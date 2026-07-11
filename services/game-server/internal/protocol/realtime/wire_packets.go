@@ -9,21 +9,20 @@ import (
 )
 
 type AsteroidWireDeltaPacket struct {
-	Type             string           `json:"type"`
-	Metadata         Metadata
-	AsteroidCreates   []WorldAsteroidWireRecord
-	AsteroidUpdates   []map[string]any `json:"asteroid_updates"`
-	AsteroidDeletes   []string
+	Type            string `json:"type"`
+	Metadata        Metadata
+	AsteroidCreates []WorldAsteroidWireRecord
+	AsteroidUpdates []map[string]any `json:"asteroid_updates"`
+	AsteroidDeletes []string
 }
 
 type BulletWireDeltaPacket struct {
-	Type          string             `json:"type"`
+	Type          string `json:"type"`
 	Metadata      Metadata
 	BulletCreates []WorldBulletWireRecord
 	BulletUpdates []map[string]any `json:"bullet_updates"`
 	BulletDeletes []string
 }
-
 
 func WireLanePacket(candidate RealtimeLaneCandidate) map[string]any {
 	switch packet := candidate.Full.(type) {
@@ -124,17 +123,17 @@ func wireSessionWireFullPacket(packet SessionWireFullPacket) map[string]any {
 	players := make([]any, 0, len(packet.Players))
 	for _, player := range packet.Players {
 		players = append(players, map[string]any{
-			"id":                  player.ID,
-			"ship_type":          player.ShipType,
-			"score":              player.Score,
-			"lives":              player.Lives,
-			"respawn_cooldown":   player.RespawnCooldown,
-			"primary_weapon_id":   player.PrimaryWeaponID,
-			"primary_ammo_policy": player.PrimaryAmmoPolicy,
-			"secondary_weapon_id": player.SecondaryWeaponID,
+			"id":                    player.ID,
+			"ship_type":             player.ShipType,
+			"score":                 player.Score,
+			"lives":                 player.Lives,
+			"respawn_cooldown":      player.RespawnCooldown,
+			"primary_weapon_id":     player.PrimaryWeaponID,
+			"primary_ammo_policy":   player.PrimaryAmmoPolicy,
+			"secondary_weapon_id":   player.SecondaryWeaponID,
 			"secondary_ammo_policy": player.SecondaryAmmoPolicy,
-			"spawn_x":            player.SpawnX,
-			"spawn_y":            player.SpawnY,
+			"spawn_x":               player.SpawnX,
+			"spawn_y":               player.SpawnY,
 		})
 	}
 	wire["players"] = players
@@ -273,7 +272,6 @@ func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 	return wire
 }
 
-
 func wireAsteroidWireDeltaPacket(packet AsteroidWireDeltaPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
 	if packet.Metadata.Lane == LaneAsteroidsLifecycle {
@@ -360,7 +358,7 @@ func wireLaneDelta(delta any) map[string]any {
 		}
 	case SessionLaneDelta:
 		return map[string]any{
-			"players":                 wireRecordArray(packet.Players.Creates),
+			"players":                  wireRecordArray(packet.Players.Creates),
 			"player_session_updates":   wireRecordArray(packet.Players.Updates),
 			"player_session_deletes":   wireStringArray(packet.Players.Deletes),
 			"player_lifecycle":         wireRecordArray(packet.PlayerLifecycle.Creates),
@@ -625,142 +623,3 @@ func isRuntimeGeneratedFullBaseline(metadata Metadata) bool {
 	}
 	return sequence == metadata.Sequence
 }
-
-func wireRecords(records any) any {
-	if records == nil {
-		return nil
-	}
-
-	rv := reflect.ValueOf(records)
-	for rv.Kind() == reflect.Pointer {
-		if rv.IsNil() {
-			return nil
-		}
-		rv = rv.Elem()
-	}
-
-	switch rv.Kind() {
-	case reflect.Slice, reflect.Array:
-		items := make([]any, 0, rv.Len())
-		for i := 0; i < rv.Len(); i++ {
-			items = append(items, wireValue(rv.Index(i).Interface()))
-		}
-		return items
-	case reflect.Map:
-		items := make(map[string]any, rv.Len())
-		iter := rv.MapRange()
-		for iter.Next() {
-			key := iter.Key()
-			if key.Kind() != reflect.String {
-				continue
-			}
-			items[key.String()] = wireValue(iter.Value().Interface())
-		}
-		return items
-	default:
-		return wireValue(records)
-	}
-}
-
-func wireStructToMap(value any) map[string]any {
-	if value == nil {
-		return map[string]any{}
-	}
-
-	rv := reflect.ValueOf(value)
-	for rv.Kind() == reflect.Pointer {
-		if rv.IsNil() {
-			return map[string]any{}
-		}
-		rv = rv.Elem()
-	}
-
-	if rv.Kind() != reflect.Struct {
-		return map[string]any{}
-	}
-
-	wire := make(map[string]any, rv.NumField())
-	rt := rv.Type()
-	for i := 0; i < rv.NumField(); i++ {
-		field := rt.Field(i)
-		fieldValue := rv.Field(i)
-		if !fieldValue.CanInterface() {
-			continue
-		}
-		wire[toSnakeCase(field.Name)] = wireValue(fieldValue.Interface())
-	}
-	return wire
-}
-
-func wireValue(value any) any {
-	if value == nil {
-		return nil
-	}
-
-	rv := reflect.ValueOf(value)
-	for rv.Kind() == reflect.Pointer {
-		if rv.IsNil() {
-			return nil
-		}
-		rv = rv.Elem()
-		value = rv.Interface()
-	}
-
-	switch rv.Kind() {
-	case reflect.Struct:
-		return wireStructToMap(value)
-	case reflect.Slice, reflect.Array:
-		items := make([]any, 0, rv.Len())
-		for i := 0; i < rv.Len(); i++ {
-			items = append(items, wireValue(rv.Index(i).Interface()))
-		}
-		return items
-	case reflect.Map:
-		items := make(map[string]any, rv.Len())
-		iter := rv.MapRange()
-		for iter.Next() {
-			key := iter.Key()
-			if key.Kind() != reflect.String {
-				continue
-			}
-			items[key.String()] = wireValue(iter.Value().Interface())
-		}
-		return items
-	default:
-		return value
-	}
-}
-
-func toSnakeCase(value string) string {
-	if value == "" {
-		return value
-	}
-
-	runes := []rune(value)
-	var builder strings.Builder
-	builder.Grow(len(runes) + 4)
-	for i, r := range runes {
-		if i > 0 && isUpper(r) && (isLower(runes[i-1]) || isDigit(runes[i-1]) || (isUpper(runes[i-1]) && i+1 < len(runes) && isLower(runes[i+1]))) {
-			builder.WriteByte('_')
-		}
-		if isUpper(r) {
-			builder.WriteRune(r + ('a' - 'A'))
-			continue
-		}
-		builder.WriteRune(r)
-	}
-	return builder.String()
-}
-
-func isUpper(r rune) bool { return r >= 'A' && r <= 'Z' }
-func isLower(r rune) bool { return r >= 'a' && r <= 'z' }
-func isDigit(r rune) bool { return r >= '0' && r <= '9' }
-
-
-
-
-
-
-
-
-

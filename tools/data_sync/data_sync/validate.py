@@ -8,14 +8,16 @@ from pathlib import Path
 
 from data_sync.block_io import BlockIOError, find_block
 from data_sync.cli import DOMAINS
-from data_sync.config import DataSyncConfig
+from data_sync.config import ConfigError, DataSyncConfig
 from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.discovery import discover_constants_files
 from data_sync.model.constants import ConstantValue
 from data_sync.model.packets import PacketDefinition, PacketSchema, PacketSchemaField
 from data_sync.player_data_toml import PlayerDataTomlError, load_player_data_schema
+from data_sync.realtime_wire_toml import RealtimeWireTomlError
 from data_sync.packet_rendering import GO_PRIMITIVES, PacketRenderingError, parse_rich_type
 from data_sync.packet_toml import PacketTomlError, load_packet_schema, load_packet_schema_files
+from data_sync.realtime_wire_validate import RealtimeWireValidationError, validate_realtime_wire
 from data_sync.toml_store import TomlStore, TomlStoreError
 
 
@@ -43,6 +45,11 @@ class ValidationRequest:
 
 def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[str, ...]) -> None:
     requested_domains = domains or _enabled_domains(config)
+    if not domains:
+        if _is_dedicated_realtime_wire_source(config) and "realtime_wire" not in requested_domains:
+            requested_domains = (*requested_domains, "realtime_wire")
+        elif not _is_dedicated_realtime_wire_source(config):
+            requested_domains = tuple(domain for domain in requested_domains if domain != "realtime_wire")
     request = ValidationRequest(
         domains=requested_domains,
         languages=languages,
@@ -58,11 +65,36 @@ def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[
         _validate_packet_sot(config.sot_paths("packets"), errors)
     if "player_data" in request.domains:
         _validate_player_data_sot(config.sot_paths("player_data"), errors)
+    if "realtime_wire" in request.domains:
+        _validate_realtime_wire_source(config, errors)
 
     _validate_configured_files_and_blocks(config, request, errors)
 
     if errors:
         raise ValidationError(errors)
+
+
+def _is_dedicated_realtime_wire_source(config: DataSyncConfig) -> bool:
+    try:
+        paths = config.sot_paths("realtime_wire")
+    except ConfigError:
+        return False
+    return len(paths) == 1 and paths[0].name == "realtime_wire.toml"
+
+
+def _validate_realtime_wire_source(config: DataSyncConfig, errors: list[str]) -> None:
+    path = config.sot_path("realtime_wire")
+    if not path.exists():
+        return
+    packet_schema: PacketSchema | None = None
+    try:
+        packet_schema = load_packet_schema_files(config.sot_paths("packets"))
+    except PacketTomlError as exc:
+        errors.append(str(exc))
+    try:
+        validate_realtime_wire(path, packet_schema)
+    except (RealtimeWireTomlError, RealtimeWireValidationError) as exc:
+        errors.extend(exc.errors if isinstance(exc, RealtimeWireValidationError) else [str(exc)])
 
 
 def _load_store(path: Path, errors: list[str]) -> TomlStore | None:
@@ -439,7 +471,7 @@ def _validate_configured_files_and_blocks(
                     text = _read_configured_file(path, errors)
                     if text is None:
                         continue
-                    if domain == "packets":
+                    if domain in {"packets", "realtime_wire"}:
                         continue
                     for section_name in target.sections:
                         try:

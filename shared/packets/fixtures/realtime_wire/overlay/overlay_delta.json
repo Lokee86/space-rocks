@@ -1,0 +1,43 @@
+{
+  "compact": {
+    "bq": 7,
+    "q": 8,
+    "ru": [
+      {
+        "sco": 1,
+        "self": "player-1"
+      }
+    ],
+    "t": "od"
+  },
+  "expanded": {
+    "baseline_id": "overlay-baseline-7",
+    "baseline_sequence": 7,
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "overlay",
+    "receiver_updates": [
+      {
+        "score": 1,
+        "self_id": "player-1"
+      }
+    ],
+    "sequence": 8,
+    "snapshot_id": "overlay-snapshot-8",
+    "snapshot_kind": "delta",
+    "type": "overlay_delta"
+  },
+  "name": "overlay_delta_map",
+  "readable": {
+    "baseline_sequence": 7,
+    "receiver_updates": [
+      {
+        "score": 1,
+        "self_id": "player-1"
+      }
+    ],
+    "sequence": 8,
+    "type": "overlay_delta"
+  }
+}

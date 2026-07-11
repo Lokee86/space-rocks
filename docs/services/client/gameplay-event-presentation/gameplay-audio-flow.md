@@ -14,6 +14,8 @@ Gameplay audio is client presentation only.
 
 The server decides gameplay facts such as projectile existence, pickup collection, ship death, radial effect start, local elimination, and room match-over. The client converts those facts into local Godot audio playback.
 
+The event and authoritative lifecycle paths may both request local-elimination handling, but `MatchEndFlow` accepts immediate local-elimination audio consequences only in multiplayer. Single-player waits for authoritative room `GameOver` before requesting match-over audio through the room match-over path.
+
 The main audio helper is:
 
 ```text
@@ -211,7 +213,7 @@ room state GameOver
 -> GameplayEventFlow.play_game_over_sound_after_delay()
 ```
 
-`MatchEndFlow` owns idempotent local-elimination orchestration and suppresses duplicate delayed-sound requests across event and authoritative lifecycle entry paths. `GameplayEventFlow` and `GameplayEffects` own the delay, timer invalidation, and playback mechanics after a request is accepted.
+`MatchEndFlow` owns idempotent multiplayer local-elimination orchestration and suppresses duplicate delayed-sound requests across event and authoritative lifecycle entry paths. Its session-mode guard rejects immediate local-elimination consequences in single-player. `GameplayEventFlow` and `GameplayEffects` own the delay, timer invalidation, and playback mechanics after a request is accepted. Single-player receives game-over audio through the authoritative room match-over path instead.
 
 The delay uses:
 
@@ -360,7 +362,7 @@ local elimination
 room match-over
 ```
 
-Both paths are consequences of server-owned gameplay or room facts. The client only chooses how to present the sound.
+Both paths are consequences of server-owned gameplay or room facts. The client only chooses how to present the sound. The local-elimination path has immediate consequences only in multiplayer; single-player waits for room `GameOver`.
 
 The `ship_death` path is supplementary immediate presentation. The authoritative world/session lifecycle path is the reconstructable source for pending respawn, active restoration, and eliminated state; audio does not acknowledge durable lifecycle delivery.
 
@@ -451,7 +453,7 @@ Scene-local audio settings such as stream, volume, pitch, looping, and polyphony
 * `client/scripts/gameplay/events/gameplay_event_lifecycle_flow.gd` - Wires event flow into gameplay event presentation and reset.
 * `client/scripts/gameplay/events/gameplay_death_flow.gd` - Stops transient player effects before local death presentation and delegates final elimination to match-end flow.
 * `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - Reconstructs local lifecycle presentation and delegates authoritative elimination to match-end flow.
-* `client/scripts/gameplay/match_end/match_end_flow.gd` - Requests game-over audio for local elimination and authoritative room match-over.
+* `client/scripts/gameplay/match_end/match_end_flow.gd` - Requests game-over audio for accepted multiplayer local elimination and authoritative room match-over.
 
 ### World-sync audio callers
 
@@ -515,7 +517,8 @@ Relevant tests include:
 Current direct coverage verifies:
 
 * Torpedo explosion effect scene creation, scaling, and sound-node presence.
-* Match-end requests game-over sound for local elimination.
+* Multiplayer match-end requests game-over sound for accepted local elimination.
+* Single-player local-elimination calls do not request immediate game-over sound.
 * Match-end requests game-over sound for authoritative room match-over.
 * Repeated room match-over handling does not repeatedly show results.
 * Bullet and torpedo projectile nodes expose firing sound nodes on first creation.

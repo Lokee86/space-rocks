@@ -411,15 +411,22 @@ func TestEstimateCompactBulletMovementUpdateBytesKeepsRotationConservative(t *te
 		t.Fatalf("expected positive estimate, got %d", estimated)
 	}
 
-	packed := compactWirePackBulletMovementUpdate(map[string]any{
-		"i": "bullet-rot",
-		"x": 7,
-		"y": 8,
-		"r": 9,
+	packedPacket := CompactWirePacket(map[string]any{
+		"type": "bullet_delta",
+		"bullet_updates": []any{map[string]any{
+			"id":       "bullet-rot",
+			"x":        7,
+			"y":        8,
+			"rotation": 9,
+		}},
 	})
-	tuple, ok := packed.([]any)
+	updates, ok := packedPacket["bu"].([]any)
+	if !ok || len(updates) != 1 {
+		t.Fatalf("expected one compact bullet update, got %#v", packedPacket["bu"])
+	}
+	tuple, ok := updates[0].([]any)
 	if !ok {
-		t.Fatalf("expected compact tuple, got %#v", packed)
+		t.Fatalf("expected compact tuple, got %#v", updates[0])
 	}
 	if len(tuple) != 4 {
 		t.Fatalf("expected rotation tuple to remain four entries, got %#v", tuple)

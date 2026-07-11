@@ -1,0 +1,555 @@
+{
+  "compact": {
+    "records": [
+      {
+        "abs": 0,
+        "ac": 0,
+        "age": 0,
+        "ah": 0,
+        "amt": 0,
+        "au": 0,
+        "ax": 0,
+        "b": 0,
+        "ba": 0,
+        "bc": 0,
+        "bid": 0,
+        "bq": 0,
+        "bu": 0,
+        "bx": 0,
+        "cc": 0,
+        "ci": 0,
+        "dc": 0,
+        "dt": 0,
+        "ei": 0,
+        "ev": 0,
+        "fc": false,
+        "fx": 0,
+        "h": 0,
+        "i": 0,
+        "k": "f",
+        "l": "w",
+        "life": 0,
+        "lv": 0,
+        "lva": 0,
+        "ma": 0,
+        "ms": 0,
+        "oi": 0,
+        "pap": 0,
+        "par": 0,
+        "pc": 0,
+        "pcl": 0,
+        "pcr": 0,
+        "pid": 0,
+        "pkid": 0,
+        "pkt": 0,
+        "pl": 0,
+        "plc": 0,
+        "plu": 0,
+        "plx": 0,
+        "psu": 0,
+        "psx": 0,
+        "pt": 0,
+        "pu": 0,
+        "pwid": 0,
+        "px": 0,
+        "q": 0,
+        "r": 0,
+        "rc": 0,
+        "rcd": 0,
+        "rd": 0,
+        "rh": 0,
+        "rs": 0,
+        "ru": 0,
+        "rx": 0,
+        "sap": 0,
+        "sar": 0,
+        "sc": 0,
+        "sco": 0,
+        "scr": 0,
+        "self": 0,
+        "sh": 0,
+        "sid": 0,
+        "sl": 0,
+        "spx": 0,
+        "spy": 0,
+        "src": 0,
+        "srct": 0,
+        "st": 0,
+        "stat": 0,
+        "su": 0,
+        "swid": 0,
+        "sx": 0,
+        "sz": 0,
+        "t": "wf",
+        "ta": 0,
+        "tbl": 0,
+        "th": false,
+        "tid": 0,
+        "tk": 0,
+        "tt": 0,
+        "v": 0,
+        "wid": 0
+      },
+      {
+        "t": "wf"
+      },
+      {
+        "t": "wd"
+      },
+      {
+        "t": "of"
+      },
+      {
+        "t": "od"
+      },
+      {
+        "t": "sf"
+      },
+      {
+        "t": "sd"
+      },
+      {
+        "t": "eb"
+      },
+      {
+        "t": "ad"
+      },
+      {
+        "t": "al"
+      },
+      {
+        "t": "bd"
+      },
+      {
+        "t": "bl"
+      },
+      {
+        "t": "bb"
+      },
+      {
+        "t": "shd"
+      },
+      {
+        "t": "rfx"
+      },
+      {
+        "t": "pcol"
+      },
+      {
+        "t": "pea"
+      },
+      {
+        "t": "pexp"
+      },
+      {
+        "t": "pdr"
+      },
+      {
+        "t": "dmg"
+      },
+      {
+        "t": "dots"
+      },
+      {
+        "t": "dott"
+      },
+      {
+        "l": "w"
+      },
+      {
+        "l": "o"
+      },
+      {
+        "l": "s"
+      },
+      {
+        "l": "a"
+      },
+      {
+        "l": "b"
+      },
+      {
+        "l": "al"
+      },
+      {
+        "l": "bl"
+      },
+      {
+        "k": "f"
+      },
+      {
+        "k": "d"
+      }
+    ],
+    "t": "resync_required"
+  },
+  "expanded": {
+    "records": [
+      {
+        "absorbed_by_shield": 0,
+        "age_seconds": 0,
+        "amount": 0,
+        "applied_to_health": 0,
+        "asteroid_creates": 0,
+        "asteroid_deletes": 0,
+        "asteroid_updates": 0,
+        "base_amount": 0,
+        "baseline_id": 0,
+        "baseline_sequence": 0,
+        "batch_id": "event-batch-0",
+        "bullet_creates": 0,
+        "bullet_deletes": 0,
+        "bullet_updates": 0,
+        "chunk_count": 0,
+        "chunk_index": 0,
+        "damage_cause": 0,
+        "damage_type": 0,
+        "effect_type": 0,
+        "event_id": 0,
+        "events": 0,
+        "health": 0,
+        "id": 0,
+        "is_final_chunk": false,
+        "lane": "world",
+        "lifespan_seconds": 0,
+        "lives": 0,
+        "lives_after": 0,
+        "modified_amount": 0,
+        "owner_id": 0,
+        "pickup_class": 0,
+        "pickup_creates": 0,
+        "pickup_deletes": 0,
+        "pickup_id": 0,
+        "pickup_type": 0,
+        "pickup_updates": 0,
+        "player_id": 0,
+        "player_lifecycle": 0,
+        "player_lifecycle_deletes": 0,
+        "player_lifecycle_updates": 0,
+        "player_session_deletes": 0,
+        "player_session_updates": 0,
+        "players": 0,
+        "primary_ammo_policy": 0,
+        "primary_ammo_remaining": 0,
+        "primary_cooldown_remaining": 0,
+        "primary_weapon_id": 0,
+        "projectile_type": 0,
+        "receiver_creates": 0,
+        "receiver_deletes": 0,
+        "receiver_updates": 0,
+        "remaining_health": 0,
+        "remaining_shield": 0,
+        "respawn_cooldown": 0,
+        "respawn_delay": 0,
+        "rotation": 0,
+        "scale": 0,
+        "score": 0,
+        "secondary_ammo_policy": 0,
+        "secondary_ammo_remaining": 0,
+        "secondary_cooldown_remaining": 0,
+        "secondary_weapon_id": 0,
+        "self_id": 0,
+        "sequence": 0,
+        "server_sent_msec": 0,
+        "shields": 0,
+        "ship_creates": 0,
+        "ship_deletes": 0,
+        "ship_type": 0,
+        "ship_updates": 0,
+        "size": 0,
+        "snapshot_id": 0,
+        "snapshot_kind": "full",
+        "source_id": 0,
+        "source_type": 0,
+        "spawn_x": 0,
+        "spawn_y": 0,
+        "status": 0,
+        "table_id": 0,
+        "target_id": 0,
+        "target_kind": 0,
+        "target_type": 0,
+        "thrusting": false,
+        "total_asteroids": 0,
+        "type": "world_full",
+        "variant": 0,
+        "weapon_id": 0
+      },
+      {
+        "type": "world_full"
+      },
+      {
+        "type": "world_delta"
+      },
+      {
+        "type": "overlay_full"
+      },
+      {
+        "type": "overlay_delta"
+      },
+      {
+        "type": "session_full"
+      },
+      {
+        "type": "session_delta"
+      },
+      {
+        "type": "event_batch"
+      },
+      {
+        "type": "asteroid_delta"
+      },
+      {
+        "type": "asteroids_lifecycle"
+      },
+      {
+        "type": "bullet_delta"
+      },
+      {
+        "type": "bullets_lifecycle"
+      },
+      {
+        "type": "bullet_blast"
+      },
+      {
+        "type": "ship_death"
+      },
+      {
+        "type": "radial_effect_started"
+      },
+      {
+        "type": "pickup_collected"
+      },
+      {
+        "type": "pickup_effect_applied"
+      },
+      {
+        "type": "pickup_expired"
+      },
+      {
+        "type": "pickup_dropped"
+      },
+      {
+        "type": "damage_applied"
+      },
+      {
+        "type": "damage_over_time_started"
+      },
+      {
+        "type": "damage_over_time_tick"
+      },
+      {
+        "lane": "world"
+      },
+      {
+        "lane": "overlay"
+      },
+      {
+        "lane": "session"
+      },
+      {
+        "lane": "asteroids"
+      },
+      {
+        "lane": "bullets"
+      },
+      {
+        "lane": "asteroids.lifecycle"
+      },
+      {
+        "lane": "bullets.lifecycle"
+      },
+      {
+        "snapshot_kind": "full"
+      },
+      {
+        "snapshot_kind": "delta"
+      }
+    ],
+    "type": "resync_required"
+  },
+  "name": "all_compact_key_and_value_aliases",
+  "readable": {
+    "records": [
+      {
+        "absorbed_by_shield": 0,
+        "age_seconds": 0,
+        "amount": 0,
+        "applied_to_health": 0,
+        "asteroid_creates": 0,
+        "asteroid_deletes": 0,
+        "asteroid_updates": 0,
+        "base_amount": 0,
+        "baseline_id": 0,
+        "baseline_sequence": 0,
+        "batch_id": 0,
+        "bullet_creates": 0,
+        "bullet_deletes": 0,
+        "bullet_updates": 0,
+        "chunk_count": 0,
+        "chunk_index": 0,
+        "damage_cause": 0,
+        "damage_type": 0,
+        "effect_type": 0,
+        "event_id": 0,
+        "events": 0,
+        "health": 0,
+        "id": 0,
+        "is_final_chunk": false,
+        "lane": "world",
+        "lifespan_seconds": 0,
+        "lives": 0,
+        "lives_after": 0,
+        "modified_amount": 0,
+        "owner_id": 0,
+        "pickup_class": 0,
+        "pickup_creates": 0,
+        "pickup_deletes": 0,
+        "pickup_id": 0,
+        "pickup_type": 0,
+        "pickup_updates": 0,
+        "player_id": 0,
+        "player_lifecycle": 0,
+        "player_lifecycle_deletes": 0,
+        "player_lifecycle_updates": 0,
+        "player_session_deletes": 0,
+        "player_session_updates": 0,
+        "players": 0,
+        "primary_ammo_policy": 0,
+        "primary_ammo_remaining": 0,
+        "primary_cooldown_remaining": 0,
+        "primary_weapon_id": 0,
+        "projectile_type": 0,
+        "receiver_creates": 0,
+        "receiver_deletes": 0,
+        "receiver_updates": 0,
+        "remaining_health": 0,
+        "remaining_shield": 0,
+        "respawn_cooldown": 0,
+        "respawn_delay": 0,
+        "rotation": 0,
+        "scale": 0,
+        "score": 0,
+        "secondary_ammo_policy": 0,
+        "secondary_ammo_remaining": 0,
+        "secondary_cooldown_remaining": 0,
+        "secondary_weapon_id": 0,
+        "self_id": 0,
+        "sequence": 0,
+        "server_sent_msec": 0,
+        "shields": 0,
+        "ship_creates": 0,
+        "ship_deletes": 0,
+        "ship_type": 0,
+        "ship_updates": 0,
+        "size": 0,
+        "snapshot_id": 0,
+        "snapshot_kind": "full",
+        "source_id": 0,
+        "source_type": 0,
+        "spawn_x": 0,
+        "spawn_y": 0,
+        "status": 0,
+        "table_id": 0,
+        "target_id": 0,
+        "target_kind": 0,
+        "target_type": 0,
+        "thrusting": false,
+        "total_asteroids": 0,
+        "type": "world_full",
+        "variant": 0,
+        "weapon_id": 0
+      },
+      {
+        "type": "world_full"
+      },
+      {
+        "type": "world_delta"
+      },
+      {
+        "type": "overlay_full"
+      },
+      {
+        "type": "overlay_delta"
+      },
+      {
+        "type": "session_full"
+      },
+      {
+        "type": "session_delta"
+      },
+      {
+        "type": "event_batch"
+      },
+      {
+        "type": "asteroid_delta"
+      },
+      {
+        "type": "asteroids_lifecycle"
+      },
+      {
+        "type": "bullet_delta"
+      },
+      {
+        "type": "bullets_lifecycle"
+      },
+      {
+        "type": "bullet_blast"
+      },
+      {
+        "type": "ship_death"
+      },
+      {
+        "type": "radial_effect_started"
+      },
+      {
+        "type": "pickup_collected"
+      },
+      {
+        "type": "pickup_effect_applied"
+      },
+      {
+        "type": "pickup_expired"
+      },
+      {
+        "type": "pickup_dropped"
+      },
+      {
+        "type": "damage_applied"
+      },
+      {
+        "type": "damage_over_time_started"
+      },
+      {
+        "type": "damage_over_time_tick"
+      },
+      {
+        "lane": "world"
+      },
+      {
+        "lane": "overlay"
+      },
+      {
+        "lane": "session"
+      },
+      {
+        "lane": "asteroids"
+      },
+      {
+        "lane": "bullets"
+      },
+      {
+        "lane": "asteroids.lifecycle"
+      },
+      {
+        "lane": "bullets.lifecycle"
+      },
+      {
+        "snapshot_kind": "full"
+      },
+      {
+        "snapshot_kind": "delta"
+      }
+    ],
+    "type": "resync_required"
+  }
+}

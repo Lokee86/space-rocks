@@ -31,6 +31,8 @@ GameplayUserInterface
 
 `GameplayUserInterface` is the gameplay-session UI root. HUD, gameplay menu overlays, match results, and gameplay-session modals belong under this root. `GameplayUserInterface` uses `mouse_filter = IGNORE` so it does not block sibling app or menu screens by itself.
 
+Local elimination presentation is mode-specific: multiplayer may immediately show the local eliminated HUD/menu state, while single-player waits for authoritative room `GameOver`. The room match-over path then hides and locks the HUD, configures match-over UI, requests game-over audio through its owning flow, and presents results.
+
 The HUD scene is:
 
 ```text
@@ -167,7 +169,7 @@ session_lane_state.player_lifecycle
 
 The event path is best-effort and is not the durable source for dead HUD, respawn availability, authoritative lives, or eliminated state. Reconstructable local lifecycle presentation comes from `GameplayLocalLifecycleFlow` after `PresentationAdapter` applies authoritative world and decoded session lane state.
 
-If the event path reports zero lives, `GameplayDeathFlow` delegates final local elimination to `MatchEndFlow.handle_local_player_eliminated(lives)`, passing the integer lives value rather than the event dictionary. The lifecycle path independently reconstructs eliminated presentation from authoritative session state.
+If the event path reports zero lives, `GameplayDeathFlow` delegates final local elimination to `MatchEndFlow.handle_local_player_eliminated(lives)`, passing the integer lives value rather than the event dictionary. The lifecycle path independently reconstructs eliminated presentation from authoritative session state. Both paths may call the handler, but only multiplayer accepts immediate local-elimination HUD/menu consequences; single-player waits for room `GameOver`.
 
 `GameplayRespawnFlow` uses `GameplayHudFlow.can_request_respawn()` before sending a respawn request. The respawn path currently emits three structured network diagnostics through [Client Logging](./client-logging.md): `respawn_request_send_started` and `respawn_awaiting_confirmation_marked` at info level, and `respawn_request_blocked` at info level when a local guard blocks the request. These diagnostics are one-shot or guarded by local flow state and do not change respawn permission, gameplay readiness, or server authority.
 
@@ -177,7 +179,7 @@ If the event path reports zero lives, `GameplayDeathFlow` delegates final local 
 
 For `pending_respawn`, the flow reads the local `player_sessions` record, applies authoritative lives, reads decoded `respawn_cooldown`, stops transient local effects on entry, and calls `GameplayHudFlow.set_dead(cooldown)`. A cooldown of `0.0` is valid and makes respawn immediately available. Unchanged pending-respawn fanout does not restart the countdown; a changed authoritative cooldown refreshes it.
 
-For `eliminated`, it applies authoritative lives and delegates to `MatchEndFlow.handle_local_player_eliminated(lives)`. Active restoration requires authoritative `active` lifecycle plus the local ship in world state before stale dead presentation and respawn confirmation are cleared.
+For `eliminated`, it applies authoritative lives and delegates to `MatchEndFlow.handle_local_player_eliminated(lives)`. The handler is presentation-effective only in multiplayer. In single-player, authoritative room `GameOver` owns the later HUD/menu match-over presentation and results handoff. Active restoration requires authoritative `active` lifecycle plus the local ship in world state before stale dead presentation and respawn confirmation are cleared.
 
 ### Match-over participant
 
@@ -280,7 +282,7 @@ respawn_delay
 
 When `lives > 0`, HUD presentation moves into dead or respawn state.
 
-When `lives == 0`, final local elimination is delegated to `MatchEndFlow.handle_local_player_eliminated(lives)` with the integer lives value.
+When `lives == 0`, final local elimination is delegated to `MatchEndFlow.handle_local_player_eliminated(lives)` with the integer lives value. The handler performs immediate HUD/menu orchestration only in multiplayer; single-player waits for authoritative room `GameOver`.
 
 ### Local lifecycle and immediate event inputs
 
@@ -308,7 +310,7 @@ Room match-over presentation is driven by room state, not local HUD inference.
 
 `RoomSessionController` caches latest room state from room snapshots and room state changes. `GameplaySessionController` provides that room state to `GameplayComposition`, which provides it to `MatchEndFlow`.
 
-When the current room state is `GameOver`, `MatchEndFlow` handles room match-over once and asks HUD presentation to hide and lock.
+When the current room state is `GameOver`, `MatchEndFlow` handles room match-over once and asks HUD presentation to hide and lock. This is the required single-player match-end path and the final-results path in multiplayer, separate from multiplayer local elimination.
 
 ### Match results input
 

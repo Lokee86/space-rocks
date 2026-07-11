@@ -24,9 +24,9 @@ authoritative room match-over
 
 Those states are related but not equivalent.
 
-Local elimination updates local presentation only. It can update lives, show game-over HUD/menu state, and request game-over audio. It does not show match results.
+`handle_local_player_eliminated(lives)` performs immediate local-elimination orchestration only in multiplayer. It applies lives, shows local eliminated/game-over HUD and menu state, and requests game-over audio; it does not show match results. The best-effort self-death event path and reconstructable authoritative lifecycle path may both call it, but its session-mode guard returns without presentation consequences in single-player.
 
-Authoritative room match-over is the room-level end condition. It hides and locks the HUD, enables the match-over gameplay menu overlay, requests game-over audio, reads cached match-result data, and asks `MatchResultsFlow` to present result rows.
+Authoritative room match-over is the room-level end condition for both modes. Single-player waits for this path. It hides and locks the HUD, enables the match-over gameplay menu overlay, requests game-over audio, reads cached match-result data, and asks `MatchResultsFlow` to present result rows. In multiplayer it remains separate from local elimination, which may occur while other players remain active.
 
 `MatchEndFlow` does not calculate match winners, scores, deaths, persistence, or room state. Those facts come from server-owned room state and match-result payloads. The client only adapts those facts into presentation-safe UI rows and forwards user intent outward.
 
@@ -42,9 +42,10 @@ The match-end orchestration flow owns:
 
 * Distinguishing local elimination from authoritative room match-over.
 * Handling local player elimination presentation from immediate self-death events and authoritative eliminated lifecycle state.
-* Updating local lives on final local elimination.
-* Moving HUD and gameplay menu presentation into local game-over state.
-* Requesting game-over audio through the gameplay event flow.
+* Updating local lives on final multiplayer local elimination.
+* Moving HUD and gameplay menu presentation into local multiplayer eliminated/game-over state.
+* Requesting game-over audio through the gameplay event flow for accepted multiplayer local elimination.
+* Guarding `handle_local_player_eliminated(lives)` by session mode so single-player has no immediate local-elimination presentation consequences.
 * Suppressing duplicate local-elimination side effects with `local_player_eliminated_handled`.
 * Ignoring local elimination after `room_match_over_handled` so room-wide match-over remains the higher-level outcome path.
 * Checking current room state through a configured provider.
@@ -128,15 +129,21 @@ authoritative eliminated lifecycle with integer lives
 -> MatchEndFlow.handle_local_player_eliminated(lives)
 
 both paths
+-> MatchEndFlow checks the active session mode
+
+multiplayer
 -> apply authoritative lives to HUD
 -> set HUD game-over presentation
 -> set gameplay menu game-over presentation
 -> request delayed game-over sound
+
+single-player
+-> return without presentation consequences
 ```
 
-This path does not show match results because the room may not have reached authoritative match-over yet.
+In multiplayer this path does not show match results because the room may not have reached authoritative match-over yet. In single-player, the handler returns without immediate HUD, menu, or audio consequences; the client waits for the authoritative room `GameOver` path.
 
-`local_player_eliminated_handled` suppresses duplicate local-elimination side effects when the event and authoritative lifecycle paths describe the same outcome. Local elimination is also ignored after `room_match_over_handled`; room-wide match-over remains the separate higher-level outcome path. `reset()` and `handle_alive_restored()` clear the local elimination guard so a later lifecycle can be handled.
+`local_player_eliminated_handled` suppresses duplicate multiplayer local-elimination side effects when the event and authoritative lifecycle paths describe the same outcome. The session-mode guard is evaluated before those consequences are applied. Local elimination is also ignored after `room_match_over_handled`; room-wide match-over remains the separate higher-level outcome path. `reset()` and `handle_alive_restored()` clear the local elimination guard so a later lifecycle can be handled.
 
 ### Room match-over handler
 
@@ -279,6 +286,8 @@ MatchEndFlow.handle_local_player_eliminated(lives)
 
 The protocol-neutral handler accepts only the integer lives value. It may also be reached by `GameplayLocalLifecycleFlow` when authoritative `player_lifecycle` reports `eliminated`.
 
+`handle_local_player_eliminated(lives)` checks the active session mode. Only multiplayer accepts immediate local-elimination HUD, menu, and delayed-audio consequences. Single-player returns from this handler and waits for room state `GameOver` to enter the authoritative room match-over path.
+
 ### Match result input
 
 Match results are read from a configured provider.
@@ -344,7 +353,7 @@ room_match_over_handled
 local_player_eliminated_handled
 ```
 
-`room_match_over_handled` prevents repeated room match-over handling during the same lifecycle. `local_player_eliminated_handled` prevents duplicate local HUD, menu, and delayed-audio side effects across event and authoritative lifecycle entry paths. Both guards are reset for a later lifecycle; `handle_alive_restored()` specifically clears the local elimination guard.
+`room_match_over_handled` prevents repeated room match-over handling during the same lifecycle. `local_player_eliminated_handled` prevents duplicate multiplayer local HUD, menu, and delayed-audio side effects across event and authoritative lifecycle entry paths; it does not make single-player local elimination consequential. Both guards are reset for a later lifecycle; `handle_alive_restored()` specifically clears the local elimination guard.
 
 `MatchEndFlow` also holds references to collaborators and providers:
 
@@ -417,8 +426,10 @@ The flow does not persist data. It does not own match-result storage. It does no
 
 These tests verify:
 
-* Local elimination updates HUD/menu game-over state and requests game-over audio.
-* Local elimination does not show match results.
+* Multiplayer local elimination updates local HUD/menu game-over state and requests game-over audio.
+* Single-player local-elimination calls return without presentation consequences.
+* Single-player waits for authoritative room `GameOver` before HUD/menu/audio match-over orchestration and results presentation.
+* Multiplayer local elimination does not show final match results while other players remain active.
 * Room match-over hides the HUD and passes rows to results presentation.
 * Empty match-result providers still show the result window with empty rows.
 * Repeated room match-over refreshes do not repeatedly show result windows.
@@ -464,7 +475,7 @@ These tests verify the menu and result collaborators that `MatchEndFlow` coordin
 
 This file stays focused on `MatchEndFlow` and its immediate orchestration boundary, while match-results presentation, HUD behavior, gameplay menu behavior, and route execution remain in their own client-service docs.
 
-Local elimination and authoritative room match-over must remain separate. Showing match results from local elimination would be incorrect because the local player can be out of lives before the authoritative room has ended.
+Multiplayer local elimination and authoritative room match-over must remain separate. Showing match results from local elimination would be incorrect because the local player can be out of lives while other players remain active. Single-player deliberately waits for authoritative room `GameOver`; its local-elimination handler is a no-op for presentation.
 
 `MatchEndFlow.reset()` clears match-end state, the local elimination guard, and the HUD visibility lock, but it must not directly show the HUD again. `handle_alive_restored()` also clears the local elimination guard. HUD presentation returns through normal gameplay state flow when a new active gameplay lifecycle begins.
 

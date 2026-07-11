@@ -1,0 +1,1638 @@
+[wire_contract]
+id = "realtime"
+version = 1
+readable_keys = true
+explicit_metadata = true
+unknown_key_passthrough = true
+unknown_event_passthrough = true
+
+# The compact key vocabulary is deliberately one invertible domain.
+[[key_aliases]]
+domain = "wire"
+readable = "type"
+compact = "t"
+[[key_aliases]]
+domain = "wire"
+readable = "lane"
+compact = "l"
+[[key_aliases]]
+domain = "wire"
+readable = "sequence"
+compact = "q"
+[[key_aliases]]
+domain = "wire"
+readable = "baseline_id"
+compact = "b"
+[[key_aliases]]
+domain = "wire"
+readable = "baseline_sequence"
+compact = "bq"
+[[key_aliases]]
+domain = "wire"
+readable = "snapshot_id"
+compact = "sid"
+[[key_aliases]]
+domain = "wire"
+readable = "server_sent_msec"
+compact = "ms"
+[[key_aliases]]
+domain = "wire"
+readable = "snapshot_kind"
+compact = "k"
+[[key_aliases]]
+domain = "wire"
+readable = "chunk_index"
+compact = "ci"
+[[key_aliases]]
+domain = "wire"
+readable = "chunk_count"
+compact = "cc"
+[[key_aliases]]
+domain = "wire"
+readable = "is_final_chunk"
+compact = "fc"
+[[key_aliases]]
+domain = "wire"
+readable = "ship_creates"
+compact = "sc"
+[[key_aliases]]
+domain = "wire"
+readable = "ship_updates"
+compact = "su"
+[[key_aliases]]
+domain = "wire"
+readable = "ship_deletes"
+compact = "sx"
+[[key_aliases]]
+domain = "wire"
+readable = "bullet_creates"
+compact = "bc"
+[[key_aliases]]
+domain = "wire"
+readable = "bullet_updates"
+compact = "bu"
+[[key_aliases]]
+domain = "wire"
+readable = "bullet_deletes"
+compact = "bx"
+[[key_aliases]]
+domain = "wire"
+readable = "asteroid_creates"
+compact = "ac"
+[[key_aliases]]
+domain = "wire"
+readable = "asteroid_updates"
+compact = "au"
+[[key_aliases]]
+domain = "wire"
+readable = "asteroid_deletes"
+compact = "ax"
+[[key_aliases]]
+domain = "wire"
+readable = "pickup_creates"
+compact = "pc"
+[[key_aliases]]
+domain = "wire"
+readable = "pickup_updates"
+compact = "pu"
+[[key_aliases]]
+domain = "wire"
+readable = "pickup_deletes"
+compact = "px"
+[[key_aliases]]
+domain = "wire"
+readable = "receiver_creates"
+compact = "rc"
+[[key_aliases]]
+domain = "wire"
+readable = "receiver_updates"
+compact = "ru"
+[[key_aliases]]
+domain = "wire"
+readable = "receiver_deletes"
+compact = "rx"
+[[key_aliases]]
+domain = "wire"
+readable = "players"
+compact = "pl"
+[[key_aliases]]
+domain = "wire"
+readable = "player_session_updates"
+compact = "psu"
+[[key_aliases]]
+domain = "wire"
+readable = "player_session_deletes"
+compact = "psx"
+[[key_aliases]]
+domain = "wire"
+readable = "player_lifecycle"
+compact = "plc"
+[[key_aliases]]
+domain = "wire"
+readable = "player_lifecycle_updates"
+compact = "plu"
+[[key_aliases]]
+domain = "wire"
+readable = "player_lifecycle_deletes"
+compact = "plx"
+[[key_aliases]]
+domain = "wire"
+readable = "total_asteroids"
+compact = "ta"
+[[key_aliases]]
+domain = "wire"
+readable = "batch_id"
+compact = "bid"
+[[key_aliases]]
+domain = "wire"
+readable = "events"
+compact = "ev"
+[[key_aliases]]
+domain = "wire"
+readable = "event_id"
+compact = "ei"
+[[key_aliases]]
+domain = "wire"
+readable = "id"
+compact = "i"
+[[key_aliases]]
+domain = "wire"
+readable = "player_id"
+compact = "pid"
+[[key_aliases]]
+domain = "wire"
+readable = "self_id"
+compact = "self"
+[[key_aliases]]
+domain = "wire"
+readable = "source_type"
+compact = "srct"
+[[key_aliases]]
+domain = "wire"
+readable = "source_id"
+compact = "src"
+[[key_aliases]]
+domain = "wire"
+readable = "status"
+compact = "stat"
+[[key_aliases]]
+domain = "wire"
+readable = "rotation"
+compact = "r"
+[[key_aliases]]
+domain = "wire"
+readable = "health"
+compact = "h"
+[[key_aliases]]
+domain = "wire"
+readable = "score"
+compact = "sco"
+[[key_aliases]]
+domain = "wire"
+readable = "lives"
+compact = "lv"
+[[key_aliases]]
+domain = "wire"
+readable = "respawn_cooldown"
+compact = "rcd"
+[[key_aliases]]
+domain = "wire"
+readable = "ship_type"
+compact = "st"
+[[key_aliases]]
+domain = "wire"
+readable = "shields"
+compact = "sh"
+[[key_aliases]]
+domain = "wire"
+readable = "thrusting"
+compact = "th"
+[[key_aliases]]
+domain = "wire"
+readable = "target_kind"
+compact = "tk"
+[[key_aliases]]
+domain = "wire"
+readable = "target_id"
+compact = "tid"
+[[key_aliases]]
+domain = "wire"
+readable = "target_type"
+compact = "tt"
+[[key_aliases]]
+domain = "wire"
+readable = "damage_type"
+compact = "dt"
+[[key_aliases]]
+domain = "wire"
+readable = "damage_cause"
+compact = "dc"
+[[key_aliases]]
+domain = "wire"
+readable = "base_amount"
+compact = "ba"
+[[key_aliases]]
+domain = "wire"
+readable = "modified_amount"
+compact = "ma"
+[[key_aliases]]
+domain = "wire"
+readable = "applied_to_health"
+compact = "ah"
+[[key_aliases]]
+domain = "wire"
+readable = "absorbed_by_shield"
+compact = "abs"
+[[key_aliases]]
+domain = "wire"
+readable = "remaining_health"
+compact = "rh"
+[[key_aliases]]
+domain = "wire"
+readable = "remaining_shield"
+compact = "rs"
+[[key_aliases]]
+domain = "wire"
+readable = "owner_id"
+compact = "oi"
+[[key_aliases]]
+domain = "wire"
+readable = "weapon_id"
+compact = "wid"
+[[key_aliases]]
+domain = "wire"
+readable = "projectile_type"
+compact = "pt"
+[[key_aliases]]
+domain = "wire"
+readable = "size"
+compact = "sz"
+[[key_aliases]]
+domain = "wire"
+readable = "scale"
+compact = "sl"
+[[key_aliases]]
+domain = "wire"
+readable = "variant"
+compact = "v"
+[[key_aliases]]
+domain = "wire"
+readable = "pickup_id"
+compact = "pkid"
+[[key_aliases]]
+domain = "wire"
+readable = "pickup_type"
+compact = "pkt"
+[[key_aliases]]
+domain = "wire"
+readable = "pickup_class"
+compact = "pcl"
+[[key_aliases]]
+domain = "wire"
+readable = "age_seconds"
+compact = "age"
+[[key_aliases]]
+domain = "wire"
+readable = "lifespan_seconds"
+compact = "life"
+[[key_aliases]]
+domain = "wire"
+readable = "table_id"
+compact = "tbl"
+[[key_aliases]]
+domain = "wire"
+readable = "lives_after"
+compact = "lva"
+[[key_aliases]]
+domain = "wire"
+readable = "effect_type"
+compact = "fx"
+[[key_aliases]]
+domain = "wire"
+readable = "amount"
+compact = "amt"
+[[key_aliases]]
+domain = "wire"
+readable = "respawn_delay"
+compact = "rd"
+[[key_aliases]]
+domain = "wire"
+readable = "primary_weapon_id"
+compact = "pwid"
+[[key_aliases]]
+domain = "wire"
+readable = "primary_ammo_policy"
+compact = "pap"
+[[key_aliases]]
+domain = "wire"
+readable = "primary_cooldown_remaining"
+compact = "pcr"
+[[key_aliases]]
+domain = "wire"
+readable = "primary_ammo_remaining"
+compact = "par"
+[[key_aliases]]
+domain = "wire"
+readable = "secondary_weapon_id"
+compact = "swid"
+[[key_aliases]]
+domain = "wire"
+readable = "secondary_ammo_policy"
+compact = "sap"
+[[key_aliases]]
+domain = "wire"
+readable = "secondary_cooldown_remaining"
+compact = "scr"
+[[key_aliases]]
+domain = "wire"
+readable = "secondary_ammo_remaining"
+compact = "sar"
+[[key_aliases]]
+domain = "wire"
+readable = "spawn_x"
+compact = "spx"
+[[key_aliases]]
+domain = "wire"
+readable = "spawn_y"
+compact = "spy"
+
+[[value_domains]]
+id = "packet_type"
+entries = [{ readable = "world_full", compact = "wf" }, { readable = "world_delta", compact = "wd" }, { readable = "overlay_full", compact = "of" }, { readable = "overlay_delta", compact = "od" }, { readable = "session_full", compact = "sf" }, { readable = "session_delta", compact = "sd" }, { readable = "asteroid_delta", compact = "ad" }, { readable = "asteroids_lifecycle", compact = "al" }, { readable = "bullet_delta", compact = "bd" }, { readable = "bullets_lifecycle", compact = "bl" }, { readable = "event_batch", compact = "eb" }, { readable = "resync_request", compact = "resync_request" }, { readable = "resync_required", compact = "resync_required" }]
+[[value_domains]]
+id = "lane"
+entries = [{ readable = "world", compact = "w" }, { readable = "overlay", compact = "o" }, { readable = "session", compact = "s" }, { readable = "asteroids", compact = "a" }, { readable = "bullets", compact = "b" }, { readable = "asteroids.lifecycle", compact = "al" }, { readable = "bullets.lifecycle", compact = "bl" }, { readable = "event", compact = "event" }, { readable = "control", compact = "control" }]
+[[value_domains]]
+id = "snapshot_kind"
+entries = [{ readable = "full", compact = "f" }, { readable = "delta", compact = "d" }]
+[[value_domains]]
+id = "event_type"
+entries = [{ readable = "bullet_blast", compact = "bb" }, { readable = "ship_death", compact = "shd" }, { readable = "damage_applied", compact = "dmg" }, { readable = "damage_over_time_started", compact = "dots" }, { readable = "damage_over_time_tick", compact = "dott" }, { readable = "radial_effect_started", compact = "rfx" }, { readable = "pickup_collected", compact = "pcol" }, { readable = "pickup_effect_applied", compact = "pea" }, { readable = "pickup_expired", compact = "pexp" }, { readable = "pickup_dropped", compact = "pdr" }]
+
+[[quantizations]]
+path = "session.elapsed"
+policy = "seconds"
+[[quantizations]]
+path = "session.duration"
+policy = "seconds"
+[[quantizations]]
+path = "session.timer"
+policy = "seconds"
+[[quantizations]]
+path = "session.lifetime"
+policy = "seconds"
+[[quantizations]]
+path = "session.players.respawn_cooldown"
+policy = "seconds"
+[[quantizations]]
+path = "session.players.spawn_x"
+policy = "position"
+[[quantizations]]
+path = "session.players.spawn_y"
+policy = "position"
+[[quantizations]]
+path = "overlay.respawn_cooldown"
+policy = "seconds"
+[[quantizations]]
+path = "overlay.primary_cooldown_remaining"
+policy = "seconds"
+[[quantizations]]
+path = "overlay.secondary_cooldown_remaining"
+policy = "seconds"
+[[quantizations]]
+path = "world.ships.x"
+policy = "position"
+[[quantizations]]
+path = "world.ships.y"
+policy = "position"
+[[quantizations]]
+path = "world.ships.rotation"
+policy = "float_generic"
+[[quantizations]]
+path = "world.bullets.x"
+policy = "position"
+[[quantizations]]
+path = "world.bullets.y"
+policy = "position"
+[[quantizations]]
+path = "world.bullets.rotation"
+policy = "float_generic"
+[[quantizations]]
+path = "world.asteroids.x"
+policy = "position"
+[[quantizations]]
+path = "world.asteroids.y"
+policy = "position"
+[[quantizations]]
+path = "world.asteroids.scale"
+policy = "float_generic"
+[[quantizations]]
+path = "world.pickups.x"
+policy = "position"
+[[quantizations]]
+path = "world.pickups.y"
+policy = "position"
+[[quantizations]]
+path = "world.pickups.age_seconds"
+policy = "seconds"
+[[quantizations]]
+path = "world.pickups.lifespan_seconds"
+policy = "seconds"
+[[quantizations]]
+path = "event.bullet_blast.x"
+policy = "position"
+[[quantizations]]
+path = "event.bullet_blast.y"
+policy = "position"
+[[quantizations]]
+path = "event.ship_death.x"
+policy = "position"
+[[quantizations]]
+path = "event.ship_death.y"
+policy = "position"
+[[quantizations]]
+path = "event.ship_death.respawn_delay"
+policy = "seconds"
+[[quantizations]]
+path = "event.damage_applied.x"
+policy = "position"
+[[quantizations]]
+path = "event.damage_applied.y"
+policy = "position"
+[[quantizations]]
+path = "event.radial_effect_started.x"
+policy = "position"
+[[quantizations]]
+path = "event.radial_effect_started.y"
+policy = "position"
+[[quantizations]]
+path = "event.pickup_collected.x"
+policy = "position"
+[[quantizations]]
+path = "event.pickup_collected.y"
+policy = "position"
+[[quantizations]]
+path = "event.pickup_expired.x"
+policy = "position"
+[[quantizations]]
+path = "event.pickup_expired.y"
+policy = "position"
+[[quantizations]]
+path = "event.pickup_dropped.x"
+policy = "position"
+[[quantizations]]
+path = "event.pickup_dropped.y"
+policy = "position"
+[[quantizations]]
+path = "event.damage_over_time_tick.x"
+policy = "position"
+[[quantizations]]
+path = "event.damage_over_time_tick.y"
+policy = "position"
+
+[[id_codecs]]
+id = "player_id"
+prefix = "player-"
+tag = "p"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "ship_id"
+prefix = "ship-"
+tag = "s"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "asteroid_id"
+prefix = "asteroid-"
+tag = "a"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "bullet_id"
+prefix = "bullet-"
+tag = "b"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "pickup_id"
+prefix = "pickup-"
+tag = "pk"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "table_id"
+prefix = "table-"
+tag = "tbl"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "presentation_event_id"
+prefix = "presentation-event-"
+tag = "pe"
+numeric_suffix = true
+preserve_malformed = true
+[[id_codecs]]
+id = "event_batch_id"
+prefix = "event-batch-"
+tag = "eb"
+numeric_suffix = true
+preserve_malformed = true
+
+[[id_selectors]]
+id = "source_type"
+field = "source_type"
+fallback_tagged = true
+[[id_selectors.mappings]]
+value = "player"
+codec_id = "player_id"
+[[id_selectors.mappings]]
+value = "ship"
+codec_id = "ship_id"
+[[id_selectors.mappings]]
+value = "projectile"
+codec_id = "bullet_id"
+[[id_selectors.mappings]]
+value = "bullet"
+codec_id = "bullet_id"
+[[id_selectors.mappings]]
+value = "asteroid"
+codec_id = "asteroid_id"
+[[id_selectors.mappings]]
+value = "pickup"
+codec_id = "pickup_id"
+[[id_selectors]]
+id = "target_kind"
+field = "target_kind"
+fallback_tagged = true
+[[id_selectors.mappings]]
+value = "player"
+codec_id = "player_id"
+[[id_selectors.mappings]]
+value = "ship"
+codec_id = "ship_id"
+[[id_selectors.mappings]]
+value = "projectile"
+codec_id = "bullet_id"
+[[id_selectors.mappings]]
+value = "bullet"
+codec_id = "bullet_id"
+[[id_selectors.mappings]]
+value = "asteroid"
+codec_id = "asteroid_id"
+[[id_selectors.mappings]]
+value = "pickup"
+codec_id = "pickup_id"
+
+[[packets]]
+id = "world_full"
+compact = "wf"
+lane = "world"
+snapshot_kind = "full"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+infer_baseline_id = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "world_delta"
+compact = "wd"
+lane = "world"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "overlay_full"
+compact = "of"
+lane = "overlay"
+snapshot_kind = "full"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+infer_baseline_id = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "overlay_delta"
+compact = "od"
+lane = "overlay"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "session_full"
+compact = "sf"
+lane = "session"
+snapshot_kind = "full"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+infer_baseline_id = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "session_delta"
+compact = "sd"
+lane = "session"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "asteroid_delta"
+compact = "ad"
+lane = "asteroids"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "asteroids_lifecycle"
+compact = "al"
+lane = "asteroids.lifecycle"
+snapshot_kind = "delta"
+runtime = false
+[[packets]]
+id = "bullet_delta"
+compact = "bd"
+lane = "bullets"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "bullets_lifecycle"
+compact = "bl"
+lane = "bullets.lifecycle"
+snapshot_kind = "delta"
+runtime = false
+[[packets]]
+id = "event_batch"
+compact = "eb"
+lane = "event"
+runtime = false
+[[packets]]
+id = "resync_request"
+compact = "resync_request"
+lane = "control"
+runtime = false
+[[packets]]
+id = "resync_required"
+compact = "resync_required"
+lane = "control"
+runtime = false
+
+[[records]]
+id = "ship_full"
+source_struct = "ShipState"
+encoding = "fixed_tuple"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "player_id"
+[[records.fields]]
+name = "ship_type"
+json = "ship_type"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+quantization = "float_generic"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "shields"
+json = "shields"
+[[records.fields]]
+name = "thrusting"
+json = "thrusting"
+[[records.fields]]
+name = "target_kind"
+json = "target_kind"
+[[records.fields]]
+name = "target_id"
+json = "target_id"
+id_codec_by = "target_kind"
+
+[[records]]
+id = "ship_update"
+source_struct = "ShipState"
+encoding = "sparse_positional_tuple"
+identity_field = "id"
+sparse_trailing = true
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "player_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+quantization = "float_generic"
+[[records.fields]]
+name = "thrusting"
+json = "thrusting"
+
+[[records]]
+id = "asteroid_full"
+source_struct = "AsteroidState"
+encoding = "fixed_tuple"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "asteroid_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "size"
+json = "size"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "scale"
+json = "scale"
+quantization = "float_generic"
+[[records.fields]]
+name = "variant"
+json = "variant"
+
+[[records]]
+id = "asteroid_update"
+source_struct = "AsteroidState"
+encoding = "sparse_positional_tuple"
+identity_field = "id"
+sparse_trailing = true
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "asteroid_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "bullet_full"
+source_struct = "BulletState"
+encoding = "fixed_tuple"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "bullet_id"
+[[records.fields]]
+name = "owner_id"
+json = "owner_id"
+id_codec = "player_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+quantization = "float_generic"
+[[records.fields]]
+name = "weapon_id"
+json = "weapon_id"
+[[records.fields]]
+name = "projectile_type"
+json = "projectile_type"
+
+[[records]]
+id = "bullet_update"
+source_struct = "BulletState"
+encoding = "sparse_positional_tuple"
+identity_field = "id"
+sparse_trailing = true
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "bullet_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+quantization = "float_generic"
+
+[[records]]
+id = "pickup_full"
+source_struct = "PickupState"
+encoding = "map"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+[[records.fields]]
+name = "type"
+json = "type"
+[[records.fields]]
+name = "pickup_class"
+json = "pickup_class"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "age_seconds"
+json = "age_seconds"
+quantization = "seconds"
+[[records.fields]]
+name = "lifespan_seconds"
+json = "lifespan_seconds"
+quantization = "seconds"
+
+[[records]]
+id = "pickup_update"
+source_struct = "PickupState"
+encoding = "map"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "age_seconds"
+json = "age_seconds"
+quantization = "seconds"
+
+[[records]]
+id = "asteroid_lifecycle_create"
+source_struct = "AsteroidState"
+encoding = "map"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+[[records.fields]]
+name = "x"
+json = "x"
+[[records.fields]]
+name = "y"
+json = "y"
+[[records.fields]]
+name = "size"
+json = "size"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "scale"
+json = "scale"
+[[records.fields]]
+name = "variant"
+json = "variant"
+
+[[records]]
+id = "asteroid_ids"
+encoding = "scalar_id_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "asteroid_id"
+
+[[records]]
+id = "asteroid_lifecycle_delete_ids"
+encoding = "scalar_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+
+[[records]]
+id = "bullet_ids"
+encoding = "scalar_id_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "bullet_id"
+
+[[records]]
+id = "bullet_lifecycle_create"
+source_struct = "BulletState"
+encoding = "map"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+[[records.fields]]
+name = "owner_id"
+json = "owner_id"
+[[records.fields]]
+name = "x"
+json = "x"
+[[records.fields]]
+name = "y"
+json = "y"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+[[records.fields]]
+name = "weapon_id"
+json = "weapon_id"
+[[records.fields]]
+name = "projectile_type"
+json = "projectile_type"
+
+[[records]]
+id = "bullet_lifecycle_delete_ids"
+encoding = "scalar_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+
+[[records]]
+id = "player_ids"
+encoding = "scalar_id_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "player_id"
+
+[[records]]
+id = "ship_ids"
+encoding = "scalar_id_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "ship_id"
+
+[[records]]
+id = "pickup_ids"
+encoding = "scalar_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+
+[[records]]
+id = "player_session"
+source_struct = "PlayerSessionState"
+encoding = "fixed_tuple"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "player_id"
+[[records.fields]]
+name = "ship_type"
+json = "ship_type"
+[[records.fields]]
+name = "score"
+json = "score"
+[[records.fields]]
+name = "lives"
+json = "lives"
+[[records.fields]]
+name = "respawn_cooldown"
+json = "respawn_cooldown"
+quantization = "seconds"
+[[records.fields]]
+name = "primary_weapon_id"
+json = "primary_weapon_id"
+[[records.fields]]
+name = "primary_ammo_policy"
+json = "primary_ammo_policy"
+[[records.fields]]
+name = "secondary_weapon_id"
+json = "secondary_weapon_id"
+[[records.fields]]
+name = "secondary_ammo_policy"
+json = "secondary_ammo_policy"
+[[records.fields]]
+name = "spawn_x"
+json = "spawn_x"
+quantization = "position"
+[[records.fields]]
+name = "spawn_y"
+json = "spawn_y"
+quantization = "position"
+
+[[records]]
+id = "player_session_update"
+source_struct = "PlayerSessionState"
+encoding = "sparse_key_value_tuple"
+identity_field = "id"
+sparse_trailing = true
+preserve_unknown_fields = true
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "player_id"
+[[records.fields]]
+name = "score"
+json = "score"
+[[records.fields]]
+name = "lives"
+json = "lives"
+[[records.fields]]
+name = "respawn_cooldown"
+json = "respawn_cooldown"
+quantization = "seconds"
+[[records.fields]]
+name = "ship_type"
+json = "ship_type"
+[[records.fields]]
+name = "primary_weapon_id"
+json = "primary_weapon_id"
+[[records.fields]]
+name = "primary_ammo_policy"
+json = "primary_ammo_policy"
+[[records.fields]]
+name = "secondary_weapon_id"
+json = "secondary_weapon_id"
+[[records.fields]]
+name = "secondary_ammo_policy"
+json = "secondary_ammo_policy"
+[[records.fields]]
+name = "spawn_x"
+json = "spawn_x"
+quantization = "position"
+[[records.fields]]
+name = "spawn_y"
+json = "spawn_y"
+quantization = "position"
+
+[[records]]
+id = "player_lifecycle"
+encoding = "fixed_tuple"
+identity_field = "player_id"
+[[records.fields]]
+name = "player_id"
+json = "player_id"
+id_codec = "player_id"
+[[records.fields]]
+name = "status"
+json = "status"
+
+[[records]]
+id = "event_batch_id"
+encoding = "scalar_id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "event_batch_id"
+
+[[records]]
+id = "event_union"
+encoding = "discriminated_event_tuple"
+
+[[records]]
+id = "event_bullet_blast"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_ship_death"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "player_id"
+json = "player_id"
+id_codec = "player_id"
+[[records.fields]]
+name = "lives"
+json = "lives"
+[[records.fields]]
+name = "respawn_delay"
+json = "respawn_delay"
+quantization = "seconds"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_damage_applied"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "source_type"
+json = "source_type"
+[[records.fields]]
+name = "source_id"
+json = "source_id"
+id_codec_by = "source_type"
+[[records.fields]]
+name = "effect_type"
+json = "effect_type"
+[[records.fields]]
+name = "amount"
+json = "amount"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_damage_over_time_started"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "source_type"
+json = "source_type"
+[[records.fields]]
+name = "source_id"
+json = "source_id"
+id_codec_by = "source_type"
+[[records.fields]]
+name = "effect_type"
+json = "effect_type"
+[[records.fields]]
+name = "amount"
+json = "amount"
+
+[[records]]
+id = "event_damage_over_time_tick"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "source_type"
+json = "source_type"
+[[records.fields]]
+name = "source_id"
+json = "source_id"
+id_codec_by = "source_type"
+[[records.fields]]
+name = "effect_type"
+json = "effect_type"
+[[records.fields]]
+name = "amount"
+json = "amount"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_radial_effect_started"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "source_type"
+json = "source_type"
+[[records.fields]]
+name = "source_id"
+json = "source_id"
+id_codec_by = "source_type"
+[[records.fields]]
+name = "effect_type"
+json = "effect_type"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_pickup_collected"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "player_id"
+json = "player_id"
+id_codec = "player_id"
+[[records.fields]]
+name = "pickup_id"
+json = "pickup_id"
+id_codec = "pickup_id"
+[[records.fields]]
+name = "pickup_type"
+json = "pickup_type"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_pickup_effect_applied"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "player_id"
+json = "player_id"
+id_codec = "player_id"
+[[records.fields]]
+name = "pickup_id"
+json = "pickup_id"
+id_codec = "pickup_id"
+[[records.fields]]
+name = "pickup_type"
+json = "pickup_type"
+[[records.fields]]
+name = "effect_type"
+json = "effect_type"
+[[records.fields]]
+name = "amount"
+json = "amount"
+[[records.fields]]
+name = "lives_after"
+json = "lives_after"
+
+[[records]]
+id = "event_pickup_expired"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "pickup_id"
+json = "pickup_id"
+id_codec = "pickup_id"
+[[records.fields]]
+name = "pickup_type"
+json = "pickup_type"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[records]]
+id = "event_pickup_dropped"
+source_struct = "EventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "pickup_id"
+json = "pickup_id"
+id_codec = "pickup_id"
+[[records.fields]]
+name = "pickup_type"
+json = "pickup_type"
+[[records.fields]]
+name = "source_type"
+json = "source_type"
+[[records.fields]]
+name = "source_id"
+json = "source_id"
+id_codec_by = "source_type"
+[[records.fields]]
+name = "table_id"
+json = "table_id"
+id_codec = "table_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[packet_fields]]
+packet_id = "world_full"
+readable_field = "ships"
+record_id = "ship_full"
+[[packet_fields]]
+packet_id = "world_full"
+readable_field = "bullets"
+record_id = "bullet_full"
+[[packet_fields]]
+packet_id = "world_full"
+readable_field = "asteroids"
+record_id = "asteroid_full"
+[[packet_fields]]
+packet_id = "world_full"
+readable_field = "pickups"
+record_id = "pickup_full"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "ship_creates"
+record_id = "ship_full"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "ship_updates"
+record_id = "ship_update"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "ship_deletes"
+record_id = "player_ids"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "bullet_creates"
+record_id = "bullet_full"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "bullet_updates"
+record_id = "bullet_update"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "bullet_deletes"
+record_id = "bullet_ids"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "asteroid_creates"
+record_id = "asteroid_full"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "asteroid_deletes"
+record_id = "asteroid_ids"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "asteroid_updates"
+record_id = "asteroid_update"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "pickup_creates"
+record_id = "pickup_full"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "pickup_updates"
+record_id = "pickup_update"
+[[packet_fields]]
+packet_id = "world_delta"
+readable_field = "pickup_deletes"
+record_id = "pickup_ids"
+[[packet_fields]]
+packet_id = "asteroid_delta"
+readable_field = "asteroid_updates"
+record_id = "asteroid_update"
+[[packet_fields]]
+packet_id = "asteroids_lifecycle"
+readable_field = "asteroid_creates"
+record_id = "asteroid_lifecycle_create"
+decode_record_ids = ["asteroid_full"]
+[[packet_fields]]
+packet_id = "asteroids_lifecycle"
+readable_field = "asteroid_deletes"
+record_id = "asteroid_lifecycle_delete_ids"
+decode_record_ids = ["asteroid_ids"]
+[[packet_fields]]
+packet_id = "bullet_delta"
+readable_field = "bullet_updates"
+record_id = "bullet_update"
+[[packet_fields]]
+packet_id = "bullets_lifecycle"
+readable_field = "bullet_creates"
+record_id = "bullet_lifecycle_create"
+decode_record_ids = ["bullet_full"]
+[[packet_fields]]
+packet_id = "bullets_lifecycle"
+readable_field = "bullet_deletes"
+record_id = "bullet_lifecycle_delete_ids"
+decode_record_ids = ["bullet_ids"]
+[[packet_fields]]
+packet_id = "session_full"
+readable_field = "players"
+record_id = "player_session"
+[[packet_fields]]
+packet_id = "session_full"
+readable_field = "player_lifecycle"
+record_id = "player_lifecycle"
+[[packet_fields]]
+packet_id = "session_delta"
+readable_field = "players"
+record_id = "player_session"
+[[packet_fields]]
+packet_id = "session_delta"
+readable_field = "player_session_updates"
+record_id = "player_session_update"
+[[packet_fields]]
+packet_id = "session_delta"
+readable_field = "player_lifecycle"
+record_id = "player_lifecycle"
+[[packet_fields]]
+packet_id = "session_delta"
+readable_field = "player_lifecycle_updates"
+record_id = "player_lifecycle"
+[[packet_fields]]
+packet_id = "session_delta"
+readable_field = "player_lifecycle_deletes"
+record_id = "player_ids"
+[[packet_fields]]
+packet_id = "session_delta"
+readable_field = "player_session_deletes"
+record_id = "player_ids"
+[[packet_fields]]
+packet_id = "event_batch"
+readable_field = "batch_id"
+record_id = "event_batch_id"
+[[packet_fields]]
+packet_id = "event_batch"
+readable_field = "events"
+record_id = "event_union"
+
+[[events]]
+readable = "bullet_blast"
+compact = "bb"
+record_id = "event_bullet_blast"
+[[events]]
+readable = "ship_death"
+compact = "shd"
+record_id = "event_ship_death"
+[[events]]
+readable = "damage_applied"
+compact = "dmg"
+record_id = "event_damage_applied"
+[[events]]
+readable = "damage_over_time_started"
+compact = "dots"
+record_id = "event_damage_over_time_started"
+[[events]]
+readable = "damage_over_time_tick"
+compact = "dott"
+record_id = "event_damage_over_time_tick"
+[[events]]
+readable = "radial_effect_started"
+compact = "rfx"
+record_id = "event_radial_effect_started"
+[[events]]
+readable = "pickup_collected"
+compact = "pcol"
+record_id = "event_pickup_collected"
+[[events]]
+readable = "pickup_effect_applied"
+compact = "pea"
+record_id = "event_pickup_effect_applied"
+[[events]]
+readable = "pickup_expired"
+compact = "pexp"
+record_id = "event_pickup_expired"
+[[events]]
+readable = "pickup_dropped"
+compact = "pdr"
+record_id = "event_pickup_dropped"

@@ -18,6 +18,7 @@ The active `tools/data_sync` pipeline currently owns generation and drift checks
 constants
 packets
 drop_tables
+realtime_wire
 ```
 
 The data-sync tool reads TOML sources under `shared/`, renders deterministic language outputs, and either writes them, diffs them, or verifies that generated outputs are current.
@@ -59,6 +60,12 @@ shared/packets/webrtc.toml
 shared/packets/player_data.toml
 ```
 
+Physical realtime-wire source:
+
+```text
+shared/packets/realtime_wire.toml
+```
+
 Active data-sync drop-table sources:
 
 ```text
@@ -97,6 +104,11 @@ That configuration defines:
 [sot.packets]
 [sot.drop_tables]
 [sot.player_data]
+[sot.realtime_wire]
+[realtime_wire.go]
+[realtime_wire.gds]
+[realtime_wire.json]
+[realtime_wire.docs]
 [constants.scan]
 [packets.go]
 [packets.gds]
@@ -124,6 +136,8 @@ server_devtools_packets
 player_data_packets
 client_packets
 ```
+
+Realtime-wire targets are direct configured outputs rather than packet output IDs.
 
 TypeScript packet output is configured but disabled:
 
@@ -154,6 +168,15 @@ services/game-server/internal/game/runtime/packets_generated.go
 services/game-server/internal/game/packets.go
 services/game-server/internal/devtools/packets_generated.go
 services/player-data/protocol/packets.go
+```
+
+Realtime-wire outputs:
+
+```text
+services/game-server/internal/protocol/realtimewire/generated.go
+client/scripts/generated/networking/realtime_wire_generated.gd
+shared/packets/generated/realtime_wire.json
+docs/protocol/generated/realtime-wire-reference.md
 ```
 
 Drop-table outputs:
@@ -192,6 +215,15 @@ services/game-server/internal/devtools/packets_generated.go
 services/game-server/internal/game/drops/drop_tables.go
 ```
 
+Realtime-wire descriptor consumers are:
+
+```text
+services/game-server/internal/protocol/realtime/compact_wire_descriptor.go  server descriptor encoder
+client/scripts/protocol/realtime/compact_wire_descriptor_decoder.gd          client descriptor decoder
+services/game-server/internal/protocol/realtime/quantize/                    server quantization lookup
+client/scripts/protocol/realtime/realtime_quantize.gd                         client quantization lookup
+```
+
 The player-data service consumes generated packet contracts through:
 
 ```text
@@ -224,6 +256,7 @@ Supported active generation domains are:
 -constants
 -packets
 -drop-tables
+-realtime-wire
 ```
 
 `-player_data` is currently validation-only.
@@ -236,12 +269,15 @@ Supported language flags are:
 -ts
 ```
 
+For `-realtime-wire`, `-go`, `-gds`, `-json`, and `-docs` select the generated outputs. `-json` and `-docs` are realtime-wire output selectors, not programming languages or general language targets for every domain.
+
 `-push` writes generated output.
 
 ```text
 data-sync -push -constants -go -gds
 data-sync -push -packets -go -gds
 data-sync -push -drop-tables -go
+data-sync -push -realtime-wire -go -gds -json -docs
 ```
 
 `-diff` renders generated output and prints a unified diff without writing.
@@ -250,6 +286,7 @@ data-sync -push -drop-tables -go
 data-sync -diff -constants -go -gds
 data-sync -diff -packets -go -gds
 data-sync -diff -drop-tables -go
+data-sync -diff -realtime-wire -go -gds -json -docs
 ```
 
 `-check` renders generated output, writes nothing, exits `0` when outputs are current, and exits `1` when generated files differ.
@@ -258,6 +295,7 @@ data-sync -diff -drop-tables -go
 data-sync -check -constants -go -gds
 data-sync -check -packets -go -gds
 data-sync -check -drop-tables -go
+data-sync -check -realtime-wire -go -gds -json -docs
 ```
 
 `-validate` checks configuration, source TOML structure, supported values, configured files, managed blocks, packet schemas, drop-table schemas, and player-data logical schema where requested.
@@ -266,6 +304,7 @@ data-sync -check -drop-tables -go
 data-sync -validate
 data-sync -validate -constants
 data-sync -validate -packets
+data-sync -validate -realtime-wire
 data-sync -validate -drop-tables
 data-sync -validate -player_data
 ```
@@ -307,6 +346,13 @@ Drop-table drift check:
 
 ```text
 data-sync -check -drop-tables -go
+```
+
+Realtime-wire validation and drift check:
+
+```text
+data-sync -validate -realtime-wire
+data-sync -check -realtime-wire -go -gds -json -docs
 ```
 
 Player-data logical schema validation:
@@ -358,6 +404,18 @@ Unsupported constants values fail validation. Constants currently support boolea
 Packet schema errors fail validation or generation. Common failures include duplicate packet type IDs, duplicate packet values, invalid struct names, invalid JSON field names, unsupported field types, unknown struct references, unknown packet output IDs, or references to unknown packet builder fields.
 
 Packet target errors fail generation. A configured packet target must be enabled, must have a matching output in `shared/packets/outputs.toml`, and must use a supported language renderer.
+
+Realtime-wire validation fails for invalid logical packet, struct, or field references; alias collisions; invalid tuple layouts; missing quantization, ID, or event declarations; and inconsistent packet, lane, record, or compatibility metadata. Generated drift is reported by the realtime-wire check command.
+
+Physical realtime-wire declarations that reference unknown logical packet, struct, or field names fail validation.
+
+Duplicate or non-invertible aliases fail validation.
+
+Invalid record, fixed-tuple, sparse-tuple, or sparse-positional layouts fail validation.
+
+Missing or invalid quantization, ID codec or selector, event, or decode-alternative references fail validation.
+
+Generated Go, GDScript, JSON, or documentation drift is reported by the realtime-wire check command.
 
 Packet pull fails by design. Packet schemas are edited in TOML, not reconstructed from generated Go or GDScript.
 
@@ -422,6 +480,19 @@ tools/data_sync/data_sync/generators/rich_go_packets.py
 tools/data_sync/data_sync/generators/rich_gds_packets.py
 ```
 
+Realtime-wire pipeline:
+
+```text
+tools/data_sync/data_sync/model/realtime_wire.py
+tools/data_sync/data_sync/realtime_wire_toml.py
+tools/data_sync/data_sync/realtime_wire_validate.py
+tools/data_sync/data_sync/realtime_wire_sync.py
+tools/data_sync/data_sync/generators/realtime_wire_go.py
+tools/data_sync/data_sync/generators/realtime_wire_gds.py
+tools/data_sync/data_sync/generators/realtime_wire_json.py
+tools/data_sync/data_sync/generators/realtime_wire_docs.py
+```
+
 Drop-table pipeline:
 
 ```text
@@ -483,4 +554,4 @@ Legacy data-sync docs layout links should now point at this document for workflo
 
 `SSoT` in this document means source of truth. It does not imply every source of truth is handled by `tools/data_sync`.
 
-The data-sync pipeline is intentionally narrower than the project-wide source-of-truth map. Constants, packets, and drop tables are active generated domains. Player-data logical schema is validate-only. HTTP contracts, collision exports, asteroid variants, Rails migrations, and Godot scenes use separate ownership and verification paths.
+The data-sync pipeline is intentionally narrower than the project-wide source-of-truth map. Constants, packets, drop tables, and realtime wire are active generated domains. Player-data logical schema is validate-only. HTTP contracts, collision exports, asteroid variants, Rails migrations, and Godot scenes use separate ownership and verification paths.

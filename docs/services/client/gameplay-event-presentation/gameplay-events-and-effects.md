@@ -34,6 +34,8 @@ event_batch
 
 The authoritative lane path is the durable source for dead HUD, respawn availability, authoritative lives, and eliminated state. The `event_batch` path is best-effort immediate-effects output; it is not a durable lifecycle state store.
 
+Both the best-effort self-death event path and the reconstructable authoritative eliminated-lifecycle path may call `MatchEndFlow.handle_local_player_eliminated(lives)`. Only multiplayer accepts that handler's immediate local-elimination HUD, menu, and audio consequences; single-player returns from the handler and waits for authoritative room `GameOver`.
+
 Server event coordinates are server-space positions. Before a visual effect is spawned, `GameplayEventController` converts those coordinates through the world-sync visual-coordinate seam:
 
 ```text
@@ -75,7 +77,7 @@ The gameplay event or effects presentation flow owns:
 * Starting event-local audio through the gameplay audio flow.
 * Cleaning up effect nodes after animation and or sound completion.
 * Providing immediate non-final local self-death response to HUD dead or respawn presentation.
-* Delegating immediate final local elimination to match-end orchestration.
+* Delegating immediate final multiplayer local elimination to match-end orchestration, whose session-mode guard makes the single-player call presentation-neutral.
 * Resetting game-over sound one-shot state when the gameplay lifecycle resets.
 * Keeping presentation events separate from server simulation authority.
 
@@ -185,9 +187,9 @@ pickup_collected      -> res://scenes/pickups/pickup_collect.tscn
 
 For lives above zero, it applies the event's lives to the HUD and provides an immediate dead or respawn response using the event respawn delay. This is a best-effort response, not the durable source for respawn availability or authoritative lives.
 
-For lives equal to zero, it delegates to `MatchEndFlow.handle_local_player_eliminated(lives)` when match-end flow is configured. The handler receives the integer lives value, not the event dictionary.
+For lives equal to zero, it delegates to `MatchEndFlow.handle_local_player_eliminated(lives)` when match-end flow is configured. The handler receives the integer lives value, not the event dictionary. The handler applies immediate local-elimination consequences only in multiplayer; in single-player it returns without HUD, menu, or game-over-audio consequences.
 
-This keeps final local elimination presentation separate from authoritative room match-over presentation.
+This keeps multiplayer local-elimination presentation separate from authoritative room match-over presentation. Single-player waits for the room `GameOver` path for match-over presentation and results.
 
 ### Match-end collaborator
 
@@ -213,7 +215,7 @@ authoritative world/session lanes
 
 The flow reconstructs `pending_respawn` by reading the local `player_sessions` record, applying authoritative lives, reading decoded `respawn_cooldown`, stopping transient local effects on entry, and calling `GameplayHudFlow.set_dead(cooldown)`. A cooldown of `0.0` is valid and makes respawn immediately available. Unchanged pending-respawn fanout does not restart the countdown; a changed authoritative cooldown refreshes it.
 
-For `eliminated`, the flow applies authoritative lives and delegates to `MatchEndFlow.handle_local_player_eliminated(lives)`. Active restoration requires authoritative `active` lifecycle plus the local ship in world state before clearing stale dead presentation and respawn confirmation.
+For `eliminated`, the flow applies authoritative lives and delegates to `MatchEndFlow.handle_local_player_eliminated(lives)`. The handler's immediate consequences are multiplayer-only; single-player waits for authoritative room `GameOver`. Active restoration requires authoritative `active` lifecycle plus the local ship in world state before clearing stale dead presentation and respawn confirmation.
 
 The immediate event path remains separate:
 

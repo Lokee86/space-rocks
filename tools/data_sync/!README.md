@@ -9,6 +9,11 @@
 - constants
 - packets
 - drop_tables
+- realtime_wire
+
+The `realtime_wire` domain owns the physical compact realtime contract. It is
+distinct from the logical packet TOML, which remains the source for packet
+types, structs, fields, and JSON names.
 
 `tools/data_sync/` does not currently own:
 
@@ -17,7 +22,7 @@
 - Godot scene/node structure
 - collision export source scenes/assets
 
-`player_data` is a logical-schema domain with partial/planned pipeline support. The authoritative overview for project-wide ownership lives in [source-of-truth-map](../../docs/design/source-of-truth-map.md).
+`player_data` is a logical-schema domain with partial/planned pipeline support. The authoritative overview for project-wide ownership lives in [source-of-truth-map](../../docs/data/source-of-truth-map.md).
 
 HTTP contracts are separate from data-sync and are documented elsewhere.
 
@@ -36,6 +41,8 @@ This README describes data-sync-supported domains only, not every project source
   - `shared/packets/gameplay.toml`
   - `shared/packets/debug.toml`
   - `shared/packets/lobby.toml`
+  - `shared/packets/webrtc.toml`
+  - `shared/packets/player_data.toml`
 - TOML sources of truth for active drop tables:
   - `shared/drop_tables/*.toml`
 - Planned future TOML sources of truth for player-data schema:
@@ -57,6 +64,7 @@ Current active data-sync scope:
 ```text
 constants -> Go, GDScript, and TypeScript when enabled
 packets -> Go and GDScript
+realtime_wire -> Go, GDScript, JSON, and docs
 drop_tables -> Go only
 ```
 
@@ -76,7 +84,7 @@ The likely future domain flag is `-player-data`, but it is not implemented yet.
 
 Future outputs may include Go structs/contracts, schema docs, contract fixtures, Rails migration skeletons, and embedded DB migration skeletons.
 
-See the broader [source-of-truth map](../../docs/design/source-of-truth-map.md) and [player-data schema source of truth](../../docs/design/player-data-schema-ssot.md).
+See the broader [source-of-truth map](../../docs/data/source-of-truth-map.md) and [player-data schema source of truth](../../docs/data/player-data-schema.md).
 
 ## Supported Source Of Truth
 
@@ -89,6 +97,11 @@ The canonical sources for data-sync-supported active packets are:
 - `shared/packets/debug.toml`
 - `shared/packets/lobby.toml`
 - `shared/packets/webrtc.toml`
+- `shared/packets/player_data.toml`
+
+The canonical physical realtime-wire source is:
+
+- `shared/packets/realtime_wire.toml`
 
 The canonical sources for data-sync-supported active drop tables are the TOML files under `shared/drop_tables/`, including `shared/drop_tables/basicasteroids.toml`.
 
@@ -121,6 +134,7 @@ Domains:
 -constants
 -packets
 -drop-tables
+-realtime-wire
 ```
 
 Languages:
@@ -130,6 +144,16 @@ Languages:
 -gds
 -ts
 ```
+
+Realtime-wire-only output selectors:
+
+```bash
+-json
+-docs
+```
+
+`-go`, `-gds`, and `-ts` are language selectors. The realtime-wire domain
+rejects `-ts`; `-json` and `-docs` are not general language targets.
 
 Options:
 
@@ -150,6 +174,10 @@ data-sync -validate -packets
 data-sync -diff -packets -go -gds
 data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
+data-sync -push -realtime-wire -go -gds -json -docs
+data-sync -diff -realtime-wire -go -gds -json -docs
+data-sync -check -realtime-wire -go -gds -json -docs
+data-sync -validate -realtime-wire
 data-sync -push -drop-tables -go
 data-sync -diff -drop-tables -go
 data-sync -check -drop-tables -go
@@ -157,15 +185,18 @@ data-sync -validate
 data-sync -validate -constants
 ```
 
-`-push`, `-pull`, `-diff`, and `-check` require at least one domain and one language. `-pull` accepts only one language at a time.
+`-push`, `-pull`, `-diff`, and `-check` require at least one domain and one output selector. Ordinary domains use language selectors; realtime-wire accepts `-go -gds -json -docs`. `-pull` accepts only one language at a time for supported pull domains and is not supported for realtime-wire.
 `-constants` does not generate drop tables.
 
 ## Operation Behavior
 
 `-push` reads TOML and generates canonical language output. Constants replace
 matching discovered `data-sync` blocks by section name. Packets rewrite
-configured generated packet files. Drop tables generate the server Go file
-only.
+configured generated packet files. Realtime-wire reads the logical packet
+schema for cross-validation, fully generates all configured Go, GDScript, JSON,
+and documentation output files, and supports `-push`, `-diff`, `-check`, and
+`-validate`; realtime-wire pull is unsupported. Drop tables generate the
+server Go file only.
 
 `-diff` does the same generation as `-push`, prints a unified diff, and writes
 nothing.
@@ -173,7 +204,8 @@ nothing.
 `-check` writes nothing and exits `0` when generated blocks are current, or `1` when files differ.
 
 `-validate` checks config, TOML integrity, supported values/types, configured
-file existence, and required managed blocks.
+file existence, and required managed blocks. Realtime-wire validation also
+cross-validates the physical contract against the logical packet schema.
 
 `-pull` is intentionally restricted. Constants pull reads discovered generated
 blocks for the selected language, updates existing TOML values only, and writes
@@ -184,6 +216,9 @@ section appears in more than one TOML file, or if duplicate discovered blocks
 for one section disagree.
 
 TypeScript output is disabled in the default config.
+
+Realtime-wire pull is unsupported; edit its TOML source and regenerate all
+selected outputs.
 
 ## Config Format
 
@@ -211,7 +246,12 @@ paths = [
   "shared/packets/gameplay.toml",
   "shared/packets/debug.toml",
   "shared/packets/lobby.toml",
+  "shared/packets/webrtc.toml",
+  "shared/packets/player_data.toml",
 ]
+
+[sot.realtime_wire]
+path = "shared/packets/realtime_wire.toml"
 
 [sot.drop_tables]
 paths = [
@@ -235,6 +275,30 @@ outputs = ["server_entities_packets", "server_game_packets", "server_devtools_pa
 [packets.gds]
 files = ["client/scripts/generated/networking/packets/packets.gd"]
 sections = ["packets"]
+owns = []
+
+[realtime_wire.go]
+enabled = true
+files = ["services/game-server/internal/protocol/realtimewire/generated.go"]
+sections = []
+owns = []
+
+[realtime_wire.gds]
+enabled = true
+files = ["client/scripts/generated/networking/realtime_wire_generated.gd"]
+sections = []
+owns = []
+
+[realtime_wire.json]
+enabled = true
+files = ["shared/packets/generated/realtime_wire.json"]
+sections = []
+owns = []
+
+[realtime_wire.docs]
+enabled = true
+files = ["docs/protocol/generated/realtime-wire-reference.md"]
+sections = []
 owns = []
 
 [drop_tables.go]
@@ -329,6 +393,23 @@ map<string,ShipState>
 array<EventState>
 ```
 
+## Realtime Wire TOML
+
+`shared/packets/realtime_wire.toml` is the physical compact realtime protocol source of truth. It is separate from logical packet TOML: the logical files own packet types, structs, fields, and JSON names. The physical contract owns aliases, value domains, packet metadata, records and encodings, bindings and decode alternatives, quantization assignments, ID codecs and selectors, event layouts, and compatibility flags.
+
+See [Realtime Compact Wire Mapping](../../docs/services/game-server/networking/realtime-compact-wire-mapping.md) for architecture and ownership, and the [generated realtime-wire reference](../../docs/protocol/generated/realtime-wire-reference.md) for generated details. Do not duplicate contract tables in this README.
+
+Generated outputs are:
+
+```text
+services/game-server/internal/protocol/realtimewire/generated.go
+client/scripts/generated/networking/realtime_wire_generated.gd
+shared/packets/generated/realtime_wire.json
+docs/protocol/generated/realtime-wire-reference.md
+```
+
+Use `-realtime-wire` with `-go`, `-gds`, `-json`, or `-docs` to select these outputs. Runtime codecs apply generated descriptors; they own algorithms, not the contract data.
+
 ## Generated Blocks
 
 Go and TypeScript markers:
@@ -377,6 +458,9 @@ shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
 shared/packets/lobby.toml
+shared/packets/webrtc.toml
+shared/packets/player_data.toml
+shared/packets/realtime_wire.toml
 shared/drop_tables/basicasteroids.toml
 ```
 
@@ -396,6 +480,15 @@ shared/drop_tables/basicasteroids.toml
 4. Review the diff.
 5. Run `data-sync -push -packets -go -gds`.
 6. Run `data-sync -check -packets -go -gds`.
+
+## Active Realtime Wire Workflow
+
+1. Edit logical packet types, structs, fields, and JSON names in the relevant `shared/packets/*.toml` file when needed.
+2. Edit the physical contract in `shared/packets/realtime_wire.toml`.
+3. Run `data-sync -validate -realtime-wire`.
+4. Run `data-sync -diff -realtime-wire -go -gds -json -docs` and review the diff.
+5. Run `data-sync -push -realtime-wire -go -gds -json -docs`.
+6. Run `data-sync -check -realtime-wire -go -gds -json -docs`.
 
 ## Active Drop Table Workflow
 

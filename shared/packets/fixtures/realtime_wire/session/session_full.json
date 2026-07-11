@@ -1,0 +1,88 @@
+{
+  "compact": {
+    "pl": [
+      [
+        1,
+        "v_wing",
+        0,
+        3,
+        0,
+        "pulse",
+        "limited",
+        "mine",
+        "limited",
+        0,
+        0
+      ]
+    ],
+    "plc": [
+      [
+        1,
+        "active"
+      ]
+    ],
+    "q": 9,
+    "t": "sf",
+    "ta": 0
+  },
+  "expanded": {
+    "baseline_id": "session-baseline-9",
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "session",
+    "player_lifecycle": [
+      {
+        "player_id": "player-1",
+        "status": "active"
+      }
+    ],
+    "players": [
+      {
+        "id": "player-1",
+        "lives": 3,
+        "primary_ammo_policy": "limited",
+        "primary_weapon_id": "pulse",
+        "respawn_cooldown": 0,
+        "score": 0,
+        "secondary_ammo_policy": "limited",
+        "secondary_weapon_id": "mine",
+        "ship_type": "v_wing",
+        "spawn_x": 0,
+        "spawn_y": 0
+      }
+    ],
+    "sequence": 9,
+    "snapshot_id": "session-baseline-9",
+    "snapshot_kind": "full",
+    "total_asteroids": 0,
+    "type": "session_full"
+  },
+  "name": "session_full_records",
+  "readable": {
+    "player_lifecycle": [
+      {
+        "player_id": "player-1",
+        "status": "active"
+      }
+    ],
+    "players": [
+      {
+        "id": "player-1",
+        "lives": 3,
+        "primary_ammo_policy": "limited",
+        "primary_weapon_id": "pulse",
+        "respawn_cooldown": 0,
+        "score": 0,
+        "secondary_ammo_policy": "limited",
+        "secondary_weapon_id": "mine",
+        "ship_type": "v_wing",
+        "spawn_x": 0,
+        "spawn_y": 0
+      }
+    ],
+    "sequence": 9,
+    "total_asteroids": 0,
+    "type": "session_full"
+  }
+}

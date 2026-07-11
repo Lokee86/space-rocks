@@ -127,6 +127,7 @@ old
         encoding="utf-8",
     )
     (tmp_path / "go/packets.go").write_text("stale go packets\n", encoding="utf-8")
+    (tmp_path / "go/realtime_packets.go").write_text("stale realtime packets\n", encoding="utf-8")
     (tmp_path / "gds/packets.gd").write_text("stale gds packets\n", encoding="utf-8")
     (tmp_path / "ts/packets.ts").write_text("stale ts packets\n", encoding="utf-8")
     (tmp_path / "go/drop_tables.go").write_text("stale drop tables\n", encoding="utf-8")

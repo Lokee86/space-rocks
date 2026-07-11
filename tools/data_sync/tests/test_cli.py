@@ -134,3 +134,24 @@ def test_multiple_domains_and_languages_are_preserved_in_order() -> None:
 
     assert args.domains == ("constants", "packets")
     assert args.languages == ("go", "gds", "ts")
+
+
+def test_realtime_wire_accepts_json_and_docs_outputs() -> None:
+    args = parse_args(["-diff", "-realtime-wire", "-json", "-docs"])
+
+    assert args.languages == ()
+    assert args.output_kinds == ("json", "docs")
+
+
+def test_json_output_requires_realtime_wire() -> None:
+    with pytest.raises(SystemExit) as exc:
+        parse_args(["-diff", "-packets", "-json"])
+
+    assert exc.value.code == 2
+
+
+def test_realtime_wire_rejects_ts() -> None:
+    with pytest.raises(SystemExit) as exc:
+        parse_args(["-diff", "-realtime-wire", "-ts"])
+
+    assert exc.value.code == 2

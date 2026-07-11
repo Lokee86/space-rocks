@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from data_sync.cli import DOMAINS, LANGUAGES
+from data_sync.cli import DOMAINS, LANGUAGES, OUTPUT_KINDS
 
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.toml"
@@ -19,6 +19,7 @@ DEFAULT_SOT_PATHS = {
         "shared/constants/client/shell.toml",
         "shared/constants/client/lobby.toml",
     ),
+    "realtime_wire": ("shared/packets/realtime_wire.toml",),
     "packets": (
         "shared/packets/outputs.toml",
         "shared/packets/gameplay.toml",
@@ -108,9 +109,10 @@ class DataSyncConfig:
             for key_domain, key_language in self.targets_by_domain_language
         ):
             return ()
+        kinds = LANGUAGES + OUTPUT_KINDS if domain == "realtime_wire" else LANGUAGES
         return tuple(
             language
-            for language in LANGUAGES
+            for language in kinds
             if any(
                 target.enabled
                 for target in self.targets_by_domain_language.get((domain, language), ())
@@ -149,7 +151,12 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
             continue
         if not isinstance(domain_table, Mapping):
             raise ConfigError(f"missing required config table [{domain}]")
-        domain_languages = ("go",) if domain == "drop_tables" else LANGUAGES
+        if domain == "drop_tables":
+            domain_languages = ("go",)
+        elif domain == "realtime_wire":
+            domain_languages = LANGUAGES + OUTPUT_KINDS
+        else:
+            domain_languages = LANGUAGES
         for language in domain_languages:
             table = domain_table.get(language)
             if table is None:
@@ -366,7 +373,7 @@ def _load_domain_language_config(
 
     if enabled and domain != "drop_tables" and not files:
         raise ConfigError(f"[{label}].files must not be empty")
-    if enabled and domain != "drop_tables" and not sections:
+    if enabled and domain not in {"drop_tables", "realtime_wire"} and not sections:
         raise ConfigError(f"[{label}].sections must not be empty")
 
     unknown_owns = [section for section in owns if section not in sections]

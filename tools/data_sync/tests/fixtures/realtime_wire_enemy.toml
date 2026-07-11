@@ -1,0 +1,412 @@
+[wire_contract]
+id = "enemy_extensibility"
+version = 1
+readable_keys = true
+explicit_metadata = true
+unknown_key_passthrough = true
+unknown_event_passthrough = true
+
+[[key_aliases]]
+domain = "wire"
+readable = "type"
+compact = "t"
+[[key_aliases]]
+domain = "wire"
+readable = "lane"
+compact = "l"
+[[key_aliases]]
+domain = "wire"
+readable = "sequence"
+compact = "q"
+[[key_aliases]]
+domain = "wire"
+readable = "baseline_id"
+compact = "b"
+[[key_aliases]]
+domain = "wire"
+readable = "baseline_sequence"
+compact = "bq"
+[[key_aliases]]
+domain = "wire"
+readable = "snapshot_id"
+compact = "sid"
+[[key_aliases]]
+domain = "wire"
+readable = "snapshot_kind"
+compact = "k"
+[[key_aliases]]
+domain = "wire"
+readable = "enemies"
+compact = "es"
+[[key_aliases]]
+domain = "wire"
+readable = "enemy_updates"
+compact = "eu"
+[[key_aliases]]
+domain = "wire"
+readable = "enemy_creates"
+compact = "ec"
+[[key_aliases]]
+domain = "wire"
+readable = "enemy_deletes"
+compact = "ex"
+[[key_aliases]]
+domain = "wire"
+readable = "events"
+compact = "ev"
+[[key_aliases]]
+domain = "wire"
+readable = "id"
+compact = "i"
+[[key_aliases]]
+domain = "wire"
+readable = "enemy_type"
+compact = "et"
+[[key_aliases]]
+domain = "wire"
+readable = "x"
+compact = "x"
+[[key_aliases]]
+domain = "wire"
+readable = "y"
+compact = "y"
+[[key_aliases]]
+domain = "wire"
+readable = "rotation"
+compact = "r"
+[[key_aliases]]
+domain = "wire"
+readable = "health"
+compact = "h"
+[[key_aliases]]
+domain = "wire"
+readable = "shields"
+compact = "s"
+[[key_aliases]]
+domain = "wire"
+readable = "target_kind"
+compact = "tk"
+[[key_aliases]]
+domain = "wire"
+readable = "target_id"
+compact = "ti"
+[[key_aliases]]
+domain = "wire"
+readable = "event_id"
+compact = "ei"
+[[key_aliases]]
+domain = "wire"
+readable = "enemy_id"
+compact = "enid"
+
+[[value_domains]]
+id = "packet_type"
+[[value_domains.entries]]
+readable = "enemies_full"
+compact = "ef"
+[[value_domains.entries]]
+readable = "enemy_delta"
+compact = "ed"
+[[value_domains.entries]]
+readable = "enemies_lifecycle"
+compact = "el"
+[[value_domains.entries]]
+readable = "event_batch"
+compact = "eb"
+
+[[value_domains]]
+id = "lane"
+[[value_domains.entries]]
+readable = "enemies"
+compact = "en"
+[[value_domains.entries]]
+readable = "enemies.lifecycle"
+compact = "enl"
+[[value_domains.entries]]
+readable = "event"
+compact = "event"
+
+[[value_domains]]
+id = "snapshot_kind"
+[[value_domains.entries]]
+readable = "full"
+compact = "f"
+[[value_domains.entries]]
+readable = "delta"
+compact = "d"
+
+[[value_domains]]
+id = "event_type"
+[[value_domains.entries]]
+readable = "enemy_destroyed"
+compact = "exd"
+
+[[id_codecs]]
+id = "enemy_id"
+prefix = "enemy-"
+tag = "e"
+numeric_suffix = true
+[[id_codecs]]
+id = "player_id"
+prefix = "player-"
+tag = "p"
+numeric_suffix = true
+[[id_codecs]]
+id = "presentation_event_id"
+prefix = "presentation-event-"
+tag = "pe"
+numeric_suffix = true
+
+[[id_selectors]]
+id = "target_kind"
+field = "target_kind"
+fallback_tagged = true
+[[id_selectors.mappings]]
+value = "enemy"
+codec_id = "enemy_id"
+[[id_selectors.mappings]]
+value = "player"
+codec_id = "player_id"
+
+[[quantizations]]
+path = "enemies.full.x"
+policy = "position"
+[[quantizations]]
+path = "enemies.full.y"
+policy = "position"
+[[quantizations]]
+path = "enemies.full.rotation"
+policy = "float_generic"
+[[quantizations]]
+path = "enemies.delta.x"
+policy = "position"
+[[quantizations]]
+path = "enemies.delta.y"
+policy = "position"
+[[quantizations]]
+path = "enemies.delta.rotation"
+policy = "float_generic"
+[[quantizations]]
+path = "event.enemy_destroyed.x"
+policy = "position"
+[[quantizations]]
+path = "event.enemy_destroyed.y"
+policy = "position"
+
+[[packets]]
+id = "enemies_full"
+compact = "ef"
+lane = "enemies"
+snapshot_kind = "full"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+infer_baseline_id = true
+
+[[packets]]
+id = "enemy_delta"
+compact = "ed"
+lane = "enemies"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+
+[[packets]]
+id = "enemies_lifecycle"
+compact = "el"
+lane = "enemies.lifecycle"
+runtime = false
+
+[[packets]]
+id = "event_batch"
+compact = "eb"
+lane = "event"
+runtime = false
+
+[[records]]
+id = "enemy_full"
+source_struct = "EnemyState"
+encoding = "fixed_tuple"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "enemy_id"
+[[records.fields]]
+name = "enemy_type"
+json = "enemy_type"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+quantization = "float_generic"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "shields"
+json = "shields"
+[[records.fields]]
+name = "target_kind"
+json = "target_kind"
+[[records.fields]]
+name = "target_id"
+json = "target_id"
+id_codec_by = "target_kind"
+
+[[records]]
+id = "enemy_update"
+source_struct = "EnemyState"
+encoding = "sparse_positional_tuple"
+identity_field = "id"
+sparse_trailing = true
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "enemy_id"
+[[records.fields]]
+name = "enemy_type"
+json = "enemy_type"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+quantization = "float_generic"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "shields"
+json = "shields"
+[[records.fields]]
+name = "target_kind"
+json = "target_kind"
+[[records.fields]]
+name = "target_id"
+json = "target_id"
+id_codec_by = "target_kind"
+
+[[records]]
+id = "enemy_lifecycle_create"
+source_struct = "EnemyState"
+encoding = "map"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+[[records.fields]]
+name = "enemy_type"
+json = "enemy_type"
+[[records.fields]]
+name = "x"
+json = "x"
+[[records.fields]]
+name = "y"
+json = "y"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "shields"
+json = "shields"
+[[records.fields]]
+name = "target_kind"
+json = "target_kind"
+[[records.fields]]
+name = "target_id"
+json = "target_id"
+
+[[records]]
+id = "enemy_ids"
+encoding = "scalar_id_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "enemy_id"
+
+[[records]]
+id = "enemy_lifecycle_delete_ids"
+encoding = "scalar_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+
+[[records]]
+id = "event_union"
+encoding = "discriminated_event_tuple"
+
+[[records]]
+id = "event_enemy_destroyed"
+source_struct = "EnemyEventState"
+encoding = "fixed_tuple"
+[[records.fields]]
+name = "type"
+json = "type"
+value_domain = "event_type"
+[[records.fields]]
+name = "event_id"
+json = "event_id"
+id_codec = "presentation_event_id"
+[[records.fields]]
+name = "enemy_id"
+json = "enemy_id"
+id_codec = "enemy_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+
+[[packet_fields]]
+packet_id = "enemies_full"
+readable_field = "enemies"
+record_id = "enemy_full"
+[[packet_fields]]
+packet_id = "enemy_delta"
+readable_field = "enemy_updates"
+record_id = "enemy_update"
+[[packet_fields]]
+packet_id = "enemies_lifecycle"
+readable_field = "enemy_creates"
+record_id = "enemy_lifecycle_create"
+decode_record_ids = ["enemy_full"]
+[[packet_fields]]
+packet_id = "enemies_lifecycle"
+readable_field = "enemy_deletes"
+record_id = "enemy_lifecycle_delete_ids"
+decode_record_ids = ["enemy_ids"]
+[[packet_fields]]
+packet_id = "event_batch"
+readable_field = "events"
+record_id = "event_union"
+
+[[events]]
+readable = "enemy_destroyed"
+compact = "exd"
+record_id = "event_enemy_destroyed"

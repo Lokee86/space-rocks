@@ -86,7 +86,7 @@ local navigation after match-end buttons
 
 The client does not own authoritative gameplay results. A sent packet is a request or observation, not proof that the server accepted the action.
 
-Packet schemas own packet type strings, generated constants, generated fields where applicable, and generated helpers. Runtime realtime protocol code owns active lane wire-map emission behavior such as sparse delta omission, numeric wire quantization, and compact alias application. Runtime meaning belongs to the service that handles the packet.
+Logical packet schemas own packet type strings, structs, fields, JSON names, generated constants, and generated helpers. The separate physical contract in `shared/packets/realtime_wire.toml` owns compact aliases, packet metadata, record encodings, tuple and sparse layouts, quantization assignments, ID codecs/selectors, event layouts, and decode compatibility alternatives. Runtime protocol code projects authoritative state and applies the generated contract; runtime meaning belongs to the service that handles the packet.
 
 ```text
 shared/packets/*.toml
@@ -96,18 +96,20 @@ shared/packets/*.toml
 services/game-server/internal/protocol/realtime/wire_packets.go
 -> active lane wire-map emission
 
-services/game-server/internal/protocol/realtime/compact_wire_ids.go
-services/game-server/internal/protocol/realtime/compact_wire_asteroids.go
-services/game-server/internal/protocol/realtime/compact_wire_bullets.go
-services/game-server/internal/protocol/realtime/compact_wire_ships.go
-services/game-server/internal/protocol/realtime/compact_wire_players.go
-services/game-server/internal/protocol/realtime/compact_wire_events.go
+shared/packets/realtime_wire.toml
+-> physical compact-wire source of truth
+
+services/game-server/internal/protocol/realtimewire/generated.go
 services/game-server/internal/protocol/realtime/compact_wire_packet.go
+services/game-server/internal/protocol/realtime/compact_wire_descriptor.go
+client/scripts/generated/networking/realtime_wire_generated.gd
 client/scripts/protocol/realtime/compact_lane_packet.gd
--> compact aliases for emitted active lane keys
+client/scripts/protocol/realtime/compact_wire_descriptor_decoder.gd
+-> generated descriptor data and generic encode/decode application
 
 services/game-server/internal/protocol/realtime/quantize/
--> numeric wire quantization policies
+client/scripts/protocol/realtime/realtime_quantize.gd
+-> quantization algorithms; field-path policy assignments come from generated realtime-wire descriptors
 ```
 
 The WebSocket connection itself has no durable persistence authority. Player-data and API-server systems participate only after identity, auth, or match-result data crosses explicit service boundaries.
@@ -251,7 +253,7 @@ The game server simulation owns the authoritative runtime state.
 
 On each server tick, the session write path can build and encode active gameplay lane packets when the session has an active game player, the room has a game instance in an eligible state, and the WebRTC transport is ready.
 
-The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `asteroid_delta`, `bullet_delta`, `asteroids_lifecycle`, `bullets_lifecycle`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`. The server emits compact tuple wire shape for selected hot records, including asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records. Active realtime gameplay delivery uses WebRTC DataChannel text over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot lanes for `sr.asteroids` and `sr.bullets` after signaling succeeds; WebSocket remains the session/control/auth/lobby/signaling path. Asteroid and bullet lifecycle creates/deletes are subtractively removed from active world_delta and emitted as reliable ordered lifecycle packets on sr.asteroids.lifecycle and sr.bullets.lifecycle. Dedicated unordered hot lanes carry movement updates only. Regular asteroid and bullet movement updates are subtractively removed from `sr.world` and emitted as `asteroid_delta` and `bullet_delta`; asteroid and bullet lifecycle creates/deletes no longer remain in `world_delta` as active ownership. Oversized `asteroid_delta` and `bullet_delta` movement update lists are split into multiple real same-sequence hot-lane packets before encoding. This packet-size guard lives in the hot-lane chunker. Scheduler and active encoding do not perform a second hard-size rejection for already-chunked hot movement packets. This keeps hot packets under the encoded hard cap while leaving lifecycle creates/deletes on the dedicated lifecycle lanes. Tuple packing is a wire optimization, not a domain model change. The client `compact_lane_packet` expands compact keys, values, IDs, and tuple arrays before the existing world, session, and event appliers run. Tuple IDs rehydrate by context: bare numeric suffixes expand when the tuple slot determines the prefix, tagged compact IDs expand when only the prefix is known, and malformed or unknown IDs stay unchanged. World ship/player tuple packing keeps player and ship presentation data readable through compaction. The active encode path still records encoded-byte values for diagnostics and accounting.
+The current active gameplay output uses lane-native packet families: `world_full`/`world_delta`, `asteroid_delta`, `bullet_delta`, `asteroids_lifecycle`, `bullets_lifecycle`, `overlay_full`/`overlay_delta`, `session_full`/`session_delta`, and `event_batch`. Generated record descriptors tuple-pack selected world, hot-movement, session, and known-event records. Lifecycle creates and deletes use the contract's primary map/readable-ID encoding; historical tuple and numeric-ID lifecycle forms remain declared decode-only alternatives. Active realtime gameplay delivery uses WebRTC DataChannel text over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot lanes for `sr.asteroids` and `sr.bullets` after signaling succeeds; WebSocket remains the session/control/auth/lobby/signaling path. Asteroid and bullet lifecycle creates/deletes are subtractively removed from active world_delta and emitted as reliable ordered lifecycle packets on sr.asteroids.lifecycle and sr.bullets.lifecycle. Dedicated unordered hot lanes carry movement updates only. Regular asteroid and bullet movement updates are subtractively removed from `sr.world` and emitted as `asteroid_delta` and `bullet_delta`; asteroid and bullet lifecycle creates/deletes no longer remain in `world_delta` as active ownership. Oversized `asteroid_delta` and `bullet_delta` movement update lists are split into multiple real same-sequence hot-lane packets before encoding. This packet-size guard lives in the hot-lane chunker. Scheduler and active encoding do not perform a second hard-size rejection for already-chunked hot movement packets. This keeps hot packets under the encoded hard cap while leaving lifecycle creates/deletes on the dedicated lifecycle lanes. Tuple packing is a wire optimization, not a domain model change. The client `compact_lane_packet` facade delegates compact keys, values, IDs, tuple arrays, metadata inference, and decode alternatives to the generated descriptor decoder before world, session, and event appliers run. Tuple IDs rehydrate by context: bare numeric suffixes expand when the tuple slot determines the prefix, tagged compact IDs expand when only the prefix is known, and malformed or unknown IDs stay unchanged. World ship/player tuple packing keeps player and ship presentation data readable through compaction. The active encode path still records encoded-byte values for diagnostics and accounting.
 
 
 World lane carries ships, pickups, player/world presentation, and full/bootstrap state. Asteroids.lifecycle carries asteroid creates/deletes. Bullets.lifecycle carries bullet/projectile creates/deletes. Asteroids carries movement updates only. Bullets carries movement updates only. Overlay lane carries receiver-specific HUD-facing values. Session lane carries player/session/lifecycle/asteroid-count presentation state. For world, asteroid, bullet, overlay, and session state lanes, numeric wire quantization, field deltas, sparse delta omission, and compact JSON aliases are current active behavior. `event_batch` is transient presentation-event delivery, not a state delta lane. It uses compact output encoding and tuple-packed known event records, but remains batched. Known event `x`/`y` and `ship_death` `respawn_delay` are quantized during event wire shaping. `event_batch` does not use baselines, deltas, state snapshots, or chunking.

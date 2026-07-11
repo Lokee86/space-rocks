@@ -3,6 +3,8 @@ package realtime
 import (
 	"reflect"
 	"testing"
+
+	"github.com/Lokee86/space-rocks/server/internal/protocol/realtimewire"
 )
 
 func TestCompactWirePacketCompactsMetadataKeys(t *testing.T) {
@@ -1308,7 +1310,7 @@ func TestCompactWirePacketCompactsEventTypeAliases(t *testing.T) {
 
 func TestCompactWirePacketCompactAliasCollisionGuard(t *testing.T) {
 	seen := map[string]string{}
-	for key, value := range compactWireKeyMap {
+	for key, value := range realtimewire.RealtimeWireKeyCompactByReadable {
 		if prior, ok := seen[value]; ok {
 			t.Fatalf("compact alias %q used by both %q and %q", value, prior, key)
 		}

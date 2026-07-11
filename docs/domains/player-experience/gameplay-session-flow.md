@@ -247,9 +247,9 @@ The client may locally present death, respawn, game-over HUD state, and effects 
 
 Local elimination and authoritative room match-over are separate states.
 
-Local elimination means the local player has reached zero lives. The client can update local HUD/menu presentation and play game-over audio from this event.
+Multiplayer local elimination means the local player has reached zero lives while the room may still contain active players. The client can update only the local eliminated HUD/menu presentation and request game-over audio from this event. The local-elimination handler is mode-guarded, so the same event or authoritative lifecycle call has no immediate presentation consequences in single-player.
 
-Authoritative room match-over means the server room state is `GameOver`. Only room match-over shows match results and locks the gameplay HUD for the completed room.
+Authoritative room match-over means the server room state is `GameOver`. Single-player waits for this authoritative room state; its match-over path hides and locks the HUD, configures match-over UI, requests game-over audio, and presents results. In multiplayer, this room path remains separate from local elimination and shows final results only when the room is over.
 
 This distinction prevents the client from presenting final room results just because one player has been eliminated.
 
@@ -275,7 +275,7 @@ Room snapshots expose a presentation-safe match result summary to clients. That 
 
 ### 10. Client presents match results
 
-After room state reaches `GameOver`, the client match-end flow reads the current room state and cached match-result payload through providers from the room-session cache.
+After room state reaches `GameOver`, the client match-end flow reads the current room state and cached match-result payload through providers from the room-session cache. This is the required single-player end path and the authoritative final-results path for multiplayer.
 
 The client then:
 
@@ -512,4 +512,4 @@ WebSocket connection, room membership, and active gameplay participation are sep
 
 The current local development WebSocket targets for single-player and multiplayer may be the same URL. This does not make single-player and multiplayer the same session flow. The server-side room request, admission rules, room joinability, and player-data identity context distinguish them.
 
-Room match-over and local player elimination must stay separate in documentation and implementation. Local elimination is a player presentation state; room match-over is the authoritative session completion state.
+Room match-over and local player elimination must stay separate in documentation and implementation. Multiplayer local elimination is a player presentation state that does not imply final results; single-player waits for authoritative room match-over, which is the session completion and results-presentation state.

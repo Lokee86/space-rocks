@@ -1,8 +1,8 @@
 extends RefCounted
 class_name RealtimePacketPipeline
 
-const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
+const DescriptorIndex := preload("res://scripts/protocol/realtime/compact_wire_descriptor_index.gd")
 const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
 const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -42,21 +42,9 @@ func apply_packet(packet: Dictionary) -> void:
 		else:
 			return
 	var packet_type = expanded_packet.get("type")
-	match packet_type:
-		LaneMetadata.PACKET_FAMILY_WORLD[0], LaneMetadata.PACKET_FAMILY_WORLD[1]:
-			_apply_lane_packet(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_ASTEROIDS[0], LaneMetadata.PACKET_FAMILY_BULLETS[0], LaneMetadata.PACKET_FAMILY_ASTEROIDS_LIFECYCLE[0], LaneMetadata.PACKET_FAMILY_BULLETS_LIFECYCLE[0]:
-			_apply_lane_packet(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_OVERLAY[0], LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
-			_apply_lane_packet(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_SESSION[0], LaneMetadata.PACKET_FAMILY_SESSION[1]:
-			_apply_lane_packet(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_EVENT[0]:
-			_apply_lane_packet(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_CONTROL[0], LaneMetadata.PACKET_FAMILY_CONTROL[1]:
-			_apply_lane_packet(expanded_packet)
-		_:
-			return
+	if DescriptorIndex.packet_by_readable_id(str(packet_type)).is_empty():
+		return
+	_apply_lane_packet(expanded_packet)
 
 func reset() -> void:
 	_router = RealtimeRouter.new()

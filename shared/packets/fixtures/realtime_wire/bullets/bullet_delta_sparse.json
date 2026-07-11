@@ -1,0 +1,41 @@
+{
+  "compact": {
+    "bu": [
+      [
+        1,
+        null,
+        null,
+        0
+      ]
+    ],
+    "q": 5,
+    "t": "bd"
+  },
+  "expanded": {
+    "bullet_updates": [
+      {
+        "id": "bullet-1",
+        "rotation": 0
+      }
+    ],
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "bullets",
+    "sequence": 5,
+    "snapshot_id": "bullets-snapshot-5",
+    "snapshot_kind": "delta",
+    "type": "bullet_delta"
+  },
+  "name": "bullet_delta_sparse",
+  "readable": {
+    "bullet_updates": [
+      {
+        "id": "bullet-1",
+        "rotation": 0
+      }
+    ],
+    "sequence": 5,
+    "type": "bullet_delta"
+  }
+}

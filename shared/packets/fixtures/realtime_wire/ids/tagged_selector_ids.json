@@ -1,0 +1,54 @@
+{
+  "compact": {
+    "bid": 11,
+    "ev": [
+      [
+        "dmg",
+        3,
+        "mystery",
+        [
+          "p",
+          2
+        ],
+        "blast",
+        1,
+        0,
+        0
+      ]
+    ],
+    "t": "eb"
+  },
+  "expanded": {
+    "batch_id": "event-batch-11",
+    "events": [
+      {
+        "amount": 1,
+        "effect_type": "blast",
+        "event_id": "presentation-event-3",
+        "source_id": "player-2",
+        "source_type": "mystery",
+        "type": "damage_applied",
+        "x": 0,
+        "y": 0
+      }
+    ],
+    "type": "event_batch"
+  },
+  "name": "tagged_and_selector_ids",
+  "readable": {
+    "batch_id": "event-batch-11",
+    "events": [
+      {
+        "amount": 1,
+        "effect_type": "blast",
+        "event_id": "presentation-event-3",
+        "source_id": "player-2",
+        "source_type": "mystery",
+        "type": "damage_applied",
+        "x": 0,
+        "y": 0
+      }
+    ],
+    "type": "event_batch"
+  }
+}

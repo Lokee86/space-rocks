@@ -1,0 +1,12 @@
+{
+  "compact": {
+    "t": "resync_required"
+  },
+  "expanded": {
+    "type": "resync_required"
+  },
+  "name": "resync_required",
+  "readable": {
+    "type": "resync_required"
+  }
+}

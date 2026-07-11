@@ -24,7 +24,7 @@ authoritative game state
 -> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
 -> the chunker is the only hard-size guard for asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
 -> sparse readable wire-map serialization
--> compact alias mapping
+-> generated descriptor-driven compact encoding
 -> packetcodec JSON encoding
 -> encoded-byte accounting
 -> networking write integration
@@ -42,7 +42,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, compact alias preparation, and encoded-byte accounting inputs. Hot-lane hard-size guarding for asteroid and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for asteroid and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot-lane hard-size guarding for asteroid and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for asteroid and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -77,7 +77,7 @@ This doc only covers the projection-side service boundary. It does not define wi
 
 The lane projection path owns the transient projection results used to build lane-native realtime packets from authoritative game state.
 
-It does not own packet schema source files or generated constants. Runtime wire-map behavior for active realtime lanes lives in protocol/realtime and is specified by the realtime protocol docs; packet schema docs own generated schema inputs and outputs.
+It does not own logical packet schema or physical wire-contract source files. Logical packet types, structs, fields, and JSON names belong to the configured packet TOML. Physical aliases, metadata, record encodings, tuple/sparse layouts, quantization assignments, ID codecs/selectors, event layouts, and decode alternatives belong to `shared/packets/realtime_wire.toml`. Runtime projection and codec algorithms consume generated descriptors.
 
 ## Lane ownership
 
@@ -155,15 +155,15 @@ authoritative gameplay state
 -> numeric wire quantization into wire-shaped records
 -> delta comparison on projected wire-shaped values
 -> sparse delta serializers emit only non-empty delta sections into readable wire maps
--> CompactWirePacket applies aliases, compact values, shared ID compaction, and tuple packing to remaining emitted keys
+-> CompactWirePacket applies generated packet bindings, aliases, value domains, ID codecs/selectors, record encodings, and event layouts
 -> packetcodec encodes JSON
 ```
 
-Sparse omission is a realtime wire-map serialization concern. Compact aliasing is a realtime encode-boundary mapping concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane-native realtime packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
+Sparse omission is a realtime wire-map serialization concern. The physical compact contract is schema-owned; generic descriptor application is a realtime encode-boundary algorithm concern. `packetcodec` only encodes the already-shaped map to JSON. Networking only writes encoded bytes after realtime builds them. Full lane-native realtime packets remain complete snapshots. Delta create, update, and delete sections are omitted when empty. Clients treat missing delta sections as empty or no-op, and missing fields inside update records remain unchanged, not cleared. Sparse omission must not drop meaningful `false` or `0` values inside present records.
 
 Runtime active encoding no longer performs raw-float reflection scanning. Numeric wire quantization remains part of projection and explicit event wire shaping before compacting and JSON encoding.
 
-Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/`, `services/game-server/internal/protocol/realtime/quantize_world.go`, `services/game-server/internal/protocol/realtime/quantize_overlay.go`, and `services/game-server/internal/protocol/realtime/quantize_session.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings.
+Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/`, `services/game-server/internal/protocol/realtime/quantize_world.go`, `services/game-server/internal/protocol/realtime/quantize_overlay.go`, and `services/game-server/internal/protocol/realtime/quantize_session.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings. Quantization algorithms remain runtime-owned, while field-path policy assignments come from generated realtime-wire descriptors.
 
 The ownership boundary remains:
 
@@ -198,7 +198,7 @@ Projection, shadow, and inspection paths must not treat event access as an impli
 
 Relevant active files include:
 
-* `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, compact alias preparation, encoded-byte accounting inputs, and shadow/parity helpers.
+* `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, generated compact descriptor application, encoded-byte accounting inputs, and shadow/parity helpers.
 * `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
 * `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `asteroid_delta` and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
 * `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - conservative compact-JSON byte estimation used by hot-lane chunk construction.
@@ -217,9 +217,12 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/candidate_diagnostics.go` - candidate write diagnostics used by active lane metric/debug records.
 * `services/game-server/internal/protocol/realtime/quantize_overlay.go` and `services/game-server/internal/protocol/realtime/quantize_session.go` - overlay and session full-packet wire quantization.
 * `services/game-server/internal/protocol/realtime/wire_packets.go` - readable wire-map construction and sparse delta omission.
-* `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - compact alias mapping for emitted active lane keys.
+* `shared/packets/realtime_wire.toml` - physical compact-wire contract source of truth.
+* `services/game-server/internal/protocol/realtimewire/generated.go` - generated server descriptor data.
+* `services/game-server/internal/protocol/realtime/compact_wire_packet.go` - public compact encode boundary and generic recursive fallback.
+* `services/game-server/internal/protocol/realtime/compact_wire_descriptor.go` - generic application of generated packet bindings and record encodings.
 * `services/game-server/internal/protocol/realtime/active.go` - active lane packet encoding path, compact/packetcodec boundary, and encoded-byte accounting. It does not reject already-scheduled hot packets for size.
-* `services/game-server/internal/protocol/realtime/quantize/` - numeric wire quantization policies.
+* `services/game-server/internal/protocol/realtime/quantize/` - numeric quantization algorithms; generated descriptors own field-path policy assignments.
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
 * `services/game-server/internal/networking/websocket_write.go` - session write-loop integration and active write triggering.
@@ -228,6 +231,7 @@ Relevant active files include:
 * `services/game-server/internal/networking/` - websocket session, WebRTC transport, and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.
 * `shared/packets/outputs.toml` - generated output routing for packet constants and builders.
+* `docs/protocol/generated/realtime-wire-reference.md` - generated physical contract reference.
 
 ## Tests
 

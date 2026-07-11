@@ -1,0 +1,28 @@
+{
+  "compact": {
+    "bq": 5,
+    "ms": 123,
+    "q": 7,
+    "t": "wd"
+  },
+  "expanded": {
+    "baseline_id": "world-baseline-5",
+    "baseline_sequence": 5,
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "world",
+    "sequence": 7,
+    "server_sent_msec": 123,
+    "snapshot_id": "world-snapshot-7",
+    "snapshot_kind": "delta",
+    "type": "world_delta"
+  },
+  "name": "world_delta_inferred_metadata",
+  "readable": {
+    "baseline_sequence": 5,
+    "sequence": 7,
+    "server_sent_msec": 123,
+    "type": "world_delta"
+  }
+}

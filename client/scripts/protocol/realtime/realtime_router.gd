@@ -40,9 +40,9 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			return {}
 	var packet_type = expanded_packet.get("type")
 	match packet_type:
-		LaneMetadata.PACKET_FAMILY_WORLD[0]:
+		"world_full":
 			_route_world_full(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_WORLD[1]:
+		"world_delta":
 			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		"asteroid_delta":
 			_world_applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_ASTEROIDS, expanded_packet)
@@ -52,17 +52,17 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			_route_asteroids_lifecycle(expanded_packet)
 		"bullets_lifecycle":
 			_route_bullets_lifecycle(expanded_packet)
-		LaneMetadata.PACKET_FAMILY_OVERLAY[0]:
+		"overlay_full":
 			_overlay_applier.apply_overlay_full(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_OVERLAY[1]:
+		"overlay_delta":
 			_overlay_applier.apply_overlay_delta(overlay_lane_state, baseline_tracker, LaneMetadata.LANE_OVERLAY, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_SESSION[0]:
+		"session_full":
 			_session_applier.apply_session_full(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_SESSION[1]:
+		"session_delta":
 			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
-		LaneMetadata.PACKET_FAMILY_EVENT[0]:
+		"event_batch":
 			event_batch_applier.apply_event_batch(expanded_packet, self)
-		LaneMetadata.PACKET_FAMILY_CONTROL[0], LaneMetadata.PACKET_FAMILY_CONTROL[1]:
+		"resync_request", "resync_required":
 			_route_resync(expanded_packet)
 	return {}
 

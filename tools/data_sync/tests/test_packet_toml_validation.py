@@ -97,10 +97,11 @@ def test_validate_packets_accepts_rich_type_strings(tmp_path: Path) -> None:
 def test_validate_packets_rejects_absolute_output_path(tmp_path: Path) -> None:
     config_path = write_project(tmp_path)
     packets_path = tmp_path / "shared/packets/packets.toml"
+    absolute_output_path = (tmp_path / "packets.go").as_posix()
     packets_path.write_text(
         packets_path.read_text(encoding="utf-8").replace(
             'path = "go/packets.go"',
-            'path = "/tmp/packets.go"',
+            f'path = "{absolute_output_path}"',
         ),
         encoding="utf-8",
     )

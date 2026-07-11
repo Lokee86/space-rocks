@@ -278,7 +278,16 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Relevant verification areas now include lane-native packet routing/application, lifecycle packet routing/application, `test_lifecycle_lane_gate.gd` coverage for baseline and sequence policy, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, server lifecycle wire metadata coverage in `wire_packets_test.go`, sparse delta omission, quantized wire values, compact alias mapping, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
+Physical realtime-wire validation remains separate:
+
+```bash
+data-sync -validate -realtime-wire
+data-sync -diff -realtime-wire -go -gds -json -docs
+data-sync -push -realtime-wire -go -gds -json -docs
+data-sync -check -realtime-wire -go -gds -json -docs
+```
+
+Relevant verification areas now include lane-native packet routing/application, lifecycle packet routing/application, `test_lifecycle_lane_gate.gd` coverage for baseline and sequence policy, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, server lifecycle wire metadata coverage in `wire_packets_test.go`, sparse delta omission, quantized wire values, generated descriptor-driven compact encoding/decoding, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
 
 ## Code map
 
@@ -287,11 +296,16 @@ Packet sources and generated outputs:
 ```text
 shared/packets/gameplay.toml
 shared/packets/outputs.toml
+shared/packets/realtime_wire.toml
+shared/packets/generated/realtime_wire.json
+docs/protocol/generated/realtime-wire-reference.md
 tools/data_sync/
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
 services/game-server/internal/protocol/realtime/packets_generated.go
+services/game-server/internal/protocol/realtimewire/generated.go
 client/scripts/generated/networking/packets/packets.gd
+client/scripts/generated/networking/realtime_wire_generated.gd
 ```
 
 Client inbound lane-native gameplay application:
@@ -303,6 +317,12 @@ client/scripts/networking/inbound/server_packet_dispatcher.gd
 client/scripts/networking/inbound/server_packet_router.gd
 client/scripts/networking/realtime/realtime_packet_pipeline.gd
 client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/compact_lane_packet.gd
+client/scripts/protocol/realtime/compact_wire_descriptor_index.gd
+client/scripts/protocol/realtime/compact_wire_descriptor_ids.gd
+client/scripts/protocol/realtime/compact_wire_descriptor_records.gd
+client/scripts/protocol/realtime/compact_wire_descriptor_decoder.gd
+client/scripts/protocol/realtime/realtime_quantize.gd
 client/scripts/protocol/realtime/lifecycle_lane_gate.gd
 client/scripts/protocol/realtime/baseline_tracker.gd
 client/scripts/protocol/realtime/world_lane_applier.gd
@@ -330,7 +350,9 @@ services/game-server/internal/protocol/realtime/candidate_types.go
 services/game-server/internal/protocol/realtime/candidate_policy.go
 services/game-server/internal/protocol/realtime/candidate_diagnostics.go
 services/game-server/internal/protocol/realtime/wire_packets.go
+services/game-server/internal/protocol/realtime/wire_reflect.go
 services/game-server/internal/protocol/realtime/compact_wire_packet.go
+services/game-server/internal/protocol/realtime/compact_wire_descriptor.go
 services/game-server/internal/protocol/realtime/quantize/
 services/game-server/internal/protocol/realtime/quantize_world.go
 services/game-server/internal/protocol/realtime/quantize_overlay.go
@@ -352,6 +374,8 @@ services/game-server/internal/game/
 * [Lane Packet Projection](../services/game-server/simulation/runtime/lane-packet-projection.md)
 * [Packet Schemas](../data/packet-schemas.md)
 * [Realtime WebRTC Gameplay Transport](realtime-webrtc-gameplay-transport.md)
+* [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md)
+* [Generated Realtime Wire Reference](./generated/realtime-wire-reference.md)
 
 ## Notes
 

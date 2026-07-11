@@ -54,7 +54,8 @@ Drift
 | Area                            | Source of truth                                                                        | Generated or synchronized output                                                                                                                                                                                                                                                        | Consumers                                                                                                             | Enforcement                                                                                  | Does not own                                                                                       |
 | ------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Gameplay and shared constants   | `shared/constants/**/*.toml` listed by `tools/data_sync/config.toml`                   | `services/game-server/internal/constants/*.go`, `client/scripts/generated/constants/constants.gd`                                                                                                                                                                                       | Game server runtime, Godot client runtime                                                                             | `data-sync -validate -constants`, `data-sync -check -constants -go -gds`                     | Packet schemas, drop tables, database schemas, scene hierarchy                                     |
-| Realtime packet schemas         | `shared/packets/*.toml` listed by `tools/data_sync/config.toml`                        | `services/game-server/internal/game/packets.go`, `services/game-server/internal/game/runtime/packets_generated.go`, `services/game-server/internal/devtools/packets_generated.go`, `services/player-data/protocol/packets.go`, `client/scripts/generated/networking/packets/packets.gd` | Game server networking, game runtime packet projection, devtools, player-data runtime protocol, Godot networking      | `data-sync -validate -packets`, `data-sync -check -packets -go -gds`                         | Constants, HTTP contracts, Rails schema, local SQLite schema                                       |
+| Logical packet schemas          | Configured `shared/packets/*.toml`, except `realtime_wire.toml`                       | `services/game-server/internal/game/packets.go`, `services/game-server/internal/game/runtime/packets_generated.go`, `services/game-server/internal/devtools/packets_generated.go`, `services/player-data/protocol/packets.go`, `client/scripts/generated/networking/packets/packets.gd` | Game server networking, game runtime packet projection, devtools, player-data runtime protocol, Godot networking      | `data-sync -validate -packets`, `data-sync -check -packets -go -gds`                         | Physical realtime wire contract, constants, HTTP contracts, Rails schema, local SQLite schema |
+| Physical realtime wire         | `shared/packets/realtime_wire.toml`                                                   | `services/game-server/internal/protocol/realtimewire/generated.go`, `client/scripts/generated/networking/realtime_wire_generated.gd`, `shared/packets/generated/realtime_wire.json`, `docs/protocol/generated/realtime-wire-reference.md` | Server compact descriptor encoder, client descriptor decoder, server/client quantization lookup | `data-sync -validate -realtime-wire`, `data-sync -check -realtime-wire -go -gds -json -docs`, shared fixture and codec tests | Simulation projection, transport scheduling, packet application, quantization math |
 | Drop tables                     | `shared/drop_tables/*.toml` listed by `tools/data_sync/config.toml`                    | `services/game-server/internal/game/drops/drop_tables.go`                                                                                                                                                                                                                               | Game server drop evaluation and pickup spawning handoff                                                               | `data-sync -validate -drop-tables`, `data-sync -check -drop-tables -go`, drop table Go tests | Pickup collection, pickup effects, packet schema, constants                                        |
 | Player-data logical schema      | `shared/player_data/stats.toml`, `shared/player_data/match_result.toml`                | Current pipeline validates schema shape only; implemented Go structs and stores must satisfy the logical contract                                                                                                                                                                       | Player-data runtime, game-server match reporting, Rails-backed account persistence, embedded SQLite local persistence | `data-sync -validate -player_data`, player-data Go tests, Rails player-data tests            | HTTP request/response shapes, physical Rails schema, physical SQLite schema, live simulation state |
 | Player-data runtime packets     | `shared/packets/player_data.toml` plus `shared/packets/outputs.toml`                   | `services/player-data/protocol/packets.go`                                                                                                                                                                                                                                              | Player-data dispatcher, runtime sink, game-server match reporting                                                     | `data-sync -validate -packets`, `data-sync -check -packets -go`                              | Player-data physical storage, HTTP profile/local-profile contracts                                 |
@@ -98,6 +99,9 @@ shared/packets/lobby.toml
 shared/packets/webrtc.toml
 shared/packets/player_data.toml
 
+[sot.realtime_wire]
+shared/packets/realtime_wire.toml
+
 [sot.drop_tables]
 shared/drop_tables/basicasteroids.toml
 
@@ -111,6 +115,7 @@ Active generated output targets:
 ```text
 constants -> Go and GDScript
 packets -> Go and GDScript
+realtime_wire -> Go, GDScript, JSON, and docs
 drop_tables -> Go
 player_data -> validation only
 ```
@@ -183,6 +188,32 @@ data-sync -check -packets -go -gds
 ```
 
 Packet schemas do not own the server simulation, room rules, HTTP request/response contracts, or database schema.
+
+## Realtime wire ownership
+
+Logical packet types, structs, fields, and JSON names remain owned by the configured packet TOML files. `shared/packets/realtime_wire.toml` is a separate physical compact-wire contract. It owns aliases, packet metadata, record encodings, tuple and sparse layouts, quantization assignments, ID codecs and selectors, event layouts, decode alternatives, and compatibility flags.
+
+The contract generates:
+
+```text
+services/game-server/internal/protocol/realtimewire/generated.go
+client/scripts/generated/networking/realtime_wire_generated.gd
+shared/packets/generated/realtime_wire.json
+docs/protocol/generated/realtime-wire-reference.md
+```
+
+Runtime code owns algorithms that apply those descriptors: projection, reflection, compact encoding and decoding, ID parsing, quantization math, metadata reconstruction, transport, scheduling, baselines, and packet application. Compatibility alternatives are declared in the contract and must not become hidden entity-specific branches.
+
+Use this workflow for physical realtime-wire changes:
+
+```text
+data-sync -validate -realtime-wire
+data-sync -diff -realtime-wire -go -gds -json -docs
+data-sync -push -realtime-wire -go -gds -json -docs
+data-sync -check -realtime-wire -go -gds -json -docs
+```
+
+The generated reference is the place to inspect concrete physical mappings; this ownership map does not duplicate those tables.
 
 ## Drop-table ownership
 
@@ -492,6 +523,7 @@ Core data-sync validation:
 data-sync -validate
 data-sync -validate -constants
 data-sync -validate -packets
+data-sync -validate -realtime-wire
 data-sync -validate -drop-tables
 data-sync -validate -player_data
 ```
@@ -501,6 +533,7 @@ Generated output drift checks:
 ```text
 data-sync -check -constants -go -gds
 data-sync -check -packets -go -gds
+data-sync -check -realtime-wire -go -gds -json -docs
 data-sync -check -drop-tables -go
 ```
 
@@ -570,6 +603,10 @@ tools/data_sync/data_sync/constants_sync.py
 tools/data_sync/data_sync/packets_sync.py
 tools/data_sync/data_sync/drop_tables_sync.py
 tools/data_sync/data_sync/player_data_toml.py
+tools/data_sync/data_sync/model/realtime_wire.py
+tools/data_sync/data_sync/realtime_wire_toml.py
+tools/data_sync/data_sync/realtime_wire_validate.py
+tools/data_sync/data_sync/realtime_wire_sync.py
 ```
 
 Data-sync generators:
@@ -584,6 +621,7 @@ tools/data_sync/data_sync/generators/ts_packets.py
 tools/data_sync/data_sync/generators/rich_go_packets.py
 tools/data_sync/data_sync/generators/rich_gds_packets.py
 tools/data_sync/data_sync/generators/go_drop_tables.py
+tools/data_sync/data_sync/generators/realtime_wire_*.py
 ```
 
 Data-sync parser and validation tests:
@@ -595,6 +633,8 @@ tools/data_sync/tests/test_constants_sync.py
 tools/data_sync/tests/test_packets_sync.py
 tools/data_sync/tests/test_drop_tables_sync.py
 tools/data_sync/tests/test_player_data_toml.py
+tools/data_sync/tests/test_realtime_wire.py
+tools/data_sync/tests/test_realtime_wire_enemy_extensibility.py
 ```
 
 Source roots:
@@ -602,6 +642,11 @@ Source roots:
 ```text
 shared/constants/
 shared/packets/
+shared/packets/realtime_wire.toml
+services/game-server/internal/protocol/realtimewire/generated.go
+client/scripts/generated/networking/realtime_wire_generated.gd
+shared/packets/generated/realtime_wire.json
+docs/protocol/generated/realtime-wire-reference.md
 shared/drop_tables/
 shared/player_data/
 shared/contracts/http/openapi.yaml

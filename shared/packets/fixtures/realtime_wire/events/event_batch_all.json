@@ -1,0 +1,297 @@
+{
+  "compact": {
+    "bid": 11,
+    "ev": [
+      [
+        "bb",
+        1,
+        10,
+        20
+      ],
+      [
+        "shd",
+        2,
+        1,
+        2,
+        250,
+        30,
+        40
+      ],
+      [
+        "dmg",
+        3,
+        "projectile",
+        1,
+        "blast",
+        17,
+        50,
+        60
+      ],
+      [
+        "dots",
+        4,
+        "asteroid",
+        "hazard-1",
+        "radioactive",
+        2
+      ],
+      [
+        "dott",
+        5,
+        "asteroid",
+        "hazard-1",
+        "radioactive",
+        3,
+        70,
+        80
+      ],
+      [
+        "rfx",
+        6,
+        "pickup",
+        1,
+        "pulse",
+        90,
+        100
+      ],
+      [
+        "pcol",
+        7,
+        1,
+        1,
+        "shield",
+        110,
+        120
+      ],
+      [
+        "pea",
+        8,
+        1,
+        1,
+        "shield",
+        "repair",
+        4,
+        3
+      ],
+      [
+        "pexp",
+        9,
+        1,
+        "shield",
+        130,
+        140
+      ],
+      [
+        "pdr",
+        10,
+        1,
+        "shield",
+        "ship",
+        1,
+        1,
+        150,
+        160
+      ]
+    ],
+    "ms": 123,
+    "q": 11,
+    "t": "eb"
+  },
+  "expanded": {
+    "batch_id": "event-batch-11",
+    "events": [
+      {
+        "event_id": "presentation-event-1",
+        "type": "bullet_blast",
+        "x": 10,
+        "y": 20
+      },
+      {
+        "event_id": "presentation-event-2",
+        "lives": 2,
+        "player_id": "player-1",
+        "respawn_delay": 250,
+        "type": "ship_death",
+        "x": 30,
+        "y": 40
+      },
+      {
+        "amount": 17,
+        "effect_type": "blast",
+        "event_id": "presentation-event-3",
+        "source_id": "bullet-1",
+        "source_type": "projectile",
+        "type": "damage_applied",
+        "x": 50,
+        "y": 60
+      },
+      {
+        "amount": 2,
+        "effect_type": "radioactive",
+        "event_id": "presentation-event-4",
+        "source_id": "hazard-1",
+        "source_type": "asteroid",
+        "type": "damage_over_time_started"
+      },
+      {
+        "amount": 3,
+        "effect_type": "radioactive",
+        "event_id": "presentation-event-5",
+        "source_id": "hazard-1",
+        "source_type": "asteroid",
+        "type": "damage_over_time_tick",
+        "x": 70,
+        "y": 80
+      },
+      {
+        "effect_type": "pulse",
+        "event_id": "presentation-event-6",
+        "source_id": "pickup-1",
+        "source_type": "pickup",
+        "type": "radial_effect_started",
+        "x": 90,
+        "y": 100
+      },
+      {
+        "event_id": "presentation-event-7",
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "player_id": "player-1",
+        "type": "pickup_collected",
+        "x": 110,
+        "y": 120
+      },
+      {
+        "amount": 4,
+        "effect_type": "repair",
+        "event_id": "presentation-event-8",
+        "lives_after": 3,
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "player_id": "player-1",
+        "type": "pickup_effect_applied"
+      },
+      {
+        "event_id": "presentation-event-9",
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "type": "pickup_expired",
+        "x": 130,
+        "y": 140
+      },
+      {
+        "event_id": "presentation-event-10",
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "source_id": "ship-1",
+        "source_type": "ship",
+        "table_id": "table-1",
+        "type": "pickup_dropped",
+        "x": 150,
+        "y": 160
+      }
+    ],
+    "sequence": 11,
+    "server_sent_msec": 123,
+    "type": "event_batch"
+  },
+  "name": "event_batch_all_known_events",
+  "readable": {
+    "batch_id": "event-batch-11",
+    "events": [
+      {
+        "event_id": "presentation-event-1",
+        "type": "bullet_blast",
+        "x": 10,
+        "y": 20
+      },
+      {
+        "event_id": "presentation-event-2",
+        "lives": 2,
+        "player_id": "player-1",
+        "respawn_delay": 250,
+        "type": "ship_death",
+        "x": 30,
+        "y": 40
+      },
+      {
+        "amount": 17,
+        "effect_type": "blast",
+        "event_id": "presentation-event-3",
+        "source_id": "bullet-1",
+        "source_type": "projectile",
+        "type": "damage_applied",
+        "x": 50,
+        "y": 60
+      },
+      {
+        "amount": 2,
+        "effect_type": "radioactive",
+        "event_id": "presentation-event-4",
+        "source_id": "hazard-1",
+        "source_type": "asteroid",
+        "type": "damage_over_time_started"
+      },
+      {
+        "amount": 3,
+        "effect_type": "radioactive",
+        "event_id": "presentation-event-5",
+        "source_id": "hazard-1",
+        "source_type": "asteroid",
+        "type": "damage_over_time_tick",
+        "x": 70,
+        "y": 80
+      },
+      {
+        "effect_type": "pulse",
+        "event_id": "presentation-event-6",
+        "source_id": "pickup-1",
+        "source_type": "pickup",
+        "type": "radial_effect_started",
+        "x": 90,
+        "y": 100
+      },
+      {
+        "event_id": "presentation-event-7",
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "player_id": "player-1",
+        "type": "pickup_collected",
+        "x": 110,
+        "y": 120
+      },
+      {
+        "amount": 4,
+        "effect_type": "repair",
+        "event_id": "presentation-event-8",
+        "lives_after": 3,
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "player_id": "player-1",
+        "type": "pickup_effect_applied"
+      },
+      {
+        "event_id": "presentation-event-9",
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "type": "pickup_expired",
+        "x": 130,
+        "y": 140
+      },
+      {
+        "event_id": "presentation-event-10",
+        "pickup_id": "pickup-1",
+        "pickup_type": "shield",
+        "source_id": "ship-1",
+        "source_type": "ship",
+        "table_id": "table-1",
+        "type": "pickup_dropped",
+        "x": 150,
+        "y": 160
+      }
+    ],
+    "sequence": 11,
+    "server_sent_msec": 123,
+    "type": "event_batch"
+  }
+}

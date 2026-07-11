@@ -1,0 +1,63 @@
+{
+  "compact": {
+    "bc": [
+      {
+        "i": "bullet-2",
+        "oi": "player-1",
+        "pt": "laser",
+        "r": 0,
+        "wid": "pulse",
+        "x": 1,
+        "y": 2
+      }
+    ],
+    "bx": [
+      "bullet-3",
+      "bullet-bad"
+    ],
+    "l": "bl",
+    "q": 6,
+    "t": "bl"
+  },
+  "expanded": {
+    "bullet_creates": [
+      {
+        "id": "bullet-2",
+        "owner_id": "player-1",
+        "projectile_type": "laser",
+        "rotation": 0,
+        "weapon_id": "pulse",
+        "x": 1,
+        "y": 2
+      }
+    ],
+    "bullet_deletes": [
+      "bullet-3",
+      "bullet-bad"
+    ],
+    "lane": "bullets.lifecycle",
+    "sequence": 6,
+    "type": "bullets_lifecycle"
+  },
+  "name": "bullets_lifecycle_create_delete",
+  "readable": {
+    "bullet_creates": [
+      {
+        "id": "bullet-2",
+        "owner_id": "player-1",
+        "projectile_type": "laser",
+        "rotation": 0,
+        "weapon_id": "pulse",
+        "x": 1,
+        "y": 2
+      }
+    ],
+    "bullet_deletes": [
+      "bullet-3",
+      "bullet-bad"
+    ],
+    "lane": "bullets.lifecycle",
+    "sequence": 6,
+    "type": "bullets_lifecycle"
+  }
+}

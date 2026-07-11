@@ -68,6 +68,43 @@ outputs = ["server_drop_tables"]
 """.strip()
 
 
+def test_loads_realtime_wire_output_kinds(tmp_path: Path) -> None:
+    body = valid_config().replace('[sot]\npath = "shared/game_data.toml"', '[sot.realtime_wire]\npath = "shared/packets/realtime_wire.toml"')
+    body += """
+
+[realtime_wire.go]
+enabled = true
+files = ["generated/realtime_wire.go"]
+sections = []
+owns = []
+
+[realtime_wire.gds]
+enabled = true
+files = ["generated/realtime_wire.gd"]
+sections = []
+owns = []
+
+[realtime_wire.json]
+enabled = true
+files = ["generated/realtime_wire.json"]
+sections = []
+owns = []
+
+[realtime_wire.docs]
+enabled = true
+files = ["generated/realtime_wire.md"]
+sections = []
+owns = []
+"""
+    config = load_config(write_config(tmp_path, body))
+
+    assert config.enabled_languages("realtime_wire") == ("go", "gds", "json", "docs")
+    assert config.target("realtime_wire", "json").files == (tmp_path / "generated/realtime_wire.json",)
+    with pytest.raises(ConfigError):
+        config.target("constants", "json")
+
+
+
 def test_loads_valid_config(tmp_path: Path) -> None:
     config_path = write_config(tmp_path, valid_config())
 
@@ -86,8 +123,6 @@ def test_loads_valid_config(tmp_path: Path) -> None:
     assert config.target("constants", "ts").files == (
         tmp_path / "services/api-server/src/constants.ts",
     )
-
-
     assert config.target("packets", "go").files == (tmp_path / "services/game-server/internal/network/packets.go",)
     assert config.constants_scan == ScanConfig(
         include=("client/scripts/**/*.gd", "services/game-server/**/*.go"),
@@ -272,7 +307,14 @@ paths = [
     config = load_config(config_path)
 
     assert config.sot_path("constants") == tmp_path / "shared/game_data.toml"
-    assert config.sot_path("packets") == tmp_path / "shared/packets/packets.toml"
+    assert config.sot_paths("packets") == (
+        tmp_path / "shared/packets/outputs.toml",
+        tmp_path / "shared/packets/gameplay.toml",
+        tmp_path / "shared/packets/debug.toml",
+        tmp_path / "shared/packets/lobby.toml",
+        tmp_path / "shared/packets/webrtc.toml",
+        tmp_path / "shared/packets/player_data.toml",
+    )
 
 
 def test_loads_per_domain_sot_paths_arrays(tmp_path: Path) -> None:
@@ -298,8 +340,12 @@ paths = ["shared/packets/outputs.toml", "shared/packets/gameplay.toml", "shared/
         tmp_path / "shared/game_data.override.toml",
     )
     assert config.sot_paths("packets") == (
-        tmp_path / "shared/packets/packets.toml",
-        tmp_path / "shared/packets/packets.override.toml",
+        tmp_path / "shared/packets/outputs.toml",
+        tmp_path / "shared/packets/gameplay.toml",
+        tmp_path / "shared/packets/debug.toml",
+        tmp_path / "shared/packets/lobby.toml",
+        tmp_path / "shared/packets/webrtc.toml",
+        tmp_path / "shared/packets/player_data.toml",
     )
 
 

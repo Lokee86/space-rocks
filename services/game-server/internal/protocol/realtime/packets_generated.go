@@ -2,15 +2,17 @@
 package realtime
 
 const (
-	PacketTypeWorldFull      = "world_full"
-	PacketTypeWorldDelta     = "world_delta"
-	PacketTypeOverlayFull    = "overlay_full"
-	PacketTypeOverlayDelta   = "overlay_delta"
-	PacketTypeSessionFull    = "session_full"
-	PacketTypeSessionDelta   = "session_delta"
-	PacketTypeAsteroidDelta  = "asteroid_delta"
-	PacketTypeBulletDelta    = "bullet_delta"
-	PacketTypeEventBatch     = "event_batch"
-	PacketTypeResyncRequest  = "resync_request"
-	PacketTypeResyncRequired = "resync_required"
+	PacketTypeWorldFull          = "world_full"
+	PacketTypeWorldDelta         = "world_delta"
+	PacketTypeOverlayFull        = "overlay_full"
+	PacketTypeOverlayDelta       = "overlay_delta"
+	PacketTypeSessionFull        = "session_full"
+	PacketTypeSessionDelta       = "session_delta"
+	PacketTypeAsteroidDelta      = "asteroid_delta"
+	PacketTypeBulletDelta        = "bullet_delta"
+	PacketTypeAsteroidsLifecycle = "asteroids_lifecycle"
+	PacketTypeBulletsLifecycle   = "bullets_lifecycle"
+	PacketTypeEventBatch         = "event_batch"
+	PacketTypeResyncRequest      = "resync_request"
+	PacketTypeResyncRequired     = "resync_required"
 )

@@ -1,0 +1,40 @@
+{
+  "compact": {
+    "au": [
+      [
+        1,
+        null,
+        0
+      ]
+    ],
+    "q": 3,
+    "t": "ad"
+  },
+  "expanded": {
+    "asteroid_updates": [
+      {
+        "id": "asteroid-1",
+        "y": 0
+      }
+    ],
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "asteroids",
+    "sequence": 3,
+    "snapshot_id": "asteroids-snapshot-3",
+    "snapshot_kind": "delta",
+    "type": "asteroid_delta"
+  },
+  "name": "asteroid_delta_sparse",
+  "readable": {
+    "asteroid_updates": [
+      {
+        "id": "asteroid-1",
+        "y": 0
+      }
+    ],
+    "sequence": 3,
+    "type": "asteroid_delta"
+  }
+}

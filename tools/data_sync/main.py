@@ -11,6 +11,7 @@ from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.constants_sync import ConstantsSyncError, apply_updates, plan_constants_updates, unified_diff
 from data_sync.drop_tables_sync import DropTablesSyncError, plan_drop_tables_updates
 from data_sync.packets_sync import PacketsSyncError, plan_packets_updates
+from data_sync.realtime_wire_sync import RealtimeWireSyncError, plan_realtime_wire_updates
 from data_sync.packet_toml import PacketTomlError, load_packet_schema_files
 from data_sync.pull import PullError, pull_constants
 from data_sync.toml_store import TomlStore, TomlStoreError
@@ -61,11 +62,14 @@ def run(argv: list[str] | None = None) -> int:
             _ensure_enabled_packet_targets(config, args.languages)
             packet_schema = load_packet_schema_files(config.sot_paths("packets"))
             updates.extend(plan_packets_updates(config, packet_schema, args.languages))
+        if "realtime_wire" in args.domains:
+            updates.extend(plan_realtime_wire_updates(config, (*args.languages, *args.output_kinds)))
     except (
         ConstantsSyncError,
         ConstantsStoreError,
         DropTablesSyncError,
         PacketsSyncError,
+        RealtimeWireSyncError,
         PacketTomlError,
         TomlStoreError,
     ) as exc:

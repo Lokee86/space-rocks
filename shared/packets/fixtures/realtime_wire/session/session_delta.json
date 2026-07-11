@@ -1,0 +1,84 @@
+{
+  "compact": {
+    "bq": 9,
+    "plu": [
+      [
+        1,
+        "respawning"
+      ]
+    ],
+    "plx": [
+      "player-bad"
+    ],
+    "psu": [
+      [
+        1,
+        "sco",
+        0,
+        "lv",
+        false
+      ]
+    ],
+    "psx": [
+      2
+    ],
+    "q": 10,
+    "t": "sd"
+  },
+  "expanded": {
+    "baseline_id": "session-baseline-9",
+    "baseline_sequence": 9,
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "session",
+    "player_lifecycle_deletes": [
+      "player-bad"
+    ],
+    "player_lifecycle_updates": [
+      {
+        "player_id": "player-1",
+        "status": "respawning"
+      }
+    ],
+    "player_session_deletes": [
+      "player-2"
+    ],
+    "player_session_updates": [
+      {
+        "id": "player-1",
+        "lives": false,
+        "score": 0
+      }
+    ],
+    "sequence": 10,
+    "snapshot_id": "session-snapshot-10",
+    "snapshot_kind": "delta",
+    "type": "session_delta"
+  },
+  "name": "session_delta_updates_deletes",
+  "readable": {
+    "baseline_sequence": 9,
+    "player_lifecycle_deletes": [
+      "player-bad"
+    ],
+    "player_lifecycle_updates": [
+      {
+        "player_id": "player-1",
+        "status": "respawning"
+      }
+    ],
+    "player_session_deletes": [
+      "player-2"
+    ],
+    "player_session_updates": [
+      {
+        "id": "player-1",
+        "lives": false,
+        "score": 0
+      }
+    ],
+    "sequence": 10,
+    "type": "session_delta"
+  }
+}

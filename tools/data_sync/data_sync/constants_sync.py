@@ -102,6 +102,7 @@ def _configured_constants_targets(config: DataSyncConfig, language: str):
 def apply_updates(updates: tuple[FileUpdate, ...]) -> None:
     for update in updates:
         if update.changed:
+            update.path.parent.mkdir(parents=True, exist_ok=True)
             update.path.write_text(update.after, encoding="utf-8")
 
 

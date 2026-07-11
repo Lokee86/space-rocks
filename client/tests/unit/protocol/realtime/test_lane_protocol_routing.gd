@@ -8,19 +8,19 @@ const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
 func test_lane_packet_families_route_directly() -> void:
 	var router := RealtimeRouter.new()
 
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_WORLD[0], "baseline_id": "b1", "sequence": 1, "snapshot_id": "s1", "is_final_chunk": true})
+	router.route_lane_packet({"type": "world_full", "baseline_id": "b1", "sequence": 1, "snapshot_id": "s1", "is_final_chunk": true})
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
 
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_WORLD[1], "baseline_id": "b1", "sequence": 2})
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_OVERLAY[0], "baseline_id": "b2", "sequence": 1, "snapshot_id": "o1", "is_final_chunk": true})
+	router.route_lane_packet({"type": "world_delta", "baseline_id": "b1", "sequence": 2})
+	router.route_lane_packet({"type": "overlay_full", "baseline_id": "b2", "sequence": 1, "snapshot_id": "o1", "is_final_chunk": true})
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_OVERLAY))
 
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_OVERLAY[1], "baseline_id": "b2", "sequence": 2})
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_SESSION[0], "baseline_id": "b3", "sequence": 1, "snapshot_id": "u1", "is_final_chunk": true})
+	router.route_lane_packet({"type": "overlay_delta", "baseline_id": "b2", "sequence": 2})
+	router.route_lane_packet({"type": "session_full", "baseline_id": "b3", "sequence": 1, "snapshot_id": "u1", "is_final_chunk": true})
 	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_SESSION))
 
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_SESSION[1], "baseline_id": "b3", "sequence": 2})
-	router.route_lane_packet({"type": LaneMetadata.PACKET_FAMILY_EVENT[0], "batch_id": "batch-1", "events": [{"event_id": "event-1", "type": "spark", "payload": {}}]})
+	router.route_lane_packet({"type": "session_delta", "baseline_id": "b3", "sequence": 2})
+	router.route_lane_packet({"type": "event_batch", "batch_id": "batch-1", "events": [{"event_id": "event-1", "type": "spark", "payload": {}}]})
 	assert_true(router.event_batch_applier.has_applied_batch("batch-1"))
 	assert_true(router.event_batch_applier.has_applied_event("event-1"))
 

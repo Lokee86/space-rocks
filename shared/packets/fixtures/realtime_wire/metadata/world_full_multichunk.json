@@ -1,0 +1,29 @@
+{
+  "compact": {
+    "cc": 3,
+    "ci": 1,
+    "ms": 99,
+    "q": 4,
+    "t": "wf"
+  },
+  "expanded": {
+    "baseline_id": "world-baseline-4",
+    "chunk_count": 3,
+    "chunk_index": 1,
+    "is_final_chunk": false,
+    "lane": "world",
+    "sequence": 4,
+    "server_sent_msec": 99,
+    "snapshot_id": "world-baseline-4",
+    "snapshot_kind": "full",
+    "type": "world_full"
+  },
+  "name": "world_full_explicit_multichunk_metadata",
+  "readable": {
+    "chunk_count": 3,
+    "chunk_index": 1,
+    "sequence": 4,
+    "server_sent_msec": 99,
+    "type": "world_full"
+  }
+}

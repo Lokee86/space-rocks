@@ -60,6 +60,10 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
         "overlay_delta",
         "session_full",
         "session_delta",
+        "asteroid_delta",
+        "bullet_delta",
+        "asteroids_lifecycle",
+        "bullets_lifecycle",
         "event_batch",
         "resync_request",
         "resync_required",
@@ -110,6 +114,8 @@ def test_preserves_rich_type_strings(tmp_path: Path) -> None:
     path = tmp_path / "packets.toml"
     path.write_text(
         """
+builders = []
+
 [[outputs]]
 language = "go"
 path = "out.go"
@@ -148,6 +154,8 @@ def test_supports_output_lookup_by_id_and_path(tmp_path: Path) -> None:
     path = tmp_path / "packets.toml"
     path.write_text(
         """
+builders = []
+
 [[outputs]]
 id = "go_packets"
 language = "go"

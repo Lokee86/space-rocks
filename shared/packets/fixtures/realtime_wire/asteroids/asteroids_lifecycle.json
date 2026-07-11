@@ -1,0 +1,63 @@
+{
+  "compact": {
+    "ac": [
+      {
+        "h": 10,
+        "i": "asteroid-2",
+        "sl": 1000,
+        "sz": 1,
+        "v": 0,
+        "x": 1,
+        "y": 2
+      }
+    ],
+    "ax": [
+      "asteroid-3",
+      "asteroid-bad"
+    ],
+    "l": "al",
+    "q": 4,
+    "t": "al"
+  },
+  "expanded": {
+    "asteroid_creates": [
+      {
+        "health": 10,
+        "id": "asteroid-2",
+        "scale": 1000,
+        "size": 1,
+        "variant": 0,
+        "x": 1,
+        "y": 2
+      }
+    ],
+    "asteroid_deletes": [
+      "asteroid-3",
+      "asteroid-bad"
+    ],
+    "lane": "asteroids.lifecycle",
+    "sequence": 4,
+    "type": "asteroids_lifecycle"
+  },
+  "name": "asteroids_lifecycle_create_delete",
+  "readable": {
+    "asteroid_creates": [
+      {
+        "health": 10,
+        "id": "asteroid-2",
+        "scale": 1000,
+        "size": 1,
+        "variant": 0,
+        "x": 1,
+        "y": 2
+      }
+    ],
+    "asteroid_deletes": [
+      "asteroid-3",
+      "asteroid-bad"
+    ],
+    "lane": "asteroids.lifecycle",
+    "sequence": 4,
+    "type": "asteroids_lifecycle"
+  }
+}

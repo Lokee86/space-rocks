@@ -20,11 +20,11 @@ Authoritative room match-over
 = the game server room has entered GameOver.
 ```
 
-Local elimination is presentation-only. It can update the HUD, set local game-over menu state, and request game-over audio, but it does not show match results.
+Multiplayer local elimination is presentation-only. When the local player reaches zero lives while other players may remain active, it can update the local HUD, set local eliminated/game-over menu state, and request game-over audio, but it does not show final match results. The same event and authoritative lifecycle entry paths may call the local-elimination handler in single-player, but its session-mode guard returns without those presentation consequences.
 
 Authoritative room match-over is the valid source for final match results. The game server detects that the match is complete from server-owned gameplay facts, moves the room from `InGame` to `GameOver`, stores a resolved match summary, broadcasts a room snapshot containing a presentation-safe `match_result`, and reports durable result data through the player-data runtime.
 
-The client presents match results only after observing authoritative room match-over. The room snapshot result is cached by the client session flow, adapted into result rows by the client match-end flow, and rendered by the match-results UI.
+Single-player waits for the authoritative room `GameOver`; its room match-over path hides and locks the HUD, configures match-over UI, requests game-over audio, and presents results. The client presents match results only after observing authoritative room match-over. The room snapshot result is cached by the client session flow, adapted into result rows by the client match-end flow, and rendered by the match-results UI.
 
 The durable result commit path is separate from the visible result window. The result window is not a persistence surface. It displays presentation-safe rows and emits navigation intent.
 
@@ -152,7 +152,7 @@ moves through Starting into InGame
 
 When the local player reaches zero lives, the server emits death/lives facts through gameplay event flow.
 
-The client handles this as local elimination:
+In multiplayer, the client handles this as local elimination:
 
 ```text
 self-death event with lives == 0
@@ -165,6 +165,8 @@ self-death event with lives == 0
 This does not show match results.
 
 The room may still not be in `GameOver`, especially in multiplayer where other players may still be active or pending respawn.
+
+In single-player, both the best-effort self-death event path and the reconstructable authoritative eliminated-lifecycle path may call `MatchEndFlow.handle_local_player_eliminated(lives)`, but the session-mode guard returns without immediate HUD, menu, or game-over-audio consequences. Single-player waits for the authoritative room `GameOver` path below.
 
 ### 3. Server detects authoritative room match-over
 
@@ -210,7 +212,7 @@ The client session flow caches a match result only when the snapshot contains a 
 
 The client match-end flow observes room state through the room-state provider.
 
-When the room state is `GameOver`, the client handles authoritative room match-over once:
+When the room state is `GameOver`, the client handles authoritative room match-over once in both modes:
 
 ```text
 room state provider returns GameOver
@@ -223,7 +225,7 @@ room state provider returns GameOver
 -> MatchResultsFlow mounts the result window
 ```
 
-Repeated `GameOver` snapshots must not remount duplicate result windows.
+Repeated `GameOver` snapshots must not remount duplicate result windows. This authoritative room path is the single-player match-end presentation path; in multiplayer it is separate from the earlier local-elimination presentation and runs only when the room itself is over.
 
 If there is no valid result provider, no match result, or no player array, the result window can still open with empty rows.
 
@@ -422,7 +424,7 @@ Those belong in service, protocol, data, systems-design, limits, or planning doc
 
 ## Notes
 
-Local elimination and authoritative room match-over must remain separate. Showing final match results from local elimination would be incorrect.
+Multiplayer local elimination and authoritative room match-over must remain separate. Local elimination may occur while other players remain active, updates only the local eliminated presentation, and does not show final results. Single-player does not apply immediate local-elimination presentation; it waits for authoritative room `GameOver`, whose room match-over path presents the completed match and results.
 
 The client result window is a presentation surface, not a persistence surface.
 

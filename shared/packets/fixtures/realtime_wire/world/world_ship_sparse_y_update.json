@@ -1,0 +1,48 @@
+{
+  "compact": {
+    "bq": 1,
+    "q": 2,
+    "su": [
+      [
+        1,
+        null,
+        0,
+        null,
+        false
+      ]
+    ],
+    "t": "wd"
+  },
+  "expanded": {
+    "baseline_id": "world-baseline-1",
+    "baseline_sequence": 1,
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "world",
+    "sequence": 2,
+    "ship_updates": [
+      {
+        "id": "player-1",
+        "thrusting": false,
+        "y": 0
+      }
+    ],
+    "snapshot_id": "world-snapshot-2",
+    "snapshot_kind": "delta",
+    "type": "world_delta"
+  },
+  "name": "world_ship_sparse_y_update",
+  "readable": {
+    "baseline_sequence": 1,
+    "sequence": 2,
+    "ship_updates": [
+      {
+        "id": "player-1",
+        "thrusting": false,
+        "y": 0
+      }
+    ],
+    "type": "world_delta"
+  }
+}

@@ -520,7 +520,9 @@ selected generated GDScript builders
 packet output file routing
 ```
 
-For active realtime gameplay lanes, runtime protocol code may build wire maps from generated packet type constants and hand-authored realtime records. Sparse delta omission, numeric wire quantization, and compact alias mapping are runtime protocol behaviors, not TOML schema generation behavior. Generated `EventState` fields define possible event payload fields, while the realtime event wire shaper emits only relevant fields for known event types.
+Logical packet TOML owns packet types, structs, fields, and JSON names. The physical compact-wire contract is separate: `shared/packets/realtime_wire.toml` owns physical aliases, packet metadata, record encodings, tuple and sparse layouts, quantization assignments, ID codecs and selectors, event layouts, and decode compatibility alternatives.
+
+Runtime projection and encoding/decoding algorithms remain handwritten consumers of those logical and physical contracts. See [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md) for architecture and ownership, and the [generated realtime-wire reference](../protocol/generated/realtime-wire-reference.md) for concrete generated mappings.
 
 Packet schemas do not own:
 

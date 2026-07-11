@@ -59,6 +59,8 @@ func refresh_match_end_state() -> void:
 func handle_local_player_eliminated(lives: int) -> void:
 	if local_player_eliminated_handled || room_match_over_handled:
 		return
+	if _current_session_mode() != Constants.SESSION_MODE_MULTIPLAYER:
+		return
 	local_player_eliminated_handled = true
 	if hud_flow != null && hud_flow.has_method("apply_lives"):
 		hud_flow.apply_lives(lives)

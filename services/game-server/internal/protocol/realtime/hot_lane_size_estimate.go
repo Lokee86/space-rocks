@@ -102,7 +102,7 @@ func estimateJSONStringBytes(value string) int {
 
 func estimateCompactBulletMovementUpdateBytes(update map[string]any) int {
 	if update == nil {
-		return estimateCompactJSONTupleBytes([]any{compactWirePackBulletID(nil)})
+		return estimateCompactJSONTupleBytes([]any{compactWireEncodeID("bullet_id", nil)})
 	}
 
 	id := update["id"]
@@ -110,7 +110,7 @@ func estimateCompactBulletMovementUpdateBytes(update map[string]any) int {
 		id = update["i"]
 	}
 
-	items := []any{compactWirePackBulletID(id)}
+	items := []any{compactWireEncodeID("bullet_id", id)}
 	x, hasX := update["x"]
 	y, hasY := update["y"]
 	rotation, hasRotation := update["rotation"]
@@ -138,7 +138,7 @@ func estimateCompactBulletMovementUpdateBytes(update map[string]any) int {
 
 func estimateCompactAsteroidMovementUpdateBytes(update map[string]any) int {
 	if update == nil {
-		return estimateCompactJSONTupleBytes([]any{compactWirePackAsteroidID(nil)})
+		return estimateCompactJSONTupleBytes([]any{compactWireEncodeID("asteroid_id", nil)})
 	}
 
 	id := update["id"]
@@ -146,7 +146,7 @@ func estimateCompactAsteroidMovementUpdateBytes(update map[string]any) int {
 		id = update["i"]
 	}
 
-	items := []any{compactWirePackAsteroidID(id)}
+	items := []any{compactWireEncodeID("asteroid_id", id)}
 	x, hasX := update["x"]
 	y, hasY := update["y"]
 	if hasX {

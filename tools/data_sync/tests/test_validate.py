@@ -265,6 +265,12 @@ def test_validate_valid_config_and_sot(tmp_path: Path) -> None:
     assert run(["-validate", "-config", str(config_path)]) == 0
 
 
+def test_validate_explicit_realtime_wire_does_not_skip_legacy_source(tmp_path: Path) -> None:
+    config_path = write_validation_project(tmp_path)
+
+    assert run(["-validate", "-realtime_wire", "-config", str(config_path)]) == 1
+
+
 def test_validate_player_data_sot(tmp_path: Path) -> None:
     config_path = write_validation_project(tmp_path)
     config_path.write_text(player_data_config_text(), encoding="utf-8")
@@ -728,3 +734,23 @@ def test_validate_missing_configured_file(tmp_path: Path) -> None:
     (tmp_path / "ts/packets.ts").unlink()
 
     assert run(["-validate", "-packets", "-ts", "-config", str(config_path)]) == 1
+
+
+def test_validate_missing_realtime_wire_configured_file(tmp_path: Path) -> None:
+    config_path = write_validation_project(tmp_path)
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8")
+        + """
+
+[sot.realtime_wire]
+path = "shared/game_data.toml"
+
+[realtime_wire.go]
+files = ["go/realtime_wire.go"]
+sections = []
+owns = []
+""",
+        encoding="utf-8",
+    )
+
+    assert run(["-validate", "-realtime_wire", "-go", "-config", str(config_path)]) == 1

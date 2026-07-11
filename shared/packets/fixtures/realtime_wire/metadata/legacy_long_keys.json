@@ -1,0 +1,39 @@
+{
+  "compact": {
+    "asteroids": [],
+    "bullets": [],
+    "lane": "world",
+    "pickups": [],
+    "sequence": 12,
+    "ships": [],
+    "snapshot_kind": "full",
+    "type": "world_full"
+  },
+  "expanded": {
+    "asteroids": [],
+    "baseline_id": "world-baseline-12",
+    "bullets": [],
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "world",
+    "pickups": [],
+    "sequence": 12,
+    "ships": [],
+    "snapshot_id": "world-baseline-12",
+    "snapshot_kind": "full",
+    "type": "world_full"
+  },
+  "name": "legacy_long_key_input",
+  "readable": {
+    "asteroids": [],
+    "bullets": [],
+    "lane": "world",
+    "pickups": [],
+    "sequence": 12,
+    "ships": [],
+    "snapshot_kind": "full",
+    "type": "world_full"
+  },
+  "server_encode": false
+}

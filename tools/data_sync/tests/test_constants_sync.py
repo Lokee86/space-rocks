@@ -5,9 +5,18 @@ from pathlib import Path
 import pytest
 
 from main import run
+from data_sync.constants_sync import FileUpdate, apply_updates
 
 
 pytest.importorskip("tomlkit")
+
+
+def test_apply_updates_creates_nested_parent_directories(tmp_path: Path) -> None:
+    path = tmp_path / "generated" / "nested" / "descriptor.json"
+
+    apply_updates((FileUpdate(path=path, before="", after="generated"),))
+
+    assert path.read_text(encoding="utf-8") == "generated"
 
 
 def write_project(tmp_path: Path) -> Path:

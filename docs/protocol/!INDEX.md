@@ -34,6 +34,8 @@ This folder owns protocol documentation indexes for current Space Rocks communic
 <!-- doc-ledger:stubs:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
+
+- [generated](generated/!INDEX.md) - Generated documentation.
 <!-- doc-ledger:folders:end -->
 ## Related Docs
 

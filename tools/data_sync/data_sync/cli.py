@@ -9,8 +9,9 @@ from typing import Sequence
 
 
 OPERATIONS = ("push", "pull", "diff", "check", "validate")
-DOMAINS = ("constants", "packets", "drop_tables", "player_data")
+DOMAINS = ("constants", "packets", "realtime_wire", "drop_tables", "player_data")
 LANGUAGES = ("go", "gds", "ts")
+OUTPUT_KINDS = ("json", "docs")
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class CliArgs:
     operation: str
     domains: tuple[str, ...]
     languages: tuple[str, ...]
+    output_kinds: tuple[str, ...]
     config: Path | None
     sot: Path | None
 
@@ -47,9 +49,12 @@ def build_parser() -> argparse.ArgumentParser:
                 help="include drop tables",
             )
             continue
+        if domain == "realtime_wire":
+            parser.add_argument("-realtime-wire", "-realtime_wire", dest=domain, action="store_true", help="include realtime wire")
+            continue
         parser.add_argument(f"-{domain}", action="store_true", help=f"include {domain}")
 
-    for language in LANGUAGES:
+    for language in LANGUAGES + OUTPUT_KINDS:
         parser.add_argument(f"-{language}", action="store_true", help=f"include {language}")
 
     parser.add_argument("-config", type=Path, help="path to data-sync config TOML")
@@ -68,14 +73,20 @@ def parse_args(argv: Sequence[str] | None = None) -> CliArgs:
     operation = selected_operations[0]
     domains = tuple(name for name in DOMAINS if getattr(namespace, name))
     languages = tuple(name for name in LANGUAGES if getattr(namespace, name))
+    output_kinds = tuple(name for name in OUTPUT_KINDS if getattr(namespace, name))
+
+    if output_kinds and "realtime_wire" not in domains:
+        parser.error("-json and -docs are only supported with -realtime-wire")
+    if "realtime_wire" in domains and "ts" in languages:
+        parser.error("-realtime-wire does not support -ts")
 
     if operation in {"push", "pull", "diff", "check"}:
         if not domains:
             parser.error(f"-{operation} requires at least one domain: -constants and/or -packets")
         if "player_data" in domains:
             parser.error("-player_data is only supported with -validate for now")
-        if not languages:
-            parser.error(f"-{operation} requires at least one language: -go, -gds, and/or -ts")
+        if not languages and not ("realtime_wire" in domains and output_kinds):
+            parser.error(f"-{operation} requires at least one language or realtime-wire output: -go, -gds, -ts, -json, and/or -docs")
         if "drop_tables" in domains and "go" not in languages:
             parser.error(f"-{operation} with -drop-tables requires -go")
 
@@ -86,6 +97,7 @@ def parse_args(argv: Sequence[str] | None = None) -> CliArgs:
         operation=operation,
         domains=domains,
         languages=languages,
+        output_kinds=output_kinds,
         config=namespace.config,
         sot=namespace.sot,
     )

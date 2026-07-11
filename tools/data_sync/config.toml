@@ -20,6 +20,9 @@ paths = [
   "shared/packets/player_data.toml",
 ]
 
+[sot.realtime_wire]
+path = "shared/packets/realtime_wire.toml"
+
 [sot.drop_tables]
 paths = [
   "shared/drop_tables/basicasteroids.toml",
@@ -56,6 +59,30 @@ outputs = ["client_packets"]
 [packets.ts]
 enabled = false
 files = []
+sections = []
+owns = []
+
+[realtime_wire.go]
+enabled = true
+files = ["services/game-server/internal/protocol/realtimewire/generated.go"]
+sections = []
+owns = []
+
+[realtime_wire.gds]
+enabled = true
+files = ["client/scripts/generated/networking/realtime_wire_generated.gd"]
+sections = []
+owns = []
+
+[realtime_wire.json]
+enabled = true
+files = ["shared/packets/generated/realtime_wire.json"]
+sections = []
+owns = []
+
+[realtime_wire.docs]
+enabled = true
+files = ["docs/protocol/generated/realtime-wire-reference.md"]
 sections = []
 owns = []
 

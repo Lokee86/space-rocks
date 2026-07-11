@@ -1,0 +1,154 @@
+{
+  "compact": {
+    "asteroids": [
+      [
+        1,
+        10,
+        20,
+        2,
+        90,
+        1500,
+        3
+      ]
+    ],
+    "bullets": [
+      [
+        1,
+        1,
+        10,
+        20,
+        30,
+        "pulse",
+        "laser"
+      ]
+    ],
+    "pickups": [
+      {
+        "i": "pickup-1",
+        "pcl": "health",
+        "x": 5,
+        "y": 6
+      }
+    ],
+    "q": 1,
+    "ships": [
+      [
+        1,
+        "v_wing",
+        10,
+        20,
+        30,
+        100,
+        50,
+        false,
+        "player",
+        2
+      ]
+    ],
+    "t": "wf"
+  },
+  "expanded": {
+    "asteroids": [
+      {
+        "health": 90,
+        "id": "asteroid-1",
+        "scale": 1500,
+        "size": 2,
+        "variant": 3,
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "baseline_id": "world-baseline-1",
+    "bullets": [
+      {
+        "id": "bullet-1",
+        "owner_id": "player-1",
+        "projectile_type": "laser",
+        "rotation": 30,
+        "weapon_id": "pulse",
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "chunk_count": 1,
+    "chunk_index": 0,
+    "is_final_chunk": true,
+    "lane": "world",
+    "pickups": [
+      {
+        "id": "pickup-1",
+        "pickup_class": "health",
+        "x": 5,
+        "y": 6
+      }
+    ],
+    "sequence": 1,
+    "ships": [
+      {
+        "health": 100,
+        "id": "player-1",
+        "rotation": 30,
+        "shields": 50,
+        "ship_type": "v_wing",
+        "target_id": "player-2",
+        "target_kind": "player",
+        "thrusting": false,
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "snapshot_id": "world-baseline-1",
+    "snapshot_kind": "full",
+    "type": "world_full"
+  },
+  "name": "world_full_records",
+  "readable": {
+    "asteroids": [
+      {
+        "health": 90,
+        "id": "asteroid-1",
+        "scale": 1500,
+        "size": 2,
+        "variant": 3,
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "bullets": [
+      {
+        "id": "bullet-1",
+        "owner_id": "player-1",
+        "projectile_type": "laser",
+        "rotation": 30,
+        "weapon_id": "pulse",
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "pickups": [
+      {
+        "id": "pickup-1",
+        "pickup_class": "health",
+        "x": 5,
+        "y": 6
+      }
+    ],
+    "sequence": 1,
+    "ships": [
+      {
+        "health": 100,
+        "id": "player-1",
+        "rotation": 30,
+        "shields": 50,
+        "ship_type": "v_wing",
+        "target_id": "player-2",
+        "target_kind": "player",
+        "thrusting": false,
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "type": "world_full"
+  }
+}
