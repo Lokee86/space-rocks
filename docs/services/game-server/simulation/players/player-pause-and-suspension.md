@@ -537,7 +537,7 @@ services/game-server/internal/game/rules/
 services/game-server/internal/rooms/
 services/game-server/internal/networking/
 client/scripts/gameplay/input/
-client/scripts/gameplay/menu/
+client/scripts/shell/gameplay_menu_flow.gd
 client/scripts/devtools/
 ```
 

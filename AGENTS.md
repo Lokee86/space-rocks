@@ -33,20 +33,20 @@ For project memory and recent volatile context:
 For architecture and seam rules:
 
 - `docs/agent/architecture-rules.md`
-- `docs/design/architecture.md`
+- `docs/systems-design/!INDEX.md`
 
 For Godot/editor/client-specific notes:
 
-- `docs/agent/godot-notes.md`
-- `docs/devtools/toggles.md`
-- `docs/design/toroidal-wrap.md`
-- `docs/design/ship-variants.md`
+- `docs/agent/godot-editing.md`
+- `docs/devtools/server/toggles.md`
+- `docs/systems-design/world/toroidal-wrap.md`
+- `docs/systems-design/entities/variants.md`
 
 For server/API/logging details:
 
-- `docs/agent/server-notes.md`
-- `docs/server/logging.md`
-- `docs/api/ruby-api-server.md`
+- `docs/agent/server-editing.md`
+- `docs/services/game-server/observability/logging-and-diagnostics.md`
+- `docs/services/api-server/!INDEX.md`
 
 ## Current Layout Notes
 
@@ -56,13 +56,13 @@ The Go game server lives at:
 services/game-server/
 ```
 
-Its Go module path is still:
+Its Go module path is:
 
 ```text
-github.com/Lokee86/space-rocks/server
+github.com/Lokee86/space-rocks/services/game-server
 ```
 
-That mismatch is intentional for now. Import paths inside the Go server still use `github.com/Lokee86/space-rocks/server/...`.
+The module path matches the `services/game-server/` directory. Import paths inside the Go server use `github.com/Lokee86/space-rocks/services/game-server/...`.
 
 `services/api-server/` exists as a Ruby/Rails API-only scaffold. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
 
@@ -119,7 +119,7 @@ tools/data_sync/
 
 Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active constants. Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets. API-specific output is future/deferred until the Ruby/Rails API-only service grows beyond the scaffold.
 
-Tunable/game-data constants belong in the split constants SoT files under `shared/constants/` and generated scripts under `client/scripts/constants/`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
+Tunable/game-data constants belong in the split constants SoT files under `shared/constants/` and generated scripts under `client/scripts/generated/constants/`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
 
 Packet schema changes should be made in the relevant split packet TOML under `shared/packets/` and pushed with `tools/data_sync`. Edit `shared/packets/outputs.toml` only when changing output routing. Packet pull is intentionally unsupported.
 
@@ -142,12 +142,12 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Keep server websocket/session transport in `services/game-server/internal/networking`.
 - Keep server inbound packet handlers in `services/game-server/internal/networking/inbound`.
 - Keep server outbound packet/write helpers in `services/game-server/internal/networking/outbound`.
-- Keep reusable game simulation in `services/game-server/internal/game`, not `cmd/game-server/main.go`.
+- Keep reusable game simulation in `services/game-server/internal/game`, not `services/game-server/cmd/game-server/main.go`.
 - Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
 - Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active Go/GDScript constants.
 - Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.
-- Route client packet wire JSON through `client/scripts/networking/packet_codec/packet_codec.gd`.
+- Route client packet wire JSON through `client/scripts/networking/packets/packet_codec.gd`.
 - Keep `PlayerID` player-facing and readable, for example `Player-1`/`Player-2`; do not convert it to UUID. UUID upgrades are for server-internal identities such as `SessionID` and `MemberID`.
 - Keep client websocket transport in `client/scripts/networking/network_client.gd`.
 - Keep client inbound server packet dispatch in `client/scripts/networking/inbound`.
@@ -169,30 +169,9 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 
 ## Architecture / Seam Discipline
 
-Read `docs/agent/architecture-rules.md` before adding ownership seams, moving packages/folders, changing lifecycle/networking/game-loop responsibilities, or editing known gravity-well files.
+Read `docs/agent/architecture-rules.md` before adding ownership seams, moving packages/folders, changing lifecycle/networking/game-loop responsibilities, or editing broad coordination files. It is the canonical source for the detailed guardrails.
 
-Core rules:
-
-- Prefer small, explicit ownership seams over broad god files.
-- If a change would add a new responsibility to an already-large file, stop and propose the smallest seam or same-package split first.
-- Do not add new behavior to gravity-well files unless the prompt explicitly allows it.
-- Known gravity-well candidates include broad lifecycle, networking, sync, shell, and game-loop files.
-- When adding a feature, first identify the owning system.
-- If no obvious owner exists, stop and report the missing seam instead of placing code in the nearest working file.
-- Defer mechanics, not ownership.
-- Prefer behavior-preserving extraction before behavior change.
-- Do not mix unrelated seams in one prompt.
-- Every architecture/refactor prompt must preserve current behavior unless it explicitly says behavior may change.
-- Do not add broad cleanup, formatting-only churn, or opportunistic refactors while implementing a seam.
-
-Line-count guardrails for hand-written production files:
-
-- Prefer files under roughly 200 lines when practical.
-- Around 300 lines, check whether the file still has one clear responsibility.
-- Around 350 lines, avoid adding new responsibility unless it clearly belongs there.
-- Around 500 lines, treat actively changing files as split/refactor candidates.
-- Over 500 lines, prefer routing/extraction through an owning seam unless the prompt explicitly says to edit that file.
-- Generated files, Godot `.tscn` scene files, `.tres` resources, vendored addons, fixtures, snapshots, and large declarative data files are exempt.
+Core rules: identify the owning system first; keep policy in that owner and routing/composition thin; create the smallest concrete seam or stop/report when ownership is unclear; prefer behavior-preserving extraction; keep one seam per scoped change; preserve behavior unless explicitly authorized; and avoid unrelated cleanup, churn, refactors, or moves. Stop when the work crosses seams or expands materially. Generated/schema changes and scene/signal rewiring must be explicitly in scope.
 
 ## Where To Look First
 
@@ -219,7 +198,6 @@ Client runtime:
 
 - `client/scripts/shell/gameplay_hud_flow.gd`
 - `client/scripts/shell/gameplay_menu_flow.gd`
-- `client/scripts/shell/gameplay_respawn_flow.gd`
 - `client/scripts/shell/gameplay_runtime_tick_flow.gd`
 - `client/scripts/world/`
 - `client/scripts/world/world_sync.gd`
@@ -231,18 +209,20 @@ Client runtime:
 - `client/scripts/gameplay/runtime/`
 - `client/scripts/gameplay/state/`
 - `client/scripts/gameplay/input/`
-- `client/scripts/gameplay/hud/`
-- `client/scripts/gameplay/menu/`
+- `client/scripts/ui/hud/`
+- `client/scripts/ui/menus/`
+- `client/scripts/ui/menu_flow/`
+- `client/scripts/main_menu/`
 - `client/scripts/gameplay/respawn/`
 - `client/scripts/gameplay/spectate/`
-- `client/scripts/gameplay/background/`
+- `client/scripts/presentation/background/`
 - `client/scripts/gameplay/events/`
 - `client/scripts/gameplay/effects/`
 - `client/scripts/lobby/`
 - `client/scripts/boot/`
 - `client/scripts/config/`
 - `client/scripts/networking/network_client.gd`
-- `client/scripts/networking/packet_codec/packet_codec.gd`
+- `client/scripts/networking/packets/packet_codec.gd`
 - `client/scripts/entities/player.gd`
 - `client/scripts/ui/`
 
@@ -258,7 +238,7 @@ Shared schema/generation:
 - `shared/packets/debug.toml`
 - `shared/packets/lobby.toml`
 - `services/game-server/internal/protocol/packetcodec/`
-- `tools/data_sync/README.md`
+- `tools/data_sync/!README.md`
 - `tools/data_sync/main.py`
 
 ## Agent Behavior Notes
@@ -273,7 +253,7 @@ Shared schema/generation:
 - If a task starts to balloon, stop and report why before adding large amounts of code.
 - Preserve current behavior unless the user explicitly asks to change it.
 - Keep implementation slices small enough for quick review.
-- Before editing a known gravity-well file, use the line-count guardrails above as judgment, but do not run `wc -l` unless the prompt allows terminal commands.
+- Before editing a known gravity-well file, use the line-count guardrails in `docs/agent/architecture-rules.md` as judgment, but do not run `wc -l` unless the prompt allows terminal commands.
 - Implementation prompts must not broaden scope beyond the named target.
 - If broader work appears necessary, stop and propose a follow-up prompt.
 - Do not produce no-work prompts. Verification belongs in commands/checkpoints, not in separate agent prompts.

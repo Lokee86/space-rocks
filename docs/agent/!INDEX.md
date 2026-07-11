@@ -35,6 +35,7 @@ This folder does not own:
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [architecture-rules.md](architecture-rules.md) - Architecture and seam-editing guardrails.
 - [client-editing.md](client-editing.md) - Client editing guardrails.
 - [current-context.md](current-context.md) - Volatile current context.
 - [documentation-editing.md](documentation-editing.md) - Documentation editing guidance.

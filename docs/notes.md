@@ -13,10 +13,10 @@ Use these instead of expanding this file:
 - Developer workflow: `docs/developer.md`
 - Testing and verification: `docs/agent/testing.md`
 - Architecture rules: `docs/agent/architecture-rules.md`
-- Godot-specific notes: `docs/agent/godot-notes.md`
-- Server-specific notes: `docs/agent/server-notes.md`
+- Godot-specific notes: `docs/agent/godot-editing.md`
+- Server-specific notes: `docs/agent/server-editing.md`
 - Current volatile context: `docs/agent/current-context.md`
-- Devtools toggles: `docs/devtools/toggles.md`
+- Devtools toggles: `docs/devtools/server/toggles.md`
 - Data sync: `docs/data/data-sync-and-ssot-pipeline.md`
 - Toroidal wrap: `docs/systems-design/world/toroidal-wrap.md`
 - Ship variants: `docs/systems-design/entities/variants.md`
@@ -28,7 +28,7 @@ Use these instead of expanding this file:
 - Do not duplicate canonical architecture or workflow details here.
 - Do not document generated file paths here unless this file is being used only as a temporary parking lot.
 - Do not document packet schema locations here; use `docs/developer.md` and `docs/data/data-sync-and-ssot-pipeline.md`.
-- Do not document devtool key bindings here; use `docs/devtools/toggles.md`.
+- Do not document devtool key bindings here; use `docs/devtools/server/toggles.md`.
 - Delete or move notes once they become stable enough for a focused doc.
 
 ## Parking Lot
