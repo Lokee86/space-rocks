@@ -44,6 +44,22 @@ func test_non_integer_sequences_are_rejected() -> void:
 		assert_eq(decision.status, LifecycleLaneGate.DECISION_REJECT)
 
 
+func test_integral_float_sequence_is_accepted_and_normalized() -> void:
+	var gate := LifecycleLaneGate.new()
+	var decision := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(1.0), true, "world-baseline-1")
+
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_APPLY)
+	assert_eq(decision.sequence, 1)
+	assert_eq(typeof(decision.sequence), TYPE_INT)
+
+
+func test_negative_sequence_is_rejected() -> void:
+	var gate := LifecycleLaneGate.new()
+	var decision := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(-1.0), true, "world-baseline-1")
+
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_REJECT)
+
+
 func test_missing_and_empty_baseline_ids_are_rejected() -> void:
 	var gate := LifecycleLaneGate.new()
 	var missing := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, {"sequence": 1}, true, "world-baseline-1")
@@ -63,6 +79,14 @@ func test_unsupported_lane_is_rejected() -> void:
 func test_mark_applied_rejects_the_same_sequence() -> void:
 	var gate := LifecycleLaneGate.new()
 	gate.mark_applied(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, 3)
+	var decision := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(3), true, "world-baseline-1")
+
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_REJECT)
+
+
+func test_mark_applied_accepts_integral_float_sequence() -> void:
+	var gate := LifecycleLaneGate.new()
+	gate.mark_applied(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, 3.0)
 	var decision := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(3), true, "world-baseline-1")
 
 	assert_eq(decision.status, LifecycleLaneGate.DECISION_REJECT)
@@ -110,9 +134,9 @@ func test_queued_packets_are_returned_only_for_matching_baseline() -> void:
 
 func test_asteroid_packets_drain_in_ascending_sequence_order() -> void:
 	var gate := LifecycleLaneGate.new()
-	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5), false, "world-baseline-2")
-	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(2), false, "world-baseline-2")
-	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(9), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5, "world-baseline-2"), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(2, "world-baseline-2"), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(9, "world-baseline-2"), false, "world-baseline-2")
 
 	var drained := gate.take_pending_for_baseline("world-baseline-2")
 
@@ -121,9 +145,9 @@ func test_asteroid_packets_drain_in_ascending_sequence_order() -> void:
 
 func test_bullet_packets_drain_in_ascending_sequence_order() -> void:
 	var gate := LifecycleLaneGate.new()
-	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(6), false, "world-baseline-2")
-	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(1), false, "world-baseline-2")
-	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(4), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(6, "world-baseline-2"), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(1, "world-baseline-2"), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(4, "world-baseline-2"), false, "world-baseline-2")
 
 	var drained := gate.take_pending_for_baseline("world-baseline-2")
 
@@ -132,8 +156,8 @@ func test_bullet_packets_drain_in_ascending_sequence_order() -> void:
 
 func test_different_lifecycle_lanes_are_not_ordered_against_each_other() -> void:
 	var gate := LifecycleLaneGate.new()
-	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(1), false, "world-baseline-2")
-	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(9), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_BULLETS_LIFECYCLE, _packet(1, "world-baseline-2"), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(9, "world-baseline-2"), false, "world-baseline-2")
 
 	var drained := gate.take_pending_for_baseline("world-baseline-2")
 
@@ -151,10 +175,25 @@ func test_already_pending_lane_sequence_is_rejected_as_duplicate() -> void:
 
 func test_draining_removes_pending_duplicate_tracking() -> void:
 	var gate := LifecycleLaneGate.new()
-	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(3), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(3, "world-baseline-2"), false, "world-baseline-2")
 	gate.take_pending_for_baseline("world-baseline-2")
-	var resubmitted := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(3), false, "world-baseline-2")
+	var resubmitted := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(3, "world-baseline-2"), false, "world-baseline-2")
 
+	assert_eq(resubmitted.status, LifecycleLaneGate.DECISION_QUEUE)
+
+
+func test_queued_integral_float_sequences_drain_in_order_and_clear_duplicates() -> void:
+	var gate := LifecycleLaneGate.new()
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5.0, "world-baseline-2"), false, "world-baseline-2")
+	gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(2.0, "world-baseline-2"), false, "world-baseline-2")
+
+	var duplicate := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5), false, "world-baseline-3")
+	assert_eq(duplicate.status, LifecycleLaneGate.DECISION_REJECT)
+
+	var drained := gate.take_pending_for_baseline("world-baseline-2")
+	assert_eq([drained[0].sequence, drained[1].sequence], [2, 5])
+
+	var resubmitted := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5, "world-baseline-2"), false, "world-baseline-2")
 	assert_eq(resubmitted.status, LifecycleLaneGate.DECISION_QUEUE)
 
 
@@ -191,7 +230,7 @@ func test_unparseable_baseline_remains_bounded_not_obsolete() -> void:
 func test_per_lane_packet_overflow_discards_oldest_packet() -> void:
 	var gate := LifecycleLaneGate.new()
 	for sequence in range(1, 10):
-		gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(sequence), false, "world-baseline-2")
+		gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(sequence, "world-baseline-2"), false, "world-baseline-2")
 
 	var drained := gate.take_pending_for_baseline("world-baseline-2")
 

@@ -289,6 +289,17 @@ Lane packet metadata always carries:
 - `sequence`
 - `server_sent_msec`
 
+The lifecycle wire contract is explicit. `asteroids_lifecycle` and `bullets_lifecycle` emit:
+
+- `lane`
+- `sequence`
+- `baseline_id`
+- `snapshot_id`
+- `snapshot_kind`
+- `server_sent_msec`
+
+For lifecycle candidates, `baseline_id` is inherited from the world baseline used to project the candidate. It is required so the client can gate lifecycle application on the matching world baseline. Each lifecycle lane has its own lane-local sequence, and lifecycle packets are not chunked. Reliable/ordered delivery on `sr.asteroids.lifecycle` or `sr.bullets.lifecycle` orders messages only within that DataChannel; it does not establish ordering relative to `sr.world`.
+
 Active runtime world/overlay/session lane packets may also carry inferred-or-conditional metadata when needed:
 
 - `lane` when not inferred from `type`
@@ -298,6 +309,8 @@ Active runtime world/overlay/session lane packets may also carry inferred-or-con
 - `snapshot_kind` when not inferred from `type`
 - `chunk_index` and `chunk_count` when `chunk_count > 1`
 - `is_final_chunk` is inferred by the client from `chunk_index`/`chunk_count` when absent and may be emitted on chunked hot-lane packets when needed by the runtime or debug path.
+
+The lifecycle exception above is intentional: lifecycle packets are not grouped with active runtime families whose redundant lane/baseline metadata may be inferred, or whose numeric dependency may be represented by `baseline_sequence`.
 
 `event_batch` now uses compact envelope keys and sparse nested event records. It remains one ordered batch of pending presentation events, not one packet per event. It does not use baselines, deltas, state snapshots, or chunking, and this section does not claim any future scheduler or transport behavior.
 The packet-shape details for those lane packets belong in the realtime protocol doc. This service doc only keeps the outbound delivery boundary and the current lane roles.
@@ -517,6 +530,7 @@ The documented focused test paths for outbound routing are:
 - `services/game-server/tests/game/pause_test.go`
 - `services/game-server/internal/networking/packetmetrics/*_test.go`
 - `services/game-server/internal/protocol/realtime/*_test.go`
+- `services/game-server/internal/protocol/realtime/wire_packets_test.go` - lifecycle wire metadata coverage.
 
 ## Related docs
 
@@ -532,5 +546,3 @@ The documented focused test paths for outbound routing are:
 - [Data](../../../data/!INDEX.md)
 - [Realtime Protocol Architecture](../../../planning/protocol/realtime-protocol-architecture.md)
 - [Network Observability And Packet Budget](../../../planning/domains/technical/network-observability-and-packet-budget.md)
-
-

@@ -57,7 +57,7 @@ String fields that are only loosely associated with an entity or record keep the
 
 ## Runtime Metadata Inference
 
-For active realtime world, asteroid, bullet, overlay, and session packet families, the preferred outbound wire shape now omits runtime metadata the client can infer.
+For active realtime world, asteroid, bullet, overlay, and session packet families, the preferred outbound wire shape now omits runtime metadata the client can infer. This broad inference claim explicitly excludes `asteroids_lifecycle` and `bullets_lifecycle`.
 
 The client derives:
 
@@ -75,6 +75,10 @@ When those fields are absent, the client treats the packet as a single final chu
 
 For `asteroid_delta` and `bullet_delta`, `chunk_index` and `chunk_count` are emitted when a hot movement update list is split into multiple candidate chunks. All chunks for one original hot-lane delta share the same lane-local sequence and differ by `chunk_index`.
 The client tracks accepted chunk indices separately for each hot lane and sequence, accepts distinct chunks in any arrival order, rejects duplicate chunk indices, and discards older sequences after a newer sequence is accepted.
+
+Lifecycle metadata exception:
+
+`asteroids_lifecycle` and `bullets_lifecycle` explicitly emit `lane`, `sequence`, `baseline_id`, `snapshot_id`, `snapshot_kind`, and `server_sent_msec`. Their compact keys are `l`, `q`, `b`, `sid`, `k`, and `ms`. Lifecycle packets are not allowed to rely on the runtime inference rules above because `LifecycleLaneGate` uses the explicit lane and world-baseline identity before applying or queuing the packet.
 
 ## Compact Packet Type Values
 
@@ -109,7 +113,7 @@ These remain documented for backward-compatible decode support and for contexts 
 
 ## Metadata Keys
 
-Preferred active runtime output for world/asteroid/bullet/overlay/session gameplay lanes:
+Preferred active runtime output for world/asteroid/bullet/overlay/session gameplay lanes, excluding lifecycle packets:
 
 - `type` -> `t`
 - `sequence` -> `q`
@@ -127,6 +131,8 @@ Legacy or backward-compatible decode support still accepted by the client:
 - `is_final_chunk` -> `fc` when emitted as conditional runtime metadata for chunked hot-lane packets, and remains accepted for backward-compatible decode support
 
 For active runtime world/overlay/session packets, `baseline_id` is only emitted when a delta packet cannot express its dependency as a numeric baseline sequence or when full-packet metadata cannot be represented by the current inferred format safely.
+
+For lifecycle packets, `b` is always the explicit `baseline_id` of the world projection used to build the lifecycle candidate. It is the world baseline dependency, not an independent asteroid or bullet lifecycle baseline. Lifecycle packets do not participate independently in gameplay readiness.
 
 ## World Delta Section Keys
 
@@ -202,13 +208,13 @@ Non-integer float values and unsupported values remain unchanged.
 ### Compact Lifecycle Examples
 
 ```json
-{"t":"al","q":1,"ac":[[1,10,20,2,90,1500,3]]}
+{"t":"al","l":"al","q":1,"b":"world-baseline-7","sid":"asteroids-lifecycle-snapshot-1","k":"d","ms":123456,"ac":[[1,10,20,2,90,1500,3]],"ax":[1]}
 ```
 
 Readable packet type: `asteroids_lifecycle`
 
 ```json
-{"t":"bl","q":2,"bc":[[1,"player-1",10,20,30,"torpedo","torpedo"]]}
+{"t":"bl","l":"bl","q":2,"b":"world-baseline-7","sid":"bullets-lifecycle-snapshot-2","k":"d","ms":123457,"bc":[[1,"player-1",10,20,30,"torpedo","torpedo"]],"bx":[1]}
 ```
 
 Readable packet type: `bullets_lifecycle`
@@ -545,7 +551,7 @@ The current implementation does not use binary encoding for events.
 
 - Server readable lane maps are still built by `WireLanePacket`.
 - `CompactWirePacket` applies compact keys, compact values, shared ID compaction, and tuple packing only at the final outbound encode boundary.
-- Active outbound compacting currently applies to world, asteroid, bullet, overlay, session, and `event_batch` realtime packet families.
+- Active outbound compacting currently applies to world, asteroid, bullet, overlay, session, lifecycle, and `event_batch` realtime packet families; lifecycle packets are the explicit-metadata exception to runtime metadata inference.
 - Generated control-lane resync packet families are not compacted in this pass unless implementation changes.
 - `PacketCodec.decode` performs the first compact expansion before packet envelope validation. `RealtimeRouter` may defensively normalize already-expanded packets, but it is not the first decode boundary.
 - Legacy long-key packets remain accepted during the transition.
@@ -563,13 +569,15 @@ The current implementation does not use binary encoding for events.
 - `services/game-server/internal/protocol/realtime/active.go`
 - `client/scripts/networking/packets/packet_codec.gd`
 - `client/scripts/protocol/realtime/compact_lane_packet.gd`
-- `client/scripts/protocol/realtime/realtime_router.gd` - Defensive/idempotent normalization after decode, if still present in implementation.
+- `client/scripts/protocol/realtime/realtime_router.gd`
+- `client/scripts/protocol/realtime/lifecycle_lane_gate.gd`
 
 ## Tests
 
 - `services/game-server/internal/protocol/realtime/compact_wire_packet_test.go`
+- `services/game-server/internal/protocol/realtime/wire_packets_test.go` lifecycle metadata coverage
 - `services/game-server/internal/protocol/realtime/active_test.go`
 - `client/tests/unit/protocol/realtime/test_compact_lane_packet.gd`
+- `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`
 - `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
 - PacketCodec compact decode coverage in `client/tests/unit/test_packet_codec.gd`
-

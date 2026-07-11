@@ -90,6 +90,8 @@ Entity lifecycle ownership is split by entity family. The world lane owns player
 Lower-sequence `asteroid_delta` and `bullet_delta` packets are rejected by client hot-lane sequence guards. Same-sequence packets are valid only for distinct `chunk_index` values of the same `chunk_count`; duplicate chunk indices are rejected. Sequence gaps remain valid because hot packets can be dropped.
 ```
 
+Ordered/reliable delivery is scoped to one DataChannel only. It does not order `sr.world` against `sr.asteroids.lifecycle` or `sr.bullets.lifecycle`, and it does not order a lifecycle channel against its corresponding unordered hot channel. The world/lifecycle race is therefore expected: a lifecycle packet may arrive before the matching `world_full` or after a hot update. The lifecycle packet's explicit world `baseline_id` determines whether the client can apply it now or must keep it pending.
+
 
 ## Active Gameplay Readiness
 
@@ -139,12 +141,14 @@ WebRTCTransport receives DataChannel text
 -> ClientInboundCoordinator
 -> matching typed RealtimePacketPipeline.apply_* method
 -> RealtimeRouter.route_lane_packet(packet)
+-> lifecycle packet: LifecycleLaneGate apply / queue / reject
+-> lifecycle apply: WorldLaneApplier validates and mutates WorldLaneState
 -> RealtimePresentationState refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`.
+The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`. Lifecycle routing submits explicit lane, sequence, and world-baseline metadata to `LifecycleLaneGate`; a completed matching `world_full` records the active world baseline and drains pending packets for that baseline, sorted within each lifecycle lane.
 
 `RealtimeTransportSession` owns the WebRTC transport lifecycle and transport-originated callbacks. `ClientConnectionService` configures the transport-session dispatch callback but does not inspect or relay each gameplay packet. `ServerPacketDispatcher` emits the typed gameplay signal to `ClientInboundCoordinator`, which invokes the matching typed `RealtimePacketPipeline` apply method. The pipeline expands and validates the packet, refreshes `RealtimePresentationState`, and emits `gameplay_packet_applied(packet)`. `PresentationBridge` consumes that semantic notification with later coalesced flush when ready.
 
@@ -224,7 +228,7 @@ Tests or alternate composition paths that need normal startup must provide trans
 
 Connection teardown closes the previous session transport. A later connection uses transport_factory to create a fresh WebRTCTransport, rewires its signals, and starts it. Packets emitted by the replacement transport re-enter the same dispatcher and gameplay application path as packets from the original transport.
 
-Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset.
+Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending packets, pending duplicate tracking, and latest applied lifecycle sequences; it does not provide lifecycle resync or reconnect recovery.
 
 ## Hot Movement Split
 
@@ -286,3 +290,5 @@ Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing
 * [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md)
 * [Outbound Message Flow](../services/game-server/networking/outbound-message-flow.md)
 * [Lane Packet Projection](../services/game-server/simulation/runtime/lane-packet-projection.md)
+
+Lifecycle transport implementation and verification references include `client/scripts/protocol/realtime/lifecycle_lane_gate.gd`, `client/scripts/protocol/realtime/realtime_router.gd`, `client/scripts/networking/realtime/realtime_packet_pipeline.gd`, `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, and the server lifecycle wire metadata tests in `services/game-server/internal/protocol/realtime/wire_packets_test.go`.

@@ -703,4 +703,3 @@ The command surface deliberately keeps interpretation in `internal/devtools` and
 `debug_respawn_player` currently receives position fields but applies a server-selected safe respawn position. Do not document the payload position as authoritative respawn placement unless the implementation changes.
 
 When adding a new command, update packet source data, generated outputs, inbound routing, command classification, handler dispatch, Controller dispatch, capability interfaces, Control implementation, client send paths, and focused tests together.
-

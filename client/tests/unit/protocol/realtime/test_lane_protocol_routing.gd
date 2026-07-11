@@ -143,6 +143,8 @@ func test_asteroids_lifecycle_routes_into_world_lane_state() -> void:
 	router.route_lane_packet({
 		"type": "asteroids_lifecycle",
 		"lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
+		"sequence": 1,
+		"baseline_id": "world-baseline-1",
 		"asteroid_creates": [{"id": "asteroid-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}],
 		"asteroid_deletes": [],
 	})
@@ -159,6 +161,8 @@ func test_bullets_lifecycle_routes_into_world_lane_state() -> void:
 	router.route_lane_packet({
 		"type": "bullets_lifecycle",
 		"lane": LaneMetadata.LANE_BULLETS_LIFECYCLE,
+		"sequence": 1,
+		"baseline_id": "world-baseline-1",
 		"bullet_creates": [{"id": "bullet-1", "owner_id": "player-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 30, "lifespan_seconds": 1.0, "weapon_id": "torpedo", "projectile_type": "torpedo"}],
 		"bullet_deletes": [],
 	})
@@ -309,7 +313,8 @@ func test_obsolete_lifecycle_baselines_cannot_mutate_current_world() -> void:
 func test_compact_asteroids_lifecycle_routes_into_world_lane_state() -> void:
 	var router := RealtimeRouter.new()
 
-	router.route_lane_packet({"t": "al", "l": "al", "q": 1, "k": "d", "ac": [[1, 10, 20, 2, 90, 1500, 3]]})
+	router.route_lane_packet({"t": "wf", "l": "w", "q": 1, "b": "world-baseline-1", "sid": "world-snapshot-1", "fc": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	router.route_lane_packet({"t": "al", "l": "al", "q": 1, "b": "world-baseline-1", "k": "d", "ac": [[1, 10, 20, 2, 90, 1500, 3]]})
 
 	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
 	assert_eq(router.world_lane_state.asteroids["asteroid-1"]["variant"], 3)
@@ -318,7 +323,8 @@ func test_compact_asteroids_lifecycle_routes_into_world_lane_state() -> void:
 func test_compact_bullets_lifecycle_routes_into_world_lane_state() -> void:
 	var router := RealtimeRouter.new()
 
-	router.route_lane_packet({"t": "bl", "l": "bl", "q": 1, "k": "d", "bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]]})
+	router.route_lane_packet({"t": "wf", "l": "w", "q": 1, "b": "world-baseline-1", "sid": "world-snapshot-1", "fc": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	router.route_lane_packet({"t": "bl", "l": "bl", "q": 1, "b": "world-baseline-1", "k": "d", "bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]]})
 
 	assert_true(router.world_lane_state.bullets.has("bullet-1"))
 	assert_eq(router.world_lane_state.bullets["bullet-1"]["projectile_type"], "torpedo")
@@ -327,10 +333,34 @@ func test_compact_bullets_lifecycle_routes_into_world_lane_state() -> void:
 func test_compact_bullets_lifecycle_delete_removes_bullet() -> void:
 	var router := RealtimeRouter.new()
 
-	router.route_lane_packet({"t": "bl", "l": "bl", "q": 1, "k": "d", "bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]]})
-	router.route_lane_packet({"t": "bl", "l": "bl", "q": 2, "k": "d", "bx": [1]})
+	router.route_lane_packet({"t": "wf", "l": "w", "q": 1, "b": "world-baseline-1", "sid": "world-snapshot-1", "fc": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	router.route_lane_packet({"t": "bl", "l": "bl", "q": 1, "b": "world-baseline-1", "k": "d", "bc": [[1, "player-1", 10, 20, 30, "torpedo", "torpedo"]]})
+	router.route_lane_packet({"t": "bl", "l": "bl", "q": 2, "b": "world-baseline-1", "k": "d", "bx": [1]})
 
 	assert_false(router.world_lane_state.bullets.has("bullet-1"))
+
+
+func test_packet_codec_decoded_lifecycle_creates_asteroid_and_bullet_entities() -> void:
+	var router := RealtimeRouter.new()
+
+	var world_packet := _decode_fixture("{\"t\":\"wf\",\"l\":\"w\",\"q\":1,\"ships\":[],\"bullets\":[],\"asteroids\":[],\"pickups\":[]}")
+
+	assert_eq(typeof(world_packet["sequence"]), TYPE_FLOAT)
+	assert_eq(world_packet["baseline_id"], "world-baseline-1")
+
+	router.route_lane_packet(world_packet)
+
+	var asteroid_packet := _decode_fixture("{\"t\":\"al\",\"l\":\"al\",\"q\":1,\"b\":\"world-baseline-1\",\"k\":\"d\",\"ac\":[[1,10,20,2,90,1500,3]]}")
+	var bullet_packet := _decode_fixture("{\"t\":\"bl\",\"l\":\"bl\",\"q\":1,\"b\":\"world-baseline-1\",\"k\":\"d\",\"bc\":[[1,\"player-1\",10,20,30,\"torpedo\",\"torpedo\"]]}")
+
+	assert_eq(typeof(asteroid_packet["sequence"]), TYPE_FLOAT)
+	assert_eq(typeof(bullet_packet["sequence"]), TYPE_FLOAT)
+
+	router.route_lane_packet(asteroid_packet)
+	router.route_lane_packet(bullet_packet)
+
+	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
+	assert_true(router.world_lane_state.bullets.has("bullet-1"))
 
 
 func _decode_fixture(text: String) -> Dictionary:

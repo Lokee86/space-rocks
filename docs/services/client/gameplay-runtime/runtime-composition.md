@@ -30,7 +30,7 @@ GameplaySessionController
 
 `GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, and logger.
 
-`GameplaySessionController` connects `RealtimePacketPipeline.gameplay_packet_applied` directly to `GameplayComposition.handle_gameplay_packet`.
+`GameplaySessionController` connects `RealtimePacketPipeline.gameplay_packet_applied` to `PresentationBridge.handle_gameplay_packet`. `GameplayComposition` supplies the presentation targets and focused entry points that the bridge uses; it is not the direct signal consumer.
 
 `PresentationBridge` is the dedicated orchestration seam. `GameplaySessionController` activates, resets, and flushes it with the gameplay session lifecycle.
 
@@ -136,7 +136,7 @@ The session controller owns the outer lifecycle. Composition owns gameplay runti
 
 ### Lane-native presentation entries
 
-Runtime composition participates after `RealtimePacketPipeline` emits `gameplay_packet_applied`. `GameplaySessionController` drives `PresentationBridge` activation, frame flushing, and reset, and the gameplay packet signal is routed directly to `GameplayComposition.handle_gameplay_packet` instead of being relayed by the session controller.
+Runtime composition participates after `RealtimePacketPipeline` emits `gameplay_packet_applied`. `GameplaySessionController` drives `PresentationBridge` activation, frame flushing, and reset. The signal route is `RealtimePacketPipeline.gameplay_packet_applied` -> `PresentationBridge.handle_gameplay_packet`; `GameplayComposition` supplies the concrete presentation targets and focused entry points rather than consuming the signal directly.
 
 Current lane-native delegation surfaces are:
 

@@ -34,6 +34,8 @@ The current generated recovery packet families are resync_request and resync_req
 
 This doc summarizes gameplay packet ownership and the high-level packet families only.
 
+Lifecycle packet behavior at this boundary is: `asteroids_lifecycle` and `bullets_lifecycle` each maintain an independent strict lifecycle sequence; each packet must include explicit `lane`, `sequence`, `baseline_id`, `snapshot_id`, `snapshot_kind`, and `server_sent_msec` metadata; and `baseline_id` names the world baseline used to build the candidate. The client applies a lifecycle packet immediately only when the world is synced to that baseline, queues it otherwise, and rejects unsupported lanes, malformed packets, missing/empty baselines, invalid sequences, and duplicate or lower sequences. Sequence gaps are valid. Lifecycle packets are not chunked, so same-sequence lifecycle packets do not receive the distinct-chunk exception used by hot `asteroid_delta` and `bullet_delta` packets. Detailed gate bounds, drain ordering, and reset behavior remain canonical in the realtime protocol document.
+
 ## Packet families
 
 Active server-to-client gameplay packet families are:
@@ -160,7 +162,7 @@ WebRTCTransport receives DataChannel text for active gameplay lane packets
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> EventBatchApplier
 ```
-Realtime lane packets are owned by the realtime inbound pipeline and are not re-emitted through the connection-service shell. `ClientInboundCoordinator` does not mutate gameplay state itself, but it owns dispatcher-consumer bindings for every realtime gameplay family. Those bindings invoke the typed `RealtimePacketPipeline` apply methods for world, asteroid, bullet, lifecycle, overlay, session, event, and resync packets. `RealtimePacketPipeline` and its owned `RealtimeRouter` own packet and lane-state application before `PresentationBridge` handles the semantic applied notification. Presentation flow continues through gameplay composition and `event_batch` application.
+Realtime lane packets are owned by the realtime inbound pipeline and are not re-emitted through the connection-service shell. `ClientInboundCoordinator` does not mutate gameplay state itself, but it owns dispatcher-consumer bindings for every realtime gameplay family. Those bindings invoke the typed `RealtimePacketPipeline` apply methods for world, asteroid, bullet, lifecycle, overlay, session, event, and resync packets. `RealtimePacketPipeline` and its owned `RealtimeRouter` own packet and lane-state application before `PresentationBridge` handles the semantic applied notification. Lifecycle packets route through `LifecycleLaneGate` for apply/queue/reject decisions, then `WorldLaneApplier` validates the accepted payload and mutates `WorldLaneState`. Presentation flow continues through gameplay composition and `event_batch` application.
 
 Lifecycle packets are applied through RealtimePacketPipeline and its owned RealtimeRouter before presentation handoff, so entity existence and identity are established before session and presentation handling.
 
@@ -276,7 +278,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-Relevant verification areas now include lane-native packet routing/application, lifecycle packet routing/application, sparse delta omission, quantized wire values, compact alias mapping, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
+Relevant verification areas now include lane-native packet routing/application, lifecycle packet routing/application, `test_lifecycle_lane_gate.gd` coverage for baseline and sequence policy, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, server lifecycle wire metadata coverage in `wire_packets_test.go`, sparse delta omission, quantized wire values, compact alias mapping, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
 
 ## Code map
 
@@ -300,7 +302,10 @@ client/scripts/networking/inbound/client_inbound_coordinator.gd
 client/scripts/networking/inbound/server_packet_dispatcher.gd
 client/scripts/networking/inbound/server_packet_router.gd
 client/scripts/networking/realtime/realtime_packet_pipeline.gd
-client/scripts/networking/realtime/realtime_router.gd
+client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/lifecycle_lane_gate.gd
+client/scripts/protocol/realtime/baseline_tracker.gd
+client/scripts/protocol/realtime/world_lane_applier.gd
 client/scripts/networking/realtime/realtime_presentation_state.gd
 client/scripts/session/session_network_controller.gd
 client/scripts/session/gameplay_session_controller.gd

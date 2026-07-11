@@ -295,7 +295,7 @@ sequence
 server_sent_msec
 ```
 
-For active world, asteroid, bullet, overlay, and session runtime packets where the fields are present, the client infers additional metadata when the server omits redundant fields:
+For active world, asteroid, bullet, overlay, and session runtime packets where the fields are present, the client infers additional metadata when the server omits redundant fields. This inference rule does not apply to `asteroids_lifecycle` or `bullets_lifecycle` packets; lifecycle metadata is explicit because the gate must validate the packet's lane and world-baseline dependency before application:
 
 ```text
 lane
@@ -319,6 +319,19 @@ chunk_index / chunk_count
 is_final_chunk
   inferred from chunk_index and chunk_count
 ```
+
+Lifecycle packets explicitly carry all gate-relevant metadata:
+
+```text
+lane
+sequence
+baseline_id
+snapshot_id
+snapshot_kind
+server_sent_msec
+```
+
+Lifecycle `baseline_id` is the world baseline identity inherited from the world projection used to build the lifecycle candidate. Lifecycle lanes do not own independent full baselines and do not participate independently in gameplay readiness. Their compact forms use `l`, `q`, `b`, `sid`, `k`, and `ms`; they are not grouped with runtime families whose lane or baseline metadata may be inferred.
 
 Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world, asteroid, bullet, overlay, and session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output, and it remains excluded from baseline/delta/chunk metadata. Control-lane resync packets keep their own current metadata behavior.
 
@@ -485,6 +498,22 @@ It carries create identity such as variant, size, health, scale, and initial pos
 
 It is not a hot movement lane.
 
+### Lifecycle synchronization and ordering
+
+`asteroids_lifecycle` and `bullets_lifecycle` each have an independent strict lifecycle sequence. The two lifecycle sequences are separate from the world sequence, the hot asteroid sequence, the hot bullet sequence, and each other. Reliable/ordered delivery orders messages only within one DataChannel: there is no ordering guarantee between `sr.world` and either lifecycle channel, or between either lifecycle channel and its hot channel.
+
+`RealtimeRouter` submits each lifecycle packet to `LifecycleLaneGate`. A packet applies immediately only when the world is synced and its explicit `baseline_id` matches the active world baseline; otherwise it is queued. Unsupported lanes, non-dictionary packets, missing or empty `baseline_id`, missing sequence, negative sequence, non-integral numeric sequence, strings, and booleans are rejected at the gate. Non-negative integral numeric values such as `1.0` are normalized to integer sequence `1`.
+
+Duplicate or lower lifecycle sequences are rejected when `sequence <= latest applied`. Sequence gaps are valid. Lifecycle lanes are not chunked, so a same-sequence lifecycle packet never receives the distinct-chunk exception used by hot lanes. `WorldLaneApplier` owns lifecycle payload validation and `WorldLaneState` mutation after gate acceptance; it does not own lifecycle baseline or sequence policy.
+
+After a matching `world_full` is completely applied and its baseline is recorded, `RealtimeRouter` drains pending packets for that baseline, sorting packets ascending within each lifecycle lane. There is no ordering contract between the two lifecycle lanes. A lifecycle sequence advances only after `WorldLaneApplier` successfully validates and mutates the payload.
+
+The pending gate is bounded to four baseline buckets and eight packets per lifecycle lane per baseline. Per-lane overflow discards the oldest packet; bucket overflow discards the oldest non-active bucket. Parsed `world-baseline-N` buckets older than the active baseline are discarded. Newer and unparseable baseline IDs remain pending until drained or evicted by those bounds. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending queues, pending duplicate tracking, and latest applied lifecycle sequences.
+
+`BaselineTracker` continues to track only world, overlay, and session state. It supplies world synced state and the active world baseline identity; `record_delta` remains ordinary world/overlay/session baseline tracking and is not the lifecycle gate. Lifecycle lanes do not add independent readiness requirements.
+
+Lifecycle gate failure behavior is local client rejection or bounded queue eviction. It does not add ack, resend, reconnect recovery, durable queues, lifecycle resync, or stale-`world_full` protection.
+
 ### Bullet lifecycle lane packets
 
 `bullets_lifecycle` carries:
@@ -520,10 +549,16 @@ Compact asteroid example:
 
 The client expands the tuple-packed asteroid record back into a readable dictionary before world lane application. The client expands ID `1` to `asteroid-1`.
 
+Compact asteroid lifecycle example:
+
+```json
+{"t":"al","l":"al","q":1,"b":"world-baseline-7","sid":"asteroids-lifecycle-snapshot-1","k":"d","ms":123455,"ac":[[1,10,20,2,90,1500,3]],"ax":[1]}
+```
+
 Compact bullet lifecycle example:
 
 ```json
-{"t":"bl","q":2,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
+{"t":"bl","l":"bl","q":2,"b":"world-baseline-7","sid":"bullets-lifecycle-snapshot-2","k":"d","ms":123456,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
 ```
 
 The client expands the tuple-packed bullet lifecycle records back into readable dictionaries before bullet lifecycle application.
@@ -884,8 +919,8 @@ Lane application responsibilities are split by lane:
 
 ```text
 world lane -> ships, pickups, world/full/bootstrap presentation state
-asteroids_lifecycle -> asteroid creates/deletes through WorldLaneApplier.apply_asteroids_lifecycle
-bullets_lifecycle -> bullet creates/deletes through WorldLaneApplier.apply_bullets_lifecycle
+asteroids_lifecycle -> RealtimeRouter -> LifecycleLaneGate -> apply/queue/reject -> WorldLaneApplier.apply_asteroids_lifecycle
+bullets_lifecycle -> RealtimeRouter -> LifecycleLaneGate -> apply/queue/reject -> WorldLaneApplier.apply_bullets_lifecycle
 asteroid_delta -> regular asteroid movement updates through hot sequence guards
 bullet_delta -> regular bullet movement updates through hot sequence guards
 overlay lane -> receiver and HUD state
@@ -1337,6 +1372,8 @@ client/scripts/networking/packets/packet_codec.gd
 client/scripts/protocol/realtime/compact_lane_packet.gd
 client/scripts/protocol/realtime/world_lane_applier.gd
 client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/lifecycle_lane_gate.gd
+client/scripts/protocol/realtime/baseline_tracker.gd
 client/scripts/networking/packets/packet_encode_result.gd
 client/scripts/networking/packets/packet_decode_result.gd
 ```
@@ -1485,7 +1522,7 @@ services/game-server/internal/networking/outbound/debug_shape_catalog_presentati
 services/game-server/internal/protocol/realtime/*_test.go
 ```
 
-Realtime protocol tests cover sparse delta omission in `wire_packets_test.go`, world/overlay/session wire delta serialization, quantized wire values, and planner baseline/delta behavior.
+Realtime protocol tests cover sparse delta omission in `wire_packets_test.go`, world/overlay/session wire delta serialization, quantized wire values, and planner baseline/delta behavior. Lifecycle coverage includes `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset state replacement/clear coverage, and server lifecycle metadata tests in `services/game-server/internal/protocol/realtime/wire_packets_test.go`.
 
 Relevant client tests include:
 
@@ -1503,6 +1540,7 @@ client/tests/unit/test_target_request_flow.gd
 client/tests/unit/devtools/telemetry/test_network_telemetry_metrics.gd
 client/tests/unit/devtools/telemetry/test_world_telemetry_context.gd
 client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd
+client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd
 client/tests/unit/protocol/realtime/test_world_lane_applier.gd
 client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd
 client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd
@@ -1557,23 +1595,3 @@ Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCK
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.
 
 The generated packet schema defines the shared packet vocabulary, but service implementation still determines runtime consequences. New packets should update source TOML, generated outputs, runtime handlers, tests, and protocol documentation together.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

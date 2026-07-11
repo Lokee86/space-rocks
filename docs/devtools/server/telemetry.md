@@ -547,4 +547,3 @@ Telemetry in this document means live debug and diagnostic readouts. It does not
 `packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and lane packets; the client owns the derived timing readout.
 
 The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.
-

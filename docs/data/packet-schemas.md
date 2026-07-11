@@ -656,5 +656,3 @@ Realtime lane packet type constants are generated from packet schemas, but activ
 The GDScript packet output currently renders field constants from the loaded schema and builders selected by `client_packets`. This makes some field constants available even when the client does not own the corresponding runtime packet family.
 
 Packet data documentation should stay focused on schema source files, generated outputs, and pipeline behavior. Packet lifecycle, routing order, authority, and service-specific runtime consequences belong in protocol and service documentation.
-
-

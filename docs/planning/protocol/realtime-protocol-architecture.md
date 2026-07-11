@@ -95,6 +95,7 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Session player and lifecycle tuple packing is implemented for compact session lane records.
 - Known event tuple packing is implemented for compact `event_batch` records.
 - Sparse delta serialization is implemented for active realtime gameplay delta lanes; empty delta sections are omitted from emitted delta wire maps.
+- Client lifecycle application validates explicit world-baseline dependencies, queues future or not-yet-active lifecycle packets, drains them after matching `world_full` activation, and enforces strict independent lifecycle sequences.
 
 Current implementation details live in:
 
@@ -116,6 +117,8 @@ Delta decides what changed. The current candidate-level send plan uses the estim
 
 Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, focused asteroid/bullet hot-lane chunking, and chunker-owned hot-lane hard-size guarding. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy. Scheduler and active encoding do not own a second hard-size rejection step for already-chunked hot movement packets.
 Current WebRTC physical gameplay channels are split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`). Client-side hot-lane guards accept distinct valid chunks for each `asteroid_delta` or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the two lanes track independently.
+
+Reliability and ordering remain per DataChannel; they do not establish cross-channel `sr.world`/lifecycle ordering. The implemented client lifecycle gate handles that arrival race by waiting for the referenced active world baseline.
 
 
 Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, deeper record/entity-level prioritization, further transport policy beyond the current asteroid/bullet unordered hot lanes where safe, and binary representation later.
@@ -156,5 +159,3 @@ Future packetcodec and transport evolution must preserve these ownership seams. 
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.
-
-

@@ -658,15 +658,23 @@ static func _snapshot_kind_from_type(packet_type) -> String:
 
 static func _default_snapshot_id(lane, snapshot_kind, sequence) -> String:
 	if snapshot_kind == "full":
-		return "%s-baseline-%s" % [lane, str(sequence)]
+		return "%s-baseline-%s" % [lane, _runtime_sequence_suffix(sequence)]
 	if snapshot_kind == "delta":
-		return "%s-snapshot-%s" % [lane, str(sequence)]
+		return "%s-snapshot-%s" % [lane, _runtime_sequence_suffix(sequence)]
 	return ""
 
 
 static func _default_baseline_id(lane, snapshot_kind, sequence, baseline_sequence) -> String:
 	if snapshot_kind == "full":
-		return "%s-baseline-%s" % [lane, str(sequence)]
+		return "%s-baseline-%s" % [lane, _runtime_sequence_suffix(sequence)]
 	if snapshot_kind == "delta" and baseline_sequence != null:
-		return "%s-baseline-%s" % [lane, str(baseline_sequence)]
+		return "%s-baseline-%s" % [lane, _runtime_sequence_suffix(baseline_sequence)]
 	return ""
+
+
+static func _runtime_sequence_suffix(value) -> String:
+	if typeof(value) == TYPE_INT:
+		return str(value)
+	if typeof(value) == TYPE_FLOAT and is_finite(value) and value == floor(value):
+		return str(int(value))
+	return str(value)

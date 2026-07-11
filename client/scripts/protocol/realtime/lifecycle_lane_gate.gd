@@ -31,11 +31,12 @@ func submit(lane, packet, world_synced, active_world_baseline_id) -> Dictionary:
 	if not packet is Dictionary:
 		return _reject(lane, packet, null, "invalid_packet")
 
-	var sequence = packet.get("sequence")
-	if sequence == null:
+	var raw_sequence = packet.get("sequence")
+	if raw_sequence == null:
 		return _reject(lane, packet, null, "missing_sequence")
-	if typeof(sequence) != TYPE_INT:
-		return _reject(lane, packet, sequence, "sequence_not_integer")
+	var sequence = _parse_sequence(raw_sequence)
+	if sequence == null:
+		return _reject(lane, packet, raw_sequence, "sequence_not_integer")
 
 	var baseline_id = packet.get("baseline_id")
 	if baseline_id == null or baseline_id == "":
@@ -62,11 +63,12 @@ func submit(lane, packet, world_synced, active_world_baseline_id) -> Dictionary:
 func mark_applied(lane, sequence) -> void:
 	if not _latest_applied_sequence.has(lane):
 		return
-	if typeof(sequence) != TYPE_INT:
+	var normalized_sequence = _parse_sequence(sequence)
+	if normalized_sequence == null:
 		return
 	var latest_sequence = _latest_applied_sequence[lane]
-	if latest_sequence == null or sequence > latest_sequence:
-		_latest_applied_sequence[lane] = sequence
+	if latest_sequence == null or normalized_sequence > latest_sequence:
+		_latest_applied_sequence[lane] = normalized_sequence
 
 func take_pending_for_baseline(baseline_id) -> Array:
 	var baseline_bucket: Dictionary = _pending_by_baseline.get(baseline_id, {})
@@ -108,6 +110,17 @@ func _parse_world_baseline_number(baseline_id):
 		return null
 	return int(suffix)
 
+func _parse_sequence(value):
+	if typeof(value) == TYPE_INT:
+		if value < 0:
+			return null
+		return value
+	if typeof(value) == TYPE_FLOAT:
+		if not is_finite(value) or value < 0 or value != floor(value):
+			return null
+		return int(value)
+	return null
+
 func _reject(lane, packet, sequence, reason: String) -> Dictionary:
 	return {
 		"status": DECISION_REJECT,
@@ -128,7 +141,9 @@ func _store_pending(lane, packet, sequence, baseline_id, active_world_baseline_i
 	if lane_packets.size() >= MAX_PENDING_PACKETS_PER_LANE:
 		var discarded_packet: Dictionary = lane_packets.pop_front()
 		_pending_sequences[lane].erase(discarded_packet.get("sequence"))
-	lane_packets.append(packet)
+	var normalized_packet: Dictionary = packet.duplicate()
+	normalized_packet["sequence"] = sequence
+	lane_packets.append(normalized_packet)
 	_pending_sequences[lane][sequence] = true
 
 func _trim_baseline_buckets(active_world_baseline_id) -> void:

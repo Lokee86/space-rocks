@@ -21,11 +21,12 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> ServerPacketDispatcher emits typed realtime signal
 -> ClientInboundCoordinator routes the typed signal to the matching RealtimePacketPipeline entry point
 -> RealtimePacketPipeline expands and validates the packet
--> RealtimeRouter applies the packet to lane state
+-> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for immediate apply / queue / reject
+-> WorldLaneApplier validates accepted lifecycle payloads and mutates WorldLaneState
 -> RealtimePacketPipeline refreshes RealtimePresentationState
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
--> PresentationBridge records pending applied notification
+-> PresentationBridge records pending routed-packet notification when active
 -> GameplaySessionController._process(delta)
 -> read RealtimePacketPipeline.is_gameplay_ready()
 -> propagate readiness into GameplayComposition
@@ -39,7 +40,7 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> DevtoolsLaneStateAdapter builds a separate devtools readmodel
 ```
 
-The client applies lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow.
+The client routes lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific routing and state mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow.
 
 `ClientConnectionService` passes decoded transport packets into `ServerPacketDispatcher`; `ClientInboundCoordinator` owns the post-classification realtime consumer binding. `ClientConnectionService` does not choose lane handlers, own lane diagnostics, or re-emit realtime lane signals.
 
@@ -47,7 +48,11 @@ The client applies lane packets through `RealtimePacketPipeline`. The pipeline o
 
 `RealtimePacketPipeline` applies realtime gameplay packets regardless of gameplay-session activation state.
 
-`WorldLaneApplier` now applies `apply_asteroids_lifecycle`, `apply_bullets_lifecycle`, `apply_asteroid_delta`, and `apply_bullet_delta` so lifecycle packets define existence before hot movement updates are merged.
+`BaselineTracker` owns world, overlay, and session synchronization plus the active world baseline identity. It does not independently track lifecycle lanes. `LifecycleLaneGate` validates lifecycle lane/sequence/baseline metadata, owns strict independent per-lane sequence state, pending duplicate tracking, pending queues keyed by required world baseline, bounded eviction, and obsolete parsed-baseline disposal. `RealtimeRouter` coordinates gate decisions and drains matching pending lifecycle packets after a completed, recorded `world_full`. `WorldLaneApplier` validates lifecycle arrays and records and mutates `WorldLaneState` only after gate acceptance. Lifecycle packets apply immediately only for the active matching world baseline; otherwise they wait or are rejected. Hot lanes remain movement/update lanes and must not be described as ordered after every lifecycle packet.
+
+The pending lifecycle gate is bounded to 4 baseline buckets and 8 packets per lifecycle lane per baseline. Per-lane overflow evicts the oldest packet. Bucket overflow evicts the oldest non-active bucket. Parsed `world-baseline-N` buckets older than the active baseline are discarded; newer and unparseable baseline IDs remain pending until drained or bounded eviction.
+
+`RealtimePacketPipeline.gameplay_packet_applied(packet)` retains its historical name. It means routing and `RealtimePresentationState` refresh completed; it does not prove that the particular lifecycle packet mutated state, because that packet may have been queued or rejected.
 
 ## Code root
 
@@ -165,7 +170,16 @@ RealtimePacketPipeline
 = owns compact packet expansion, gameplay packet validation, the active RealtimeRouter, gameplay readiness, protocol reset, lane-routing invocation, gameplay_packet_applied(packet), and realtime gameplay packet application regardless of gameplay-session activation state
 
 RealtimeRouter
-= owns lane-specific state mutation, baseline and sequence handling, and lane-state storage beneath RealtimePacketPipeline
+= coordinates lane-specific routing, lifecycle gate decisions, and matching pending lifecycle drains beneath RealtimePacketPipeline
+
+BaselineTracker
+= owns world, overlay, and session synchronization plus active world baseline identity; it does not track lifecycle lanes independently
+
+LifecycleLaneGate
+= owns lifecycle validation, independent per-lane sequence state, world-baseline-keyed pending queues, duplicate tracking, bounded eviction, and obsolete parsed-baseline disposal
+
+WorldLaneApplier
+= validates accepted lifecycle payload arrays/records and mutates WorldLaneState, without owning lifecycle baseline or sequence policy
 
 PresentationBridge
 = owns gameplay_packet_applied notification handling, pending/coalescing state, readiness-gated flush, latest-state retrieval, and orchestration of lane presentation, local lifecycle presentation, and devtools-state adaptation through composition
@@ -219,8 +233,7 @@ Key lane-native files:
 
 * `client/scripts/networking/realtime/` - home of `RealtimePacketPipeline`.
 * `client/scripts/protocol/realtime/world_lane_state.gd`
-* `client/scripts/protocol/realtime/world_lane_applier.gd` - decodes quantized world records and applies full/delta world packets.
-* `client/scripts/protocol/realtime/world_lane_applier.gd` - applies `apply_asteroids_lifecycle`, `apply_bullets_lifecycle`, `apply_asteroid_delta`, and `apply_bullet_delta` into `WorldLaneState`.
+* `client/scripts/protocol/realtime/world_lane_applier.gd` - decodes quantized world records, validates lifecycle payloads, and applies full/delta/lifecycle packets into `WorldLaneState` after routing policy accepts them.
 * `client/scripts/protocol/realtime/overlay_lane_state.gd`
 * `client/scripts/protocol/realtime/overlay_lane_applier.gd` - routes overlay full/delta packets into overlay lane state.
 * `client/scripts/protocol/realtime/session_lane_state.gd`
@@ -233,6 +246,8 @@ Key lane-native files:
 * `client/scripts/protocol/realtime/event_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/gameplay_readiness.gd`
 * `client/scripts/protocol/realtime/realtime_router.gd`
+* `client/scripts/protocol/realtime/lifecycle_lane_gate.gd`
+* `client/scripts/protocol/realtime/baseline_tracker.gd`
 * `client/scripts/protocol/realtime/devtools_lane_state_adapter.gd`
 
 ## Tests
@@ -244,6 +259,8 @@ Relevant client tests include:
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
 * `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - lifecycle coverage for `apply_asteroids_lifecycle` and `apply_bullets_lifecycle`.
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd` - lifecycle routing coverage.
+* `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd` - lifecycle validation, sequence, queue, eviction, and obsolete-baseline coverage.
+* `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` - protocol reset clears the replaced router and lifecycle gate state.
 * `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd` - `test_overlay_delta_treats_missing_sparse_sections_as_empty_noop` and `test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_empty_noop` cover missing sparse delta section fields as empty/no-op for overlay and session lane application.
 * `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
 * `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`

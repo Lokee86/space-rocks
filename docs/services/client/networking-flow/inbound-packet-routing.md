@@ -35,11 +35,13 @@ WebRTCTransport receives DataChannel text
 -> typed dispatcher signal
 -> RealtimePacketPipeline typed entry point for the packet family
 -> RealtimeRouter.route_lane_packet(packet)
+-> lifecycle packet: LifecycleLaneGate immediate apply / queue / reject
+-> accepted lifecycle packet: WorldLaneApplier validates and mutates WorldLaneState
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Lifecycle defines existence. Hot lanes update known entities only. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client accepts distinct valid chunk indices with consistent `chunk_count` values for each hot lane sequence. Duplicate indices, inconsistent or malformed chunk metadata, and lower sequences are rejected; sequence gaps remain valid, and asteroid and bullet tracking are independent.
+The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Lifecycle packets enter `LifecycleLaneGate`: they apply immediately only when their explicit world baseline matches the active synced world baseline, otherwise they queue or reject. `WorldLaneApplier` validates and mutates lifecycle state only after gate acceptance. Hot lanes update known entities only, but a lifecycle notification does not prove that an entity was created or deleted. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. The client accepts distinct valid chunk indices with consistent `chunk_count` values for each hot lane sequence. Duplicate indices, inconsistent or malformed chunk metadata, and lower sequences are rejected; sequence gaps remain valid, and asteroid and bullet tracking are independent.
 
 ## Code root
 
@@ -264,7 +266,7 @@ player_pause_state_received
 
 For gameplay application, the controller now follows the semantic presentation handoff instead of connecting separately to each lane-specific packet signal.
 
-Realtime gameplay lane packets are applied by `RealtimePacketPipeline` and delivered through `PresentationBridge.handle_gameplay_packet(packet)`; they are not exposed as service-facade signals.
+Realtime gameplay lane packets are routed by `RealtimePacketPipeline`, which refreshes `RealtimePresentationState` and emits the historically named `gameplay_packet_applied(packet)` notification. They are delivered through `PresentationBridge.handle_gameplay_packet(packet)` and are not exposed as service-facade signals. The notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
 
 ### Room packet handoff
 
@@ -292,7 +294,7 @@ Inbound packet routing does not own those consequences.
 
 ### Gameplay packet handoff
 
-Lane-native realtime gameplay packets route through the completed semantic application path after the realtime router has already applied lane state.
+Lane-native realtime gameplay packets route through the completed semantic handoff after the pipeline has refreshed its presentation state. Lifecycle packets may have applied immediately, been queued for a matching world baseline, or been rejected before this notification.
 
 Current handoff:
 
@@ -364,9 +366,19 @@ Unknown packets are not applied to gameplay, room, auth, or telemetry state.
 
 ### Lifecycle routing note
 
-Lifecycle packets use the same routing path as other gameplay packets, but they are applied by `WorldLaneApplier` lifecycle methods before the presentation bridge fans them to gameplay consumers.
+Lifecycle packets use the same dispatcher and pipeline classification path as other gameplay packets:
 
-Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+```text
+typed lifecycle signal
+-> RealtimePacketPipeline.apply_asteroids_lifecycle / apply_bullets_lifecycle
+-> RealtimeRouter.route_lane_packet(packet)
+-> LifecycleLaneGate immediate apply / queue / reject
+-> WorldLaneApplier lifecycle validation and WorldLaneState mutation only after acceptance
+```
+
+After a completed matching `world_full` is applied and recorded, `RealtimeRouter` drains pending lifecycle packets for that world baseline, ordered within each lifecycle lane. There is no ordering contract between the two lifecycle lanes.
+
+Reliable/ordered delivery orders messages only within one DataChannel. Cross-lane ordering is not guaranteed between `sr.world` and either lifecycle channel, between the two lifecycle channels, or between lifecycle and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets; lifecycle packets may also wait for a matching world baseline.
 
 ## Related Docs
 
@@ -469,6 +481,8 @@ asteroids_lifecycle
 -> asteroids_lifecycle_received(packet)
 -> RealtimePacketPipeline.apply_asteroids_lifecycle(packet)
 -> RealtimeRouter.route_lane_packet(packet)
+-> LifecycleLaneGate immediate apply / queue / reject
+-> WorldLaneApplier validates and mutates only after acceptance
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> GameplayComposition / runtime presentation flows
@@ -477,6 +491,8 @@ bullets_lifecycle
 -> bullets_lifecycle_received(packet)
 -> RealtimePacketPipeline.apply_bullets_lifecycle(packet)
 -> RealtimeRouter.route_lane_packet(packet)
+-> LifecycleLaneGate immediate apply / queue / reject
+-> WorldLaneApplier validates and mutates only after acceptance
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> GameplayComposition / runtime presentation flows

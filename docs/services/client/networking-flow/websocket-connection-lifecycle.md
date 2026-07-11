@@ -233,6 +233,8 @@ update ClientInboundCoordinator with a null transport-session reference
 
 The `RealtimePacketPipeline` object itself is preserved. Only its active realtime protocol state is reset, so consumers holding the pipeline reference continue to use the same object across connection lifecycles.
 
+`RealtimePacketPipeline.reset()` replaces the active `RealtimeRouter`. That replacement clears world/overlay/session protocol state, pending lifecycle baseline buckets, pending lifecycle duplicate tracking, the latest applied asteroid lifecycle sequence, and the latest applied bullet lifecycle sequence. This reset is connection-scoped and is performed on connect and close; `GameplaySessionController.reset()` is a gameplay-session reset and does not perform this protocol reset.
+
 `ClientConnectionService` emits the structured `realtime_protocol_state_reset` network diagnostic after the reset. The diagnostic reports the lifecycle action; it does not make `ClientConnectionService` the owner of realtime pipeline or transport-session state.
 
 On close, `_on_closed()` completes this realtime reset before clearing connection-scoped websocket auth state and emitting `closed`. On connect, `connect_to_server()` performs the same reset before starting the new WebSocket connection.
@@ -466,6 +468,9 @@ client/scripts/networking/packets/packet_codec.gd
 client/scripts/networking/packets/packet_encode_result.gd
 client/scripts/networking/packets/packet_decode_result.gd
 client/scripts/protocol/realtime/compact_lane_packet.gd
+client/scripts/networking/realtime/realtime_packet_pipeline.gd
+client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/lifecycle_lane_gate.gd
 ```
 
 Related generated files:
@@ -479,6 +484,7 @@ Related tests:
 
 ```text
 client/tests/unit/test_packet_codec.gd
+client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd
 ```
 
 Important adjacent implementation files:
@@ -495,6 +501,8 @@ The adjacent files are listed to show handoff boundaries. They do not belong to 
 ## Tests
 
 Packet codec behavior is covered by `client/tests/unit/test_packet_codec.gd`.
+
+`client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` covers connection-scoped pipeline reset and replacement of the router-owned realtime protocol state.
 
 Those tests cover:
 

@@ -96,7 +96,11 @@ server simulation decides to spawn an asteroid
 -> server projects runtime.Asteroid.State()
 `protocol/realtime` includes asteroid state in asteroid lifecycle creates and world_full/bootstrap snapshots when needed, including the selected index.
 -> packetcodec encodes the asteroids_lifecycle packet or world_full/bootstrap packet as JSON
--> client receives the lifecycle or full/bootstrap packet
+-> client decodes the packet and expands compact wire fields
+-> RealtimePacketPipeline routes through RealtimeRouter
+-> LifecycleLaneGate applies immediately or waits for the matching world baseline; invalid/stale lifecycle packets reject
+-> WorldLaneApplier applies the accepted asteroid create
+-> accumulated WorldLaneState reaches WorldSync/AsteroidSync
 -> AsteroidSync reads AsteroidState.variant
 -> asteroid scene receives the variant index
 -> client asteroid catalog resolves presentation data for that index
@@ -390,6 +394,9 @@ Client consumption and presentation:
 
 ```text
 client/scripts/world/asteroid_sync.gd
+client/scripts/protocol/realtime/lifecycle_lane_gate.gd
+client/scripts/protocol/realtime/realtime_router.gd
+client/scripts/protocol/realtime/world_lane_applier.gd
 client/scripts/entities/asteroid.gd
 client/scenes/asteroid.tscn
 client/tests/unit/entities/test_asteroid_variants.gd

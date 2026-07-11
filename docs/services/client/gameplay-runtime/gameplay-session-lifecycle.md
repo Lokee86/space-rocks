@@ -27,7 +27,7 @@ This lifecycle is client presentation/session orchestration only. The server rem
 ## Responsibilities
 
 * Configure gameplay composition from scene, network, session, HUD, world, and UI references.
-* Gate gameplay lane packets and player pause packets behind `accepts_gameplay_packets`.
+* Gate gameplay input and player-pause forwarding behind `accepts_gameplay_packets`; realtime lane packet routing continues through `RealtimePacketPipeline` independently.
 * Begin accepting gameplay packets after room state enters `InGame`.
 * Activate and flush gameplay presentation bridging only when both the gate and pipeline readiness allow it.
 * Forward player pause packets into gameplay composition.
@@ -135,30 +135,30 @@ ServerPacketDispatcher
 -> RealtimePresentationState is refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
--> inactive bridge ignores applied-packet notifications for presentation scheduling
+-> inactive bridge ignores routed-packet notifications for presentation scheduling
 ```
 
-`RealtimePacketPipeline` owns realtime packet application.
+`RealtimePacketPipeline` applies/routes realtime packets regardless of gameplay-session activation and owns the refreshed realtime presentation state.
 
-If `accepts_gameplay_packets` is false, the packet is ignored by `GameplaySessionController`.
+If `accepts_gameplay_packets` is false, `GameplaySessionController` does not activate or schedule `PresentationBridge`, but realtime lane packets are still received and routed by `RealtimePacketPipeline`. A lifecycle packet may apply, queue, or reject before the historically named `gameplay_packet_applied` notification; that notification means routing and presentation-state refresh completed, not that lifecycle state necessarily mutated.
 
-If gameplay readiness is not yet true, presentation orchestration is skipped even though `ServerPacketDispatcher` has already delivered the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has applied the available realtime state. Packet application may still occur while gameplay presentation is inactive.
+If gameplay readiness is not yet true, presentation orchestration is skipped even though `ServerPacketDispatcher` has already delivered the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has routed it. Packet routing and available state application may still occur while gameplay presentation is inactive.
 
 `RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that gameplay composition later consumes when presentation is allowed.
 
-Packet application and gameplay handoff are separate boundaries. `RealtimePacketPipeline` owns application and readiness; `PresentationBridge` owns presentation orchestration; gameplay composition owns the downstream presentation targets.
+Packet routing/application and gameplay handoff are separate boundaries. `RealtimePacketPipeline` owns packet routing/application and readiness; `PresentationBridge` owns presentation orchestration; gameplay composition owns the downstream presentation targets.
 
-`RealtimePacketPipeline.gameplay_packet_applied(packet)` hands the applied packet directly to `PresentationBridge.handle_gameplay_packet(packet)` for presentation fanout when the bridge is active.
+`RealtimePacketPipeline.gameplay_packet_applied(packet)` hands the routed-packet notification directly to `PresentationBridge.handle_gameplay_packet(packet)` for presentation scheduling when the bridge is active. `GameplaySessionController` does not connect this signal to `GameplayComposition`.
 
 ### Active and inactive input gating
 
 * `GameplaySessionController` only forwards player pause packets while `accepts_gameplay_packets` is true.
 
-When the gate is inactive, the controller ignores gameplay lane packets and pause packets at the session boundary. Debug packets remain routed independently of this gate.
+When the gate is inactive, the controller does not forward gameplay input or player-pause packets and does not activate/schedule the bridge. It does not block realtime lane packets from reaching `RealtimePacketPipeline`; debug packets remain routed independently of this gate.
 
 ### Player pause packets
 
-Player pause packets use the same acceptance gate as gameplay lane packets.
+Player pause packets use the `accepts_gameplay_packets` input/pause acceptance gate; realtime lane packets do not.
 
 ```text
 ClientConnectionService.player_pause_state_received
@@ -167,7 +167,7 @@ ClientConnectionService.player_pause_state_received
 -> GameplayComposition.apply_player_pause_state_packet
 ```
 
-If `accepts_gameplay_packets` is false, the packet is ignored.
+If `accepts_gameplay_packets` is false, the player-pause packet is not forwarded to gameplay composition. Realtime lane packet routing remains independent of this input/pause gate.
 
 ### Debug packets
 
@@ -256,7 +256,7 @@ The gameplay-session lifecycle owns transient client state only.
 
 Owned local state includes:
 
-* `accepts_gameplay_packets`
+* `accepts_gameplay_packets` for gameplay input, player-pause forwarding, and `PresentationBridge` activation/scheduling
 * references to connection service, HUD, gameplay UI, main menu, session context, shell boot flow, and logger
 * gameplay composition reference
 * lifecycle signals for replay and return-to-pregame requests
@@ -341,7 +341,7 @@ Relevant client tests include:
 
 `RealtimePacketPipeline` owns readiness and presentation-state access for active gameplay presentation orchestration. `PresentationBridge` consumes `is_gameplay_ready()` and `get_presentation_state()`; `GameplaySessionController` owns bridge activation, reset, and flush timing.
 
-`accepts_gameplay_packets` is the gameplay-session/input/pause acceptance state that activates and resets `PresentationBridge` along with gameplay packet and pause gating.
+`accepts_gameplay_packets` is the gameplay-session/input/pause acceptance state that activates and resets `PresentationBridge` and gates gameplay input and player-pause forwarding. It does not gate `RealtimePacketPipeline` lane packet routing.
 
 Dead-HUD recovery, alive-presentation restoration, and respawn-facing presentation do not belong to `GameplaySessionController`; they route through gameplay composition and the focused runtime flows behind it.
 

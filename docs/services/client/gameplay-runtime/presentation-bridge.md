@@ -2,7 +2,7 @@
 
 Parent index: [Gameplay Runtime](./!INDEX.md)
 
-`PresentationBridge` owns the boundary between applied realtime gameplay state and frame-coalesced client presentation.
+`PresentationBridge` owns the boundary between refreshed realtime gameplay state and frame-coalesced client presentation.
 
 It is configured by `GameplaySessionController`, driven by packet-ingress notifications from `RealtimePacketPipeline`, and flushed once per gameplay frame before normal gameplay composition processing.
 
@@ -14,7 +14,7 @@ Packet ingress is the only input path for this bridge; it does not consume lane-
 
 - Activation and reset state for the current gameplay session.
 - Pending gameplay-presentation state.
-- Coalescing multiple applied gameplay packets into one frame flush.
+- Coalescing multiple routed gameplay notifications into one frame flush.
 - Retaining pending presentation while required gameplay lane baselines are not ready.
 - Reading the latest `RealtimePresentationState` at flush time.
 - Resolving world, HUD, and event presentation targets through `GameplayComposition`.
@@ -51,7 +51,7 @@ GameplayComposition
 logger Callable
 ```
 
-`RealtimePacketPipeline` provides applied gameplay notifications, gameplay readiness, and the current `RealtimePresentationState`.
+`RealtimePacketPipeline` provides the historically named `gameplay_packet_applied` routed-packet notification, gameplay readiness, and the current `RealtimePresentationState`.
 
 `PresentationAdapter` performs stateless lane-native fanout.
 
@@ -65,13 +65,14 @@ The packet-ingress path is:
 ServerPacketDispatcher
 -> ClientInboundCoordinator typed realtime binding
 -> RealtimePacketPipeline typed apply entry point
--> RealtimeRouter applies the packet
+-> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for immediate apply / queue / reject
+-> WorldLaneApplier validates and mutates accepted lifecycle payloads
 -> RealtimePresentationState is refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The bridge receives packet-ingress notification only after the gameplay packet has been applied.
+The bridge receives a routed-packet notification after `RealtimePacketPipeline` has completed routing and refreshed `RealtimePresentationState`. The notification does not prove that the particular lifecycle packet mutated state: it may have been queued for a matching world baseline or rejected by `LifecycleLaneGate`.
 
 `SessionNetworkController` and `GameplaySessionController` do not relay generic gameplay packet notifications in this path, and `PresentationBridge` is not fed by lane-specific `ClientConnectionService` signals.
 
@@ -98,20 +99,22 @@ GameplaySessionController.begin_accepting_gameplay_packets()
 
 `begin_accepting_gameplay_packets()` activates the bridge.
 
-Once active, applied gameplay notifications may mark presentation pending.
+Once active, routed gameplay notifications may mark presentation pending.
 
 An inactive bridge does not mark presentation pending.
 
-### Applied Packet Notification
+### Routed Packet Notification
 
 ```text
-RealtimePacketPipeline.gameplay_packet_applied(packet)
+`RealtimePacketPipeline.gameplay_packet_applied(packet)`
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> collect relevant diagnostics
 -> mark presentation pending
 ```
 
 Current gameplay readiness does not prevent the bridge from recording pending presentation.
+
+For lifecycle packets, this notification may mark presentation pending while the lifecycle packet itself is queued or rejected. A later matching `world_full` can cause `RealtimeRouter` to drain and apply the queued lifecycle packet, and the bridge remains correct because it presents the latest refreshed `RealtimePresentationState` at flush time.
 
 Readiness is evaluated when the pending state is flushed.
 
@@ -164,16 +167,16 @@ This prevents presentation from one gameplay session from flushing into another.
 
 ## Coalescing
 
-The bridge coalesces applied gameplay notifications until the next frame flush.
+The bridge coalesces routed gameplay notifications until the next frame flush.
 
 ```text
-packet A applied
+packet A routed / notification received
 -> pending = true
 
-packet B applied
+packet B routed / notification received
 -> pending remains true
 
-packet C applied
+packet C routed / notification received
 -> pending remains true
 
 next gameplay frame
@@ -182,7 +185,7 @@ next gameplay frame
 
 The bridge does not retain packet dictionaries as visual snapshots.
 
-It reads the newest applied state from `RealtimePacketPipeline` when the frame flush occurs. This keeps lane presentation coherent when several lane packets are applied between rendered frames.
+It reads the newest `RealtimePresentationState` from `RealtimePacketPipeline` when the frame flush occurs. It does not retain packet dictionaries as resulting visual snapshots. This keeps lane presentation coherent when several lane packets are routed between rendered frames, including when a later matching `world_full` mutates lifecycle state that was previously queued.
 
 ## Readiness
 
@@ -242,4 +245,4 @@ This ordering is covered by focused bridge and gameplay-session-controller unit 
 
 The bridge is an orchestration seam, not an alternate realtime state store.
 
-`RealtimePacketPipeline` remains authoritative for applied client realtime state and gameplay readiness. Presentation consumers receive state only after pipeline application has completed.
+`RealtimePacketPipeline` remains authoritative for refreshed client realtime state and gameplay readiness. Presentation consumers receive the latest state after pipeline routing has completed; `gameplay_packet_applied` is a routed notification, not a per-packet mutation receipt.

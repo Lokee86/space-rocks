@@ -96,10 +96,21 @@ func test_expand_packet_derives_minimal_compact_world_delta_runtime_metadata() -
 	assert_true(expanded["is_final_chunk"])
 
 
+func test_expand_packet_derives_integral_float_world_delta_runtime_metadata() -> void:
+	var expanded := CompactLanePacket.expand_packet({
+		"t": "wd",
+		"q": 2.0,
+		"bq": 1.0,
+	})
+
+	assert_eq(expanded["baseline_id"], "world-baseline-1")
+	assert_eq(expanded["snapshot_id"], "world-snapshot-2")
+
+
 func test_expand_packet_derives_minimal_compact_world_full_runtime_metadata() -> void:
 	var expanded := CompactLanePacket.expand_packet({
 		"t": "wf",
-		"q": 3,
+		"q": 1.0,
 		"ships": [],
 		"bullets": [],
 		"asteroids": [],
@@ -109,8 +120,8 @@ func test_expand_packet_derives_minimal_compact_world_full_runtime_metadata() ->
 	assert_eq(expanded["type"], "world_full")
 	assert_eq(expanded["lane"], "world")
 	assert_eq(expanded["snapshot_kind"], "full")
-	assert_eq(expanded["snapshot_id"], "world-baseline-3")
-	assert_eq(expanded["baseline_id"], "world-baseline-3")
+	assert_eq(expanded["snapshot_id"], "world-baseline-1")
+	assert_eq(expanded["baseline_id"], "world-baseline-1")
 	assert_eq(expanded["chunk_index"], 0)
 	assert_eq(expanded["chunk_count"], 1)
 	assert_true(expanded["is_final_chunk"])

@@ -329,7 +329,19 @@ unknown packet fallback
 
 Room packets route into room session handling.
 
-Gameplay state routes into gameplay session handling, but gameplay application is gated. The client begins accepting gameplay packets only after room state reaches `InGame`. The client `compact_lane_packet` expands compact keys, compact values, IDs, and tuple arrays before the existing world, session, and event appliers receive readable dictionaries. Cross-lane ordering is not guaranteed between reliable lifecycle lanes and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+Gameplay state routes into `RealtimePacketPipeline` independently of gameplay-session activation. The pipeline classifies and expands realtime packets, routes them through `RealtimeRouter`, and refreshes realtime presentation state regardless of room state. Room state reaching `InGame` activates client gameplay input, player-pause forwarding, and presentation scheduling; required world/overlay/session readiness gates presentation fanout, not realtime packet routing/application. The client `compact_lane_packet` expands compact keys, compact values, IDs, and tuple arrays before readable lane state reaches the protocol appliers.
+
+The cross-system lifecycle correctness flow is:
+
+```text
+server lifecycle candidate carries its required world baseline dependency
+-> world and lifecycle packets travel on separate WebRTC DataChannels
+-> arrival order may differ
+-> client waits when the referenced world baseline is not active
+-> lifecycle create/delete applies only after matching world state is active
+```
+
+`asteroids_lifecycle` and `bullets_lifecycle` use strict independent lane-local sequences. Future or not-yet-active baseline packets remain queued for the matching world activation; invalid or stale lifecycle packets are rejected. Reliable/ordered delivery is per DataChannel and does not order `sr.world` against either lifecycle channel or establish lifecycle-to-hot-lane ordering. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
 
 Telemetry pong routes to telemetry consumers and does not pass through normal gameplay lane state application.
 
@@ -508,8 +520,3 @@ WebSocket connection, room membership, and active gameplay participation are sep
 Lane-native packets are current active realtime behavior. World, asteroid, bullet, overlay, and session state lanes currently use deltas, numeric wire quantization, sparse delta omission, and compact JSON aliases. Regular asteroid and bullet movement updates are split into dedicated hot movement lane packets instead of remaining in `sr.world`. `event_batch` remains compact sparse quantized presentation-event delivery. The server now emits compact tuple wire shape for selected hot records, and the client accepts distinct valid chunk indices with consistent `chunk_count` values for each hot `asteroid_delta` and `bullet_delta` lane sequence while rejecting duplicate indices, inconsistent or malformed metadata, and lower sequences; gaps remain valid and tracking is independent per lane. The client expands those tuples before appliers run. Remaining future work includes record/entity-level prioritization, deeper packet-budget behavior beyond current candidate-level send-plan selection and current chunker-owned hot-lane hard-size guarding, binary/bit-packed representation, protobuf/custom binary representation, and transport evolution beyond the current WebSocket control/signaling path plus ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
 
 Single-player and multiplayer can currently use the same local `/ws` route. That does not collapse their authority model. The boot packet, session mode, auth/admission rule, room joinability, and player-data identity context distinguish the flows.
-
-
-
-
-

@@ -735,8 +735,3 @@ The devtools packet protocol deliberately reuses the normal WebSocket packet tra
 World telemetry overlay packet timing uses `telemetry_ping` and `telemetry_pong`, which belong to the gameplay packet schema. The overlay is devtools presentation, but the packet pair is not defined in `debug.toml`.
 
 `target_player_id` remains a devtools compatibility field for player-only debug commands. New gameplay targeting should continue to use canonical target kind/id fields instead of extending `target_player_id` further.
-
-
-
-
-

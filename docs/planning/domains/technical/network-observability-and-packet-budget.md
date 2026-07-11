@@ -255,15 +255,3 @@ This support work belongs to remaining realtime protocol validation when it help
 ## Notes
 
 Preserve the packet-budget policy and Phase P1 structure; this doc owns measurement, diagnostics, and decision gates rather than packet-format redesign.
-
-
-
-
-
-
-
-
-
-
-
-

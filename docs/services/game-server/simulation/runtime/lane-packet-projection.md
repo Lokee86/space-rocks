@@ -252,4 +252,3 @@ Relevant server tests include:
 * [Realtime WebRTC Gameplay Transport](../../../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Notes
-
