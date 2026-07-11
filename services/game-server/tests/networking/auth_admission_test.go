@@ -4,10 +4,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/authclient"
-	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/networking"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/authclient"
+	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
 

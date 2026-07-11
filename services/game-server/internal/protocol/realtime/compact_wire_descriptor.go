@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtimewire"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtimewire"
 )
 
 type compactWireDescriptorIndexes struct {

@@ -1,6 +1,6 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/events"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 
 func (game *Game) stepPickups(delta float64) {
 	for id, pickup := range game.entities.Pickups {

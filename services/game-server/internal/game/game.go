@@ -3,13 +3,13 @@ package game
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/drops"
-	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
-	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 type Game struct {

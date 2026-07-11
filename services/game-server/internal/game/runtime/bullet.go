@@ -1,9 +1,9 @@
 package runtime
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
 
 func NewBullet(

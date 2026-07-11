@@ -1,6 +1,6 @@
 package packetmetrics
 
-import "github.com/Lokee86/space-rocks/server/internal/logging"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 
 func LogShadowLaneMetrics(records []PacketMetricRecord, roomID string, playerID string, remoteAddr string) {
 	logLaneMetrics(records, roomID, playerID, remoteAddr)

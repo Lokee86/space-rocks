@@ -5,12 +5,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/motion"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/motion"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
 func TestDefaultShipTypeResolvesBaselineEffectiveStats(t *testing.T) {

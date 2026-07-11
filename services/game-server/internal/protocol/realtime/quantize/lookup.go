@@ -1,6 +1,6 @@
 package quantize
 
-import "github.com/Lokee86/space-rocks/server/internal/protocol/realtimewire"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtimewire"
 
 func LookupPolicy(fieldPath string) (Policy, bool) {
 	policyName, ok := realtimewire.RealtimeWireQuantizations[fieldPath]

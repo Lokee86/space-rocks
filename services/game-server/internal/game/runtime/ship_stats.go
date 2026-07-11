@@ -1,6 +1,6 @@
 package runtime
 
-import "github.com/Lokee86/space-rocks/server/internal/constants"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 
 const (
 	DefaultShipRotationSpeedModifier     = 1.0

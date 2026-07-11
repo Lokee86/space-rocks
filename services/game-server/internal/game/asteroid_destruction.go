@@ -1,9 +1,9 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
 )
 
 func (game *Game) applyProjectileAsteroidDestruction(playerID string, asteroid *runtime.Asteroid) {

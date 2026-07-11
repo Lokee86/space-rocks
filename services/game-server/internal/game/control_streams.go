@@ -1,6 +1,6 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 
 func (target *Control) BulletsCanMove() bool {
 	return target.game.worldSimulationOptions.BulletsCanMove()

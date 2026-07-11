@@ -1,4 +1,4 @@
-module github.com/Lokee86/space-rocks/server
+module github.com/Lokee86/space-rocks/services/game-server
 
 go 1.26.3
 

@@ -1,6 +1,6 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/player"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 
 func (game *Game) playerWorldStateLocked(playerID string) (player.WorldState, bool) {
 	session, ok := game.playerSessions[playerID]

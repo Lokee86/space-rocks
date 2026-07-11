@@ -3,7 +3,7 @@ package realtime
 import (
 	"testing"
 
-	game "github.com/Lokee86/space-rocks/server/internal/game"
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
 func mustWireLanePacket(t *testing.T, candidate RealtimeLaneCandidate) map[string]any {

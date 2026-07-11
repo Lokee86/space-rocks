@@ -1,8 +1,8 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	runtimepkg "github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	runtimepkg "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func (target *Control) SafeRespawnPosition(playerID string) (physics.Vector2, bool) {

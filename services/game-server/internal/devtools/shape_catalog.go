@@ -1,6 +1,6 @@
 package devtools
 
-import "github.com/Lokee86/space-rocks/server/internal/game/physics"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 
 func BuildShapeCatalog(catalog physics.CollisionShapeCatalog) map[string]DebugShapeDefinition {
 	shapes := make(map[string]DebugShapeDefinition)

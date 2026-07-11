@@ -6,7 +6,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PLAYER_DATA_ROOT = REPO_ROOT / "services" / "player-data"
 FORBIDDEN_IMPORTS = (
-    "github.com/Lokee86/space-rocks/server/internal/",
+    "github.com/Lokee86/space-rocks/services/game-server/internal/",
     "services/game-server",
 )
 FORBIDDEN_TEXT_REFERENCES = (

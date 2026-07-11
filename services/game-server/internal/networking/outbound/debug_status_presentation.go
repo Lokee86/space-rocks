@@ -1,11 +1,11 @@
 package outbound
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 func CanSendDebugStatus(room *rooms.Room) bool {

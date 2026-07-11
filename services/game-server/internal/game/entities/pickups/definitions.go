@@ -1,6 +1,6 @@
 package pickups
 
-import "github.com/Lokee86/space-rocks/server/internal/constants"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 
 type Definition struct {
 	Type            PickupType

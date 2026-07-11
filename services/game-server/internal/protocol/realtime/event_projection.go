@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
 type EventLaneProjection struct {

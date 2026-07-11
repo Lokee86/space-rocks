@@ -3,10 +3,10 @@ package game
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/drops"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func TestMaybeDropPickupFromAsteroidLockedCreatesPickup(t *testing.T) {

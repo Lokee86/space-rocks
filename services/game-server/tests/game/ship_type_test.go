@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func TestNewShipsDefaultToDefaultShipTypeID(t *testing.T) {

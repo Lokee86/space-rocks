@@ -3,9 +3,9 @@ package networking
 import (
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 func tickSessionGameplayLifecycle(session *webSocketSession, done <-chan struct{}) {

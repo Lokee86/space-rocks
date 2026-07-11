@@ -3,7 +3,7 @@ package radial
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
 func TestStepRespectsTargetFilterForAsteroidsAndEnemies(t *testing.T) {

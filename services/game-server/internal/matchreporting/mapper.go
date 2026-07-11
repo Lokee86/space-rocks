@@ -3,7 +3,7 @@ package matchreporting
 import (
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
-	serverplayerdata "github.com/Lokee86/space-rocks/server/internal/playerdata"
+	serverplayerdata "github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
 func BuildRecordMatchResultCommands(summary serverplayerdata.MatchResultSummary) []protocol.PlayerDataRecordMatchResult {

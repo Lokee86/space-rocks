@@ -1,9 +1,9 @@
 package game
 
 import (
-	pickuprules "github.com/Lokee86/space-rocks/server/internal/game/pickups"
-	"github.com/Lokee86/space-rocks/server/internal/game/events"
-	"github.com/Lokee86/space-rocks/server/internal/game/weapons"
+	pickuprules "github.com/Lokee86/space-rocks/services/game-server/internal/game/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
 
 func (game *Game) applyPickupEffectIntentLocked(intent pickuprules.EffectIntent) bool {

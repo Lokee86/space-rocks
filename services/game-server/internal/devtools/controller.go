@@ -1,6 +1,6 @@
 package devtools
 
-import streamruntime "github.com/Lokee86/space-rocks/server/internal/devtools/streamruntime"
+import streamruntime "github.com/Lokee86/space-rocks/services/game-server/internal/devtools/streamruntime"
 
 type Dependencies struct {
 	Target           Target

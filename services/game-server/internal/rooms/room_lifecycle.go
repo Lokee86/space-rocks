@@ -1,6 +1,6 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game) *RoomDomainError {
 	room.mu.Lock()

@@ -3,12 +3,12 @@ package gametests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
-	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	pickupentities "github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
+	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	pickupentities "github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
 func TestDebugInvincibleToggleCanBeDisabled(t *testing.T) {

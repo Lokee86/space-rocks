@@ -3,7 +3,7 @@ package matchreporting
 import (
 	"testing"
 
-	serverplayerdata "github.com/Lokee86/space-rocks/server/internal/playerdata"
+	serverplayerdata "github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
 func TestBuildRecordMatchResultCommandsUsesAccountIdentity(t *testing.T) {

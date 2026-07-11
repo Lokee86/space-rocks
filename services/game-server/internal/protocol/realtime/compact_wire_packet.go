@@ -1,6 +1,6 @@
 package realtime
 
-import "github.com/Lokee86/space-rocks/server/internal/protocol/realtimewire"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtimewire"
 
 func CompactWirePacket(packet map[string]any) map[string]any {
 	return compactWirePacketFromDescriptors(packet)

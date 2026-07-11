@@ -1,6 +1,6 @@
 package scoring
 
-import "github.com/Lokee86/space-rocks/server/internal/constants"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 
 type EventKind string
 

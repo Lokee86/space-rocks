@@ -3,7 +3,7 @@ package rooms
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
 type Room struct {

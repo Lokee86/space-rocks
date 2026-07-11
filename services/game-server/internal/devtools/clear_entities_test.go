@@ -3,11 +3,11 @@ package devtools
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/devtools/streamruntime"
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools/streamruntime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 )
 
 func TestHandleDebugClearBulletsUsesInjectedStreamRuntime(t *testing.T) {

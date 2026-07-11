@@ -1,8 +1,8 @@
 package game
 
 import (
-	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	targetpolicy "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 type PlayerTargeting struct {

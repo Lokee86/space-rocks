@@ -1,7 +1,7 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func handleDebugSpawnEntity(target Target, playerID string, command DebugCommand) bool {

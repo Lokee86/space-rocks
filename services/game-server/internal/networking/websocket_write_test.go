@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	"github.com/gorilla/websocket"
 	"github.com/pion/webrtc/v4"
 )

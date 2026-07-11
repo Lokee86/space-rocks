@@ -7,7 +7,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/player-data/httpapi"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
-	"github.com/Lokee86/space-rocks/server/internal/networking"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
 )
 
 func buildPlayerDataRuntime() (*playerdata.Runtime, error) {

@@ -3,8 +3,8 @@ package realtime
 import (
 	"fmt"
 
-	game "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
 )
 
 type ShadowRealtimeResult struct {

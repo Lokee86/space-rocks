@@ -1,6 +1,6 @@
 package realtime
 
-import game "github.com/Lokee86/space-rocks/server/internal/game"
+import game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 func CompareShadowRealtimeCoverage(snapshot game.GameplayPresentationSnapshot, world WorldFullPacket, overlay OverlayFullPacket, session SessionFullPacket, events EventBatchPacket) []string {
 	issues := make([]string, 0)

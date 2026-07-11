@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/authclient"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/authclient"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 )
 
 type TokenVerifier interface {

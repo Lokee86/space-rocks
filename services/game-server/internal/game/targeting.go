@@ -1,9 +1,9 @@
 package game
 
 import (
-	playerstate "github.com/Lokee86/space-rocks/server/internal/game/player"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	targetpolicy "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
 )
 
 func (game *Game) SelectTargetAtPosition(playerID string, x float64, y float64, target targetpolicy.TargetRef) bool {

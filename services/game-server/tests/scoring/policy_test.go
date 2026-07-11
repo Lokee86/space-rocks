@@ -3,8 +3,8 @@ package scoringtests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
 )
 
 func TestAsteroidDestroyedAwardsBaseScoreByAsteroidSize(t *testing.T) {

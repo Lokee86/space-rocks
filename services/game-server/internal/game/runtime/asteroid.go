@@ -1,8 +1,8 @@
 package runtime
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
 func NewAsteroid(id string, position physics.Vector2, velocity physics.Vector2, size int, variant int) *Asteroid {

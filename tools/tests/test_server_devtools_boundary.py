@@ -6,7 +6,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GAME_INTERNAL = REPO_ROOT / "services" / "game-server" / "internal" / "game"
 DEVTOOLS_INTERNAL = REPO_ROOT / "services" / "game-server" / "internal" / "devtools"
-ROOT_GAME_IMPORT = '"github.com/Lokee86/space-rocks/server/internal/game"'
+ROOT_GAME_IMPORT = '"github.com/Lokee86/space-rocks/services/game-server/internal/game"'
 DEVTOOLS_METHOD_RE = re.compile(r"func\s*\([^)]*\*Game\s*\)\s*Devtools\w*\s*\(")
 
 

@@ -3,12 +3,12 @@ package game
 import (
 	"math"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/space"
-	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func debugBulletRotation(direction physics.Vector2) float64 {

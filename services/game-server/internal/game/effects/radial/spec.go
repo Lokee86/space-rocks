@@ -1,6 +1,6 @@
 package radial
 
-import "github.com/Lokee86/space-rocks/server/internal/game/damage"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 
 type Spec struct {
 	CoverageMode       CoverageMode

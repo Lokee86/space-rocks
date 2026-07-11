@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/authclient"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/authclient"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type fakeTokenVerifier struct {

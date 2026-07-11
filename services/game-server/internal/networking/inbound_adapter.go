@@ -1,6 +1,6 @@
 package networking
 
-import "github.com/Lokee86/space-rocks/server/internal/rooms"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 
 type inboundSessionAdapter struct {
 	session *webSocketSession

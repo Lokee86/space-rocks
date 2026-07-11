@@ -3,11 +3,11 @@ package game
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/player"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	targetpolicy "github.com/Lokee86/space-rocks/server/internal/game/targeting"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	targetpolicy "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
 )
 
 func TestSetPlayerTargetStoresExistingTarget(t *testing.T) {

@@ -1,8 +1,8 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/scoring"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func (game *Game) awardScore(award scoring.Award) {

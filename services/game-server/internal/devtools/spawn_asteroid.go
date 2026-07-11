@@ -3,10 +3,10 @@ package devtools
 import (
 	"math/rand"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/asteroids"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/game/space"
-	"github.com/Lokee86/space-rocks/server/internal/game/spawning"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/asteroids"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 )
 
 func buildDebugAsteroidSpawnPlan(target Target, request SpawnEntityRequest) spawning.AsteroidSpawnPlan {

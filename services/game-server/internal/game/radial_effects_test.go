@@ -3,10 +3,10 @@ package game
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/damage"
-	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func TestRadialEffectsRespectTargetFilter(t *testing.T) {

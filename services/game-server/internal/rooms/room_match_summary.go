@@ -1,7 +1,7 @@
 package rooms
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/playerdata"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
 func (room *Room) buildMatchResultSummaryLocked() (playerdata.MatchResultSummary, bool) {

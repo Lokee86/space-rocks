@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 type RoomManager struct {

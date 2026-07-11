@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	servergame "github.com/Lokee86/space-rocks/server/internal/game"
+	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
 func TestGeneratedLobbyRequestPacketFields(t *testing.T) {

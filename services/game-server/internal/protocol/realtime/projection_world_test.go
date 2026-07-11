@@ -3,8 +3,8 @@ package realtime
 import (
 	"testing"
 
-	game "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func TestProjectWorldLaneFieldOwnershipAndOrder(t *testing.T) {

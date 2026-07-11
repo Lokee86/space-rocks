@@ -1,7 +1,7 @@
 package radial
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
 
 func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {

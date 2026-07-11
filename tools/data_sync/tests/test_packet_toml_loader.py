@@ -44,7 +44,7 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert "ExcludedPacket" not in game_output.structs
     assert any(name in game_output.structs for name in ("RoomSnapshot", "CreateRoomRequest"))
     assert game_output.imports == {
-        "runtime": "github.com/Lokee86/space-rocks/server/internal/game/runtime",
+        "runtime": "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime",
     }
 
     realtime_output = schema.output_for_id("server_realtime_packets")

@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 // GameplayPresentationSnapshot is the game-facing DTO for realtime presentation projection.

@@ -3,8 +3,8 @@ package game
 import (
 	"math"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
 func (game *Game) radialCandidates() []radial.Candidate {

@@ -25,7 +25,7 @@ packet_type_ids = ["input", "client_config", "bullet_blast", "ship_death", "resp
 structs = ["ClientPacket", "CreateRoomRequest", "JoinRoomRequest", "LeaveRoomRequest", "SetReadyRequest", "StartGameRequest", "StartSinglePlayerRequest", "ReturnToLobbyRequest", "AuthenticateRequest", "AuthenticateResult", "RoomMemberState", "RoomPlayerMatchSummary", "RoomMatchResultSummary", "RoomSnapshot", "RoomStateChanged", "RoomError", "EventState", "PlayerPauseState", "PlayerSessionState", "PickupState", "WebRTCOffer", "WebRTCAnswer", "WebRTCIceCandidate", "WebRTCReady", "WebRTCSmoke", "WebRTCFailed"]
 
 [outputs.imports]
-runtime = "github.com/Lokee86/space-rocks/server/internal/game/runtime"
+runtime = "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 
 [[outputs]]
 id = "player_data_packets"

@@ -3,7 +3,7 @@ package networkingtests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 func TestRoomLifecycleStateNames(t *testing.T) {

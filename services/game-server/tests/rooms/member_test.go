@@ -3,7 +3,7 @@ package roomstests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 func TestNewRoomMember(t *testing.T) {

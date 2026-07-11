@@ -3,7 +3,7 @@ package networking
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 var roomSessions = struct {

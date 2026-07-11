@@ -1,6 +1,6 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 func (manager *RoomManager) StartRoomGame(roomID string, sessionID string) (*Room, *RoomDomainError) {
 	roomID = NormalizeRoomID(roomID)

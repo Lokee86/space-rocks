@@ -1,6 +1,6 @@
 package inbound
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 type lobbySession interface {
 	LogLobbyPacketReceived(message string, roomCode string)

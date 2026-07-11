@@ -3,10 +3,10 @@ package inbound
 import (
 	"sync"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	targeting "github.com/Lokee86/space-rocks/server/internal/game/targeting"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	targeting "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type gameplaySession interface {

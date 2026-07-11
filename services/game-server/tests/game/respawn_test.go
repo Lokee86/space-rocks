@@ -3,9 +3,9 @@ package gametests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	servergame "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
 func TestPlayerDeathReducesLivesAndAllowsRespawnAfterDelay(t *testing.T) {

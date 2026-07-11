@@ -1,6 +1,6 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/server/internal/playerids"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/playerids"
 
 func formatPlayerID(number int) string {
 	return playerids.Format(number)

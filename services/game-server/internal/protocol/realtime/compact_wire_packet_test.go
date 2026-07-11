@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtimewire"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtimewire"
 )
 
 func TestCompactWirePacketCompactsMetadataKeys(t *testing.T) {

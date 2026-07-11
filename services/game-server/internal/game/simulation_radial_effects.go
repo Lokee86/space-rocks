@@ -1,9 +1,9 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/server/internal/game/damage"
-	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func (game *Game) stepRadialEffects(delta float64) {

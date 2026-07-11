@@ -1,6 +1,6 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/server/internal/playerdata"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 
 type MatchResultReporter interface {
 	ReportMatchResult(summary playerdata.MatchResultSummary) error

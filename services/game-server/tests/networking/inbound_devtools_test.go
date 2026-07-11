@@ -3,9 +3,9 @@ package networkingtests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/devtools"
-	"github.com/Lokee86/space-rocks/server/internal/networking/inbound"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type placementDevtoolsSession struct{}

@@ -340,7 +340,7 @@ packet_types = true
 structs = ["ClientPacket", "EventState", "WorldFullPacket"]
 
 [outputs.imports]
-runtime = "github.com/Lokee86/space-rocks/server/internal/game/runtime"
+runtime = "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 
 [[structs]]
 id = "WorldFullPacket"

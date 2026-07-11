@@ -3,7 +3,7 @@ package realtime
 import (
 	"fmt"
 
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime/quantize"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime/quantize"
 )
 
 func quantizeWorldFullPacket(packet WorldFullPacket) (WorldWireFullPacket, error) {

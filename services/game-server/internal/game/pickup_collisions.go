@@ -1,7 +1,7 @@
 package game
 
-import pickuprules "github.com/Lokee86/space-rocks/server/internal/game/pickups"
-import "github.com/Lokee86/space-rocks/server/internal/game/events"
+import pickuprules "github.com/Lokee86/space-rocks/services/game-server/internal/game/pickups"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 
 func (game *Game) handlePlayerPickupCollisions() {
 	for playerID, player := range game.entities.Players {

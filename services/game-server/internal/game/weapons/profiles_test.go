@@ -3,9 +3,9 @@ package weapons
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	"github.com/Lokee86/space-rocks/server/internal/game/effects/radial"
-	"github.com/Lokee86/space-rocks/server/internal/game/damage"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 )
 
 func TestLookupBasicCannonReturnsExpectedProfile(t *testing.T) {

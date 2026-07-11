@@ -3,9 +3,9 @@ package protocoltests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
-	realtime "github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	realtime "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 )
 
 func TestDecodeClientInputPacket(t *testing.T) {

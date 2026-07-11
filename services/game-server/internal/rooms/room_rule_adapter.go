@@ -1,6 +1,6 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/server/internal/rooms/roomrules"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/rooms/roomrules"
 
 func roomDomainErrorFromDecision(decision roomrules.Decision) *RoomDomainError {
 	if decision.Allowed {

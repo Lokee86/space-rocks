@@ -1,6 +1,6 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/damage"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 
 func (target *Control) SetWorldFrozen(enabled bool) {
 	target.game.worldSimulationOptions.SetFreezeWorld(enabled)

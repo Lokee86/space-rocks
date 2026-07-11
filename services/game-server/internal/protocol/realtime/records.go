@@ -1,6 +1,6 @@
 package realtime
 
-import "github.com/Lokee86/space-rocks/server/internal/game"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 type WorldShipRecord struct {
 	ID         string

@@ -3,11 +3,11 @@ package game
 import (
 	"math/rand"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/drops"
-	"github.com/Lokee86/space-rocks/server/internal/game/events"
-	"github.com/Lokee86/space-rocks/server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func (game *Game) maybeDropPickupFromAsteroidLocked(asteroid *runtime.Asteroid) {

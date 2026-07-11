@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	game "github.com/Lokee86/space-rocks/server/internal/game"
-	runtime "github.com/Lokee86/space-rocks/server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	runtime "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 )
 
 func TestActiveWirePacketEncodingUsesLowercaseWorldShape(t *testing.T) {

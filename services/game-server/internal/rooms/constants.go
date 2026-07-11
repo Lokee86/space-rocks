@@ -3,7 +3,7 @@ package rooms
 import (
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/playerids"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/playerids"
 )
 
 const (

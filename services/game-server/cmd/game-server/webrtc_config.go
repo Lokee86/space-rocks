@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/server/internal/networking"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
 )
 
 const (

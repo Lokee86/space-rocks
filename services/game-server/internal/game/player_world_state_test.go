@@ -3,7 +3,7 @@ package game
 import (
 	"testing"
 
-	playerstate "github.com/Lokee86/space-rocks/server/internal/game/player"
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 )
 
 func TestPlayerWorldStateLocked_ActivePlayer(t *testing.T) {

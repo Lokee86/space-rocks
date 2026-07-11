@@ -3,7 +3,7 @@ package realtime
 import (
 	"sort"
 
-	game "github.com/Lokee86/space-rocks/server/internal/game"
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
 type WorldLaneProjection struct {

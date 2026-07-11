@@ -3,8 +3,8 @@ package rooms
 import (
 	"strconv"
 
-	"github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/playerdata"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
 type roomMatch struct {

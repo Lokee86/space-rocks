@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
-	"github.com/Lokee86/space-rocks/server/internal/rooms"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	"github.com/gorilla/websocket"
 )
 

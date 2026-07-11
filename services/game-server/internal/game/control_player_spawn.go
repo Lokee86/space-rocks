@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/physics"
-	runtimepkg "github.com/Lokee86/space-rocks/server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	runtimepkg "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func (target *Control) EnsurePlayerSession(playerID string, spawnPosition physics.Vector2) bool {

@@ -1,6 +1,6 @@
 package inbound
 
-import "github.com/Lokee86/space-rocks/server/internal/protocol/packetcodec"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 
 type ClientPacketEnvelope struct {
 	Type string `json:"type"`

@@ -4,12 +4,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Lokee86/space-rocks/server/internal/constants"
-	game "github.com/Lokee86/space-rocks/server/internal/game"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/networking/outbound"
-	"github.com/Lokee86/space-rocks/server/internal/networking/packetmetrics"
-	"github.com/Lokee86/space-rocks/server/internal/protocol/realtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/outbound"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 )
 
 const debugStatusWriteIntervalTicks = 8

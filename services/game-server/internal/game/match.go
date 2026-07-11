@@ -1,6 +1,6 @@
 package game
 
-import "github.com/Lokee86/space-rocks/server/internal/game/rules"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 
 func (game *Game) IsGameOver() bool {
 	game.mu.Lock()

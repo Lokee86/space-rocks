@@ -3,7 +3,7 @@ package gametests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/server/internal/game/rules"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
 
 func TestEvaluateMatchCurrentGameOverSemantics(t *testing.T) {

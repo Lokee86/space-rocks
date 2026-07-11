@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/Lokee86/space-rocks/server/internal/authclient"
-	"github.com/Lokee86/space-rocks/server/internal/logging"
-	"github.com/Lokee86/space-rocks/server/internal/networking"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/authclient"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
 )
 
 func buildAuthVerifierFromEnv() networking.TokenVerifier {
