@@ -23,6 +23,7 @@ var session_context
 var logger: Callable
 var room_max_players_provider: Callable
 var gameplay_shell_flow
+var world_sync
 var gameplay_presentation_flow
 var gameplay_hud_flow
 var gameplay_menu_flow
@@ -74,9 +75,10 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 		spectate_menu_state,
 		match_end_flow
 	)
+	world_sync = gameplay_shell_flow.world_sync
 	spectate_session_flow.configure(gameplay_menu_flow, gameplay_shell_flow, spectate_menu_state)
 	dev_tools_session_flow = DevToolsSessionFlow.new()
-	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, logger)
+	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, world_sync, logger)
 	dev_tools_session_flow.attach_to_gameplay_shell(gameplay_shell_flow)
 
 	_connect_gameplay_shell_signal(&"gameplay_started", Callable(self, "_on_gameplay_started"))
@@ -203,8 +205,8 @@ func _configure_gameplay_presentation_flow() -> void:
 		hud,
 		player,
 		Callable(self, "_active_camera"),
-		Callable(gameplay_shell_flow.runtime_context.world_sync, "get_remote_player_visual_positions"),
-		Callable(gameplay_shell_flow.runtime_context.world_sync, "get_remote_player_hues")
+		Callable(world_sync, "get_remote_player_visual_positions"),
+		Callable(world_sync, "get_remote_player_hues")
 	)
 
 

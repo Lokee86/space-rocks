@@ -23,9 +23,7 @@ class FakePacketPipeline:
 class FakeGameplayComposition:
 	extends RefCounted
 
-	var gameplay_shell_flow := {
-		"runtime_context": {"world_sync": "world-sync"}
-	}
+	var world_sync := "world-sync"
 	var gameplay_hud_flow := "hud-flow"
 	var devtools_states: Array = []
 	var call_order: Array = []
@@ -65,7 +63,7 @@ func _make_bridge(active := true, ready := true) -> Dictionary:
 	var presentation_adapter := FakePresentationAdapter.new()
 	var composition := FakeGameplayComposition.new()
 	var logger := FakeLogger.new()
-	bridge.configure(pipeline, presentation_adapter, composition, Callable(logger, "record"))
+	bridge.configure(pipeline, presentation_adapter, composition, composition.world_sync, Callable(logger, "record"))
 	if active:
 		bridge.activate()
 	return {

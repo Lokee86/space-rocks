@@ -28,13 +28,13 @@ GameplaySessionController
 
 `GameplayComposition` is the top-level client runtime composition seam. It wires the gameplay shell, HUD flow, gameplay menu flow, match-end flow, match-results flow, spectate flow, devtools session flow, and gameplay presentation flow, and it provides the concrete runtime presentation targets and focused entry points used by `PresentationBridge`.
 
-`GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, and logger.
+`GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, `GameplayComposition.world_sync`, and logger.
 
 `GameplaySessionController` connects `RealtimePacketPipeline.gameplay_packet_applied` to `PresentationBridge.handle_gameplay_packet`. `GameplayComposition` supplies the presentation targets and focused entry points that the bridge uses; it is not the direct signal consumer.
 
 `PresentationBridge` is the dedicated orchestration seam. `GameplaySessionController` activates, resets, and flushes it with the gameplay session lifecycle.
 
-`GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, creates the flow composer, stores required lane baseline sync, and preserves a stable runtime pipeline identity for the composed gameplay frame path.
+`GameplayShellFlow` owns the mounted gameplay shell. It creates the gameplay runtime context, configures world sync and respawn dependencies, captures and threads `world_sync` directly into `GameplayFlowComposer`, creates the flow composer, stores required lane baseline sync, and preserves a stable runtime pipeline identity for the composed gameplay frame path.
 
 ## Code root
 
@@ -85,7 +85,7 @@ It receives scene-level dependencies, creates the major gameplay flows, forwards
 
 `GameplayShellFlow` owns the runtime shell inside the mounted gameplay scene.
 
-It is responsible for creating the runtime context and flow composer. It also stores whether required lane baselines are synced before delegating runtime input/process work.
+It is responsible for creating the runtime context and flow composer, and for capturing and threading `world_sync` directly into the flow composer. It also stores whether required lane baselines are synced before delegating runtime input/process work.
 
 ### Runtime context
 
@@ -116,7 +116,9 @@ gameplay process flow
 
 `GameplayFlowComposer` preloads, constructs, configures, owns, exposes, and resets `GameplayLocalLifecycleFlow`.
 
-It configures the local lifecycle flow with `GameplayRuntimeContext.world_sync`, `GameplayRuntimeContext.respawn_flow`, `GameplayHudFlow`, `MatchEndFlow`, and the local `Player`.
+It configures the local lifecycle flow with the directly injected `world_sync`, `GameplayRuntimeContext.respawn_flow`, `GameplayHudFlow`, `MatchEndFlow`, and the local `Player`. It retains `GameplayRuntimeContext` for respawn and per-frame runtime responsibilities.
+
+`GameplayRuntimeContext` creates and owns `world_sync`. `GameplayShellFlow` captures that reference immediately after runtime-context world configuration and threads it directly into `GameplayFlowComposer`. `GameplayComposition` then captures `GameplayShellFlow.world_sync` and injects it directly into `GameplayPresentationFlow`, `DevToolsSessionFlow`, and `PresentationBridge` through `GameplaySessionController`.
 
 ## Protocols and APIs
 
@@ -247,6 +249,7 @@ It may hold references to:
 * server hitbox overlay flow
 * runtime HUD tick flow
 * gameplay process flow
+* world_sync
 
 It may track:
 
@@ -328,6 +331,8 @@ Use the normal Godot headless GUT client test run for verification.
 ## Notes
 
 Composition should stay a wiring seam. When a section starts describing detailed lane packet application, per-frame processing order, target selection, HUD widget behavior, or world entity interpolation, that content belongs in the more specific client service document.
+
+Consumers must not rediscover `world_sync` by navigating through `GameplayComposition -> GameplayShellFlow -> GameplayRuntimeContext`; dependency threading is explicit while creation and ownership remain in `GameplayRuntimeContext`.
 
 `GameplayRuntimeContext` and `GameplayFlowComposer` are the main guardrails against runtime composition becoming a multipurpose gameplay controller.
 

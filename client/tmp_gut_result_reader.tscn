@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bstws7bhdkv04"]
+
+[ext_resource type="Script" uid="uid://ctgam3b21wxn5" path="res://tmp_gut_result_reader.gd" id="1_133w6"]
+
+[node name="TmpGutResultReader" type="Node" unique_id=1973892055]
+script = ExtResource("1_133w6")

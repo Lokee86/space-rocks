@@ -118,6 +118,7 @@ func test_handle_unhandled_input_delegates_to_injected_input_context() -> void:
 		null,
 		null,
 		FakeRuntimeContext.new(),
+		FakeRuntimeContext.new().world_sync,
 		null,
 		fake_input_context,
 		null,
@@ -141,7 +142,8 @@ func test_handle_unhandled_input_returns_false_without_input_context() -> void:
 		_tracked(Player.new()),
 		null,
 		null,
-		FakeRuntimeContext.new()
+		FakeRuntimeContext.new(),
+		FakeRuntimeContext.new().world_sync
 	)
 	composer.input_context = null
 
@@ -158,6 +160,7 @@ func test_process_delegates_to_injected_process_flow() -> void:
 		null,
 		null,
 		FakeRuntimeContext.new(),
+		FakeRuntimeContext.new().world_sync,
 		null,
 		null,
 		null,
@@ -179,7 +182,8 @@ func test_reset_calls_owned_flow_resets() -> void:
 		_tracked(Player.new()),
 		null,
 		null,
-		FakeRuntimeContext.new()
+		FakeRuntimeContext.new(),
+		FakeRuntimeContext.new().world_sync
 	)
 	composer.input_context = FakeResettableFlow.new()
 	composer.event_lifecycle_flow = FakeResettableFlow.new()
@@ -207,6 +211,7 @@ func test_configure_creates_core_owned_flows() -> void:
 		null,
 		null,
 		FakeRuntimeContext.new(),
+		FakeRuntimeContext.new().world_sync,
 		null,
 		FakeInputContext.new(),
 		FakeDevtoolsContext.new(),
@@ -244,6 +249,7 @@ func test_apply_devtools_gameplay_state_forwards_lane_state_to_hitbox_overlay_fl
 		null,
 		null,
 		runtime_context,
+		fake_world_sync,
 		null,
 		fake_input_context,
 		fake_devtools_context,

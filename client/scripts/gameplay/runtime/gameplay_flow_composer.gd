@@ -27,6 +27,7 @@ func configure(
 	hud_flow_ref,
 	menu_flow_ref,
 	runtime_context_ref,
+	world_sync_ref,
 	spectate_menu_state_ref = null,
 	input_context_ref = null,
 	devtools_context_ref = null,
@@ -41,14 +42,14 @@ func configure(
 		hud_flow_ref,
 		menu_flow_ref,
 		player_ref,
-		Callable(runtime_context_ref.world_sync, "visual_position_for_server_position"),
+		Callable(world_sync_ref, "visual_position_for_server_position"),
 		null,
 		null,
 		match_end_flow
 	)
 	local_lifecycle_flow = GameplayLocalLifecycleFlowScript.new()
 	local_lifecycle_flow.configure(
-		runtime_context_ref.world_sync,
+		world_sync_ref,
 		runtime_context_ref.respawn_flow,
 		hud_flow_ref,
 		match_end_flow,
@@ -58,13 +59,13 @@ func configure(
 	pointer_position_provider = GameplayPointerPositionProvider.new()
 	pointer_position_provider.configure(
 		game_owner_ref,
-		Callable(runtime_context_ref.world_sync, "server_position_for_visual_position")
+		Callable(world_sync_ref, "server_position_for_visual_position")
 	)
 
 	targeting_context = GameplayTargetingContextScript.new()
 	targeting_context.configure(
 		connection_service_ref,
-		runtime_context_ref.world_sync.target_source(),
+		world_sync_ref.target_source(),
 		Callable(pointer_position_provider, "mouse_visual_position"),
 		Callable(pointer_position_provider, "server_position_for_visual_position")
 	)
@@ -87,17 +88,17 @@ func configure(
 			devtools_context,
 			Callable(runtime_context_ref, "request_respawn"),
 			targeting_context,
-			Callable(runtime_context_ref.world_sync, "remote_player_nodes")
+			Callable(world_sync_ref, "remote_player_nodes")
 		)
 
 	server_hitbox_overlay_flow = ServerHitboxOverlayFlowScript.new()
-	server_hitbox_overlay_flow.configure(game_owner_ref, runtime_context_ref.world_sync)
+	server_hitbox_overlay_flow.configure(game_owner_ref, world_sync_ref)
 
 	runtime_tick_flow = GameplayRuntimeTickFlow.new()
 	runtime_tick_flow.configure(hud_flow_ref)
 
 	spectate_context = GameplaySpectateContext.new()
-	spectate_context.configure(menu_flow_ref, null, runtime_context_ref.world_sync)
+	spectate_context.configure(menu_flow_ref, null, world_sync_ref)
 	if spectate_menu_state_ref != null:
 		spectate_context.configure_menu_state(spectate_menu_state_ref)
 

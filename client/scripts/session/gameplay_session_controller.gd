@@ -72,7 +72,7 @@ func configure(
 	gameplay_state_flow = GameplayStateFlow.new()
 	gameplay_state_flow.configure(gameplay_composition)
 	if presentation_bridge != null:
-		presentation_bridge.configure(realtime_packet_pipeline, gameplay_presentation_adapter, gameplay_composition, logger)
+		presentation_bridge.configure(realtime_packet_pipeline, gameplay_presentation_adapter, gameplay_composition, gameplay_composition.world_sync, logger)
 		var gameplay_packet_callable := Callable(presentation_bridge, "handle_gameplay_packet")
 		if realtime_packet_pipeline != null and not realtime_packet_pipeline.gameplay_packet_applied.is_connected(gameplay_packet_callable):
 			realtime_packet_pipeline.gameplay_packet_applied.connect(gameplay_packet_callable)

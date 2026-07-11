@@ -10,6 +10,7 @@ signal return_to_pregame_requested(session_mode: String)
 signal return_to_lobby_requested
 
 var runtime_context
+var world_sync
 var flow_composer
 var gameplay_pause_state_flow
 var hud_flow
@@ -45,6 +46,7 @@ func configure(
 			menu_flow.return_to_pregame_requested.connect(return_to_pregame_callable)
 	runtime_context = GameplayRuntimeContext.new()
 	runtime_context.configure_world(game_owner_ref, player_ref, view_anchor_ref, bullets, asteroids, pickups, gameplay_pause_state_flow.tracker())
+	world_sync = runtime_context.world_sync
 
 	runtime_context.configure_respawn(connection_service_ref, hud_flow)
 
@@ -56,6 +58,7 @@ func configure(
 		hud_flow,
 		menu_flow,
 		runtime_context,
+		world_sync,
 		spectate_menu_state_ref,
 		null,
 		null,

@@ -6,6 +6,7 @@ const ClientLogger = preload("res://scripts/logging/logger.gd")
 var realtime_packet_pipeline
 var presentation_adapter
 var gameplay_composition
+var world_sync
 var logger: Callable
 var _active := false
 var _presentation_pending := false
@@ -17,10 +18,11 @@ var _logged_debug_shape_catalog_received := false
 var _pending_event_lifecycle_flow = null
 
 
-func configure(pipeline_ref, presentation_adapter_ref, gameplay_composition_ref, logger_callable) -> void:
+func configure(pipeline_ref, presentation_adapter_ref, gameplay_composition_ref, world_sync_ref, logger_callable) -> void:
 	realtime_packet_pipeline = pipeline_ref
 	presentation_adapter = presentation_adapter_ref
 	gameplay_composition = gameplay_composition_ref
+	world_sync = world_sync_ref
 	logger = logger_callable
 
 
@@ -94,9 +96,6 @@ func flush_pending() -> bool:
 	var local_lifecycle_flow = null
 	if gameplay_composition.has_method("get_local_lifecycle_flow"):
 		local_lifecycle_flow = gameplay_composition.get_local_lifecycle_flow()
-	var world_sync = null
-	if gameplay_composition.gameplay_shell_flow != null and gameplay_composition.gameplay_shell_flow.runtime_context != null:
-		world_sync = gameplay_composition.gameplay_shell_flow.runtime_context.world_sync
 	var gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
 	var presentation_state = realtime_packet_pipeline.get_presentation_state()
 	presentation_adapter.fanout_lane_states(presentation_state, world_sync, gameplay_hud_flow, event_lifecycle_flow, local_lifecycle_flow)

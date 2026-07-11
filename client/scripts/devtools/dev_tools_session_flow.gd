@@ -10,6 +10,7 @@ const DebugContinuousBulletSpawnFlow := preload("res://scripts/gameplay/devtools
 var connection_service
 var scene_root: Node
 var gameplay_shell_flow
+var world_sync
 var logger: Callable
 var debug_kill_input_flow
 var dev_connection_service
@@ -18,20 +19,21 @@ var debug_click_placement_flow
 var debug_continuous_bullet_spawn_flow
 
 
-func configure(connection_service_ref, scene_root_ref: Node, gameplay_shell_flow_ref, logger_callable: Callable) -> void:
+func configure(connection_service_ref, scene_root_ref: Node, gameplay_shell_flow_ref, world_sync_ref, logger_callable: Callable) -> void:
 	connection_service = connection_service_ref
 	scene_root = scene_root_ref
 	gameplay_shell_flow = gameplay_shell_flow_ref
+	world_sync = world_sync_ref
 	logger = logger_callable
 	debug_kill_input_flow = DebugKillInputFlow.new()
 	debug_kill_input_flow.configure(connection_service)
 	dev_connection_service = DevConnectionService.new()
 	dev_connection_service.configure(connection_service)
-	if scene_root is Node2D && gameplay_shell_flow != null && gameplay_shell_flow.runtime_context != null:
+	if scene_root is Node2D && world_sync != null:
 		debug_mouse_world_position = DebugMouseWorldPosition.new()
 		debug_mouse_world_position.configure(
 			scene_root,
-			Callable(gameplay_shell_flow.runtime_context.world_sync, "server_position_for_visual_position")
+			Callable(world_sync, "server_position_for_visual_position")
 		)
 		debug_click_placement_flow = DebugClickPlacementFlow.new()
 		debug_click_placement_flow.configure(debug_mouse_world_position)

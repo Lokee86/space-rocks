@@ -17,7 +17,7 @@ Packet ingress is the only input path for this bridge; it does not consume lane-
 - Coalescing multiple routed gameplay notifications into one frame flush.
 - Retaining pending presentation while required gameplay lane baselines are not ready.
 - Reading the latest `RealtimePresentationState` at flush time.
-- Resolving world, HUD, and event presentation targets through `GameplayComposition`.
+- Using the directly injected `world_sync` for world presentation while resolving HUD, event, local lifecycle, and devtools targets through `GameplayComposition`.
 - Obtaining the local lifecycle flow through `GameplayComposition` for each ready presentation flush.
 - Calling `PresentationAdapter` for lane-native presentation fanout.
 - Building the devtools gameplay read model through `DevtoolsLaneStateAdapter`.
@@ -48,6 +48,7 @@ Packet ingress is the only input path for this bridge; it does not consume lane-
 RealtimePacketPipeline
 PresentationAdapter
 GameplayComposition
+WorldSync
 logger Callable
 ```
 
@@ -55,7 +56,7 @@ logger Callable
 
 `PresentationAdapter` performs stateless lane-native fanout.
 
-`GameplayComposition` provides the concrete runtime presentation targets and focused presentation entry points.
+`GameplaySessionController` injects `GameplayComposition.world_sync` directly into `PresentationBridge`; `WorldSync` is the world presentation target. `GameplayComposition` continues to provide HUD, event/local lifecycle, and devtools entry points.
 
 ## Applied Packet Handoff
 
@@ -84,7 +85,7 @@ The bridge receives a routed-packet notification after `RealtimePacketPipeline` 
 GameplaySessionController.configure(...)
 -> construct PresentationAdapter
 -> construct PresentationBridge
--> configure PresentationBridge with pipeline, adapter, composition, and logger
+-> configure PresentationBridge with pipeline, adapter, composition, world sync, and logger
 ```
 
 The configured bridge remains inactive until the gameplay session is activated.
@@ -143,7 +144,7 @@ pending and gameplay not ready
 
 pending and gameplay ready
 -> read latest RealtimePresentationState
--> resolve presentation targets
+-> use the injected world sync and resolve the remaining targets through GameplayComposition
 -> obtain GameplayLocalLifecycleFlow through GameplayComposition
 -> PresentationAdapter.fanout_lane_states(..., local_lifecycle_flow)
 -> build and apply devtools gameplay state
@@ -208,7 +209,7 @@ PresentationAdapter
 
 During a successful flush, the bridge resolves:
 
-* World presentation through `GameplayComposition.gameplay_shell_flow.runtime_context.world_sync`.
+* World presentation through directly injected `WorldSync` from `GameplayComposition.world_sync`.
 * Overlay and session HUD presentation through `GameplayComposition.gameplay_hud_flow`.
 * Applied event presentation through `GameplayComposition.get_event_lifecycle_flow()`.
 * Local lifecycle presentation through `GameplayComposition.get_local_lifecycle_flow()`, delegated through the shell and flow composer.
