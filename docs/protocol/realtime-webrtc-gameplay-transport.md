@@ -141,7 +141,7 @@ WebRTCTransport receives DataChannel text
 -> ClientInboundCoordinator
 -> matching typed RealtimePacketPipeline.apply_* method
 -> RealtimeRouter.route_lane_packet(packet)
--> lifecycle packet: LifecycleLaneGate apply / queue / reject
+-> lifecycle packet: LifecycleLaneGate apply / queue / reject / resync on capacity loss
 -> lifecycle apply: WorldLaneApplier validates and mutates WorldLaneState
 -> RealtimePresentationState refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
@@ -228,7 +228,7 @@ Tests or alternate composition paths that need normal startup must provide trans
 
 Connection teardown closes the previous session transport. A later connection uses transport_factory to create a fresh WebRTCTransport, rewires its signals, and starts it. Packets emitted by the replacement transport re-enter the same dispatcher and gameplay application path as packets from the original transport.
 
-Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending packets, pending duplicate tracking, and latest applied lifecycle sequences; it does not provide lifecycle resync or reconnect recovery.
+Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending packets, pending duplicate tracking, and latest applied lifecycle sequences. Lifecycle queue capacity loss uses the existing world-lane resync path; transport replacement itself does not provide reconnect recovery.
 
 ## Hot Movement Split
 

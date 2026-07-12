@@ -98,7 +98,7 @@ server simulation decides to spawn an asteroid
 -> packetcodec encodes the asteroids_lifecycle packet or world_full/bootstrap packet as JSON
 -> client decodes the packet and expands compact wire fields
 -> RealtimePacketPipeline routes through RealtimeRouter
--> LifecycleLaneGate applies immediately or waits for the matching world baseline; invalid/stale lifecycle packets reject
+-> LifecycleLaneGate applies immediately, queues for a matching/replacement world baseline, rejects invalid/stale packets, or requests resync on capacity loss
 -> WorldLaneApplier applies the accepted asteroid create
 -> accumulated WorldLaneState reaches WorldSync/AsteroidSync
 -> AsteroidSync reads AsteroidState.variant

@@ -217,36 +217,61 @@ func test_higher_numeric_baseline_remains_queued() -> void:
 	assert_eq(gate.take_pending_for_baseline("world-baseline-4").size(), 1)
 
 
-func test_unparseable_baseline_remains_bounded_not_obsolete() -> void:
+func test_unparseable_baselines_survive_cleanup_until_capacity_overflow_clears_pending() -> void:
 	var gate := LifecycleLaneGate.new()
-	for index in range(5):
+	for index in range(4):
 		gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(index + 1, "pending-" + str(index)), false, "world-baseline-3")
 	gate.discard_obsolete_baselines("world-baseline-3")
 
+	assert_true(gate._pending_by_baseline.has("pending-0"))
+	assert_true(gate._pending_by_baseline.has("pending-3"))
+
+	var decision := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5, "pending-4"), false, "world-baseline-3")
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_RESYNC)
+	assert_eq(decision.reason, LifecycleLaneGate.REASON_QUEUE_OVERFLOW)
 	assert_eq(gate.take_pending_for_baseline("pending-0").size(), 0)
-	assert_eq(gate.take_pending_for_baseline("pending-4").size(), 1)
+	assert_eq(gate.take_pending_for_baseline("pending-1").size(), 0)
 
 
-func test_per_lane_packet_overflow_discards_oldest_packet() -> void:
+func test_per_lane_packet_overflow_requests_resync_and_clears_pending_state() -> void:
 	var gate := LifecycleLaneGate.new()
+	var decision := {}
 	for sequence in range(1, 10):
-		gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(sequence, "world-baseline-2"), false, "world-baseline-2")
+		decision = gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(sequence, "world-baseline-2"), false, "world-baseline-2")
 
-	var drained := gate.take_pending_for_baseline("world-baseline-2")
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_RESYNC)
+	assert_eq(decision.reason, LifecycleLaneGate.REASON_QUEUE_OVERFLOW)
+	assert_eq(gate.take_pending_for_baseline("world-baseline-2").size(), 0)
 
-	assert_eq(drained.size(), 8)
-	assert_eq(drained[0].sequence, 2)
-	assert_eq(drained[7].sequence, 9)
+	var resubmitted := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(1, "world-baseline-2"), false, "world-baseline-2")
+	assert_eq(resubmitted.status, LifecycleLaneGate.DECISION_QUEUE)
 
 
-func test_baseline_bucket_overflow_discards_oldest_non_active_bucket() -> void:
+func test_packet_overflow_preserves_latest_applied_sequence_and_allows_higher_sequence() -> void:
 	var gate := LifecycleLaneGate.new()
+	gate.mark_applied(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, 5)
+	var decision := {}
+	for sequence in range(6, 15):
+		decision = gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(sequence, "world-baseline-2"), false, "world-baseline-2")
+
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_RESYNC)
+	assert_eq(gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(4), true, "world-baseline-1").reason, "stale_sequence")
+	assert_eq(gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(5), true, "world-baseline-1").reason, "stale_sequence")
+	var higher := gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(6), false, "world-baseline-2")
+	assert_eq(higher.status, LifecycleLaneGate.DECISION_QUEUE)
+
+
+func test_baseline_bucket_overflow_requests_resync_and_clears_pending_state() -> void:
+	var gate := LifecycleLaneGate.new()
+	var decision := {}
 	for baseline_number in range(1, 6):
 		var baseline_id := "world-baseline-" + str(baseline_number)
-		gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(baseline_number, baseline_id), false, "world-baseline-5")
+		decision = gate.submit(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, _packet(baseline_number, baseline_id), false, "world-baseline-5")
 
+	assert_eq(decision.status, LifecycleLaneGate.DECISION_RESYNC)
+	assert_eq(decision.reason, LifecycleLaneGate.REASON_QUEUE_OVERFLOW)
 	assert_eq(gate.take_pending_for_baseline("world-baseline-1").size(), 0)
-	assert_eq(gate.take_pending_for_baseline("world-baseline-5").size(), 1)
+	assert_eq(gate.take_pending_for_baseline("world-baseline-4").size(), 0)
 
 
 func test_reset_clears_applied_sequence_and_all_pending_state() -> void:

@@ -3,6 +3,7 @@ extends RefCounted
 const REASON_WRONG_BASELINE := "wrong_baseline"
 const REASON_MISSING_BASELINE := "missing_baseline"
 const REASON_STALE_OR_INVALID_SEQUENCE := "stale_or_invalid_sequence"
+const REASON_LIFECYCLE_QUEUE_OVERFLOW := "lifecycle_queue_overflow"
 
 const LANES := ["world", "overlay", "session"]
 
@@ -26,6 +27,9 @@ func mark_missing_baseline(lane: String) -> void:
 
 func mark_stale_or_invalid_sequence(lane: String) -> void:
 	_mark_lane_resync(lane, REASON_STALE_OR_INVALID_SEQUENCE)
+
+func mark_lifecycle_queue_overflow(lane: String) -> void:
+	_mark_lane_resync(lane, REASON_LIFECYCLE_QUEUE_OVERFLOW)
 
 func clear_resync(lane: String) -> void:
 	var lane_resync := _ensure_lane_resync(lane)

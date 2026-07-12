@@ -363,6 +363,44 @@ func test_packet_codec_decoded_lifecycle_creates_asteroid_and_bullet_entities() 
 	assert_true(router.world_lane_state.bullets.has("bullet-1"))
 
 
+func test_lifecycle_queue_overflow_marks_world_unsynced_and_emits_once_with_reason() -> void:
+	var router := RealtimeRouter.new()
+	var requests := []
+	router.resync_request_required.connect(func(lane, baseline_id, sequence, reason): requests.append([lane, baseline_id, sequence, reason]))
+	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 7, "baseline_id": "world-baseline-1", "snapshot_id": "world-snapshot-1", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	router.route_lane_packet({"type": "overlay_full", "lane": LaneMetadata.LANE_OVERLAY, "sequence": 1, "baseline_id": "overlay-baseline-1", "snapshot_id": "overlay-snapshot-1", "is_final_chunk": true})
+	router.route_lane_packet({"type": "session_full", "lane": LaneMetadata.LANE_SESSION, "sequence": 1, "baseline_id": "session-baseline-1", "snapshot_id": "session-snapshot-1", "is_final_chunk": true, "players": [], "player_lifecycle": [], "total_asteroids": 0})
+	assert_true(router.is_presentable())
+	for sequence in range(1, 10):
+		router.route_lane_packet({"type": "bullets_lifecycle", "lane": LaneMetadata.LANE_BULLETS_LIFECYCLE, "sequence": sequence, "baseline_id": "world-baseline-2", "bullet_creates": [], "bullet_deletes": []})
+	for sequence in range(1, 10):
+		router.route_lane_packet({"type": "bullets_lifecycle", "lane": LaneMetadata.LANE_BULLETS_LIFECYCLE, "sequence": sequence, "baseline_id": "world-baseline-3", "bullet_creates": [], "bullet_deletes": []})
+
+	assert_false(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+	assert_false(router.is_presentable())
+	assert_eq(router.resync_state.get_reason(LaneMetadata.LANE_WORLD), "lifecycle_queue_overflow")
+	assert_eq(requests, [[LaneMetadata.LANE_WORLD, "world-baseline-1", 7, "lifecycle_queue_overflow"]])
+
+
+func test_replacement_world_full_applies_only_post_overflow_lifecycle_packets() -> void:
+	var router := RealtimeRouter.new()
+	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 7, "baseline_id": "world-baseline-1", "snapshot_id": "world-snapshot-1", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	for sequence in range(1, 9):
+		var creates := []
+		if sequence == 1:
+			creates = [{"id": "pre-overflow-asteroid", "x": 1, "y": 2, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}]
+		router.route_lane_packet({"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "sequence": sequence, "baseline_id": "world-baseline-2", "asteroid_creates": creates, "asteroid_deletes": []})
+	router.route_lane_packet({"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "sequence": 9, "baseline_id": "world-baseline-2", "asteroid_creates": [{"id": "overflow-asteroid", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}], "asteroid_deletes": []})
+	router.route_lane_packet({"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "sequence": 11, "baseline_id": "world-baseline-2", "asteroid_creates": [{"id": "post-overflow-asteroid", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}], "asteroid_deletes": []})
+	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 8, "baseline_id": "world-baseline-2", "snapshot_id": "world-snapshot-2", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+
+	assert_true(router.baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
+	assert_true(router.world_lane_state.asteroids.has("post-overflow-asteroid"))
+	assert_false(router.world_lane_state.asteroids.has("pre-overflow-asteroid"))
+	assert_false(router.world_lane_state.asteroids.has("overflow-asteroid"))
+	assert_eq(router.resync_state.get_reason(LaneMetadata.LANE_WORLD), null)
+
+
 func _decode_fixture(text: String) -> Dictionary:
 	var decoded = PacketCodec.decode(text)
 	assert_true(decoded.ok)

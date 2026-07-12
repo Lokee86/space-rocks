@@ -84,6 +84,9 @@ func mark_lane_unsynced(lane: String) -> void:
 func needs_resync(lane: String) -> bool:
 	return _ensure_lane_state(lane).resync_needed
 
+func request_resync_for_lane(lane: String, reason: String) -> void:
+	_request_resync(lane, _ensure_lane_state(lane), reason)
+
 func _ensure_lane_state(lane: String) -> Dictionary:
 	if not _lane_state.has(lane):
 		_lane_state[lane] = _make_lane_state()

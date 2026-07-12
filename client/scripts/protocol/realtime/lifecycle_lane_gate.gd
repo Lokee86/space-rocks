@@ -6,6 +6,8 @@ const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const DECISION_APPLY := "apply"
 const DECISION_QUEUE := "queue"
 const DECISION_REJECT := "reject"
+const DECISION_RESYNC := "resync"
+const REASON_QUEUE_OVERFLOW := "lifecycle_queue_overflow"
 
 const MAX_PENDING_BASELINE_BUCKETS := 4
 const MAX_PENDING_PACKETS_PER_LANE := 8
@@ -57,7 +59,9 @@ func submit(lane, packet, world_synced, active_world_baseline_id) -> Dictionary:
 	if world_synced and baseline_id == active_world_baseline_id:
 		decision.status = DECISION_APPLY
 	else:
-		_store_pending(lane, packet, sequence, baseline_id, active_world_baseline_id)
+		if not _store_pending(lane, packet, sequence, baseline_id):
+			_clear_pending()
+			return {"status": DECISION_RESYNC, "lane": lane, "packet": packet, "sequence": sequence, "reason": REASON_QUEUE_OVERFLOW}
 	return decision
 
 func mark_applied(lane, sequence) -> void:
@@ -130,34 +134,28 @@ func _reject(lane, packet, sequence, reason: String) -> Dictionary:
 		"reason": reason,
 	}
 
-func _store_pending(lane, packet, sequence, baseline_id, active_world_baseline_id) -> void:
+func _store_pending(lane, packet, sequence, baseline_id) -> bool:
 	if not _pending_by_baseline.has(baseline_id):
-		_trim_baseline_buckets(active_world_baseline_id)
+		if _pending_by_baseline.size() >= MAX_PENDING_BASELINE_BUCKETS:
+			return false
 		_pending_by_baseline[baseline_id] = {}
 		_pending_baseline_order.append(baseline_id)
 	if not _pending_by_baseline[baseline_id].has(lane):
 		_pending_by_baseline[baseline_id][lane] = []
 	var lane_packets: Array = _pending_by_baseline[baseline_id][lane]
 	if lane_packets.size() >= MAX_PENDING_PACKETS_PER_LANE:
-		var discarded_packet: Dictionary = lane_packets.pop_front()
-		_pending_sequences[lane].erase(discarded_packet.get("sequence"))
+		return false
 	var normalized_packet: Dictionary = packet.duplicate()
 	normalized_packet["sequence"] = sequence
 	lane_packets.append(normalized_packet)
 	_pending_sequences[lane][sequence] = true
+	return true
 
-func _trim_baseline_buckets(active_world_baseline_id) -> void:
-	while _pending_by_baseline.size() >= MAX_PENDING_BASELINE_BUCKETS:
-		var discarded_baseline = _oldest_discardable_baseline(active_world_baseline_id)
-		if discarded_baseline == null:
-			return
-		_discard_baseline(discarded_baseline)
-
-func _oldest_discardable_baseline(active_world_baseline_id):
-	for baseline_id in _pending_baseline_order:
-		if baseline_id != active_world_baseline_id:
-			return baseline_id
-	return null
+func _clear_pending() -> void:
+	_pending_by_baseline.clear()
+	_pending_baseline_order.clear()
+	for lane in _LIFECYCLE_LANES:
+		_pending_sequences[lane].clear()
 
 func _discard_baseline(baseline_id) -> void:
 	var baseline_bucket: Dictionary = _pending_by_baseline.get(baseline_id, {})

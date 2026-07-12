@@ -524,11 +524,11 @@ Duplicate or lower lifecycle sequences are rejected when `sequence <= latest app
 
 After a matching `world_full` is completely applied and its baseline is recorded, `RealtimeRouter` drains pending packets for that baseline, sorting packets ascending within each lifecycle lane. There is no ordering contract between the two lifecycle lanes. A lifecycle sequence advances only after `WorldLaneApplier` successfully validates and mutates the payload.
 
-The pending gate is bounded to four baseline buckets and eight packets per lifecycle lane per baseline. Per-lane overflow discards the oldest packet; bucket overflow discards the oldest non-active bucket. Parsed `world-baseline-N` buckets older than the active baseline are discarded. Newer and unparseable baseline IDs remain pending until drained or evicted by those bounds. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending queues, pending duplicate tracking, and latest applied lifecycle sequences.
+The pending gate is bounded to four baseline buckets and eight packets per lifecycle lane per baseline. Per-lane packet-capacity overflow and baseline-bucket capacity overflow do not discard old entries while continuing as synchronized. Instead, capacity loss returns an explicit resync decision with reason `lifecycle_queue_overflow`; it clears all pending lifecycle packets and pending duplicate tracking, preserves latest-applied lifecycle sequence state, marks the world lane unsynchronized, makes gameplay not ready, and emits the existing deduplicated world-lane resync request. While resync is pending, later lifecycle packets may queue for the replacement world baseline. A valid replacement `world_full` restores synchronization and drains only post-overflow lifecycle packets. Parsed `world-baseline-N` buckets older than the accepted active baseline are still discarded during normal cleanup; this is separate from capacity overflow. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending queues, pending duplicate tracking, and latest applied lifecycle sequences.
 
 `BaselineTracker` continues to track only world, overlay, and session state. It supplies world synced state and the active world baseline identity; `record_delta` remains ordinary world/overlay/session baseline tracking and is not the lifecycle gate. Lifecycle lanes do not add independent readiness requirements.
 
-Lifecycle gate failure behavior is local client rejection or bounded queue eviction. It does not add ack, resend, reconnect recovery, durable queues, lifecycle resync, or stale-`world_full` protection.
+Lifecycle gate failure behavior is local client rejection or explicit world-lane resync on bounded queue capacity loss. Lifecycle lanes do not own independent full baselines or readiness. The existing deduplicated world-lane resync request and replacement `world_full` provide recovery; this does not add ack, resend, reconnect recovery, durable queues, or stale-`world_full` protection.
 
 ### Bullet lifecycle lane packets
 
@@ -935,8 +935,8 @@ Lane application responsibilities are split by lane:
 
 ```text
 world lane -> ships, pickups, world/full/bootstrap presentation state
-asteroids_lifecycle -> RealtimeRouter -> LifecycleLaneGate -> apply/queue/reject -> WorldLaneApplier.apply_asteroids_lifecycle
-bullets_lifecycle -> RealtimeRouter -> LifecycleLaneGate -> apply/queue/reject -> WorldLaneApplier.apply_bullets_lifecycle
+asteroids_lifecycle -> RealtimeRouter -> LifecycleLaneGate -> apply/queue/reject/resync -> WorldLaneApplier.apply_asteroids_lifecycle
+bullets_lifecycle -> RealtimeRouter -> LifecycleLaneGate -> apply/queue/reject/resync -> WorldLaneApplier.apply_bullets_lifecycle
 asteroid_delta -> regular asteroid movement updates through hot sequence guards
 bullet_delta -> regular bullet movement updates through hot sequence guards
 overlay lane -> receiver and HUD state

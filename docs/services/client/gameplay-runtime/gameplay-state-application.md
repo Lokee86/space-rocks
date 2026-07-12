@@ -21,7 +21,7 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> ServerPacketDispatcher emits typed realtime signal
 -> ClientInboundCoordinator routes the typed signal to the matching RealtimePacketPipeline entry point
 -> RealtimePacketPipeline expands and validates the packet
--> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for immediate apply / queue / reject
+-> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for apply / queue / reject / resync on capacity loss
 -> WorldLaneApplier validates accepted lifecycle payloads and mutates WorldLaneState
 -> RealtimePacketPipeline refreshes RealtimePresentationState
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
@@ -48,9 +48,9 @@ The client routes lane packets through `RealtimePacketPipeline`. The pipeline ow
 
 `RealtimePacketPipeline` applies realtime gameplay packets regardless of gameplay-session activation state.
 
-`BaselineTracker` owns world, overlay, and session synchronization plus the active world baseline identity. It does not independently track lifecycle lanes. `LifecycleLaneGate` validates lifecycle lane/sequence/baseline metadata, owns strict independent per-lane sequence state, pending duplicate tracking, pending queues keyed by required world baseline, bounded eviction, and obsolete parsed-baseline disposal. `RealtimeRouter` coordinates gate decisions and drains matching pending lifecycle packets after a completed, recorded `world_full`. `WorldLaneApplier` validates lifecycle arrays and records and mutates `WorldLaneState` only after gate acceptance. Lifecycle packets apply immediately only for the active matching world baseline; otherwise they wait or are rejected. Hot lanes remain movement/update lanes and must not be described as ordered after every lifecycle packet.
+`BaselineTracker` owns world, overlay, and session synchronization plus the active world baseline identity. It does not independently track lifecycle lanes. `LifecycleLaneGate` validates lifecycle lane/sequence/baseline metadata, owns strict independent per-lane sequence state, pending duplicate tracking, pending queues keyed by required world baseline, bounded capacity, and obsolete parsed-baseline disposal. `RealtimeRouter` coordinates gate decisions and drains matching pending lifecycle packets after a completed, recorded `world_full`. World-lane capacity loss is an explicit resync decision: it clears pending lifecycle packets and duplicate tracking, preserves latest-applied lifecycle sequences, marks the world lane unsynchronized, makes gameplay not ready, and emits the existing deduplicated world-lane resync request. `WorldLaneApplier` validates lifecycle arrays and records and mutates `WorldLaneState` only after gate acceptance. Lifecycle packets apply immediately only for the active matching world baseline; otherwise they wait or are rejected. Hot lanes remain movement/update lanes and must not be described as ordered after every lifecycle packet.
 
-The pending lifecycle gate is bounded to 4 baseline buckets and 8 packets per lifecycle lane per baseline. Per-lane overflow evicts the oldest packet. Bucket overflow evicts the oldest non-active bucket. Parsed `world-baseline-N` buckets older than the active baseline are discarded; newer and unparseable baseline IDs remain pending until drained or bounded eviction.
+The pending lifecycle gate is bounded to 4 baseline buckets and 8 packets per lifecycle lane per baseline. Per-lane packet-capacity overflow and baseline-bucket capacity overflow do not evict old entries while the client remains synchronized. They return reason `lifecycle_queue_overflow` through the explicit resync decision and clear all pending lifecycle packets and pending duplicate tracking. While resync is pending, later lifecycle packets may queue for the replacement world baseline. A valid replacement `world_full` restores synchronization and drains only post-overflow lifecycle packets. Parsed `world-baseline-N` buckets older than the accepted active baseline are still discarded during normal cleanup; this is separate from capacity overflow. Newer and unparseable baseline IDs remain pending until drained.
 
 `RealtimePacketPipeline.gameplay_packet_applied(packet)` retains its historical name. It means routing and `RealtimePresentationState` refresh completed; it does not prove that the particular lifecycle packet mutated state, because that packet may have been queued or rejected.
 
@@ -176,7 +176,7 @@ BaselineTracker
 = owns world, overlay, and session synchronization plus active world baseline identity; it does not track lifecycle lanes independently
 
 LifecycleLaneGate
-= owns lifecycle validation, independent per-lane sequence state, world-baseline-keyed pending queues, duplicate tracking, bounded eviction, and obsolete parsed-baseline disposal
+= owns lifecycle validation, independent per-lane sequence state, world-baseline-keyed pending queues, duplicate tracking, bounded capacity, explicit resync-on-capacity-loss, and obsolete parsed-baseline disposal
 
 WorldLaneApplier
 = validates accepted lifecycle payload arrays/records and mutates WorldLaneState, without owning lifecycle baseline or sequence policy
@@ -259,7 +259,7 @@ Relevant client tests include:
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
 * `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - lifecycle coverage for `apply_asteroids_lifecycle` and `apply_bullets_lifecycle`.
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd` - lifecycle routing coverage.
-* `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd` - lifecycle validation, sequence, queue, eviction, and obsolete-baseline coverage.
+* `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd` - lifecycle validation, sequence, bounded queue capacity, overflow resync/recovery, post-overflow draining, and obsolete-baseline coverage.
 * `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` - protocol reset clears the replaced router and lifecycle gate state.
 * `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd` - `test_overlay_delta_treats_missing_sparse_sections_as_empty_noop` and `test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_empty_noop` cover missing sparse delta section fields as empty/no-op for overlay and session lane application.
 * `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`

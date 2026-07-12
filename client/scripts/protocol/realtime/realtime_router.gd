@@ -113,6 +113,9 @@ func _route_asteroids_lifecycle(packet: Dictionary) -> void:
 		baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
 	)
 	if decision.status != LifecycleLaneGate.DECISION_APPLY:
+		if decision.status == LifecycleLaneGate.DECISION_RESYNC:
+			baseline_tracker.request_resync_for_lane(LaneMetadata.LANE_WORLD, decision.reason)
+			resync_state.mark_lifecycle_queue_overflow(LaneMetadata.LANE_WORLD)
 		return
 	if _world_applier.apply_asteroids_lifecycle(world_lane_state, packet):
 		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, decision.sequence)
@@ -125,6 +128,9 @@ func _route_bullets_lifecycle(packet: Dictionary) -> void:
 		baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
 	)
 	if decision.status != LifecycleLaneGate.DECISION_APPLY:
+		if decision.status == LifecycleLaneGate.DECISION_RESYNC:
+			baseline_tracker.request_resync_for_lane(LaneMetadata.LANE_WORLD, decision.reason)
+			resync_state.mark_lifecycle_queue_overflow(LaneMetadata.LANE_WORLD)
 		return
 	if _world_applier.apply_bullets_lifecycle(world_lane_state, packet):
 		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_BULLETS_LIFECYCLE, decision.sequence)
@@ -140,7 +146,9 @@ func _route_resync(packet: Dictionary) -> void:
 			return
 	else:
 		baseline_tracker.mark_lane_unsynced(lane)
-	if reason == "missing_baseline":
+	if reason == ResyncState.REASON_LIFECYCLE_QUEUE_OVERFLOW:
+		resync_state.mark_lifecycle_queue_overflow(lane)
+	elif reason == "missing_baseline":
 		resync_state.mark_missing_baseline(lane)
 	elif reason == "stale_or_invalid_sequence":
 		resync_state.mark_stale_or_invalid_sequence(lane)
@@ -148,7 +156,9 @@ func _route_resync(packet: Dictionary) -> void:
 		resync_state.mark_wrong_baseline(lane)
 
 func _on_resync_required(lane, baseline_id, sequence, reason) -> void:
-	if reason == ResyncState.REASON_MISSING_BASELINE:
+	if reason == ResyncState.REASON_LIFECYCLE_QUEUE_OVERFLOW:
+		resync_state.mark_lifecycle_queue_overflow(lane)
+	elif reason == ResyncState.REASON_MISSING_BASELINE:
 		resync_state.mark_missing_baseline(lane)
 	else:
 		resync_state.mark_wrong_baseline(lane)

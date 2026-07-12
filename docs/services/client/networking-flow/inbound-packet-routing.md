@@ -35,7 +35,7 @@ WebRTCTransport receives DataChannel text
 -> typed dispatcher signal
 -> RealtimePacketPipeline typed entry point for the packet family
 -> RealtimeRouter.route_lane_packet(packet)
--> lifecycle packet: LifecycleLaneGate immediate apply / queue / reject
+-> lifecycle packet: LifecycleLaneGate apply / queue / reject / resync on capacity loss
 -> accepted lifecycle packet: WorldLaneApplier validates and mutates WorldLaneState
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
@@ -378,7 +378,7 @@ Lifecycle packets use the same dispatcher and pipeline classification path as ot
 typed lifecycle signal
 -> RealtimePacketPipeline.apply_asteroids_lifecycle / apply_bullets_lifecycle
 -> RealtimeRouter.route_lane_packet(packet)
--> LifecycleLaneGate immediate apply / queue / reject
+-> LifecycleLaneGate apply / queue / reject / resync on capacity loss
 -> WorldLaneApplier lifecycle validation and WorldLaneState mutation only after acceptance
 ```
 
@@ -487,7 +487,7 @@ asteroids_lifecycle
 -> asteroids_lifecycle_received(packet)
 -> RealtimePacketPipeline.apply_asteroids_lifecycle(packet)
 -> RealtimeRouter.route_lane_packet(packet)
--> LifecycleLaneGate immediate apply / queue / reject
+-> LifecycleLaneGate apply / queue / reject / resync on capacity loss
 -> WorldLaneApplier validates and mutates only after acceptance
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
@@ -497,7 +497,7 @@ bullets_lifecycle
 -> bullets_lifecycle_received(packet)
 -> RealtimePacketPipeline.apply_bullets_lifecycle(packet)
 -> RealtimeRouter.route_lane_packet(packet)
--> LifecycleLaneGate immediate apply / queue / reject
+-> LifecycleLaneGate apply / queue / reject / resync on capacity loss
 -> WorldLaneApplier validates and mutates only after acceptance
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)

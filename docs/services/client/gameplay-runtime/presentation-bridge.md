@@ -66,14 +66,14 @@ The packet-ingress path is:
 ServerPacketDispatcher
 -> ClientInboundCoordinator typed realtime binding
 -> RealtimePacketPipeline typed apply entry point
--> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for immediate apply / queue / reject
+-> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for apply / queue / reject / resync on capacity loss
 -> WorldLaneApplier validates and mutates accepted lifecycle payloads
 -> RealtimePresentationState is refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The bridge receives a routed-packet notification after `RealtimePacketPipeline` has completed routing and refreshed `RealtimePresentationState`. The notification does not prove that the particular lifecycle packet mutated state: it may have been queued for a matching world baseline or rejected by `LifecycleLaneGate`.
+The bridge receives a routed-packet notification after `RealtimePacketPipeline` has completed routing and refreshed `RealtimePresentationState`. The notification does not prove that the particular lifecycle packet mutated state: it may have been queued for a matching world baseline, rejected by `LifecycleLaneGate`, or caused a capacity-loss resync decision. During that recovery, gameplay is not ready until a valid replacement `world_full` restores synchronization.
 
 `SessionNetworkController` and `GameplaySessionController` do not relay generic gameplay packet notifications in this path, and `PresentationBridge` is not fed by lane-specific `ClientConnectionService` signals.
 
