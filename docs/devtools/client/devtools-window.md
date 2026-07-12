@@ -74,6 +74,8 @@ The root script lives at:
 client/scripts/devtools/devtools_window.gd
 ```
 
+`devtools_window.gd` remains the window composition and signal surface. Its public refresh methods are preserved as thin delegation methods for existing callers. `DevtoolsWindowTelemetry` owns telemetry source selector setup, selected-source state, raw local/target rendering, sorted key output, JSON rendering, and float formatting. `DevtoolsWindowTargetSelectors` owns repeated player-target selector population, selection preservation, game-target fallback, and shared score/lives selector updates.
+
 The window is titled `Space Rocks Devtools`, opens centered, stays on top, and hides instead of freeing itself when closed.
 
 The current window surface includes:
@@ -296,6 +298,8 @@ Primary window files:
 client/scenes/devtools/devtools_window.tscn
 client/scripts/devtools/devtools_window.gd
 client/scripts/devtools/devtools_window_controller.gd
+client/scripts/devtools/devtools_window_telemetry.gd
+client/scripts/devtools/devtools_window_target_selectors.gd
 ```
 
 Composition and action routing:
@@ -363,7 +367,9 @@ client/scenes/devtools/player_dev_label.tscn
 
 Important non-ownership boundaries:
 
-* `devtools_window.gd` owns UI controls and signal emission, not gameplay mutation.
+* `devtools_window.gd` owns window composition, public refresh routing, UI action handlers, and signal emission, not gameplay mutation.
+* `DevtoolsWindowTelemetry` owns telemetry selector setup/state and raw telemetry rendering/formatting.
+* `DevtoolsWindowTargetSelectors` owns repeated player-target selector population, selection preservation, game-target fallback, and shared score/lives selector updates.
 * `DevtoolsWindowController` owns window lifecycle, latest cached UI state, and target-scope conversion.
 * `DevtoolsCommandContext` owns command routing into debug packet send paths.
 * `DevtoolsPlacementContext` owns placement request handoff, not mouse/world coordinate conversion.
@@ -377,6 +383,8 @@ Relevant client tests include:
 
 ```text
 client/tests/unit/devtools/devtools_window_test.gd
+client/tests/unit/devtools/test_devtools_window_telemetry.gd
+client/tests/unit/devtools/test_devtools_window_target_selectors.gd
 client/tests/unit/test_devtools_window_controller.gd
 client/tests/unit/test_devtools_player_target_model.gd
 ```
@@ -386,6 +394,9 @@ Current test coverage verifies:
 * granular freeze buttons emit the expected freeze targets
 * debug status updates granular freeze labels
 * pickup selector values are populated from the pickup catalog and default to `1_up`
+* telemetry selectors initialize with stable defaults and preserve source selection
+* local and target telemetry render empty states, sorted keys, JSON values, and four-decimal floats
+* player-target selectors preserve selected metadata, fall back to the game target where applicable, clear empty sets, retain local-player labels/metadata, and update all shared score/lives selectors consistently
 * explicit selected players override canonical game targets
 * player canonical targets resolve for player-only commands
 * non-player canonical targets do not emit player-only commands
