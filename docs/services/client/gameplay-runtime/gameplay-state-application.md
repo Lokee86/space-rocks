@@ -153,7 +153,9 @@ GameplayLocalLifecycleFlow
 
 The event path uses `EventBatchApplier` for `event_batch` delivery. Compact aliases such as `eb`, `ev`, `ei`, `bb`, `shd`, and `dmg` are wire details and should not leak into client presentation code.
 
-`EventBatchApplier`'s applied-batch, applied-event, and logged-batch dedupe dictionaries are match-scoped, replaced/reset at match boundaries, and grow linearly within a match. This behavior is covered by [Stable Limitations](../../../limits/stable-limitations.md); pruning requires a safe replay window.
+`EventBatchApplier` retains match-scoped dedupe histories with bounded insertion-order retention: 4096 applied batch IDs, 8192 applied event IDs, and 4096 logged batch IDs. When a history reaches its cap, the oldest retained ID is evicted. Recording a duplicate ID does not consume additional capacity or change its retained order. The histories are replaced or reset at match boundaries.
+
+`WorldLaneState` retains at most 4096 deleted bullet IDs and 2048 pending updates for unknown bullet IDs. Recreating a bullet removes its tombstone from both the public dictionary and insertion-order state; deleting it again records it through the same bounded path. Clear and reset operations keep the dictionaries and insertion-order arrays synchronized.
 
 `PresentationAdapter` decodes session state once, passes the decoded state to `SessionPresentationAdapter`, then reuses that decoded session state when it calls `GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_state, self_id)`. Local lifecycle reconciliation runs after world, overlay, and session lane presentation and before `EventPresentationAdapter` drains event output.
 
@@ -267,6 +269,9 @@ Relevant client tests include:
 * `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` - protocol reset clears the replaced router and lifecycle gate state.
 * `client/tests/unit/protocol/realtime/test_overlay_session_lane_applier.gd` - `test_overlay_delta_treats_missing_sparse_sections_as_empty_noop` and `test_session_delta_treats_missing_sparse_sections_and_total_asteroids_as_empty_noop` cover missing sparse delta section fields as empty/no-op for overlay and session lane application.
 * `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd`
+  * bounded applied-batch, applied-event, and logged-batch history retention, oldest-entry eviction, and duplicate-record capacity coverage.
+* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd`
+  * bounded deleted-bullet tombstones, bounded pending unknown-bullet updates, recreation, replacement ordering, and clear-state coverage.
 * `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd`
 * `client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd`
 * `client/tests/unit/test_gameplay_session_controller.gd`
@@ -275,7 +280,6 @@ Relevant client tests include:
 ## Related docs
 
 * [Gameplay Runtime](./!INDEX.md)
-* [Stable Limitations](../../../limits/stable-limitations.md)
 * [World Sync](../world-sync/!INDEX.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)
