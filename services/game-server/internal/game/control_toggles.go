@@ -153,5 +153,6 @@ func (target *Control) ApplyPlayerDefeat(sourcePlayerID string, targetPlayerID s
 	if damageResult.Fatal {
 		target.game.applyFatalPlayerDamage(targetPlayerID, targetPlayer)
 	}
+	target.game.publishPresentationFrameLocked()
 	return true
 }

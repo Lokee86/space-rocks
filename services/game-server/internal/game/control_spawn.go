@@ -26,19 +26,28 @@ func (target *Control) AddBullet(bullet *runtimepkg.Bullet) bool {
 		return false
 	}
 	target.game.entities.Projectiles[bullet.ID] = bullet
+	target.game.publishPresentationFrameLocked()
 	return true
 }
 
 func (target *Control) SpawnBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*runtimepkg.Bullet, bool) {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
-	return target.game.spawnDebugBullet(ownerID, position, direction)
+	bullet, ok := target.game.spawnDebugBullet(ownerID, position, direction)
+	if ok {
+		target.game.publishPresentationFrameLocked()
+	}
+	return bullet, ok
 }
 
 func (target *Control) SpawnPickup(pickupType pickups.PickupType, position physics.Vector2) (*pickups.Pickup, bool, error) {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
-	return target.game.spawnPickupLocked(pickupType, position)
+	pickup, ok, err := target.game.spawnPickupLocked(pickupType, position)
+	if ok {
+		target.game.publishPresentationFrameLocked()
+	}
+	return pickup, ok, err
 }
 
 func (target *Control) RandomAsteroidSpeed() float64 {
@@ -50,5 +59,9 @@ func (target *Control) RandomAsteroidSpeed() float64 {
 func (target *Control) ApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *runtimepkg.Asteroid {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
-	return target.game.applyAsteroidSpawn(plan)
+	asteroid := target.game.applyAsteroidSpawn(plan)
+	if asteroid != nil {
+		target.game.publishPresentationFrameLocked()
+	}
+	return asteroid
 }

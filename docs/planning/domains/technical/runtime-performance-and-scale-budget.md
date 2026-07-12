@@ -102,7 +102,9 @@ Entity counts should include current and future pressure sources:
 
 Baseline recorded 2026-07-12 from `services/game-server/internal/game/presentation_snapshot_benchmark_test.go` on Linux/amd64 with an 11th Gen Intel Core i9-11900H. These measurements are local benchmark evidence, not release limits.
 
-`GameplayPresentationSnapshot` copies the authoritative presentation maps while holding `Game.mu`. Representative results from three 250 ms runs were:
+### Pre-optimization baseline
+
+Before the shared presentation frame, `GameplayPresentationSnapshot` copied the authoritative presentation maps while holding `Game.mu` for every receiver request. This is retained as the pre-optimization baseline that explains the presentation ownership seam. Representative results from three 250 ms runs were:
 
 | Scenario | Representative snapshot cost | Allocations |
 | --- | ---: | ---: |
@@ -118,7 +120,19 @@ The `Game.Step` contention benchmark freezes world movement, spawning, and colli
 | 8 players, 100 asteroids, 500 bullets | 1.09 us/op | 3.01 us/op | 11.6 us/op | 22.2 us/op |
 | 16 players, 500 asteroids, 2,000 bullets | 2.32 us/op | 5.87 us/op | 22.0 us/op | 32.8 us/op |
 
-Contention readers request snapshots continuously and are deliberately harsher than normal per-session requests at 60 Hz. The representative 8-player load is healthy relative to the 16.67 ms server tick budget. Snapshot allocation pressure is notable, and the 16-player stress case is warning-level evidence for future scale work, but the current measurements do not require production optimization.
+### Post-implementation baseline
+
+The implemented shared presentation frame changes the measured boundary. Across the same small, medium, and stress scenarios, the receiver-scoped snapshot wrapper is approximately 34 ns/op, 0 B/op, and 0 allocs/op. Shared-frame publication is approximately:
+
+| Scenario | Publication cost | Allocations |
+| --- | ---: | ---: |
+| 1 player, 100 asteroids, 100 bullets | 11.6 us/op | 25,984 B/op |
+| 8 players, 100 asteroids, 500 bullets | 45.7 us/op | about 129,985 B/op |
+| 16 players, 500 asteroids, 2,000 bullets | 225.7 us/op | about 559,036 B/op |
+
+Publication occurs once per simulation generation rather than once per receiver request. Per-receiver pending-event copying and realtime lane planning remain separate costs. The duplicated per-receiver snapshot-copy pressure is addressed; future measurement gates remain frame-publication cost, delta/projection cost, event copying, GC behavior, larger rooms, and multi-room process scale.
+
+Contention readers request snapshots continuously and are deliberately harsher than normal per-session requests at 60 Hz. They no longer multiply entity-map copying. Remaining `Step` cost is dominated by once-per-step frame publication and simulation work; reader count adds only brief lock access for frame capture and pending-event copying. The representative 8-player load is healthy relative to the 16.67 ms server tick budget, while the 16-player stress case remains evidence for future scale work.
 
 Revisit this decision when rooms grow larger, sustained entity counts rise, runtime observation shows GC or memory pressure, or snapshot work consumes a material portion of the 16.67 ms tick budget.
 
@@ -127,8 +141,11 @@ Exact benchmark commands:
 ```bash
 cd services/game-server
 go test ./internal/game -run '^$' -bench '^BenchmarkGameplayPresentationSnapshot$' -benchtime=250ms -count=3
+go test ./internal/game -run '^$' -bench '^BenchmarkGameplayPresentationFramePublication$' -benchtime=250ms -count=3
 go test ./internal/game -run '^$' -bench '^BenchmarkGameStepWithPresentationSnapshotContention$' -benchtime=100ms -count=3
 ```
+
+Current presentation-frame ownership and publication behavior are documented canonically in [Game Aggregate](../../../services/game-server/simulation/runtime/game-aggregate.md).
 
 ## Client Runtime Signals
 

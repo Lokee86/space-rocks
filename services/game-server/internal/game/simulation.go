@@ -25,6 +25,7 @@ func (game *Game) runSimulation() {
 func (game *Game) Step(delta float64) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	defer game.publishPresentationFrameLocked()
 
 	bounds := space.DefaultBounds()
 

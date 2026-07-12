@@ -36,5 +36,6 @@ func (target *Control) ForceRespawnPlayer(playerID string, position physics.Vect
 	cameraView.Y = player.Y
 	cameraView.Config = cameraConfig
 
+	target.game.publishPresentationFrameLocked()
 	return true
 }

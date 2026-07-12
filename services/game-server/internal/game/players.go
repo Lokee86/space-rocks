@@ -24,6 +24,7 @@ func (game *Game) AddPlayer() string {
 	game.entities.Players[playerID] = player
 	game.setPlayerCameraViewLocked(playerID, player)
 	game.pendingPresentationEvents[playerID] = nil
+	game.publishPresentationFrameLocked()
 	logging.Game.Debug("player added",
 		logging.FieldPlayerID, playerID,
 		"x", spawnPosition.X,
@@ -78,6 +79,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	delete(game.playerSessions, playerID)
 	game.clearTargetsForMissingPlayersLocked()
 	delete(game.pendingPresentationEvents, playerID)
+	game.publishPresentationFrameLocked()
 	logging.Game.Debug("player removed", logging.FieldPlayerID, playerID)
 }
 

@@ -6,6 +6,59 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
+// gameplayPresentationFrame is immutable after publication and may be read after game.mu is released.
+type gameplayPresentationFrame struct {
+	players         map[string]runtime.ShipState
+	playerSessions  map[string]PlayerSessionState
+	playerLifecycle map[string]string
+	bullets         map[string]runtime.BulletState
+	asteroids       map[string]runtime.AsteroidState
+	pickups         map[string]runtime.PickupState
+	totalAsteroids  int
+	serverSentMsec  int
+	generation      uint64
+}
+
+func (game *Game) publishPresentationFrameLocked() {
+	players := make(map[string]runtime.ShipState, len(game.entities.Players))
+	for id, player := range game.entities.Players {
+		players[id] = player.State()
+	}
+
+	matchDecision := game.matchDecisionLocked()
+	playerLifecycle := make(map[string]string, len(matchDecision.Players))
+	for _, player := range matchDecision.Players {
+		playerLifecycle[player.ID] = string(player.Status)
+	}
+
+	asteroids := make(map[string]runtime.AsteroidState, len(game.entities.Asteroids))
+	for id, asteroid := range game.entities.Asteroids {
+		asteroids[id] = asteroid.State()
+	}
+
+	bullets := make(map[string]runtime.BulletState, len(game.entities.Projectiles))
+	for id, bullet := range game.entities.Projectiles {
+		bullets[id] = bullet.State()
+	}
+
+	generation := uint64(1)
+	if game.presentationFrame != nil {
+		generation = game.presentationFrame.generation + 1
+	}
+
+	game.presentationFrame = &gameplayPresentationFrame{
+		players:         players,
+		playerSessions:  game.playerSessionStatesLocked(),
+		playerLifecycle: playerLifecycle,
+		bullets:         bullets,
+		asteroids:       asteroids,
+		pickups:         game.pickupStatesLocked(),
+		totalAsteroids:  game.spawner.TotalAsteroidsSpawned(),
+		serverSentMsec:  int(time.Now().UnixMilli()),
+		generation:      generation,
+	}
+}
+
 // GameplayPresentationSnapshot is the game-facing DTO for realtime presentation projection.
 type GameplayPresentationSnapshot struct {
 	SelfID          string
@@ -21,52 +74,37 @@ type GameplayPresentationSnapshot struct {
 	ServerSentMsec  int
 }
 
-// GameplayPresentationSnapshot returns a non-draining copy of the authoritative
-// presentation state for realtime projection.
+// GameplayPresentationSnapshot returns a receiver-scoped view over the current
+// immutable frame and copies only the receiver's pending events.
 func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresentationSnapshot {
 	game.mu.Lock()
-	defer game.mu.Unlock()
-
-	players := make(map[string]runtime.ShipState, len(game.entities.Players))
-	for id, player := range game.entities.Players {
-		players[id] = player.State()
-	}
-
-	matchDecision := game.matchDecisionLocked()
-	playerLifecycle := make(map[string]string, len(matchDecision.Players))
-	for _, player := range matchDecision.Players {
-		playerLifecycle[player.ID] = string(player.Status)
-	}
-
-	playerSessions := game.playerSessionStatesLocked()
-
-	asteroids := make(map[string]runtime.AsteroidState, len(game.entities.Asteroids))
-	for id, asteroid := range game.entities.Asteroids {
-		asteroids[id] = asteroid.State()
-	}
-
-	pickups := game.pickupStatesLocked()
-	bullets := make(map[string]runtime.BulletState, len(game.entities.Projectiles))
-	for id, bullet := range game.entities.Projectiles {
-		bullets[id] = bullet.State()
+	frame := game.presentationFrame
+	if frame == nil {
+		game.publishPresentationFrameLocked()
+		frame = game.presentationFrame
 	}
 
 	pending := game.pendingPresentationEvents[playerID]
 	pendingEvents := make([]PendingPresentationEvent, len(pending))
 	copy(pendingEvents, pending)
+	game.mu.Unlock()
 
-	serverSentMsec := int(time.Now().UnixMilli())
+	lives := 0
+	if session, ok := frame.playerSessions[playerID]; ok {
+		lives = session.Lives
+	}
+
 	return GameplayPresentationSnapshot{
 		SelfID:          playerID,
-		Lives:           game.playerLives(playerID),
-		Players:         players,
-		PlayerSessions:  playerSessions,
-		PlayerLifecycle: playerLifecycle,
-		Bullets:         bullets,
-		Asteroids:       asteroids,
-		Pickups:         pickups,
-		TotalAsteroids:  game.spawner.TotalAsteroidsSpawned(),
+		Lives:           lives,
+		Players:         frame.players,
+		PlayerSessions:  frame.playerSessions,
+		PlayerLifecycle: frame.playerLifecycle,
+		Bullets:         frame.bullets,
+		Asteroids:       frame.asteroids,
+		Pickups:         frame.pickups,
+		TotalAsteroids:  frame.totalAsteroids,
 		PendingEvents:   pendingEvents,
-		ServerSentMsec:  serverSentMsec,
+		ServerSentMsec:  frame.serverSentMsec,
 	}
 }
