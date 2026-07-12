@@ -9,7 +9,6 @@ import (
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
-	"github.com/gorilla/websocket"
 )
 
 type fakeTokenVerifier struct {
@@ -40,7 +39,7 @@ func TestWebSocketAuthenticateRequestReturnsAuthenticatedResult(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -88,7 +87,7 @@ func TestWebSocketAuthenticateRequestRejectsInvalidToken(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -123,7 +122,7 @@ func TestWebSocketAuthenticateRequestWithoutVerifierReturnsUnavailable(t *testin
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -158,7 +157,7 @@ func TestWebSocketStartSinglePlayerRequestStillWorksWithoutAuthentication(t *tes
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}

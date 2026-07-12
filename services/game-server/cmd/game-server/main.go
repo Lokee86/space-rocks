@@ -57,7 +57,7 @@ func main() {
 	mux.Handle("PUT /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 
 	logging.Server.Info("server starting", "addr", ":8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := newHTTPServer(mux).ListenAndServe(); err != nil {
 		logging.Server.Error("server stopped", err, "addr", ":8080")
 		os.Exit(1)
 	}

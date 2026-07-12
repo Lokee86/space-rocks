@@ -232,15 +232,16 @@ The route is handled by the networking WebSocket handler and upgraded with Goril
 
 ### Origin policy
 
-The server allows WebSocket upgrade requests with these origins:
+The server rejects an absent or empty `Origin` header. The handler builds its policy once. When `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is unset, the exact default allowlist is:
 
 ```text
-empty Origin header
 https://space-rocks-client.local
 http://localhost:8080
 http://127.0.0.1:8080
 http://[::1]:8080
 ```
+
+When set, `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is a comma-separated replacement allowlist; whitespace is trimmed and empty entries are ignored. Origins are matched exactly.
 
 The Godot client currently sets the WebSocket handshake origin from generated constants:
 
@@ -252,7 +253,7 @@ Origin rejection or upgrade failure prevents session creation.
 
 ### Message framing
 
-Each WebSocket message is a text message containing one JSON object.
+Each WebSocket message is a text message containing one JSON object. The server enforces a 256 KiB inbound WebSocket text-message limit and sets a 10-second deadline before every outbound WebSocket write. The process HTTP server uses `:8080` with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`.
 
 The packet envelope uses:
 

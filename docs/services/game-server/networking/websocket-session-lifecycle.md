@@ -247,7 +247,7 @@ session.conn.ReadMessage()
 -> handleClientPacket(session, remoteAddr, msg, envelope)
 ```
 
-If `ReadMessage()` returns an error, the read loop sends the error into `readErr` and returns. The write loop receives that error, logs the close/failure, and exits.
+The read loop applies the server-owned 256 KiB inbound WebSocket text-message limit immediately after a successful upgrade. If `ReadMessage()` returns an error, including because a message exceeds that limit, the read loop sends the error into `readErr` and returns. The write loop receives that error, logs the close/failure, and exits.
 
 If envelope decode fails, the server logs:
 
@@ -304,6 +304,8 @@ Queued outbound messages are already encoded byte payloads. They are written as 
 ```text
 outbound.WriteServerMessage(session.conn, message, onWriteClose)
 ```
+
+Each outbound WebSocket write sets a deadline 10 seconds from the current time before calling `WriteMessage`. The process hosts the mux with an explicit `http.Server` on `:8080`, configured with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`.
 
 The write loop also runs a ticker at:
 

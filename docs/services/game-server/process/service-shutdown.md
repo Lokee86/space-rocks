@@ -22,9 +22,9 @@ During startup, `main()`:
 6. builds the match result reporter
 7. builds the auth verifier
 8. registers health, WebSocket, and player-data HTTP routes
-9. blocks in `http.ListenAndServe(":8080", mux)`
+9. creates the configured `http.Server` on `:8080` and calls `ListenAndServe()`
 
-The current executable does not install OS signal handling and does not create an `http.Server` value with a graceful `Shutdown` call. The only process-level cleanup hook currently present in `main()` is the deferred `rooms.StopAll()` call.
+The current executable does create an explicit `http.Server`, configured for `:8080` with the process HTTP timeouts. It does not install OS signal handling or orchestrate a graceful `Shutdown()` call. The only process-level cleanup hook currently present in `main()` is the deferred `rooms.StopAll()` call.
 
 Because startup and server error paths call `os.Exit(1)`, those paths bypass deferred cleanup. As implemented, `RoomManager.StopAll()` is the cleanup primitive for room-owned runtime state, but the executable does not yet provide a complete graceful shutdown sequence for HTTP draining, WebSocket closure, signal handling, or dependency teardown.
 
@@ -132,7 +132,8 @@ main()
   build reporter
   build auth verifier
   register routes
-  http.ListenAndServe(":8080", mux)
+  create the configured `http.Server` on :8080
+  call `ListenAndServe()`
 ```
 
 Current room-manager stop flow:
@@ -178,7 +179,8 @@ Player-data runtime construction happens in the process entrypoint, but player-d
 
 Primary implementation files:
 
-* `services/game-server/cmd/game-server/main.go` - executable entrypoint, route registration, `defer rooms.StopAll()`, and `http.ListenAndServe`.
+* `services/game-server/cmd/game-server/main.go` - executable entrypoint, route registration, `defer rooms.StopAll()`, and configured HTTP server startup.
+* `services/game-server/cmd/game-server/http_server.go` - explicit HTTP server construction and timeout configuration.
 * `services/game-server/internal/networking/rooms.go` - networking-facing room manager constructor wrapper.
 * `services/game-server/internal/rooms/manager.go` - `RoomManager`, room map ownership, `StopAll()`, and cleanup scheduling.
 * `services/game-server/internal/rooms/room_cleanup.go` - room cleanup timer stop, cleanup scheduling, and `StopGameIfPresent()`.

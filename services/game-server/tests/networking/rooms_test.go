@@ -35,7 +35,7 @@ func newAuthenticatedRoomTestServer(t *testing.T, manager *rooms.RoomManager) *h
 func dialAuthenticatedRoomWebSocket(t *testing.T, serverURL string) *websocket.Conn {
 	t.Helper()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(serverURL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(serverURL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestWebSocketRoomIDQueryDoesNotJoinOrSpawn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create lobby room: %v", err)
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL)+"/?room_id="+room.ID, nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL) + "/?room_id=" + room.ID)
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestWebSocketWithoutRoomIDDoesNotJoinOrSpawn(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -264,7 +264,7 @@ func TestStartSinglePlayerRequestCreatesInGameRoomAndBootstrapsLane(t *testing.T
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -350,7 +350,7 @@ func TestSetTargetPlayerRequestUpdatesCanonicalTarget(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -392,7 +392,7 @@ func TestSetTargetPlayerRequestInvalidTargetDoesNotOverwriteExistingTarget(t *te
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -449,7 +449,7 @@ func TestSetTargetPlayerRequestEmptyTargetClearsTarget(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -508,7 +508,7 @@ func TestSelectTargetAtPositionRequestRoutesToServerTargetSelection(t *testing.T
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -554,7 +554,7 @@ func TestClearTargetRequestClearsGenericTarget(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -748,7 +748,7 @@ func TestLeaveRoomRequestRejectsSessionNotInRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -986,7 +986,7 @@ func TestSetReadyRequestRejectsSessionNotInRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -1049,7 +1049,7 @@ func TestStartGameRequestRejectsSessionNotInRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -1382,7 +1382,7 @@ func TestReturnToLobbyRequestRejectsSessionNotInRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -1783,5 +1783,3 @@ func readJSON(t *testing.T, conn *websocket.Conn, value any) {
 		return
 	}
 }
-
-

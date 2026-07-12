@@ -8,6 +8,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const webSocketReadLimit = 256 * 1024
+
 func WebSocketHandler(roomManager *rooms.RoomManager) http.HandlerFunc {
 	return WebSocketHandlerWithAuth(roomManager, nil)
 }
@@ -17,9 +19,10 @@ func WebSocketHandlerWithAuth(roomManager *rooms.RoomManager, verifier TokenVeri
 }
 
 func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter) http.HandlerFunc {
+	originPolicy := newWebSocketOriginPolicy()
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return allowWebSocketOrigin(r)
+			return originPolicy.allows(r)
 		},
 	}
 
@@ -29,6 +32,7 @@ func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifie
 			logging.Network.Error("websocket upgrade failed", err, logging.FieldRemoteAddr, r.RemoteAddr)
 			return
 		}
+		conn.SetReadLimit(webSocketReadLimit)
 
 		session := newWebSocketSession(conn, roomManager, verifier, reporter)
 		handleConnection(session, r.RemoteAddr)

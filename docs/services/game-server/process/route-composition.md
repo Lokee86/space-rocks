@@ -36,7 +36,7 @@ build match-result reporter
 build auth verifier
 mount core game-server routes
 mount player-data HTTP routes
-start ListenAndServe(":8080", mux)
+create the configured HTTP server (`:8080`, `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, `IdleTimeout=60s`)
 ```
 
 The route table is intentionally thin. It decides which HTTP paths are reachable from the game-server process and which runtime dependencies each mounted handler receives. It does not own WebSocket packet routing, room rules, simulation rules, auth internals, player-data request semantics, player-data persistence, or WebRTC peer/DataChannel internals after dependency setup.
@@ -313,7 +313,7 @@ Startup failures:
 
 * player-data runtime initialization failure stops the process
 * match-result reporter initialization failure stops the process
-* `http.ListenAndServe(":8080", mux)` failure logs `server stopped` and exits
+* configured `http.Server.ListenAndServe()` failure logs `server stopped` and exits
 * auth verifier initialization failure logs an error and continues with no verifier
 
 Request-time failures:
@@ -331,6 +331,8 @@ Route composition should not translate or reinterpret handler-owned failures aft
 Primary process files:
 
 * `services/game-server/cmd/game-server/main.go` - Creates the mux, constructs process dependencies, mounts routes, starts HTTP serving, and defines the health handler.
+* `services/game-server/cmd/game-server/http_server.go` - Constructs the explicit HTTP server and its timeout configuration.
+* `services/game-server/cmd/game-server/http_server_test.go` - Verifies the configured HTTP server timeout values.
 * `services/game-server/cmd/game-server/auth_config.go` - Builds the optional game-server auth verifier from environment configuration.
 * `services/game-server/cmd/game-server/webrtc_config.go` - Builds WebRTC transport config from environment configuration.
 * `services/game-server/cmd/game-server/player_data_http.go` - Builds the player-data runtime, player-data sink, hosted player-data HTTP handlers, and auth-verifier adapter.
@@ -386,7 +388,7 @@ Important non-ownership boundaries:
 
 ## Tests
 
-There are no dedicated route-registration tests under `services/game-server/cmd/game-server/` in the current tree.
+There are no dedicated route-registration tests under `services/game-server/cmd/game-server/` in the current tree. `http_server_test.go` directly verifies the explicit server timeout configuration, but does not cover route registration.
 
 Relevant adjacent tests include:
 

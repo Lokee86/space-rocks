@@ -21,7 +21,7 @@ At startup, the game server:
 5. builds the auth verifier
 6. mounts game-server routes
 7. mounts player-data HTTP handlers
-8. starts `http.ListenAndServe(":8080", mux)`
+8. starts the explicit configured `http.Server` on `:8080` with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`
 
 The game server does not implement the player-data HTTP behavior directly. It constructs the player-data runtime and installs handlers from the player-data service package. The player-data service owns request validation, local profile behavior, profile lookup behavior, stats loading, local profile mutation, store routing, and JSON response shapes.
 

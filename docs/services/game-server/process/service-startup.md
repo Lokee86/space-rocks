@@ -40,7 +40,8 @@ main()
   set WebRTC transport config on networking
   log WebRTC transport config loaded
   mount player-data HTTP routes
-  listen on :8080
+  create the configured HTTP server with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`
+  call `newHTTPServer(mux).ListenAndServe()` on :8080
 ```
 
 ## Code root
@@ -71,7 +72,7 @@ The game-server startup boundary owns:
 * mounting the WebSocket realtime/session/signaling route with room manager, auth verifier, and match reporter dependencies
 * mounting game-server-hosted player-data HTTP routes
 * logging the server start event
-* starting `http.ListenAndServe(":8080", mux)`
+* starting the explicit configured `http.Server` on `:8080` (`ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, `IdleTimeout=60s`)
 * exiting when fatal startup or listen errors occur
 
 ## Does not own
@@ -423,10 +424,10 @@ The player-data HTTP handlers own request parsing, validation, response shape, l
 The process listens with:
 
 ```go
-http.ListenAndServe(":8080", mux)
+newHTTPServer(mux).ListenAndServe()
 ```
 
-The address is currently hard-coded in `main.go`.
+`newHTTPServer(mux)` configures `:8080` with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`.
 
 If `ListenAndServe` returns an error, startup logs `server stopped` with the address and exits with status `1`.
 
@@ -515,6 +516,8 @@ Startup behavior should not be confused with request-time behavior. A process ca
 Primary startup files:
 
 * `services/game-server/cmd/game-server/main.go`
+* `services/game-server/cmd/game-server/http_server.go` - explicit HTTP server construction and timeout configuration.
+* `services/game-server/cmd/game-server/http_server_test.go` - HTTP server timeout configuration test.
 * `services/game-server/cmd/game-server/auth_config.go`
 * `services/game-server/cmd/game-server/webrtc_config.go`
 * `services/game-server/cmd/game-server/player_data_http.go`
@@ -562,7 +565,7 @@ Important non-ownership boundaries:
 
 ## Tests
 
-There are no direct `cmd/game-server` startup composition tests identified for this boundary.
+There is no dedicated route-registration test under `services/game-server/cmd/game-server/`. `http_server_test.go` directly verifies the configured HTTP server timeout values.
 
 Relevant lower-level tests include:
 

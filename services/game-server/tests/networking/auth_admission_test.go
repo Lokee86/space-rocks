@@ -8,7 +8,6 @@ import (
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
-	"github.com/gorilla/websocket"
 )
 
 func TestWebSocketCreateRoomRequiresAuthentication(t *testing.T) {
@@ -18,7 +17,7 @@ func TestWebSocketCreateRoomRequiresAuthentication(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, &fakeTokenVerifier{}))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -50,7 +49,7 @@ func TestWebSocketJoinRoomRequiresAuthentication(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, &fakeTokenVerifier{}))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -82,7 +81,7 @@ func TestCreateRoomWithMissingAuthVerifierReturnsAuthUnavailable(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -114,7 +113,7 @@ func TestJoinRoomWithMissingAuthVerifierReturnsAuthUnavailable(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -146,7 +145,7 @@ func TestWebSocketStartSinglePlayerRequestStillWorksWithoutAuthenticationAdmissi
 	server := httptest.NewServer(networking.WebSocketHandler(manager))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -184,7 +183,7 @@ func TestAuthenticatedCreateRoomCreatesLobbyRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -238,7 +237,7 @@ func TestAuthenticatedCreateRoomAttachesAccountIDToRoomMember(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
 	defer server.Close()
 
-	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	conn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -306,7 +305,7 @@ func TestAuthenticatedJoinRoomCanJoinExistingLobbyRoom(t *testing.T) {
 	server := httptest.NewServer(networking.WebSocketHandlerWithAuth(manager, verifier))
 	defer server.Close()
 
-	creatorConn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	creatorConn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial creator websocket: %v", err)
 	}
@@ -333,7 +332,7 @@ func TestAuthenticatedJoinRoomCanJoinExistingLobbyRoom(t *testing.T) {
 		t.Fatal("expected generated room code")
 	}
 
-	joinerConn, _, err := websocket.DefaultDialer.Dial(webSocketURL(server.URL), nil)
+	joinerConn, _, err := dialTestWebSocket(webSocketURL(server.URL))
 	if err != nil {
 		t.Fatalf("dial joiner websocket: %v", err)
 	}
