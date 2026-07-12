@@ -41,5 +41,7 @@ func (packet WorldWireDeltaPacket) PacketFamily() string { return packet.Type }
 func (packet WorldWireDeltaPacket) LaneMetadata() (Metadata, bool) {
 	return packet.Metadata, packet.Metadata != (Metadata{})
 }
-func (packet WorldWireDeltaPacket) WirePacket() map[string]any { return wireWorldWireDeltaPacket(packet) }
-func (WorldWireDeltaPacket) realtimeLanePayload()              {}
+func (packet WorldWireDeltaPacket) WirePacket() map[string]any {
+	return wireWorldWireDeltaPacket(packet)
+}
+func (WorldWireDeltaPacket) realtimeLanePayload() {}

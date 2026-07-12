@@ -19,8 +19,10 @@ func (packet SessionWireFullPacket) PacketFamily() string { return packet.Type }
 func (packet SessionWireFullPacket) LaneMetadata() (Metadata, bool) {
 	return packet.Metadata, packet.Metadata != (Metadata{})
 }
-func (packet SessionWireFullPacket) WirePacket() map[string]any { return wireSessionWireFullPacket(packet) }
-func (SessionWireFullPacket) realtimeLanePayload()              {}
+func (packet SessionWireFullPacket) WirePacket() map[string]any {
+	return wireSessionWireFullPacket(packet)
+}
+func (SessionWireFullPacket) realtimeLanePayload() {}
 
 func (packet SessionLaneDelta) Lane() Lane { return packet.Metadata.Lane }
 func (packet SessionLaneDelta) CandidateKind() RealtimeLaneCandidateKind {
@@ -41,5 +43,7 @@ func (SessionWireLaneDelta) PacketFamily() string { return PacketFamilySessionDe
 func (packet SessionWireLaneDelta) LaneMetadata() (Metadata, bool) {
 	return packet.Metadata, packet.Metadata != (Metadata{})
 }
-func (packet SessionWireLaneDelta) WirePacket() map[string]any { return wireSessionWireDeltaPacket(packet) }
-func (SessionWireLaneDelta) realtimeLanePayload()              {}
+func (packet SessionWireLaneDelta) WirePacket() map[string]any {
+	return wireSessionWireDeltaPacket(packet)
+}
+func (SessionWireLaneDelta) realtimeLanePayload() {}

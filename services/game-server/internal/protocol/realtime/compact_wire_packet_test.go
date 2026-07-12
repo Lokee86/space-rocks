@@ -76,9 +76,9 @@ func TestCompactWirePacketCompactsNestedMapRecordsRecursively(t *testing.T) {
 		"lane": "world",
 		"pickup_updates": []any{
 			map[string]any{
-				"id":   "pickup-1",
-				"x":    10,
-				"y":    11,
+				"id": "pickup-1",
+				"x":  10,
+				"y":  11,
 				"nested": map[string]any{
 					"owner_id": "player-9",
 					"size":     3,
@@ -223,12 +223,12 @@ func TestCompactWirePacketTuplePacksWorldFullBullets(t *testing.T) {
 		"type": "world_full",
 		"bullets": []any{
 			map[string]any{
-				"id":             "bullet-1",
-				"owner_id":       "player-1",
-				"x":              10,
-				"y":              20,
-				"rotation":       30,
-				"weapon_id":      "pulse",
+				"id":              "bullet-1",
+				"owner_id":        "player-1",
+				"x":               10,
+				"y":               20,
+				"rotation":        30,
+				"weapon_id":       "pulse",
 				"projectile_type": "laser",
 			},
 		},
@@ -299,7 +299,6 @@ func TestCompactWirePacketTuplePacksWorldFullShips(t *testing.T) {
 		}
 	}
 }
-
 
 func TestCompactWirePacketTuplePacksWorldDeltaShipCreates(t *testing.T) {
 	input := map[string]any{
@@ -496,7 +495,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesSparseFieldsPreserveLat
 		"ship_updates": []any{
 			map[string]any{
 				"id": "player-1",
-				"y": 20,
+				"y":  20,
 			},
 		},
 	}
@@ -518,7 +517,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesSparseFieldsPreserveLat
 		"type": "world_delta",
 		"ship_updates": []any{
 			map[string]any{
-				"id": "player-1",
+				"id":       "player-1",
 				"rotation": 30,
 			},
 		},
@@ -539,7 +538,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesSparseFieldsPreserveLat
 		"type": "world_delta",
 		"ship_updates": []any{
 			map[string]any{
-				"id": "player-1",
+				"id":        "player-1",
 				"thrusting": true,
 			},
 		},
@@ -557,10 +556,9 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipUpdatesSparseFieldsPreserveLat
 	}
 }
 
-
 func TestCompactWirePacketCompactsWorldDeltaShipDeletes(t *testing.T) {
 	input := map[string]any{
-		"type":           "world_delta",
+		"type":         "world_delta",
 		"ship_deletes": []any{"player-1", "ship-legacy", "player-2"},
 	}
 
@@ -576,17 +574,17 @@ func TestCompactWirePacketTuplePacksSessionFullPlayers(t *testing.T) {
 		"type": "session_full",
 		"players": []any{
 			map[string]any{
-				"id":                  "player-1",
-				"ship_type":           "v_wing",
-				"score":               100,
-				"lives":               3,
-				"respawn_cooldown":    250,
-				"primary_weapon_id":   "pulse",
-				"primary_ammo_policy": "limited",
-				"secondary_weapon_id": "mine",
+				"id":                    "player-1",
+				"ship_type":             "v_wing",
+				"score":                 100,
+				"lives":                 3,
+				"respawn_cooldown":      250,
+				"primary_weapon_id":     "pulse",
+				"primary_ammo_policy":   "limited",
+				"secondary_weapon_id":   "mine",
 				"secondary_ammo_policy": "limited",
-				"spawn_x":             10,
-				"spawn_y":             20,
+				"spawn_x":               10,
+				"spawn_y":               20,
 			},
 		},
 	}
@@ -605,23 +603,22 @@ func TestCompactWirePacketTuplePacksSessionFullPlayers(t *testing.T) {
 	}
 }
 
-
 func TestCompactWirePacketTuplePacksSessionDeltaPlayerCreates(t *testing.T) {
 	input := map[string]any{
 		"type": "session_delta",
 		"pl": []any{
 			map[string]any{
-				"id":                  "player-1",
-				"ship_type":           "v_wing",
-				"score":               100,
-				"lives":               3,
-				"respawn_cooldown":    250,
-				"primary_weapon_id":   "pulse",
-				"primary_ammo_policy": "limited",
-				"secondary_weapon_id": "mine",
+				"id":                    "player-1",
+				"ship_type":             "v_wing",
+				"score":                 100,
+				"lives":                 3,
+				"respawn_cooldown":      250,
+				"primary_weapon_id":     "pulse",
+				"primary_ammo_policy":   "limited",
+				"secondary_weapon_id":   "mine",
 				"secondary_ammo_policy": "limited",
-				"spawn_x":             10,
-				"spawn_y":             20,
+				"spawn_x":               10,
+				"spawn_y":               20,
 			},
 		},
 	}
@@ -667,7 +664,7 @@ func TestCompactWirePacketTuplePacksSessionDeltaPlayerSessionUpdates(t *testing.
 func TestCompactWirePacketCompactsSessionDeltaPlayerSessionDeletes(t *testing.T) {
 	input := map[string]any{
 		"type": "session_delta",
-		"psx": []any{"player-1", "player-bad", "player-2"},
+		"psx":  []any{"player-1", "player-bad", "player-2"},
 	}
 
 	got := CompactWirePacket(input)
@@ -702,7 +699,7 @@ func TestCompactWirePacketTuplePacksSessionLifecycleCreatesAndUpdates(t *testing
 func TestCompactWirePacketCompactsSessionLifecycleDeletes(t *testing.T) {
 	input := map[string]any{
 		"type": "session_delta",
-		"plx": []any{"player-1"},
+		"plx":  []any{"player-1"},
 	}
 
 	got := CompactWirePacket(input)
@@ -877,7 +874,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesSparseFieldsPreserveL
 		"bullet_updates": []any{
 			map[string]any{
 				"id": "bullet-1",
-				"y": 20,
+				"y":  20,
 			},
 		},
 	}
@@ -899,7 +896,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesSparseFieldsPreserveL
 		"type": "world_delta",
 		"bullet_updates": []any{
 			map[string]any{
-				"id": "bullet-1",
+				"id":       "bullet-1",
 				"rotation": 30,
 			},
 		},
@@ -916,7 +913,6 @@ func TestCompactWirePacketTuplePacksWorldDeltaBulletUpdatesSparseFieldsPreserveL
 		}
 	}
 }
-
 
 func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesXY(t *testing.T) {
 	input := map[string]any{
@@ -997,8 +993,8 @@ func TestCompactWirePacketTuplePacksWorldDeltaAsteroidUpdatesPreserveZeroValues(
 
 func TestCompactWirePacketAsteroidDeltaCompactsTupleUpdates(t *testing.T) {
 	input := map[string]any{
-		"type": "asteroid_delta",
-		"sequence": 33,
+		"type":             "asteroid_delta",
+		"sequence":         33,
 		"server_sent_msec": 12345,
 		"asteroid_updates": []any{
 			map[string]any{
@@ -1034,8 +1030,8 @@ func TestCompactWirePacketAsteroidDeltaCompactsTupleUpdates(t *testing.T) {
 
 func TestCompactWirePacketBulletDeltaCompactsTupleUpdates(t *testing.T) {
 	input := map[string]any{
-		"type": "bullet_delta",
-		"sequence": 34,
+		"type":             "bullet_delta",
+		"sequence":         34,
 		"server_sent_msec": 54321,
 		"bullet_updates": []any{
 			map[string]any{
@@ -1160,7 +1156,7 @@ func TestCompactWirePacketCompactsReadableWorldDeltaMap(t *testing.T) {
 
 func TestCompactWirePacketCompactsEventBatchAndNestedEventRecords(t *testing.T) {
 	input := map[string]any{
-		"type": "event_batch",
+		"type":     "event_batch",
 		"batch_id": "event-batch-11",
 		"events": []any{
 			map[string]any{"event_id": "presentation-event-1", "type": "bullet_blast", "x": 10, "y": 20},
@@ -1252,7 +1248,7 @@ func TestCompactWirePacketCompactsEventBatchAndNestedEventRecords(t *testing.T) 
 
 func TestCompactWirePacketLeavesUnknownEventRecordsMapShaped(t *testing.T) {
 	input := map[string]any{
-		"type": "event_batch",
+		"type":     "event_batch",
 		"batch_id": "event-batch-11",
 		"events": []any{
 			map[string]any{"event_id": "presentation-event-11", "type": "new_future_event", "source_id": "ship-1", "note": "kept"},
@@ -1318,10 +1314,6 @@ func TestCompactWirePacketCompactAliasCollisionGuard(t *testing.T) {
 	}
 }
 
-
-
-
-
 func TestCompactWirePacketTuplePacksWorldFullShipUnknownTargetKindUsesTaggedTargetID(t *testing.T) {
 	input := map[string]any{
 		"type": "world_full",
@@ -1343,10 +1335,9 @@ func TestCompactWirePacketTuplePacksWorldFullShipUnknownTargetKindUsesTaggedTarg
 	}
 }
 
-
 func TestCompactWirePacketCompactsKnownEventSourceIDsByTupleContext(t *testing.T) {
 	input := map[string]any{
-		"type": "event_batch",
+		"type":     "event_batch",
 		"batch_id": "event-batch-1",
 		"events": []any{
 			map[string]any{"event_id": "presentation-event-1", "type": "damage_applied", "source_type": "mystery", "source_id": "player-2", "effect_type": "blast", "amount": 1},
@@ -1359,5 +1350,3 @@ func TestCompactWirePacketCompactsKnownEventSourceIDsByTupleContext(t *testing.T
 		t.Fatalf("damage_applied source_id = %#v, want tagged player id", event[3])
 	}
 }
-
-

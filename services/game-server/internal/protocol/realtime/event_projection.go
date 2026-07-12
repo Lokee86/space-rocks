@@ -34,7 +34,7 @@ func ProjectEventLane(pending []game.PendingPresentationEvent, sequence int) Eve
 
 	return EventLaneProjection{
 		Batch: EventBatchRecord{
-			BatchID: sequenceBackedBatchID(sequence),
+			BatchID:  sequenceBackedBatchID(sequence),
 			Sequence: sequence,
 			Events:   events,
 		},

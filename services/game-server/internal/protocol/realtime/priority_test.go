@@ -7,31 +7,31 @@ func TestLaneCandidateClassificationTreatsLifecycleLanesAsRequiredCritical(t *te
 		name         string
 		candidate    RealtimeLaneCandidate
 		wantDelivery DeliveryClass
-		wantPriority  Priority
+		wantPriority Priority
 	}{
 		{
-			name: "asteroid lifecycle",
-			candidate: mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1}}, nil),
+			name:         "asteroid lifecycle",
+			candidate:    mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidsLifecycle, Metadata: Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 1}}, nil),
 			wantDelivery: DeliveryClassRequired,
-			wantPriority:  PriorityCritical,
+			wantPriority: PriorityCritical,
 		},
 		{
-			name: "bullet lifecycle",
-			candidate: mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1}}, nil),
+			name:         "bullet lifecycle",
+			candidate:    mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1}}, nil),
 			wantDelivery: DeliveryClassRequired,
-			wantPriority:  PriorityCritical,
+			wantPriority: PriorityCritical,
 		},
 		{
-			name: "asteroid hot lane",
-			candidate: mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 1}}, nil),
+			name:         "asteroid hot lane",
+			candidate:    mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 1}}, nil),
 			wantDelivery: DeliveryClassHotSupersedable,
-			wantPriority:  PriorityHigh,
+			wantPriority: PriorityHigh,
 		},
 		{
-			name: "bullet hot lane",
-			candidate: mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 1}}, nil),
+			name:         "bullet hot lane",
+			candidate:    mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 1}}, nil),
 			wantDelivery: DeliveryClassHotSupersedable,
-			wantPriority:  PriorityHigh,
+			wantPriority: PriorityHigh,
 		},
 	}
 

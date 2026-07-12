@@ -48,5 +48,3 @@ func BuildOverlayFullPacket(snapshot game.GameplayPresentationSnapshot, receiver
 		Receiver: projection.Receiver,
 	}
 }
-
-

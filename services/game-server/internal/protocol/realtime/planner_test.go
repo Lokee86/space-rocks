@@ -52,7 +52,7 @@ func findCandidateByLane(candidates []RealtimeLaneCandidate, lane Lane) (Realtim
 func TestRealtimeOwnershipParityAcrossLanes(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
-		Lives: 4,
+		Lives:  4,
 		Players: map[string]runtime.ShipState{
 			"player-1": {
 				ID:                         "player-1",

@@ -97,5 +97,3 @@ func TestProjectOverlayLaneUsesReceiverLocalFields(t *testing.T) {
 		t.Fatal("expected overlay projection to use receiver-local weapon state, not other player values")
 	}
 }
-
-

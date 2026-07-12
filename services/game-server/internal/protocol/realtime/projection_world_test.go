@@ -22,26 +22,26 @@ func TestProjectWorldLaneFieldOwnershipAndOrder(t *testing.T) {
 				TargetKind: "player",
 				TargetID:   "p-2",
 				// world lane should not include these local overlay fields
-				PrimaryCooldownRemaining: 99,
-				PrimaryAmmoRemaining:     88,
+				PrimaryCooldownRemaining:   99,
+				PrimaryAmmoRemaining:       88,
 				SecondaryCooldownRemaining: 77,
-				SecondaryAmmoRemaining:   66,
+				SecondaryAmmoRemaining:     66,
 			},
 			"ship-a": {
-				ID:         "ship-a",
-				ShipType:   "v_wing",
-				X:          10,
-				Y:          15,
-				Rotation:   0.1,
-				Health:     3,
-				Shields:    2,
-				Thrusting:  false,
-				TargetKind: "player",
-				TargetID:   "p-1",
-				PrimaryCooldownRemaining: 55,
-				PrimaryAmmoRemaining:     44,
+				ID:                         "ship-a",
+				ShipType:                   "v_wing",
+				X:                          10,
+				Y:                          15,
+				Rotation:                   0.1,
+				Health:                     3,
+				Shields:                    2,
+				Thrusting:                  false,
+				TargetKind:                 "player",
+				TargetID:                   "p-1",
+				PrimaryCooldownRemaining:   55,
+				PrimaryAmmoRemaining:       44,
 				SecondaryCooldownRemaining: 33,
-				SecondaryAmmoRemaining:   22,
+				SecondaryAmmoRemaining:     22,
 			},
 		},
 		Bullets: map[string]runtime.BulletState{
@@ -60,7 +60,7 @@ func TestProjectWorldLaneFieldOwnershipAndOrder(t *testing.T) {
 			"ship-a": {ID: "ship-a", ShipType: "v_wing", Score: 9, Lives: 3, RespawnCooldown: 0.5, PrimaryWeaponID: "basic", PrimaryAmmoPolicy: "infinite", SecondaryWeaponID: "mine", SecondaryAmmoPolicy: "limited", SpawnX: 1, SpawnY: 2},
 		},
 		PlayerLifecycle: map[string]string{"ship-a": "active"},
-		PendingEvents: []game.PendingPresentationEvent{{EventID: "evt-1", Event: game.EventState{Type: "bullet_blast"}}},
+		PendingEvents:   []game.PendingPresentationEvent{{EventID: "evt-1", Event: game.EventState{Type: "bullet_blast"}}},
 	}
 
 	projection := ProjectWorldLane(snapshot)
@@ -115,5 +115,3 @@ func TestBuildWorldFullPacketUsesMetadataAndSortedProjection(t *testing.T) {
 		t.Fatalf("expected ships sorted by ID in packet, got %#v", packet.Ships)
 	}
 }
-
-

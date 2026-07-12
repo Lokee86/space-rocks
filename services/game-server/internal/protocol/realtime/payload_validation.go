@@ -25,21 +25,21 @@ var realtimeLanePayloadFamilyMatrix = map[Lane]map[RealtimeLaneCandidateKind]map
 }
 
 var realtimeLanePayloadTypes = map[reflect.Type]struct{}{
-	reflect.TypeOf(WorldFullPacket{}):          {},
-	reflect.TypeOf(WorldWireFullPacket{}):      {},
-	reflect.TypeOf(WorldDeltaPacket{}):         {},
-	reflect.TypeOf(WorldWireDeltaPacket{}):     {},
-	reflect.TypeOf(OverlayFullPacket{}):        {},
-	reflect.TypeOf(OverlayWireFullPacket{}):    {},
-	reflect.TypeOf(OverlayLaneDelta{}):         {},
-	reflect.TypeOf(OverlayWireLaneDelta{}):     {},
-	reflect.TypeOf(SessionFullPacket{}):        {},
-	reflect.TypeOf(SessionWireFullPacket{}):    {},
-	reflect.TypeOf(SessionLaneDelta{}):         {},
-	reflect.TypeOf(SessionWireLaneDelta{}):     {},
-	reflect.TypeOf(AsteroidWireDeltaPacket{}):  {},
-	reflect.TypeOf(BulletWireDeltaPacket{}):    {},
-	reflect.TypeOf(EventBatchPacket{}):         {},
+	reflect.TypeOf(WorldFullPacket{}):         {},
+	reflect.TypeOf(WorldWireFullPacket{}):     {},
+	reflect.TypeOf(WorldDeltaPacket{}):        {},
+	reflect.TypeOf(WorldWireDeltaPacket{}):    {},
+	reflect.TypeOf(OverlayFullPacket{}):       {},
+	reflect.TypeOf(OverlayWireFullPacket{}):   {},
+	reflect.TypeOf(OverlayLaneDelta{}):        {},
+	reflect.TypeOf(OverlayWireLaneDelta{}):    {},
+	reflect.TypeOf(SessionFullPacket{}):       {},
+	reflect.TypeOf(SessionWireFullPacket{}):   {},
+	reflect.TypeOf(SessionLaneDelta{}):        {},
+	reflect.TypeOf(SessionWireLaneDelta{}):    {},
+	reflect.TypeOf(AsteroidWireDeltaPacket{}): {},
+	reflect.TypeOf(BulletWireDeltaPacket{}):   {},
+	reflect.TypeOf(EventBatchPacket{}):        {},
 }
 
 func ValidateRealtimeLanePayload(payload RealtimeLanePayload) error {

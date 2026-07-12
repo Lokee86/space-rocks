@@ -2,18 +2,18 @@ package realtime
 
 func quantizeOverlayFullPacket(packet OverlayFullPacket) (OverlayWireFullPacket, error) {
 	quantized := OverlayWireFullPacket{
-		Type: packet.Type,
+		Type:     packet.Type,
 		Metadata: packet.Metadata,
 		Receiver: OverlayReceiverWireRecord{
-			SelfID:                  packet.Receiver.SelfID,
-			Lives:                   packet.Receiver.Lives,
-			Score:                   packet.Receiver.Score,
-			PrimaryWeaponID:         packet.Receiver.PrimaryWeaponID,
-			PrimaryAmmoPolicy:       packet.Receiver.PrimaryAmmoPolicy,
-			PrimaryAmmoRemaining:    packet.Receiver.PrimaryAmmoRemaining,
-			SecondaryWeaponID:       packet.Receiver.SecondaryWeaponID,
-			SecondaryAmmoPolicy:     packet.Receiver.SecondaryAmmoPolicy,
-			SecondaryAmmoRemaining:  packet.Receiver.SecondaryAmmoRemaining,
+			SelfID:                 packet.Receiver.SelfID,
+			Lives:                  packet.Receiver.Lives,
+			Score:                  packet.Receiver.Score,
+			PrimaryWeaponID:        packet.Receiver.PrimaryWeaponID,
+			PrimaryAmmoPolicy:      packet.Receiver.PrimaryAmmoPolicy,
+			PrimaryAmmoRemaining:   packet.Receiver.PrimaryAmmoRemaining,
+			SecondaryWeaponID:      packet.Receiver.SecondaryWeaponID,
+			SecondaryAmmoPolicy:    packet.Receiver.SecondaryAmmoPolicy,
+			SecondaryAmmoRemaining: packet.Receiver.SecondaryAmmoRemaining,
 		},
 	}
 	var err error

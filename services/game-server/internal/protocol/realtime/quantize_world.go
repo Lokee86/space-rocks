@@ -8,12 +8,12 @@ import (
 
 func quantizeWorldFullPacket(packet WorldFullPacket) (WorldWireFullPacket, error) {
 	quantized := WorldWireFullPacket{
-		Type: packet.Type,
-		Metadata: packet.Metadata,
-		Ships: make([]WorldShipWireRecord, 0, len(packet.Ships)),
-		Bullets: make([]WorldBulletWireRecord, 0, len(packet.Bullets)),
+		Type:      packet.Type,
+		Metadata:  packet.Metadata,
+		Ships:     make([]WorldShipWireRecord, 0, len(packet.Ships)),
+		Bullets:   make([]WorldBulletWireRecord, 0, len(packet.Bullets)),
 		Asteroids: make([]WorldAsteroidWireRecord, 0, len(packet.Asteroids)),
-		Pickups: make([]WorldPickupWireRecord, 0, len(packet.Pickups)),
+		Pickups:   make([]WorldPickupWireRecord, 0, len(packet.Pickups)),
 	}
 
 	var err error

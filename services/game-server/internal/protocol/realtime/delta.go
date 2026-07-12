@@ -73,7 +73,6 @@ type WorldWireDeltaPacket struct {
 	Pickups   FieldRecordDelta[WorldPickupWireRecord]
 }
 
-
 func CompareLaneRecordFields[T any](previous []T, current []T, recordID func(T) string, identityWireKey string) FieldRecordDelta[T] {
 	previousByID := make(map[string]T, len(previous))
 	for _, record := range previous {
@@ -204,9 +203,15 @@ func sessionWirePayloadChanged(previous SessionWireFullPacket, current SessionWi
 	return !reflect.DeepEqual(previous, current)
 }
 
-func WorldWirePayloadChanged(previous WorldWireFullPacket, current WorldWireFullPacket) bool { return worldWirePayloadChanged(previous, current) }
-func OverlayWirePayloadChanged(previous OverlayWireFullPacket, current OverlayWireFullPacket) bool { return overlayWirePayloadChanged(previous, current) }
-func SessionWirePayloadChanged(previous SessionWireFullPacket, current SessionWireFullPacket) bool { return sessionWirePayloadChanged(previous, current) }
+func WorldWirePayloadChanged(previous WorldWireFullPacket, current WorldWireFullPacket) bool {
+	return worldWirePayloadChanged(previous, current)
+}
+func OverlayWirePayloadChanged(previous OverlayWireFullPacket, current OverlayWireFullPacket) bool {
+	return overlayWirePayloadChanged(previous, current)
+}
+func SessionWirePayloadChanged(previous SessionWireFullPacket, current SessionWireFullPacket) bool {
+	return sessionWirePayloadChanged(previous, current)
+}
 
 func BuildWorldDeltaPacket(previous WorldFullPacket, current WorldFullPacket) WorldDeltaPacket {
 	metadata := current.Metadata
@@ -241,7 +246,6 @@ func WorldDeltaHasChanges(delta WorldDeltaPacket) bool {
 		len(delta.Asteroids.Creates) > 0 || len(delta.Asteroids.Updates) > 0 || len(delta.Asteroids.Deletes) > 0 ||
 		len(delta.Pickups.Creates) > 0 || len(delta.Pickups.Updates) > 0 || len(delta.Pickups.Deletes) > 0
 }
-
 
 func BuildWorldWireDeltaPacket(previous WorldWireFullPacket, current WorldWireFullPacket) WorldWireDeltaPacket {
 	metadata := current.Metadata
@@ -376,18 +380,3 @@ func SessionWireDeltaHasChanges(delta SessionWireLaneDelta) bool {
 		len(delta.PlayerLifecycle.Creates) > 0 || len(delta.PlayerLifecycle.Updates) > 0 || len(delta.PlayerLifecycle.Deletes) > 0 ||
 		len(delta.TotalAsteroids.Creates) > 0 || len(delta.TotalAsteroids.Updates) > 0 || len(delta.TotalAsteroids.Deletes) > 0
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

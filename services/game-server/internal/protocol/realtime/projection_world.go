@@ -127,5 +127,3 @@ func BuildWorldFullPacket(snapshot game.GameplayPresentationSnapshot, sequence i
 		Pickups:   projection.Pickups,
 	}
 }
-
-

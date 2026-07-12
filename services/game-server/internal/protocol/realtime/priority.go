@@ -15,7 +15,7 @@ type DeliveryClass string
 const (
 	DeliveryClassRequired        DeliveryClass = "required"
 	DeliveryClassEventOnce       DeliveryClass = "event_once"
-	DeliveryClassHotSupersedable  DeliveryClass = "hot_supersedable"
+	DeliveryClassHotSupersedable DeliveryClass = "hot_supersedable"
 	DeliveryClassDeferrable      DeliveryClass = "deferrable"
 	DeliveryClassDebugOnly       DeliveryClass = "debug_only"
 )

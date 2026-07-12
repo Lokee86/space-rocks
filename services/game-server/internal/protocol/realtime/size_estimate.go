@@ -1,10 +1,10 @@
 package realtime
 
 const (
-	TargetBytes   = 500
-	WarningBytes  = 800
-	DangerBytes   = 1100
-	HardCapBytes  = 1200
+	TargetBytes  = 500
+	WarningBytes = 800
+	DangerBytes  = 1100
+	HardCapBytes = 1200
 )
 
 func EstimatePacketBytes(packetFamily string, recordCount int, payloadBytes int) int {
@@ -28,7 +28,7 @@ func EstimatePacketBytes(packetFamily string, recordCount int, payloadBytes int)
 type EncodedPacketSizeClass string
 
 const (
-	EncodedPacketSizeNormal    EncodedPacketSizeClass = "normal"
+	EncodedPacketSizeNormal     EncodedPacketSizeClass = "normal"
 	EncodedPacketSizeOverTarget EncodedPacketSizeClass = "over_target"
 	EncodedPacketSizeOverHard   EncodedPacketSizeClass = "over_hard_cap"
 	EncodedPacketSizeOverMTU    EncodedPacketSizeClass = "over_mtu"
@@ -46,4 +46,3 @@ func ClassifyHotPacketEncodedSize(encodedBytes int) EncodedPacketSizeClass {
 		return EncodedPacketSizeNormal
 	}
 }
-

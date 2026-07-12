@@ -19,8 +19,10 @@ func (packet OverlayWireFullPacket) PacketFamily() string { return packet.Type }
 func (packet OverlayWireFullPacket) LaneMetadata() (Metadata, bool) {
 	return packet.Metadata, packet.Metadata != (Metadata{})
 }
-func (packet OverlayWireFullPacket) WirePacket() map[string]any { return wireOverlayWireFullPacket(packet) }
-func (OverlayWireFullPacket) realtimeLanePayload()              {}
+func (packet OverlayWireFullPacket) WirePacket() map[string]any {
+	return wireOverlayWireFullPacket(packet)
+}
+func (OverlayWireFullPacket) realtimeLanePayload() {}
 
 func (packet OverlayLaneDelta) Lane() Lane { return packet.Metadata.Lane }
 func (packet OverlayLaneDelta) CandidateKind() RealtimeLaneCandidateKind {
@@ -41,5 +43,7 @@ func (OverlayWireLaneDelta) PacketFamily() string { return PacketFamilyOverlayDe
 func (packet OverlayWireLaneDelta) LaneMetadata() (Metadata, bool) {
 	return packet.Metadata, packet.Metadata != (Metadata{})
 }
-func (packet OverlayWireLaneDelta) WirePacket() map[string]any { return wireOverlayWireDeltaPacket(packet) }
-func (OverlayWireLaneDelta) realtimeLanePayload()              {}
+func (packet OverlayWireLaneDelta) WirePacket() map[string]any {
+	return wireOverlayWireDeltaPacket(packet)
+}
+func (OverlayWireLaneDelta) realtimeLanePayload() {}

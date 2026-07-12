@@ -480,11 +480,11 @@ func TestBuildWorldDeltaPacketEmitsDelete(t *testing.T) {
 
 func TestBuildWorldDeltaPacketReturnsNoChangesForIdenticalProjection(t *testing.T) {
 	previous := WorldFullPacket{
-		Type: PacketTypeWorldFull,
-		Ships: []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1}},
-		Bullets: []WorldBulletRecord{{ID: "bullet-a", OwnerID: "ship-a", X: 2}},
+		Type:      PacketTypeWorldFull,
+		Ships:     []WorldShipRecord{{ID: "ship-a", ShipType: "v_wing", X: 1}},
+		Bullets:   []WorldBulletRecord{{ID: "bullet-a", OwnerID: "ship-a", X: 2}},
 		Asteroids: []WorldAsteroidRecord{{ID: "asteroid-a", X: 3, Size: 1}},
-		Pickups: []WorldPickupRecord{{ID: "pickup-a", Type: "shield", X: 4}},
+		Pickups:   []WorldPickupRecord{{ID: "pickup-a", Type: "shield", X: 4}},
 	}
 	current := previous
 
@@ -683,18 +683,18 @@ func TestBuildOverlayDeltaPacketReturnsNoChangesForIdenticalOverlayData(t *testi
 
 func TestBuildSessionDeltaPacketEmitsChangedSessionData(t *testing.T) {
 	previous := SessionFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, SnapshotID: "session-1"},
-		Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, SnapshotID: "session-1"},
+		Players:         []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 	current := SessionFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, SnapshotID: "session-1"},
-		Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 9, Lives: 2}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, SnapshotID: "session-1"},
+		Players:         []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 9, Lives: 2}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "respawning"}},
-		TotalAsteroids: 7,
+		TotalAsteroids:  7,
 	}
 
 	delta := BuildSessionDeltaPacket(previous, current)
@@ -715,11 +715,11 @@ func TestBuildSessionDeltaPacketEmitsChangedSessionData(t *testing.T) {
 
 func TestBuildSessionDeltaPacketReturnsNoChangesForIdenticalSessionData(t *testing.T) {
 	current := SessionFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, SnapshotID: "session-1"},
-		Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, SnapshotID: "session-1"},
+		Players:         []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 
 	delta := BuildSessionDeltaPacket(current, current)
@@ -740,18 +740,18 @@ func TestBuildSessionDeltaPacketReturnsNoChangesForIdenticalSessionData(t *testi
 
 func TestBuildSessionDeltaPacketEmitsDeleteForMissingSessionRecord(t *testing.T) {
 	previous := SessionFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, SnapshotID: "session-1"},
-		Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}, {ID: "player-b", ShipType: "v_wing", Score: 8, Lives: 2}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, SnapshotID: "session-1"},
+		Players:         []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}, {ID: "player-b", ShipType: "v_wing", Score: 8, Lives: 2}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}, {PlayerID: "player-b", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 	current := SessionFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, SnapshotID: "session-1"},
-		Players: []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, SnapshotID: "session-1"},
+		Players:         []SessionPlayerRecord{{ID: "player-a", ShipType: "v_wing", Score: 5, Lives: 3}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 
 	delta := BuildSessionDeltaPacket(previous, current)
@@ -769,18 +769,18 @@ func TestBuildSessionDeltaPacketEmitsDeleteForMissingSessionRecord(t *testing.T)
 
 func TestSessionWireDeltaHasChangesIgnoresMetadataOnlyTotalAsteroidsChanges(t *testing.T) {
 	previous := SessionWireFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")},
-		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")},
+		Players:         []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 	current := SessionWireFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")},
-		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")},
+		Players:         []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 
 	delta := BuildSessionWireDeltaPacket(previous, current)
@@ -795,18 +795,18 @@ func TestSessionWireDeltaHasChangesIgnoresMetadataOnlyTotalAsteroidsChanges(t *t
 
 func TestSessionWireDeltaHasChangesEmitsTotalAsteroidsUpdateWithStableRecordID(t *testing.T) {
 	previous := SessionWireFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")},
-		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, Sequence: 7, BaselineID: "session-baseline-7", SnapshotID: "session-baseline-7", SnapshotKind: SnapshotKind("full")},
+		Players:         []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 4,
+		TotalAsteroids:  4,
 	}
 	current := SessionWireFullPacket{
-		Type: PacketFamilySessionFull,
-		Metadata: Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")},
-		Players: []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
+		Type:            PacketFamilySessionFull,
+		Metadata:        Metadata{Lane: LaneSession, Sequence: 8, BaselineID: "session-baseline-8", SnapshotID: "session-baseline-8", SnapshotKind: SnapshotKind("full")},
+		Players:         []SessionPlayerWireRecord{{ID: "player-a", ShipType: "v_wing", Score: 5}},
 		PlayerLifecycle: []SessionLifecycleRecord{{PlayerID: "player-a", Status: "active"}},
-		TotalAsteroids: 7,
+		TotalAsteroids:  7,
 	}
 
 	delta := BuildSessionWireDeltaPacket(previous, current)
@@ -818,8 +818,6 @@ func TestSessionWireDeltaHasChangesEmitsTotalAsteroidsUpdateWithStableRecordID(t
 		t.Fatalf("expected stable total asteroid update, got %#v", got)
 	}
 }
-
-
 
 func TestBuildWorldWireDeltaPacketEmitsWireChanges(t *testing.T) {
 	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-baseline-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10, Y: 20, Rotation: 30, Health: 4, Shields: 5, Thrusting: false, TargetKind: "player", TargetID: "player-1"}}}
@@ -849,14 +847,6 @@ func TestBuildWorldWireDeltaPacketEmitsWireChanges(t *testing.T) {
 		t.Fatalf("expected id and quantized x only, got %#v", got)
 	}
 }
-
-
-
-
-
-
-
-
 
 func TestWorldWirePayloadChangedIgnoresMetadataOnlyDifferences(t *testing.T) {
 	previous := WorldWireFullPacket{Type: PacketTypeWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-snapshot-1", SnapshotKind: SnapshotKind("full")}, Ships: []WorldShipWireRecord{{ID: "ship-a", ShipType: "v_wing", X: 10}}}

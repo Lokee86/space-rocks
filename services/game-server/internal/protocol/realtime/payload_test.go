@@ -22,7 +22,7 @@ func (payload invalidRealtimeLanePayload) LaneMetadata() (Metadata, bool) {
 	return payload.metadata, payload.present
 }
 func (invalidRealtimeLanePayload) WirePacket() map[string]any { return map[string]any{} }
-func (invalidRealtimeLanePayload) realtimeLanePayload()        {}
+func (invalidRealtimeLanePayload) realtimeLanePayload()       {}
 
 func TestRealtimeLanePayloadImplementationsExposeExpectedContract(t *testing.T) {
 	metadata := Metadata{Lane: LaneWorld, Sequence: 1}

@@ -1,18 +1,18 @@
 package realtime
 
 type OverlayReceiverWireRecord struct {
-	SelfID                    string
-	Lives                     int
-	Score                     int
-	RespawnCooldown           int64
-	PrimaryWeaponID           string
-	PrimaryAmmoPolicy         string
-	PrimaryCooldownRemaining  int64
-	PrimaryAmmoRemaining      int
-	SecondaryWeaponID         string
-	SecondaryAmmoPolicy       string
+	SelfID                     string
+	Lives                      int
+	Score                      int
+	RespawnCooldown            int64
+	PrimaryWeaponID            string
+	PrimaryAmmoPolicy          string
+	PrimaryCooldownRemaining   int64
+	PrimaryAmmoRemaining       int
+	SecondaryWeaponID          string
+	SecondaryAmmoPolicy        string
 	SecondaryCooldownRemaining int64
-	SecondaryAmmoRemaining    int
+	SecondaryAmmoRemaining     int
 }
 
 type WorldShipWireRecord struct {
@@ -89,9 +89,9 @@ type SessionPlayerWireRecord struct {
 }
 
 type SessionWireFullPacket struct {
-	Type           string
-	Metadata       Metadata
-	Players        []SessionPlayerWireRecord
+	Type            string
+	Metadata        Metadata
+	Players         []SessionPlayerWireRecord
 	PlayerLifecycle []SessionLifecycleRecord
-	TotalAsteroids int
+	TotalAsteroids  int
 }

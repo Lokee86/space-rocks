@@ -7,7 +7,7 @@ import (
 
 func TestCompactWireDescriptorYOnlySparsePlaceholder(t *testing.T) {
 	packet := map[string]any{
-		"type": "world_delta",
+		"type":         "world_delta",
 		"ship_updates": []any{map[string]any{"id": "player-7", "y": 12}},
 	}
 	got := compactWirePacketFromDescriptors(packet)
@@ -34,13 +34,13 @@ func TestCompactWireDescriptorPreservesSessionUnknownFields(t *testing.T) {
 func TestCompactWireDescriptorAcceptsCompactSessionKeysAndFields(t *testing.T) {
 	packet := map[string]any{
 		"type": "session_delta",
-		"pl":  []any{map[string]any{"i": "player-1", "st": "scout", "sco": 3}},
-		"psu": []any{map[string]any{"i": "player-2", "sco": 4, "future_field": "kept"}},
-		"plu": []any{map[string]any{"pid": "player-3", "stat": "active"}},
+		"pl":   []any{map[string]any{"i": "player-1", "st": "scout", "sco": 3}},
+		"psu":  []any{map[string]any{"i": "player-2", "sco": 4, "future_field": "kept"}},
+		"plu":  []any{map[string]any{"pid": "player-3", "stat": "active"}},
 	}
 	got := compactWirePacketFromDescriptors(packet)
 	want := map[string]any{
-		"t": "sd",
+		"t":   "sd",
 		"pl":  []any{[]any{1, "scout", 3, nil, nil, nil, nil, nil, nil, nil, nil}},
 		"psu": []any{[]any{2, "sco", 4, "future_field", "kept"}},
 		"plu": []any{[]any{3, "active"}},
@@ -60,7 +60,7 @@ func TestCompactWireDescriptorAcceptsCompactLifecycleKeysAndFields(t *testing.T)
 	}
 	got := compactWirePacketFromDescriptors(packet)
 	want := map[string]any{
-		"t": "al",
+		"t":  "al",
 		"ac": []any{map[string]any{"h": 10, "i": "asteroid-2", "sl": 1000, "sz": 1, "v": 0, "x": 1, "y": 2}},
 		"ax": []any{"asteroid-3", "asteroid-bad"},
 	}
@@ -71,7 +71,7 @@ func TestCompactWireDescriptorAcceptsCompactLifecycleKeysAndFields(t *testing.T)
 
 func TestCompactWireDescriptorPreservesMalformedIDs(t *testing.T) {
 	packet := map[string]any{
-		"type": "world_full",
+		"type":      "world_full",
 		"asteroids": []any{map[string]any{"id": "asteroid-invalid", "x": 1}},
 	}
 	got := compactWirePacketFromDescriptors(packet)
@@ -97,7 +97,7 @@ func TestCompactWireDescriptorSelectorTaggedFallback(t *testing.T) {
 
 func TestCompactWireDescriptorUnknownEventPassesThroughAsMap(t *testing.T) {
 	packet := map[string]any{
-		"type": "event_batch",
+		"type":   "event_batch",
 		"events": []any{map[string]any{"type": "future_event", "id": "opaque-1"}},
 	}
 	got := compactWirePacketFromDescriptors(packet)

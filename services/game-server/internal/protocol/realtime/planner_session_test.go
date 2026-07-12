@@ -58,8 +58,8 @@ func TestAssembleRealtimeLaneCandidatesEmitsSessionDeltaWhenStoredBaselineDiffer
 	state.UpdateLane(LaneSession, Metadata{Sequence: 8, BaselineID: "session-baseline", SnapshotID: "session-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneSession)
 	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, game.GameplayPresentationSnapshot{
-		SelfID: "player-1",
-		PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing", Score: 5, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}},
+		SelfID:          "player-1",
+		PlayerSessions:  map[string]game.PlayerSessionState{"player-1": {ID: "player-1", ShipType: "v_wing", Score: 5, Lives: 3, PrimaryWeaponID: "laser", PrimaryAmmoPolicy: "infinite"}},
 		PlayerLifecycle: map[string]string{"player-1": "active"},
 		TotalAsteroids:  5,
 	}, 7))

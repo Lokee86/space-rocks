@@ -64,5 +64,3 @@ func (r ScheduleRecord) Summary() ScheduleSummary {
 
 	return summary
 }
-
-

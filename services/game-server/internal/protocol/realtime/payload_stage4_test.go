@@ -28,7 +28,7 @@ func (stage4EmptyWirePayload) LaneMetadata() (Metadata, bool) {
 	return Metadata{Lane: LaneWorld}, true
 }
 func (stage4EmptyWirePayload) WirePacket() map[string]any { return nil }
-func (stage4EmptyWirePayload) realtimeLanePayload()        {}
+func (stage4EmptyWirePayload) realtimeLanePayload()       {}
 
 type stage4MissingTypePayload struct{}
 

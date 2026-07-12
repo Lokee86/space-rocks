@@ -7,9 +7,9 @@ import (
 )
 
 type SessionLaneProjection struct {
-	Players       []SessionPlayerRecord
+	Players         []SessionPlayerRecord
 	PlayerLifecycle []SessionLifecycleRecord
-	TotalAsteroids int
+	TotalAsteroids  int
 }
 
 type SessionLifecycleRecord struct {
@@ -83,5 +83,3 @@ func BuildSessionFullPacket(snapshot game.GameplayPresentationSnapshot, sequence
 		TotalAsteroids:  projection.TotalAsteroids,
 	}
 }
-
-

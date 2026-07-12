@@ -33,11 +33,11 @@ type OverlayFullPacket struct {
 }
 
 type SessionFullPacket struct {
-	Type           string
-	Metadata       Metadata
-	Players        []SessionPlayerRecord
+	Type            string
+	Metadata        Metadata
+	Players         []SessionPlayerRecord
 	PlayerLifecycle []SessionLifecycleRecord
-	TotalAsteroids int
+	TotalAsteroids  int
 }
 
 type EventBatchPacket struct {
@@ -45,8 +45,6 @@ type EventBatchPacket struct {
 	Metadata Metadata
 	Batch    EventBatchRecord
 }
-
-
 
 func FullBaselineID(lane Lane, sequence int) string {
 	return string(lane) + "-baseline-" + itoa(sequence)

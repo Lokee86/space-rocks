@@ -29,7 +29,7 @@ func TestCompareShadowRealtimeOwnershipAndMetadata(t *testing.T) {
 			"pickup-1": {ID: "pickup-1", Type: "ammo", PickupClass: "weapon", X: 14, Y: 15, Health: 16, AgeSeconds: 17, LifespanSeconds: 18},
 		},
 		TotalAsteroids: 19,
-		PendingEvents: []game.PendingPresentationEvent{{EventID: "event-1", Event: game.EventState{Type: "ship_death"}}},
+		PendingEvents:  []game.PendingPresentationEvent{{EventID: "event-1", Event: game.EventState{Type: "ship_death"}}},
 	}
 
 	world := BuildWorldFullPacket(snapshot, 7)

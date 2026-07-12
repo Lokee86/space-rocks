@@ -47,18 +47,18 @@ type WorldPickupRecord struct {
 }
 
 type OverlayReceiverRecord struct {
-	SelfID                   string
-	Lives                    int
-	Score                    int
-	RespawnCooldown          float64
-	PrimaryWeaponID          string
-	PrimaryAmmoPolicy        string
-	PrimaryCooldownRemaining  float64
-	PrimaryAmmoRemaining     int
-	SecondaryWeaponID        string
-	SecondaryAmmoPolicy      string
+	SelfID                     string
+	Lives                      int
+	Score                      int
+	RespawnCooldown            float64
+	PrimaryWeaponID            string
+	PrimaryAmmoPolicy          string
+	PrimaryCooldownRemaining   float64
+	PrimaryAmmoRemaining       int
+	SecondaryWeaponID          string
+	SecondaryAmmoPolicy        string
 	SecondaryCooldownRemaining float64
-	SecondaryAmmoRemaining   int
+	SecondaryAmmoRemaining     int
 }
 
 type SessionPlayerRecord struct {
@@ -76,9 +76,9 @@ type SessionPlayerRecord struct {
 }
 
 type SessionSnapshotRecord struct {
-	PlayerSessions map[string]SessionPlayerRecord
+	PlayerSessions  map[string]SessionPlayerRecord
 	PlayerLifecycle map[string]string
-	TotalAsteroids int
+	TotalAsteroids  int
 }
 
 type EventRecord struct {
@@ -87,7 +87,7 @@ type EventRecord struct {
 }
 
 type EventBatchRecord struct {
-	BatchID string
+	BatchID  string
 	Sequence int
 	Events   []EventRecord
 }

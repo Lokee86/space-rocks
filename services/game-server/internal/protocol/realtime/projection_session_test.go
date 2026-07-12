@@ -107,4 +107,3 @@ func TestProjectSessionLaneUsesSharedFactsAndDeterministicOrder(t *testing.T) {
 		t.Fatalf("expected player-b runtime state to remain untouched, got %#v", snapshot.Players["player-b"])
 	}
 }
-
