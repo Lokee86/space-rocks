@@ -48,3 +48,4 @@ services/player-data/data/player-data.sqlite3
 services/game-server/logs/
 
 logs/
+/.worktrees/
