@@ -41,6 +41,21 @@ player client
 
 TURN may be needed for players behind restrictive NAT, networks that block UDP, institutional or corporate firewalls, proxies, or other environments where direct connectivity fails. TURN adds relay bandwidth cost, operational ownership, credentials and abuse protection, latency, and another production dependency.
 
+## Shared ICE configuration contract
+
+The client ICE configuration is authored in the shared client shell constants/data source and generated into GDScript. The future structured record shape must preserve the fields needed by Godot's `RTCIceServer` initialization:
+
+```text
+ice server record
+  urls        one or more stun:/turn: URLs
+  username    empty for unauthenticated STUN; required for credentialed TURN
+  credential  empty for unauthenticated STUN; required for credentialed TURN
+```
+
+The data shape must support both records without inventing separate hard-coded STUN and TURN code paths. STUN records normally contain only `urls`; credentialed TURN records contain `urls`, `username`, and `credential`. Credentials are deployment configuration, not gameplay constants, and must not be committed as real secrets. The constants/data-sync pipeline owns the shared source and generated GDScript representation; the client WebRTC transport owns converting the generated records into transport initialization options.
+
+Transport initialization tests must cover an empty list, a STUN-only record, and a credentialed TURN record, including the resulting `RTCIceServer` fields. Hosted connectivity testing must also verify that configured candidates are actually offered and that direct dedicated-server UDP remains the preferred candidate path.
+
 ## Deployment policy
 
 Do not make TURN the default path or add it solely because players are on separate networks.
@@ -53,6 +68,8 @@ Use this sequence for hosted deployment:
 4. Record connection-success and failure reasons through the existing signaling and transport diagnostics.
 5. Add STUN or TURN only when hosted test evidence shows that the direct candidate path is insufficient.
 6. Prefer TURN as a fallback candidate rather than the normal gameplay route.
+
+This evidence-based decision is the production policy: TURN is not required merely because the server is hosted or players are on different networks. It becomes a supported production dependency only when repeatable hosted tests show that direct UDP cannot meet the required network-compatibility target and the relay's operational, credential, bandwidth, and abuse controls are accepted.
 
 ## Revisit triggers
 

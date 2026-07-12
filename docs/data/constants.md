@@ -141,7 +141,7 @@ constants.client.shell.session
 constants.client.shell.game_menu
 ```
 
-These sections own client websocket target URLs/origin, network polling priority, client WebRTC ICE server configuration, room-state strings, shell-state strings, session-mode strings, boot request strings, connect result strings, and gameplay menu primary-action identifiers. The network subsection includes `webrtc_ice_servers` for the client ICE server config seam.
+These sections own client websocket target URLs/origin, network polling priority, client WebRTC ICE server configuration, room-state strings, shell-state strings, session-mode strings, boot request strings, connect result strings, and gameplay menu primary-action identifiers. The network subsection includes `webrtc_ice_servers` for the client ICE server config seam. Its future structured records must preserve ICE URLs plus optional username and credential fields so the generated GDScript can initialize both STUN and credentialed TURN records without hard-coded provider details.
 
 ### Client lobby constants
 

@@ -168,6 +168,29 @@ unknown       -> ""
 
 The generated constants come from shared client shell constants. The server-advertised ICE address and UDP-path reachability belong to server WebRTC config, not `SessionNetworkTarget`.
 
+### Future environment configuration contract
+
+The client will eventually need one centralized environment-configuration contract for these independently deployable targets:
+
+```text
+Rails API base URL
+player-data API base URL
+single-player WebSocket URL
+multiplayer WebSocket URL
+```
+
+`SessionNetworkTarget` remains the mode-to-WebSocket mapping seam. It must consume the resolved single-player and multiplayer WebSocket targets; it must not grow scattered environment lookup or service-discovery behavior.
+
+The centralized resolver must apply one documented precedence order:
+
+```text
+packaged/build configuration
+-> command-line or environment override
+-> local development defaults
+```
+
+The exact Godot configuration mechanism remains an implementation decision, but callers must receive a resolved contract rather than independently reading process environment state. A missing or malformed hosted target must be visible validation failure at configuration/boot time, with the target name and reason exposed to the user or diagnostic log. It must not silently fall back to a localhost URL or proceed with an empty target. Local defaults are valid only for explicitly local development and local packaged single-player shapes.
+
 ### Connection, auth, and readiness gate
 
 `SessionNetworkController` participates in boot only after the websocket connection emits connection/auth/readiness signals.
