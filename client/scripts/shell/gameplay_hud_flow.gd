@@ -2,6 +2,7 @@ extends RefCounted
 class_name GameplayHudFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var hud: Control
 var hidden_for_match_over := false
@@ -142,7 +143,13 @@ func set_dead(respawn_delay: float) -> void:
 	can_respawn = false
 	respawn_countdown_remaining = maxf(respawn_delay, 0.0)
 	if !_logged_set_dead_diagnostics:
-		print("GameplayHudFlow.set_dead: respawn_delay=%s can_respawn=%s" % [str(respawn_countdown_remaining), str(can_respawn)])
+		ClientLogger.event(
+			ClientLogger.CATEGORY_HUD,
+			ClientLogger.LEVEL_DEBUG,
+			"player_death_presented",
+			"Showing dead-player HUD",
+			{"respawn_delay": respawn_countdown_remaining, "can_respawn": can_respawn}
+		)
 		_logged_set_dead_diagnostics = true
 	_show_hud_child("CenterContainer/VBoxContainer2")
 	_hide_hud_child("CenterContainer/GameOverContainer")
@@ -221,7 +228,13 @@ func has_dead_presentation() -> bool:
 func _make_respawn_available() -> void:
 	can_respawn = true
 	if !_logged_respawn_available:
-		print("GameplayHudFlow._make_respawn_available: can_respawn=%s" % str(can_respawn))
+		ClientLogger.event(
+			ClientLogger.CATEGORY_HUD,
+			ClientLogger.LEVEL_DEBUG,
+			"respawn_available",
+			"Respawn became available",
+			{"can_respawn": can_respawn}
+		)
 		_logged_respawn_available = true
 	var respawn_timer_label := _respawn_timer_label()
 	if respawn_timer_label != null:

@@ -5,6 +5,7 @@ const PICKUP_CLASS_POWERUP := "powerup"
 const PICKUP_CLASS_WEAPON := "weapon"
 
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var pickups_layer = null
 var audio_flow := GameplayAudioFlow.new()
@@ -42,7 +43,13 @@ func _scene_for_class(pickup_class: String):
 	if pickup_scene != null:
 		return pickup_scene
 
-	print("PickupSync: unknown pickup class=%s" % pickup_class)
+	ClientLogger.event(
+		ClientLogger.CATEGORY_WORLD_SYNC,
+		ClientLogger.LEVEL_WARN,
+		"pickup_class_unknown",
+		"Cannot resolve pickup presentation scene",
+		{"pickup_class": pickup_class}
+	)
 	return null
 
 
@@ -51,7 +58,12 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 		return pickup_nodes[pickup_id]
 
 	if pickups_layer == null:
-		print("PickupSync: cannot create pickup; pickups_layer is null")
+		ClientLogger.event(
+			ClientLogger.CATEGORY_WORLD_SYNC,
+			ClientLogger.LEVEL_WARN,
+			"pickup_layer_unavailable",
+			"Cannot create pickup without a configured pickups layer"
+		)
 		return null
 
 	var pickup_scene = _scene_for_class(pickup_class)

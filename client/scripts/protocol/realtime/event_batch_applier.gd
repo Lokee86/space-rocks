@@ -1,6 +1,7 @@
 extends RefCounted
 
 const RealtimeQuantize := preload("res://scripts/protocol/realtime/realtime_quantize.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 var _applied_batch_ids := {}
 var _applied_event_ids := {}
 var _applied_events := []
@@ -46,7 +47,12 @@ func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 		var applied_event_types := []
 		for event in newly_applied_events:
 			applied_event_types.append(str(event.get("type", "")))
-		print("[event_batch][info] applied new events: batch_id=%s new_event_count=%d event_types=%s" % [str(batch_id), newly_applied_events.size(), ",".join(applied_event_types)])
+		ClientLogger.packets_event(
+			ClientLogger.LEVEL_DEBUG,
+			"event_batch_applied",
+			"Applied new server events",
+			{"batch_id": str(batch_id), "new_event_count": newly_applied_events.size(), "event_types": applied_event_types}
+		)
 	return applied_any
 
 func _apply_event(event_sink, event: Dictionary) -> bool:
