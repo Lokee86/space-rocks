@@ -42,10 +42,6 @@ func apply_overlay_lane_state(overlay_lane_state) -> void:
 		return
 
 	show_gameplay()
-	if overlay_lane_state.self_id != null:
-		var self_id := str(overlay_lane_state.self_id)
-		if self_id != "":
-			loadout_display_flow.clear()
 	if overlay_lane_state.lives != null:
 		apply_lives(int(overlay_lane_state.lives))
 	if overlay_lane_state.score != null:

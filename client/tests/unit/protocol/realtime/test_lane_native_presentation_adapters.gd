@@ -137,6 +137,36 @@ func test_gameplay_hud_flow_overlay_lane_shows_torpedo_loadout_with_cooldown() -
 	assert_true((display.get_node("%AmmoLabel") as CanvasItem).visible)
 
 
+func test_gameplay_hud_flow_overlay_lane_preserves_loadout_display_through_cooldown_ready_transition() -> void:
+	var hud := HudScene.instantiate()
+	add_child_autofree(hud)
+	var hud_flow := GameplayHudFlow.new()
+	hud_flow.configure(hud)
+	var overlay_lane_state := OverlayLaneState.new()
+	overlay_lane_state.self_id = "player-1"
+	overlay_lane_state.secondary_weapon_id = "torpedo"
+	overlay_lane_state.secondary_cooldown_remaining = 4.0
+
+	hud_flow.apply_overlay_lane_state(overlay_lane_state)
+
+	var loadout_container := hud.get_node("%LoadoutContainer") as HBoxContainer
+	var display := loadout_container.get_child(0)
+	var ring_highlight := display.get_node("%RingHighlight") as CanvasItem
+	var ready_flash := display.get_node("%ReadyFlash") as AnimatedSprite2D
+	var ready_sweep := display.get_node("%ReadySweepHighlight") as CanvasItem
+	assert_false(ring_highlight.visible)
+	assert_false(ready_flash.visible)
+	assert_false(ready_sweep.visible)
+
+	overlay_lane_state.secondary_cooldown_remaining = 0.0
+	hud_flow.apply_overlay_lane_state(overlay_lane_state)
+
+	assert_eq(loadout_container.get_child(0), display)
+	assert_true(ring_highlight.visible)
+	assert_true(ready_flash.visible or ready_flash.is_playing())
+	assert_true(ready_sweep.visible)
+
+
 func test_gameplay_hud_flow_session_lane_does_not_overwrite_overlay_owned_torpedo_loadout() -> void:
 	var hud := HudScene.instantiate()
 	add_child_autofree(hud)
