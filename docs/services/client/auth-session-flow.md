@@ -29,6 +29,8 @@ On startup, `AppEntry` creates an `AuthSessionController`, wires it into the mai
 
 If no saved token exists, the controller clears auth state and emits `auth_state_changed`. If a saved token exists, the controller validates it through Rails `GET /api/auth/me`. A valid response repopulates `AuthSession`. An invalid or failed response clears the saved token and signs the client out.
 
+Saved-token validation, Discord sign-in, and logout share one monotonically increasing auth-operation epoch. Starting any of these operations advances the epoch; each new operation supersedes older awaited operations. A stale completion returns without changing the token store or `AuthSession`, and without emitting `auth_state_changed` or `auth_error`. Logout advances the epoch before clearing local state. Its remote logout request still uses the token captured before local clearing and may finish independently.
+
 Current user-facing sign-in is Discord-only. The sign-in window has disabled manual email/password and Google controls. Pressing the Discord button starts a Rails login-session handoff: the client asks Rails for a login session, opens the returned browser URL, polls the exchange endpoint, receives the normal Space Rocks bearer token, stores it in `user://auth_token.json`, and updates the in-memory session.
 
 Multiplayer entry is gated by client signed-in state. If the player requests multiplayer while signed out, the menu routes to the sign-in screen. If the player is already signed in, or becomes signed in while on the sign-in screen, the menu routes to multiplayer pregame.
@@ -255,6 +257,8 @@ if token existed:
 
 Remote logout is best-effort from the client perspective. Local state is cleared immediately before the remote call finishes.
 
+Because logout advances the auth-operation epoch before clearing local state, any older saved-token validation or Discord sign-in completion returns without restoring auth state or emitting stale auth signals. Remote logout remains scoped to the captured prior token and does not update local auth state.
+
 ### Websocket authentication
 
 Websocket auth flow:
@@ -434,6 +438,8 @@ These backend paths are listed for boundary clarity. The client does not own the
 * `client/tests/unit/test_auth_session.gd`
 * `client/tests/unit/test_auth_token_store.gd`
 * `client/tests/unit/test_auth_session_controller.gd`
+
+The controller tests also cover the two logout races: saved-token validation completing after logout, and Discord sign-in initialization completing after logout. Both verify that logout remains the sole local auth-state change.
 
 ### Sign-in UI and menu routing
 
