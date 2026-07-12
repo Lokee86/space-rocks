@@ -110,6 +110,9 @@ func _apply_display_state(display: Node, slot_state: Dictionary, _cooldown_total
 		"cooldown_total": cooldown_total,
 	}
 
+	if cooldown_remaining > 0.0:
+		ready_effect_played_for_cooldown[slot] = false
+
 	if display.has_method("apply_weapon_display_state"):
 		display.apply_weapon_display_state(display_state)
 

@@ -196,6 +196,29 @@ func test_first_cooldown_ready_transition_triggers_ready_effects() -> void:
 	assert_true(ready_sweep.visible)
 
 
+func test_authoritative_cooldown_zero_triggers_ready_effects_after_active_cooldown() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 2.0,
+	}))
+
+	var ring_highlight := _display_ring_highlight()
+	var ready_flash := _display_ready_flash()
+	var ready_sweep := _display_ready_sweep_highlight()
+	assert_false(ring_highlight.visible)
+	assert_false(ready_flash.visible)
+	assert_false(ready_sweep.visible)
+
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 0.0,
+	}))
+
+	assert_true(ring_highlight.visible)
+	assert_true(ready_flash.visible or ready_flash.is_playing())
+	assert_true(ready_sweep.visible)
+
+
 func test_cooldown_ready_transition_clears_overlay_and_only_plays_ready_effects_once() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
