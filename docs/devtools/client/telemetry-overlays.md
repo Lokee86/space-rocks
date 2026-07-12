@@ -84,7 +84,7 @@ The server also participates in packet timing diagnostics through `telemetry_pin
 
 This packet pair does not require room membership and does not mutate gameplay state.
 
-The authoritative `GameplayPresentationSnapshot` captures `server_sent_msec` as the server's Unix-millisecond wall-clock time when the snapshot is created. Realtime lane projection carries that value into lane metadata. The client uses it together with the estimated server clock offset from telemetry pong packets to calculate receive age in local monotonic-clock space. Runtime metadata inference removes redundant envelope fields for some gameplay lanes, but it does not remove or sample `server_sent_msec`.
+The game captures gameplay `server_sent_msec` as the server's Unix-millisecond wall-clock time when it publishes an immutable presentation frame. All lane packets projected from that frame carry the same timestamp. The client uses it together with the estimated server clock offset from `telemetry_pong` packets to calculate receive age in local monotonic-clock space. Runtime metadata inference removes redundant envelope fields for some gameplay lanes, but it does not remove or sample `server_sent_msec`. The separate `telemetry_pong.server_sent_msec` remains the timestamp captured by the ping/pong response path immediately before encoding the pong.
 
 The authority boundary is:
 

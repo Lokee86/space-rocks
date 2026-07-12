@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	targetpolicy "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
 )
 
@@ -67,6 +67,7 @@ func TestSetPlayerTargetReflectedInGameplayPresentationSnapshot(t *testing.T) {
 		t.Fatal("expected SetPlayerTarget to succeed for existing requester/target")
 	}
 
+	game.Step(0)
 	snapshot := game.GameplayPresentationSnapshot(shooterID)
 	shooterState, ok := snapshot.Players[shooterID]
 	if !ok {

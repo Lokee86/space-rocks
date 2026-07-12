@@ -25,9 +25,9 @@ Game.Start
 
 `runSimulation` uses a fixed delta derived from `constants.ServerTickRate`. The current generated server tick rate is `60`, so the normal loop advances simulation at 60 ticks per second.
 
-`Game.Step(delta)` is the authoritative per-tick coordinator. It locks the game aggregate, chooses the wrapped world bounds, advances simulation phases in a fixed order, and invokes registered simulation step observers at the end of the tick.
+`Game.Step(delta)` is the authoritative per-tick coordinator. It locks the game aggregate, chooses the wrapped world bounds, advances simulation phases in a fixed order, invokes registered simulation step observers, and publishes one immutable presentation frame before releasing `Game.mu`.
 
-The phase order is intentionally centralized in `services/game-server/internal/game/simulation.go`. Individual phases delegate into focused helpers, but the root order remains visible in one place.
+The phase order is intentionally centralized in `services/game-server/internal/game/simulation.go`. Individual phases delegate into focused helpers, but the root order remains visible in one place. See [Game Aggregate](./game-aggregate.md) for the presentation-frame ownership model.
 
 ## Code root
 
@@ -63,6 +63,7 @@ The simulation loop and phase-order boundary owns:
 * Applying world simulation option gates for spawning, asteroid movement, bullet movement, and collisions.
 * Routing collision phase execution through the current collision-pair handlers.
 * Invoking registered simulation step observers after normal or reduced simulation phases.
+* Publishing one immutable presentation frame after observers and before releasing `Game.mu`.
 * Keeping per-phase mutation inside the game aggregate and focused same-package helpers.
 
 ## Does not own
@@ -162,7 +163,7 @@ event_batch
 = presentation events for the current receiver
 ```
 
-Lane-native realtime projection is a separate runtime responsibility. The simulation loop mutates runtime state; `protocol/realtime` reads that state later and `event_batch` drains per receiver only after successful active write. The simulation-owned event facts can contain raw simulation values, and the realtime event wire shaper later quantizes and sparsifies known records before compact output encoding. See [Presentation Event Queue](presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Lane-native realtime projection is a separate runtime responsibility. The simulation loop mutates runtime state; `protocol/realtime` reads that state later and `event_batch` drains per receiver only after successful active write. The simulation-owned event facts can contain raw simulation values, and the realtime event wire shaper later quantizes and sparsifies known records before compact output encoding. See [Presentation Event Queue](presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../networking/realtime-compact-wire-mapping.md).
 
 ## Tick lifecycle
 
@@ -201,6 +202,8 @@ defer game.mu.Unlock()
 
 The phase helpers called from `Step` run under that lock. They mutate shared runtime maps, player sessions, camera views, radial effects, presentation event queues, and counters without taking separate locks.
 
+Deferred presentation-frame publication runs while `Game.mu` is still held, on both the normal completion and match-over early-return paths. Observer-triggered mutations are included in that same final frame.
+
 The same lock is used by public game APIs that mutate or read live state, including player addition/removal, input routing, pause-state packet generation, match decision reads, counter mutation, targeting, pickups, lane-native realtime projection inputs, and devtools adapters.
 
 This means the simulation phase order is serialized against inbound game mutations and outbound lane-native realtime projection reads.
@@ -233,6 +236,7 @@ For an active match, `Game.Step(delta)` runs this order:
 10. stepCollisions()
 11. stepRadialEffects(delta)
 12. simulationStepObservers
+13. publish presentation frame
 ```
 
 ### 1. Player sessions
@@ -342,6 +346,10 @@ Registered simulation step observers run last.
 
 Current usage supports devtools continuous bullet streams. Observer callbacks run after regular simulation phases and after radial effect stepping.
 
+### 13. Presentation frame publication
+
+The deferred publication captures the completed tick, including observer mutations, while `Game.mu` is still held. Detailed ownership remains in [Game Aggregate](./game-aggregate.md).
+
 ## Match-over phase order
 
 If the match is already over after player sessions tick, `Game.Step(delta)` runs a reduced path:
@@ -354,7 +362,8 @@ If the match is already over after player sessions tick, `Game.Step(delta)` runs
 5. stepPickups(delta)
 6. stepRadialEffects(delta)
 7. simulationStepObservers
-8. return
+8. publish presentation frame
+9. return
 ```
 
 The reduced path intentionally skips:
@@ -490,6 +499,7 @@ entities.Enemies
 playerSessions
 cameraViews
 pendingPresentationEvents
+presentationFrame
 radialEffects
 worldSimulationOptions
 asteroidSpawnElapsed
@@ -513,7 +523,8 @@ The simulation loop does not persist profile, account, wallet, or match-result d
 Primary implementation files:
 
 * `services/game-server/internal/game/game.go` - `Game` aggregate fields, construction defaults, `Start`, and `Stop`.
-* `services/game-server/internal/game/simulation.go` - `runSimulation`, `Step(delta)`, normal phase order, match-over phase order, and collision phase routing.
+* `services/game-server/internal/game/presentation_snapshot.go` - immutable presentation-frame publication and receiver-scoped snapshots.
+* `services/game-server/internal/game/simulation.go` - `runSimulation`, `Step(delta)`, normal phase order, match-over phase order, end-of-step presentation-frame publication, and collision phase routing.
 * `services/game-server/internal/game/simulation_players.go` - player session ticking, player movement/fire phase, and ready-player removal.
 * `services/game-server/internal/game/simulation_weapons.go` - per-tick weapon state stepping.
 * `services/game-server/internal/game/simulation_asteroids.go` - timed asteroid spawning, asteroid movement, and asteroid cleanup.
@@ -558,6 +569,7 @@ Important non-ownership boundaries:
 Relevant focused tests include:
 
 * `services/game-server/internal/game/simulation_match_over_test.go`
+* `services/game-server/internal/game/presentation_snapshot_test.go` - publication, reuse, frame immutability, receiver event isolation, removal publication, and concurrent reads.
 * `services/game-server/internal/game/world_simulation_options_test.go`
 * `services/game-server/internal/game/player_weapons_test.go`
 * `services/game-server/internal/game/radial_effects_test.go`
@@ -620,9 +632,9 @@ go test -buildvcs=false ./internal/game ./tests/game
 * [Runtime Entity Store](runtime-entity-store.md)
 * [Lane Packet Projection](lane-packet-projection.md)
 * [Presentation Event Queue](presentation-event-queue.md)
-* [Realtime Protocol](../../../../../protocol/!INDEX.md)
-* [Data](../../../../../data/!INDEX.md)
-* [Devtools](../../../../../devtools/!INDEX.md)
+* [Realtime Protocol](../../../../protocol/!INDEX.md)
+* [Data](../../../../data/!INDEX.md)
+* [Devtools](../../../../devtools/!INDEX.md)
 
 ## Notes
 

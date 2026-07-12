@@ -14,6 +14,9 @@ func (target *Control) SpawnDebugBullet(ownerPlayerID string, origin physics.Vec
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
 	_, ok := target.game.spawnDebugBullet(ownerPlayerID, origin, direction)
+	if ok {
+		target.game.publishPresentationFrameLocked()
+	}
 	return ok
 }
 

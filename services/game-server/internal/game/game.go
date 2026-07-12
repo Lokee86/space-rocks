@@ -32,6 +32,7 @@ type Game struct {
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]PendingPresentationEvent
+	presentationFrame         *gameplayPresentationFrame
 }
 
 func New() *Game {
@@ -40,7 +41,7 @@ func New() *Game {
 		logging.Game.Warn("collision shapes unavailable", logging.FieldError, err)
 	}
 
-	return &Game{
+	game := &Game{
 		collisionShapes:           collisionShapes,
 		stopSimulation:            make(chan struct{}),
 		cameraViews:               make(map[string]*runtime.CameraView),
@@ -52,6 +53,8 @@ func New() *Game {
 		radialEffects:             radial.NewStore(),
 		entities:                  runtime.NewEntityStore(),
 	}
+	game.publishPresentationFrameLocked()
+	return game
 }
 
 func (game *Game) Start() {

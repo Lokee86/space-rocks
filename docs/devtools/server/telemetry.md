@@ -134,7 +134,7 @@ pickup
 
 `telemetry_ping` and `telemetry_pong` are timing diagnostics only. The server preserves the client ping sequence and client send timestamp, then adds server receive and server send timestamps. The client uses the pong midpoint to estimate the offset between the server's Unix-millisecond wall clock and the client's monotonic clock. The packet pair does not mutate room, player, or simulation state.
 
-Normal gameplay lane packets carry `server_sent_msec` from the authoritative `GameplayPresentationSnapshot`. The snapshot captures the server's live Unix-millisecond wall-clock time at snapshot creation; realtime lane projection preserves that timestamp through outbound encoding. Client telemetry maps that server clock into client monotonic time using the ping/pong-derived offset to calculate packet age. The newer runtime envelope inference for world/overlay/session packets removes redundant metadata fields, not this timestamp.
+Normal gameplay lane packets carry `server_sent_msec` from the authoritative immutable presentation frame. The game captures the server's Unix-millisecond wall-clock time when it publishes that frame, so all lane packets projected from the frame share the timestamp. Client telemetry maps that server clock into client monotonic time using the ping/pong-derived offset to calculate packet age. The newer runtime envelope inference for world/overlay/session packets removes redundant metadata fields, not this timestamp. This gameplay-frame timestamp is distinct from `telemetry_pong.server_sent_msec`, which is captured by the ping/pong response path immediately before encoding the pong.
 
 When observability reads raw wire maps, omitted runtime metadata can appear as `nil` until inference or normalization fills it in. Packet-size interpretation should prefer the lane candidate/kind fields and inferred lane context over expecting a literal `wire_lane` field for `event_batch` packets.
 
@@ -200,13 +200,13 @@ Debug commands can change facts later reported by telemetry, but telemetry is no
 
 Gameplay presentation state is not a devtools packet, but it carries timing data used by devtools telemetry.
 
-Before encoding an outbound gameplay lane packet, the server sets:
+The game publishes an immutable presentation frame with:
 
 ```text
 server_sent_msec
 ```
 
-The timestamp is generated in the outbound networking path immediately before packet encoding.
+The frame timestamp is shared by all receiver snapshots and lane packets projected from that frame. The outbound networking path preserves and delivers it; networking does not generate the gameplay timestamp.
 
 The outgoing lane packets also contain world data that client telemetry can count:
 
@@ -243,7 +243,7 @@ server_received_msec
 server_sent_msec
 ```
 
-`sequence` and `client_sent_msec` are copied from the ping. `server_received_msec` is captured when the server begins handling the ping. `server_sent_msec` is captured immediately before encoding the pong.
+`sequence` and `client_sent_msec` are copied from the ping. `server_received_msec` is captured when the server begins handling the ping. `server_sent_msec` is captured immediately before encoding the pong; this pong timestamp is separate from the gameplay presentation-frame timestamp.
 
 The response is written to the same WebSocket session outbound channel. It is not broadcast to the room.
 

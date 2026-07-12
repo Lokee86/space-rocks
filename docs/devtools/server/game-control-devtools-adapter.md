@@ -314,6 +314,10 @@ Control capability or public game method must accept the operation
 
 Every externally callable `game.Control` method that reads or mutates aggregate state acquires `Game.mu` itself. This makes the adapter a uniform aggregate-lock boundary for devtools and other callers.
 
+Successful presentation-visible Control mutations publish a replacement immutable presentation frame before releasing `Game.mu`. This lets devtools command handlers and tests observe authoritative lane/readback state immediately without waiting for the next simulation tick. The affected mutation families include counters, clear operations, entity/player spawn and forced respawn, direct debug-bullet stream spawn, and player defeat.
+
+Read-only Control methods, failed or no-op mutations, world/toggle state that is not part of the gameplay presentation frame, reservation/occupancy queries, and observer registration do not republish merely because they were called.
+
 Control methods do not call public `Game` or `Control` methods while holding that lock when those methods would lock again. They use the existing lock-assuming helpers, such as `matchDecisionLocked`, counter helpers, and `spawnPickupLocked`.
 
 `ObserverKey` is the sole lock-free exception: it returns the immutable `*Game` identity used only for observer-registry deduplication and reads no mutable aggregate state.
@@ -321,6 +325,8 @@ Control methods do not call public `Game` or `Control` methods while holding tha
 `Game.Step` invokes simulation observers while `Game.mu` is held. `RegisterSimulationStepObserver` wraps each registered callback and supplies narrow capability closures for bullet movement and debug-bullet spawning only during that callback. The closures call lock-assuming game helpers inside the already-locked simulation phase; ordinary callers only see the locking `BulletsCanMove` and `SpawnDebugBullet` methods. This preserves phase ordering and avoids recursive locking without exposing a lock-assuming Control method.
 
 `RegisterSimulationStepObserver` acquires `Game.mu` before changing the observer list. Observer callbacks should stay narrow and should route gameplay effects through the lock-assuming observer seam only when invoked by `Game.Step`.
+
+Observer-triggered gameplay mutations during `Game.Step` are included in the single end-of-step presentation-frame publication rather than causing an extra publication inside the observer callback.
 
 ## Relationship to real gameplay systems
 

@@ -15,6 +15,7 @@ func (target *Control) EnsurePlayerSession(playerID string, spawnPosition physic
 		return false
 	}
 	target.game.playerSessions[playerID] = newPlayerSession(playerID, spawnPosition)
+	target.game.publishPresentationFrameLocked()
 	return true
 }
 
@@ -38,6 +39,7 @@ func (target *Control) SpawnPlayerShip(playerID string, spawnPosition physics.Ve
 	if cameraConfig.VisibleWorldWidth > 0 && cameraConfig.VisibleWorldHeight > 0 {
 		cameraView.Config = cameraConfig
 	}
+	target.game.publishPresentationFrameLocked()
 	return true
 }
 

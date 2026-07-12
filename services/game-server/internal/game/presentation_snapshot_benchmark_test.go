@@ -37,6 +37,21 @@ func BenchmarkGameplayPresentationSnapshot(b *testing.B) {
 	}
 }
 
+func BenchmarkGameplayPresentationFramePublication(b *testing.B) {
+	for _, scenario := range presentationBenchmarkScenarios {
+		b.Run(scenario.name, func(b *testing.B) {
+			game := newPresentationBenchmarkGame(scenario)
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				game.mu.Lock()
+				game.publishPresentationFrameLocked()
+				game.mu.Unlock()
+			}
+		})
+	}
+}
+
 func BenchmarkGameStepWithPresentationSnapshotContention(b *testing.B) {
 	for _, scenario := range presentationBenchmarkScenarios {
 		for _, readers := range []int{0, 1, 4, 8} {
@@ -88,5 +103,8 @@ func newPresentationBenchmarkGame(scenario presentationBenchmarkScenario) *Game 
 		id := fmt.Sprintf("bullet-%d", i)
 		game.entities.Projectiles[id] = runtimepkg.NewBullet(id, "player-0", physics.Vector2{X: float64(i), Y: float64(i * 2)}, 0, physics.Vector2{X: 2, Y: 0}, 10)
 	}
+	game.mu.Lock()
+	game.publishPresentationFrameLocked()
+	game.mu.Unlock()
 	return game
 }
