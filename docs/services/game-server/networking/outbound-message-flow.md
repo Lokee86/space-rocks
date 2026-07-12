@@ -422,7 +422,7 @@ Debug shape catalog is devtools-only shape metadata. It is sent once per room ID
 
 ## Failure behavior
 
-Invalid realtime payload, wire-map, compact, or JSON encoding failures abort the active result build and reach the existing `lane protocol gameplay build failed` networking error boundary. They are not silently omitted and `{}` is never sent. This fail-closed behavior is distinct from queued WebSocket behavior: queued messages remain an in-memory queue and their WebSocket write failures close the write loop.
+World, overlay, and session quantization is fail-closed during candidate construction. The realtime projection package detects and returns quantization failures through planner assembly and active-result construction; a failed lane is not silently omitted while candidates for other lanes continue. Networking owns the existing `lane protocol gameplay build failed` log/boundary that receives the propagated build error. Invalid realtime payload, wire-map, compact, or JSON encoding failures likewise abort the active result build rather than being silently omitted, and `{}` is never sent. This fail-closed behavior is distinct from queued WebSocket behavior: queued messages remain an in-memory queue and their WebSocket write failures close the write loop.
 
 Queued WebSocket write failures end the WebSocket write loop for that session. The connection teardown path closes the socket and leaves the disconnected room when needed.
 
@@ -508,11 +508,11 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/protocol/packetcodec/` owns JSON encode/decode mechanics.
 - `services/game-server/internal/protocol/realtime/` owns realtime lane packet construction, send-plan records, sparse delta omission, generated compact descriptor application, encoded-byte accounting inputs, and metrics behavior.
 - `services/game-server/internal/protocol/realtime/lanes.go`
-- `services/game-server/internal/protocol/realtime/planner.go` - orchestrates lane candidate builder calls before scheduling.
-- `services/game-server/internal/protocol/realtime/lane_candidate_world.go` - builds world lane candidates, integrates hot movement splitting, and chains world projections.
+- `services/game-server/internal/protocol/realtime/planner.go` - orchestrates lane candidate builder calls before scheduling and propagates candidate-construction errors.
+- `services/game-server/internal/protocol/realtime/lane_candidate_world.go` - builds world lane candidates, returns world quantization failures, integrates hot movement splitting, and chains world projections.
 - `services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go` - builds reliable asteroid and bullet lifecycle candidates.
-- `services/game-server/internal/protocol/realtime/lane_candidate_overlay.go` - builds overlay lane candidates.
-- `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - builds session lane candidates.
+- `services/game-server/internal/protocol/realtime/lane_candidate_overlay.go` - builds overlay lane candidates and returns overlay quantization failures.
+- `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - builds session lane candidates and returns session quantization failures.
 - `services/game-server/internal/protocol/realtime/lane_candidate_event.go` - builds event_batch candidates without draining pending events.
 - `services/game-server/internal/protocol/realtime/candidate_types.go` - realtime candidate/send-preparation types.
 - `services/game-server/internal/protocol/realtime/candidate_policy.go` - delivery-class, priority, schedule-record, and projection helpers; packet-family identity is payload-owned.
@@ -552,6 +552,7 @@ The documented focused test paths for outbound routing are:
 - `services/game-server/tests/game/pause_test.go`
 - `services/game-server/internal/networking/packetmetrics/*_test.go`
 - `services/game-server/internal/protocol/realtime/*_test.go`
+- `services/game-server/internal/protocol/realtime/quantization_propagation_test.go` - world, overlay, and session quantization error propagation through exported planner and active-result boundaries.
 - `services/game-server/internal/protocol/realtime/wire_packets_test.go` - lifecycle wire metadata coverage.
 - `services/game-server/internal/game/presentation_snapshot_test.go` - snapshot-time Unix-millisecond timestamp coverage.
 

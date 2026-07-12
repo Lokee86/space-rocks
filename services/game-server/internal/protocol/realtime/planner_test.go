@@ -8,7 +8,16 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
-var _ func(game.GameplayPresentationSnapshot, RealtimeSessionState) RealtimeLanePlan = AssembleRealtimeLaneCandidates
+var _ func(game.GameplayPresentationSnapshot, RealtimeSessionState) (RealtimeLanePlan, error) = AssembleRealtimeLaneCandidates
+
+func mustAssembleRealtimeLaneCandidates(t *testing.T, snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeLanePlan {
+	t.Helper()
+	plan, err := AssembleRealtimeLaneCandidates(snapshot, state)
+	if err != nil {
+		t.Fatalf("assemble realtime lane candidates: %v", err)
+	}
+	return plan
+}
 
 func mustWorldWireFull(t *testing.T, snapshot game.GameplayPresentationSnapshot, sequence int) WorldWireFullPacket {
 	t.Helper()
@@ -160,7 +169,7 @@ func TestRealtimeOwnershipParityAcrossLanes(t *testing.T) {
 		t.Fatalf("event batch mismatch: %#v", events.Batch)
 	}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	for _, candidate := range plan.Candidates {
 		if candidate.Lane() == LaneControl {
 			t.Fatalf("planner used session lane: %#v", candidate)
@@ -179,7 +188,7 @@ func TestRealtimePlannerUsesGameplayPresentationSnapshotInput(t *testing.T) {
 		},
 	}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	if len(plan.Candidates) == 0 {
 		t.Fatalf("planner returned no realtime candidates from GameplayPresentationSnapshot input")
 	}

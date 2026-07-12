@@ -42,8 +42,10 @@ func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, 
 func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (ActiveRealtimeResult, error) {
 	preparedState := state
 	preparedState.AdvanceHotLaneTick()
-	candidatePlan := assembleRealtimeLaneCandidates(snapshot, preparedState, &preparedState)
-	var err error
+	candidatePlan, err := assembleRealtimeLaneCandidates(snapshot, preparedState, &preparedState)
+	if err != nil {
+		return ActiveRealtimeResult{}, fmt.Errorf("assemble realtime lane candidates: %w", err)
+	}
 	candidatePlan.Candidates, err = ExpandRealtimeCandidateChunks(candidatePlan.Candidates)
 	if err != nil {
 		return ActiveRealtimeResult{}, fmt.Errorf("expand realtime candidate chunks: %w", err)

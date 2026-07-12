@@ -170,7 +170,7 @@ Sparse omission is a realtime wire-map serialization concern. The physical compa
 
 Runtime active encoding no longer performs raw-float reflection scanning. Numeric wire quantization remains part of projection and explicit event wire shaping before compacting and JSON encoding.
 
-Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/`, `services/game-server/internal/protocol/realtime/quantize_world.go`, `services/game-server/internal/protocol/realtime/quantize_overlay.go`, and `services/game-server/internal/protocol/realtime/quantize_session.go` as the quantization boundary for outbound lane projection. It should not truncate authoritative simulation state for packet-size savings. Quantization algorithms remain runtime-owned, while field-path policy assignments come from generated realtime-wire descriptors.
+Numeric wire quantization is implemented in the realtime projection and wire-record path before delta comparison. The active server implementation uses `services/game-server/internal/protocol/realtime/quantize/`, `services/game-server/internal/protocol/realtime/quantize_world.go`, `services/game-server/internal/protocol/realtime/quantize_overlay.go`, and `services/game-server/internal/protocol/realtime/quantize_session.go` as the quantization boundary for outbound lane projection. World, overlay, and session candidate construction is fail-closed: each lane builder returns a quantization error, planner assembly and active-result construction propagate it, and the failed lane is not silently omitted while other lanes continue. Realtime projection owns detection and error return; networking owns the existing gameplay-build failure log/boundary. Quantization should not truncate authoritative simulation state for packet-size savings. Quantization algorithms remain runtime-owned, while field-path policy assignments come from generated realtime-wire descriptors.
 
 The ownership boundary remains:
 
@@ -213,11 +213,11 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
 * `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and estimated byte-budget include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.
 * `services/game-server/internal/protocol/realtime/lanes.go` - lane definitions and packet-family ownership.
-* `services/game-server/internal/protocol/realtime/planner.go` - orchestrates lane candidate builder calls for world, overlay, session, and event lanes.
-* `services/game-server/internal/protocol/realtime/lane_candidate_world.go` - world lane candidate construction, world baseline/delta comparison, hot movement split integration, and world projection chaining.
+* `services/game-server/internal/protocol/realtime/planner.go` - orchestrates lane candidate builder calls for world, overlay, session, and event lanes and returns candidate-construction errors.
+* `services/game-server/internal/protocol/realtime/lane_candidate_world.go` - world lane candidate construction, fail-closed world quantization, world baseline/delta comparison, hot movement split integration, and world projection chaining.
 * `services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go` - asteroid and bullet lifecycle candidate construction for dedicated reliable lifecycle lanes.
-* `services/game-server/internal/protocol/realtime/lane_candidate_overlay.go` - overlay lane full/delta candidate construction.
-* `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - session lane full/delta candidate construction.
+* `services/game-server/internal/protocol/realtime/lane_candidate_overlay.go` - overlay lane full/delta candidate construction with fail-closed quantization.
+* `services/game-server/internal/protocol/realtime/lane_candidate_session.go` - session lane full/delta candidate construction with fail-closed quantization.
 * `services/game-server/internal/protocol/realtime/lane_candidate_event.go` - event_batch candidate construction without draining pending events.
 * `services/game-server/internal/protocol/realtime/candidate_types.go` - realtime lane candidate and send-preparation types.
 * `services/game-server/internal/protocol/realtime/payload.go` - typed candidate payload contract, compile-time coverage, and candidate constructors.
@@ -248,6 +248,7 @@ Relevant active files include:
 Relevant server tests include:
 
 * `services/game-server/internal/protocol/realtime/*_test.go` - lane-native realtime projection coverage, including sparse delta serialization, lifecycle candidate routing/planning, and wire-map omission behavior.
+* `services/game-server/internal/protocol/realtime/quantization_propagation_test.go` - exported planner and active-result coverage for surfaced world, overlay, and session quantization failures.
 * `services/game-server/internal/networking/websocket_write_test.go`
 * `services/game-server/internal/networking/room_snapshot_test.go`
 * `services/game-server/internal/networking/room_error_test.go`

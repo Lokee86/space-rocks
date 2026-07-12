@@ -15,7 +15,7 @@ func TestRealtimeEventBatchProjectionSchedulingEncodingDoNotDrain(t *testing.T) 
 	}
 
 	state := NewRealtimeSessionState("player-1", "match-1")
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	if len(snapshot.PendingEvents) != 1 {
 		t.Fatalf("projection mutated pending events: %d", len(snapshot.PendingEvents))
 	}

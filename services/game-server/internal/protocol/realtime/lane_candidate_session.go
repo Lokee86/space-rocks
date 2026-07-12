@@ -1,10 +1,12 @@
 package realtime
 
 import (
+	"fmt"
+
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
-func buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate {
+func buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ([]RealtimeLaneCandidate, error) {
 	candidates := make([]RealtimeLaneCandidate, 0, 1)
 
 	sessionStateLane, sessionSynced := state.LaneState(LaneSession)
@@ -13,7 +15,7 @@ func buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 	sessionFull := BuildSessionFullPacket(snapshot, sessionSequence)
 	quantizedSessionFull, err := quantizeSessionFullPacket(sessionFull)
 	if err != nil {
-		return candidates
+		return nil, fmt.Errorf("quantize session full packet: %w", err)
 	}
 	sessionProjection, sessionHasProjection := state.BaselineProjection(LaneSession)
 	sessionCanUseProjection := sessionReady && sessionSynced && sessionStateLane.IsFinalChunk && sessionStateLane.BaselineID != "" && sessionHasProjection
@@ -37,5 +39,5 @@ func buildSessionLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 		}
 	}
 
-	return candidates
+	return candidates, nil
 }

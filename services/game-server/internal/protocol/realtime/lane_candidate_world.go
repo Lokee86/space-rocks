@@ -1,10 +1,12 @@
 package realtime
 
 import (
+	"fmt"
+
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
-func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) []RealtimeLaneCandidate {
+func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) ([]RealtimeLaneCandidate, error) {
 	candidates := make([]RealtimeLaneCandidate, 0, 4)
 
 	worldState, worldSynced := state.LaneState(LaneWorld)
@@ -13,7 +15,7 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 	worldFull := BuildWorldFullPacket(snapshot, worldSequence)
 	quantizedWorldFull, err := quantizeWorldFullPacket(worldFull)
 	if err != nil {
-		return candidates
+		return nil, fmt.Errorf("quantize world full packet: %w", err)
 	}
 	worldProjection, worldHasProjection := state.BaselineProjection(LaneWorld)
 	worldCanUseProjection := worldReady && worldSynced && worldState.IsFinalChunk && worldState.BaselineID != "" && worldHasProjection
@@ -106,5 +108,5 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 		}
 	}
 
-	return candidates
+	return candidates, nil
 }

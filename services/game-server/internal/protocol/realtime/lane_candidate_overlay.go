@@ -1,10 +1,12 @@
 package realtime
 
 import (
+	"fmt"
+
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
-func buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) []RealtimeLaneCandidate {
+func buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) ([]RealtimeLaneCandidate, error) {
 	candidates := make([]RealtimeLaneCandidate, 0, 1)
 
 	overlayState, overlaySynced := state.LaneState(LaneOverlay)
@@ -13,7 +15,7 @@ func buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 	overlayFull := BuildOverlayFullPacket(snapshot, state.ReceiverID, overlaySequence)
 	quantizedOverlayFull, err := quantizeOverlayFullPacket(overlayFull)
 	if err != nil {
-		return candidates
+		return nil, fmt.Errorf("quantize overlay full packet: %w", err)
 	}
 	overlayProjection, overlayHasProjection := state.BaselineProjection(LaneOverlay)
 	overlayCanUseProjection := overlayReady && overlaySynced && overlayState.IsFinalChunk && overlayState.BaselineID != "" && overlayHasProjection
@@ -37,5 +39,5 @@ func buildOverlayLaneCandidates(snapshot game.GameplayPresentationSnapshot, stat
 		}
 	}
 
-	return candidates
+	return candidates, nil
 }
