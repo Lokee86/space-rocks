@@ -1,6 +1,8 @@
 extends Window
 
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const DevtoolsWindowTelemetry := preload("res://scripts/devtools/devtools_window_telemetry.gd")
+const DevtoolsWindowTargetSelectors := preload("res://scripts/devtools/devtools_window_target_selectors.gd")
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
@@ -22,9 +24,6 @@ signal game_target_set_requested(target_player_id: String)
 signal game_target_clear_requested()
 signal show_server_hitboxes_changed(enabled: bool)
 signal telemetry_sources_changed(local_source: String, target_source: String)
-
-const TELEMETRY_SOURCE_PLAYERS := "players"
-const TELEMETRY_SOURCE_PLAYER_WORLD_STATES := "player_world_states"
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -76,6 +75,8 @@ const TELEMETRY_SOURCE_PLAYER_WORLD_STATES := "player_world_states"
 @onready var local_player_telemetry_text: Label = %LocalPlayerTelemetryText
 @onready var target_telemetry: PanelContainer = %TargetTelemetry
 @onready var target_telemetry_text: Label = %TargetTelemetryText
+var telemetry: DevtoolsWindowTelemetry
+var target_selectors: DevtoolsWindowTargetSelectors
 
 
 func _ready() -> void:
@@ -129,8 +130,20 @@ func _ready() -> void:
 	if !clear_game_target_button.pressed.is_connected(_on_clear_game_target_button_pressed):
 		clear_game_target_button.pressed.connect(_on_clear_game_target_button_pressed)
 	_initialize_pickup_select()
-	_initialize_telemetry_source_select(local_telemetry_select)
-	_initialize_telemetry_source_select(target_telemetry_select)
+	telemetry = DevtoolsWindowTelemetry.new()
+	telemetry.configure(local_telemetry_select, target_telemetry_select, local_player_telemetry_text, target_telemetry_text)
+	target_selectors = DevtoolsWindowTargetSelectors.new()
+	target_selectors.configure(
+		invincible_status_select,
+		infinite_lives_select,
+		player_frozen_select,
+		kill_player_select,
+		respawn_player_select,
+		set_score_select,
+		add_score_select,
+		set_lives_select,
+		add_lives_select
+	)
 	if !local_telemetry_select.item_selected.is_connected(_on_local_telemetry_select_item_selected):
 		local_telemetry_select.item_selected.connect(_on_local_telemetry_select_item_selected)
 	if !target_telemetry_select.item_selected.is_connected(_on_target_telemetry_select_item_selected):
@@ -162,40 +175,19 @@ func set_debug_status(status: Dictionary) -> void:
 
 
 func refresh_invincible_targets(rows: Array) -> void:
-	_refresh_target_option(invincible_status_select, rows, "", true, true)
+	target_selectors.refresh_invincible_targets(rows)
 
 
 func refresh_infinite_lives_targets(rows: Array) -> void:
-	_refresh_target_option(infinite_lives_select, rows, "", true, true)
+	target_selectors.refresh_infinite_lives_targets(rows)
 
 
 func refresh_player_frozen_targets(rows: Array) -> void:
-	_refresh_target_option(player_frozen_select, rows, "", true, true)
+	target_selectors.refresh_player_frozen_targets(rows)
 
 
 func refresh_kill_player_targets(target_rows: Array) -> void:
-	var previous_player_id := ""
-	var previous_index := kill_player_select.get_selected()
-	if previous_index >= 0:
-		previous_player_id = str(kill_player_select.get_item_metadata(previous_index))
-
-	kill_player_select.clear()
-
-	var selected_index := -1
-	for row in target_rows:
-		if !(row is Dictionary):
-			continue
-
-		var label := str(row.get("label", ""))
-		var player_id := str(row.get("player_id", ""))
-		kill_player_select.add_item(label)
-		var item_index := kill_player_select.get_item_count() - 1
-		kill_player_select.set_item_metadata(item_index, player_id)
-		if player_id == previous_player_id:
-			selected_index = item_index
-
-	if selected_index >= 0:
-		kill_player_select.select(selected_index)
+	target_selectors.refresh_kill_player_targets(target_rows)
 
 
 func refresh_spawn_player_slots(max_players: int) -> void:
@@ -222,35 +214,11 @@ func refresh_spawn_player_slots(max_players: int) -> void:
 
 
 func refresh_respawn_player_targets(target_rows: Array) -> void:
-	var previous_player_id := ""
-	var previous_index := respawn_player_select.get_selected()
-	if previous_index >= 0:
-		previous_player_id = str(respawn_player_select.get_item_metadata(previous_index))
-
-	respawn_player_select.clear()
-
-	var selected_index := -1
-	for row in target_rows:
-		if !(row is Dictionary):
-			continue
-
-		var label := str(row.get("label", ""))
-		var player_id := str(row.get("player_id", ""))
-		respawn_player_select.add_item(label)
-		var item_index := respawn_player_select.get_item_count() - 1
-		respawn_player_select.set_item_metadata(item_index, player_id)
-		if player_id == previous_player_id:
-			selected_index = item_index
-
-	if selected_index >= 0:
-		respawn_player_select.select(selected_index)
+	target_selectors.refresh_respawn_player_targets(target_rows)
 
 
 func refresh_counter_player_targets(rows: Array) -> void:
-	_refresh_target_option(set_score_select, rows, "", true, true)
-	_refresh_target_option(add_score_select, rows, "", true, true)
-	_refresh_target_option(set_lives_select, rows, "", true, true)
-	_refresh_target_option(add_lives_select, rows, "", true, true)
+	target_selectors.refresh_counter_player_targets(rows)
 
 
 func refresh_game_target_options(
@@ -292,63 +260,31 @@ func refresh_game_target_options(
 
 
 func refresh_local_player_state(state: Dictionary) -> void:
-	if state.is_empty():
-		local_player_telemetry_text.text = "\u2014"
-		return
-
-	var keys := state.keys()
-	keys.sort()
-	var lines: Array[String] = []
-	for key in keys:
-		var value = state.get(key)
-		var rendered_value := _format_telemetry_value(value)
-		lines.append("%s: %s" % [str(key), rendered_value])
-	local_player_telemetry_text.text = "\n".join(lines)
+	telemetry.refresh_local_state(state)
 
 
 func refresh_target_state(target_kind: String, target_id: String, state: Dictionary) -> void:
-	if target_kind == "" or target_id == "":
-		target_telemetry_text.text = "\u2014"
-		return
-
-	var lines: Array[String] = []
-	lines.append("target_kind: %s" % target_kind)
-	lines.append("target_id: %s" % target_id)
-
-	if state.is_empty():
-		lines.append("state: \u2014")
-		target_telemetry_text.text = "\n".join(lines)
-		return
-
-	lines.append("")
-	var keys := state.keys()
-	keys.sort()
-	for key in keys:
-		var value = state.get(key)
-		var rendered_value := _format_telemetry_value(value)
-		lines.append("%s: %s" % [str(key), rendered_value])
-	target_telemetry_text.text = "\n".join(lines)
+	telemetry.refresh_target_state(target_kind, target_id, state)
 
 
 func local_telemetry_source() -> String:
-	return _selected_telemetry_source(local_telemetry_select)
+	return telemetry.local_source()
 
 
 func target_telemetry_source() -> String:
-	return _selected_telemetry_source(target_telemetry_select)
+	return telemetry.target_source()
 
 
 func set_local_telemetry_source(source: String) -> void:
-	_select_telemetry_source(local_telemetry_select, source)
+	telemetry.set_sources(source, target_telemetry_source())
 
 
 func set_target_telemetry_source(source: String) -> void:
-	_select_telemetry_source(target_telemetry_select, source)
+	telemetry.set_sources(local_telemetry_source(), source)
 
 
 func set_telemetry_sources(local_source: String, target_source: String) -> void:
-	_select_telemetry_source(local_telemetry_select, local_source)
-	_select_telemetry_source(target_telemetry_select, target_source)
+	telemetry.set_sources(local_source, target_source)
 
 
 func _on_close_requested() -> void:
@@ -509,32 +445,11 @@ func _format_game_target_display(target_kind: String, target_id: String) -> Stri
 	return target_id
 
 
-func _format_telemetry_value(value) -> String:
-	if value is Array or value is Dictionary:
-		return JSON.stringify(value)
-	if value is float:
-		return "%.4f" % snappedf(value, 0.0001)
-	return str(value)
-
-
 func _selected_metadata_as_string(select: OptionButton) -> String:
 	var selected_index := select.get_selected()
 	if selected_index < 0:
 		return ""
 	return str(select.get_item_metadata(selected_index))
-
-
-func _selected_telemetry_source(select: OptionButton) -> String:
-	return _selected_metadata_as_string(select)
-
-
-func _initialize_telemetry_source_select(select: OptionButton) -> void:
-	select.clear()
-	select.add_item("players")
-	select.set_item_metadata(0, TELEMETRY_SOURCE_PLAYERS)
-	select.add_item("player_world_states")
-	select.set_item_metadata(1, TELEMETRY_SOURCE_PLAYER_WORLD_STATES)
-	select.select(0)
 
 
 func _initialize_pickup_select() -> void:
@@ -562,15 +477,6 @@ func _emit_telemetry_sources_changed() -> void:
 	telemetry_sources_changed.emit(local_telemetry_source(), target_telemetry_source())
 
 
-func _select_telemetry_source(select: OptionButton, source: String) -> void:
-	var selected_index := 0
-	for index in range(select.get_item_count()):
-		if str(select.get_item_metadata(index)) == source:
-			selected_index = index
-			break
-	select.select(selected_index)
-
-
 func _selected_player_id(select: OptionButton) -> String:
 	return _selected_metadata_as_string(select)
 
@@ -587,43 +493,4 @@ func _line_edit_int(input: LineEdit) -> int:
 	return int(text)
 
 
-func _refresh_target_option(
-	select: OptionButton,
-	rows: Array,
-	preferred_player_id: String = "",
-	include_game_target: bool = true,
-	default_to_game_target: bool = false
-) -> void:
-	var previous_player_id := ""
-	var previous_index := select.get_selected()
-	if previous_index >= 0:
-		previous_player_id = str(select.get_item_metadata(previous_index))
 
-	select.clear()
-
-	var selected_index := -1
-	var game_target_index := -1
-	for row in rows:
-		if !(row is Dictionary):
-			continue
-
-		var label := str(row.get("label", ""))
-		var player_id := str(row.get("player_id", ""))
-		if player_id == DevtoolsTargetResolver.TARGET_GAME and !include_game_target:
-			continue
-		select.add_item(label)
-		var item_index := select.get_item_count() - 1
-		select.set_item_metadata(item_index, player_id)
-		if player_id == DevtoolsTargetResolver.TARGET_GAME:
-			game_target_index = item_index
-		if preferred_player_id != "" and player_id == preferred_player_id:
-			selected_index = item_index
-		elif preferred_player_id == "" and player_id == previous_player_id:
-			if player_id != DevtoolsTargetResolver.TARGET_GAME:
-				selected_index = item_index
-
-	if selected_index < 0 and default_to_game_target and game_target_index >= 0:
-		selected_index = game_target_index
-
-	if selected_index >= 0:
-		select.select(selected_index)
