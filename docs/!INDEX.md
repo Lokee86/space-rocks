@@ -20,7 +20,6 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [.obsidian](.obsidian/!INDEX.md) - .obsidian documentation.
 - [Agent](agent/!INDEX.md) - Agent workflow and documentation support notes.
 - [data](data/!INDEX.md) - Data documentation.
 - [devtools](devtools/!INDEX.md) - Devtools documentation.
