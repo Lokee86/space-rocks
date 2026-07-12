@@ -25,7 +25,7 @@ simulation system records events.Event
 -> protocol/realtime projects pending events into event_batch candidates
 -> outbound selects and writes event_batch
 -> successful active realtime WebRTC delivery
--> pendingPresentationEvents[playerID] = nil for drained event IDs
+-> only successfully written event IDs are removed from pendingPresentationEvents[playerID]
 -> client gameplay event presentation
 ```
 
@@ -178,19 +178,19 @@ Fanout uses durable player sessions rather than active ship state. This is inten
 
 `protocol/realtime` projects pending events for one player into `event_batch` candidates.
 
-During projection, the lane-native event projection copies that player's current pending events into `event_batch` candidates for the receiver.
+During projection, the lane-native event projection copies that player's current pending events into `event_batch` candidates for the receiver without draining them.
 
-The copy is made before the queue is cleared so the returned packet owns its own event slice.
+The candidate owns its copied event slice, and projection does not remove pending events; only successful-write drain removes the written event IDs.
 
 ### Drain
 
-After the active `event_batch` write succeeds, the queue clears that player's pending event slice:
+After the active `event_batch` write succeeds, only the successfully written event IDs are removed from that player's pending event slice, preserving the relative order of remaining events:
 
 ```text
-game.pendingPresentationEvents[playerID] = nil
+remove successfully written event IDs; retain remaining events in order
 ```
 
-The queue is drained only after the active outbound write succeeds. Presentation events are therefore not retried if later outbound work fails.
+An encode or write failure leaves the events pending. Delivery remains best-effort and non-durable.
 
 ### Player removal
 
@@ -306,7 +306,7 @@ map[string][]EventState
 
 The key is the game player ID.
 
-The value is that player's not-yet-projected presentation event slice.
+The value is that player's not-yet-successfully-written presentation event slice.
 
 The queue is runtime-only. It is not persisted, not replayed, not mirrored to player-data, and not stored in room state.
 

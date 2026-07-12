@@ -794,7 +794,7 @@ This does not define a separate generated packet family named `control`.
 
 ### Scheduling and delivery classes
 
-The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity and selects included candidates against an estimated byte budget.
+The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity and selects included candidates against an estimated byte budget. Lifecycle logical candidates may expand into one or more hard-capped packet candidates before scheduling and encoding.
 
 The size policies have three separate meanings: the roughly 1,200 B construction cap applies to full, lifecycle, asteroid movement, and bullet movement candidates; the scheduler's 500 B `TargetBytes` is an advisory candidate-selection target; and there is no aggregate per-tick byte cap.
 
@@ -818,14 +818,14 @@ The active path currently schedules whole lane candidates:
 world_delta = one candidate
 asteroid_delta = one or more candidates when asteroid hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
 bullet_delta = one or more candidates when bullet hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
-asteroids_lifecycle = one candidate when asteroid creates/deletes are present
-bullets_lifecycle = one candidate when bullet creates/deletes are present
+asteroids_lifecycle = one logical candidate when asteroid creates/deletes are present; it may expand into one or more hard-capped packet candidates before scheduling/encoding
+bullets_lifecycle = one logical candidate when bullet creates/deletes are present; it may expand into one or more hard-capped packet candidates before scheduling/encoding
 overlay_delta = one candidate
 session_delta = one candidate
 event_batch = one candidate
 ```
 
-Hot asteroid_delta and bullet_delta packets require numeric sequence values. Missing or non-numeric hot sequences are ignored. Sequence gaps are valid because unordered/unreliable hot packets may be dropped.
+Hot asteroid_delta and bullet_delta packets require finite, non-negative integer-valued numeric sequence values according to the `int` schema. Fractional, negative, missing, non-finite, string, and boolean values are invalid. Sequence gaps are valid because unordered/unreliable hot packets may be dropped.
 
 For `asteroid_delta` and `bullet_delta`, the client accepts a same-sequence packet only when its `chunk_index` has not already been accepted for that lane and sequence and its `chunk_count` matches the count already established for that sequence. Duplicate chunk indices, inconsistent `chunk_count` values, malformed chunk metadata, and lower sequence values are rejected. Distinct chunk indices may arrive in any order, sequence gaps are valid because unordered/unreliable hot packets may be dropped, and asteroid and bullet chunk tracking are independent.
 

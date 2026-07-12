@@ -315,7 +315,7 @@ The lifecycle wire contract is explicit. `asteroids_lifecycle` and `bullets_life
 - `snapshot_kind`
 - `server_sent_msec`
 
-For lifecycle candidates, `baseline_id` is inherited from the world baseline used to project the candidate. It is required so the client can gate lifecycle application on the matching world baseline. Each lifecycle lane has its own lane-local sequence, and lifecycle packets are not chunked. Reliable/ordered delivery on `sr.asteroids.lifecycle` or `sr.bullets.lifecycle` orders messages only within that DataChannel; it does not establish ordering relative to `sr.world`.
+For lifecycle candidates, `baseline_id` is inherited from the world baseline used to project the candidate. It is required so the client can gate lifecycle application on the matching world baseline. Each lifecycle lane has its own lane-local sequence. `world_full`, `asteroids_lifecycle`, and `bullets_lifecycle` use the general hard-cap chunker; when split, lifecycle metadata conditionally carries `chunk_index`, `chunk_count`, and `is_final_chunk`. Lifecycle chunks are assembled atomically client-side before lifecycle gate validation and application. Reliable/ordered delivery on `sr.asteroids.lifecycle` or `sr.bullets.lifecycle` orders messages only within that DataChannel; it does not establish ordering relative to `sr.world`.
 
 Active runtime world/overlay/session lane packets may also carry inferred-or-conditional metadata when needed:
 
@@ -324,10 +324,10 @@ Active runtime world/overlay/session lane packets may also carry inferred-or-con
 - `baseline_sequence` for parseable runtime delta dependencies
 - `snapshot_id` when not inferred from lane, packet kind, and sequence
 - `snapshot_kind` when not inferred from `type`
-- `chunk_index` and `chunk_count` when `chunk_count > 1`
-- `is_final_chunk` is inferred by the client from `chunk_index`/`chunk_count` when absent and may be emitted on chunked hot-lane packets when needed by the runtime or debug path.
+- `chunk_index` and `chunk_count` when a lifecycle or other hard-capped candidate is split
+- `is_final_chunk` is conditionally emitted for split lifecycle packets and may be emitted on chunked hot-lane packets when needed by the runtime or debug path; when absent, the client infers it from `chunk_index`/`chunk_count`.
 
-The lifecycle exception above is intentional: lifecycle packets are not grouped with active runtime families whose redundant lane/baseline metadata may be inferred, or whose numeric dependency may be represented by `baseline_sequence`.
+Lifecycle packets retain explicit gate-relevant metadata, while split lifecycle candidates additionally carry conditional chunk metadata.
 
 `event_batch` now uses compact envelope keys and sparse nested event records. It remains one ordered batch of pending presentation events, not one packet per event. It does not use baselines, deltas, state snapshots, or chunking, and this section does not claim any future scheduler or transport behavior.
 The packet-shape details for those lane packets belong in the realtime protocol doc. This service doc only keeps the outbound delivery boundary and the current lane roles.
@@ -450,7 +450,7 @@ Lifecycle lane writes may also appear here for `sr.asteroids.lifecycle` and `sr.
 - `is_final_chunk`
 - `encoded_bytes`
 
-For chunked hot lanes, multiple `lane protocol gameplay wire packet written` entries may appear for `sr.asteroids` or `sr.bullets` in the same tick, sharing a hot-lane sequence with different `chunk_index`/`chunk_count` values. Lifecycle lanes are not chunked hot lanes.
+For chunked hot lanes and split lifecycle candidates, multiple `lane protocol gameplay wire packet written` entries may appear in the same tick, sharing a logical sequence with distinct `chunk_index`/`chunk_count` values. Lifecycle writes remain reliable/ordered and required; they are not hot-supersedable.
 
 Per-tick summary logs are most useful when more than one gameplay packet is emitted in a tick. The active summary debug message is `lane protocol gameplay written`, with useful fields such as:
 
@@ -487,6 +487,7 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets via Control/Controller projection.
 - `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
 - `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - expands oversized `asteroid_delta` and `bullet_delta` hot movement candidates into bounded real candidate chunks before scheduling and encoding.
+- `services/game-server/internal/protocol/realtime/realtime_hardcap_chunker.go` - expands oversized `world_full`, `asteroids_lifecycle`, and `bullets_lifecycle` candidates into bounded real candidate chunks before scheduling and encoding.
 
 ### Related source and generated files
 
