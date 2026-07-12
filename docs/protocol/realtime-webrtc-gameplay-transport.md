@@ -212,7 +212,7 @@ ClientConnectionService remains the public connection coordinator, but it does n
 
 RealtimeTransportSession owns the active WebRTCTransport reference, transport construction through transport_factory, transport signal wiring, start, poll, close, clearing the active transport after close, and replacement after reconnect.
 
-WebRTCTransport owns the peer connection, DataChannel setup, bounded receive draining, packet decoding, packet emission, outbound DataChannel writes, and transport-level diagnostics.
+WebRTCTransport owns the peer connection, DataChannel setup, bounded receive draining, packet decoding, packet emission, outbound DataChannel writes, and transport-level diagnostics. Receive polling uses repeated one-packet-per-lane round-robin passes; reliable asteroid and bullet lifecycle lanes are serviced before the general group, and lifecycle and general group start positions rotate between polls. The existing limits remain `MAX_PACKETS_PER_POLL = 48` and `MAX_PACKETS_PER_LANE_PER_POLL = 12`.
 
 ### Start, Poll, and Close Contract
 

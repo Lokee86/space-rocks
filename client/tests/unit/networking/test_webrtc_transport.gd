@@ -517,3 +517,49 @@ func test_send_smoke_writes_smoke_packet_when_open() -> void:
 	assert_eq(parsed["smoke_id"], "smoke-2")
 	assert_eq(parsed["origin"], "client")
 	assert_eq(parsed["message"], "payload")
+
+func test_poll_round_robin_fairly_serves_all_backlogged_lanes() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels := {}
+	for lane in ["world", "overlay", "session", "event", "asteroids", "bullets", "asteroids_lifecycle", "bullets_lifecycle"]:
+		channels[lane] = FakeChannel.new()
+	peer.set_peer_for_tests(fake_peer, channels)
+	for lane in channels:
+		channels[lane].ready_state = WebRTCDataChannel.STATE_OPEN
+		for i in range(WebRTCTransportScript.MAX_PACKETS_PER_POLL):
+			channels[lane].packets.append(JSON.stringify({"type": "overlay_delta", "lane": "overlay", "source": lane}).to_utf8_buffer())
+	var received_lanes: Array = []
+	peer.packet_received.connect(func(packet: Dictionary) -> void:
+		received_lanes.append(packet["source"])
+	)
+	peer.poll()
+	assert_eq(received_lanes.size(), WebRTCTransportScript.MAX_PACKETS_PER_POLL)
+	for lane in channels:
+		assert_eq(received_lanes.count(lane), 6)
+	var drained := 0
+	for lane in channels:
+		drained += WebRTCTransportScript.MAX_PACKETS_PER_POLL - channels[lane].packets.size()
+	assert_eq(drained, WebRTCTransportScript.MAX_PACKETS_PER_POLL)
+	for lane in channels:
+		assert_eq(channels[lane].packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_POLL - 6)
+
+func test_poll_services_lifecycle_before_hot_lanes() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels := {}
+	for lane in ["asteroids", "bullets", "asteroids_lifecycle", "bullets_lifecycle"]:
+		channels[lane] = FakeChannel.new()
+	peer.set_peer_for_tests(fake_peer, channels)
+	for lane in channels:
+		channels[lane].ready_state = WebRTCDataChannel.STATE_OPEN
+		channels[lane].packets.append(JSON.stringify({"type": "overlay_delta", "lane": "overlay", "source": lane}).to_utf8_buffer())
+	var received_lanes: Array = []
+	peer.packet_received.connect(func(packet: Dictionary) -> void:
+		received_lanes.append(packet["source"])
+	)
+	peer.poll()
+	assert_eq(received_lanes[0], "asteroids_lifecycle")
+	assert_eq(received_lanes[1], "bullets_lifecycle")
+	assert_eq(received_lanes[2], "asteroids")
+	assert_eq(received_lanes[3], "bullets")

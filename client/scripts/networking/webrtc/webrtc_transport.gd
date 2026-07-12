@@ -34,6 +34,11 @@ var _peer: Variant
 var _channels: Dictionary = {}
 var _ready_channels: Dictionary = {}
 var _ready_emitted := false
+var _lifecycle_start_cursor := 0
+var _general_start_cursor := 0
+
+const LIFECYCLE_LANES := ["asteroids_lifecycle", "bullets_lifecycle"]
+const GENERAL_LANES := ["world", "overlay", "session", "event", "asteroids", "bullets"]
 
 
 func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
@@ -45,6 +50,8 @@ func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
 		_channels["world"] = channels
 	_ready_channels = {}
 	_ready_emitted = false
+	_lifecycle_start_cursor = 0
+	_general_start_cursor = 0
 
 
 func configure_ice_servers(servers: Array) -> void:
@@ -132,18 +139,33 @@ func poll() -> void:
 	if !_ready_emitted and all_ready:
 		_ready_emitted = true
 		ready.emit(_gameplay_channel_ready_payload())
-	var total_drained: int = 0
-	for spec in GAMEPLAY_CHANNEL_SPECS:
-		if total_drained >= MAX_PACKETS_PER_POLL:
+	var total_drained := 0
+	var drained_by_lane := {}
+	while total_drained < MAX_PACKETS_PER_POLL:
+		var drained_this_pass := 0
+		for lanes_data in [[LIFECYCLE_LANES, _lifecycle_start_cursor], [GENERAL_LANES, _general_start_cursor]]:
+			var lanes: Array = lanes_data[0]
+			var start_cursor: int = lanes_data[1]
+			for offset in lanes.size():
+				if total_drained >= MAX_PACKETS_PER_POLL:
+					break
+				var lane: String = str(lanes[(start_cursor + offset) % lanes.size()])
+				var channel: Variant = _channels.get(lane)
+				if channel == null or channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
+					continue
+				var lane_drained: int = int(drained_by_lane.get(lane, 0))
+				if lane_drained >= MAX_PACKETS_PER_LANE_PER_POLL or channel.get_available_packet_count() <= 0:
+					continue
+				var raw_packet: PackedByteArray = channel.get_packet()
+				if raw_packet is PackedByteArray:
+					_handle_channel_packet(raw_packet)
+					drained_by_lane[lane] = lane_drained + 1
+					total_drained += 1
+					drained_this_pass += 1
+		if drained_this_pass == 0:
 			break
-		var lane: String = str(spec.get("lane", ""))
-		var channel: Variant = _channels.get(lane)
-		if channel == null:
-			continue
-		if channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
-			continue
-		var drained_for_lane: int = _drain_channel_packets(channel, MAX_PACKETS_PER_POLL - total_drained)
-		total_drained += drained_for_lane
+	_lifecycle_start_cursor = (_lifecycle_start_cursor + 1) % LIFECYCLE_LANES.size()
+	_general_start_cursor = (_general_start_cursor + 1) % GENERAL_LANES.size()
 
 func send_json(packet: Dictionary) -> void:
 	_send_json_to_lane("world", packet)
@@ -169,6 +191,8 @@ func close() -> void:
 	_channels = {}
 	_ready_channels = {}
 	_ready_emitted = false
+	_lifecycle_start_cursor = 0
+	_general_start_cursor = 0
 
 
 func _on_session_description_created(description_type: String, sdp: String) -> void:
@@ -205,16 +229,6 @@ func _handle_decoded_packet(data: Dictionary) -> void:
 		return
 	packet_received.emit(data)
 
-
-func _drain_channel_packets(channel: Variant, remaining_budget: int) -> int:
-	var drained: int = 0
-	var lane_budget: int = int(min(MAX_PACKETS_PER_LANE_PER_POLL, remaining_budget))
-	while drained < lane_budget and channel.get_available_packet_count() > 0:
-		var raw_packet: PackedByteArray = channel.get_packet()
-		if raw_packet is PackedByteArray:
-			_handle_channel_packet(raw_packet)
-			drained += 1
-	return drained
 
 func _send_json_to_lane(lane: String, packet: Dictionary) -> void:
 	var channel: Variant = _channels.get(lane)
