@@ -1,6 +1,8 @@
 extends RefCounted
 class_name GameplayEventLifecycleFlow
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+
 var event_flow
 var death_flow
 var match_end_flow
@@ -38,7 +40,12 @@ func apply_server_events(server_events: Array, self_id: String) -> void:
 		var event_types := []
 		for event in server_events:
 			event_types.append(str(event.get("type", "")))
-		print("[event_batch][info] lifecycle received server events: count=%d self_id=%s event_types=%s" % [server_events.size(), self_id, ",".join(event_types)])
+		ClientLogger.packets_event(
+			ClientLogger.LEVEL_DEBUG,
+			"event_batch_received",
+			"Lifecycle received server events",
+			{"count": server_events.size(), "self_id": self_id, "event_types": event_types}
+		)
 	if event_flow != null:
 		event_flow.apply_server_events(server_events, self_id)
 

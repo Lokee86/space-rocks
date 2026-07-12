@@ -1,5 +1,7 @@
 extends RefCounted
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+
 func apply_event_batch_output(event_flow, event_batch_applier, self_id: String) -> void:
 	if event_flow == null or event_batch_applier == null:
 		return
@@ -15,6 +17,11 @@ func apply_event_batch_output(event_flow, event_batch_applier, self_id: String) 
 	var event_types := []
 	for event in events:
 		event_types.append(str(event.get("type", "")))
-	print("[event_batch][info] forwarding applied events to lifecycle: count=%d self_id=%s event_types=%s" % [events.size(), self_id, ",".join(event_types)])
+	ClientLogger.packets_event(
+		ClientLogger.LEVEL_DEBUG,
+		"event_batch_forwarded",
+		"Forwarding applied events to lifecycle",
+		{"count": events.size(), "self_id": self_id, "event_types": event_types}
+	)
 	event_flow.apply_server_events(events, self_id)
 

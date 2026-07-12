@@ -82,6 +82,10 @@ The implemented categories are:
 
 If a category does not have an override, it uses the current default level.
 
+### Current gameplay diagnostic usage
+
+Gameplay and presentation diagnostics route through structured `ClientLogger` events rather than direct client `print(...)` calls. Event-batch diagnostics use the `packets` category, gameplay death diagnostics use `game`, HUD lifecycle diagnostics use `hud`, and pickup presentation failures use `world_sync`. These diagnostics use stable event names and structured fields; high-frequency event-batch activity remains debug-level and targeted.
+
 ### Text helpers
 
 Use the existing text helpers for ordinary human-readable status lines. They still build structured records with event `log_message`.
