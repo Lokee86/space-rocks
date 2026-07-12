@@ -8,7 +8,7 @@ This folder owns client app-shell-and-session documentation.
 
 ## Ownership
 
-This folder owns client app entry, shell/session composition, boot flow, room session state, shutdown, and client viewport config docs.
+This folder owns client app entry, shell/session composition, boot flow, hosted WebRTC connectivity policy, room session state, shutdown, and client viewport config docs.
 
 ## Does Not Belong
 
@@ -24,6 +24,7 @@ This folder owns client app entry, shell/session composition, boot flow, room se
 - [app-entry-composition.md](app-entry-composition.md) - Client app entry composition documentation.
 - [app-shutdown-flow.md](app-shutdown-flow.md) - Client app shutdown documentation.
 - [client-viewport-config-flow.md](client-viewport-config-flow.md) - Client viewport configuration documentation.
+- [hosted-webrtc-connectivity.md](hosted-webrtc-connectivity.md) - Hosted ICE, STUN, TURN, and direct-connectivity policy.
 - [room-session-state.md](room-session-state.md) - Client room session state documentation.
 - [session-boot-and-network-target.md](session-boot-and-network-target.md) - Client session boot and network target documentation.
 <!-- doc-ledger:files:end -->
