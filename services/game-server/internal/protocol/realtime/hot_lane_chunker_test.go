@@ -36,6 +36,42 @@ func encodedCandidateBytes(t *testing.T, candidate RealtimeLaneCandidate) int {
 	return recordedBytes
 }
 
+func TestHotLaneModeForBulletChunkCount(t *testing.T) {
+	for _, tc := range []struct {
+		count int
+		want  HotLaneMode
+	}{
+		{count: 1, want: HotLaneModeFullOwned60Hz},
+		{count: 2, want: HotLaneModeFullOwned30Hz},
+		{count: 3, want: HotLaneModeFullOwned20Hz},
+		{count: 7, want: HotLaneModeFullOwned20Hz},
+	} {
+		if got := hotLaneModeForBulletChunkCount(tc.count); got != tc.want {
+			t.Fatalf("chunk count %d mode = %q, want %q", tc.count, got, tc.want)
+		}
+	}
+}
+
+func TestBulletWireDeltaChunkCountAgreesWithExpansion(t *testing.T) {
+	for _, updates := range [][]map[string]any{
+		{makeBulletUpdate("bullet-small", 1, 2)},
+		func() []map[string]any {
+			updates := make([]map[string]any, 0, 240)
+			for i := 1; i <= 240; i++ {
+				updates = append(updates, makeBulletUpdate(fmt.Sprintf("bullet-%06d", i), i, i+1))
+			}
+			return updates
+		}(),
+	} {
+		packet := BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 10, SnapshotKind: SnapshotKind("delta")}, BulletUpdates: updates}
+		candidate := mustRealtimeLaneCandidate(packet, nil)
+		got := bulletWireDeltaChunkCount(packet)
+		if expanded := len(ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})); expanded != got {
+			t.Fatalf("updates=%d helper chunks=%d expansion chunks=%d", len(updates), got, expanded)
+		}
+	}
+}
+
 func assertConservativeEncodedBytes(t *testing.T, label string, candidate RealtimeLaneCandidate, estimated int) {
 	t.Helper()
 	_, actual := mustEncodeLanePacketUnchecked(t, candidate)

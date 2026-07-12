@@ -248,7 +248,7 @@ bullet_delta on sr.bullets
 
 ### Hot Movement Cadence
 
-Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Movement-only hot candidates use `full_owned_30hz` every second tick and `full_owned_20hz` every third tick. Non-hot world deltas or asteroid/bullet lifecycle creates/deletes force immediate related hot movement emission and advance the shared world projection chain. WebRTC does not own this timing policy; it sends the candidates selected by protocol/realtime.
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
 
 ## Control and Resync Boundary
 

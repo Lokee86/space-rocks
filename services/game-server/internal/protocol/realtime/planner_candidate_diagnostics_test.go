@@ -6,6 +6,12 @@ import (
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
+func TestHotPacketCadenceLabelForFullOwned60Hz(t *testing.T) {
+	if got := hotPacketCadenceLabel(HotLaneModeFullOwned60Hz, 99); got != "60hz" {
+		t.Fatalf("cadence label = %q, want 60hz", got)
+	}
+}
+
 func TestCandidateWriteDiagnosticsForReturnsMetadataForFullCandidate(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
 	state := NewRealtimeSessionState("player-1", "match-1")

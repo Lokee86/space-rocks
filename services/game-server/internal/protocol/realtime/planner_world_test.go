@@ -106,7 +106,7 @@ func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *t
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
-	state.HotLaneTick = 3
+	state.HotLaneTick = 2
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -289,17 +289,14 @@ func TestAssembleRealtimeLaneCandidatesHonorsAsteroidHotCadence(t *testing.T) {
 		plan := AssembleRealtimeLaneCandidates(current, state)
 		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
 		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
-		if tick == 1 && (hasHot || hasWorld) {
-			t.Fatalf("tick %d unexpectedly emitted hot/world candidates", tick)
-		}
-		if tick == 2 && (!hasHot || !hasWorld) {
+		if !hasHot || !hasWorld {
 			t.Fatalf("tick %d omitted hot/world candidates", tick)
 		}
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesUsesFullOwnedCadenceForLargeAsteroidCohort(t *testing.T) {
-	count := DefaultAsteroidHotLaneEntityBudget*2 + 1
+func TestAssembleRealtimeLaneCandidatesThrottlesChunkedAsteroidsTo30Hz(t *testing.T) {
+	count := 300
 	previous, current := syncedMovingAsteroidSnapshots(count)
 	for _, tick := range []int{1, 2, 3} {
 		state := syncedWorldState(t, previous)
@@ -307,11 +304,17 @@ func TestAssembleRealtimeLaneCandidatesUsesFullOwnedCadenceForLargeAsteroidCohor
 		plan := AssembleRealtimeLaneCandidates(current, state)
 		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
 		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
-		if tick < 3 && (hasHot || hasWorld) {
+		if (tick == 1 || tick == 3) && (hasHot || hasWorld) {
 			t.Fatalf("tick %d unexpectedly emitted hot/world candidates", tick)
 		}
-		if tick == 3 && (!hasHot || !hasWorld) {
+		if tick == 2 && (!hasHot || !hasWorld) {
 			t.Fatalf("tick %d omitted hot/world candidates", tick)
+		}
+		if tick == 2 {
+			candidate, _ := findCandidateByLane(plan.Candidates, LaneAsteroids)
+			if len(ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})) <= 1 {
+				t.Fatal("expected asteroid candidate to expand into multiple chunks")
+			}
 		}
 	}
 }
@@ -348,6 +351,40 @@ func TestAssembleRealtimeLaneCandidatesEmitsLifecycleWithoutAsteroidHotMovement(
 	}
 }
 
+func TestAssembleRealtimeLaneCandidatesHonorsBulletChunkCadence(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		target     int
+		wantChunks int
+	}{
+		{name: "one chunk", target: 1, wantChunks: 1},
+		{name: "two chunks", target: 2, wantChunks: 2},
+		{name: "three chunks", target: 3, wantChunks: 3},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			count := bulletUpdateCountForChunkTarget(t, tc.target)
+			previous, current := syncedMovingBulletSnapshots(count)
+			for _, tick := range []int{1, 2, 3} {
+				state := syncedWorldState(t, previous)
+				state.HotLaneTick = tick
+				plan := AssembleRealtimeLaneCandidates(current, state)
+				_, hasHot := findCandidateByLane(plan.Candidates, LaneBullets)
+				_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
+				want := tc.target == 1 || tick == tc.target
+				if hasHot != want || hasWorld != want {
+					t.Fatalf("tick %d hot=%t world=%t want=%t", tick, hasHot, hasWorld, want)
+				}
+				if want {
+					candidate, _ := findCandidateByLane(plan.Candidates, LaneBullets)
+					if got := len(ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})); got != tc.wantChunks {
+						t.Fatalf("tick %d expanded chunks=%d, want %d", tick, got, tc.wantChunks)
+					}
+				}
+			}
+		})
+	}
+}
+
 func syncedWorldState(t *testing.T, snapshot game.GameplayPresentationSnapshot) RealtimeSessionState {
 	t.Helper()
 	state := NewRealtimeSessionState("player-1", "match-1")
@@ -366,4 +403,38 @@ func syncedMovingAsteroidSnapshots(count int) (game.GameplayPresentationSnapshot
 		current.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i + 1), Y: float64(i + 11), Size: 2, Health: 3, Scale: 1, Variant: 1}
 	}
 	return previous, current
+}
+
+func syncedMovingBulletSnapshots(count int) (game.GameplayPresentationSnapshot, game.GameplayPresentationSnapshot) {
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
+	current := game.GameplayPresentationSnapshot{SelfID: "player-1", Bullets: map[string]runtime.BulletState{}}
+	for i := 1; i <= count; i++ {
+		id := fmt.Sprintf("bullet-%d", i)
+		previous.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i), Y: float64(i + 10), Rotation: float64(i + 20), WeaponID: "laser", ProjectileType: "bolt"}
+		current.Bullets[id] = runtime.BulletState{ID: id, OwnerID: "player-1", X: float64(i + 1), Y: float64(i + 11), Rotation: float64(i + 21), WeaponID: "laser", ProjectileType: "bolt"}
+	}
+	return previous, current
+}
+
+func bulletUpdateCountForChunkTarget(t *testing.T, target int) int {
+	t.Helper()
+	for count := 1; count <= 600; count++ {
+		previous, current := syncedMovingBulletSnapshots(count)
+		delta := BuildWorldWireDeltaPacket(mustWorldWireFull(t, previous, 1), mustWorldWireFull(t, current, 2))
+		split := SplitWorldHotUpdates(delta, NewHotLaneCohortState(), DefaultHotLaneOffloadPolicy())
+		if split.BulletDelta == nil {
+			continue
+		}
+		metadata := split.BulletDelta.Metadata
+		metadata.Lane = LaneBullets
+		metadata.Sequence = 1
+		metadata.SnapshotKind = SnapshotKind("delta")
+		metadata = metadata.WithChunk(0, 1)
+		split.BulletDelta.Metadata = metadata
+		if bulletWireDeltaChunkCount(*split.BulletDelta) == target {
+			return count
+		}
+	}
+	t.Fatalf("no bullet update count produced exactly %d chunks", target)
+	return 0
 }

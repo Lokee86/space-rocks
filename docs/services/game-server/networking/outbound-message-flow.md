@@ -148,14 +148,14 @@ On each tick, gameplay lane output is eligible only when:
 - captured `SessionContext.Room` is not nil
 - captured `SessionContext.Room.GameplayContext()` is current and its match is valid
 
-When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(session, remoteAddr)` on every eligible tick. Networking owns this invocation and the successful writes; protocol/realtime advances the independent per-session `HotLaneTick` and may suppress movement-only hot candidates to their 30/20 Hz cadence.
+When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(session, remoteAddr)` on every eligible tick. Networking owns this invocation and the successful writes; protocol/realtime advances the independent per-session `HotLaneTick` and may suppress movement-only hot candidates according to their chunk-count cadence.
 
 `writeGameplayLaneProtocolMessage()` currently:
 
 1. Writes debug shape catalog output first when eligible.
 2. Resets `session.realtimeState` when the receiver is empty or changes.
 3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
-4. Advances `HotLaneTick` and applies cadence gating to movement-only asteroid/bullet hot candidates: `full_owned_30hz` every second tick and `full_owned_20hz` every third tick, while retaining forced sends for related non-hot world or lifecycle changes.
+4. Advances `HotLaneTick` and applies the current cadence policy: asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends still bypass cadence suppression.
 5. Selects included lane candidates from the send plan, including lifecycle candidates before expanded asteroid/bullet hot chunks when needed.
 6. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
 7. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.

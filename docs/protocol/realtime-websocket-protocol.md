@@ -357,7 +357,7 @@ Chunk metadata exists in the wire shape and scheduler records. For `asteroid_del
 
 ### Hot movement cadence
 
-Each eligible active build advances an independent per-session `HotLaneTick` on the 60 Hz write-loop cadence. `full_owned_30hz` candidates are eligible every second tick and `full_owned_20hz` every third tick. Cadence-suppressed ticks produce no hot packet; non-hot world deltas or asteroid/bullet lifecycle creates/deletes force related hot movement sends and advance the shared world projection chain. Sequence numbers advance only for successfully written candidates, while `HotLaneTick` advances on every eligible active build, so skipped sends cannot freeze cadence. This is candidate policy in protocol/realtime; it does not change DataChannel reliability or hot-lane chunk metadata semantics.
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression. Sequence numbers advance only for successfully written candidates, while `HotLaneTick` advances on every eligible active build, so skipped sends cannot freeze cadence. This is candidate policy in protocol/realtime; it does not change DataChannel reliability or hot-lane chunk metadata semantics.
 
 ### Numeric wire quantization
 

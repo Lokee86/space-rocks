@@ -19,8 +19,6 @@ func findMatchingScheduleRecords(records []ScheduleRecord, entityID, recordKind 
 	return matches
 }
 
-
-
 func TestHotPacketCadenceAllowsFullOwned30HzEveryOtherTick(t *testing.T) {
 	if hotPacketCadenceAllows(HotLaneModeFullOwned30Hz, 1) {
 		t.Fatal("sequence 1 should skip 30hz hot packets")
@@ -30,6 +28,14 @@ func TestHotPacketCadenceAllowsFullOwned30HzEveryOtherTick(t *testing.T) {
 	}
 	if hotPacketCadenceAllows(HotLaneModeFullOwned30Hz, 3) {
 		t.Fatal("sequence 3 should skip 30hz hot packets")
+	}
+}
+
+func TestHotPacketCadenceAllowsFullOwned60HzEveryTick(t *testing.T) {
+	for _, sequence := range []int{1, 2, 3} {
+		if !hotPacketCadenceAllows(HotLaneModeFullOwned60Hz, sequence) {
+			t.Fatalf("sequence %d should emit 60hz hot packets", sequence)
+		}
 	}
 }
 
@@ -47,7 +53,6 @@ func TestHotPacketCadenceAllowsFullOwned20HzEveryThirdTick(t *testing.T) {
 		t.Fatal("sequence 4 should skip 20hz hot packets")
 	}
 }
-
 
 func TestClassifyHotPacketEncodedSizeBands(t *testing.T) {
 	if got := ClassifyHotPacketEncodedSize(800); got != EncodedPacketSizeNormal {
@@ -69,7 +74,6 @@ func TestClassifyHotPacketEncodedSizeBands(t *testing.T) {
 		t.Fatalf("size 1500 = %q, want over mtu", got)
 	}
 }
-
 
 func TestEncodeLanePacketAllowsHotPacketUnderTarget(t *testing.T) {
 	encoded, recordedBytes := mustEncodeLanePacket(t, hotBulletCandidateWithUpdateCount(1))
@@ -137,19 +141,19 @@ func hotBulletCandidateWithUpdateCount(count int) RealtimeLaneCandidate {
 	updates := make([]map[string]any, 0, count)
 	for i := 1; i <= count; i++ {
 		updates = append(updates, map[string]any{
-			"id": fmt.Sprintf("bullet-%d", i),
-			"owner_id": "player-1",
-			"x": i,
-			"y": i + 1,
-			"rotation": i + 2,
-			"weapon_id": "laser",
+			"id":              fmt.Sprintf("bullet-%d", i),
+			"owner_id":        "player-1",
+			"x":               i,
+			"y":               i + 1,
+			"rotation":        i + 2,
+			"weapon_id":       "laser",
 			"projectile_type": "laser",
 		})
 	}
 	return mustRealtimeLaneCandidate(BulletWireDeltaPacket{
-			Type:     PacketFamilyBulletDelta,
-			Metadata: Metadata{Lane: LaneBullets, Sequence: 2, ServerSentMsec: 1234},
-			BulletUpdates: updates,
+		Type:          PacketFamilyBulletDelta,
+		Metadata:      Metadata{Lane: LaneBullets, Sequence: 2, ServerSentMsec: 1234},
+		BulletUpdates: updates,
 	}, nil)
 }
 
@@ -370,7 +374,6 @@ func TestSendPlanExposesCounts(t *testing.T) {
 		t.Fatalf("summary = %#v, want counts exposed", plan.Summary)
 	}
 }
-
 
 func TestSelectSendPlanDefersLowerPriorityUnderBudgetPressure(t *testing.T) {
 	records := []ScheduleRecord{

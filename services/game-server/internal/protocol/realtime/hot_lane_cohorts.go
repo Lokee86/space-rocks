@@ -11,18 +11,19 @@ const (
 type HotLaneMode string
 
 const (
-	HotLaneModeInline         HotLaneMode = "inline"
-	HotLaneModeOverflow       HotLaneMode = "overflow"
-	HotLaneModeFullOwned30Hz  HotLaneMode = "full_owned_30hz"
-	HotLaneModeFullOwned20Hz  HotLaneMode = "full_owned_20hz"
-	HotLaneModeNeedsChunking  HotLaneMode = "needs_chunking"
+	HotLaneModeInline        HotLaneMode = "inline"
+	HotLaneModeOverflow      HotLaneMode = "overflow"
+	HotLaneModeFullOwned60Hz HotLaneMode = "full_owned_60hz"
+	HotLaneModeFullOwned30Hz HotLaneMode = "full_owned_30hz"
+	HotLaneModeFullOwned20Hz HotLaneMode = "full_owned_20hz"
+	HotLaneModeNeedsChunking HotLaneMode = "needs_chunking"
 )
 
 type HotLaneCohortState struct {
-	AsteroidRoutes       map[string]HotUpdateRoute
-	BulletRoutes         map[string]HotUpdateRoute
-	AsteroidMode         HotLaneMode
-	BulletMode           HotLaneMode
+	AsteroidRoutes         map[string]HotUpdateRoute
+	BulletRoutes           map[string]HotUpdateRoute
+	AsteroidMode           HotLaneMode
+	BulletMode             HotLaneMode
 	StableLowPressureTicks int
 }
 

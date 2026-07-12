@@ -29,7 +29,7 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		}
 		packet.Metadata.MatchID = candidate.MatchID
 
-		if estimateBulletDeltaPacketBytes(packet, packet.BulletUpdates) <= HardCapBytes {
+		if bulletWireDeltaChunkCount(packet) == 1 {
 			return []RealtimeLaneCandidate{normalizedBulletWireDeltaCandidate(candidate, packet, packet.BulletUpdates, 0, 1)}
 		}
 
@@ -51,7 +51,7 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		}
 		packet.Metadata.MatchID = candidate.MatchID
 
-		if estimateAsteroidDeltaPacketBytes(packet, packet.AsteroidUpdates) <= HardCapBytes {
+		if !asteroidWireDeltaRequiresChunking(packet) {
 			return []RealtimeLaneCandidate{normalizedAsteroidWireDeltaCandidate(candidate, packet, packet.AsteroidUpdates, 0, 1)}
 		}
 
@@ -68,6 +68,24 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		return chunks
 	default:
 		return []RealtimeLaneCandidate{candidate}
+	}
+}
+
+func bulletWireDeltaChunkCount(packet BulletWireDeltaPacket) int {
+	if estimateBulletDeltaPacketBytes(packet, packet.BulletUpdates) <= HardCapBytes {
+		return 1
+	}
+	return len(greedyBulletWireDeltaChunks(packet))
+}
+
+func hotLaneModeForBulletChunkCount(chunkCount int) HotLaneMode {
+	switch {
+	case chunkCount <= 1:
+		return HotLaneModeFullOwned60Hz
+	case chunkCount == 2:
+		return HotLaneModeFullOwned30Hz
+	default:
+		return HotLaneModeFullOwned20Hz
 	}
 }
 
@@ -112,6 +130,10 @@ func greedyBulletWireDeltaChunks(packet BulletWireDeltaPacket) [][]map[string]an
 func asteroidWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (AsteroidWireDeltaPacket, bool) {
 	packet, ok := candidate.Payload.(AsteroidWireDeltaPacket)
 	return packet, ok
+}
+
+func asteroidWireDeltaRequiresChunking(packet AsteroidWireDeltaPacket) bool {
+	return estimateAsteroidDeltaPacketBytes(packet, packet.AsteroidUpdates) > HardCapBytes
 }
 
 func normalizedAsteroidWireDeltaCandidate(candidate RealtimeLaneCandidate, packet AsteroidWireDeltaPacket, updates []map[string]any, chunkIndex int, chunkCount int) RealtimeLaneCandidate {

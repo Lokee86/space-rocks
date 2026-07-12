@@ -28,9 +28,6 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 		} else {
 			worldDelta := BuildWorldWireDeltaPacket(previousWorldFull, quantizedWorldFull)
 			split := SplitWorldHotUpdates(worldDelta, state.HotLaneCohorts, DefaultHotLaneOffloadPolicy())
-			if sessionState != nil {
-				sessionState.HotLaneCohorts = split.CohortState
-			}
 			bulletLifecyclePresent := len(split.WorldDelta.Bullets.Creates) > 0 || len(split.WorldDelta.Bullets.Deletes) > 0
 			asteroidLifecyclePresent := len(split.WorldDelta.Asteroids.Creates) > 0 || len(split.WorldDelta.Asteroids.Deletes) > 0
 			if bulletLifecyclePresent {
@@ -53,9 +50,6 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			worldDeltaHasChanges := WorldWireDeltaHasChanges(split.WorldDelta)
 			forceHotSend := worldDeltaHasChanges || asteroidLifecyclePresent || bulletLifecyclePresent
 
-			asteroidHotAllowed := asteroidHotPresent && (forceHotSend || hotPacketCadenceAllows(split.CohortState.AsteroidMode, state.HotLaneTick))
-			bulletHotAllowed := bulletHotPresent && (forceHotSend || hotPacketCadenceAllows(split.CohortState.BulletMode, state.HotLaneTick))
-			allPresentHotAllowed := (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
 			asteroidState, asteroidSynced := state.LaneState(LaneAsteroids)
 			asteroidSequence := NextLaneSequence(asteroidState, asteroidSynced)
 			bulletState, bulletSynced := state.LaneState(LaneBullets)
@@ -67,6 +61,7 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 				metadata.SnapshotID = DeltaSnapshotID(LaneAsteroids, asteroidSequence)
 				metadata.SnapshotKind = SnapshotKind("delta")
 				metadata.ServerSentMsec = split.WorldDelta.Metadata.ServerSentMsec
+				metadata.MatchID = state.MatchID
 				metadata = metadata.WithChunk(0, 1)
 				split.AsteroidDelta.Metadata = metadata
 			}
@@ -77,9 +72,26 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 				metadata.SnapshotID = DeltaSnapshotID(LaneBullets, bulletSequence)
 				metadata.SnapshotKind = SnapshotKind("delta")
 				metadata.ServerSentMsec = split.WorldDelta.Metadata.ServerSentMsec
+				metadata.MatchID = state.MatchID
 				metadata = metadata.WithChunk(0, 1)
 				split.BulletDelta.Metadata = metadata
+				split.BulletMode = hotLaneModeForBulletChunkCount(bulletWireDeltaChunkCount(*split.BulletDelta))
+				split.CohortState.BulletMode = split.BulletMode
 			}
+			if split.AsteroidDelta != nil {
+				if asteroidWireDeltaRequiresChunking(*split.AsteroidDelta) {
+					split.AsteroidMode = HotLaneModeFullOwned30Hz
+				} else {
+					split.AsteroidMode = HotLaneModeFullOwned60Hz
+				}
+				split.CohortState.AsteroidMode = split.AsteroidMode
+			}
+			if sessionState != nil {
+				sessionState.HotLaneCohorts = split.CohortState
+			}
+			asteroidHotAllowed := asteroidHotPresent && (forceHotSend || hotPacketCadenceAllows(split.CohortState.AsteroidMode, state.HotLaneTick))
+			bulletHotAllowed := bulletHotPresent && (forceHotSend || hotPacketCadenceAllows(split.CohortState.BulletMode, state.HotLaneTick))
+			allPresentHotAllowed := (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
 			if forceHotSend || ((asteroidHotAllowed || bulletHotAllowed) && allPresentHotAllowed) {
 				chainedWorldProjection := quantizedWorldFull
 				chainedWorldProjection.Metadata = split.WorldDelta.Metadata

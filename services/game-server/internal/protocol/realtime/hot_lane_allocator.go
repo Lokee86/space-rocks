@@ -22,7 +22,7 @@ type hotLaneSortedUpdateID struct {
 
 type hotLaneSortedUpdateIDs []hotLaneSortedUpdateID
 
-func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCohortState, policy HotLaneOffloadPolicy) HotLaneSplitResult {
+func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCohortState, _ HotLaneOffloadPolicy) HotLaneSplitResult {
 	cohortState.EnsureInitialized()
 
 	asteroidActive := activeUpdateIDsFromWireRecords(worldDelta.Asteroids.Updates)
@@ -43,7 +43,7 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 	if len(asteroidIDs) > 0 {
 		assignHotRoutesWithOverride(result.CohortState.AsteroidRoutes, asteroidIDs, HotUpdateRouteAsteroids)
 		result.WorldDelta.Asteroids.Updates = nil
-		result.AsteroidMode = hotLaneModeForFullOwnedCount(len(asteroidIDs), policy.AsteroidHotLaneEntityBudget)
+		result.AsteroidMode = HotLaneModeFullOwned60Hz
 		result.CohortState.AsteroidMode = result.AsteroidMode
 		result.AsteroidOffloaded = len(asteroidIDs)
 		metadata := worldDelta.Metadata
@@ -59,7 +59,7 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 	if len(bulletIDs) > 0 {
 		assignHotRoutesWithOverride(result.CohortState.BulletRoutes, bulletIDs, HotUpdateRouteBullets)
 		result.WorldDelta.Bullets.Updates = nil
-		result.BulletMode = hotLaneModeForFullOwnedCount(len(bulletIDs), policy.BulletHotLaneEntityBudget)
+		result.BulletMode = HotLaneModeFullOwned60Hz
 		result.CohortState.BulletMode = result.BulletMode
 		result.BulletOffloaded = len(bulletIDs)
 		metadata := worldDelta.Metadata
@@ -75,16 +75,6 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 	result.CohortState.RemoveMissingAsteroids(asteroidActive)
 	result.CohortState.RemoveMissingBullets(bulletActive)
 	return result
-}
-
-func hotLaneModeForFullOwnedCount(count int, budget int) HotLaneMode {
-	if count > budget*3 {
-		return HotLaneModeNeedsChunking
-	}
-	if count > budget*2 {
-		return HotLaneModeFullOwned20Hz
-	}
-	return HotLaneModeFullOwned30Hz
 }
 
 func sortedHotLaneUpdateIDs(active map[string]bool) hotLaneSortedUpdateIDs {

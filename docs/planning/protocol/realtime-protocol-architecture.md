@@ -81,7 +81,7 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Active output can emit multiple encoded packets on `sr.asteroids` or `sr.bullets` in one tick.
 - Hot asteroid and bullet movement packets have focused candidate-level chunking before scheduling and encoding; that chunker is the only hard-size guard for those hot movement packets.
 - Client hot-lane guards accept distinct valid chunks for each `asteroid_delta` or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the two lanes track independently.
-- Independent per-session hot movement cadence enforcement is implemented: `HotLaneTick` runs at the active 60 Hz build cadence with full-owned 30/20 Hz candidate modes.
+- Independent per-session hot movement cadence enforcement is implemented: `HotLaneTick` runs at the active 60 Hz build cadence; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required, while bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
 - Non-hot world and asteroid/bullet lifecycle changes force related hot movement emission and advance the shared world projection chain; this is implemented protocol/realtime policy, not future transport work.
 - Record/entity-level prioritization remains future work.
 - High-frequency gameplay state is no longer sent as one full combined packet every tick.

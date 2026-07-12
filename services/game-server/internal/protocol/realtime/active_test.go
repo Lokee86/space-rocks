@@ -198,7 +198,7 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	}
 }
 
-func TestBuildActiveRealtimeResultAdvancesHotLaneTickWhenCadenceSkips(t *testing.T) {
+func TestBuildActiveRealtimeResultAdvancesHotLaneTickForUnchunkedAsteroids(t *testing.T) {
 	previous, current := syncedMovingAsteroidSnapshots(1)
 	state := syncedWorldState(t, previous)
 	state.HotLaneTick = 0
@@ -207,8 +207,8 @@ func TestBuildActiveRealtimeResultAdvancesHotLaneTickWhenCadenceSkips(t *testing
 	if first.SessionState.HotLaneTick != 1 {
 		t.Fatalf("first hot lane tick = %d, want 1", first.SessionState.HotLaneTick)
 	}
-	if _, ok := findCandidateByLane(first.SelectedCandidates, LaneAsteroids); ok {
-		t.Fatal("did not expect asteroid hot candidate on skipped first tick")
+	if _, ok := findCandidateByLane(first.SelectedCandidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid hot candidate on first tick")
 	}
 
 	second := mustBuildActiveRealtimeResult(t, current, first.SessionState)
@@ -247,6 +247,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.
 	currentSnapshot.Asteroids = currentAsteroids
 
 	state := NewRealtimeSessionState("player-1", "match-1")
+	state.HotLaneTick = 1
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
@@ -337,6 +338,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 	currentSnapshot.Bullets = currentBullets
 
 	state := NewRealtimeSessionState("player-1", "match-1")
+	state.HotLaneTick = 2
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
@@ -348,6 +350,9 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, previousSnapshot, 1))
 
 	result := mustBuildActiveRealtimeResult(t, currentSnapshot, state)
+	if result.SessionState.HotLaneCohorts.BulletMode != HotLaneModeFullOwned20Hz {
+		t.Fatalf("bullet cohort mode = %q, want full-owned 20hz", result.SessionState.HotLaneCohorts.BulletMode)
+	}
 
 	bulletPackets := encodedPacketsForLane(result, LaneBullets)
 	if len(bulletPackets) <= 1 {

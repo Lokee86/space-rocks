@@ -1,28 +1,28 @@
 package realtime
 
 type CandidateWriteDiagnostics struct {
-	PacketFamily          string
-	Lane                  Lane
-	Kind                  RealtimeLaneCandidateKind
-	Sequence              int
-	BaselineID            string
-	SnapshotID            string
-	SnapshotKind          SnapshotKind
-	ChunkIndex            int
-	ChunkCount            int
-	IsFinalChunk          bool
-	Channel               string
-	EncodedBytes          int
-	WorldHotCount         int
-	AsteroidHotCount      int
-	BulletHotCount        int
+	PacketFamily           string
+	Lane                   Lane
+	Kind                   RealtimeLaneCandidateKind
+	Sequence               int
+	BaselineID             string
+	SnapshotID             string
+	SnapshotKind           SnapshotKind
+	ChunkIndex             int
+	ChunkCount             int
+	IsFinalChunk           bool
+	Channel                string
+	EncodedBytes           int
+	WorldHotCount          int
+	AsteroidHotCount       int
+	BulletHotCount         int
 	AsteroidOffloadedCount int
-	BulletOffloadedCount  int
-	AsteroidMode          HotLaneMode
-	BulletMode            HotLaneMode
-	Cadence               string
-	PacketOverTarget      bool
-	PacketOverHardCap     bool
+	BulletOffloadedCount   int
+	AsteroidMode           HotLaneMode
+	BulletMode             HotLaneMode
+	Cadence                string
+	PacketOverTarget       bool
+	PacketOverHardCap      bool
 }
 
 func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state RealtimeSessionState, encodedBytes int) CandidateWriteDiagnostics {
@@ -72,6 +72,8 @@ func hotPacketCadenceForDiagnostics(candidate RealtimeLaneCandidate, state Realt
 
 func hotPacketCadenceLabel(mode HotLaneMode, sequence int) string {
 	switch mode {
+	case HotLaneModeFullOwned60Hz:
+		return "60hz"
 	case HotLaneModeFullOwned30Hz:
 		return "30hz"
 	case HotLaneModeFullOwned20Hz:
