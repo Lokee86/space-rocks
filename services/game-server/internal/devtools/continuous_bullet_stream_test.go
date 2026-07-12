@@ -2,6 +2,7 @@ package devtools
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
@@ -15,7 +16,7 @@ func TestHandleDebugBeginContinuousBulletStreamRegistersObserverAndSpawnsOnStep(
 
 	command := DebugCommand{
 		Type:         PacketTypeDebugBeginContinuousBulletStream,
-		HasDirection:  true,
+		HasDirection: true,
 		X:            10,
 		Y:            20,
 		DirectionX:   0,
@@ -31,7 +32,16 @@ func TestHandleDebugBeginContinuousBulletStreamRegistersObserverAndSpawnsOnStep(
 		t.Fatalf("expected 0 bullets before stepping the game, got %d", len(beforeSnapshot.Bullets))
 	}
 
-	gameInstance.Step(constants.BasicCannonCooldown)
+	done := make(chan struct{})
+	go func() {
+		gameInstance.Step(constants.BasicCannonCooldown)
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("continuous bullet stream simulation step deadlocked")
+	}
 
 	afterSnapshot := gameInstance.GameplayPresentationSnapshot(playerID)
 	if len(afterSnapshot.Bullets) != 1 {

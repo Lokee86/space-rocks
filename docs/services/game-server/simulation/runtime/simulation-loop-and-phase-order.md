@@ -205,14 +205,15 @@ The same lock is used by public game APIs that mutate or read live state, includ
 
 This means the simulation phase order is serialized against inbound game mutations and outbound lane-native realtime projection reads.
 
-Simulation step observers are invoked while `Step` still holds the game lock. Current observer usage is narrow devtools integration for continuous bullet streams. Observer callbacks should remain small and route mutations through the intended game-owned Control adapter functions.
+Simulation step observers are invoked while `Step` still holds the game lock. Current observer usage is narrow devtools integration for continuous bullet streams. `Control.RegisterSimulationStepObserver` owns `Game.mu` while registering the observer, then wraps it so the callback receives narrow bullet-movement and debug-bullet-spawn capability closures during the in-step invocation. The wrapped observer therefore runs under the already-held aggregate lock; it must not call the public lock-owning `Control.BulletsCanMove` or `Control.SpawnDebugBullet` methods from inside `Game.Step`.
 
 Observer path:
 
 ```text
 devtools.ObserverRegistry
 -> Control.RegisterSimulationStepObserver
--> callbacks invoked during Game.Step
+-> wrapped callback with bullet capabilities
+-> callback invoked during Game.Step while Game.mu is held
 ```
 
 ## Normal phase order
@@ -452,18 +453,24 @@ Primitive collision shape math remains in the physics package. Damage math remai
 The current registration surface is:
 
 ```text
-Control.RegisterSimulationStepObserver(observer func(float64))
+Control.RegisterSimulationStepObserver(
+    observer func(
+        delta float64,
+        bulletsCanMove func() bool,
+        spawnDebugBullet func(string, physics.Vector2, physics.Vector2) bool,
+    ),
+)
 ```
 
 Current observer usage is the devtools continuous bullet stream path:
 
 ```text
 devtools continuous stream command
--> ensureContinuousBulletStreamStepObserver
+-> ObserverRegistry.RegisterOnce
 -> Control.RegisterSimulationStepObserver
--> Step observer callback
--> streamruntime.StepContinuousBulletStreams
--> game-owned debug bullet spawn adapter
+-> Control wraps the callback
+-> Game.Step invokes the wrapped callback while Game.mu is held
+-> callback passes the supplied closures to streamruntime.StepContinuousBulletStreams
 ```
 
 Observers are not a general gameplay scheduling system. They are currently a narrow bridge for devtools behavior that must run inside the authoritative simulation cadence.

@@ -312,21 +312,15 @@ Control capability or public game method must accept the operation
 
 ## Locking and mutation model
 
-Control.ClearBullets, Control.ClearAsteroids, and Control.CollisionBodiesByKind own the documented aggregate locks.
+Every externally callable `game.Control` method that reads or mutates aggregate state acquires `Game.mu` itself. This makes the adapter a uniform aggregate-lock boundary for devtools and other callers.
 
-Control methods are mixed:
+Control methods do not call public `Game` or `Control` methods while holding that lock when those methods would lock again. They use the existing lock-assuming helpers, such as `matchDecisionLocked`, counter helpers, and `spawnPickupLocked`.
 
-```text
-Control.ClearBullets and Control.ClearAsteroids lock the game aggregate.
-Control.CollisionBodiesByKind locks the game aggregate.
-Game.SpawnPickup locks the game aggregate.
-Control counter methods delegate to public counter methods that lock the game aggregate.
-Several toggle, spawn, respawn, and stream adapter methods delegate directly to game-owned fields or helpers without adding their own local lock.
-```
+`ObserverKey` is the sole lock-free exception: it returns the immutable `*Game` identity used only for observer-registry deduplication and reads no mutable aggregate state.
 
-When adding or changing a Control capability, decide explicitly whether the called game method already owns locking or whether the Control method must lock before touching aggregate state. Do not assume a method is safe only because it is in a focused control file.
+`Game.Step` invokes simulation observers while `Game.mu` is held. `RegisterSimulationStepObserver` wraps each registered callback and supplies narrow capability closures for bullet movement and debug-bullet spawning only during that callback. The closures call lock-assuming game helpers inside the already-locked simulation phase; ordinary callers only see the locking `BulletsCanMove` and `SpawnDebugBullet` methods. This preserves phase ordering and avoids recursive locking without exposing a lock-assuming Control method.
 
-Simulation step observers run from inside `Game.Step`. Observer callbacks should stay narrow and should route gameplay effects through game-owned adapters.
+`RegisterSimulationStepObserver` acquires `Game.mu` before changing the observer list. Observer callbacks should stay narrow and should route gameplay effects through the lock-assuming observer seam only when invoked by `Game.Step`.
 
 ## Relationship to real gameplay systems
 

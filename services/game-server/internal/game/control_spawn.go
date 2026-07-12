@@ -8,14 +8,20 @@ import (
 )
 
 func (target *Control) RandomUnitVector() physics.Vector2 {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.spawner.RandomUnitVector()
 }
 
 func (target *Control) NextBulletID() string {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.spawner.NextBulletID()
 }
 
 func (target *Control) AddBullet(bullet *runtimepkg.Bullet) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	if bullet == nil {
 		return false
 	}
@@ -24,17 +30,25 @@ func (target *Control) AddBullet(bullet *runtimepkg.Bullet) bool {
 }
 
 func (target *Control) SpawnBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*runtimepkg.Bullet, bool) {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.spawnDebugBullet(ownerID, position, direction)
 }
 
 func (target *Control) SpawnPickup(pickupType pickups.PickupType, position physics.Vector2) (*pickups.Pickup, bool, error) {
-	return target.game.SpawnPickup(pickupType, position)
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
+	return target.game.spawnPickupLocked(pickupType, position)
 }
 
 func (target *Control) RandomAsteroidSpeed() float64 {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.spawner.RandomAsteroidSpeed()
 }
 
 func (target *Control) ApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *runtimepkg.Asteroid {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.applyAsteroidSpawn(plan)
 }

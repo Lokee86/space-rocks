@@ -1,8 +1,8 @@
 package devtools
 
 import (
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 	runtimepkg "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
@@ -75,7 +75,7 @@ type StreamTarget interface {
 	ObserverKey() any
 	BulletsCanMove() bool
 	SpawnDebugBullet(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool
-	RegisterSimulationStepObserver(observer func(float64))
+	RegisterSimulationStepObserver(observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool))
 }
 
 type CollisionTelemetryTarget interface {

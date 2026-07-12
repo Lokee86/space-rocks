@@ -9,6 +9,8 @@ import (
 )
 
 func (target *Control) EnsurePlayerSession(playerID string, spawnPosition physics.Vector2) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	if playerID == "" {
 		return false
 	}
@@ -17,6 +19,8 @@ func (target *Control) EnsurePlayerSession(playerID string, spawnPosition physic
 }
 
 func (target *Control) SpawnPlayerShip(playerID string, spawnPosition physics.Vector2, cameraConfig runtimepkg.ClientConfig) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok || session == nil {
 		return false
@@ -38,6 +42,12 @@ func (target *Control) SpawnPlayerShip(playerID string, spawnPosition physics.Ve
 }
 
 func (target *Control) PlayerIDOccupied(playerID string) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
+	return target.playerIDOccupiedLocked(playerID)
+}
+
+func (target *Control) playerIDOccupiedLocked(playerID string) bool {
 	normalizedRequestedID, ok := normalizeControlPlayerID(playerID)
 	if !ok {
 		return true
@@ -67,11 +77,13 @@ func (target *Control) PlayerIDOccupied(playerID string) bool {
 }
 
 func (target *Control) ReservePlayerID(playerID string) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	normalizedPlayerID, ok := normalizeControlPlayerID(playerID)
 	if !ok {
 		return false
 	}
-	if target.PlayerIDOccupied(normalizedPlayerID) {
+	if target.playerIDOccupiedLocked(normalizedPlayerID) {
 		return false
 	}
 	nextID := normalizedControlPlayerNumber(normalizedPlayerID)

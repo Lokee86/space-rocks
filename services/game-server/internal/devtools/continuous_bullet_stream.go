@@ -28,8 +28,8 @@ func handleDebugBeginContinuousBulletStream(controller *Controller, playerID str
 		return true
 	}
 
-	controller.observerRegistry.RegisterOnce(controller.target, func(delta float64) {
-		controller.streams.StepContinuousBulletStreams(delta, controller.target.BulletsCanMove(), controller.target.SpawnDebugBullet)
+	controller.observerRegistry.RegisterOnce(controller.target, func(delta float64, bulletsCanMove func() bool, spawnDebugBullet func(string, physics.Vector2, physics.Vector2) bool) {
+		controller.streams.StepContinuousBulletStreams(delta, bulletsCanMove(), spawnDebugBullet)
 	})
 
 	normalizedDirection := direction.Normalized()

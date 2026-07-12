@@ -6,6 +6,8 @@ import (
 )
 
 func (target *Control) SafeRespawnPosition(playerID string) (physics.Vector2, bool) {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok || session == nil {
 		return physics.Vector2{}, false
@@ -14,6 +16,8 @@ func (target *Control) SafeRespawnPosition(playerID string) (physics.Vector2, bo
 }
 
 func (target *Control) ForceRespawnPlayer(playerID string, position physics.Vector2, cameraConfig runtimepkg.ClientConfig) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok || session == nil {
 		return false

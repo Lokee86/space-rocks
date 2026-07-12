@@ -3,30 +3,44 @@ package game
 import "github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 
 func (target *Control) SetWorldFrozen(enabled bool) {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	target.game.worldSimulationOptions.SetFreezeWorld(enabled)
 }
 
 func (target *Control) ToggleFreezeWorld() bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.worldSimulationOptions.ToggleFreezeWorld()
 }
 
 func (target *Control) ToggleFreezeAsteroids() bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.worldSimulationOptions.ToggleFreezeAsteroids()
 }
 
 func (target *Control) ToggleFreezeBullets() bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.worldSimulationOptions.ToggleFreezeBullets()
 }
 
 func (target *Control) ToggleFreezeSpawning() bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.worldSimulationOptions.ToggleFreezeSpawning()
 }
 
 func (target *Control) ToggleFreezeCollisions() bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	return target.game.worldSimulationOptions.ToggleFreezeCollisions()
 }
 
 func (target *Control) PlayerInvincible(playerID string) (bool, bool) {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	found := false
 	invincible := false
 
@@ -44,6 +58,8 @@ func (target *Control) PlayerInvincible(playerID string) (bool, bool) {
 }
 
 func (target *Control) SetPlayerInvincible(playerID string, enabled bool) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	found := false
 
 	if session, ok := target.game.playerSessions[playerID]; ok {
@@ -60,6 +76,8 @@ func (target *Control) SetPlayerInvincible(playerID string, enabled bool) bool {
 }
 
 func (target *Control) InfiniteLives(playerID string) (bool, bool) {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok {
 		return false, false
@@ -68,6 +86,8 @@ func (target *Control) InfiniteLives(playerID string) (bool, bool) {
 }
 
 func (target *Control) SetInfiniteLives(playerID string, enabled bool) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok {
 		return false
@@ -77,6 +97,8 @@ func (target *Control) SetInfiniteLives(playerID string, enabled bool) bool {
 }
 
 func (target *Control) PlayerFrozen(playerID string) (bool, bool) {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok {
 		return false, false
@@ -85,6 +107,8 @@ func (target *Control) PlayerFrozen(playerID string) (bool, bool) {
 }
 
 func (target *Control) SetPlayerFrozen(playerID string, enabled bool) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	session, ok := target.game.playerSessions[playerID]
 	if !ok {
 		return false
@@ -99,6 +123,8 @@ func (target *Control) SetPlayerFrozen(playerID string, enabled bool) bool {
 }
 
 func (target *Control) ApplyPlayerDefeat(sourcePlayerID string, targetPlayerID string) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
 	targetPlayer, ok := target.game.entities.Players[targetPlayerID]
 	if !ok || targetPlayer == nil {
 		return true

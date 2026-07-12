@@ -28,7 +28,7 @@ type Game struct {
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	entities                  runtime.EntityStore
-	simulationStepObservers   []func(float64)
+	simulationStepObservers   []simulationStepObserver
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]PendingPresentationEvent

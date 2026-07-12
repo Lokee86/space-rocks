@@ -43,9 +43,8 @@ client devtools placement
 -> stream runtime begin
 -> ObserverRegistry.RegisterOnce
 -> Control.RegisterSimulationStepObserver
--> stream runtime step
--> Control.BulletsCanMove
--> Control.SpawnDebugBullet
+-> wrapped observer callback with bullet capabilities
+-> stream runtime step using those capabilities under Game.mu
 -> bullets_lifecycle create readback plus bullet_delta movement readback
 ```
 
@@ -116,7 +115,7 @@ Control.SpawnDebugBullet
 
 `ObserverRegistry.RegisterOnce` deduplicates simulation observer registration by `Control.ObserverKey()`. One simulation observer is registered per underlying game target.
 
-The stream observer runs at the end of `Game.Step(delta)`, after normal or reduced simulation phases. The observer still runs while `Game.Step` holds the game lock, so stream callbacks must stay small and route mutations through game-owned adapter functions. Begin, step, and clear operations use the same Controller-selected runtime.
+The stream observer runs at the end of `Game.Step(delta)`, after normal or reduced simulation phases. `Control.RegisterSimulationStepObserver` owns locking while registering and supplies the observer with narrow bullet-movement and debug-bullet-spawn capability closures when the wrapped callback runs. The callback executes while `Game.Step` already holds `Game.mu`, so it uses those closures rather than calling the public lock-owning `Control.BulletsCanMove()` or `Control.SpawnDebugBullet()` methods. Ordinary external callers continue to use those public Control methods. Begin, step, and clear operations use the same Controller-selected runtime.
 
 ## Stream ticking and bullet spawning
 
@@ -128,13 +127,7 @@ When the cooldown reaches zero or below, the stream attempts to spawn a debug bu
 bulletsCanMove == true
 ```
 
-The `bulletsCanMove` value comes from:
-
-```text
-Control.BulletsCanMove()
-```
-
-That delegates to the world simulation bullet gate:
+The `bulletsCanMove` value comes from the narrow capability supplied to the wrapped simulation observer by `Control.RegisterSimulationStepObserver`. That capability reads the world simulation bullet gate while `Game.mu` is already held:
 
 ```text
 WorldSimulationOptions.BulletsCanMove()
@@ -148,7 +141,7 @@ When spawn succeeds, the stream cooldown resets to:
 constants.BasicCannonCooldown
 ```
 
-Debug bullets are spawned through:
+Debug bullets are spawned through the narrow spawn capability supplied to the wrapped simulation observer by `Control.RegisterSimulationStepObserver`. Ordinary external callers use the public lock-owning method:
 
 ```text
 Control.SpawnDebugBullet(ownerPlayerID, origin, direction)

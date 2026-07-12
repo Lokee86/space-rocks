@@ -1,6 +1,10 @@
 package devtools
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+)
 
 type ObserverRegistry struct {
 	mu         sync.Mutex
@@ -13,7 +17,7 @@ func NewObserverRegistry() *ObserverRegistry {
 	}
 }
 
-func (registry *ObserverRegistry) RegisterOnce(target StreamTarget, observer func(float64)) {
+func (registry *ObserverRegistry) RegisterOnce(target StreamTarget, observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool)) {
 	if registry == nil || target == nil || observer == nil {
 		return
 	}

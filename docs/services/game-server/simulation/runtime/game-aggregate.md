@@ -218,7 +218,7 @@ Room lifecycle owns when this lifecycle shell is called. `Room.StartGameForMembe
 
 `Game.mu` is the synchronization boundary for aggregate state.
 
-Public methods that read or mutate runtime state lock the aggregate before touching shared fields. Current examples include:
+Public methods that read or mutate runtime state lock the aggregate before touching shared fields. The `game.Control` adapter follows the same rule: every externally callable aggregate-reading or aggregate-mutating Control method acquires `Game.mu` itself. Current examples include:
 
 ```text
 AddPlayer
@@ -240,7 +240,7 @@ Control adapter APIs
 Step
 ```
 
-Package-local helper methods generally assume the caller already holds the lock when their names or usage indicate locked aggregate context.
+Package-local helper methods generally assume the caller already holds the lock when their names or usage indicate locked aggregate context. `Control.RegisterSimulationStepObserver` wraps callbacks with narrow capability closures that call those helpers only while `Game.Step` holds `Game.mu`; no lock-assuming Control method is exposed to callers.
 
 This lock keeps the ticker-driven simulation loop, inbound packet handling, outbound state projection, room match checks, and devtools adapters from concurrently mutating the same maps.
 
