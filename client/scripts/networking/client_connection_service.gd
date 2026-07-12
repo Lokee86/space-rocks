@@ -24,7 +24,10 @@ signal realtime_transport_ready
 signal unknown_packet_received(packet: Dictionary)
 
 var network_client: NetworkClient
-var client_packet_sender: ClientPacketSender
+var client_packet_sender: ClientPacketSender:
+	set(value):
+		client_packet_sender = value
+		_missing_client_packet_sender_reported = false
 var server_packet_dispatcher: ServerPacketDispatcher
 var client_inbound_coordinator: ClientInboundCoordinator
 var realtime_packet_pipeline: RealtimePacketPipeline
@@ -33,11 +36,13 @@ var webrtc_transport_factory: Callable
 var server_clock_offset_ms := -1
 
 var has_started_connection := false
-var auth_session_controller
+var auth_session_controller: AuthSessionController
 var websocket_auth_authenticated := false
-var websocket_auth_user_id = null
+const NO_WEBSOCKET_AUTH_USER_ID := -1
+var websocket_auth_user_id: int = NO_WEBSOCKET_AUTH_USER_ID
 var websocket_auth_display_name := ""
 var _resync_signal_bound := false
+var _missing_client_packet_sender_reported := false
 
 
 func _ready() -> void:
@@ -116,7 +121,7 @@ func is_websocket_auth_authenticated() -> bool:
 
 
 func has_websocket_auth_identity() -> bool:
-	return websocket_auth_authenticated && websocket_auth_user_id != null
+	return websocket_auth_authenticated && websocket_auth_user_id != NO_WEBSOCKET_AUTH_USER_ID
 
 
 func begin_graceful_close() -> void:
@@ -129,37 +134,37 @@ func close_gracefully() -> void:
 		await network_client.close_gracefully()
 
 
-func set_auth_session_controller(auth_session_controller_ref) -> void:
+func set_auth_session_controller(auth_session_controller_ref: AuthSessionController) -> void:
 	auth_session_controller = auth_session_controller_ref
 
 
 func send_start_single_player_request(local_profile_id := "") -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_start_single_player_request(local_profile_id)
 
 
 func send_create_room_request() -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_create_room_request()
 
 
 func send_join_room_request(room_code: String) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_join_room_request(room_code)
 
 
 func send_set_ready_request(is_ready: bool) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_set_ready_request(is_ready)
 
 
 func send_start_game_request() -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_start_game_request()
 
 
 func send_input_packet(packet: Dictionary) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_input_packet(packet)
 
 func _bind_resync_request_signal() -> void:
@@ -169,69 +174,72 @@ func _bind_resync_request_signal() -> void:
 	_resync_signal_bound = true
 
 func _on_resync_request_required(lane, baseline_id, sequence, reason) -> void:
-	if client_packet_sender != null and realtime_packet_pipeline != null:
-		var match_id := realtime_packet_pipeline.active_match_id()
-		if !match_id.is_empty():
-			client_packet_sender.send_resync_request(match_id, lane, baseline_id, sequence, reason)
+	if realtime_packet_pipeline == null:
+		return
+	var match_id := realtime_packet_pipeline.active_match_id()
+	if match_id.is_empty():
+		return
+	if _can_send_outbound():
+		client_packet_sender.send_resync_request(match_id, lane, baseline_id, sequence, reason)
 
 
 func send_packet(packet: Dictionary) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_packet(packet)
 
 
 func send_webrtc_offer(description_type: String, sdp: String) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_webrtc_offer(description_type, sdp)
 
 
 func send_webrtc_ice_candidate(media: String, index: int, name: String) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_webrtc_ice_candidate(media, index, name)
 
 
 func send_webrtc_smoke(smoke_id: String, origin: String, message: String) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_webrtc_smoke(smoke_id, origin, message)
 
 
 func send_webrtc_failed(error_code: String, message: String) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_webrtc_failed(error_code, message)
 
 
 func send_respawn_request() -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_respawn_request()
 
 
 func send_pause_request() -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_pause_request()
 
 
 func send_telemetry_ping(sequence: int, client_sent_msec: int) -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_telemetry_ping(sequence, client_sent_msec)
 
 
 func send_debug_kill_player_request(target_scope: String = "", target_player_id: String = "") -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_debug_kill_player_request(target_scope, target_player_id)
 
 
 func send_debug_kill_target_player_request(target_player_id: String, target_scope: String = "") -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_debug_kill_target_player_request(target_player_id, target_scope)
 
 
 func send_leave_room_request() -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_leave_room_request()
 
 
 func send_return_to_lobby_request() -> void:
-	if client_packet_sender != null:
+	if _can_send_outbound():
 		client_packet_sender.send_return_to_lobby_request()
 
 
@@ -269,7 +277,7 @@ func _on_connected() -> void:
 func _on_closed() -> void:
 	reset_realtime_session()
 	websocket_auth_authenticated = false
-	websocket_auth_user_id = null
+	websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 	websocket_auth_display_name = ""
 	closed.emit()
 
@@ -289,7 +297,11 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 
 func _on_authenticate_result_received(packet: Dictionary) -> void:
 	websocket_auth_authenticated = bool(packet.get(Packets.FIELD_AUTHENTICATED, false))
-	websocket_auth_user_id = packet.get(Packets.FIELD_USER_ID, null)
+	var raw_user_id = packet.get(Packets.FIELD_USER_ID, NO_WEBSOCKET_AUTH_USER_ID)
+	if websocket_auth_authenticated and raw_user_id is int:
+		websocket_auth_user_id = int(raw_user_id)
+	else:
+		websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 	websocket_auth_display_name = str(packet.get(Packets.FIELD_DISPLAY_NAME, ""))
 	websocket_auth_result_received.emit(packet)
 
@@ -357,10 +369,10 @@ func _clear_realtime_transport_session() -> void:
 
 
 func _send_authenticate_request_if_token_exists() -> void:
-	if network_client == null || auth_session_controller == null:
+	if auth_session_controller == null:
 		return
 
-	var auth_session = auth_session_controller.get_session()
+	var auth_session: AuthSession = auth_session_controller.get_session()
 	if auth_session == null:
 		return
 
@@ -368,7 +380,17 @@ func _send_authenticate_request_if_token_exists() -> void:
 	if token.is_empty():
 		return
 
-	client_packet_sender.send_authenticate_request(token)
+	if _can_send_outbound():
+		client_packet_sender.send_authenticate_request(token)
+
+
+func _can_send_outbound() -> bool:
+	if client_packet_sender != null:
+		return true
+	if !_missing_client_packet_sender_reported:
+		_missing_client_packet_sender_reported = true
+		ClientLogger.error(ClientLogger.CATEGORY_NETWORK, "Client packet sender is not configured")
+	return false
 
 
 func get_realtime_packet_pipeline() -> RealtimePacketPipeline:

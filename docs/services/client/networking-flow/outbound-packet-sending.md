@@ -37,7 +37,7 @@ ClientConnectionService.send_packet(packet)
 
 instead of a more specific wrapper method.
 
-The outbound send path is best-effort and non-queued. If the packet sender has no `NetworkClient`, or if the raw WebSocket is not open, the packet is not sent. If packet encoding fails, the client emits a structured network warning event and drops the packet.
+The outbound send path is best-effort and non-queued. If `ClientConnectionService` has no `ClientPacketSender`, it reports the missing dependency once; assigning a sender resets that report state. If `ClientPacketSender` has no `NetworkClient`, it reports the missing dependency once; assigning or configuring a network client resets that report state. If the raw WebSocket is not open, the packet is not sent. If packet encoding fails, the client emits a structured network warning event and drops the packet.
 
 The server remains authoritative for packet acceptance, room state, gameplay simulation, devtools effects, and durable results.
 
@@ -61,7 +61,7 @@ The client outbound packet sending flow owns:
 * Creating generated packet dictionaries through focused packet-family wrappers.
 * Passing already-built packet dictionaries from callers that own context-specific packet construction.
 * Sending gameplay input, respawn, pause, target, lobby, room-entry, devtools, telemetry, viewport config, and auth packets through a common raw send path.
-* Guarding sends when the packet sender or raw network client is unavailable.
+* Reporting missing `ClientPacketSender` and `NetworkClient` dependencies through the owning outbound seams.
 * Letting `NetworkClient` guard sends when the WebSocket is not open.
 * Encoding outbound packet dictionaries as JSON text.
 * Sending encoded packet text through the active WebSocket.
@@ -150,7 +150,7 @@ send_packet(packet)
 send_input_packet(packet)
 ```
 
-`send_packet()` only checks that `network_client` exists. The final connected-state check belongs to `NetworkClient.send_raw_packet()`.
+Specialized `ClientPacketSender` methods converge through `send_packet()`. `send_packet()` reports a missing `network_client` once until assignment or configuration resets that report state. The final connected-state check belongs to `NetworkClient.send_raw_packet()`.
 
 `ClientPacketSender.send_respawn_request()` currently emits a structured network event once for the first respawn packet send marker:
 
@@ -227,7 +227,7 @@ if encode fails:
 socket.send_text(encoded wire message)
 ```
 
-The raw sender does not queue packets for later delivery.
+The raw sender owns the open-WebSocket guard. It does not retry or queue packets for later delivery.
 
 `NetworkClient` currently emits a structured network warning event for packet encode failures:
 
@@ -282,6 +282,8 @@ ClientPacketSender.send_authenticate_request(token)
 ```
 
 Authentication uses the same `ClientPacketSender` outbound path as every other protocol packet. All outbound protocol packets now flow through `ClientPacketSender`.
+
+Absence of an auth session or token, including an empty auth token, intentionally remains a no-op for the automatic auth request path.
 
 ### Timing and gating
 
@@ -642,10 +644,10 @@ The current outbound send path has these constraints:
 
 ```text
 ClientConnectionService method with no ClientPacketSender
--> no-op
+-> reports the missing dependency once until sender assignment resets the report state
 
 ClientPacketSender method with no NetworkClient
--> no-op
+-> reports the missing dependency once until network-client assignment/configuration resets the report state
 
 NetworkClient.send_raw_packet() while WebSocket is not open
 -> no-op
@@ -742,6 +744,8 @@ client/tests/unit/test_target_request_flow.gd
 client/tests/unit/lobby/test_lobby_shell_flow.gd
 client/tests/unit/lobby/test_lobby_return_flow.gd
 client/tests/unit/test_room_session_controller.gd
+client/tests/unit/test_client_connection_service.gd
+client/tests/unit/test_client_packet_sender.gd
 client/tests/unit/ui/menu_flow/test_app_entry_menu_flow.gd
 client/tests/unit/ui/lobby/test_join_dialog_flow.gd
 ```
@@ -754,7 +758,7 @@ Gameplay input and target request tests verify caller-side send behavior before 
 
 Lobby tests verify lobby UI intent and return flows that call outbound lobby request methods.
 
-No focused `ClientPacketSender` unit test was found during this pass.
+`test_client_connection_service.gd` covers missing-sender dependency reporting and reset behavior. `test_client_packet_sender.gd` covers missing-network-client dependency reporting, reset behavior, and specialized-method convergence through `send_packet()`.
 
 ## Related docs
 
