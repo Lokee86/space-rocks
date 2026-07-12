@@ -74,7 +74,7 @@ The root script lives at:
 client/scripts/devtools/devtools_window.gd
 ```
 
-`devtools_window.gd` remains the window composition and signal surface. Its public refresh methods are preserved as thin delegation methods for existing callers. `DevtoolsWindowTelemetry` owns telemetry source selector setup, selected-source state, raw local/target rendering, sorted key output, JSON rendering, and float formatting. `DevtoolsWindowTargetSelectors` owns repeated player-target selector population, selection preservation, game-target fallback, and shared score/lives selector updates.
+`devtools_window.gd` remains the window composition and signal surface. Its public refresh methods are preserved as thin delegation methods for existing callers. `DevtoolsWindowTargetSelectors` owns repeated player-target selector population, selection preservation, game-target fallback, and non-counter selector updates. `DevtoolsWindowCounterControls` owns score/lives input validation, signal emission, and counter target refreshes. `DevtoolsWindowSpawnControls` owns pickup initialization and spawn/respawn control wiring. `DevtoolsWindowTelemetry` owns telemetry source selector setup, selected-source state, raw local/target rendering, sorted key output, JSON rendering, and float formatting. These seams operate on the window's existing controls and signals; they do not own gameplay mutation.
 
 The window is titled `Space Rocks Devtools`, opens centered, stays on top, and hides instead of freeing itself when closed.
 
@@ -297,9 +297,11 @@ Primary window files:
 ```text
 client/scenes/devtools/devtools_window.tscn
 client/scripts/devtools/devtools_window.gd
-client/scripts/devtools/devtools_window_controller.gd
+client/scripts/devtools/devtools_window_spawn_controls.gd
+client/scripts/devtools/devtools_window_counter_controls.gd
 client/scripts/devtools/devtools_window_telemetry.gd
 client/scripts/devtools/devtools_window_target_selectors.gd
+client/scripts/devtools/devtools_window_controller.gd
 ```
 
 Composition and action routing:
@@ -368,8 +370,10 @@ client/scenes/devtools/player_dev_label.tscn
 Important non-ownership boundaries:
 
 * `devtools_window.gd` owns window composition, public refresh routing, UI action handlers, and signal emission, not gameplay mutation.
+* `DevtoolsWindowTargetSelectors` owns repeated player-target selector population, selection preservation, game-target fallback, and non-counter selector updates.
+* `DevtoolsWindowCounterControls` owns score/lives input validation, counter signal emission, and the four counter target selectors.
+* `DevtoolsWindowSpawnControls` owns pickup initialization and spawn/respawn control wiring while preserving the window's placement-request signals.
 * `DevtoolsWindowTelemetry` owns telemetry selector setup/state and raw telemetry rendering/formatting.
-* `DevtoolsWindowTargetSelectors` owns repeated player-target selector population, selection preservation, game-target fallback, and shared score/lives selector updates.
 * `DevtoolsWindowController` owns window lifecycle, latest cached UI state, and target-scope conversion.
 * `DevtoolsCommandContext` owns command routing into debug packet send paths.
 * `DevtoolsPlacementContext` owns placement request handoff, not mouse/world coordinate conversion.

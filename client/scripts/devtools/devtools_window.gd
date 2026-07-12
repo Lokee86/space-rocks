@@ -3,6 +3,8 @@ extends Window
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const DevtoolsWindowTelemetry := preload("res://scripts/devtools/devtools_window_telemetry.gd")
 const DevtoolsWindowTargetSelectors := preload("res://scripts/devtools/devtools_window_target_selectors.gd")
+const DevtoolsWindowSpawnControls := preload("res://scripts/devtools/devtools_window_spawn_controls.gd")
+const DevtoolsWindowCounterControls := preload("res://scripts/devtools/devtools_window_counter_controls.gd")
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
@@ -77,6 +79,8 @@ signal telemetry_sources_changed(local_source: String, target_source: String)
 @onready var target_telemetry_text: Label = %TargetTelemetryText
 var telemetry: DevtoolsWindowTelemetry
 var target_selectors: DevtoolsWindowTargetSelectors
+var spawn_controls: DevtoolsWindowSpawnControls
+var counter_controls: DevtoolsWindowCounterControls
 
 
 func _ready() -> void:
@@ -99,26 +103,10 @@ func _ready() -> void:
 		freeze_collisions_button.pressed.connect(_on_freeze_collisions_button_pressed)
 	if !freeze_player_button.pressed.is_connected(_on_freeze_player_button_pressed):
 		freeze_player_button.pressed.connect(_on_freeze_player_button_pressed)
-	if !spawn_asteroid_button.pressed.is_connected(_on_spawn_asteroid_button_pressed):
-		spawn_asteroid_button.pressed.connect(_on_spawn_asteroid_button_pressed)
-	if !spawn_pickup_button.pressed.is_connected(_on_spawn_pickup_button_pressed):
-		spawn_pickup_button.pressed.connect(_on_spawn_pickup_button_pressed)
-	if !spawn_player_button.pressed.is_connected(_on_spawn_player_button_pressed):
-		spawn_player_button.pressed.connect(_on_spawn_player_button_pressed)
-	if !spawn_bullet_button.pressed.is_connected(_on_spawn_bullet_button_pressed):
-		spawn_bullet_button.pressed.connect(_on_spawn_bullet_button_pressed)
-	if !respawn_player_button.pressed.is_connected(_on_respawn_player_button_pressed):
-		respawn_player_button.pressed.connect(_on_respawn_player_button_pressed)
+
 	if !kill_player_button.pressed.is_connected(_on_kill_player_button_pressed):
 		kill_player_button.pressed.connect(_on_kill_player_button_pressed)
-	if !set_score_button.pressed.is_connected(_on_set_score_button_pressed):
-		set_score_button.pressed.connect(_on_set_score_button_pressed)
-	if !add_score_button.pressed.is_connected(_on_add_score_button_pressed):
-		add_score_button.pressed.connect(_on_add_score_button_pressed)
-	if !set_lives_button.pressed.is_connected(_on_set_lives_button_pressed):
-		set_lives_button.pressed.connect(_on_set_lives_button_pressed)
-	if !add_lives_button.pressed.is_connected(_on_add_lives_button_pressed):
-		add_lives_button.pressed.connect(_on_add_lives_button_pressed)
+
 	if !clear_bullets_button.pressed.is_connected(_on_clear_bullets_button_pressed):
 		clear_bullets_button.pressed.connect(_on_clear_bullets_button_pressed)
 	if !clear_asteroids_button.pressed.is_connected(_on_clear_asteroids_button_pressed):
@@ -144,6 +132,12 @@ func _ready() -> void:
 		set_lives_select,
 		add_lives_select
 	)
+	spawn_controls = DevtoolsWindowSpawnControls.new()
+	spawn_controls.configure(self)
+	spawn_controls.initialize()
+	counter_controls = DevtoolsWindowCounterControls.new()
+	counter_controls.configure(self)
+	counter_controls.initialize()
 	if !local_telemetry_select.item_selected.is_connected(_on_local_telemetry_select_item_selected):
 		local_telemetry_select.item_selected.connect(_on_local_telemetry_select_item_selected)
 	if !target_telemetry_select.item_selected.is_connected(_on_target_telemetry_select_item_selected):
@@ -218,7 +212,7 @@ func refresh_respawn_player_targets(target_rows: Array) -> void:
 
 
 func refresh_counter_player_targets(rows: Array) -> void:
-	target_selectors.refresh_counter_player_targets(rows)
+	counter_controls.refresh_targets(rows)
 
 
 func refresh_game_target_options(
