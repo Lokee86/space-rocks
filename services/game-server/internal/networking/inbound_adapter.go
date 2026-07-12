@@ -1,8 +1,8 @@
 package networking
 
 import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type inboundSessionAdapter struct {
@@ -20,16 +20,9 @@ func newInboundSessionAdapter(session *webSocketSession) inboundSessionAdapter {
 	return inboundSessionAdapter{session: session}
 }
 
-func (a inboundSessionAdapter) CurrentRoomID() string {
-	return a.session.currentRoomID
-}
-
-func (a inboundSessionAdapter) CurrentRoom() *rooms.Room {
-	return a.session.room
-}
-
-func (a inboundSessionAdapter) CurrentGamePlayerID() string {
-	return a.session.currentGamePlayerID
+func (a inboundSessionAdapter) CurrentSessionContext() inbound.SessionContext {
+	context := a.session.sessionContext()
+	return inbound.SessionContext{Room: context.Room, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID}
 }
 
 func (a inboundSessionAdapter) SessionID() string {
@@ -40,17 +33,9 @@ func (a inboundSessionAdapter) EnqueueOutboundMessage(message []byte) {
 	a.session.outbound <- message
 }
 
-func (a inboundSessionAdapter) EnqueueResyncRequest(request realtime.ResyncRequest) bool {
-	roomID := ""
-	if a.session.room != nil {
-		roomID = a.session.room.ID
-	}
-	matchID := ""
-	if a.session.room != nil {
-		matchID = a.session.room.CurrentMatchID()
-	}
+func (a inboundSessionAdapter) EnqueueResyncRequest(context inbound.SessionContext, request realtime.ResyncRequest) bool {
 	select {
-	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: roomID, ReceiverID: a.session.currentGamePlayerID, MatchID: matchID}:
+	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: context.RoomID, ReceiverID: context.GamePlayerID, MatchID: request.MatchID}:
 		return true
 	default:
 		return false

@@ -199,14 +199,14 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 		t.Fatalf("expected 8 data channels to be created, got %d", len(fakePeer.created))
 	}
 	expected := map[string]fakeWebRTCDataChannelCreateSpec{
-	"sr.world":              {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1, MaxRetransmits: nil},
-	"sr.overlay":            {Label: "sr.overlay", Ordered: true, Negotiated: true, ID: 2, MaxRetransmits: nil},
-	"sr.session":            {Label: "sr.session", Ordered: true, Negotiated: true, ID: 3, MaxRetransmits: nil},
-	"sr.event":              {Label: "sr.event", Ordered: true, Negotiated: true, ID: 4, MaxRetransmits: nil},
-	"sr.asteroids":          {Label: "sr.asteroids", Ordered: false, Negotiated: true, ID: 5, MaxRetransmits: uint16Ptr(0)},
-	"sr.bullets":            {Label: "sr.bullets", Ordered: false, Negotiated: true, ID: 6, MaxRetransmits: uint16Ptr(0)},
-	"sr.asteroids.lifecycle": {Label: "sr.asteroids.lifecycle", Ordered: true, Negotiated: true, ID: 7, MaxRetransmits: nil},
-	"sr.bullets.lifecycle":   {Label: "sr.bullets.lifecycle", Ordered: true, Negotiated: true, ID: 8, MaxRetransmits: nil},
+		"sr.world":               {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1, MaxRetransmits: nil},
+		"sr.overlay":             {Label: "sr.overlay", Ordered: true, Negotiated: true, ID: 2, MaxRetransmits: nil},
+		"sr.session":             {Label: "sr.session", Ordered: true, Negotiated: true, ID: 3, MaxRetransmits: nil},
+		"sr.event":               {Label: "sr.event", Ordered: true, Negotiated: true, ID: 4, MaxRetransmits: nil},
+		"sr.asteroids":           {Label: "sr.asteroids", Ordered: false, Negotiated: true, ID: 5, MaxRetransmits: uint16Ptr(0)},
+		"sr.bullets":             {Label: "sr.bullets", Ordered: false, Negotiated: true, ID: 6, MaxRetransmits: uint16Ptr(0)},
+		"sr.asteroids.lifecycle": {Label: "sr.asteroids.lifecycle", Ordered: true, Negotiated: true, ID: 7, MaxRetransmits: nil},
+		"sr.bullets.lifecycle":   {Label: "sr.bullets.lifecycle", Ordered: true, Negotiated: true, ID: 8, MaxRetransmits: nil},
 	}
 	for _, created := range fakePeer.created {
 		want, ok := expected[created.Label]
@@ -456,12 +456,12 @@ func TestWebRTCTransportClose(t *testing.T) {
 	peer := NewWebRTCTransport(WebRTCSignalHooks{})
 	peer.peer = fakePeer
 	peer.channels = map[string]webRTCDataChannel{
-		"sr.world":              &fakeWebRTCDataChannel{},
-		"sr.overlay":            &fakeWebRTCDataChannel{},
-		"sr.session":            &fakeWebRTCDataChannel{},
-		"sr.event":              &fakeWebRTCDataChannel{},
-		"sr.asteroids":          &fakeWebRTCDataChannel{},
-		"sr.bullets":            &fakeWebRTCDataChannel{},
+		"sr.world":               &fakeWebRTCDataChannel{},
+		"sr.overlay":             &fakeWebRTCDataChannel{},
+		"sr.session":             &fakeWebRTCDataChannel{},
+		"sr.event":               &fakeWebRTCDataChannel{},
+		"sr.asteroids":           &fakeWebRTCDataChannel{},
+		"sr.bullets":             &fakeWebRTCDataChannel{},
 		"sr.asteroids.lifecycle": &fakeWebRTCDataChannel{},
 		"sr.bullets.lifecycle":   &fakeWebRTCDataChannel{},
 	}

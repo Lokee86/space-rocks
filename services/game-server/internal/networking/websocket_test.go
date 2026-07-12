@@ -24,8 +24,7 @@ func (reporter *recordingMatchResultReporter) ReportMatchResult(summary playerda
 func TestWebSocketSessionLeaveDisconnectedRoomIsQuietWithoutRoomState(t *testing.T) {
 	session := &webSocketSession{}
 	session.leaveDisconnectedRoom()
-
-	if session.room != nil || session.currentRoomID != "" || session.currentGamePlayerID != "" {
+	if session.sessionContext() != (SessionContext{}) {
 		t.Fatal("expected empty disconnect leave to keep session state clear")
 	}
 }
@@ -34,9 +33,7 @@ func TestWebSocketSessionReportsResolvedMatchBeforeRoomExit(t *testing.T) {
 	t.Run("requested leave reports before removing member", func(t *testing.T) {
 		session, room, reporter, cleanup := newWebSocketSessionRoomExitTestSetup(t)
 		defer cleanup()
-
 		session.leaveRequestedRoom()
-
 		if reporter.calls != 1 {
 			t.Fatalf("expected reporter to be called once, got %d", reporter.calls)
 		}
@@ -46,23 +43,20 @@ func TestWebSocketSessionReportsResolvedMatchBeforeRoomExit(t *testing.T) {
 		if room.MemberCount() != 0 {
 			t.Fatalf("expected room member to be removed after leave, got %d", room.MemberCount())
 		}
-		if session.room != nil || session.currentRoomID != "" || session.currentGamePlayerID != "" {
+		if session.sessionContext() != (SessionContext{}) {
 			t.Fatal("expected session room state to be cleared after leave")
 		}
 	})
-
 	t.Run("disconnected leave clears state after manager cleanup", func(t *testing.T) {
 		session, room, reporter, cleanup := newWebSocketSessionRoomExitTestSetup(t)
 		defer cleanup()
-
 		roomID := room.ID
 		session.rooms.StopAll()
 		session.leaveDisconnectedRoom()
-
 		if reporter.calls != 0 {
 			t.Fatalf("expected reporter to be skipped after room cleanup, got %d calls", reporter.calls)
 		}
-		if session.room != nil || session.currentRoomID != "" || session.currentGamePlayerID != "" {
+		if session.sessionContext() != (SessionContext{}) {
 			t.Fatal("expected session room state to be cleared after cleaned-up disconnect")
 		}
 		if _, ok := session.rooms.Find(roomID); ok {
@@ -73,49 +67,30 @@ func TestWebSocketSessionReportsResolvedMatchBeforeRoomExit(t *testing.T) {
 
 func newWebSocketSessionRoomExitTestSetup(t *testing.T) (*webSocketSession, *rooms.Room, *recordingMatchResultReporter, func()) {
 	t.Helper()
-
 	manager := rooms.NewRoomManager()
 	room, err := manager.CreateLobbyRoom()
 	if err != nil {
 		t.Fatalf("create room: %v", err)
 	}
-
 	sessionID := "session-1"
 	room.AddMemberSessionID(sessionID)
 	playerID, ok := room.PlayerIDForSession(sessionID)
 	if !ok {
 		t.Fatal("expected room member to be created")
 	}
-
 	gameInstance := game.New()
 	control := game.NewControl(gameInstance)
 	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
 		t.Fatal("expected devtools player session to be created")
 	}
 	control.SetPlayerLives(playerID, 0)
-
-	if err := room.StartSinglePlayerGame(func() *game.Game {
-		return gameInstance
-	}); err != nil {
+	if err := room.StartSinglePlayerGame(func() *game.Game { return gameInstance }); err != nil {
 		t.Fatalf("start game: %v", err)
 	}
 	if err := room.MarkGameOver(); err != nil {
 		t.Fatalf("mark game over: %v", err)
 	}
-
 	reporter := &recordingMatchResultReporter{room: room}
-	session := &webSocketSession{
-		sessionID:           sessionID,
-		currentRoomID:       room.ID,
-		currentGamePlayerID: playerID,
-		room:                room,
-		rooms:               manager,
-		matchResultReporter: reporter,
-	}
-
-	cleanup := func() {
-		gameInstance.Stop()
-	}
-
-	return session, room, reporter, cleanup
+	session := &webSocketSession{sessionID: sessionID, context: SessionContext{Room: room, RoomID: room.ID, GamePlayerID: playerID}, rooms: manager, matchResultReporter: reporter}
+	return session, room, reporter, func() { gameInstance.Stop() }
 }

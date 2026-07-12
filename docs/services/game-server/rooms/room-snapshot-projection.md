@@ -117,7 +117,7 @@ Important identity boundaries:
 * `SessionID` is server-side WebSocket/session identity and is not exposed in snapshot members.
 * `MemberID` is server-internal room membership identity and is not exposed in normal room snapshots.
 * `AccountID` and `LocalProfileID` may be attached to room members for match reporting, but they are not exposed in room snapshot presentation payloads.
-* `currentGamePlayerID` belongs to networking session routing and is not a room snapshot identity field.
+* `SessionContext.GamePlayerID` belongs to networking session routing and is not a room snapshot field.
 
 ## Protocols and APIs
 

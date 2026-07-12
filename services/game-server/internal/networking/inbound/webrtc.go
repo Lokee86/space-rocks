@@ -1,4 +1,4 @@
-﻿package inbound
+package inbound
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
@@ -67,4 +67,3 @@ func HandleWebRTCSignalingPacket(session webRTCSession, remoteAddr string, msg [
 		return false
 	}
 }
-

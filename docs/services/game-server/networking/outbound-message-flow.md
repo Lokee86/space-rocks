@@ -144,9 +144,9 @@ Queued response producers generally encode with `packetcodec` before enqueue, an
 
 On each tick, gameplay lane output is eligible only when:
 
-- `session.currentGamePlayerID` is not empty
-- `session.room` is not nil
-- `session.room.GameInstance()` is not nil
+- captured `SessionContext.GamePlayerID` is not empty
+- captured `SessionContext.Room` is not nil
+- captured `SessionContext.Room.GameplayContext()` is current and its match is valid
 
 When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(session, remoteAddr)`.
 
@@ -199,9 +199,9 @@ Command fanout membership is separate from debug-status membership.
 
 It is eligible only when:
 
-- `session.currentRoomID` is not empty
+- captured `SessionContext.RoomID` is not empty
 - the current room ID has not already received the shape catalog from this write loop
-- `outbound.CanSendDebugShapeCatalog(session.room)` returns true
+- `outbound.CanSendDebugShapeCatalog(SessionContext.Room)` returns true
 
 `CanSendDebugShapeCatalog()` uses the same devtools and room/game-state gates as debug status.
 

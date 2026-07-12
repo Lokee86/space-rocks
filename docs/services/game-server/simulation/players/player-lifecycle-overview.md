@@ -86,7 +86,7 @@ This overview does not own:
 
 * Room membership, lobby ownership, ready checks, or match state transitions.
 * WebSocket connection lifecycle.
-* Per-connection `currentGamePlayerID` assignment.
+* Per-connection `SessionContext.GamePlayerID` assignment; networking binds and clears it through synchronized session helpers.
 * Room snapshot projection.
 * Client gameplay state application.
 * Client respawn UI.
@@ -120,7 +120,7 @@ The current activation path lives outside the game simulation:
 successful room start
 -> networking activateRoomPlayers
 -> gameInstance.AddPlayer
--> websocket session currentGamePlayerID
+-> networking binds `SessionContext.GamePlayerID` through synchronized session helpers
 -> room member player_id
 -> room active player count
 ```

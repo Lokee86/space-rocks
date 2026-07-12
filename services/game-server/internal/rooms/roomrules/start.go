@@ -2,9 +2,9 @@ package roomrules
 
 // StartMember captures the room-member state needed to decide whether a game can start.
 type StartMember struct {
-	PlayerID   string
-	Ready      bool
-	Connected  bool
+	PlayerID  string
+	Ready     bool
+	Connected bool
 }
 
 // StartInput captures the data needed to decide whether a game can start.

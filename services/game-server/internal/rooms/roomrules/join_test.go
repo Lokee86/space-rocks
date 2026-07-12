@@ -4,10 +4,10 @@ import "testing"
 
 func TestDecideJoin(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    JoinInput
-		allowed  bool
-		code     string
+		name    string
+		input   JoinInput
+		allowed bool
+		code    string
 	}{
 		{
 			name: "lobby joinable with space allows",

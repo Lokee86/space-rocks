@@ -302,3 +302,72 @@ func TestMarkGameOverKeepsExistingResolvedMatchSummary(t *testing.T) {
 	}
 	room.GameInstance().Stop()
 }
+
+func TestStartGameForSessionRejectsMissingSessionAfterPlayerIDReuse(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	if room.AddMember(NewRoomMember("session-old")) == nil {
+		t.Fatal("expected old member to be added")
+	}
+	if _, _, removed := room.RemoveMemberForSession("session-old"); !removed {
+		t.Fatal("expected old member removal")
+	}
+	replacement := room.AddMember(NewRoomMember("session-replacement"))
+	if replacement == nil {
+		t.Fatal("expected replacement member to be added")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-replacement"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected replacement session to map to Player-1, got %q, %v", playerID, ok)
+	}
+	replacement.SetReady(true)
+	factoryCalls := 0
+	err := room.StartGameForSession("session-old", func() *game.Game { factoryCalls++; return game.New() })
+	if err == nil || err.Code != RoomErrorNotInRoom {
+		t.Fatalf("expected not_in_room error, got %v", err)
+	}
+	if factoryCalls != 0 {
+		t.Fatalf("expected factory not to be called, got %d calls", factoryCalls)
+	}
+	if room.State != RoomStateLobby || room.GameInstance() != nil || room.CurrentMatchID() != "" {
+		t.Fatal("expected unchanged lobby state")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-replacement"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected replacement mapping to remain Player-1, got %q, %v", playerID, ok)
+	}
+}
+
+func TestResetToLobbyForSessionRejectsMissingSessionAfterPlayerIDReuse(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	if room.AddMember(NewRoomMember("session-old")) == nil {
+		t.Fatal("expected old member to be added")
+	}
+	if _, _, removed := room.RemoveMemberForSession("session-old"); !removed {
+		t.Fatal("expected old member removal")
+	}
+	replacement := room.AddMember(NewRoomMember("session-replacement"))
+	if replacement == nil {
+		t.Fatal("expected replacement member to be added")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-replacement"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected replacement session to map to Player-1, got %q, %v", playerID, ok)
+	}
+	replacement.SetReady(true)
+	if err := room.StartGameForSession("session-replacement", game.New); err != nil {
+		t.Fatalf("expected replacement start to succeed, got %v", err)
+	}
+	gameInstance := room.GameInstance()
+	t.Cleanup(func() { gameInstance.Stop() })
+	matchID := room.CurrentMatchID()
+	if err := room.MarkGameOver(); err != nil {
+		t.Fatalf("expected game over transition to succeed, got %v", err)
+	}
+	err := room.ResetToLobbyForSession("session-old")
+	if err == nil || err.Code != RoomErrorNotInRoom {
+		t.Fatalf("expected not_in_room error, got %v", err)
+	}
+	if room.State != RoomStateGameOver || room.GameInstance() != gameInstance || room.CurrentMatchID() != matchID {
+		t.Fatal("expected game-over state and game to remain unchanged")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-replacement"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected replacement mapping to remain Player-1, got %q, %v", playerID, ok)
+	}
+}

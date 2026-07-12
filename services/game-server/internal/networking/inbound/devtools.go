@@ -5,13 +5,10 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type devtoolsSession interface {
-	CurrentRoom() *rooms.Room
-	CurrentRoomID() string
-	CurrentGamePlayerID() string
+	CurrentSessionContext() SessionContext
 	SessionID() string
 }
 
@@ -40,17 +37,7 @@ func HandleRemainingDevtoolsPacket(session devtoolsSession, remoteAddr string, m
 
 func isSimpleDevtoolsPacketType(packetType string) bool {
 	switch packetType {
-	case devtools.PacketTypeToggleDebugInvincible,
-		devtools.PacketTypeToggleDebugInfiniteLives,
-		devtools.PacketTypeToggleDebugFreezeWorld,
-		devtools.PacketTypeToggleDebugFreezePlayer,
-		devtools.PacketTypeDebugKillPlayer,
-		devtools.PacketTypeDebugSetScore,
-		devtools.PacketTypeDebugAddScore,
-		devtools.PacketTypeDebugSetLives,
-		devtools.PacketTypeDebugAddLives,
-		devtools.PacketTypeDebugClearBullets,
-		devtools.PacketTypeDebugClearAsteroids:
+	case devtools.PacketTypeToggleDebugInvincible, devtools.PacketTypeToggleDebugInfiniteLives, devtools.PacketTypeToggleDebugFreezeWorld, devtools.PacketTypeToggleDebugFreezePlayer, devtools.PacketTypeDebugKillPlayer, devtools.PacketTypeDebugSetScore, devtools.PacketTypeDebugAddScore, devtools.PacketTypeDebugSetLives, devtools.PacketTypeDebugAddLives, devtools.PacketTypeDebugClearBullets, devtools.PacketTypeDebugClearAsteroids:
 		return true
 	default:
 		return false
@@ -59,8 +46,7 @@ func isSimpleDevtoolsPacketType(packetType string) bool {
 
 func isRemainingDevtoolsPacketType(packetType string) bool {
 	switch packetType {
-	case devtools.PacketTypeDebugBeginContinuousBulletStream,
-		devtools.PacketTypeDebugRespawnPlayer:
+	case devtools.PacketTypeDebugBeginContinuousBulletStream, devtools.PacketTypeDebugRespawnPlayer:
 		return true
 	default:
 		return false
@@ -68,24 +54,21 @@ func isRemainingDevtoolsPacketType(packetType string) bool {
 }
 
 func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg []byte) bool {
-	room := session.CurrentRoom()
-	if room == nil || session.CurrentGamePlayerID() == "" {
+	context := session.CurrentSessionContext()
+	if context.Room == nil || context.GamePlayerID == "" {
 		return true
 	}
-
+	gameplayContext := context.Room.GameplayContext()
+	if gameplayContext.Game == nil {
+		return true
+	}
 	var command devtools.DebugCommand
 	if err := packetcodec.Decode(msg, &command); err != nil {
-		logging.Network.Warn("websocket devtools command decode failed",
-			logging.FieldError, err,
-			logging.FieldRoomID, session.CurrentRoomID(),
-			logging.FieldPlayerID, session.CurrentGamePlayerID(),
-			"session_id", session.SessionID(),
-			logging.FieldRemoteAddr, remoteAddr,
-		)
+		logging.Network.Warn("websocket devtools command decode failed", logging.FieldError, err, logging.FieldRoomID, context.RoomID, logging.FieldPlayerID, context.GamePlayerID, "session_id", session.SessionID(), logging.FieldRemoteAddr, remoteAddr)
 		return true
 	}
-	control := game.NewControl(room.GameInstance())
+	control := game.NewControl(gameplayContext.Game)
 	controller := devtools.NewController(devtools.Dependencies{Target: control})
-	controller.HandleCommand(session.CurrentGamePlayerID(), command)
+	controller.HandleCommand(context.GamePlayerID, command)
 	return true
 }

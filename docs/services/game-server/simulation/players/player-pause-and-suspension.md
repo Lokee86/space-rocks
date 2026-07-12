@@ -175,7 +175,8 @@ Normal pause is toggled by a `pause_request` packet from the client.
 
 ```text
 pause_request
--> gameInstance.HandlePacket(currentGamePlayerID, packet)
+-> gameplayContext := context.Room.GameplayContext()
+gameplayContext.Game.HandlePacket(context.GamePlayerID, packet)
 -> session.EnqueuePlayerPauseState()
 ```
 

@@ -3,7 +3,7 @@ package networking
 type SessionIdentityState string
 
 const (
-	SessionIdentityStateGuest               SessionIdentityState = "guest"
+	SessionIdentityStateGuest                SessionIdentityState = "guest"
 	SessionIdentityStateAuthenticatedAccount SessionIdentityState = "authenticated_account"
 )
 

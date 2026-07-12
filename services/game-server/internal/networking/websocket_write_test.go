@@ -80,18 +80,17 @@ func TestMaybeWriteDebugShapeCatalogSendsOnlyOnceForSameRoom(t *testing.T) {
 
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, game.New())
 	session := &webSocketSession{
-		conn:          serverConn,
-		room:          room,
-		rooms:         rooms.NewRoomManager(),
-		currentRoomID: "room-1",
+		conn:    serverConn,
+		context: SessionContext{Room: room, RoomID: "room-1", GamePlayerID: "player-1"},
+		rooms:   rooms.NewRoomManager(),
 	}
 
-	if !maybeWriteDebugShapeCatalog(session, "127.0.0.1:1234") {
+	if !maybeWriteDebugShapeCatalog(session, session.sessionContext(), "127.0.0.1:1234") {
 		t.Fatal("expected first debug shape catalog write to succeed")
 	}
 	assertDebugShapeCatalogPacket(t, clientConn)
 
-	if maybeWriteDebugShapeCatalog(session, "127.0.0.1:1234") {
+	if maybeWriteDebugShapeCatalog(session, session.sessionContext(), "127.0.0.1:1234") {
 		// no-op send still returns true; verify no duplicate packet instead.
 	}
 	assertNoMessageWithin(t, clientConn)
@@ -115,16 +114,16 @@ func TestMaybeWriteDebugShapeCatalogSendsAgainForNewRoomAfterReset(t *testing.T)
 	defer serverConn.Close()
 	defer clientConn.Close()
 
+	room := rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New())
 	session := &webSocketSession{
 		conn:                        serverConn,
-		room:                        rooms.NewRoom("room-2", rooms.RoomStateInGame, game.New()),
+		context:                     SessionContext{Room: room, RoomID: room.ID, GamePlayerID: "player-1"},
 		rooms:                       rooms.NewRoomManager(),
-		currentRoomID:               "room-2",
 		debugShapeCatalogSentRoomID: "room-1",
 	}
 	session.resetDebugShapeCatalogSent()
 
-	if !maybeWriteDebugShapeCatalog(session, "127.0.0.1:1234") {
+	if !maybeWriteDebugShapeCatalog(session, session.sessionContext(), "127.0.0.1:1234") {
 		t.Fatal("expected debug shape catalog write to succeed after reset")
 	}
 	assertDebugShapeCatalogPacket(t, clientConn)
@@ -159,12 +158,10 @@ func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
 	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       room.ID,
-		currentGamePlayerID: playerID,
-		webrtcTransport:     transport,
+		conn:            serverConn,
+		context:         SessionContext{Room: room, RoomID: room.ID, GamePlayerID: playerID},
+		rooms:           rooms.NewRoomManager(),
+		webrtcTransport: transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -204,12 +201,10 @@ func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
 	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       "room-1",
-		currentGamePlayerID: playerID,
-		webrtcTransport:     transport,
+		conn:            serverConn,
+		context:         SessionContext{Room: room, RoomID: "room-1", GamePlayerID: playerID},
+		rooms:           rooms.NewRoomManager(),
+		webrtcTransport: transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -248,11 +243,9 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWithoutWebRTC(t *testing.
 
 	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       "room-1",
-		currentGamePlayerID: playerID,
+		conn:    serverConn,
+		context: SessionContext{Room: room, RoomID: "room-1", GamePlayerID: playerID},
+		rooms:   rooms.NewRoomManager(),
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -291,12 +284,10 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWhenWebRTCNotReady(t *tes
 	transport.ready = false
 	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       "room-1",
-		currentGamePlayerID: playerID,
-		webrtcTransport:     transport,
+		conn:            serverConn,
+		context:         SessionContext{Room: room, RoomID: "room-1", GamePlayerID: playerID},
+		rooms:           rooms.NewRoomManager(),
+		webrtcTransport: transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -313,12 +304,11 @@ func TestResetRealtimeStateForCurrentIdentityResetsSameReceiverAcrossMatches(t *
 	}
 	firstMatchID := room.CurrentMatchID()
 	session := &webSocketSession{
-		room:                room,
-		currentGamePlayerID: member.PlayerID,
-		realtimeState:       realtime.NewRealtimeSessionState(member.PlayerID, "old-match"),
+		context:       SessionContext{Room: room, RoomID: room.ID, GamePlayerID: member.PlayerID},
+		realtimeState: realtime.NewRealtimeSessionState(member.PlayerID, "old-match"),
 	}
 	session.realtimeState.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 8})
-	resetRealtimeStateForCurrentIdentity(session)
+	resetRealtimeStateForContext(session, session.sessionContext(), room.CurrentMatchID())
 	if session.realtimeState.MatchID != firstMatchID {
 		t.Fatalf("expected current match ID %q, got %q", firstMatchID, session.realtimeState.MatchID)
 	}
@@ -377,13 +367,11 @@ func TestWriteGameplayLaneProtocolMessageDoesNotDrainEventBatchWhenEventLaneSend
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
 	channels["event"].sendErr = errors.New("webrtc send failed")
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       "room-1",
-		currentGamePlayerID: playerID,
-		realtimeState:       state,
-		webrtcTransport:     transport,
+		conn:            serverConn,
+		context:         SessionContext{Room: room, RoomID: "room-1", GamePlayerID: playerID},
+		rooms:           rooms.NewRoomManager(),
+		realtimeState:   state,
+		webrtcTransport: transport,
 	}
 
 	if writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -452,13 +440,11 @@ func TestWriteGameplayLaneProtocolMessageAdvancesMetadataAndDrainsEventBatchOnWe
 	beforePending := len(gameInstance.PendingPresentationEvents(playerID))
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       "room-1",
-		currentGamePlayerID: playerID,
-		realtimeState:       state,
-		webrtcTransport:     transport,
+		conn:            serverConn,
+		context:         SessionContext{Room: room, RoomID: "room-1", GamePlayerID: playerID},
+		rooms:           rooms.NewRoomManager(),
+		realtimeState:   state,
+		webrtcTransport: transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -534,13 +520,11 @@ func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessful
 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
 	session := &webSocketSession{
-		conn:                serverConn,
-		room:                room,
-		rooms:               rooms.NewRoomManager(),
-		currentRoomID:       room.ID,
-		currentGamePlayerID: playerID,
-		realtimeState:       state,
-		webrtcTransport:     transport,
+		conn:            serverConn,
+		context:         SessionContext{Room: room, RoomID: room.ID, GamePlayerID: playerID},
+		rooms:           rooms.NewRoomManager(),
+		realtimeState:   state,
+		webrtcTransport: transport,
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
@@ -694,6 +678,57 @@ func newWebSocketTestConn(t *testing.T) (*websocket.Conn, *websocket.Conn) {
 	}
 	serverConn := <-serverConnCh
 	return serverConn, clientConn
+}
+
+func TestWriteGameplayLaneProtocolMessageRejectsStaleRoomContextBeforeSending(t *testing.T) {
+	originalCanSend := canSendDebugShapeCatalog
+	t.Cleanup(func() { canSendDebugShapeCatalog = originalCanSend })
+
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	control := game.NewControl(gameInstance)
+	playerID := "player-1"
+	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) || !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{VisibleWorldWidth: 1280, VisibleWorldHeight: 720}) {
+		t.Fatal("expected production-valid player setup")
+	}
+	room, matchID := newActiveRoomForWriterTest(t, gameInstance)
+	state := realtime.NewRealtimeSessionState(playerID, matchID)
+	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 9, BaselineID: "before", SnapshotID: "before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(realtime.LaneWorld)
+	state.StoreBaselineProjection(realtime.LaneWorld, "projection-before")
+	beforeLane, _ := state.LaneState(realtime.LaneWorld)
+
+	transport, channels := newReadyGameplayWebRTCTransportForTests()
+	session := &webSocketSession{conn: serverConn, context: SessionContext{Room: room, RoomID: room.ID, GamePlayerID: playerID}, rooms: rooms.NewRoomManager(), realtimeState: state, webrtcTransport: transport}
+	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
+		if err := room.MarkGameOver(); err != nil {
+			t.Fatalf("advance room to game over: %v", err)
+		}
+		return false
+	}
+
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected stale operation to be rejected without closing writer")
+	}
+	assertNoMessageWithin(t, clientConn)
+	for lane, channel := range channels {
+		if len(channel.sentTexts) != 0 {
+			t.Fatalf("stale write sent %d packets on %s", len(channel.sentTexts), lane)
+		}
+	}
+	afterLane, _ := session.realtimeState.LaneState(realtime.LaneWorld)
+	if afterLane != beforeLane {
+		t.Fatalf("stale write advanced realtime lane state: before=%#v after=%#v", beforeLane, afterLane)
+	}
+	if projection, ok := session.realtimeState.BaselineProjection(realtime.LaneWorld); !ok || projection != "projection-before" {
+		t.Fatalf("stale write changed baseline projection: %#v, %t", projection, ok)
+	}
+	if session.realtimeState.MatchID != matchID {
+		t.Fatalf("stale write replaced realtime state identity: %q", session.realtimeState.MatchID)
+	}
 }
 
 func assertDebugShapeCatalogPacket(t *testing.T, conn *websocket.Conn) {

@@ -24,9 +24,7 @@ The adapter is intentionally not a second room rules layer. Room joinability, re
 
 - Route generated room/lobby packets from the inbound router to WebSocket session handlers.
 - Maintain WebSocket-session room state:
-  - `currentRoomID`
-  - `room`
-  - `currentGamePlayerID`
+  SessionContext
   - authenticated account identity
   - outbound message queue
 - Create, join, leave, ready, start, start-single-player, and return-to-lobby through `rooms.RoomManager`.
@@ -34,6 +32,7 @@ The adapter is intentionally not a second room rules layer. Room joinability, re
 - Attach authenticated account IDs to multiplayer room members when account identity exists.
 - Attach local profile IDs to single-player room members when supplied by `StartSinglePlayerRequest`.
 - Activate connected room members into active game players after a successful start.
+- Use `SetReadyForSessionInLobby`, `StartGameForSession`, and `ResetToLobbyForSession` so session lookup and mutation are atomic under one room lock.
 - Deactivate active game player routing when returning to lobby.
 - Encode and enqueue generated `RoomSnapshot` and `RoomError` packets.
 - Report an already-resolved match result before requested leave or disconnect removes the room member.
@@ -64,7 +63,7 @@ Important identity boundaries:
 - `sessionID` is WebSocket/session identity.
 - room member identity is owned by `internal/rooms`.
 - player-facing `PlayerID` values are exposed in room snapshots.
-- `currentGamePlayerID` is networking-owned active game routing state for the current WebSocket session.
+- `SessionContext.GamePlayerID` is networking-owned active game routing state for the current WebSocket session.
 - authenticated account identity is stored on the session and copied onto room members when relevant.
 - local profile ID is copied onto the single-player room member when supplied.
 
@@ -116,7 +115,7 @@ Request behavior:
   - reports a resolved match result once before removing the member when a resolved result exists.
   - removes the session/member through `RoomManager.LeaveMember`.
   - detaches the WebSocket session from the room session registry.
-  - clears `room`, `currentRoomID`, and `currentGamePlayerID` on the WebSocket session.
+  clears the synchronized context with the expected-context helper; the caller context player ID is compatibility-only and leave uses the exact removed member identity.
   - broadcasts a room snapshot to remaining members when any remain.
 
 - `set_ready_request`
@@ -154,9 +153,7 @@ Networking owns transient connection/session data only.
 
 Networking mutates:
 
-- `webSocketSession.currentRoomID`
-- `webSocketSession.room`
-- `webSocketSession.currentGamePlayerID`
+- `webSocketSession.context` holds `SessionContext{Room, RoomID, GamePlayerID}` under the session mutex.
 - `webSocketSession.identity`
 - `roomSessions.byRoom`
 - outbound queued WebSocket payloads

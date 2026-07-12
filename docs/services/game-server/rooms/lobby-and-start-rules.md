@@ -20,8 +20,7 @@ The current multiplayer start path is:
 start_game_request
 -> networking room adapter
 -> RoomManager.StartRoomGame
--> room session resolves to room member player ID
--> Room.StartGameForMember
+-> Room.StartGameForSession
 -> start preconditions
 -> pure roomrules.DecideStart policy
 -> Lobby -> Starting -> InGame
@@ -230,10 +229,11 @@ Activation:
 ```text
 takes connected room members
 finds their live WebSocket sessions
-calls gameInstance.AddPlayer()
-stores currentGamePlayerID on each session
-rebinds the room member player ID through room.SetMemberPlayerIDForSession
-increments room active-player count
+captures `gameplayContext := room.GameplayContext()`
+calls `playerID := gameplayContext.Game.AddPlayer()`
+sets `SessionContext.GamePlayerID` with `setGamePlayerIDForRoom` on the synchronized session context
+calls `Room.ActivateMemberPlayer(gameplayContext, sessionID, playerID)`; activation validates exact context/session under `Room.mu`, rejects collisions, rekeys member/owner as needed, and activates the session exactly once
+if session bind fails, remove the game player; if room activation fails, clear the session game-player ID and remove the game player
 ```
 
 This keeps room membership and active gameplay routing separate:
@@ -408,6 +408,8 @@ The room package does not persist lobby or start state to disk. It is live runti
 * `services/game-server/internal/playerdata/` owns match result data shapes and persistence-facing records.
 * `client/scripts/lobby/` owns client-side lobby presentation and request sending, not room authority.
 
+The `RoomManager.StartRoomGame(roomID, sessionID)` path calls `Room.StartGameForSession(sessionID, game.New)`. Exact session membership and owner/readiness validation happen under one `Room.mu` acquisition before reserving `Starting`; recycled `Player-N` IDs cannot authorize a departed session. The start releases `Room.mu` before the game factory and `Game.Start`, then conditionally commits only if the reservation remains current. Concurrent starts have one winner.
+
 ## Tests
 
 Relevant room tests:
@@ -435,7 +437,7 @@ Relevant networking tests:
 
 * `services/game-server/internal/networking/player_activation_test.go`
 
-  * Verifies active player activation and member identity preservation behavior.
+  * Verifies activation rollback, Player-ID reuse rejection, and concurrent start one-winner behavior.
 * `services/game-server/internal/networking/room_snapshot_test.go`
 
   * Verifies room snapshot projection behavior.

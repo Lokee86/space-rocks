@@ -77,7 +77,7 @@ The room manager owns:
 * validating room-code shape for join requests
 * joining sessions to existing rooms through room-domain join rules
 * leaving rooms by session ID
-* removing active game players during member leave when a game player ID is supplied
+* removing the exact removed member’s game player through session-aware deactivation; the legacy caller value is ignored by room authority
 * scheduling cleanup when rooms become empty
 * deleting empty rooms after the cleanup grace delay when the cleanup version is still current
 * setting lobby readiness through room-domain rules
@@ -123,7 +123,7 @@ Important state boundaries:
 * Active game players are created when networking activates room members after a successful room start.
 * The room manager owns room lookup and room-level operations.
 * The room aggregate owns room state, membership state, match state, and cleanup state.
-* Networking owns the live session pointer, current room pointer, current room ID, and current active game player ID for each WebSocket connection.
+* Networking owns one synchronized `SessionContext{Room, RoomID, GamePlayerID}` for each WebSocket connection.
 * The game instance owns simulation state after the room starts a match.
 * Player-data owns durable profile and match-result persistence.
 
@@ -133,7 +133,7 @@ Identity boundaries:
 * `MemberID` is internal room membership identity.
 * `PlayerID` is the player-facing room/game identity such as `Player-1`.
 * `AccountID` and `LocalProfileID` are copied onto room members by networking when relevant.
-* `currentGamePlayerID` is networking-owned active gameplay routing state, not room membership identity.
+* `SessionContext.GamePlayerID` is networking-owned active gameplay routing state, not room membership identity.
 
 ## Protocols and APIs
 
@@ -185,9 +185,9 @@ SetReady(roomID, sessionID, ready)
 
 `JoinRoom()` normalizes and validates the room code before lookup. Invalid shape returns `invalid_room_code`. Missing room returns `room_not_found`.
 
-After lookup, join policy is delegated to the room aggregate. Join is allowed only when the room is in lobby state, is joinable, and is below `MaxPlayersPerRoom`.
+After lookup, `JoinRoom` calls one locked `JoinMember` operation that validates and adds atomically. Join is allowed only when the room is in lobby state, is joinable, and is below `MaxPlayersPerRoom`.
 
-`SetReady()` requires the room to exist, requires the room to be in lobby state, resolves the session to a room member, and then delegates the readiness mutation to the room aggregate.
+`SetReady()` requires the room to exist and delegates to `Room.SetReadyForSessionInLobby(sessionID, ready)` under one `Room.mu` lock.
 
 ### Match lifecycle
 
@@ -196,9 +196,9 @@ StartRoomGame(roomID, sessionID)
 ReturnRoomToLobby(roomID, sessionID)
 ```
 
-`StartRoomGame()` resolves the session to a room member and delegates start policy to the room aggregate. The room aggregate enforces owner-only start, connected-member readiness, valid lobby state, game instance creation, game start, transition to in-game state, and match ID creation.
+`StartRoomGame()` delegates to `Room.StartGameForSession(sessionID, game.New)`. The room method authorizes the session under one `Room.mu` lock, then uses reserve/external-work/conditional-commit; this prevents recycled `Player-N` IDs from authorizing a stale session.
 
-`ReturnRoomToLobby()` resolves the session to a room member and delegates reset policy to the room aggregate. The room aggregate only allows return from `GameOver`, clears ready state, stops and clears the game instance, and moves the room back to `Lobby`.
+`ReturnRoomToLobby()` delegates to `Room.ResetToLobbyForSession(sessionID)`, which resolves and mutates the session under one `Room.mu` lock, clears room-owned state, and calls `Game.Stop` outside the room lock.
 
 Networking is responsible for activating or deactivating live WebSocket sessions around these room lifecycle transitions.
 
@@ -213,11 +213,11 @@ StopAll()
 
 `LeaveRoom()` removes a room member by session ID and returns the room, room ID, session ID, and remaining member count.
 
-`LeaveMember()` extends `LeaveRoom()` for networking. If an active game player ID is supplied and the room has a game instance, it removes that player from the game and decrements the room active-player count. It schedules cleanup when the room becomes empty and reports whether a room snapshot should still be broadcast to remaining members.
+`LeaveMember()` atomically removes the exact member returned by `RemoveMemberForSession`, uses that member's `PlayerID` with `DeactivateMemberPlayer(sessionID)`, and removes the actual member player from the game. The legacy third parameter is ignored and non-authoritative. It schedules cleanup after exact session-aware deactivation when the room becomes empty and reports whether a room snapshot should still be broadcast.
 
 `ScheduleCleanupIfEmpty()` schedules cleanup only when the room exists and `room.ShouldCleanup()` is true. Cleanup uses a version number stored in `roomCleanup` so stale timers cannot delete rooms after a later cleanup scheduling event has superseded them.
 
-`StopAll()` stops cleanup timers, stops any running game instances, logs room stop events, and removes all rooms from the manager map. Startup registers this method as the current process-exit cleanup hook.
+`StopAll()` removes/copies all rooms under the manager lock, unlocks, then stops cleanup timers and game instances and logs outside the manager lock. Startup registers this method as the current process-exit cleanup hook.
 
 ## Data ownership
 
@@ -241,6 +241,7 @@ Room-owned data under manager supervision:
 * member account/local-profile identity fields
 * room game instance pointer
 * active player count
+* `roomMatch.activeSessionIDs`
 * match number
 * current match ID
 * resolved match result summary
@@ -293,8 +294,8 @@ Cleanup sequence:
 ```text
 member leaves
   LeaveMember removes room member
-  active game player is removed when playerID is supplied
-  active player count may be decremented
+  actual removed player is removed from the game
+  exact session-aware deactivation removes the actual removed player
   room.ShouldCleanup() is checked
   manager schedules cleanup if empty
   cleanup timer captures cleanup version
@@ -303,8 +304,10 @@ member leaves
   manager re-checks active player count
   manager re-checks member count
   manager re-checks cleanup version
-  game instance is stopped if present
-  room is deleted from manager map
+  delete room from manager map
+  unlock manager
+  game stop runs outside the manager lock
+  cleanup is logged
 ```
 
 Cleanup is skipped when:
@@ -320,7 +323,7 @@ The current cleanup grace time is:
 30 seconds
 ```
 
-`StopAll()` is separate from delayed cleanup. It immediately stops timers, stops game instances, logs each stopped room, and removes rooms from the map.
+`StopAll()` is separate from delayed cleanup. It removes/copies rooms under the manager lock, unlocks, then stops timers and games and logs outside the manager lock.
 
 ## Code map
 
@@ -339,6 +342,9 @@ Primary implementation files:
 * `services/game-server/internal/rooms/room_membership.go` - Membership map, owner selection, player ID allocation, and member snapshots.
 * `services/game-server/internal/rooms/room_match.go` - Game instance pointer, active-player count, match ID sequencing, resolved summary, and report state.
 * `services/game-server/internal/rooms/room_match_access.go` - Room match accessors.
+* `services/game-server/internal/rooms/room_membership_mutations.go` - Atomic session membership mutations.
+* `services/game-server/internal/rooms/room_membership_mutations_test.go` - Player-ID reuse rejection and membership mutation tests.
+* `services/game-server/internal/rooms/room_lifecycle_concurrency_test.go` - Lifecycle and cleanup lock-boundary tests.
 * `services/game-server/internal/rooms/room_cleanup.go` - Cleanup timer access, cleanup scheduling, cleanup version checks, and game stop helper.
 * `services/game-server/internal/rooms/room_cleanup_state.go` - Cleanup timer/version storage.
 * `services/game-server/internal/rooms/room_rule_adapter.go` - Pure room rule decision to room-domain error adapter.

@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
@@ -72,4 +73,34 @@ func TestBuildRoomSnapshotIncludesResolvedMatchResult(t *testing.T) {
 	}
 
 	gameInstance.Stop()
+}
+
+func TestBuildRoomSnapshotUsesCoherentProjectionWithoutMutatingRoomMembers(t *testing.T) {
+	room := rooms.NewRoom("room-1", rooms.RoomStateLobby, nil)
+	room.AddMember(rooms.NewRoomMember("session-z"))
+	room.AddMember(rooms.NewRoomMember("session-a"))
+
+	beforeMembers := room.MembersSnapshot()
+	snapshot := BuildRoomSnapshot(room, "session-z")
+	if snapshot.RoomCode != "room-1" || snapshot.RoomState != string(rooms.RoomStateLobby) {
+		t.Fatalf("unexpected room projection: %+v", snapshot)
+	}
+	if snapshot.CurrentMatchID != "" {
+		t.Fatalf("expected empty current match, got %q", snapshot.CurrentMatchID)
+	}
+	if snapshot.LocalPlayerID == "" || snapshot.OwnerID == "" {
+		t.Fatalf("expected local player and owner IDs: %+v", snapshot)
+	}
+	if len(snapshot.Members) != 2 || snapshot.Members[0].PlayerID == snapshot.Members[1].PlayerID {
+		t.Fatalf("unexpected snapshot members: %+v", snapshot.Members)
+	}
+
+	roomMembers := room.MembersSnapshot()
+	sort.Slice(beforeMembers, func(left, right int) bool { return beforeMembers[left].SessionID < beforeMembers[right].SessionID })
+	sort.Slice(roomMembers, func(left, right int) bool { return roomMembers[left].SessionID < roomMembers[right].SessionID })
+	for index := range beforeMembers {
+		if roomMembers[index] != beforeMembers[index] {
+			t.Fatalf("BuildRoomSnapshot mutated room member order: before=%+v after=%+v", beforeMembers, roomMembers)
+		}
+	}
 }

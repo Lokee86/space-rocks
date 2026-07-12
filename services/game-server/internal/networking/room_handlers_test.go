@@ -17,14 +17,14 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 
 	session.handleStartSinglePlayerRequest("")
 
-	if session.currentRoomID == "" {
+	if session.sessionContext().RoomID == "" {
 		t.Fatal("expected room to be created")
 	}
-	if session.room == nil {
+	if session.sessionContext().Room == nil {
 		t.Fatal("expected room reference to be stored")
 	}
-	if session.room.State != rooms.RoomStateInGame {
-		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, session.room.State)
+	if session.sessionContext().Room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, session.sessionContext().Room.State)
 	}
 	assertNoQueuedRoomErrorPacket(t, session.outbound)
 }
@@ -37,12 +37,10 @@ func TestHandleStartGameRequestStartsRoom(t *testing.T) {
 	}
 
 	session := &webSocketSession{
-		sessionID:           "session-1",
-		room:                room,
-		currentRoomID:       room.ID,
-		currentGamePlayerID: "player-1",
-		rooms:               manager,
-		outbound:            make(chan []byte, 1),
+		sessionID: "session-1",
+		context:   SessionContext{Room: room, RoomID: room.ID, GamePlayerID: "player-1"},
+		rooms:     manager,
+		outbound:  make(chan []byte, 1),
 	}
 	addSessionMember(room, session.sessionID, session)
 	if _, roomErr := manager.SetReady(room.ID, session.sessionID, true); roomErr != nil {
@@ -51,8 +49,8 @@ func TestHandleStartGameRequestStartsRoom(t *testing.T) {
 
 	session.handleStartGameRequest()
 
-	if session.room.State != rooms.RoomStateInGame {
-		t.Fatalf("expected room to enter in-game state, got %q", session.room.State)
+	if session.sessionContext().Room.State != rooms.RoomStateInGame {
+		t.Fatalf("expected room to enter in-game state, got %q", session.sessionContext().Room.State)
 	}
 	assertNoQueuedRoomErrorPacket(t, session.outbound)
 }

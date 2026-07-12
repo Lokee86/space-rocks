@@ -25,10 +25,11 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 		DecodePacket: func() (game.ClientPacket, error) {
 			var packet game.ClientPacket
 			if err := packetcodec.Decode(msg, &packet); err != nil {
+				context := adapter.CurrentSessionContext()
 				logging.Network.Warn("websocket packet decode failed",
 					logging.FieldError, err,
-					logging.FieldRoomID, adapter.CurrentRoomID(),
-					logging.FieldPlayerID, adapter.CurrentGamePlayerID(),
+					logging.FieldRoomID, context.RoomID,
+					logging.FieldPlayerID, context.GamePlayerID,
 					"session_id", adapter.SessionID(),
 					logging.FieldRemoteAddr, remoteAddr,
 				)

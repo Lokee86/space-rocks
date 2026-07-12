@@ -22,9 +22,7 @@ A successful WebSocket upgrade creates one `webSocketSession`. That session is t
 
 ```text
 session identity
-current room pointer
-current room ID
-current active game player ID
+`SessionContext{Room, RoomID, GamePlayerID}` synchronized immutable-value snapshot
 outbound message queue
 auth verifier access
 match result reporter access
@@ -138,7 +136,7 @@ raw packet bytes
 server-internal session ID
 session identity
 current room ID
-current active game player ID
+`SessionContext.GamePlayerID`
 encoded outbound packet bytes
 ```
 
@@ -189,9 +187,7 @@ Initial session fields include:
 ```text
 conn                -> upgraded Gorilla WebSocket connection
 sessionID           -> "session-" plus an atomic sequence number
-currentRoomID       -> empty
-currentGamePlayerID -> empty
-room                -> nil
+SessionContext{Room: nil, RoomID: "", GamePlayerID: ""}
 rooms               -> shared room manager
 outbound            -> buffered channel with capacity 16
 resyncRequests      -> buffered typed resync request channel
@@ -267,9 +263,7 @@ After a message envelope decodes, `handleClientPacket()` creates an inbound sess
 The adapter exposes narrow session operations to the inbound router, including:
 
 ```text
-CurrentRoomID
-CurrentRoom
-CurrentGamePlayerID
+CurrentSessionContext
 SessionID
 EnqueueOutboundMessage
 EnqueueResyncRequest
@@ -325,7 +319,7 @@ debug status, when eligible
 Queued outbound messages and resync acknowledgments remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.asteroids and sr.bullets when the transport is ready. Gameplay presentation writes require:
 
 ```text
-session.currentGamePlayerID is not empty
+SessionContext.GamePlayerID is not empty
 outbound lane send gate allows delivery for the current room/session
 ```
 
@@ -364,20 +358,20 @@ It exists because some room lifecycle transitions are evaluated while gameplay p
 On each server tick, it checks:
 
 ```text
-session.currentGamePlayerID is not empty
+SessionContext.GamePlayerID is not empty
 outbound lane send gate allows delivery for the current room/session
 ```
 
 When eligible, it calls:
 
 ```text
-rooms.TickRoomGameOverLifecycle(session.room, BroadcastRoomSnapshot)
+rooms.TickRoomGameOverLifecycle(SessionContext.Room, BroadcastRoomSnapshot)
 ```
 
 If that call advances the room game-over lifecycle, networking logs the transition and calls:
 
 ```text
-rooms.ReportResolvedMatchResultOnce(session.room, session.matchResultReporter)
+rooms.ReportResolvedMatchResultOnce(SessionContext.Room, session.matchResultReporter)
 ```
 
 The ticker stops when `gameplayLifecycleDone` is closed during connection teardown.
@@ -391,8 +385,8 @@ A WebSocket session can exist without a room.
 Room attachment happens later through room request handlers such as create, join, or start single-player. When a room accepts the session, networking stores:
 
 ```text
-session.room
-session.currentRoomID
+SessionContext.Room
+SessionContext.RoomID
 ```
 
 and attaches the session to the room-session registry.
@@ -400,8 +394,12 @@ and attaches the session to the room-session registry.
 Starting gameplay activates connected room sessions by assigning game-player IDs:
 
 ```text
-session.currentGamePlayerID = playerID
-room.SetMemberPlayerIDForSession(session.sessionID, playerID)
+gameplayContext := room.GameplayContext()
+playerID := gameplayContext.Game.AddPlayer()
+session.setGamePlayerIDForRoom(room, playerID)
+room.ActivateMemberPlayer(gameplayContext, session.sessionID, playerID)
+
+On session-bind failure, remove the game player. On room-activation failure, call `session.clearGamePlayerIDForRoom(room)` and remove the game player.
 ```
 
 Returning a room to lobby clears active game-player IDs for attached sessions.
@@ -412,10 +410,10 @@ Important identity separation:
 sessionID
 server-internal WebSocket/session identity
 
-currentRoomID
+SessionContext.RoomID
 room routing state for the current session
 
-currentGamePlayerID
+SessionContext.GamePlayerID
 networking-owned active game routing state
 
 PlayerID
@@ -438,12 +436,12 @@ Disconnect cleanup flow:
 
 ```text
 report resolved match result before room exit, if needed
-if session has no current room, return
-rooms.LeaveMember(roomID, sessionID, currentGamePlayerID)
+if SessionContext.Room is nil, return
+rooms.LeaveMember(SessionContext.RoomID, sessionID, SessionContext.GamePlayerID)
 detach room session from room-session registry
-clear session.room
-clear session.currentRoomID
-clear session.currentGamePlayerID
+clear the coherent `SessionContext{}` with the expected-context helper
+
+`LeaveMember` uses the atomically removed member identity and does not trust the legacy caller player-ID argument.
 if room still has members, broadcast room snapshot
 ```
 
@@ -464,7 +462,7 @@ session.reportResolvedMatchBeforeRoomExit(reason)
 checks whether the session still has a room and calls:
 
 ```text
-rooms.ReportResolvedMatchResultOnce(session.room, session.matchResultReporter)
+rooms.ReportResolvedMatchResultOnce(SessionContext.Room, session.matchResultReporter)
 ```
 
 The session lifecycle does not build the match summary or decide who won. It only protects against losing the last session reference before an already resolved match result is reported.
@@ -579,9 +577,7 @@ The WebSocket session lifecycle owns only transient per-connection state.
 It mutates:
 
 ```text
-webSocketSession.currentRoomID
-webSocketSession.currentGamePlayerID
-webSocketSession.room
+SessionContext
 webSocketSession.identity
 webSocketSession.outbound
 webSocketSession.resyncRequests
@@ -699,7 +695,7 @@ cd services/game-server && go test -buildvcs=false ./internal/networking ./inter
 
 ## Notes
 
-The current session object is shared by the read loop, write loop, lifecycle ticker, and session handlers. There is no separate session actor abstraction. This document describes the current implementation shape, not a general concurrency model.
+The current concurrency model is concrete: `webSocketSession.mu` protects session context, identity, WebRTC transport, and debug-catalog state; only `realtimeState` is write-loop-owned; room operations use `Room.mu`; and external game/reporter calls occur outside room locks.
 
 The WebSocket lifecycle intentionally stays separate from room/game authority. Adding new room or gameplay behavior should usually extend the packet routing, room, or game seams rather than adding rules directly to WebSocket upgrade or read/write loop code.
 

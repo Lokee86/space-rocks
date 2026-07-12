@@ -376,9 +376,14 @@ func TestRoomManagerLeaveMemberRemovesPlayerAndSchedulesCleanupWhenEmpty(t *test
 		t.Fatalf("create lobby room: %v", err)
 	}
 	room.AddMemberSessionID("session-1")
-	room.SetGameInstance(game.New())
+	if err := room.StartSinglePlayerGame(game.New); err != nil {
+		t.Fatalf("start game: %v", err)
+	}
+	defer room.GameInstance().Stop()
 	playerID := room.GameInstance().AddPlayer()
-	room.SetActivePlayerCount(1)
+	if !room.ActivateMemberPlayer(room.GameplayContext(), "session-1", playerID) {
+		t.Fatal("expected member activation")
+	}
 
 	result, roomErr := manager.LeaveMember(room.ID, "session-1", playerID)
 	if roomErr != nil {

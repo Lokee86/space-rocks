@@ -106,9 +106,7 @@ and continues reading the next WebSocket message. The failed message does not en
 The concrete session is hidden behind `inboundSessionAdapter`, which exposes only the operations needed by inbound packet-family handlers:
 
 ```text
-CurrentRoomID
-CurrentRoom
-CurrentGamePlayerID
+CurrentSessionContext
 SessionID
 EnqueueOutboundMessage
 LogLobbyPacketReceived
@@ -173,9 +171,9 @@ All devtools groups delegate to the same command handling path:
 ```text
 `handleDevtoolsCommandPacket`
 -> packetcodec.Decode(raw message, devtools.DebugCommand)
--> game.NewControl(room.GameInstance())
+-> game.NewControl(context.Room.GameplayContext().Game)
 -> devtools.NewController(...)
--> Controller.HandleCommand(currentGamePlayerID, command)
+-> Controller.HandleCommand(context.GamePlayerID, command)
 ```
 
 Devtools packet routing requires both a current room and a current active game player. If either is missing, the devtools packet is consumed but no command is applied. This prevents devtools command packets from falling through into normal game packet routing.
@@ -274,23 +272,23 @@ client_config
 the handler requires a current room and a current game player. If either is missing, the packet is consumed and ignored. If both exist, the handler delegates to:
 
 ```text
-room.GameInstance().HandlePacket(currentGamePlayerID, packet)
+context.Room.GameplayContext().Game.HandlePacket(context.GamePlayerID, packet)
 ```
 
 For target and pause packets, the handler first requires a current room and active game player, then routes by packet type:
 
 ```text
 set_target_player_request
--> Game.SetPlayerTarget(currentGamePlayerID, packet.TargetID)
+-> Game.SetPlayerTarget(context.GamePlayerID, packet.TargetID)
 
 select_target_at_position_request
--> Game.SelectTargetAtPosition(currentGamePlayerID, packet.X, packet.Y, TargetRef)
+-> Game.SelectTargetAtPosition(context.GamePlayerID, packet.X, packet.Y, TargetRef)
 
 clear_target_request
--> Game.ClearTarget(currentGamePlayerID)
+-> Game.ClearTarget(context.GamePlayerID)
 
 pause_request
--> Game.HandlePacket(currentGamePlayerID, packet)
+-> Game.HandlePacket(context.GamePlayerID, packet)
 -> session.EnqueuePlayerPauseState()
 ```
 
@@ -337,21 +335,21 @@ debug_add_lives
 debug_clear_bullets
 debug_clear_asteroids
 -> devtools.DebugCommand
--> game.NewControl(room.GameInstance())
+-> game.NewControl(context.Room.GameplayContext().Game)
 -> devtools.NewController(...)
 -> Controller.HandleCommand
 
 debug_spawn_entity
 debug_spawn_pickup
 -> devtools.DebugCommand
--> game.NewControl(room.GameInstance())
+-> game.NewControl(context.Room.GameplayContext().Game)
 -> devtools.NewController(...)
 -> Controller.HandleCommand
 
 debug_begin_continuous_bullet_stream
 debug_respawn_player
 -> devtools.DebugCommand
--> game.NewControl(room.GameInstance())
+-> game.NewControl(context.Room.GameplayContext().Game)
 -> devtools.NewController(...)
 -> Controller.HandleCommand
 
@@ -427,7 +425,7 @@ require current room and active game player
 fall through unhandled when room/player is missing
 ```
 
-The websocket connection itself does not imply room membership, and room membership does not imply an active game player. `currentGamePlayerID` is the networking-owned active game routing state used to target gameplay requests at the current game instance.
+The websocket connection itself does not imply room membership, and room membership does not imply an active game player. `context.GamePlayerID` is the networking-owned active game routing state used to target gameplay requests at the current game instance.
 
 ## Data ownership
 

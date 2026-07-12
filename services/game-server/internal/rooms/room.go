@@ -7,13 +7,13 @@ import (
 )
 
 type Room struct {
-	ID             string
-	State          RoomState
-	match          *roomMatch
-	membership     *roomMembership
-	Joinable       bool
-	cleanup        *roomCleanup
-	mu             sync.Mutex
+	ID         string
+	State      RoomState
+	match      *roomMatch
+	membership *roomMembership
+	Joinable   bool
+	cleanup    *roomCleanup
+	mu         sync.Mutex
 }
 
 func NewRoom(roomID string, state RoomState, gameInstance *game.Game) *Room {

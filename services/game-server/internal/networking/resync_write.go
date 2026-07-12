@@ -10,29 +10,40 @@ import (
 var writeResyncMessage = outbound.WriteServerMessage
 
 func writeResyncRequiredAndApply(session *webSocketSession, queued queuedResyncRequest, remoteAddr string) bool {
-	request := queued.Request
-	if !realtime.IsBaselineLane(request.Lane) || session == nil || session.room == nil || session.room.GameInstance() == nil || session.currentGamePlayerID == "" || queued.RoomID != session.room.ID || queued.ReceiverID != session.currentGamePlayerID || queued.MatchID == "" || request.MatchID == "" || request.MatchID != queued.MatchID || request.MatchID != session.room.CurrentMatchID() {
+	if session == nil {
 		return true
 	}
-	matchID := session.room.CurrentMatchID()
-	if !session.realtimeState.IdentityMatches(session.currentGamePlayerID, matchID) {
-		session.realtimeState = realtime.NewRealtimeSessionState(session.currentGamePlayerID, matchID)
+	context := session.sessionContext()
+	if context.Room == nil || context.GamePlayerID == "" {
+		return true
 	}
+	gameplayContext := context.Room.GameplayContext()
+	if !realtime.IsBaselineLane(queued.Request.Lane) || gameplayContext.Game == nil || queued.RoomID != context.RoomID || queued.ReceiverID != context.GamePlayerID || queued.MatchID == "" || queued.Request.MatchID == "" || queued.Request.MatchID != queued.MatchID {
+		return true
+	}
+	matchID := gameplayContext.MatchID
+	if queued.Request.MatchID != matchID {
+		return true
+	}
+	resetRealtimeStateForContext(session, context, matchID)
 	message, err := json.Marshal(map[string]any{
 		"type":        realtime.PacketFamilyResyncRequired,
 		"match_id":    matchID,
-		"lane":        request.Lane,
-		"baseline_id": request.BaselineID,
-		"sequence":    request.Sequence,
-		"reason":      request.Reason,
+		"lane":        queued.Request.Lane,
+		"baseline_id": queued.Request.BaselineID,
+		"sequence":    queued.Request.Sequence,
+		"reason":      queued.Request.Reason,
 	})
-	if err != nil {
-		return false
+	if err != nil || !session.sessionContextMatches(context) || !context.Room.GameplayContextMatches(gameplayContext) {
+		return err == nil
 	}
 	if !writeResyncMessage(session.conn, message, func(err error) {
-		logWebSocketWriteClose(err, session.currentRoomID, session.currentGamePlayerID, remoteAddr)
+		logWebSocketWriteClose(err, context.RoomID, context.GamePlayerID, remoteAddr)
 	}) {
 		return false
 	}
-	return session.realtimeState.RequireFullBaseline(request.Lane)
+	if !session.sessionContextMatches(context) || !context.Room.GameplayContextMatches(gameplayContext) {
+		return true
+	}
+	return session.realtimeState.RequireFullBaseline(queued.Request.Lane)
 }

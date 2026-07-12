@@ -108,7 +108,8 @@ client_config
 When both values exist, the packet is forwarded to:
 
 ```text
-room.GameInstance().HandlePacket(currentGamePlayerID, packet)
+gameplayContext := context.Room.GameplayContext()
+gameplayContext.Game.HandlePacket(context.GamePlayerID, packet)
 ```
 
 This means player input routing starts only after networking has already resolved the per-session game player identity.

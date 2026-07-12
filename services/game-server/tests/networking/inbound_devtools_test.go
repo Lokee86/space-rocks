@@ -5,14 +5,14 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type placementDevtoolsSession struct{}
 
-func (placementDevtoolsSession) CurrentRoom() *rooms.Room { return nil }
-func (placementDevtoolsSession) CurrentRoomID() string { return "" }
-func (placementDevtoolsSession) CurrentGamePlayerID() string { return "" }
+func (placementDevtoolsSession) CurrentSessionContext() inbound.SessionContext {
+	return inbound.SessionContext{}
+}
+
 func (placementDevtoolsSession) SessionID() string { return "" }
 
 func TestHandlePlacementDevtoolsPacketAcceptsPickupSpawn(t *testing.T) {

@@ -25,10 +25,8 @@ func resyncWriteSession(t *testing.T) (*webSocketSession, string) {
 	})
 	matchID := room.CurrentMatchID()
 	return &webSocketSession{
-		room:                room,
-		currentRoomID:       room.ID,
-		currentGamePlayerID: "player-1",
-		realtimeState:       realtime.NewRealtimeSessionState("player-1", matchID),
+		context:       SessionContext{Room: room, RoomID: room.ID, GamePlayerID: "player-1"},
+		realtimeState: realtime.NewRealtimeSessionState("player-1", matchID),
 	}, matchID
 }
 
@@ -41,7 +39,7 @@ func readyResyncWriteState(session *webSocketSession) {
 func TestWriteResyncRequiredAndApplyWritesBeforeInvalidating(t *testing.T) {
 	session, matchID := resyncWriteSession(t)
 	readyResyncWriteState(session)
-	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: matchID}
+	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.sessionContext().Room.ID, ReceiverID: "player-1", MatchID: matchID}
 	called := false
 	original := writeResyncMessage
 	t.Cleanup(func() { writeResyncMessage = original })
@@ -83,7 +81,7 @@ func TestWriteResyncRequiredAndApplyFailedWritePreservesState(t *testing.T) {
 	original := writeResyncMessage
 	t.Cleanup(func() { writeResyncMessage = original })
 	writeResyncMessage = func(_ *websocket.Conn, _ []byte, _ func(error)) bool { return false }
-	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: matchID}
+	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.sessionContext().Room.ID, ReceiverID: "player-1", MatchID: matchID}
 	if writeResyncRequiredAndApply(session, request, "remote") {
 		t.Fatal("expected failed write")
 	}
@@ -105,11 +103,11 @@ func TestWriteResyncRequiredAndApplyIgnoresStaleOrInvalidRequests(t *testing.T) 
 		{"missing queued match", func(_ *webSocketSession, r *queuedResyncRequest) { r.MatchID = "" }},
 		{"request queued mismatch", func(_ *webSocketSession, r *queuedResyncRequest) { r.Request.MatchID = "other-match" }},
 		{"nil session", func(_ *webSocketSession, _ *queuedResyncRequest) {}},
-		{"nil room", func(s *webSocketSession, _ *queuedResyncRequest) { s.room = nil }},
+		{"nil room", func(s *webSocketSession, _ *queuedResyncRequest) { s.clearRoomContext() }},
 		{"nil game", func(s *webSocketSession, _ *queuedResyncRequest) {
-			s.room = rooms.NewRoom("room-1", rooms.RoomStateInGame, nil)
+			s.context = SessionContext{Room: rooms.NewRoom("room-1", rooms.RoomStateInGame, nil), RoomID: "room-1", GamePlayerID: "player-1"}
 		}},
-		{"empty player", func(s *webSocketSession, _ *queuedResyncRequest) { s.currentGamePlayerID = "" }},
+		{"empty player", func(s *webSocketSession, _ *queuedResyncRequest) { s.context.GamePlayerID = "" }},
 		{"stale room", func(_ *webSocketSession, r *queuedResyncRequest) { r.RoomID = "old-room" }},
 		{"stale receiver", func(_ *webSocketSession, r *queuedResyncRequest) { r.ReceiverID = "old-player" }},
 	}
@@ -117,7 +115,7 @@ func TestWriteResyncRequiredAndApplyIgnoresStaleOrInvalidRequests(t *testing.T) 
 		t.Run(tc.name, func(t *testing.T) {
 			session, matchID := resyncWriteSession(t)
 			readyResyncWriteState(session)
-			request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: matchID}
+			request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.sessionContext().Room.ID, ReceiverID: "player-1", MatchID: matchID}
 			called := false
 			original := writeResyncMessage
 			t.Cleanup(func() { writeResyncMessage = original })
@@ -144,22 +142,22 @@ func TestWriteResyncRequiredAndApplyIgnoresStaleOrInvalidRequests(t *testing.T) 
 func TestWriteResyncRequiredAndApplyRejectsStaleMatchAfterRoomAdvances(t *testing.T) {
 	session, oldMatchID := resyncWriteSession(t)
 	readyResyncWriteState(session)
-	if err := session.room.MarkGameOver(); err != nil {
+	if err := session.sessionContext().Room.MarkGameOver(); err != nil {
 		t.Fatalf("mark game over: %v", err)
 	}
-	if err := session.room.ResetToLobby("Player-1"); err != nil {
+	if err := session.sessionContext().Room.ResetToLobby("Player-1"); err != nil {
 		t.Fatalf("reset room: %v", err)
 	}
-	if err := session.room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
+	if err := session.sessionContext().Room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
 		t.Fatalf("start next match: %v", err)
 	}
-	newMatchID := session.room.CurrentMatchID()
+	newMatchID := session.sessionContext().Room.CurrentMatchID()
 	if newMatchID == oldMatchID {
 		t.Fatalf("expected match to advance from %q", oldMatchID)
 	}
 	session.realtimeState = realtime.NewRealtimeSessionState("player-1", newMatchID)
 	readyResyncWriteState(session)
-	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: oldMatchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: oldMatchID}
+	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: oldMatchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.sessionContext().Room.ID, ReceiverID: "player-1", MatchID: oldMatchID}
 	called := false
 	original := writeResyncMessage
 	t.Cleanup(func() { writeResyncMessage = original })

@@ -69,3 +69,18 @@ func (room *Room) SetReadyInLobby(playerID string, ready bool) *RoomDomainError 
 	member.SetReady(ready)
 	return nil
 }
+
+func (room *Room) SetReadyForSessionInLobby(sessionID string, ready bool) *RoomDomainError {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if room.State != RoomStateLobby {
+		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Ready state can only be changed in the lobby."}
+	}
+	member, ok := room.memberForSessionLocked(sessionID)
+	if !ok {
+		return &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
+	}
+	member.SetReady(ready)
+	return nil
+}

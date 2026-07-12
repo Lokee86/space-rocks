@@ -12,36 +12,34 @@ type LeaveMemberResult struct {
 	ShouldBroadcastSnapshot bool
 }
 
-func (manager *RoomManager) LeaveMember(roomID string, sessionID string, playerID string) (*LeaveMemberResult, *RoomDomainError) {
+func (manager *RoomManager) LeaveMember(roomID, sessionID, _ string) (*LeaveMemberResult, *RoomDomainError) {
 	leaveResult, roomErr := manager.LeaveRoom(roomID, sessionID)
 	if roomErr != nil {
 		return nil, roomErr
 	}
 
 	room := leaveResult.Room
-	playerRemoved := false
+	removedPlayerID := leaveResult.RemovedMember.PlayerID
 	gameInstance := room.GameInstance()
-	if playerID != "" && gameInstance != nil {
-		gameInstance.RemovePlayer(playerID)
+	playerRemoved := false
+	if leaveResult.MemberRemoved && removedPlayerID != "" && gameInstance != nil && room.DeactivateMemberPlayer(sessionID) {
+		gameInstance.RemovePlayer(removedPlayerID)
 		playerRemoved = true
-		activePlayers := room.match.ActivePlayers()
-		if activePlayers > 0 {
-			room.match.SetActivePlayers(activePlayers - 1)
-		}
 	}
-	cleanupScheduled := room.ShouldCleanup()
+
+	population := room.Population()
+	cleanupScheduled := population.Members == 0 && population.ActivePlayers == 0
 	manager.ScheduleCleanupIfEmpty(leaveResult.RoomID)
 
-	remainingMembers := room.MemberCount()
 	return &LeaveMemberResult{
 		Room:                    room,
 		RoomID:                  leaveResult.RoomID,
 		SessionID:               sessionID,
-		PlayerID:                playerID,
-		RemainingMembers:        remainingMembers,
-		ActivePlayers:           room.ActivePlayerCount(),
+		PlayerID:                removedPlayerID,
+		RemainingMembers:        population.Members,
+		ActivePlayers:           population.ActivePlayers,
 		PlayerRemoved:           playerRemoved,
 		CleanupScheduled:        cleanupScheduled,
-		ShouldBroadcastSnapshot: remainingMembers > 0,
+		ShouldBroadcastSnapshot: population.Members > 0,
 	}, nil
 }

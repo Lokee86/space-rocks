@@ -10,7 +10,8 @@ func (session *webSocketSession) handleCreateRoomRequest() {
 		return
 	}
 
-	if session.currentRoomID != "" {
+	context := session.sessionContext()
+	if context.RoomID != "" {
 		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return
 	}
@@ -23,9 +24,7 @@ func (session *webSocketSession) handleCreateRoomRequest() {
 	}
 
 	addSessionMember(room, session.sessionID, session)
-	session.room = room
-	session.currentRoomID = room.ID
-	session.currentGamePlayerID = ""
+	session.bindRoom(room)
 	session.resetDebugShapeCatalogSent()
 	session.EnqueueRoomSnapshot(room)
 }
@@ -35,7 +34,8 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
 		return
 	}
 
-	if session.currentRoomID != "" {
+	context := session.sessionContext()
+	if context.RoomID != "" {
 		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return
 	}
@@ -50,9 +50,7 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string) {
 	if accountID := accountIDForSession(session); accountID != "" {
 		room.SetMemberAccountIDForSession(session.sessionID, accountID)
 	}
-	session.room = room
-	session.currentRoomID = room.ID
-	session.currentGamePlayerID = ""
+	session.bindRoom(room)
 	session.resetDebugShapeCatalogSent()
 	BroadcastRoomSnapshot(room)
 }
@@ -62,12 +60,13 @@ func (session *webSocketSession) handleLeaveRoomRequest() {
 }
 
 func (session *webSocketSession) handleSetReadyRequest(ready bool) {
-	if session.currentRoomID == "" || session.sessionID == "" {
+	context := session.sessionContext()
+	if context.RoomID == "" || session.sessionID == "" {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
-	room, roomErr := session.rooms.SetReady(session.currentRoomID, session.sessionID, ready)
+	room, roomErr := session.rooms.SetReady(context.RoomID, session.sessionID, ready)
 	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
@@ -77,18 +76,18 @@ func (session *webSocketSession) handleSetReadyRequest(ready bool) {
 }
 
 func (session *webSocketSession) handleStartGameRequest() {
-	if session.room == nil || session.sessionID == "" {
+	context := session.sessionContext()
+	if context.Room == nil || context.RoomID == "" || session.sessionID == "" {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
-	room, roomErr := session.rooms.StartRoomGame(session.currentRoomID, session.sessionID)
+	room, roomErr := session.rooms.StartRoomGame(context.RoomID, session.sessionID)
 	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
 	}
 
-	session.room = room
 	session.resetDebugShapeCatalogSent()
 	activateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)
@@ -96,14 +95,15 @@ func (session *webSocketSession) handleStartGameRequest() {
 
 func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string) {
 	_ = localProfileID
+	context := session.sessionContext()
 	logging.Network.Debug("StartSinglePlayerRequest received",
-		logging.FieldRoomID, session.currentRoomID,
-		logging.FieldPlayerID, session.currentGamePlayerID,
+		logging.FieldRoomID, context.RoomID,
+		logging.FieldPlayerID, context.GamePlayerID,
 		"session_id", session.sessionID,
-		"current_room_id", session.currentRoomID,
+		"current_room_id", context.RoomID,
 	)
 
-	if session.currentRoomID != "" {
+	if context.RoomID != "" {
 		session.EnqueueRoomError(rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
 		return
 	}
@@ -116,9 +116,7 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 	}
 
 	attachRoomSession(room, session.sessionID, session)
-	session.room = room
-	session.currentRoomID = room.ID
-	session.currentGamePlayerID = ""
+	session.bindRoom(room)
 	session.resetDebugShapeCatalogSent()
 	if localProfileID != "" {
 		room.SetMemberLocalProfileIDForSession(session.sessionID, localProfileID)
@@ -129,18 +127,18 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 }
 
 func (session *webSocketSession) handleReturnToLobbyRequest() {
-	if session.room == nil || session.sessionID == "" {
+	context := session.sessionContext()
+	if context.Room == nil || context.RoomID == "" || session.sessionID == "" {
 		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
-	room, roomErr := session.rooms.ReturnRoomToLobby(session.currentRoomID, session.sessionID)
+	room, roomErr := session.rooms.ReturnRoomToLobby(context.RoomID, session.sessionID)
 	if roomErr != nil {
 		session.EnqueueRoomError(roomErr.Code, roomErr.Message)
 		return
 	}
 
-	session.room = room
 	session.resetDebugShapeCatalogSent()
 	deactivateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)

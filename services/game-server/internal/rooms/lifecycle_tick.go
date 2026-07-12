@@ -2,16 +2,14 @@ package rooms
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
 func TickRoomGameOverLifecycle(room *Room, broadcastRoomSnapshot func(*Room)) bool {
 	if !room.MarkGameOverIfComplete() {
 		return false
 	}
-
-	logging.Rooms.Info("room game over detected",
-		logging.FieldRoomID, room.ID,
-	)
+	logging.Rooms.Info("room game over detected", logging.FieldRoomID, room.ID)
 	broadcastRoomSnapshot(room)
 	return true
 }
@@ -25,60 +23,45 @@ func ReportResolvedMatchResultOnceForReason(room *Room, reporter MatchResultRepo
 		return false
 	}
 	if reporter == nil {
-		logging.Rooms.Warn("match result reporter missing; using noop reporter",
-			logging.FieldRoomID, room.ID,
-			"reason", reason,
-		)
 		reporter = NoopMatchResultReporter{}
 	}
-	if room.MatchResultReported() {
-		logging.Rooms.Info("match result report skipped: already reported",
-			logging.FieldRoomID, room.ID,
-			"reason", reason,
-		)
+	room.mu.Lock()
+	if room.match.matchResultReported || room.match.matchResultReporting {
+		room.mu.Unlock()
 		return false
 	}
-
-	summary, ok := room.ResolvedMatchSummary()
+	summary, ok := room.match.ResolvedSummary()
 	if !ok {
-		if reason == "game_over" {
-			logging.Rooms.Warn("match result report skipped: missing resolved summary",
-				logging.FieldRoomID, room.ID,
-				"reason", reason,
-			)
-		} else {
-			logging.Rooms.Debug("match result report skipped: missing resolved summary during cleanup",
-				logging.FieldRoomID, room.ID,
-				"reason", reason,
-			)
+		room.mu.Unlock()
+		return false
+	}
+	roomMatchID := room.match.CurrentMatchID()
+	claimedSummaryID := summary.MatchID
+	claimedSummary := summary
+	claimedSummary.Players = append([]playerdata.PlayerMatchSummary(nil), summary.Players...)
+	room.match.matchResultReporting = true
+	room.mu.Unlock()
+
+	logging.Rooms.Info("match result report started", logging.FieldRoomID, room.ID, "reason", reason, "match_id", summary.MatchID, "mode", summary.Mode, "player_count", len(summary.Players))
+	err := reporter.ReportMatchResult(claimedSummary)
+
+	room.mu.Lock()
+	currentSummary, hasSummary := room.match.ResolvedSummary()
+	claimed := room.match.CurrentMatchID() == roomMatchID && room.match.matchResultReporting && hasSummary && currentSummary.MatchID == claimedSummaryID
+	if claimed {
+		room.match.matchResultReporting = false
+		if err == nil {
+			room.match.matchResultReported = true
 		}
+	}
+	room.mu.Unlock()
+	if err != nil {
+		logging.Rooms.Error("room match result report failed", err, logging.FieldRoomID, room.ID, "reason", reason, "match_id", summary.MatchID, "player_count", len(summary.Players))
 		return false
 	}
-
-	logging.Rooms.Info("match result report started",
-		logging.FieldRoomID, room.ID,
-		"reason", reason,
-		"match_id", summary.MatchID,
-		"mode", summary.Mode,
-		"player_count", len(summary.Players),
-	)
-	if err := reporter.ReportMatchResult(summary); err != nil {
-		logging.Rooms.Error("room match result report failed",
-			err,
-			logging.FieldRoomID, room.ID,
-			"reason", reason,
-			"match_id", summary.MatchID,
-			"player_count", len(summary.Players),
-		)
+	if !claimed {
 		return false
 	}
-
-	room.MarkMatchResultReported()
-	logging.Rooms.Info("match result report succeeded",
-		logging.FieldRoomID, room.ID,
-		"reason", reason,
-		"match_id", summary.MatchID,
-		"player_count", len(summary.Players),
-	)
+	logging.Rooms.Info("match result report succeeded", logging.FieldRoomID, room.ID, "reason", reason, "match_id", summary.MatchID, "player_count", len(summary.Players))
 	return true
 }

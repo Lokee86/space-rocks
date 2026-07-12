@@ -9,15 +9,25 @@ import (
 )
 
 func CanSendDebugStatus(room *rooms.Room) bool {
+	if room == nil {
+		return false
+	}
+	context := room.GameplayContext()
 	return room != nil &&
-		room.GameInstance() != nil &&
+		context.Game != nil &&
 		devtools.Enabled() &&
-		(room.State == rooms.RoomStateInGame || room.State == rooms.RoomStateGameOver)
+		(context.State == rooms.RoomStateInGame || context.State == rooms.RoomStateGameOver)
 }
 
 func BuildDebugStatusResponse(room *rooms.Room, playerID string, roomID string, remoteAddr string) ([]byte, bool) {
-	gameInstance := room.GameInstance()
-	control := game.NewControl(gameInstance)
+	if room == nil {
+		return nil, false
+	}
+	context := room.GameplayContext()
+	if context.Game == nil {
+		return nil, false
+	}
+	control := game.NewControl(context.Game)
 	controller := devtools.NewController(devtools.Dependencies{Target: control})
 	responsePacket := devtools.DebugStatusPacket{
 		Type:          devtools.PacketTypeDebugStatus,

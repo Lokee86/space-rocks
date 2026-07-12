@@ -5,7 +5,7 @@ import "net/http"
 const trustedWebSocketOrigin = "https://space-rocks-client.local"
 
 var localWebSocketOrigins = map[string]struct{}{
-	"http://localhost:8080":  {},
+	"http://localhost:8080": {},
 	"http://127.0.0.1:8080": {},
 	"http://[::1]:8080":     {},
 }

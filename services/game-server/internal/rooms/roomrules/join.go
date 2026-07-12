@@ -2,10 +2,10 @@ package roomrules
 
 // JoinInput captures the data needed to decide whether a room can be joined.
 type JoinInput struct {
-	State      string
-	Joinable   bool
+	State       string
+	Joinable    bool
 	MemberCount int
-	MaxMembers int
+	MaxMembers  int
 }
 
 // DecideJoin applies the join policy without touching room state directly.

@@ -40,21 +40,23 @@ func handleConnection(session *webSocketSession, remoteAddr string) {
 	defer session.conn.Close()
 	defer session.leaveDisconnectedRoom()
 
-	roomID := session.currentRoomID
-	playerID := session.currentGamePlayerID
+	context := session.sessionContext()
 	logging.Network.Debug("websocket connected",
-		logging.FieldRoomID, roomID,
-		logging.FieldPlayerID, playerID,
+		logging.FieldRoomID, context.RoomID,
+		logging.FieldPlayerID, context.GamePlayerID,
 		"session_id", session.sessionID,
-		"current_room_id", session.currentRoomID,
+		"current_room_id", context.RoomID,
 		logging.FieldRemoteAddr, remoteAddr,
 	)
-	defer logging.Network.Debug("websocket disconnected",
-		logging.FieldRoomID, roomID,
-		logging.FieldPlayerID, playerID,
-		"session_id", session.sessionID,
-		logging.FieldRemoteAddr, remoteAddr,
-	)
+	defer func() {
+		context := session.sessionContext()
+		logging.Network.Debug("websocket disconnected",
+			logging.FieldRoomID, context.RoomID,
+			logging.FieldPlayerID, context.GamePlayerID,
+			"session_id", session.sessionID,
+			logging.FieldRemoteAddr, remoteAddr,
+		)
+	}()
 
 	readErr := make(chan error, 1)
 	gameplayLifecycleDone := make(chan struct{})

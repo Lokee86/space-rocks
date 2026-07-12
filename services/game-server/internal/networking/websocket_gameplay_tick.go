@@ -17,17 +17,18 @@ func tickSessionGameplayLifecycle(session *webSocketSession, done <-chan struct{
 		case <-done:
 			return
 		case <-ticker.C:
-			if session.currentGamePlayerID == "" {
+			context := session.sessionContext()
+			if context.Room == nil || context.GamePlayerID == "" {
 				continue
 			}
 
-			if rooms.TickRoomGameOverLifecycle(session.room, BroadcastRoomSnapshot) {
+			if rooms.TickRoomGameOverLifecycle(context.Room, BroadcastRoomSnapshot) {
 				logging.Rooms.Info("room game-over lifecycle advanced; reporting match result",
-					logging.FieldRoomID, session.currentRoomID,
-					logging.FieldPlayerID, session.currentGamePlayerID,
+					logging.FieldRoomID, context.RoomID,
+					logging.FieldPlayerID, context.GamePlayerID,
 					"session_id", session.sessionID,
 				)
-				rooms.ReportResolvedMatchResultOnce(session.room, session.matchResultReporter)
+				rooms.ReportResolvedMatchResultOnce(context.Room, session.matchResultReporter)
 			}
 		}
 	}

@@ -6,18 +6,16 @@ import (
 )
 
 func (session *webSocketSession) EnqueuePlayerPauseState() {
-	if session.room == nil {
+	context := session.sessionContext()
+	if context.Room == nil || context.GamePlayerID == "" {
 		return
 	}
-	gameInstance := session.room.GameInstance()
-	if gameInstance == nil {
-		return
-	}
-	if session.currentGamePlayerID == "" {
+	gameplayContext := context.Room.GameplayContext()
+	if gameplayContext.Game == nil {
 		return
 	}
 
-	packet, ok := gameInstance.PlayerPauseStatePacket(session.currentGamePlayerID)
+	packet, ok := gameplayContext.Game.PlayerPauseStatePacket(context.GamePlayerID)
 	if !ok {
 		return
 	}
@@ -25,10 +23,14 @@ func (session *webSocketSession) EnqueuePlayerPauseState() {
 	payload, err := packetcodec.Encode(packet)
 	if err != nil {
 		logging.Network.Error("player pause state marshal failed", err,
-			logging.FieldRoomID, session.currentRoomID,
-			logging.FieldPlayerID, session.currentGamePlayerID,
+			logging.FieldRoomID, context.RoomID,
+			logging.FieldPlayerID, context.GamePlayerID,
 			"session_id", session.sessionID,
 		)
+		return
+	}
+
+	if !session.sessionContextMatches(context) || !context.Room.GameplayContextMatches(gameplayContext) {
 		return
 	}
 

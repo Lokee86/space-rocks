@@ -6,10 +6,12 @@ import (
 )
 
 func (session *webSocketSession) leaveRequestedRoom() {
-	if session == nil || session.room == nil || session.currentRoomID == "" {
-		if session != nil {
-			session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
-		}
+	if session == nil {
+		return
+	}
+	context := session.sessionContext()
+	if context.Room == nil || context.RoomID == "" {
+		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
@@ -21,37 +23,35 @@ func (session *webSocketSession) leaveDisconnectedRoom() {
 }
 
 func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool) {
-	if session == nil || session.room == nil || session.currentRoomID == "" {
+	if session == nil {
+		return
+	}
+	context := session.sessionContext()
+	if context.Room == nil || context.RoomID == "" {
 		return
 	}
 
+	room := context.Room
+	roomID := context.RoomID
+	playerID := context.GamePlayerID
 	if !enqueueRoomError {
-		if _, ok := session.rooms.Find(session.currentRoomID); !ok {
-			if session.room != nil {
-				detachRoomSession(session.room, session.sessionID)
-			}
-			session.room = nil
-			session.currentRoomID = ""
-			session.currentGamePlayerID = ""
+		if _, ok := session.rooms.Find(roomID); !ok {
+			detachRoomSession(room, session.sessionID)
+			session.clearRoomContextIfMatch(context)
 			session.resetDebugShapeCatalogSent()
 			return
 		}
 	}
 
-	room := session.room
 	if !rooms.ReportResolvedMatchResultOnceForReason(room, session.matchResultReporter, reason) {
 		// Match reporting is best-effort; leave continues even if nothing is reported.
 	}
 
-	leaveResult, roomErr := session.rooms.LeaveMember(session.currentRoomID, session.sessionID, session.currentGamePlayerID)
+	leaveResult, roomErr := session.rooms.LeaveMember(roomID, session.sessionID, playerID)
 	if roomErr != nil {
 		if !enqueueRoomError && roomErr.Code == rooms.RoomErrorRoomNotFound {
-			if session.room != nil {
-				detachRoomSession(session.room, session.sessionID)
-			}
-			session.room = nil
-			session.currentRoomID = ""
-			session.currentGamePlayerID = ""
+			detachRoomSession(room, session.sessionID)
+			session.clearRoomContextIfMatch(context)
 			session.resetDebugShapeCatalogSent()
 			return
 		}
@@ -60,8 +60,8 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 		} else {
 			logging.Rooms.Warn("websocket room leave failed",
 				logging.FieldError, roomErr,
-				logging.FieldRoomID, session.currentRoomID,
-				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRoomID, context.RoomID,
+				logging.FieldPlayerID, context.GamePlayerID,
 				"session_id", session.sessionID,
 				"reason", reason,
 			)
@@ -70,9 +70,7 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 	}
 
 	detachRoomSession(room, session.sessionID)
-	session.room = nil
-	session.currentRoomID = ""
-	session.currentGamePlayerID = ""
+	session.clearRoomContextIfMatch(context)
 	session.resetDebugShapeCatalogSent()
 
 	if leaveResult != nil && leaveResult.ShouldBroadcastSnapshot && leaveResult.Room != nil {

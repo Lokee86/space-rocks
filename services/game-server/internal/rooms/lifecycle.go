@@ -15,15 +15,7 @@ func (manager *RoomManager) StartRoomGame(roomID string, sessionID string) (*Roo
 		}
 	}
 
-	playerID, ok := room.PlayerIDForSession(sessionID)
-	if !ok {
-		return nil, &RoomDomainError{
-			Code:    RoomErrorNotInRoom,
-			Message: "Member is not in the room.",
-		}
-	}
-
-	if roomErr := room.StartGameForMember(playerID, game.New); roomErr != nil {
+	if roomErr := room.StartGameForSession(sessionID, game.New); roomErr != nil {
 		return nil, roomErr
 	}
 
@@ -59,15 +51,7 @@ func (manager *RoomManager) ReturnRoomToLobby(roomID string, sessionID string) (
 		}
 	}
 
-	playerID, ok := room.PlayerIDForSession(sessionID)
-	if !ok {
-		return nil, &RoomDomainError{
-			Code:    RoomErrorNotInRoom,
-			Message: "Member is not in the room.",
-		}
-	}
-
-	if roomErr := room.ResetToLobby(playerID); roomErr != nil {
+	if roomErr := room.ResetToLobbyForSession(sessionID); roomErr != nil {
 		return nil, roomErr
 	}
 

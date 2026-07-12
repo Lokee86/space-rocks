@@ -70,3 +70,34 @@ func TestValidateStartRejectsNonMember(t *testing.T) {
 		t.Fatalf("expected error code %q, got %q", RoomErrorNotInRoom, err.Code)
 	}
 }
+
+func TestSetReadyForSessionInLobbyRejectsMissingSessionAfterPlayerIDReuse(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	old := room.AddMember(NewRoomMember("session-old"))
+	if old == nil {
+		t.Fatal("expected old member to be added")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-old"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected old session to map to Player-1, got %q, %v", playerID, ok)
+	}
+	if _, remaining, removed := room.RemoveMemberForSession("session-old"); !removed || remaining != 0 {
+		t.Fatalf("expected old member removal, removed=%v remaining=%d", removed, remaining)
+	}
+	replacement := room.AddMember(NewRoomMember("session-replacement"))
+	if replacement == nil || replacement.Ready {
+		t.Fatal("expected replacement member to be added not ready")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-replacement"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected replacement session to map to Player-1, got %q, %v", playerID, ok)
+	}
+	err := room.SetReadyForSessionInLobby("session-old", true)
+	if err == nil || err.Code != RoomErrorNotInRoom {
+		t.Fatalf("expected not_in_room error, got %v", err)
+	}
+	if replacement.Ready {
+		t.Fatal("expected replacement member to remain not ready")
+	}
+	if playerID, ok := room.PlayerIDForSession("session-replacement"); !ok || playerID != "Player-1" {
+		t.Fatalf("expected replacement mapping to remain Player-1, got %q, %v", playerID, ok)
+	}
+}

@@ -31,8 +31,7 @@ func TestHandleGameplayPacketRoutesClientConfigToGameHandlePacket(t *testing.T) 
 	}
 
 	session := &webSocketSession{
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
-		currentGamePlayerID: playerID,
+		context: SessionContext{Room: rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance), RoomID: "room-1", GamePlayerID: playerID},
 	}
 
 	packet := game.ClientPacket{
@@ -85,11 +84,11 @@ func TestHandleLobbyPacketStartSinglePlayerStoresLocalProfileID(t *testing.T) {
 	if !inbound.HandleLobbyPacket(newInboundSessionAdapter(session), packet) {
 		t.Fatal("expected start_single_player packet to be handled")
 	}
-	if session.room == nil {
+	if session.sessionContext().Room == nil {
 		t.Fatal("expected single-player room to be created")
 	}
 
-	members := session.room.MembersSnapshot()
+	members := session.sessionContext().Room.MembersSnapshot()
 	if len(members) != 1 {
 		t.Fatalf("expected 1 room member, got %d", len(members))
 	}
@@ -102,21 +101,18 @@ type gameplayPacketTestAdapter struct {
 	session *webSocketSession
 }
 
-func (a gameplayPacketTestAdapter) CurrentRoom() *rooms.Room {
-	return a.session.room
-}
-
-func (a gameplayPacketTestAdapter) CurrentGamePlayerID() string {
-	return a.session.currentGamePlayerID
+func (a gameplayPacketTestAdapter) CurrentSessionContext() inbound.SessionContext {
+	context := a.session.sessionContext()
+	return inbound.SessionContext{Room: context.Room, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID}
 }
 
 func (a gameplayPacketTestAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
 }
 
-func (a gameplayPacketTestAdapter) EnqueueResyncRequest(request realtime.ResyncRequest) bool {
+func (a gameplayPacketTestAdapter) EnqueueResyncRequest(context inbound.SessionContext, request realtime.ResyncRequest) bool {
 	select {
-	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: a.session.room.ID, ReceiverID: a.session.currentGamePlayerID}:
+	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: context.RoomID, ReceiverID: context.GamePlayerID, MatchID: request.MatchID}:
 		return true
 	default:
 		return false

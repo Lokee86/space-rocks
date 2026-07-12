@@ -9,10 +9,14 @@ import (
 )
 
 func CanSendDebugShapeCatalog(room *rooms.Room) bool {
+	if room == nil {
+		return false
+	}
+	context := room.GameplayContext()
 	return room != nil &&
-		room.GameInstance() != nil &&
+		context.Game != nil &&
 		devtools.Enabled() &&
-		(room.State == rooms.RoomStateInGame || room.State == rooms.RoomStateGameOver)
+		(context.State == rooms.RoomStateInGame || context.State == rooms.RoomStateGameOver)
 }
 
 func BuildDebugShapeCatalogResponse(room *rooms.Room, roomID string, remoteAddr string) ([]byte, bool) {

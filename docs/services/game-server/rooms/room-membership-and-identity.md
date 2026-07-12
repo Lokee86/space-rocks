@@ -29,7 +29,7 @@ RoomMember.PlayerID
   room-facing player identity used for owner, ready, room snapshot members,
   local_player_id, and active game routing once activated
 
-webSocketSession.currentGamePlayerID
+webSocketSession.context.GamePlayerID
   networking-owned active game routing value for the current session
 
 RoomMember.AccountID
@@ -118,14 +118,14 @@ active game participation begins only after successful start activation
 MemberID is internal room-member identity
 SessionID is networking/session identity stored on the room member for lookup
 PlayerID is the room/player-facing identity used by snapshots and room rules
-currentGamePlayerID is networking-owned active game routing state
+SessionContext.GamePlayerID is networking-owned active game routing state
 AccountID and LocalProfileID are identity attachments, not room-auth authorities
 ```
 
 Current implementation uses two player ID allocation sources:
 
 * lobby/member join assigns readable provisional IDs through `playerids.Format`, currently `Player-1`, `Player-2`, and so on.
-* active game activation calls `game.AddPlayer()`, currently producing game player IDs such as `player-1`, then `room.SetMemberPlayerIDForSession` rekeys the member to that game player ID.
+* active game activation captures `GameplayContext`, calls `gameplayContext.Game.AddPlayer()`, binds `SessionContext.GamePlayerID` with `setGamePlayerIDForRoom`, then calls `Room.ActivateMemberPlayer(gameplayContext, sessionID, playerID)` under one `Room.mu`. The room validates the exact context/session, rejects collisions, rekeys member and owner when needed, and calls `roomMatch.ActivateSession` exactly once. On failure, networking clears the session game-player ID and removes the game player.
 
 Consumers should use the ID values supplied by the current packet or room API. They should not infer identity semantics from casing or assume a WebSocket session ID is a player ID.
 
@@ -143,7 +143,7 @@ Room.AddMemberSessionID
 Room.PlayerIDForSession
 Room.SetMemberAccountIDForSession
 Room.SetMemberLocalProfileIDForSession
-Room.SetMemberPlayerIDForSession
+Room.ActivateMemberPlayer
 Room.OwnerID
 Room.RemoveMember
 Room.MemberCount
@@ -217,8 +217,8 @@ Networking owns:
 
 ```text
 webSocketSession.sessionID
-webSocketSession.currentRoomID
-webSocketSession.currentGamePlayerID
+webSocketSession.context.RoomID
+webSocketSession.context.GamePlayerID
 webSocketSession.identity
 roomSessions.byRoom
 ```
@@ -239,6 +239,14 @@ Packet data ownership:
 * `shared/packets/lobby.toml` owns lobby/room packet schema.
 * Generated Go packet structs are emitted under `services/game-server/internal/game/packets.go`.
 * Room membership supplies runtime facts to snapshot construction; it does not own packet generation.
+
+## Active-session ownership and leave semantics
+
+`roomMatch.activeSessionIDs` is the authoritative per-match participation set. Same-session/same-player activation is idempotent within one match. `BeginNextMatch` clears active-session ownership and count but leaves member `PlayerID` values intact, so the same identity can activate in a later match.
+
+`RemoveMemberForSession` runs under one `Room.mu` acquisition and returns a copied exact removed `RoomMember`, the remaining count, and success. `LeaveMember` uses that member’s `PlayerID`, calls `DeactivateMemberPlayer(sessionID)` once, removes only that actual game player, ignores the legacy caller player-ID argument, and computes cleanup after deactivation.
+
+Networking-owned live state is `webSocketSession.context`, a `SessionContext{Room, RoomID, GamePlayerID}` value protected by `webSocketSession.mu`. `SessionContext.GamePlayerID` names the value member; it is not an instruction to mutate `webSocketSession.context.GamePlayerID` through an unlocked field.
 
 ## Code map
 
@@ -262,7 +270,8 @@ Networking integration files:
 
 * `services/game-server/internal/networking/room_handlers.go` - Handles room packets and attaches account/local-profile identity to members.
 * `services/game-server/internal/networking/room_sessions.go` - Tracks live WebSocket sessions by room and session ID for broadcast and activation.
-* `services/game-server/internal/networking/player_activation.go` - Activates connected members into game players and rebinds member `PlayerID`.
+* `services/game-server/internal/networking/player_activation.go` - Captures gameplay context, binds session game-player IDs, and activates members atomically with rollback.
+* `services/game-server/internal/rooms/room_membership_mutations.go` - Atomic activation/removal and per-match active-session ownership.
 * `services/game-server/internal/networking/room_snapshot.go` - Projects safe room membership fields into generated room snapshots.
 * `services/game-server/internal/networking/websocket.go` - Removes members on requested leave or disconnect.
 * `services/game-server/internal/networking/session_identity.go` - Defines guest and authenticated-account session identity.
@@ -319,6 +328,9 @@ Relevant networking tests:
 * `services/game-server/internal/networking/player_activation_test.go`
 
   * Verifies activation rebinds member player ID, preserves account ID, updates owner ID, and carries identity into match summary.
+* `services/game-server/internal/rooms/room_membership_mutations_test.go`
+
+  * Verifies Player-ID reuse rejection, activation rollback, idempotent activation, consecutive-match ownership reset, and exact active counts.
 
 * `services/game-server/internal/networking/room_sessions_test.go`
 

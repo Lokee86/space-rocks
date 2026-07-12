@@ -9,15 +9,24 @@ import (
 )
 
 type resyncGameplaySessionFake struct {
-	room     *rooms.Room
-	playerID string
-	requests []realtime.ResyncRequest
+	room         *rooms.Room
+	playerID     string
+	requests     []realtime.ResyncRequest
+	contexts     []SessionContext
+	contextCalls int
 }
 
-func (f *resyncGameplaySessionFake) CurrentRoom() *rooms.Room    { return f.room }
-func (f *resyncGameplaySessionFake) CurrentGamePlayerID() string { return f.playerID }
-func (f *resyncGameplaySessionFake) EnqueuePlayerPauseState()    {}
-func (f *resyncGameplaySessionFake) EnqueueResyncRequest(request realtime.ResyncRequest) bool {
+func (f *resyncGameplaySessionFake) CurrentSessionContext() SessionContext {
+	f.contextCalls++
+	roomID := ""
+	if f.room != nil {
+		roomID = f.room.ID
+	}
+	return SessionContext{Room: f.room, RoomID: roomID, GamePlayerID: f.playerID}
+}
+func (f *resyncGameplaySessionFake) EnqueuePlayerPauseState() {}
+func (f *resyncGameplaySessionFake) EnqueueResyncRequest(context SessionContext, request realtime.ResyncRequest) bool {
+	f.contexts = append(f.contexts, context)
 	f.requests = append(f.requests, request)
 	return true
 }
@@ -45,6 +54,13 @@ func TestHandleGameplayPacketQueuesResyncRequest(t *testing.T) {
 	}
 	if got := session.requests[0]; got.MatchID != matchID || got.Lane != realtime.LaneWorld || got.BaselineID != "baseline-4" || got.Sequence != 4 || got.Reason != "wrong_baseline" {
 		t.Fatalf("unexpected request: %#v", got)
+	}
+	expected := SessionContext{Room: room, RoomID: room.ID, GamePlayerID: "player-1"}
+	if session.contextCalls != 1 {
+		t.Fatalf("CurrentSessionContext calls = %d, want 1", session.contextCalls)
+	}
+	if len(session.contexts) != 1 || session.contexts[0] != expected {
+		t.Fatalf("unexpected enqueue context: %#v", session.contexts)
 	}
 }
 

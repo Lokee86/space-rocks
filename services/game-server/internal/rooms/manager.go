@@ -14,6 +14,8 @@ type RoomManager struct {
 	cleanupDelay time.Duration
 }
 
+var stopRoomForCleanup = func(room *Room) { room.StopGameIfPresent() }
+
 type RoomDomainError struct {
 	Code    string
 	Message string
@@ -23,6 +25,8 @@ type LeaveRoomResult struct {
 	Room             *Room
 	RoomID           string
 	SessionID        string
+	RemovedMember    RoomMember
+	MemberRemoved    bool
 	RemainingMembers int
 }
 
@@ -120,10 +124,6 @@ func (manager *RoomManager) JoinRoom(sessionID string, roomCode string) (*Room, 
 		}
 	}
 
-	if roomErr := room.ValidateJoin(); roomErr != nil {
-		return nil, roomErr
-	}
-
 	if roomErr := room.JoinMember(sessionID); roomErr != nil {
 		return nil, roomErr
 	}
@@ -143,17 +143,15 @@ func (manager *RoomManager) LeaveRoom(roomID string, sessionID string) (*LeaveRo
 		}
 	}
 
-	if sessionID != "" {
-		if playerID, ok := room.PlayerIDForSession(sessionID); ok {
-			room.RemoveMember(playerID)
-		}
-	}
+	removedMember, remainingMembers, memberRemoved := room.RemoveMemberForSession(sessionID)
 
 	return &LeaveRoomResult{
 		Room:             room,
 		RoomID:           roomID,
 		SessionID:        sessionID,
-		RemainingMembers: room.MemberCount(),
+		RemovedMember:    removedMember,
+		MemberRemoved:    memberRemoved,
+		RemainingMembers: remainingMembers,
 	}, nil
 }
 
@@ -170,22 +168,7 @@ func (manager *RoomManager) SetReady(roomID string, sessionID string, ready bool
 		}
 	}
 
-	if room.CurrentState() != RoomStateLobby {
-		return nil, &RoomDomainError{
-			Code:    RoomErrorInvalidRoomState,
-			Message: "Ready state can only be changed in the lobby.",
-		}
-	}
-
-	playerID, ok := room.PlayerIDForSession(sessionID)
-	if !ok {
-		return nil, &RoomDomainError{
-			Code:    RoomErrorNotInRoom,
-			Message: "Member is not in the room.",
-		}
-	}
-
-	if roomErr := room.SetReadyInLobby(playerID, ready); roomErr != nil {
+	if roomErr := room.SetReadyForSessionInLobby(sessionID, ready); roomErr != nil {
 		return nil, roomErr
 	}
 
@@ -194,16 +177,16 @@ func (manager *RoomManager) SetReady(roomID string, sessionID string, ready bool
 
 func (manager *RoomManager) StopAll() {
 	manager.mu.Lock()
-	defer manager.mu.Unlock()
-
+	rooms := make(map[string]*Room, len(manager.rooms))
 	for roomID, room := range manager.rooms {
+		rooms[roomID] = room
+		delete(manager.rooms, roomID)
+	}
+	manager.mu.Unlock()
+	for roomID, room := range rooms {
 		room.StopCleanupTimer()
 		logging.Rooms.Debug("room stopped", logging.FieldRoomID, roomID)
-		gameInstance := room.GameInstance()
-		if gameInstance != nil {
-			gameInstance.Stop()
-		}
-		delete(manager.rooms, roomID)
+		room.StopGameIfPresent()
 	}
 }
 
@@ -228,34 +211,37 @@ func (manager *RoomManager) ScheduleCleanupIfEmpty(roomID string) {
 
 func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) {
 	manager.mu.Lock()
-	defer manager.mu.Unlock()
 
 	room, ok := manager.rooms[roomID]
 	if !ok {
+		manager.mu.Unlock()
 		logging.Rooms.Debug("room cleanup skipped; room already removed",
 			logging.FieldRoomID, roomID,
 			"cleanup_version", cleanupVersion,
 		)
 		return
 	}
-	activePlayers := room.ActivePlayerCount()
-	if activePlayers > 0 {
+	population := room.Population()
+	if population.ActivePlayers > 0 {
+		manager.mu.Unlock()
 		logging.Rooms.Debug("room cleanup skipped; room active",
 			logging.FieldRoomID, roomID,
-			"active_players", activePlayers,
+			"active_players", population.ActivePlayers,
 			"cleanup_version", cleanupVersion,
 		)
 		return
 	}
-	if !room.ShouldCleanup() {
+	if population.Members != 0 {
+		manager.mu.Unlock()
 		logging.Rooms.Debug("room cleanup skipped; room has members",
 			logging.FieldRoomID, roomID,
-			"members", room.MemberCount(),
+			"members", population.Members,
 			"cleanup_version", cleanupVersion,
 		)
 		return
 	}
 	if !room.CleanupVersionMatches(cleanupVersion) {
+		manager.mu.Unlock()
 		logging.Rooms.Debug("room cleanup skipped; stale cleanup",
 			logging.FieldRoomID, roomID,
 			"cleanup_version", cleanupVersion,
@@ -264,8 +250,9 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 		return
 	}
 
-	room.StopGameIfPresent()
 	delete(manager.rooms, roomID)
+	manager.mu.Unlock()
+	stopRoomForCleanup(room)
 	logging.Rooms.Debug("room cleaned up",
 		logging.FieldRoomID, roomID,
 		"cleanup_version", cleanupVersion,

@@ -23,6 +23,7 @@ func (room *Room) ClearGameInstance() {
 	room.match.ClearGame()
 }
 
+// SetActivePlayerCount is retained for compatibility and test setup.
 func (room *Room) SetActivePlayerCount(count int) {
 	room.mu.Lock()
 	defer room.mu.Unlock()

@@ -1,8 +1,8 @@
 package networking
 
 import (
-	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
 )
 
 func readClientInput(
@@ -19,10 +19,11 @@ func readClientInput(
 
 		envelope, err := inbound.DecodeClientPacketEnvelope(msg)
 		if err != nil {
+			context := session.sessionContext()
 			logging.Network.Warn("websocket packet envelope decode failed",
 				logging.FieldError, err,
-				logging.FieldRoomID, session.currentRoomID,
-				logging.FieldPlayerID, session.currentGamePlayerID,
+				logging.FieldRoomID, context.RoomID,
+				logging.FieldPlayerID, context.GamePlayerID,
 				"session_id", session.sessionID,
 				logging.FieldRemoteAddr, remoteAddr,
 			)
@@ -33,11 +34,12 @@ func readClientInput(
 }
 
 func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode string) {
+	context := session.sessionContext()
 	args := []any{
-		logging.FieldRoomID, session.currentRoomID,
-		logging.FieldPlayerID, session.currentGamePlayerID,
+		logging.FieldRoomID, context.RoomID,
+		logging.FieldPlayerID, context.GamePlayerID,
 		"session_id", session.sessionID,
-		"current_room_id", session.currentRoomID,
+		"current_room_id", context.RoomID,
 	}
 	if roomCode != "" {
 		args = append(args, "room_code", roomCode)

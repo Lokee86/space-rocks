@@ -10,7 +10,8 @@ import (
 )
 
 func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapshot {
-	memberSnapshot := room.MembersSnapshot()
+	projection := room.SnapshotForSession(localSessionID)
+	memberSnapshot := projection.Members
 	sort.Slice(memberSnapshot, func(left, right int) bool {
 		return memberSnapshot[left].SessionID < memberSnapshot[right].SessionID
 	})
@@ -24,31 +25,25 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 		})
 	}
 
-	localPlayerID, _ := room.PlayerIDForSession(localSessionID)
-
 	return game.RoomSnapshot{
-		Type:          game.PacketTypeRoomSnapshot,
-		RoomCode:      room.ID,
-		RoomState:     string(room.State),
-		CurrentMatchID: room.CurrentMatchID(),
-		Members:       members,
-		LocalPlayerID: localPlayerID,
-		OwnerID:       room.OwnerID(),
-		MaxPlayers:    rooms.MaxPlayersPerRoom,
-		MatchResult:   buildRoomMatchResultSummary(room),
+		Type:           game.PacketTypeRoomSnapshot,
+		RoomCode:       projection.RoomID,
+		RoomState:      string(projection.State),
+		CurrentMatchID: projection.CurrentMatchID,
+		Members:        members,
+		LocalPlayerID:  projection.LocalPlayerID,
+		OwnerID:        projection.OwnerID,
+		MaxPlayers:     rooms.MaxPlayersPerRoom,
+		MatchResult:    buildRoomMatchResultSummary(projection),
 	}
 }
 
-func buildRoomMatchResultSummary(room *rooms.Room) game.RoomMatchResultSummary {
-	if room == nil {
+func buildRoomMatchResultSummary(projection rooms.RoomSnapshot) game.RoomMatchResultSummary {
+	if !projection.HasResolvedMatch {
 		return game.RoomMatchResultSummary{}
 	}
 
-	summary, ok := room.ResolvedMatchSummary()
-	if !ok {
-		return game.RoomMatchResultSummary{}
-	}
-
+	summary := projection.ResolvedSummary
 	matchResult := game.RoomMatchResultSummary{
 		MatchID: summary.MatchID,
 		Mode:    string(summary.Mode),

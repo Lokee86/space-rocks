@@ -199,9 +199,10 @@ Current requested-leave flow:
 leave_room_request
 -> session.leaveRequestedRoom()
 -> report resolved match result before room exit, if needed
--> rooms.LeaveMember(roomID, sessionID, currentGamePlayerID)
+-> context := CurrentSessionContext()
+rooms.LeaveMember(context.RoomID, sessionID, context.GamePlayerID)
 -> detach room session from room-session registry
--> clear session room fields
+-> clear context with the expected-context helper
 -> broadcast room snapshot if members remain
 ```
 
@@ -211,9 +212,10 @@ Current disconnect flow:
 WebSocket runtime exits
 -> session.leaveDisconnectedRoom()
 -> report resolved match result before room exit, if needed
--> rooms.LeaveMember(roomID, sessionID, currentGamePlayerID)
+-> context := CurrentSessionContext()
+rooms.LeaveMember(context.RoomID, sessionID, context.GamePlayerID)
 -> detach room session from room-session registry
--> clear session room fields
+-> clear context with the expected-context helper
 -> broadcast room snapshot if members remain
 ```
 
@@ -344,14 +346,15 @@ cleanupEmptyRoom(roomID, cleanupVersion)
     log skipped; stale cleanup
     return
 
-  room.StopGameIfPresent()
   delete room from manager map
+  unlock manager
+  call `Room.StopGameIfPresent()` outside `RoomManager.mu`
   log room cleaned up
 ```
 
 Deletion happens only after all checks pass.
 
-The callback does not set `RoomStateClosed`. Current cleanup removes the room from the manager map instead of transitioning room state.
+The cleanup callback validates existence, population, and cleanup version, deletes the room from the manager map under `RoomManager.mu`, releases that lock, then stops the game and logs completion. Game stop does not happen while holding the manager lock.
 
 ## Game stop behavior
 
@@ -360,8 +363,9 @@ Cleanup stops a room game instance before deleting the room.
 Current cleanup deletion step:
 
 ```text
-room.StopGameIfPresent()
-delete(manager.rooms, roomID)
+room is deleted from manager map under manager lock
+manager lock is released
+call `Room.StopGameIfPresent()` outside `RoomManager.mu`
 ```
 
 `StopGameIfPresent()` reads the room's current game instance under the room lock, then calls `Game.Stop()` outside that lock when a game exists.
@@ -381,12 +385,13 @@ Current `StopAll()` flow:
 ```text
 RoomManager.StopAll()
   lock manager
-  for each room:
+  copy/remove all rooms from manager map
+  unlock manager
+  for each copied room:
     room.StopCleanupTimer()
-    log room stopped
     if room has game instance:
       game.Stop()
-    delete room from manager map
+    log room stopped
 ```
 
 `StopAll()` is used by:
@@ -565,7 +570,7 @@ Relevant room-manager tests verify:
 
 ```text
 LeaveMember removes room members
-LeaveMember removes active game players when a game player ID is supplied
+LeaveMember uses the exact removed member identity and session-aware deactivation; the caller player ID is legacy and non-authoritative
 LeaveMember schedules cleanup when the room becomes empty
 LeaveMember does not schedule cleanup while a member remains
 LeaveMember result reports whether cleanup was scheduled
