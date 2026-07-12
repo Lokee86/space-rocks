@@ -74,6 +74,14 @@ The root script lives at:
 client/scripts/devtools/devtools_window.gd
 ```
 
+`devtools_window.gd` is the composition and public-signal surface for the window. Concrete UI ownership is split into these direct `RefCounted` seams:
+
+* `client/scripts/devtools/devtools_window_spawn_controls.gd` owns pickup initialization and spawn/respawn control wiring.
+* `client/scripts/devtools/devtools_window_counter_controls.gd` owns set/add score and set/add lives validation, signal emission, and counter target refreshes.
+* `client/scripts/devtools/devtools_window_telemetry.gd` owns telemetry source setup, selection, and raw telemetry presentation.
+
+The seams operate on the window's existing controls and signals; they do not own gameplay mutation or replace the window's public API.
+
 The window is titled `Space Rocks Devtools`, opens centered, stays on top, and hides instead of freeing itself when closed.
 
 The current window surface includes:
@@ -219,12 +227,13 @@ DevToggle0
 -> DevtoolsWindowController.toggle_window()
 -> DevtoolsWindowScene.instantiate()
 -> devtools_window.gd
+-> concrete window control seams
 ```
 
 Window command flow is:
 
 ```text
-devtools_window.gd signal
+devtools_window.gd public signal
 -> DevtoolsWindowController
 -> DevtoolsWindowActionContext
 -> DevtoolsCommandContext / DevtoolsPlacementContext / DevtoolsOverlayContext
@@ -295,6 +304,9 @@ Primary window files:
 ```text
 client/scenes/devtools/devtools_window.tscn
 client/scripts/devtools/devtools_window.gd
+client/scripts/devtools/devtools_window_spawn_controls.gd
+client/scripts/devtools/devtools_window_counter_controls.gd
+client/scripts/devtools/devtools_window_telemetry.gd
 client/scripts/devtools/devtools_window_controller.gd
 ```
 
@@ -363,7 +375,10 @@ client/scenes/devtools/player_dev_label.tscn
 
 Important non-ownership boundaries:
 
-* `devtools_window.gd` owns UI controls and signal emission, not gameplay mutation.
+* `devtools_window.gd` owns window composition, the public UI methods/signals, and signal routing, not gameplay mutation.
+* `DevtoolsWindowSpawnControls` owns spawn and respawn control wiring while preserving the window's placement-request signals.
+* `DevtoolsWindowCounterControls` owns score/lives input validation, counter signal emission, and the four counter target selectors.
+* `DevtoolsWindowTelemetry` owns telemetry source controls and raw telemetry presentation, not gameplay interpretation or mutation.
 * `DevtoolsWindowController` owns window lifecycle, latest cached UI state, and target-scope conversion.
 * `DevtoolsCommandContext` owns command routing into debug packet send paths.
 * `DevtoolsPlacementContext` owns placement request handoff, not mouse/world coordinate conversion.
