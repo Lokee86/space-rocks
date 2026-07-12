@@ -20,11 +20,11 @@ class FakeHudFlow:
 
 class FakeMatchEndFlow:
 	var calls := 0
-	var last_lives := -1
+	var last_event: Dictionary = {}
 
-	func handle_local_player_eliminated(lives: int) -> void:
+	func handle_local_player_eliminated(event: Dictionary) -> void:
 		calls += 1
-		last_lives = lives
+		last_event = event
 
 
 func test_apply_self_death_event_keeps_respawn_behavior_for_lives_above_zero() -> void:
@@ -53,4 +53,4 @@ func test_apply_self_death_event_delegates_final_death_to_match_end_flow() -> vo
 	assert_eq(hud_flow.last_lives, 0)
 	assert_eq(hud_flow.game_over_calls, 0)
 	assert_eq(match_end_flow.calls, 1)
-	assert_eq(match_end_flow.last_lives, 0)
+	assert_eq(match_end_flow.last_event, event)

@@ -293,7 +293,7 @@ func TestPickupCollisionRespectsFreezeCollisions(t *testing.T) {
 	}
 
 	scenario.useCircleCollisionShapes()
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "collisions",
 	})

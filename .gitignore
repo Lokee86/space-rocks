@@ -49,3 +49,4 @@ services/game-server/logs/
 
 logs/
 /.worktrees/
+/.workingtrees/

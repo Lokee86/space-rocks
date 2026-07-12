@@ -101,11 +101,23 @@ godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://test
 
 For focused client logger verification, use `client/tests/unit/test_client_logger.gd`. It uses `user://logger_test_output` with the `client-test` prefix and cleans up its own JSONL files, so it is a good place to confirm file-output and formatting behavior without broadening into a full client testing catalog.
 
-Run the client constants boundary scan:
+Run the configuration-driven architecture guard:
 
 ```bash
-python3 -m pytest tools/tests/test_client_constants_boundary.py
+python tools/architecture_guard/main.py
 ```
+
+The guard reads `tools/architecture_guard/rules.toml`; repository-specific invariants remain narrow TOML rules rather than Python logic.
+
+Shared local/CI runners are available from the repository root:
+
+```bash
+bash tools/ci/run_repo_checks.sh
+bash tools/ci/run_go_tests.sh
+bash tools/ci/run_client_tests.sh
+```
+
+The client runner uses Godot 4.6.3 in CI, checks out LFS assets, performs a 1200-frame first-run editor bootstrap under Xvfb with the compatibility renderer, imports headlessly, and runs the existing GUT selection under `tests/unit`. Local runs use Xvfb when available and retain a headless bootstrap fallback. Bootstrap, import, and GUT timeouts are configurable with `GODOT_BOOTSTRAP_TIMEOUT`, `GODOT_IMPORT_TIMEOUT`, and `GODOT_GUT_TIMEOUT`; `GODOT_ARTIFACT_DIR` stores streamed stage output and Godot engine logs.
 
 Full gameplay/network smoke testing remains manual for now: opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
 

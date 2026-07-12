@@ -38,6 +38,6 @@ func apply_self_death_event(event: Dictionary) -> void:
 		return
 
 	if match_end_flow != null && match_end_flow.has_method("handle_local_player_eliminated"):
-		match_end_flow.handle_local_player_eliminated(lives)
+		match_end_flow.handle_local_player_eliminated(event)
 
 

@@ -7,21 +7,24 @@ import (
 
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 type scenario struct {
-	t    *testing.T
-	game *servergame.Game
+	t       *testing.T
+	game    *servergame.Game
+	control *servergame.Control
 }
 
 func newScenario(t *testing.T) *scenario {
 	t.Helper()
 
+	game := servergame.New()
 	return &scenario{
-		t:    t,
-		game: servergame.New(),
+		t:       t,
+		game:    game,
+		control: servergame.NewControl(game),
 	}
 }
 

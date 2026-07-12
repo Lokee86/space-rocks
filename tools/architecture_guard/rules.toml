@@ -1,0 +1,33 @@
+# Repository-specific architecture rules.
+
+[[content_rules]]
+id = "client-no-server-owned-constants"
+kind = "literal"
+pattern = "Constants.PLAYER_STARTING_LIVES"
+include = ["client/scripts/**/*.gd"]
+exclude = ["client/scripts/generated/**"]
+message = "client scripts must not reference server-owned player starting lives"
+
+[[content_rules]]
+id = "client-no-server-owned-constants-respawn"
+kind = "literal"
+pattern = "Constants.PLAYER_RESPAWN_DELAY"
+include = ["client/scripts/**/*.gd"]
+exclude = ["client/scripts/generated/**"]
+message = "client scripts must not reference server-owned respawn delay"
+
+[[content_rules]]
+id = "client-no-server-owned-constants-asteroid"
+kind = "literal"
+pattern = "Constants.ASTEROID_SIZE_SCALE"
+include = ["client/scripts/**/*.gd"]
+exclude = ["client/scripts/generated/**"]
+message = "client scripts must not reference server-owned asteroid scale"
+
+[[content_rules]]
+id = "no-runtime-context-world-sync-reach-through"
+kind = "regex"
+pattern = "runtime_context\\.world_sync"
+include = ["client/scripts/**/*.gd"]
+exclude = ["client/scripts/shell/gameplay_shell_flow.gd"]
+message = "use the owning composition seam instead of reaching through runtime_context.world_sync"
