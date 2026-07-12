@@ -5,13 +5,31 @@ const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realt
 func _world_packet(match_id: String = "") -> Dictionary:
 	return {"type": "world_full", "match_id": match_id, "baseline_id": "world-baseline-1", "sequence": 1, "snapshot_id": "world-snapshot-1", "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []}
 
-func test_packets_are_rejected_without_active_match() -> void:
+func test_packets_are_buffered_without_active_match_and_replayed_on_activation() -> void:
 	var pipeline := RealtimePacketPipeline.new()
 	var applied := [0]
 	pipeline.gameplay_packet_applied.connect(func(_packet): applied[0] += 1)
 	pipeline.apply_packet(_world_packet("match-1"))
 	assert_eq(applied[0], 0)
 	assert_eq(pipeline.active_match_id(), "")
+	pipeline.begin_match("match-1")
+	assert_eq(applied[0], 1)
+
+func test_packets_for_unrelated_match_are_not_replayed_when_new_match_activates() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	var applied := []
+	pipeline.gameplay_packet_applied.connect(func(packet): applied.append(packet.get("match_id", "")))
+	pipeline.apply_packet(_world_packet("old-match"))
+	pipeline.apply_packet(_world_packet("match-2"))
+	pipeline.begin_match("match-2")
+	assert_eq(applied, ["match-2"])
+
+func test_pending_packets_are_cleared_when_realtime_session_resets() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	pipeline.apply_packet(_world_packet("match-1"))
+	pipeline.reset()
+	pipeline.begin_match("match-1")
+	assert_false(pipeline.is_gameplay_ready())
 
 func test_matching_readable_and_compact_packets_are_accepted() -> void:
 	var pipeline := RealtimePacketPipeline.new()

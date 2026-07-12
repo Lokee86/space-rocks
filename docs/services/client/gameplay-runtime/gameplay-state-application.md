@@ -21,6 +21,8 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> ServerPacketDispatcher emits typed realtime signal
 -> ClientInboundCoordinator routes the typed signal to the matching RealtimePacketPipeline entry point
 -> RealtimePacketPipeline expands and validates the packet
+-> no active protocol match: buffer by non-empty match_id without lane or presentation mutation
+-> active protocol match: reject mismatched match_id
 -> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for apply / queue / reject / resync on capacity loss
 -> WorldLaneApplier validates accepted lifecycle payloads and mutates WorldLaneState
 -> RealtimePacketPipeline refreshes RealtimePresentationState
@@ -46,7 +48,7 @@ The client routes lane packets through `RealtimePacketPipeline`. The pipeline ow
 
 `PresentationBridge` activation enables scheduling for gameplay-packet presentation, while `RealtimePacketPipeline` gameplay readiness gates fanout into presentation targets.
 
-`RealtimePacketPipeline` applies realtime gameplay packets regardless of gameplay-session activation state.
+`RealtimePacketPipeline` routes matching realtime gameplay packets regardless of `PresentationBridge`/gameplay-session activation state, but only after authoritative protocol match activation. Before activation, recognized packets with non-empty `match_id` are buffered by match without state mutation; missing IDs are rejected. Activation clears all pending buckets and replays only the authoritative match, while later mismatches remain rejected.
 
 `BaselineTracker` owns world, overlay, and session synchronization plus the active world baseline identity. It does not independently track lifecycle lanes. `LifecycleLaneGate` validates lifecycle lane/sequence/baseline metadata, owns strict independent per-lane sequence state, pending duplicate tracking, pending queues keyed by required world baseline, bounded capacity, and obsolete parsed-baseline disposal. `RealtimeRouter` coordinates gate decisions and drains matching pending lifecycle packets after a completed, recorded `world_full`. World-lane capacity loss is an explicit resync decision: it clears pending lifecycle packets and duplicate tracking, preserves latest-applied lifecycle sequences, marks the world lane unsynchronized, makes gameplay not ready, and emits the existing deduplicated world-lane resync request. `WorldLaneApplier` validates lifecycle arrays and records and mutates `WorldLaneState` only after gate acceptance. Lifecycle packets apply immediately only for the active matching world baseline; otherwise they wait or are rejected. Hot lanes remain movement/update lanes and must not be described as ordered after every lifecycle packet.
 
@@ -73,7 +75,7 @@ The active client gameplay application path owns:
 * Tracking required lane baseline sync before gameplay is considered ready.
 * `PresentationBridge` activation enables scheduling for gameplay-packet presentation.
 * `RealtimePacketPipeline` gameplay readiness gates fanout into presentation targets.
-* Applying realtime gameplay packets regardless of gameplay-session activation state.
+* Applying matching realtime gameplay packets after protocol match activation, independently of gameplay-session presentation activation.
 * Applying lifecycle and hot movement packets into WorldLaneState.
 * Routing current lane state into gameplay composition for world, HUD, session, and event presentation.
 * Reconstructing active, pending-respawn, and eliminated local presentation from authoritative world/session state.
@@ -169,7 +171,7 @@ ServerPacketDispatcher
 = classifies inbound packets before gameplay packets reach the realtime pipeline
 
 RealtimePacketPipeline
-= owns compact packet expansion, gameplay packet validation, the active RealtimeRouter, gameplay readiness, protocol reset, lane-routing invocation, gameplay_packet_applied(packet), and realtime gameplay packet application regardless of gameplay-session activation state
+= owns compact packet expansion, recognized-packet validation, pre-activation buffering by match ID, authoritative match activation, mismatched-match rejection, the active RealtimeRouter, gameplay readiness, protocol reset, lane-routing invocation, gameplay_packet_applied(packet), and matching realtime gameplay packet application independently of presentation activation
 
 RealtimeRouter
 = coordinates lane-specific routing, lifecycle gate decisions, and matching pending lifecycle drains beneath RealtimePacketPipeline

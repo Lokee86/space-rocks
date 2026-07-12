@@ -331,7 +331,7 @@ unknown packet fallback
 
 Room packets route into room session handling.
 
-Gameplay state routes into `RealtimePacketPipeline`, which first applies the active match-identity gate established by the authoritative room snapshot. It rejects active gameplay packets before lane mutation when there is no active match, `match_id` is missing, or `match_id` differs from the active match. Room state reaching `InGame` activates client gameplay input, player-pause forwarding, and presentation scheduling; required world/overlay/session readiness gates presentation fanout, not the match-identity gate or lane mutation. The client `compact_lane_packet` expands compact keys, compact values, IDs, and tuple arrays before readable lane state reaches the protocol appliers.
+Gameplay state routes into `RealtimePacketPipeline`, which expands and validates recognized packets before applying the match-identity boundary established by the authoritative room snapshot. Before an active match exists, non-empty `match_id` packets are buffered by match without lane or presentation mutation; missing IDs are rejected. An authoritative `InGame` snapshot resets gameplay presentation/composition, calls `begin_realtime_match(match_id)`, clears all pending match buckets, and replays only packets for that match through normal lane routing. Once active, mismatched IDs are rejected. Room state reaching `InGame` separately activates client gameplay input, player-pause forwarding, and `PresentationBridge` scheduling; required world/overlay/session readiness gates presentation fanout, not the active protocol routing path.
 
 The cross-system lifecycle correctness flow is:
 
@@ -343,7 +343,7 @@ server lifecycle candidate carries its required world baseline dependency
 -> lifecycle create/delete applies only after matching world state is active
 ```
 
-`asteroids_lifecycle` and `bullets_lifecycle` use strict independent lane-local sequences. WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee. Packets arriving before match activation are rejected rather than buffered. After match activation, valid lifecycle packets whose referenced world baseline is not yet active are queued for matching world-baseline activation; invalid or stale lifecycle packets are rejected. Reliable/ordered delivery is per DataChannel and does not order `sr.world` against either lifecycle channel or establish lifecycle-to-hot-lane ordering. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
+`asteroids_lifecycle` and `bullets_lifecycle` use strict independent lane-local sequences. WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee. Recognized packets with non-empty match IDs that arrive before protocol match activation are buffered by match; activation replays only the authoritative match and discards unrelated buckets. After match activation, valid lifecycle packets whose referenced world baseline is not yet active are queued for matching world-baseline activation; invalid or stale lifecycle packets are rejected. Reliable/ordered delivery is per DataChannel and does not order `sr.world` against either lifecycle channel or establish lifecycle-to-hot-lane ordering. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets.
 
 Telemetry pong routes to telemetry consumers and does not pass through normal gameplay lane state application.
 

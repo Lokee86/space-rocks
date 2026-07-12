@@ -113,6 +113,8 @@ Current flow:
 ClientConnectionService.room_snapshot_received
 -> SessionNetworkController._on_room_snapshot_received
 -> RoomSessionController.handle_room_snapshot
+-> GameplaySessionController.reset when authoritative InGame match changes
+-> ClientConnectionService.begin_realtime_match(current_match_id)
 -> GameplaySessionController.begin_accepting_gameplay_packets when room state is InGame
 ```
 
@@ -138,15 +140,15 @@ ServerPacketDispatcher
 -> inactive bridge ignores routed-packet notifications for presentation scheduling
 ```
 
-`RealtimePacketPipeline` applies/routes realtime packets regardless of gameplay-session activation and owns the refreshed realtime presentation state.
+`RealtimePacketPipeline` routes matching realtime packets after protocol match activation regardless of `PresentationBridge`/gameplay-session activation and owns the refreshed realtime presentation state. Before protocol activation it buffers recognized packets by non-empty `match_id` without lane or presentation mutation.
 
-If `accepts_gameplay_packets` is false, `GameplaySessionController` does not activate or schedule `PresentationBridge`, but realtime lane packets are still received and routed by `RealtimePacketPipeline`. A lifecycle packet may apply, queue, or reject before the historically named `gameplay_packet_applied` notification; that notification means routing and presentation-state refresh completed, not that lifecycle state necessarily mutated.
+If `accepts_gameplay_packets` is false, `GameplaySessionController` does not activate or schedule `PresentationBridge`. Packets are still received by `RealtimePacketPipeline`, but they route only when the protocol match is active and `match_id` matches; before activation they are buffered. A lifecycle packet may apply, queue, or reject before the historically named `gameplay_packet_applied` notification; that notification means routing and presentation-state refresh completed, not that lifecycle state necessarily mutated.
 
 If gameplay readiness is not yet true, presentation orchestration is skipped even though `ServerPacketDispatcher` has already delivered the packet to `RealtimePacketPipeline` and the pipeline-owned `RealtimeRouter` has routed it. Packet routing and available state application may still occur while gameplay presentation is inactive.
 
 `RealtimePacketPipeline.is_gameplay_ready()` determines whether the client has the required realtime baseline for gameplay presentation. `RealtimePacketPipeline.get_presentation_state()` returns the applied state that gameplay composition later consumes when presentation is allowed.
 
-Packet routing/application and gameplay handoff are separate boundaries. `RealtimePacketPipeline` owns packet routing/application and readiness; `PresentationBridge` owns presentation orchestration; gameplay composition owns the downstream presentation targets.
+Protocol match activation, packet routing/application, and gameplay presentation are separate boundaries. `RealtimePacketPipeline` owns match-scoped buffering, routing/application, and readiness; `PresentationBridge` owns presentation activation and orchestration; gameplay composition owns the downstream presentation targets.
 
 `RealtimePacketPipeline.gameplay_packet_applied(packet)` hands the routed-packet notification directly to `PresentationBridge.handle_gameplay_packet(packet)` for presentation scheduling when the bridge is active. `GameplaySessionController` does not connect this signal to `GameplayComposition`.
 

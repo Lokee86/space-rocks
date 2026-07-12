@@ -34,6 +34,9 @@ WebRTCTransport receives DataChannel text
 -> ServerPacketDispatcher.dispatch(packet)
 -> typed dispatcher signal
 -> RealtimePacketPipeline typed entry point for the packet family
+-> expand and validate recognized packet
+-> no active protocol match: buffer by non-empty match_id without state mutation
+-> active protocol match: require matching match_id
 -> RealtimeRouter.route_lane_packet(packet)
 -> lifecycle packet: LifecycleLaneGate apply / queue / reject / resync on capacity loss
 -> accepted lifecycle packet: WorldLaneApplier validates and mutates WorldLaneState
@@ -272,7 +275,7 @@ player_pause_state_received
 
 For gameplay application, the controller now follows the semantic presentation handoff instead of connecting separately to each lane-specific packet signal.
 
-Realtime gameplay lane packets are routed by `RealtimePacketPipeline`, which refreshes `RealtimePresentationState` and emits the historically named `gameplay_packet_applied(packet)` notification. Room snapshots establish the authoritative match identity: the pipeline accepts packets only while that match is active and only when readable `match_id` matches exactly. `GameOver` retains the active match; returning to `Lobby` ends protocol and presentation state for every room member. The notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
+Realtime gameplay lane packets enter `RealtimePacketPipeline`, which expands and validates recognized packets before its protocol match gate. WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee, so packets with a non-empty `match_id` are buffered by match before authoritative activation and do not mutate lane or presentation state. The authoritative `InGame` snapshot resets gameplay presentation/composition and calls `begin_realtime_match(match_id)`; the pipeline clears all pending buckets, replays only the matching bucket, and discards unrelated matches. Missing IDs remain rejected, and mismatched IDs remain rejected once active. `GameOver` retains the active match; returning to `Lobby`, reset, or connection teardown clears pending and protocol state. The routed notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
 
 ### Room packet handoff
 
@@ -300,7 +303,7 @@ Inbound packet routing does not own those consequences.
 
 ### Gameplay packet handoff
 
-Lane-native realtime gameplay packets route through the completed semantic handoff after the pipeline has refreshed its presentation state. Lifecycle packets may have applied immediately, been queued for a matching world baseline, or been rejected before this notification.
+Lane-native realtime gameplay packets route through the semantic handoff only after protocol match activation and pipeline state refresh. `PresentationBridge` activation/readiness is separate: matching packets may route while presentation is inactive, whereas pre-activation packets remain buffered. Lifecycle packets may have applied immediately, been queued for a matching world baseline, or been rejected before this notification.
 
 Current handoff:
 
