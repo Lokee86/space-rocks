@@ -121,6 +121,42 @@ func test_app_entry_shares_profile_stats_provider() -> void:
 	assert_eq(game.menu_flow_controller.profile_stats_provider, game.profile_stats_provider)
 
 
+func test_gameplay_reset_clears_runtime_state_after_full_game_scene_boot() -> void:
+	var game := await _create_game()
+	var gameplay_session_controller = game.gameplay_session_controller
+	var gameplay_composition = gameplay_session_controller.gameplay_composition
+	var gameplay_shell_flow = gameplay_composition.gameplay_shell_flow
+	var world_sync = gameplay_composition.world_sync
+
+	assert_not_null(gameplay_session_controller)
+	assert_not_null(gameplay_composition)
+	assert_not_null(gameplay_shell_flow)
+	assert_not_null(world_sync)
+	assert_not_null(gameplay_session_controller.presentation_bridge)
+
+	gameplay_session_controller.begin_accepting_gameplay_packets()
+	gameplay_shell_flow.has_received_lane_baselines_synced = true
+	world_sync.set_current_self_id("self-reset-test")
+	world_sync.world_lane_state = {"reset_sentinel": true}
+	world_sync.projectile_sync.deleted_projectile_ids["projectile-reset-test"] = true
+	world_sync.asteroid_sync.deleted_asteroid_ids["asteroid-reset-test"] = true
+	game.player.show()
+	game.hud.show()
+
+	gameplay_session_controller.reset()
+	await get_tree().process_frame
+
+	assert_false(gameplay_session_controller.accepts_gameplay_packets)
+	assert_false(gameplay_session_controller.presentation_bridge._active)
+	assert_false(gameplay_shell_flow.has_received_lane_baselines_synced)
+	assert_eq(world_sync.current_self_id, "")
+	assert_null(world_sync.world_lane_state)
+	assert_true(world_sync.projectile_sync.deleted_projectile_ids.is_empty())
+	assert_true(world_sync.asteroid_sync.deleted_asteroid_ids.is_empty())
+	assert_false(game.player.visible)
+	assert_false(game.hud.visible)
+
+
 func test_successful_auth_from_login_window_routes_to_multiplayer_pregame() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
