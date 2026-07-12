@@ -2,7 +2,6 @@ package realtime
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
@@ -12,20 +11,8 @@ type EventLaneProjection struct {
 }
 
 func ProjectEventLane(pending []game.PendingPresentationEvent, sequence int) EventLaneProjection {
-	ids := make([]string, 0, len(pending))
-	for _, event := range pending {
-		ids = append(ids, event.EventID)
-	}
-	sort.Strings(ids)
-
-	byID := make(map[string]game.PendingPresentationEvent, len(pending))
-	for _, event := range pending {
-		byID[event.EventID] = event
-	}
-
-	events := make([]EventRecord, 0, len(ids))
-	for _, eventID := range ids {
-		pendingEvent := byID[eventID]
+	events := make([]EventRecord, 0, len(pending))
+	for _, pendingEvent := range pending {
 		events = append(events, EventRecord{
 			EventID: pendingEvent.EventID,
 			Event:   pendingEvent.Event,

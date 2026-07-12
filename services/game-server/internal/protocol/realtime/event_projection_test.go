@@ -24,14 +24,14 @@ func TestProjectEventLanePreservesIdentityAndSource(t *testing.T) {
 	if len(projection.Batch.Events) != 2 {
 		t.Fatalf("expected 2 events, got %d", len(projection.Batch.Events))
 	}
-	if projection.Batch.Events[0].EventID != "evt-a" || projection.Batch.Events[1].EventID != "evt-b" {
-		t.Fatalf("expected events sorted by ID, got %#v", projection.Batch.Events)
+	if projection.Batch.Events[0].EventID != "evt-b" || projection.Batch.Events[1].EventID != "evt-a" {
+		t.Fatalf("expected events in pending order, got %#v", projection.Batch.Events)
 	}
-	if projection.Batch.Events[0].Event.Type != "ship_death" || projection.Batch.Events[0].Event.PlayerID != "player-1" || projection.Batch.Events[0].Event.Lives != 2 || projection.Batch.Events[0].Event.RespawnDelay != 1.25 {
-		t.Fatalf("expected ship death payload to be preserved, got %#v", projection.Batch.Events[0].Event)
+	if projection.Batch.Events[1].Event.Type != "ship_death" || projection.Batch.Events[1].Event.PlayerID != "player-1" || projection.Batch.Events[1].Event.Lives != 2 || projection.Batch.Events[1].Event.RespawnDelay != 1.25 {
+		t.Fatalf("expected ship death payload to be preserved, got %#v", projection.Batch.Events[1].Event)
 	}
-	if projection.Batch.Events[1].Event.Type != "bullet_blast" || projection.Batch.Events[1].Event.X != 2 || projection.Batch.Events[1].Event.Y != 3 {
-		t.Fatalf("expected bullet blast payload to be preserved, got %#v", projection.Batch.Events[1].Event)
+	if projection.Batch.Events[0].Event.Type != "bullet_blast" || projection.Batch.Events[0].Event.X != 2 || projection.Batch.Events[0].Event.Y != 3 {
+		t.Fatalf("expected bullet blast payload to be preserved, got %#v", projection.Batch.Events[0].Event)
 	}
 	if pending[0] != before[0] || pending[1] != before[1] {
 		t.Fatalf("expected source slice to remain unchanged, got %#v before %#v", pending, before)
@@ -53,16 +53,30 @@ func TestBuildEventBatchPacketUsesMetadataAndPreservesEventIDs(t *testing.T) {
 	if packet.Metadata.Lane != LaneEvent || packet.Metadata.Sequence != 11 || packet.Metadata.SnapshotID != "event-batch-11" || packet.Metadata.ServerSentMsec != 1234 || packet.Metadata.SnapshotKind != SnapshotKind("batch") || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || !packet.Metadata.IsFinalChunk {
 		t.Fatalf("expected event batch metadata to be populated, got %#v", packet.Metadata)
 	}
-	if len(packet.Batch.Events) != 2 || packet.Batch.Events[0].EventID != "evt-a" || packet.Batch.Events[1].EventID != "evt-b" {
-		t.Fatalf("expected event IDs sorted and preserved, got %#v", packet.Batch.Events)
+	if len(packet.Batch.Events) != 2 || packet.Batch.Events[0].EventID != "evt-b" || packet.Batch.Events[1].EventID != "evt-a" {
+		t.Fatalf("expected event IDs in pending order, got %#v", packet.Batch.Events)
 	}
-	if packet.Batch.Events[0].Event.Type != "ship_death" || packet.Batch.Events[1].Event.Type != "bullet_blast" {
+	if packet.Batch.Events[1].Event.Type != "ship_death" || packet.Batch.Events[0].Event.Type != "bullet_blast" {
 		t.Fatalf("expected packet event payloads to be preserved, got %#v", packet.Batch.Events)
 	}
 	if pending[0] != before[0] || pending[1] != before[1] {
 		t.Fatalf("expected source slice to remain unchanged after packet build, got %#v before %#v", pending, before)
 	}
 }
+
+func TestProjectEventLanePreservesPresentationEventCreationOrderAcrossTen(t *testing.T) {
+	pending := []game.PendingPresentationEvent{
+		{EventID: "presentation-event-9", Event: game.EventState{Type: "first"}},
+		{EventID: "presentation-event-10", Event: game.EventState{Type: "second"}},
+	}
+
+	projection := ProjectEventLane(pending, 1)
+
+	if got := []string{projection.Batch.Events[0].EventID, projection.Batch.Events[1].EventID}; got[0] != pending[0].EventID || got[1] != pending[1].EventID {
+		t.Fatalf("expected presentation events in creation order, got %#v", got)
+	}
+}
+
 func TestSuccessiveEventBatchPacketsUseDifferentBatchIDs(t *testing.T) {
 	pending := []game.PendingPresentationEvent{
 		{EventID: "evt-a", Event: game.EventState{Type: "bullet_blast"}},

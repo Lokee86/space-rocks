@@ -699,6 +699,8 @@ events
 event_id per event
 ```
 
+The `events` array preserves the authoritative pending presentation-event slice order copied during server projection. Event IDs are identity and deduplication keys; neither the server nor the client may use them to sort or otherwise reorder events. After a successful `event_batch` write, draining the written event IDs preserves the relative order of events that remain pending.
+
 Readable protocol docs may show expanded logical names, while runtime wire sends compact aliases. Domain logs may still show raw x/y before projection.
 
 Compact event batch example:

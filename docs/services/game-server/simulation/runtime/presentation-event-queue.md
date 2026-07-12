@@ -178,13 +178,15 @@ Fanout uses durable player sessions rather than active ship state. This is inten
 
 `protocol/realtime` projects pending events for one player into `event_batch` candidates.
 
-During projection, the lane-native event projection copies that player's current pending events into `event_batch` candidates for the receiver without draining them.
+During projection, the lane-native event projection copies that player's current pending events into `event_batch` candidates for the receiver without draining them. The copy preserves the authoritative pending presentation-event slice order.
 
 The candidate owns its copied event slice, and projection does not remove pending events; only successful-write drain removes the written event IDs.
 
+Event IDs are identity and deduplication keys. Projection and drain must not sort or otherwise reorder events by event ID.
+
 ### Drain
 
-After the active `event_batch` write succeeds, only the successfully written event IDs are removed from that player's pending event slice, preserving the relative order of remaining events:
+After the active `event_batch` write succeeds, only the successfully written event IDs are removed from that player's pending event slice. The drain preserves the relative order of all remaining events:
 
 ```text
 remove successfully written event IDs; retain remaining events in order

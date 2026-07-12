@@ -329,7 +329,7 @@ Active runtime world/overlay/session lane packets may also carry inferred-or-con
 
 Lifecycle packets retain explicit gate-relevant metadata, while split lifecycle candidates additionally carry conditional chunk metadata.
 
-`event_batch` now uses compact envelope keys and sparse nested event records. It remains one ordered batch of pending presentation events, not one packet per event. It does not use baselines, deltas, state snapshots, or chunking, and this section does not claim any future scheduler or transport behavior.
+`event_batch` now uses compact envelope keys and sparse nested event records. It remains one ordered batch of pending presentation events, not one packet per event: projection preserves pending slice order, event IDs are identity/deduplication keys rather than sort keys, and successful-write drain preserves the relative order of events that remain pending. It does not use baselines, deltas, state snapshots, or chunking, and this section does not claim any future scheduler or transport behavior.
 The packet-shape details for those lane packets belong in the realtime protocol doc. This service doc only keeps the outbound delivery boundary and the current lane roles.
 
 ### Room snapshots
