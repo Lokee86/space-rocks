@@ -76,7 +76,7 @@ These packets carry current lane snapshots, baseline updates, and event batches 
 
 Every server-built realtime packet carries the authoritative `match_id` metadata (compact wire key `mid`). A `RealtimeSessionState` is bounded by the identity tuple `(ReceiverID, MatchID)`; changing either component starts clean lane, baseline, projection, and hot-lane cohort state.
 
-The client pipeline has an active match identity established from the authoritative room snapshot. Compact `mid` is expanded to readable `match_id` before validation. With no active match, a missing match ID, or a match ID different from the room snapshot, the packet is rejected before lane state or presentation mutation. This applies to all active packet families, including lifecycle and event packets.
+WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee. The client pipeline expands compact `mid` to readable `match_id` and validates recognized packet types before applying its match boundary. Before an authoritative active match exists, recognized packets with a non-empty `match_id` are buffered by match and do not mutate lane or presentation state; missing IDs are rejected. When the authoritative `InGame` room snapshot activates `begin_realtime_match(match_id)`, the pipeline clears all pending match buckets and replays only that match's packets through normal lane routing. Pending unrelated matches are discarded, and once a match is active, mismatched IDs are rejected. `GameOver` retains the active match until Lobby/session teardown; `end_match`, reset, and connection teardown clear pending packets and protocol state. This applies to all active packet families, including lifecycle and event packets.
 
 ## Canonical baseline recovery loop
 
@@ -923,11 +923,11 @@ resync_required_received
 
 ClientInboundCoordinator binds the typed realtime outputs from ServerPacketDispatcher to the matching RealtimePacketPipeline packet-family entry points. ClientConnectionService does not own direct realtime dispatcher bindings; it remains the public facade for coordinator signals.
 
-The pipeline owns the active RealtimeRouter, expands and validates the packet, refreshes RealtimePresentationState, emits gameplay_packet_applied(packet), and then PresentationBridge.handle_gameplay_packet(packet) consumes the handoff into presentation layers.
+The pipeline expands and validates recognized packets first. Without an authoritative active match it buffers non-empty-match packets without routing; after activation it routes only matching packets through the active RealtimeRouter, refreshes RealtimePresentationState, emits gameplay_packet_applied(packet), and then PresentationBridge.handle_gameplay_packet(packet) consumes the handoff into presentation layers.
 
 WebSocket and WebRTC gameplay delivery use different transports but converge on the same RealtimePacketPipeline application boundary.
 
-`SessionNetworkController` continues to handle room, session, pause, debug, and other control routing. It does not block the gameplay packet pipeline.
+`SessionNetworkController` continues to handle room, session, pause, debug, and other control routing. Its authoritative `InGame` room-snapshot path resets gameplay presentation/composition and calls `begin_realtime_match(match_id)` before gameplay-session acceptance. Protocol match activation is distinct from `PresentationBridge` activation/readiness: matching packets may route after protocol activation while presentation remains inactive, but pre-activation packets are buffered rather than routed.
 
 Client baseline and readiness behavior is currently:
 

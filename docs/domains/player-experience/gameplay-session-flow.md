@@ -202,7 +202,7 @@ The server activates connected room members into active game players after start
 
 ### 6. Client begins gameplay presentation
 
-The client does not process gameplay lane packets as active gameplay until server-observed room state reaches `InGame`.
+WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee. The client therefore does not route gameplay lane packets into active protocol state until an authoritative `InGame` room snapshot establishes the match.
 
 Room snapshots and room-state-change packets update the client room-session cache. An authoritative `InGame` room snapshot establishes the match boundary in this exact order: reset gameplay presentation/composition, begin the new realtime match through the protocol-only client service seam, then accept gameplay packets.
 
@@ -215,10 +215,12 @@ room snapshot or room-state-change
 -> gameplay presentation/composition resets
 -> protocol-only realtime match begins for current_match_id
 -> gameplay-session lifecycle begins accepting gameplay packets
--> gameplay lane packets are accepted only while a match is active and only when packet match_id equals the authoritative current_match_id, then routed into realtime lane state and presented through frame-deferred realtime presentation fanout
+-> buffered packets for current_match_id replay through normal realtime lane routing; all other pending match buckets are discarded
+-> later gameplay lane packets route only when packet match_id equals the authoritative current_match_id
+-> PresentationBridge activation/readiness separately controls frame-deferred gameplay presentation fanout
 ```
 
-Compact `mid` expands to readable `match_id` before this guard. Packets with no active match, a missing match ID, or a mismatched match ID are rejected before lane state or presentation mutation. GameOver remains part of the same match and retains realtime/presentation state for final results. When the room returns to Lobby, every room member, including non-requesting clients, resets gameplay presentation and ends protocol match ownership without closing or recreating WebRTC.
+`RealtimePacketPipeline` expands compact `mid` to readable `match_id` and validates recognized packet types before the match guard. Before protocol match activation, packets with a non-empty `match_id` are buffered by match and do not mutate lane or presentation state; missing IDs remain rejected. On activation the pipeline clears every pending bucket and replays only the authoritative match's packets. Once active, mismatched IDs remain rejected. Protocol activation and `PresentationBridge` activation/readiness are separate boundaries, so packets may route after protocol activation while gameplay presentation is still inactive. `GameOver` remains part of the same match and retains realtime/presentation state for final results. Returning to `Lobby`, connection teardown, `end_match`, or reset clears pending packets and protocol state.
 
 The client then presents gameplay through world sync, HUD, input, audio/effects, devtools presentation, gameplay menu, respawn, spectate, and match-end flows.
 

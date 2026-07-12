@@ -14,6 +14,7 @@ var _router: RealtimeRouter
 var _presentation_state: RealtimePresentationState
 var _lane_route_log_emitted := {}
 var _active_match_id := ""
+var _pending_match_packets := {}
 
 func _init() -> void:
 	_router = RealtimeRouter.new()
@@ -34,9 +35,14 @@ func begin_match(match_id: String) -> void:
 		return
 	_active_match_id = match_id
 	_reset_protocol_state()
+	var pending_packets: Array = _pending_match_packets.get(match_id, [])
+	_pending_match_packets.clear()
+	for pending_packet in pending_packets:
+		_apply_lane_packet(pending_packet)
 
 func end_match() -> void:
 	_active_match_id = ""
+	_pending_match_packets.clear()
 	_reset_protocol_state()
 
 func is_gameplay_ready() -> bool:
@@ -62,12 +68,21 @@ func apply_packet(packet: Dictionary) -> void:
 	var packet_type = expanded_packet.get("type")
 	if DescriptorIndex.packet_by_readable_id(str(packet_type)).is_empty():
 		return
-	if _active_match_id.is_empty() or str(expanded_packet.get("match_id", "")) != _active_match_id:
+	var packet_match_id := str(expanded_packet.get("match_id", ""))
+	if packet_match_id.is_empty():
+		return
+	if _active_match_id.is_empty():
+		if !_pending_match_packets.has(packet_match_id):
+			_pending_match_packets[packet_match_id] = []
+		_pending_match_packets[packet_match_id].append(expanded_packet)
+		return
+	if packet_match_id != _active_match_id:
 		return
 	_apply_lane_packet(expanded_packet)
 
 func reset() -> void:
 	_active_match_id = ""
+	_pending_match_packets.clear()
 	_reset_protocol_state()
 
 func _reset_protocol_state() -> void:
