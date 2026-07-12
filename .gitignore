@@ -17,6 +17,7 @@ tools/parked-plasmic-next-host/out/
 client/.import/
 client/.godot/
 client/.export/
+client/lib/~*
 
 *.tmp
 *.temp
