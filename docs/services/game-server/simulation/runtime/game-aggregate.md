@@ -324,7 +324,11 @@ events
 server_sent_msec
 ```
 
-`GameplayPresentationSnapshot` owns the capture point for `server_sent_msec`. It records the live server Unix-millisecond wall-clock time when the authoritative presentation snapshot is created. `protocol/realtime` carries that snapshot timestamp into lane metadata; the client later combines it with the telemetry ping/pong clock-offset estimate to map server time into client monotonic time. The aggregate does not calculate client packet age.
+`GameplayPresentationSnapshot` acquires `Game.mu` and copies the complete authoritative presentation maps for players, player sessions, player lifecycle, bullets, asteroids, pickups, and pending events. This happens once per requesting session/tick before `protocol/realtime` projects the lane-native packets; mutable aggregate maps are not exposed outside the lock boundary.
+
+`GameplayPresentationSnapshot` also owns the capture point for `server_sent_msec`. It records the live server Unix-millisecond wall-clock time when the authoritative presentation snapshot is created. `protocol/realtime` carries that snapshot timestamp into lane metadata; the client later combines it with the telemetry ping/pong clock-offset estimate to map server time into client monotonic time. The aggregate does not calculate client packet age.
+
+The current benchmark boundary covers 1 player/100 asteroids/100 bullets, 8 players/100 asteroids/500 bullets, and a 16-player/500-asteroid/2,000-bullet stress case. The representative 8-player snapshot measured about 46 us and 130 KB allocated per request; continuous snapshot readers raised the frozen-world basic `Step` cost to about 22 us with eight readers. The continuous readers are deliberately harsher than normal 60 Hz per-session requests. This is current measurement evidence, not an optimization prescription; see [Runtime Performance And Scale Budget](../../../../planning/domains/technical/runtime-performance-and-scale-budget.md) for the baseline and decision boundary.
 
 `protocol/realtime` projects that player's pending presentation events into `event_batch`, and outbound networking clears only the drained event IDs after the active websocket write succeeds. This makes the event lane player-specific and packet-facing.
 
@@ -485,6 +489,7 @@ Primary implementation files:
 ```text
 services/game-server/internal/game/game.go
 services/game-server/internal/game/simulation.go
+services/game-server/internal/game/presentation_snapshot.go
 services/game-server/internal/protocol/realtime/
 services/game-server/internal/game/players.go
 services/game-server/internal/game/session.go
@@ -607,6 +612,7 @@ services/game-server/tests/game/devtools_test.go
 Relevant package tests:
 
 ```text
+services/game-server/internal/game/presentation_snapshot_benchmark_test.go
 services/game-server/internal/game/...
 services/game-server/internal/rooms/...
 services/game-server/internal/networking/...

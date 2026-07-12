@@ -98,6 +98,38 @@ Entity counts should include current and future pressure sources:
 * gameplay events,
 * spectators.
 
+## Current Measured Baseline
+
+Baseline recorded 2026-07-12 from `services/game-server/internal/game/presentation_snapshot_benchmark_test.go` on Linux/amd64 with an 11th Gen Intel Core i9-11900H. These measurements are local benchmark evidence, not release limits.
+
+`GameplayPresentationSnapshot` copies the authoritative presentation maps while holding `Game.mu`. Representative results from three 250 ms runs were:
+
+| Scenario | Representative snapshot cost | Allocations |
+| --- | ---: | ---: |
+| 1 player, 100 asteroids, 100 bullets | 10.8 us/op | 25,904 B/op, 18 allocs/op |
+| 8 players, 100 asteroids, 500 bullets | 46.0 us/op | 129,904 B/op, 33 allocs/op |
+| 16 players, 500 asteroids, 2,000 bullets | 242 us/op | 558,944 B/op, 61 allocs/op |
+
+The `Game.Step` contention benchmark freezes world movement, spawning, and collisions so it measures aggregate lock acquisition and basic tick work rather than entity-pair collision work. Representative results from three 100 ms runs were:
+
+| Scenario | 0 readers | 1 reader | 4 readers | 8 readers |
+| --- | ---: | ---: | ---: | ---: |
+| 1 player, 100 asteroids, 100 bullets | 358 ns/op | 1.18 us/op | 3.85 us/op | 7.21 us/op |
+| 8 players, 100 asteroids, 500 bullets | 1.09 us/op | 3.01 us/op | 11.6 us/op | 22.2 us/op |
+| 16 players, 500 asteroids, 2,000 bullets | 2.32 us/op | 5.87 us/op | 22.0 us/op | 32.8 us/op |
+
+Contention readers request snapshots continuously and are deliberately harsher than normal per-session requests at 60 Hz. The representative 8-player load is healthy relative to the 16.67 ms server tick budget. Snapshot allocation pressure is notable, and the 16-player stress case is warning-level evidence for future scale work, but the current measurements do not require production optimization.
+
+Revisit this decision when rooms grow larger, sustained entity counts rise, runtime observation shows GC or memory pressure, or snapshot work consumes a material portion of the 16.67 ms tick budget.
+
+Exact benchmark commands:
+
+```bash
+cd services/game-server
+go test ./internal/game -run '^$' -bench '^BenchmarkGameplayPresentationSnapshot$' -benchtime=250ms -count=3
+go test ./internal/game -run '^$' -bench '^BenchmarkGameStepWithPresentationSnapshotContention$' -benchtime=100ms -count=3
+```
+
 ## Client Runtime Signals
 
 Client-side measurement should track whether the Godot client can render and sync the game smoothly.
