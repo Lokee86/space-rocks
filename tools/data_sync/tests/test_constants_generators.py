@@ -43,6 +43,40 @@ def test_gds_constants_support_vector2_values() -> None:
     ) == "const WINDOW_MIN_SIZE := Vector2(1280.0, 720.0)"
 
 
+def test_gds_constants_support_empty_arrays() -> None:
+    assert gds_constants.generate_constants("constants.client.shell", (("items", []),)) == (
+        "const ITEMS := []"
+    )
+
+
+def test_gds_constants_support_string_arrays() -> None:
+    assert gds_constants.generate_constants(
+        "constants.client.shell", (("items", ["alpha", "beta"]),)
+    ) == 'const ITEMS := ["alpha", "beta"]'
+
+
+def test_gds_constants_support_structured_ice_server_arrays() -> None:
+    value = [
+        {"urls": ["stun:example.test:3478"]},
+        {"urls": ["turn:example.test:3478"], "username": "user", "credential": "secret"},
+    ]
+    assert gds_constants.generate_constants("constants.client.shell", (("ice_servers", value),)) == (
+        'const ICE_SERVERS := [{"urls": ["stun:example.test:3478"]}, '
+        '{"urls": ["turn:example.test:3478"], "username": "user", "credential": "secret"}]'
+    )
+
+
+@pytest.mark.parametrize("value", [[object()], {"nested": object()}])
+def test_gds_constants_reject_unsupported_nested_values(value) -> None:
+    with pytest.raises(ConstantsGenerationError):
+        gds_constants.generate_constants("constants.client.shell", (("items", value),))
+
+
+def test_gds_constants_reject_non_string_dictionary_keys() -> None:
+    with pytest.raises(ConstantsGenerationError):
+        gds_constants.generate_constants("constants.client.shell", (("items", {1: "value"}),))
+
+
 def test_ts_constants_all_supported_value_types() -> None:
     assert ts_constants.generate_constants("constants.gameplay", VALUES) == "\n".join(
         [

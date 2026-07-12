@@ -399,7 +399,7 @@ Missing constants sections fail when a generated destination block references a 
 
 Malformed or ambiguous managed blocks fail constants sync. Missing start markers, missing end markers, duplicate blocks, or mismatched marker comment styles are hard failures.
 
-Unsupported constants values fail validation. Constants currently support booleans, integers, floats, strings, and two-number vector-style arrays.
+Unsupported constants values fail validation. Constants support booleans, integers, floats, strings, recursively formatted GDScript arrays and string-keyed dictionaries, including structured ICE-server-shaped values with nested URL arrays. A two-number numeric array remains a `Vector2` value for GDScript output. Unsupported nested values and non-string dictionary keys fail GDScript generation.
 
 Packet schema errors fail validation or generation. Common failures include duplicate packet type IDs, duplicate packet values, invalid struct names, invalid JSON field names, unsupported field types, unknown struct references, unknown packet output IDs, or references to unknown packet builder fields.
 
