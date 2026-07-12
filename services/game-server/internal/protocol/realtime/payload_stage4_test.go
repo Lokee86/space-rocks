@@ -267,7 +267,7 @@ func TestEncodeLanePacketRejectsNilAndTypedNil(t *testing.T) {
 func TestSchedulerAndDiagnosticsUseTypedPayloadIdentity(t *testing.T) {
 	candidate := stage4WorldCandidate()
 	record := scheduleRecordForCandidate(2, candidate)
-	diagnostics := CandidateWriteDiagnosticsFor(candidate, NewRealtimeSessionState("player-1"), 17)
+	diagnostics := CandidateWriteDiagnosticsFor(candidate, NewRealtimeSessionState("player-1", "match-1"), 17)
 	if record.Lane != candidate.Lane() || record.RecordKind != string(candidate.Kind()) || record.PacketFamily != candidate.PacketFamily() {
 		t.Fatalf("schedule record diverged: %#v", record)
 	}

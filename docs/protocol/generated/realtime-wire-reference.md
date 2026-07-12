@@ -42,6 +42,7 @@ Parent index: [Generated](./!INDEX.md)
 | wire | `lifespan_seconds` | `life` |
 | wire | `lives` | `lv` |
 | wire | `lives_after` | `lva` |
+| wire | `match_id` | `mid` |
 | wire | `modified_amount` | `ma` |
 | wire | `owner_id` | `oi` |
 | wire | `pickup_class` | `pcl` |

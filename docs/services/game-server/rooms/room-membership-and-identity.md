@@ -185,6 +185,7 @@ RoomSnapshot.members[].ready
 RoomSnapshot.members[].connected
 RoomSnapshot.local_player_id
 RoomSnapshot.owner_id
+RoomSnapshot.current_match_id
 ```
 
 Membership identity is also used when building resolved match summaries. `room.buildMatchResultSummaryLocked` matches game player facts back to room members by `GamePlayerID` / member `PlayerID` and copies `AccountID` or `LocalProfileID` into the player-data match summary.

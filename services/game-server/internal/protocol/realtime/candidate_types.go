@@ -11,6 +11,7 @@ const (
 type RealtimeLaneCandidate struct {
 	Payload    RealtimeLanePayload
 	Projection any
+	MatchID    string
 }
 
 func (candidate RealtimeLaneCandidate) hasPayload() bool {
@@ -42,7 +43,11 @@ func (candidate RealtimeLaneCandidate) Metadata() (Metadata, bool) {
 	if !candidate.hasPayload() {
 		return Metadata{}, false
 	}
-	return candidate.Payload.LaneMetadata()
+	metadata, ok := candidate.Payload.LaneMetadata()
+	if ok {
+		metadata.MatchID = candidate.MatchID
+	}
+	return metadata, ok
 }
 
 type RealtimeLanePlan struct {

@@ -272,7 +272,7 @@ player_pause_state_received
 
 For gameplay application, the controller now follows the semantic presentation handoff instead of connecting separately to each lane-specific packet signal.
 
-Realtime gameplay lane packets are routed by `RealtimePacketPipeline`, which refreshes `RealtimePresentationState` and emits the historically named `gameplay_packet_applied(packet)` notification. They are delivered through `PresentationBridge.handle_gameplay_packet(packet)` and are not exposed as service-facade signals. The notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
+Realtime gameplay lane packets are routed by `RealtimePacketPipeline`, which refreshes `RealtimePresentationState` and emits the historically named `gameplay_packet_applied(packet)` notification. Room snapshots establish the authoritative match identity: the pipeline accepts packets only while that match is active and only when readable `match_id` matches exactly. `GameOver` retains the active match; returning to `Lobby` ends protocol and presentation state for every room member. The notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
 
 ### Room packet handoff
 

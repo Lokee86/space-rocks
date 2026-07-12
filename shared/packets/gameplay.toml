@@ -10,6 +10,13 @@ type = "string"
 
 [[structs.fields]]
 
+name = "match_id"
+go_name = "MatchID"
+json = "match_id"
+type = "string"
+
+[[structs.fields]]
+
 name = "input"
 json = "input"
 type = "InputState"
@@ -839,11 +846,12 @@ type = "clear_target_request"
 [[builders]]
 
 id = "resync_request_packet"
-args = ["lane", "baseline_id", "sequence", "reason"]
+args = ["match_id", "lane", "baseline_id", "sequence", "reason"]
 
 [builders.body]
 
 type = "resync_request"
+match_id = "$match_id"
 lane = "$lane"
 baseline_id = "$baseline_id"
 sequence = "$sequence"

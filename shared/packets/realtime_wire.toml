@@ -17,6 +17,10 @@ readable = "lane"
 compact = "l"
 [[key_aliases]]
 domain = "wire"
+readable = "match_id"
+compact = "mid"
+[[key_aliases]]
+domain = "wire"
 readable = "sequence"
 compact = "q"
 [[key_aliases]]

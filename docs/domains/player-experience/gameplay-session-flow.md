@@ -175,6 +175,7 @@ room_state
 local_player_id
 owner_id
 max_players
+current_match_id
 members
 match_result
 ```
@@ -203,7 +204,7 @@ The server activates connected room members into active game players after start
 
 The client does not process gameplay lane packets as active gameplay until server-observed room state reaches `InGame`.
 
-Room snapshots and room-state-change packets update the client room-session cache. After that update, the client session network controller opens the gameplay packet gate when the current room state is `InGame`.
+Room snapshots and room-state-change packets update the client room-session cache. An authoritative `InGame` room snapshot establishes the match boundary in this exact order: reset gameplay presentation/composition, begin the new realtime match through the protocol-only client service seam, then accept gameplay packets.
 
 Current client transition:
 
@@ -211,9 +212,13 @@ Current client transition:
 room snapshot or room-state-change
 -> room-session cache updates current room state
 -> room state is InGame
+-> gameplay presentation/composition resets
+-> protocol-only realtime match begins for current_match_id
 -> gameplay-session lifecycle begins accepting gameplay packets
--> gameplay lane packets are accepted only after InGame, routed into realtime lane state, and then presented through frame-deferred realtime presentation fanout
+-> gameplay lane packets are accepted only while a match is active and only when packet match_id equals the authoritative current_match_id, then routed into realtime lane state and presented through frame-deferred realtime presentation fanout
 ```
+
+Compact `mid` expands to readable `match_id` before this guard. Packets with no active match, a missing match ID, or a mismatched match ID are rejected before lane state or presentation mutation. GameOver remains part of the same match and retains realtime/presentation state for final results. When the room returns to Lobby, every room member, including non-requesting clients, resets gameplay presentation and ends protocol match ownership without closing or recreating WebRTC.
 
 The client then presents gameplay through world sync, HUD, input, audio/effects, devtools presentation, gameplay menu, respawn, spectate, and match-end flows.
 
@@ -289,6 +294,8 @@ show the match results window
 ```
 
 The match results window can emit intent for replay, lobby return, pregame return, or main-menu quit. Those are client route intents. They do not alter server authority by themselves.
+
+Returning to Lobby follows the server snapshot -> all-client gameplay reset -> protocol match end flow. Consecutive matches over the same WebSocket/player identity begin with a new match ID and therefore restart realtime sequences and baselines.
 
 ### 11. Results are reported to player-data
 

@@ -10,13 +10,26 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func resyncWriteSession() *webSocketSession {
-	return &webSocketSession{
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, game.New()),
-		currentRoomID:       "room-1",
-		currentGamePlayerID: "player-1",
-		realtimeState:       realtime.NewRealtimeSessionState("player-1"),
+func resyncWriteSession(t *testing.T) (*webSocketSession, string) {
+	t.Helper()
+	room := rooms.NewRoom("room-1", rooms.RoomStateLobby, nil)
+	room.SetJoinable(false)
+	room.AddMember(rooms.NewRoomMember("session-owner"))
+	if err := room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("start single-player game: %v", err)
 	}
+	t.Cleanup(func() {
+		if room.GameInstance() != nil {
+			room.GameInstance().Stop()
+		}
+	})
+	matchID := room.CurrentMatchID()
+	return &webSocketSession{
+		room:                room,
+		currentRoomID:       room.ID,
+		currentGamePlayerID: "player-1",
+		realtimeState:       realtime.NewRealtimeSessionState("player-1", matchID),
+	}, matchID
 }
 
 func readyResyncWriteState(session *webSocketSession) {
@@ -26,9 +39,9 @@ func readyResyncWriteState(session *webSocketSession) {
 }
 
 func TestWriteResyncRequiredAndApplyWritesBeforeInvalidating(t *testing.T) {
-	session := resyncWriteSession()
+	session, matchID := resyncWriteSession(t)
 	readyResyncWriteState(session)
-	request := queuedResyncRequest{Request: realtime.ResyncRequest{Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: "room-1", ReceiverID: "player-1"}
+	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: matchID}
 	called := false
 	original := writeResyncMessage
 	t.Cleanup(func() { writeResyncMessage = original })
@@ -38,7 +51,7 @@ func TestWriteResyncRequiredAndApplyWritesBeforeInvalidating(t *testing.T) {
 		if err := json.Unmarshal(message, &payload); err != nil {
 			t.Fatal(err)
 		}
-		if payload["type"] != realtime.PacketFamilyResyncRequired || payload["lane"] != "world" || payload["baseline_id"] != "baseline-7" || payload["reason"] != "missing_baseline" || payload["sequence"] != float64(7) {
+		if payload["type"] != realtime.PacketFamilyResyncRequired || payload["match_id"] != matchID || payload["lane"] != "world" || payload["baseline_id"] != "baseline-7" || payload["reason"] != "missing_baseline" || payload["sequence"] != float64(7) {
 			t.Fatalf("unexpected payload: %#v", payload)
 		}
 		if !session.realtimeState.LaneBaselineReady(realtime.LaneWorld) {
@@ -65,12 +78,12 @@ func TestWriteResyncRequiredAndApplyWritesBeforeInvalidating(t *testing.T) {
 }
 
 func TestWriteResyncRequiredAndApplyFailedWritePreservesState(t *testing.T) {
-	session := resyncWriteSession()
+	session, matchID := resyncWriteSession(t)
 	readyResyncWriteState(session)
 	original := writeResyncMessage
 	t.Cleanup(func() { writeResyncMessage = original })
 	writeResyncMessage = func(_ *websocket.Conn, _ []byte, _ func(error)) bool { return false }
-	request := queuedResyncRequest{Request: realtime.ResyncRequest{Lane: realtime.LaneWorld}, RoomID: "room-1", ReceiverID: "player-1"}
+	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: matchID}
 	if writeResyncRequiredAndApply(session, request, "remote") {
 		t.Fatal("expected failed write")
 	}
@@ -88,6 +101,9 @@ func TestWriteResyncRequiredAndApplyIgnoresStaleOrInvalidRequests(t *testing.T) 
 		mutate func(*webSocketSession, *queuedResyncRequest)
 	}{
 		{"unsupported lane", func(_ *webSocketSession, r *queuedResyncRequest) { r.Request.Lane = realtime.LaneControl }},
+		{"missing request match", func(_ *webSocketSession, r *queuedResyncRequest) { r.Request.MatchID = "" }},
+		{"missing queued match", func(_ *webSocketSession, r *queuedResyncRequest) { r.MatchID = "" }},
+		{"request queued mismatch", func(_ *webSocketSession, r *queuedResyncRequest) { r.Request.MatchID = "other-match" }},
 		{"nil session", func(_ *webSocketSession, _ *queuedResyncRequest) {}},
 		{"nil room", func(s *webSocketSession, _ *queuedResyncRequest) { s.room = nil }},
 		{"nil game", func(s *webSocketSession, _ *queuedResyncRequest) {
@@ -99,9 +115,9 @@ func TestWriteResyncRequiredAndApplyIgnoresStaleOrInvalidRequests(t *testing.T) 
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			session := resyncWriteSession()
+			session, matchID := resyncWriteSession(t)
 			readyResyncWriteState(session)
-			request := queuedResyncRequest{Request: realtime.ResyncRequest{Lane: realtime.LaneWorld}, RoomID: "room-1", ReceiverID: "player-1"}
+			request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: matchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: matchID}
 			called := false
 			original := writeResyncMessage
 			t.Cleanup(func() { writeResyncMessage = original })
@@ -122,5 +138,40 @@ func TestWriteResyncRequiredAndApplyIgnoresStaleOrInvalidRequests(t *testing.T) 
 				t.Fatal("state mutated")
 			}
 		})
+	}
+}
+
+func TestWriteResyncRequiredAndApplyRejectsStaleMatchAfterRoomAdvances(t *testing.T) {
+	session, oldMatchID := resyncWriteSession(t)
+	readyResyncWriteState(session)
+	if err := session.room.MarkGameOver(); err != nil {
+		t.Fatalf("mark game over: %v", err)
+	}
+	if err := session.room.ResetToLobby("Player-1"); err != nil {
+		t.Fatalf("reset room: %v", err)
+	}
+	if err := session.room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("start next match: %v", err)
+	}
+	newMatchID := session.room.CurrentMatchID()
+	if newMatchID == oldMatchID {
+		t.Fatalf("expected match to advance from %q", oldMatchID)
+	}
+	session.realtimeState = realtime.NewRealtimeSessionState("player-1", newMatchID)
+	readyResyncWriteState(session)
+	request := queuedResyncRequest{Request: realtime.ResyncRequest{MatchID: oldMatchID, Lane: realtime.LaneWorld, BaselineID: "baseline-7", Sequence: 7, Reason: "missing_baseline"}, RoomID: session.room.ID, ReceiverID: "player-1", MatchID: oldMatchID}
+	called := false
+	original := writeResyncMessage
+	t.Cleanup(func() { writeResyncMessage = original })
+	writeResyncMessage = func(_ *websocket.Conn, _ []byte, _ func(error)) bool { called = true; return true }
+	writeResyncRequiredAndApply(session, request, "remote")
+	if called {
+		t.Fatal("writer called for stale match")
+	}
+	if !session.realtimeState.LaneBaselineReady(realtime.LaneWorld) {
+		t.Fatal("new match readiness mutated")
+	}
+	if projection, ok := session.realtimeState.BaselineProjection(realtime.LaneWorld); !ok || projection != "projection" {
+		t.Fatalf("new match projection mutated: %#v, %t", projection, ok)
 	}
 }

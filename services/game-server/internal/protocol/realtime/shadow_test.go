@@ -15,7 +15,7 @@ func TestBuildShadowRealtimeResultDoesNotDrainPendingEvents(t *testing.T) {
 		},
 		PendingEvents: []game.PendingPresentationEvent{{EventID: "event-1", Event: game.EventState{Type: "ship_death"}}},
 	}
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 
 	result := mustBuildShadowRealtimeResult(t, snapshot, state)
 	if len(result.Candidates) == 0 {
@@ -57,7 +57,7 @@ func TestShadowLaneMetricRecordsUsesWorldFullPacketFamily(t *testing.T) {
 			Type:     PacketFamilyWorldFull,
 			Metadata: Metadata{Lane: LaneWorld},
 		}}},
-		SessionState: NewRealtimeSessionState("player-1"),
+		SessionState: NewRealtimeSessionState("player-1", "match-1"),
 	}
 
 	records := ShadowLaneMetricRecords(result)
@@ -81,7 +81,7 @@ func TestShadowRealtimeResultKeepsEventIDsStableFromProjectionToOutput(t *testin
 		t.Fatalf("projection event IDs = %#v", projection.Batch.Events)
 	}
 
-	result := mustBuildShadowRealtimeResult(t, snapshot, NewRealtimeSessionState("player-1"))
+	result := mustBuildShadowRealtimeResult(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	if len(result.Candidates) == 0 {
 		t.Fatalf("shadow result has no candidates")
 	}

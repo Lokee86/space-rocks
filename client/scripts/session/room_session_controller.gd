@@ -17,6 +17,7 @@ var shell_boot_flow
 var client_config_sender: Callable
 var logger: Callable
 var latest_room_state := ""
+var _current_match_id := ""
 var latest_match_result := {}
 
 var lobby_flow
@@ -77,6 +78,7 @@ func handle_room_snapshot(packet: Dictionary) -> void:
 	lobby_shell_flow.apply_room_snapshot(packet)
 	var state = lobby_flow.current_state()
 	latest_room_state = state.room_state
+	_current_match_id = str(packet.get(Packets.FIELD_CURRENT_MATCH_ID, ""))
 	_cache_match_result_from_snapshot(packet)
 	if state.room_state == Constants.ROOM_STATE_IN_GAME && !client_config_sender.is_null():
 		client_config_sender.call()
@@ -95,6 +97,10 @@ func current_room_state() -> String:
 	if lobby_flow == null:
 		return ""
 	return lobby_flow.current_state().room_state
+
+
+func current_match_id() -> String:
+	return _current_match_id
 
 
 func current_match_result() -> Dictionary:
@@ -127,6 +133,7 @@ func handle_room_error(packet: Dictionary) -> void:
 
 
 func _on_lobby_left_room() -> void:
+	_current_match_id = ""
 	if session_context != null:
 		session_context.clear()
 	if shell_boot_flow != null:

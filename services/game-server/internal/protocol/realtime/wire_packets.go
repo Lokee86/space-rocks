@@ -30,6 +30,9 @@ func WireLanePacket(candidate RealtimeLaneCandidate) (map[string]any, error) {
 		return nil, fmt.Errorf("wire lane packet lane=%q family=%q: %w", candidate.Lane(), candidate.PacketFamily(), err)
 	}
 	wire := candidate.Payload.WirePacket()
+	if candidate.MatchID != "" {
+		wire["match_id"] = candidate.MatchID
+	}
 	if err := validateWireLaneMap(candidate, wire); err != nil {
 		return nil, err
 	}

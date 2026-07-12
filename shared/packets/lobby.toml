@@ -230,6 +230,12 @@ json = "room_state"
 type = "string"
 
 [[structs.fields]]
+name = "current_match_id"
+go_name = "CurrentMatchID"
+json = "current_match_id"
+type = "string"
+
+[[structs.fields]]
 name = "members"
 json = "members"
 type = "array"

@@ -18,6 +18,25 @@ import (
 	"github.com/pion/webrtc/v4"
 )
 
+func newActiveRoomForWriterTest(t *testing.T, gameInstance *game.Game) (*rooms.Room, string) {
+	t.Helper()
+	room := rooms.NewRoom("room-1", rooms.RoomStateLobby, nil)
+	room.AddMember(rooms.NewRoomMember("session-owner"))
+	if err := room.StartSinglePlayerGame(func() *game.Game { return gameInstance }); err != nil {
+		t.Fatalf("expected active room to start, got %v", err)
+	}
+	matchID := room.CurrentMatchID()
+	if matchID == "" {
+		t.Fatal("expected active room match ID")
+	}
+	t.Cleanup(func() {
+		if room.GameInstance() != nil {
+			room.GameInstance().Stop()
+		}
+	})
+	return room, matchID
+}
+
 func newReadyGameplayWebRTCTransportForTests() (*WebRTCTransport, map[string]*fakeWebRTCDataChannel) {
 	world := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	overlay := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
@@ -138,7 +157,7 @@ func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
 	}
 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
-	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance)
+	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
 		room:                room,
@@ -183,9 +202,10 @@ func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) 
 	}
 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
+	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		room:                room,
 		rooms:               rooms.NewRoomManager(),
 		currentRoomID:       "room-1",
 		currentGamePlayerID: playerID,
@@ -226,9 +246,10 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWithoutWebRTC(t *testing.
 		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
+	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		room:                room,
 		rooms:               rooms.NewRoomManager(),
 		currentRoomID:       "room-1",
 		currentGamePlayerID: playerID,
@@ -268,9 +289,10 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWhenWebRTCNotReady(t *tes
 
 	transport, _ := newReadyGameplayWebRTCTransportForTests()
 	transport.ready = false
+	room, _ := newActiveRoomForWriterTest(t, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		room:                room,
 		rooms:               rooms.NewRoomManager(),
 		currentRoomID:       "room-1",
 		currentGamePlayerID: playerID,
@@ -282,6 +304,33 @@ func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWhenWebRTCNotReady(t *tes
 	}
 	assertNoMessageWithin(t, clientConn)
 }
+func TestResetRealtimeStateForCurrentIdentityResetsSameReceiverAcrossMatches(t *testing.T) {
+	room := rooms.NewRoom("room-identity", rooms.RoomStateLobby, nil)
+	member := room.AddMember(rooms.NewRoomMember("session-identity"))
+	member.SetReady(true)
+	if err := room.StartSinglePlayerGame(func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("expected first match to start, got %v", err)
+	}
+	firstMatchID := room.CurrentMatchID()
+	session := &webSocketSession{
+		room:                room,
+		currentGamePlayerID: member.PlayerID,
+		realtimeState:       realtime.NewRealtimeSessionState(member.PlayerID, "old-match"),
+	}
+	session.realtimeState.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 8})
+	resetRealtimeStateForCurrentIdentity(session)
+	if session.realtimeState.MatchID != firstMatchID {
+		t.Fatalf("expected current match ID %q, got %q", firstMatchID, session.realtimeState.MatchID)
+	}
+	if _, ok := session.realtimeState.LaneState(realtime.LaneWorld); ok {
+		t.Fatal("expected changed match identity to clear prior world lane state")
+	}
+	if got := realtime.NextLaneSequence(realtime.RealtimeLaneState{}, false); got != 1 {
+		t.Fatalf("expected new match baseline sequence 1, got %d", got)
+	}
+	room.GameInstance().Stop()
+}
+
 func TestWriteGameplayLaneProtocolMessageDoesNotDrainEventBatchWhenEventLaneSendFails(t *testing.T) {
 	originalCanSend := canSendDebugShapeCatalog
 	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
@@ -311,7 +360,8 @@ func TestWriteGameplayLaneProtocolMessageDoesNotDrainEventBatchWhenEventLaneSend
 		t.Fatal("expected KillPlayer to succeed")
 	}
 
-	state := realtime.NewRealtimeSessionState(playerID)
+	room, matchID := newActiveRoomForWriterTest(t, gameInstance)
+	state := realtime.NewRealtimeSessionState(playerID, matchID)
 	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 7, BaselineID: "world-before", SnapshotID: "world-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(realtime.LaneWorld)
 	state.UpdateLane(realtime.LaneOverlay, realtime.Metadata{Lane: realtime.LaneOverlay, Sequence: 7, BaselineID: "overlay-before", SnapshotID: "overlay-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
@@ -328,7 +378,7 @@ func TestWriteGameplayLaneProtocolMessageDoesNotDrainEventBatchWhenEventLaneSend
 	channels["event"].sendErr = errors.New("webrtc send failed")
 	session := &webSocketSession{
 		conn:                serverConn,
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		room:                room,
 		rooms:               rooms.NewRoomManager(),
 		currentRoomID:       "room-1",
 		currentGamePlayerID: playerID,
@@ -387,7 +437,8 @@ func TestWriteGameplayLaneProtocolMessageAdvancesMetadataAndDrainsEventBatchOnWe
 		t.Fatal("expected KillPlayer to succeed")
 	}
 
-	state := realtime.NewRealtimeSessionState(playerID)
+	room, matchID := newActiveRoomForWriterTest(t, gameInstance)
+	state := realtime.NewRealtimeSessionState(playerID, matchID)
 	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 1, BaselineID: "world-before", SnapshotID: "world-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(realtime.LaneWorld)
 	state.UpdateLane(realtime.LaneOverlay, realtime.Metadata{Lane: realtime.LaneOverlay, Sequence: 1, BaselineID: "overlay-before", SnapshotID: "overlay-before", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
@@ -402,7 +453,7 @@ func TestWriteGameplayLaneProtocolMessageAdvancesMetadataAndDrainsEventBatchOnWe
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
 	session := &webSocketSession{
 		conn:                serverConn,
-		room:                rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance),
+		room:                room,
 		rooms:               rooms.NewRoomManager(),
 		currentRoomID:       "room-1",
 		currentGamePlayerID: playerID,
@@ -462,7 +513,8 @@ func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessful
 		t.Fatal("expected SpawnPlayerShip to succeed")
 	}
 
-	state := realtime.NewRealtimeSessionState(playerID)
+	room, matchID := newActiveRoomForWriterTest(t, gameInstance)
+	state := realtime.NewRealtimeSessionState(playerID, matchID)
 	state.UpdateLane(realtime.LaneWorld, realtime.Metadata{Lane: realtime.LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(realtime.LaneWorld)
 	state.UpdateLane(realtime.LaneOverlay, realtime.Metadata{Lane: realtime.LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: realtime.SnapshotKind("full"), IsFinalChunk: true})
@@ -481,7 +533,6 @@ func TestWriteGameplayLaneProtocolMessageStoresBaselineProjectionAfterSuccessful
 	}
 
 	transport, channels := newReadyGameplayWebRTCTransportForTests()
-	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, gameInstance)
 	session := &webSocketSession{
 		conn:                serverConn,
 		room:                room,
@@ -695,5 +746,3 @@ func assertNoMessageWithin(t *testing.T, conn *websocket.Conn) {
 		t.Fatal("expected no duplicate debug shape catalog packet")
 	}
 }
-
-

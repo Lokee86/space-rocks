@@ -13,6 +13,7 @@ signal resync_request_required(lane, baseline_id, sequence, reason)
 var _router: RealtimeRouter
 var _presentation_state: RealtimePresentationState
 var _lane_route_log_emitted := {}
+var _active_match_id := ""
 
 func _init() -> void:
 	_router = RealtimeRouter.new()
@@ -22,6 +23,21 @@ func _init() -> void:
 
 func get_router() -> RealtimeRouter:
 	return _router
+
+func active_match_id() -> String:
+	return _active_match_id
+
+func begin_match(match_id: String) -> void:
+	if match_id.is_empty():
+		return
+	if _active_match_id == match_id:
+		return
+	_active_match_id = match_id
+	_reset_protocol_state()
+
+func end_match() -> void:
+	_active_match_id = ""
+	_reset_protocol_state()
 
 func is_gameplay_ready() -> bool:
 	if _router == null:
@@ -46,9 +62,15 @@ func apply_packet(packet: Dictionary) -> void:
 	var packet_type = expanded_packet.get("type")
 	if DescriptorIndex.packet_by_readable_id(str(packet_type)).is_empty():
 		return
+	if _active_match_id.is_empty() or str(expanded_packet.get("match_id", "")) != _active_match_id:
+		return
 	_apply_lane_packet(expanded_packet)
 
 func reset() -> void:
+	_active_match_id = ""
+	_reset_protocol_state()
+
+func _reset_protocol_state() -> void:
 	_router = RealtimeRouter.new()
 	_bind_router(_router)
 	_presentation_state.update_from_router(_router)

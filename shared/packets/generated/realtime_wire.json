@@ -185,6 +185,11 @@
       "readable": "lane"
     },
     {
+      "compact": "mid",
+      "domain": "wire",
+      "readable": "match_id"
+    },
+    {
       "compact": "q",
       "domain": "wire",
       "readable": "sequence"

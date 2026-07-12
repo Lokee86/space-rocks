@@ -27,6 +27,7 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		if !ok {
 			return []RealtimeLaneCandidate{candidate}
 		}
+		packet.Metadata.MatchID = candidate.MatchID
 
 		if estimateBulletDeltaPacketBytes(packet, packet.BulletUpdates) <= HardCapBytes {
 			return []RealtimeLaneCandidate{normalizedBulletWireDeltaCandidate(candidate, packet, packet.BulletUpdates, 0, 1)}
@@ -48,6 +49,7 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		if !ok {
 			return []RealtimeLaneCandidate{candidate}
 		}
+		packet.Metadata.MatchID = candidate.MatchID
 
 		if estimateAsteroidDeltaPacketBytes(packet, packet.AsteroidUpdates) <= HardCapBytes {
 			return []RealtimeLaneCandidate{normalizedAsteroidWireDeltaCandidate(candidate, packet, packet.AsteroidUpdates, 0, 1)}

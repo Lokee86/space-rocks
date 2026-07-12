@@ -214,6 +214,7 @@ func test_presentation_adapter_forwards_decoded_session_state_to_local_lifecycle
 
 func test_pipeline_event_batch_and_resync_packets_update_router_state() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var callback_state := {"count": 0}
 	pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
 		callback_state.count += 1
@@ -221,14 +222,15 @@ func test_pipeline_event_batch_and_resync_packets_update_router_state() -> void:
 
 	pipeline.apply_packet({
 		"type": "event_batch",
+		"match_id": "match-1",
 		"batch_id": "batch-11",
 		"events": [
 			{"event_id": "presentation-event-1", "type": "bullet_blast", "payload": {"value": 1}},
 		],
 	})
-	pipeline.apply_packet({"type": "resync_request", "lane": "world", "reason": "missing_baseline"})
-	pipeline.apply_packet({"type": "resync_request", "lane": "overlay", "reason": "wrong_baseline"})
-	pipeline.apply_packet({"type": "resync_required", "lane": "overlay", "reason": "wrong_baseline"})
+	pipeline.apply_packet({"type": "resync_request", "match_id": "match-1", "lane": "world", "reason": "missing_baseline"})
+	pipeline.apply_packet({"type": "resync_request", "match_id": "match-1", "lane": "overlay", "reason": "wrong_baseline"})
+	pipeline.apply_packet({"type": "resync_required", "match_id": "match-1", "lane": "overlay", "reason": "wrong_baseline"})
 
 	assert_eq(callback_state.count, 4)
 	assert_eq(pipeline.get_presentation_state().event_batch_applier.get_applied_events().size(), 1)
@@ -240,14 +242,15 @@ func test_pipeline_event_batch_and_resync_packets_update_router_state() -> void:
 
 func test_resync_required_marks_pending_without_emitting_request() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var emitted := {"count": 0}
 	pipeline.resync_request_required.connect(func(_lane, _baseline_id, _sequence, _reason) -> void:
 		emitted.count += 1
 	)
 
-	pipeline.apply_packet({"type": "resync_request", "lane": "world", "reason": "missing_baseline"})
+	pipeline.apply_packet({"type": "resync_request", "match_id": "match-1", "lane": "world", "reason": "missing_baseline"})
 	assert_eq(emitted.count, 0)
-	pipeline.apply_packet({"type": "resync_required", "lane": "world", "reason": "missing_baseline"})
+	pipeline.apply_packet({"type": "resync_required", "match_id": "match-1", "lane": "world", "reason": "missing_baseline"})
 
 	assert_true(pipeline.get_router().baseline_tracker.needs_resync(LaneMetadata.LANE_WORLD))
 	assert_true(pipeline.get_router().resync_state.needs_resync(LaneMetadata.LANE_WORLD))
@@ -257,18 +260,19 @@ func test_resync_required_marks_pending_without_emitting_request() -> void:
 
 func test_delayed_resync_required_does_not_regress_recovered_lane() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var emitted := {"count": 0}
 	pipeline.resync_request_required.connect(func(_lane, _baseline_id, _sequence, _reason) -> void:
 		emitted.count += 1
 	)
-	pipeline.apply_packet({"type": "world_full", "lane": "world", "baseline_id": "baseline-1", "sequence": 1, "snapshot_id": "snapshot-1", "ships": [], "bullets": [], "asteroids": [], "pickups": [], "is_final_chunk": true})
-	pipeline.apply_packet({"type": "world_delta", "lane": "world", "baseline_id": "wrong-baseline", "sequence": 2, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+	pipeline.apply_packet({"type": "world_full", "match_id": "match-1", "lane": "world", "baseline_id": "baseline-1", "sequence": 1, "snapshot_id": "snapshot-1", "ships": [], "bullets": [], "asteroids": [], "pickups": [], "is_final_chunk": true})
+	pipeline.apply_packet({"type": "world_delta", "match_id": "match-1", "lane": "world", "baseline_id": "wrong-baseline", "sequence": 2, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
 	assert_eq(emitted.count, 1)
-	pipeline.apply_packet({"type": "world_full", "lane": "world", "baseline_id": "baseline-2", "sequence": 2, "snapshot_id": "snapshot-2", "ships": [], "bullets": [], "asteroids": [], "pickups": [], "is_final_chunk": true})
+	pipeline.apply_packet({"type": "world_full", "match_id": "match-1", "lane": "world", "baseline_id": "baseline-2", "sequence": 2, "snapshot_id": "snapshot-2", "ships": [], "bullets": [], "asteroids": [], "pickups": [], "is_final_chunk": true})
 	assert_true(pipeline.get_router().baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
 	assert_false(pipeline.get_router().baseline_tracker.needs_resync(LaneMetadata.LANE_WORLD))
 	assert_false(pipeline.get_router().resync_state.needs_resync(LaneMetadata.LANE_WORLD))
-	pipeline.apply_packet({"type": "resync_required", "lane": "world", "baseline_id": "baseline-1", "sequence": 1, "reason": "wrong_baseline"})
+	pipeline.apply_packet({"type": "resync_required", "match_id": "match-1", "lane": "world", "baseline_id": "baseline-1", "sequence": 1, "reason": "wrong_baseline"})
 	assert_true(pipeline.get_router().baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD))
 	assert_false(pipeline.get_router().baseline_tracker.needs_resync(LaneMetadata.LANE_WORLD))
 	assert_false(pipeline.get_router().resync_state.needs_resync(LaneMetadata.LANE_WORLD))

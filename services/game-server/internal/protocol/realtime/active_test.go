@@ -139,7 +139,7 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 		},
 	}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, BaselineID: "overlay-baseline", SnapshotID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
@@ -224,7 +224,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.
 	currentSnapshot.ServerSentMsec = 2235
 	currentSnapshot.Asteroids = currentAsteroids
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
@@ -314,7 +314,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 	currentSnapshot.ServerSentMsec = 1235
 	currentSnapshot.Bullets = currentBullets
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
@@ -384,7 +384,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 func TestBuildActiveRealtimeResultSelectsFullPacketsWithoutStoredBaselines(t *testing.T) {
 
 	snapshot := tinyActiveBoundarySnapshot()
-	result := mustBuildActiveRealtimeResult(t, snapshot, NewRealtimeSessionState("player-1"))
+	result := mustBuildActiveRealtimeResult(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 
 	assertSelectedCandidate(t, result, LaneWorld, RealtimeLaneCandidateKindFull)
 	assertSelectedCandidate(t, result, LaneOverlay, RealtimeLaneCandidateKindFull)
@@ -397,7 +397,7 @@ func TestBuildActiveRealtimeResultSelectsFullPacketsWithoutStoredBaselines(t *te
 
 func TestBuildActiveRealtimeResultEmitsNoWorldOverlayOrSessionPacketsWhenStoredBaselinesMatch(t *testing.T) {
 	snapshot := tinyActiveBoundarySnapshot()
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
@@ -421,7 +421,7 @@ func TestBuildActiveRealtimeResultSelectsDeltaPacketsForChangedStoredBaselines(t
 	snapshot.PlayerLifecycle["player-1"] = "active"
 	snapshot.TotalAsteroids = 1
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 1, Rotation: 0, Health: 5, Shields: 0}}}, 1))
@@ -659,7 +659,7 @@ func TestIncludedRealtimeLaneCandidatesDeduplicatesRepeatedCandidateIndexes(t *t
 
 func TestBuildActiveRealtimeResultRecoversInvalidatedWorldBaseline(t *testing.T) {
 	snapshot := tinyActiveBoundarySnapshot()
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 4, BaselineID: "world-baseline-4", SnapshotID: "world-snapshot-4", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 4))

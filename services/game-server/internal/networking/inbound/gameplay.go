@@ -32,7 +32,11 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 			if gameInstance == nil {
 				return false
 			}
-			request := realtime.ResyncRequest{Lane: realtime.Lane(packet.Lane), BaselineID: packet.BaselineID, Sequence: packet.Sequence, Reason: packet.Reason}
+			matchID := room.CurrentMatchID()
+			if matchID == "" || packet.MatchID == "" {
+				return false
+			}
+			request := realtime.ResyncRequest{MatchID: packet.MatchID, Lane: realtime.Lane(packet.Lane), BaselineID: packet.BaselineID, Sequence: packet.Sequence, Reason: packet.Reason}
 			if !realtime.IsBaselineLane(request.Lane) {
 				return false
 			}

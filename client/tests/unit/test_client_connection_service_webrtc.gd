@@ -209,10 +209,12 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 	add_child_autofree(service)
 
 	var pipeline = service.get_realtime_packet_pipeline()
+	service.begin_realtime_match("match-1")
 	pipeline.get_presentation_state().world_lane_state.upsert_asteroid({"id": "asteroid-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
 
 	service._on_packet_received({
 		"type": "asteroid_delta",
+		"match_id": "match-1",
 		"sequence": 1,
 		"asteroid_updates": [
 			{"id": "asteroid-1", "x": 42, "y": 84},
@@ -235,10 +237,12 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 	add_child_autofree(service)
 
 	var pipeline = service.get_realtime_packet_pipeline()
+	service.begin_realtime_match("match-1")
 	pipeline.get_presentation_state().world_lane_state.upsert_bullet({"id": "bullet-1", "x": 1.0, "y": 2.0, "rotation": 0.0})
 
 	service._on_packet_received({
 		"type": "bullet_delta",
+		"match_id": "match-1",
 		"sequence": 1,
 		"bullet_updates": [
 			{"id": "bullet-1", "x": 55, "y": 66},

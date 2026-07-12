@@ -64,11 +64,13 @@ func test_duplicate_and_out_of_order_chunks_do_not_complete_recovery() -> void:
 
 func test_pipeline_reset_rebinds_request_propagation() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var requests: Array = []
 	pipeline.resync_request_required.connect(func(lane, baseline, sequence, reason): requests.append([lane, baseline, sequence, reason]))
-	pipeline.apply_packet({"type": "world_delta", "baseline_id": "baseline-1", "sequence": 1})
+	pipeline.apply_packet({"type": "world_delta", "match_id": "match-1", "baseline_id": "baseline-1", "sequence": 1})
 	pipeline.reset()
-	pipeline.apply_packet({"type": "world_delta", "baseline_id": "baseline-1", "sequence": 1})
+	pipeline.begin_match("match-1")
+	pipeline.apply_packet({"type": "world_delta", "match_id": "match-1", "baseline_id": "baseline-1", "sequence": 1})
 	assert_eq(requests.size(), 2)
 
 func test_full_chunk_count_change_is_rejected_without_state_mutation() -> void:
@@ -80,4 +82,4 @@ func test_full_chunk_count_change_is_rejected_without_state_mutation() -> void:
 	assert_eq(tracker.get_lane_state("world"), before)
 
 func test_generated_resync_builder_has_exact_contract_fields() -> void:
-	assert_eq(Packets.resync_request_packet("world", "baseline-1", 10, "wrong_baseline"), {"type": "resync_request", "lane": "world", "baseline_id": "baseline-1", "sequence": 10, "reason": "wrong_baseline"})
+	assert_eq(Packets.resync_request_packet("match-1", "world", "baseline-1", 10, "wrong_baseline"), {"type": "resync_request", "match_id": "match-1", "lane": "world", "baseline_id": "baseline-1", "sequence": 10, "reason": "wrong_baseline"})

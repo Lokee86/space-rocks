@@ -188,6 +188,9 @@ func estimateCompactLaneDeltaPacketBytes(packetType string, metadata Metadata, u
 	addField("t", estimateJSONValueBytes(compactWireValue(packetType, "type")))
 	addField("q", estimateJSONIntBytes(int64(metadata.Sequence)))
 	addField("ms", estimateJSONIntBytes(int64(metadata.ServerSentMsec)))
+	if metadata.MatchID != "" {
+		addField("mid", estimateJSONStringBytes(metadata.MatchID))
+	}
 
 	if metadata.SnapshotKind == SnapshotKind("delta") {
 		if baselineSequence, ok := runtimeBaselineSequence(metadata.Lane, metadata.BaselineID); ok {

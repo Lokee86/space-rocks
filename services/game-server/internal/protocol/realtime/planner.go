@@ -16,6 +16,9 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 	candidates = append(candidates, buildOverlayLaneCandidates(snapshot, state)...)
 	candidates = append(candidates, buildSessionLaneCandidates(snapshot, state)...)
 	candidates = append(candidates, buildEventLaneCandidates(snapshot, state)...)
+	for index := range candidates {
+		candidates[index].MatchID = state.MatchID
+	}
 
 	return RealtimeLanePlan{Candidates: candidates}
 }

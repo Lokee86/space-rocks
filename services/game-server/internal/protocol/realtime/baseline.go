@@ -26,20 +26,26 @@ func (state RealtimeLaneState) Metadata() Metadata {
 
 type RealtimeSessionState struct {
 	ReceiverID          string
+	MatchID             string
 	Lanes               map[Lane]RealtimeLaneState
 	BaselineReady       map[Lane]bool
 	baselineProjections map[Lane]any
 	HotLaneCohorts      HotLaneCohortState
 }
 
-func NewRealtimeSessionState(receiverID string) RealtimeSessionState {
+func NewRealtimeSessionState(receiverID string, matchID string) RealtimeSessionState {
 	return RealtimeSessionState{
 		ReceiverID:          receiverID,
+		MatchID:             matchID,
 		Lanes:               make(map[Lane]RealtimeLaneState),
 		BaselineReady:       make(map[Lane]bool),
 		baselineProjections: make(map[Lane]any),
 		HotLaneCohorts:      NewHotLaneCohortState(),
 	}
+}
+
+func (state RealtimeSessionState) IdentityMatches(receiverID, matchID string) bool {
+	return state.ReceiverID == receiverID && state.MatchID == matchID
 }
 
 func (state *RealtimeSessionState) UpdateLane(lane Lane, metadata Metadata) {

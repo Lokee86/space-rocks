@@ -74,13 +74,17 @@ event_batch
 
 These packets carry current lane snapshots, baseline updates, and event batches instead of one combined lane gameplay output payload. `resync_request` and `resync_required` are WebSocket control packets, not active WebRTC lane outputs or `RealtimeLaneCandidate`s.
 
+Every server-built realtime packet carries the authoritative `match_id` metadata (compact wire key `mid`). A `RealtimeSessionState` is bounded by the identity tuple `(ReceiverID, MatchID)`; changing either component starts clean lane, baseline, projection, and hot-lane cohort state.
+
+The client pipeline has an active match identity established from the authoritative room snapshot. Compact `mid` is expanded to readable `match_id` before validation. With no active match, a missing match ID, or a match ID different from the room snapshot, the packet is rejected before lane state or presentation mutation. This applies to all active packet families, including lifecycle and event packets.
+
 ## Canonical baseline recovery loop
 
 `BaselineTracker` owns mismatch detection for the world, overlay, and session baselines. A delta with no usable baseline is rejected with `missing_baseline`; a delta with a different baseline is rejected with `wrong_baseline`. Ordinary stale or duplicate sequence rejection is silent. Only the first transition into pending recovery emits a request; repeated rejected deltas are deduplicated.
 
-The client request contains `type`, `lane`, the last active `baseline_id` (or an empty string), the last accepted `sequence`, and `reason`. Its path is `BaselineTracker -> RealtimeRouter -> RealtimePacketPipeline -> ClientConnectionService -> ClientPacketSender -> generated resync_request_packet -> NetworkClient -> WebSocket`. If WebSocket is closed, the request is not queued or automatically retried.
+The client request contains `type`, `match_id`, `lane`, the last active `baseline_id` (or an empty string), the last accepted `sequence`, and `reason`. The queue envelope captures the room ID, receiver ID, and match ID alongside the request. Its path is `BaselineTracker -> RealtimeRouter -> RealtimePacketPipeline -> ClientConnectionService -> ClientPacketSender -> generated resync_request_packet -> NetworkClient -> WebSocket`. If WebSocket is closed, the request is not queued or automatically retried. The server write loop discards requests with missing, mismatched, or stale room, receiver, or match identities before writing or invalidating realtime state; a valid `resync_required` response carries the validated current `match_id`.
 
-The server accepts only world, overlay, and session requests when the session has an active room, non-nil game instance, and active game player. The read path validates and queues a typed request without mutating `RealtimeSessionState`. Its queue envelope captures room ID and receiver/player ID; the write loop discards requests whose context is stale. It writes `resync_required` over WebSocket first, then invalidates only the requested lane's readiness and projection after a successful write. Lane metadata and sequence are preserved and other lanes are untouched.
+The server accepts only world, overlay, and session requests when the session has an active room, non-nil game instance, and active game player. The read path validates and queues a typed request without mutating `RealtimeSessionState`. Its queue envelope captures room ID, receiver/player ID, and match ID; the write loop discards requests whose context is stale, including requests from a previous match. It writes `resync_required` over WebSocket first, including the validated current match ID, then invalidates only the requested lane's readiness and projection after a successful write. Lane metadata and sequence are preserved and other lanes are untouched.
 
 The next normal planner pass emits a full only for the invalidated lane at previous sequence plus one, with a new sequence-backed baseline ID. That full is a normal required world, overlay, or session candidate sent on the existing ordered/reliable WebRTC lane. Changed-baseline full chunks are accepted only while recovery is pending, with stable baseline ID, sequence, and chunk count, contiguous indices, and correct finality. Readiness remains false until the final chunk; the final accepted full clears tracker and `ResyncState` pending state and restores lane/gameplay readiness when all required lanes are synced.
 
@@ -303,6 +307,7 @@ Lane packets always carry these top-level metadata fields:
 type
 sequence
 server_sent_msec
+match_id (compact alias: mid)
 ```
 
 For active world, asteroid, bullet, overlay, and session runtime packets where the fields are present, the client infers additional metadata when the server omits redundant fields. This inference rule does not apply to `asteroids_lifecycle` or `bullets_lifecycle` packets; lifecycle metadata is explicit because the gate must validate the packet's lane and world-baseline dependency before application:
@@ -339,11 +344,12 @@ baseline_id
 snapshot_id
 snapshot_kind
 server_sent_msec
+match_id (compact alias: mid)
 ```
 
 Lifecycle `baseline_id` is the world baseline identity inherited from the world projection used to build the lifecycle candidate. Lifecycle lanes do not own independent full baselines and do not participate independently in gameplay readiness. Their compact forms use `l`, `q`, `b`, `sid`, `k`, and `ms`; they are not grouped with runtime families whose lane or baseline metadata may be inferred.
 
-Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world, asteroid, bullet, overlay, and session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output, and it remains excluded from baseline/delta/chunk metadata. Control-lane resync packets keep their own current metadata behavior.
+Legacy long-key fields and older compact aliases remain accepted during decode for backward-compatible packets, but they are no longer the preferred active runtime output for world, asteroid, bullet, overlay, and session gameplay lanes. `event_batch` runtime metadata is explicit: the readable logical wire map keeps `type`, `sequence`, `server_sent_msec`, `match_id`, `batch_id`, and `events`, while compact runtime output uses `t`, `q`, `ms`, `mid`, `bid`, and `ev`. `event_batch` does not emit `lane`, `baseline_id`, `snapshot_id`, `snapshot_kind`, `chunk_index`, `chunk_count`, or `is_final_chunk` in preferred runtime output, and it remains excluded from baseline/delta/chunk metadata. Control-lane resync packets keep their own current metadata behavior.
 
 The readable server projection comes from `wire_packets.go`, `wire_reflect.go`, and the realtime projection records. The physical compact shape comes from `shared/packets/realtime_wire.toml` and generated descriptors consumed by `compact_wire_packet.go` and `compact_wire_descriptor.go`. Numeric quantization algorithms remain runtime code, while field-path policy assignments come from generated descriptors before compact encoding and `packetcodec` JSON encoding.
 
@@ -562,13 +568,13 @@ The client expands the tuple-packed asteroid record back into a readable diction
 Compact asteroid lifecycle example:
 
 ```json
-{"t":"al","l":"al","q":1,"b":"world-baseline-7","sid":"asteroids-lifecycle-snapshot-1","k":"d","ms":123455,"ac":[[1,10,20,2,90,1500,3]],"ax":[1]}
+{"t":"al","l":"al","q":1,"b":"world-baseline-7","sid":"asteroids-lifecycle-snapshot-1","k":"d","ms":123455,"mid":"match-1","ac":[[1,10,20,2,90,1500,3]],"ax":[1]}
 ```
 
 Compact bullet lifecycle example:
 
 ```json
-{"t":"bl","l":"bl","q":2,"b":"world-baseline-7","sid":"bullets-lifecycle-snapshot-2","k":"d","ms":123456,"bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
+{"t":"bl","l":"bl","q":2,"b":"world-baseline-7","sid":"bullets-lifecycle-snapshot-2","k":"d","ms":123456,"mid":"match-1","bc":[[1,"player-1",10,20,30,"pulse","laser"]],"bx":[1]}
 ```
 
 The client expands the tuple-packed bullet lifecycle records back into readable dictionaries before bullet lifecycle application.

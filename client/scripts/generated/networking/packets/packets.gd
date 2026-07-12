@@ -78,6 +78,7 @@ const FIELD_COLLISIONS_FROZEN := "collisions_frozen"
 const FIELD_CONFIG := "config"
 const FIELD_CONNECTED := "connected"
 const FIELD_CONTEXT := "context"
+const FIELD_CURRENT_MATCH_ID := "current_match_id"
 const FIELD_DEBUG_STATUS := "debug_status"
 const FIELD_DEBUG_STATUSES := "debug_statuses"
 const FIELD_DESCRIPTION_TYPE := "description_type"
@@ -236,9 +237,10 @@ static func clear_target_request_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "clear_target_request"
 	return packet
 
-static func resync_request_packet(lane, baseline_id, sequence, reason) -> Dictionary:
+static func resync_request_packet(match_id, lane, baseline_id, sequence, reason) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "resync_request"
+	packet[FIELD_MATCH_ID] = match_id
 	packet[FIELD_LANE] = lane
 	packet[FIELD_BASELINE_ID] = baseline_id
 	packet[FIELD_SEQUENCE] = sequence

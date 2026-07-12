@@ -9,6 +9,7 @@ const (
 )
 
 type ResyncRequest struct {
+	MatchID    string
 	Lane       Lane
 	BaselineID string
 	Sequence   int

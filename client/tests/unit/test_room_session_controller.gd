@@ -51,6 +51,44 @@ class Probe:
 		calls += 1
 
 
+func test_handle_room_snapshot_caches_current_match_id() -> void:
+	var setup := _create_controller()
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_IN_GAME,
+		Packets.FIELD_CURRENT_MATCH_ID: "match-1",
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+	})
+	assert_eq(setup.controller.current_match_id(), "match-1")
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_GAME_OVER,
+		Packets.FIELD_CURRENT_MATCH_ID: "match-1",
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+	})
+	assert_eq(setup.controller.current_match_id(), "match-1")
+
+
+func test_handle_room_snapshot_clears_current_match_id_when_snapshot_is_empty() -> void:
+	var setup := _create_controller()
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_IN_GAME,
+		Packets.FIELD_CURRENT_MATCH_ID: "match-1",
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+	})
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_LOBBY,
+		Packets.FIELD_ROOM_CODE: "",
+		Packets.FIELD_MEMBERS: [],
+	})
+	assert_eq(setup.controller.current_match_id(), "")
+
+
 func test_lobby_return_cleanup_clears_session_context_and_shell_boot_flow() -> void:
 	var setup := _create_controller()
 

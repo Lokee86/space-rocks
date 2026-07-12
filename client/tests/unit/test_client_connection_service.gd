@@ -28,6 +28,8 @@ class FakeNetworkClient:
 class FakeTransportPeer:
 	extends WebRTCTransport
 
+	var close_calls := 0
+
 	func start() -> void:
 		pass
 
@@ -35,11 +37,41 @@ class FakeTransportPeer:
 		pass
 
 	func close() -> void:
-		pass
+		close_calls += 1
 
 
 func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
 	return fake_peer
+
+
+func test_protocol_match_begin_end_preserves_transport_without_close() -> void:
+	var service := ClientConnectionService.new()
+	add_child_autofree(service)
+	var peer := FakeTransportPeer.new()
+	var retained := ClientConnectionService.RealtimeTransportSession.new()
+	retained.transport = peer
+	service.realtime_transport_session = retained
+	service.begin_realtime_match("match-1")
+	service.end_realtime_match()
+	assert_true(service.realtime_transport_session == retained)
+	assert_true(service.realtime_transport_session.transport == peer)
+	assert_eq(peer.close_calls, 0)
+
+
+func test_resync_required_uses_active_match_and_suppresses_when_inactive() -> void:
+	var service := ClientConnectionService.new()
+	add_child_autofree(service)
+	var fake_network := FakeNetworkClient.new()
+	add_child_autofree(fake_network)
+	service.network_client = fake_network
+	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.begin_realtime_match("match-1")
+	service._on_resync_request_required("world", "baseline-1", 1, "missing_baseline")
+	assert_eq(fake_network.sent_packets.size(), 1)
+	assert_eq(fake_network.sent_packets[0].get("match_id"), "match-1")
+	service.end_realtime_match()
+	service._on_resync_request_required("world", "baseline-1", 1, "missing_baseline")
+	assert_eq(fake_network.sent_packets.size(), 1)
 
 
 func test_connection_service_does_not_expose_raw_webrtc_inbound_signals() -> void:
@@ -72,9 +104,11 @@ func test_inbound_valid_gameplay_packet_routes_through_pipeline_once() -> void:
 	service._on_connected()
 	assert_true(service.realtime_transport_session != null)
 	assert_true(service.realtime_transport_session.transport != null)
+	service.begin_realtime_match("match-1")
 
 	service.server_packet_dispatcher.dispatch({
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-1",
@@ -102,6 +136,7 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 	service._on_connected()
 	assert_true(service.realtime_transport_session != null)
 	assert_true(service.realtime_transport_session.transport != null)
+	service.begin_realtime_match("match-1")
 
 	
 	service.realtime_packet_pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
@@ -110,6 +145,7 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 
 	service._on_packet_received({
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-1",
@@ -121,6 +157,7 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 	})
 	service.realtime_transport_session.transport.packet_received.emit({
 		"type": "world_delta",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 2,
 	})
@@ -147,9 +184,11 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	)
 
 	assert_false(pipeline.is_gameplay_ready())
+	service.begin_realtime_match("match-1")
 
 	service.server_packet_dispatcher.dispatch({
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-1",
@@ -161,9 +200,11 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	})
 
 	service.reset_realtime_session()
+	service.begin_realtime_match("match-2")
 
 	service.server_packet_dispatcher.dispatch({
 		"type": "world_full",
+		"match_id": "match-2",
 		"baseline_id": "world-baseline-2",
 		"sequence": 2,
 		"snapshot_id": "world-snapshot-2",

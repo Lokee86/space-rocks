@@ -6,6 +6,7 @@ const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
 
 func test_valid_realtime_packet_mutates_router_state_before_signal_callback() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var callback_state := {"state_seen": false, "count": 0}
 
 	assert_false(pipeline.is_gameplay_ready())
@@ -23,6 +24,7 @@ func test_valid_realtime_packet_mutates_router_state_before_signal_callback() ->
 
 	pipeline.apply_packet({
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-1",
@@ -43,6 +45,7 @@ func test_valid_realtime_packet_mutates_router_state_before_signal_callback() ->
 
 func test_invalid_or_unsupported_packets_do_not_emit_gameplay_packet_applied() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var callback_state := {"count": 0}
 	pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
 		callback_state.count += 1
@@ -56,6 +59,7 @@ func test_invalid_or_unsupported_packets_do_not_emit_gameplay_packet_applied() -
 
 func test_event_batch_and_resync_packets_route_through_explicit_pipeline_handlers() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var callback_state := {"count": 0}
 	pipeline.gameplay_packet_applied.connect(func(_packet: Dictionary) -> void:
 		callback_state.count += 1
@@ -63,27 +67,26 @@ func test_event_batch_and_resync_packets_route_through_explicit_pipeline_handler
 
 	pipeline.apply_packet({
 		"type": "event_batch",
+		"match_id": "match-1",
 		"batch_id": "batch-1",
 		"events": [
 			{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 		],
 	})
-	pipeline.apply_packet({"type": "resync_request", "lane": "world"})
-	pipeline.apply_packet({"type": "resync_required", "lane": "overlay"})
+	pipeline.apply_packet({"type": "resync_request", "match_id": "match-1", "lane": "world"})
+	pipeline.apply_packet({"type": "resync_required", "match_id": "match-1", "lane": "overlay", "baseline_id": "overlay-baseline-1", "sequence": 1, "reason": "wrong_baseline"})
 
 	assert_eq(callback_state.count, 3)
 	assert_eq(pipeline.get_presentation_state().event_batch_applier.get_applied_events().size(), 1)
-	assert_true(pipeline.get_router().resync_state.needs_resync("world"))
-	assert_eq(pipeline.get_router().resync_state.get_reason("world"), ResyncState.REASON_MISSING_BASELINE)
-	assert_true(pipeline.get_router().resync_state.needs_resync("overlay"))
-	assert_eq(pipeline.get_router().resync_state.get_reason("overlay"), ResyncState.REASON_WRONG_BASELINE)
 
 
 func test_reset_clears_lifecycle_pending_state_before_matching_baseline_arrives() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 
 	pipeline.apply_packet({
 		"type": "asteroids_lifecycle",
+		"match_id": "match-1",
 		"lane": "asteroids.lifecycle",
 		"sequence": 1,
 		"baseline_id": "world-baseline-2",
@@ -93,6 +96,7 @@ func test_reset_clears_lifecycle_pending_state_before_matching_baseline_arrives(
 	pipeline.reset()
 	pipeline.apply_packet({
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-2",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-2",
@@ -108,8 +112,10 @@ func test_reset_clears_lifecycle_pending_state_before_matching_baseline_arrives(
 
 func test_reset_clears_lifecycle_applied_sequence_state() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var world_full := {
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-1",
@@ -121,6 +127,7 @@ func test_reset_clears_lifecycle_applied_sequence_state() -> void:
 	}
 	var bullet_lifecycle := {
 		"type": "bullets_lifecycle",
+		"match_id": "match-1",
 		"lane": "bullets.lifecycle",
 		"sequence": 5,
 		"baseline_id": "world-baseline-1",
@@ -133,6 +140,7 @@ func test_reset_clears_lifecycle_applied_sequence_state() -> void:
 	assert_true(pipeline.get_router().world_lane_state.bullets.has("bullet-reset"))
 
 	pipeline.reset()
+	pipeline.begin_match("match-1")
 	pipeline.apply_packet(world_full)
 	pipeline.apply_packet(bullet_lifecycle)
 
@@ -141,6 +149,7 @@ func test_reset_clears_lifecycle_applied_sequence_state() -> void:
 
 func test_reset_preserves_presentation_state_identity_and_clears_stale_state() -> void:
 	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
 	var presentation_state := pipeline.get_presentation_state()
 	var world_lane_state: Variant = presentation_state.world_lane_state
 	var overlay_lane_state: Variant = presentation_state.overlay_lane_state
@@ -149,6 +158,7 @@ func test_reset_preserves_presentation_state_identity_and_clears_stale_state() -
 
 	pipeline.apply_packet({
 		"type": "world_full",
+		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 1,
 		"snapshot_id": "world-snapshot-1",

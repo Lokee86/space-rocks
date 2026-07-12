@@ -46,9 +46,11 @@ client/scripts/
 * Receiving room-state-change packets from `SessionNetworkController`.
 * Delegating room snapshot application to `LobbyShellFlow`.
 * Caching the latest room state observed by the client.
+* Caching the latest authoritative `current_match_id` from room snapshots.
 * Caching the latest valid match-result payload from room snapshots.
 * Clearing cached match-result data when a snapshot has no valid result.
 * Exposing the current room state through `current_room_state()`.
+* Exposing the cached authoritative match identity through `current_match_id()`.
 * Exposing the current match result through `current_match_result()`.
 * Exposing room capacity through `current_max_players()`.
 * Sending client config when a room snapshot transitions the client into `InGame`.
@@ -87,6 +89,7 @@ The cache currently includes:
 
 ```text
 latest_room_state
+latest_current_match_id
 latest_match_result
 ```
 
@@ -138,6 +141,8 @@ Single-player room snapshots therefore update session state without mounting mul
 
 `GameplaySessionController` passes the provider through gameplay composition to match-end flows. This keeps gameplay runtime from owning room packet handling directly.
 
+`RoomSessionController` caches the latest authoritative snapshot value; `SessionNetworkController` decides whether that value begins or ends an active realtime match based on room state. GameOver does not clear the cached ID. Leaving or clearing the room clears it; Lobby may retain the last cached ID, while coordinated active match ownership is ended by `SessionNetworkController`.
+
 Room state also controls the transition into gameplay session and PresentationBridge activation. `SessionNetworkController` checks `RoomSessionController.current_room_state()` after room snapshots and room-state-change packets. When the state is `InGame`, it performs this sequence:
 
 ```text
@@ -182,6 +187,7 @@ When lobby leave returns through `LobbyReturnFlow`, `RoomSessionController._on_l
 
 ```text
 session_context
+latest_current_match_id
 shell_boot_flow
 ```
 
@@ -205,8 +211,9 @@ ClientConnectionService.room_snapshot_received
 1. Apply the snapshot through LobbyShellFlow.
 2. Read LobbyFlow current state.
 3. Cache state.room_state as latest_room_state.
-4. Cache or clear match result from the snapshot.
-5. If state is InGame, send client config when configured.
+4. Cache snapshot.current_match_id as latest_current_match_id.
+5. Cache or clear match result from the snapshot.
+6. If state is InGame, send client config when configured.
 ```
 
 After `RoomSessionController` handles the snapshot, `SessionNetworkController` activates gameplay session and PresentationBridge flow when the room state is `InGame` and refreshes match-end state.
@@ -257,6 +264,7 @@ This prevents stale match results from surviving later lobby snapshots.
 
 ```text
 current_room_state() -> String
+current_match_id() -> String
 current_match_result() -> Dictionary
 current_max_players() -> int
 ```
@@ -275,6 +283,7 @@ Owned local state:
 
 ```text
 latest_room_state
+latest_current_match_id
 latest_match_result
 lobby_flow
 lobby_network_actions

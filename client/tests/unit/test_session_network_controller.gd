@@ -13,12 +13,15 @@ class FakeConnectionService:
 	signal unknown_packet_received(packet: Dictionary)
 	signal websocket_auth_result_received(packet: Dictionary)
 	signal realtime_transport_ready
+	signal room_snapshot_received(packet: Dictionary)
+	signal room_state_changed(packet: Dictionary)
 
 	var websocket_auth_authenticated := false
 	var sent_single_player := 0
 	var last_local_profile_id := ""
 	var sent_create_room := 0
 	var sent_join_room_codes: Array[String] = []
+	var events: Array[String] = []
 
 	func is_websocket_auth_authenticated() -> bool:
 		return websocket_auth_authenticated
@@ -46,6 +49,53 @@ class FakeConnectionService:
 
 	func emit_webrtc_ready() -> void:
 		realtime_transport_ready.emit()
+
+	func begin_realtime_match(match_id: String) -> void:
+		events.append("begin:%s" % match_id)
+
+	func end_realtime_match() -> void:
+		events.append("end")
+
+	func emit_closed() -> void:
+		closed.emit()
+
+
+class FakeRoomSessionController:
+	extends RefCounted
+
+	var room_state := Constants.ROOM_STATE_LOBBY
+	var match_id := ""
+
+	func current_room_state() -> String:
+		return room_state
+
+	func current_match_id() -> String:
+		return match_id
+
+	func handle_room_snapshot(packet: Dictionary) -> void:
+		room_state = str(packet.get("room_state", room_state))
+		match_id = str(packet.get("current_match_id", match_id))
+
+	func handle_room_state_changed(packet: Dictionary) -> void:
+		room_state = str(packet.get("room_state", room_state))
+
+
+class FakeGameplaySessionController:
+	extends RefCounted
+
+	var events: Array[String] = []
+
+	func set_events(shared_events: Array[String]) -> void:
+		events = shared_events
+
+	func reset() -> void:
+		events.append("gameplay_reset")
+
+	func begin_accepting_gameplay_packets() -> void:
+		events.append("gameplay_accept")
+
+	func refresh_match_end_state() -> void:
+		pass
 
 
 class FakeShellBootFlow:
@@ -229,3 +279,55 @@ func test_connection_waits_for_webrtc_ready_before_multiplayer_ready_then_sends_
 
 	assert_eq(flow.send_calls, 1)
 	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
+
+
+func _create_match_controller() -> Array:
+	var connection := FakeConnectionService.new()
+	add_child_autofree(connection)
+	var room := FakeRoomSessionController.new()
+	var gameplay := FakeGameplaySessionController.new()
+	gameplay.set_events(connection.events)
+	var controller := SessionNetworkController.new()
+	controller.configure(connection, null, Callable(), {})
+	controller.configure_room_session_controller(room)
+	controller.configure_gameplay_session_controller(gameplay)
+	controller.connect_connection_signals()
+	controller.connect_room_signals()
+	return [controller, connection, room, gameplay]
+
+
+func _match_snapshot(state: String, match_id: String) -> Dictionary:
+	return {"room_state": state, "current_match_id": match_id}
+
+
+func test_match_boundaries_order_idempotency_and_lobby_cleanup() -> void:
+	var setup := _create_match_controller()
+	var controller: SessionNetworkController = setup[0]
+	var connection: FakeConnectionService = setup[1]
+
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_IN_GAME, "match-1"))
+	assert_eq(connection.events, ["gameplay_reset", "begin:match-1", "gameplay_accept"])
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_IN_GAME, "match-1"))
+	assert_eq(connection.events, ["gameplay_reset", "begin:match-1", "gameplay_accept", "gameplay_accept"])
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_GAME_OVER, "match-1"))
+	controller._on_room_state_changed(_match_snapshot(Constants.ROOM_STATE_GAME_OVER, "match-1"))
+	assert_eq(connection.events.size(), 4)
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_LOBBY, "match-1"))
+	assert_eq(connection.events, ["gameplay_reset", "begin:match-1", "gameplay_accept", "gameplay_accept", "gameplay_reset", "end"])
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_LOBBY, "match-1"))
+	controller._on_room_state_changed(_match_snapshot(Constants.ROOM_STATE_LOBBY, "match-1"))
+	assert_eq(connection.events.size(), 6)
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_IN_GAME, "match-2"))
+	assert_eq(connection.events.slice(6), ["gameplay_reset", "begin:match-2", "gameplay_accept"])
+
+
+func test_connection_close_ends_active_match_once() -> void:
+	var setup := _create_match_controller()
+	var controller: SessionNetworkController = setup[0]
+	var connection: FakeConnectionService = setup[1]
+	controller._on_room_snapshot_received(_match_snapshot(Constants.ROOM_STATE_IN_GAME, "match-1"))
+	connection.events.clear()
+	connection.emit_closed()
+	assert_eq(connection.events, ["gameplay_reset", "end"])
+	controller._on_room_state_changed(_match_snapshot(Constants.ROOM_STATE_LOBBY, "match-1"))
+	assert_eq(connection.events, ["gameplay_reset", "end"])

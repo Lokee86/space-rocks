@@ -160,7 +160,7 @@ func TestRealtimeOwnershipParityAcrossLanes(t *testing.T) {
 		t.Fatalf("event batch mismatch: %#v", events.Batch)
 	}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	for _, candidate := range plan.Candidates {
 		if candidate.Lane() == LaneControl {
 			t.Fatalf("planner used session lane: %#v", candidate)
@@ -179,7 +179,7 @@ func TestRealtimePlannerUsesGameplayPresentationSnapshotInput(t *testing.T) {
 		},
 	}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	if len(plan.Candidates) == 0 {
 		t.Fatalf("planner returned no realtime candidates from GameplayPresentationSnapshot input")
 	}

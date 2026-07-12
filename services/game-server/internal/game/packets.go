@@ -39,6 +39,7 @@ const (
 
 type ClientPacket struct {
 	Type               string               `json:"type"`
+	MatchID            string               `json:"match_id"`
 	Input              runtime.InputState   `json:"input"`
 	Config             runtime.ClientConfig `json:"config"`
 	RoomCode           string               `json:"room_code"`
@@ -124,14 +125,15 @@ type RoomMatchResultSummary struct {
 }
 
 type RoomSnapshot struct {
-	Type          string                 `json:"type"`
-	RoomCode      string                 `json:"room_code"`
-	RoomState     string                 `json:"room_state"`
-	Members       []RoomMemberState      `json:"members"`
-	LocalPlayerID string                 `json:"local_player_id"`
-	OwnerID       string                 `json:"owner_id"`
-	MaxPlayers    int                    `json:"max_players"`
-	MatchResult   RoomMatchResultSummary `json:"match_result"`
+	Type           string                 `json:"type"`
+	RoomCode       string                 `json:"room_code"`
+	RoomState      string                 `json:"room_state"`
+	CurrentMatchID string                 `json:"current_match_id"`
+	Members        []RoomMemberState      `json:"members"`
+	LocalPlayerID  string                 `json:"local_player_id"`
+	OwnerID        string                 `json:"owner_id"`
+	MaxPlayers     int                    `json:"max_players"`
+	MatchResult    RoomMatchResultSummary `json:"match_result"`
 }
 
 type RoomStateChanged struct {

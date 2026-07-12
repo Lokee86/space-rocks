@@ -34,6 +34,36 @@ func TestBuildRoomSnapshotIncludesRoomStateAndCapacity(t *testing.T) {
 	}
 }
 
+func TestBuildRoomSnapshotExposesConsecutiveMatchIDs(t *testing.T) {
+	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
+	owner := room.AddMember(rooms.NewRoomMember("session-owner"))
+	owner.SetReady(true)
+
+	if err := room.StartGameForMember(owner.PlayerID, func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("expected first start to succeed, got %v", err)
+	}
+	firstSnapshot := networking.BuildRoomSnapshot(room, owner.SessionID)
+	firstMatchID := firstSnapshot.CurrentMatchID
+	if firstMatchID == "" {
+		t.Fatal("expected first snapshot to expose an active match ID")
+	}
+	if err := room.MarkGameOver(); err != nil {
+		t.Fatalf("expected game over transition to succeed, got %v", err)
+	}
+	if err := room.ResetToLobby(owner.PlayerID); err != nil {
+		t.Fatalf("expected reset to lobby to succeed, got %v", err)
+	}
+	owner.SetReady(true)
+	if err := room.StartGameForMember(owner.PlayerID, func() *game.Game { return game.New() }); err != nil {
+		t.Fatalf("expected second start to succeed, got %v", err)
+	}
+	secondSnapshot := networking.BuildRoomSnapshot(room, owner.SessionID)
+	if secondSnapshot.CurrentMatchID == "" || secondSnapshot.CurrentMatchID == firstMatchID {
+		t.Fatalf("expected second snapshot to expose a different active match ID, first=%q second=%q", firstMatchID, secondSnapshot.CurrentMatchID)
+	}
+	room.GameInstance().Stop()
+}
+
 func TestBuildRoomSnapshotIncludesMembersAndReadyStates(t *testing.T) {
 	room := rooms.NewRoom("TEST", rooms.RoomStateLobby, nil)
 	secondSessionMember := room.AddMemberSessionID("session-2")

@@ -68,7 +68,7 @@ func TestSuccessiveEventBatchPacketsUseDifferentBatchIDs(t *testing.T) {
 		{EventID: "evt-a", Event: game.EventState{Type: "bullet_blast"}},
 	}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	first := BuildEventBatchPacket(pending, 0, 1234)
 	state.UpdateLane(LaneEvent, AdvanceMetadataForSuccessfulWrite(LaneEvent, first.Metadata))
 	laneState, ok := state.LaneState(LaneEvent)

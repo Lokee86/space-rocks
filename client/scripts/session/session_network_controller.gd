@@ -9,6 +9,7 @@ var gameplay_session_controller
 var logger: Callable
 var handlers := {}
 var _webrtc_gameplay_ready := false
+var _coordinated_active_match_id := ""
 
 
 func configure(
@@ -70,6 +71,11 @@ func _on_connection_connected() -> void:
 
 
 func _on_connection_closed() -> void:
+	_coordinated_active_match_id = ""
+	if gameplay_session_controller != null:
+		gameplay_session_controller.reset()
+	if connection_service != null:
+		connection_service.end_realtime_match()
 	_log("Connection closed")
 
 
@@ -123,8 +129,7 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_snapshot(packet)
-	if room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME && gameplay_session_controller != null:
-		gameplay_session_controller.begin_accepting_gameplay_packets()
+	_coordinate_room_match()
 	_refresh_match_end_state()
 
 
@@ -132,8 +137,8 @@ func _on_room_state_changed(packet: Dictionary) -> void:
 	if room_session_controller == null:
 		return
 	room_session_controller.handle_room_state_changed(packet)
-	if room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME && gameplay_session_controller != null:
-		gameplay_session_controller.begin_accepting_gameplay_packets()
+	if room_session_controller.current_room_state() == Constants.ROOM_STATE_LOBBY:
+		_end_coordinated_match()
 	_refresh_match_end_state()
 
 
@@ -161,6 +166,33 @@ func _on_player_pause_state_received(packet: Dictionary) -> void:
 	if gameplay_session_controller == null:
 		return
 	gameplay_session_controller.handle_player_pause_state(packet)
+
+
+func _coordinate_room_match() -> void:
+	var room_state: String = room_session_controller.current_room_state()
+	var match_id: String = room_session_controller.current_match_id()
+	if room_state == Constants.ROOM_STATE_LOBBY:
+		_end_coordinated_match()
+		return
+	if room_state != Constants.ROOM_STATE_IN_GAME or match_id.is_empty():
+		return
+	if _coordinated_active_match_id != match_id:
+		if gameplay_session_controller != null:
+			gameplay_session_controller.reset()
+		if connection_service != null:
+			connection_service.begin_realtime_match(match_id)
+		_coordinated_active_match_id = match_id
+	if gameplay_session_controller != null:
+		gameplay_session_controller.begin_accepting_gameplay_packets()
+
+func _end_coordinated_match() -> void:
+	if _coordinated_active_match_id.is_empty():
+		return
+	if gameplay_session_controller != null:
+		gameplay_session_controller.reset()
+	if connection_service != null:
+		connection_service.end_realtime_match()
+	_coordinated_active_match_id = ""
 
 
 func _refresh_match_end_state() -> void:

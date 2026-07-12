@@ -27,9 +27,9 @@ func send_packet(packet: Dictionary) -> void:
 func send_input_packet(packet: Dictionary) -> void:
 	send_packet(packet)
 
-func send_resync_request(lane: String, baseline_id: String, sequence, reason: String) -> void:
+func send_resync_request(match_id: String, lane: String, baseline_id: String, sequence, reason: String) -> void:
 	if network_client != null:
-		network_client.send_raw_packet(Packets.resync_request_packet(lane, baseline_id, sequence, reason))
+		network_client.send_raw_packet(Packets.resync_request_packet(match_id, lane, baseline_id, sequence, reason))
 
 
 func send_authenticate_request(token: String) -> void:

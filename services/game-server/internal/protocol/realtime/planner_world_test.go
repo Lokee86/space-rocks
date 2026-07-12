@@ -11,7 +11,7 @@ import (
 func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceForUnsyncedFull(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1"))
+	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatalf("expected world candidate")
@@ -31,7 +31,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldFullWhenNoBaseline(t *testing.T
 		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing"}},
 	}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, IsFinalChunk: true})
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
@@ -53,7 +53,7 @@ func TestAssembleRealtimeLaneCandidatesOmitsWorldWhenStoredBaselineMatches(t *te
 		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing"}},
 	}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
@@ -70,7 +70,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(
 		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 2}},
 	}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 0, Rotation: 0}}}, 1))
@@ -102,7 +102,7 @@ func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *t
 		previous.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i), Y: float64(i + 10)}
 	}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
@@ -144,7 +144,7 @@ func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPr
 	delete(snapshot.Asteroids, fmt.Sprintf("asteroid-%d", count))
 	delete(previous.Asteroids, "asteroid-1")
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
@@ -193,7 +193,7 @@ func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderP
 	delete(snapshot.Bullets, fmt.Sprintf("bullet-%d", count))
 	delete(previous.Bullets, "bullet-1")
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
@@ -231,7 +231,7 @@ func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderP
 
 func TestAssembleRealtimeLaneCandidatesDoesNotEmitEmptyHotCandidate(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
@@ -249,7 +249,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsAsteroidLifecycleCandidateWhenAstero
 	previous := game.GameplayPresentationSnapshot{SelfID: "player-1"}
 	current := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{"asteroid-a": {ID: "asteroid-a", X: 10, Y: 20, Size: 3, Health: 4, Scale: 5, Variant: 6}}}
 
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))

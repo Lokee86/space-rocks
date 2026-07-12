@@ -85,6 +85,15 @@ func connect_to_server(url: String) -> Error:
 	return network_client.connect_to_server(url)
 
 
+func begin_realtime_match(match_id: String) -> void:
+	if realtime_packet_pipeline != null:
+		realtime_packet_pipeline.begin_match(match_id)
+
+func end_realtime_match() -> void:
+	if realtime_packet_pipeline != null:
+		realtime_packet_pipeline.end_match()
+
+
 func reset_realtime_session() -> void:
 	if realtime_packet_pipeline != null:
 		realtime_packet_pipeline.reset()
@@ -158,8 +167,10 @@ func _bind_resync_request_signal() -> void:
 	_resync_signal_bound = true
 
 func _on_resync_request_required(lane, baseline_id, sequence, reason) -> void:
-	if client_packet_sender != null:
-		client_packet_sender.send_resync_request(lane, baseline_id, sequence, reason)
+	if client_packet_sender != null and realtime_packet_pipeline != null:
+		var match_id := realtime_packet_pipeline.active_match_id()
+		if !match_id.is_empty():
+			client_packet_sender.send_resync_request(match_id, lane, baseline_id, sequence, reason)
 
 
 func send_packet(packet: Dictionary) -> void:

@@ -77,6 +77,7 @@ Room snapshot projection owns:
   * `room_state`
   * `owner_id`
   * `max_players`
+  * `current_match_id`
 * Projecting resolved match-result summaries when the room has one.
 * Encoding generated `RoomSnapshot` packets through `packetcodec`.
 * Enqueuing snapshots onto the target WebSocket session.
@@ -138,6 +139,7 @@ members[]
 local_player_id
 owner_id
 max_players
+current_match_id
 match_result
 ```
 
@@ -156,8 +158,11 @@ RoomSnapshot
   local_player_id
   owner_id
   max_players
+  current_match_id
   match_result
 ```
+
+`current_match_id` is the room-owned authoritative active match identity projected from `room.CurrentMatchID()`. It scopes the live realtime session and is distinct from `match_result.match_id`, which identifies the resolved result summary.
 
 Current member shape:
 
@@ -193,8 +198,9 @@ RoomPlayerMatchSummary
 4. Resolves `local_player_id` through `room.PlayerIDForSession(localSessionID)`.
 5. Reads `owner_id` through `room.OwnerID()`.
 6. Uses `rooms.MaxPlayersPerRoom` for `max_players`.
-7. Reads the resolved match summary through `room.ResolvedMatchSummary()`.
-8. Returns a generated `game.RoomSnapshot`.
+7. Reads the active match identity through `room.CurrentMatchID()`.
+8. Reads the resolved match summary through `room.ResolvedMatchSummary()`.
+9. Returns a generated `game.RoomSnapshot`.
 
 The member projection deliberately copies only `PlayerID`, `Ready`, and `Connected`.
 
@@ -215,6 +221,8 @@ When a resolved summary exists, the projection copies:
 * each player `won`
 
 The room's resolved match summary may include persistence-facing identity such as account ID or local profile ID. Snapshot projection strips those fields. Client match-results presentation receives only the presentation-safe summary.
+
+After a completed match, a Lobby snapshot may still expose the last `current_match_id` until the next match begins. The client nevertheless treats Lobby as ending the active realtime and presentation boundary.
 
 ### Per-session enqueue behavior
 
@@ -378,7 +386,7 @@ Primary tests:
 
 * `services/game-server/tests/networking/room_snapshot_test.go`
 
-  * Verifies room code, room state, capacity, local player ID, owner ID, member list, ready state, and connected state projection.
+  * Verifies room code, room state, capacity, local player ID, owner ID, current match ID across consecutive matches, member list, ready state, and connected state projection.
 
 Related tests:
 

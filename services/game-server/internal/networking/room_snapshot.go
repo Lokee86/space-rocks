@@ -30,6 +30,7 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 		Type:          game.PacketTypeRoomSnapshot,
 		RoomCode:      room.ID,
 		RoomState:     string(room.State),
+		CurrentMatchID: room.CurrentMatchID(),
 		Members:       members,
 		LocalPlayerID: localPlayerID,
 		OwnerID:       room.OwnerID(),

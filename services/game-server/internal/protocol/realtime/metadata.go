@@ -5,6 +5,7 @@ type Lane string
 type SnapshotKind string
 
 type Metadata struct {
+	MatchID        string
 	Lane           Lane
 	Sequence       int
 	BaselineID     string

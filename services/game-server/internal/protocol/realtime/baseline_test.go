@@ -2,8 +2,35 @@ package realtime
 
 import "testing"
 
+func TestRealtimeSessionStateIdentitySeparatesMatches(t *testing.T) {
+	state := NewRealtimeSessionState("player-1", "match-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 9, BaselineID: "baseline-9"})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, "projection")
+	state.HotLaneCohorts.AsteroidRoutes["asteroid-1"] = HotUpdateRouteAsteroids
+	state.HotLaneCohorts.BulletRoutes["bullet-1"] = HotUpdateRouteBullets
+	state.HotLaneCohorts.AsteroidMode = HotLaneModeOverflow
+
+	newMatch := NewRealtimeSessionState("player-1", "match-2")
+	if newMatch.IdentityMatches(state.ReceiverID, state.MatchID) {
+		t.Fatal("expected changed match identity to differ")
+	}
+	if _, ok := newMatch.LaneState(LaneWorld); ok || newMatch.LaneBaselineReady(LaneWorld) {
+		t.Fatal("expected new match to start without lane or baseline state")
+	}
+	if projection, ok := newMatch.BaselineProjection(LaneWorld); ok || projection != nil {
+		t.Fatal("expected new match to start without stored projections")
+	}
+	if len(newMatch.HotLaneCohorts.AsteroidRoutes) != 0 || len(newMatch.HotLaneCohorts.BulletRoutes) != 0 || newMatch.HotLaneCohorts.AsteroidMode != HotLaneModeInline || newMatch.HotLaneCohorts.BulletMode != HotLaneModeInline {
+		t.Fatalf("expected fresh hot-lane cohort state, got %#v", newMatch.HotLaneCohorts)
+	}
+	if got := NextLaneSequence(RealtimeLaneState{}, false); got != 1 {
+		t.Fatalf("expected new match sequence to restart at 1, got %d", got)
+	}
+}
+
 func TestRealtimeSessionStateStartsUnsynced(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 
 	if state.ReceiverID != "player-1" {
 		t.Fatalf("expected receiver ID to be preserved, got %q", state.ReceiverID)
@@ -38,7 +65,7 @@ func TestNextLaneSequenceReturnsEightForSequenceSeven(t *testing.T) {
 }
 
 func TestRealtimeSessionStateStartsWithNoBaselineProjection(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 
 	if projection, ok := state.BaselineProjection(LaneWorld); ok || projection != nil {
 		t.Fatalf("expected no baseline projection on new state, got %#v, %t", projection, ok)
@@ -46,7 +73,7 @@ func TestRealtimeSessionStateStartsWithNoBaselineProjection(t *testing.T) {
 }
 
 func TestRealtimeSessionStateStoresReadsAndClearsBaselineProjection(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 
 	state.StoreBaselineProjection(LaneWorld, "world-projection")
 
@@ -67,7 +94,7 @@ func TestRealtimeSessionStateStoresReadsAndClearsBaselineProjection(t *testing.T
 }
 
 func TestRealtimeSessionStateIgnoresNilBaselineProjection(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 
 	state.StoreBaselineProjection(LaneWorld, nil)
 
@@ -77,7 +104,7 @@ func TestRealtimeSessionStateIgnoresNilBaselineProjection(t *testing.T) {
 }
 
 func TestRealtimeSessionStateAcceptsFullLaneBaseline(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{
 		Lane:           LaneWorld,
 		Sequence:       4,
@@ -100,7 +127,7 @@ func TestRealtimeSessionStateAcceptsFullLaneBaseline(t *testing.T) {
 }
 
 func TestRealtimeSessionStateChunkedBaselineRemainsIncompleteUntilFinalChunk(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneSession, Metadata{
 		Lane:           LaneSession,
 		Sequence:       8,
@@ -140,7 +167,7 @@ func TestRealtimeSessionStateChunkedBaselineRemainsIncompleteUntilFinalChunk(t *
 }
 
 func TestRealtimeSessionStateTracksBaselinePerLane(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, SnapshotID: "world-snapshot", BaselineID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 2, SnapshotID: "overlay-snapshot", BaselineID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 
@@ -155,7 +182,7 @@ func TestRealtimeSessionStateTracksBaselinePerLane(t *testing.T) {
 }
 
 func TestDecideResyncDetectsWrongAndMissingBaselines(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	observed := RealtimeLaneState{
 		Lane:       LaneWorld,
 		Sequence:   9,
@@ -175,8 +202,8 @@ func TestDecideResyncDetectsWrongAndMissingBaselines(t *testing.T) {
 }
 
 func TestOverlayBaselineIsReceiverSpecific(t *testing.T) {
-	first := NewRealtimeSessionState("player-1")
-	second := NewRealtimeSessionState("player-2")
+	first := NewRealtimeSessionState("player-1", "match-1")
+	second := NewRealtimeSessionState("player-2", "match-1")
 
 	first.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, SnapshotID: "overlay-1", BaselineID: "baseline-1", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	second.UpdateLane(LaneOverlay, Metadata{Lane: LaneOverlay, Sequence: 1, SnapshotID: "overlay-2", BaselineID: "baseline-2", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
@@ -192,7 +219,7 @@ func TestOverlayBaselineIsReceiverSpecific(t *testing.T) {
 }
 
 func TestRealtimeSessionStateIgnoresStaleSequencesAndTracksWrongBaselineResync(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 10, SnapshotID: "snapshot-new", BaselineID: "baseline-new", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 9, SnapshotID: "snapshot-old", BaselineID: "baseline-old", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 
@@ -263,7 +290,7 @@ func TestCandidateMetadataReturnsSessionDeltaMetadata(t *testing.T) {
 }
 
 func TestAdvanceMetadataForSuccessfulWriteAdvancesEventLaneSequence(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	metadata := Metadata{
 		Lane:         LaneEvent,
 		Sequence:     0,
@@ -310,7 +337,7 @@ func TestFullBaselineID(t *testing.T) {
 }
 
 func TestRequireFullBaselineOnlyInvalidatesRequestedLane(t *testing.T) {
-	state := NewRealtimeSessionState("player-1")
+	state := NewRealtimeSessionState("player-1", "match-1")
 	world := Metadata{Lane: LaneWorld, Sequence: 7, SnapshotID: "world-snapshot", BaselineID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true}
 	overlay := Metadata{Lane: LaneOverlay, Sequence: 9, SnapshotID: "overlay-snapshot", BaselineID: "overlay-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true}
 	state.UpdateLane(LaneWorld, world)

@@ -13,6 +13,7 @@ type queuedResyncRequest struct {
 	Request    realtime.ResyncRequest
 	RoomID     string
 	ReceiverID string
+	MatchID    string
 }
 
 func newInboundSessionAdapter(session *webSocketSession) inboundSessionAdapter {
@@ -44,8 +45,12 @@ func (a inboundSessionAdapter) EnqueueResyncRequest(request realtime.ResyncReque
 	if a.session.room != nil {
 		roomID = a.session.room.ID
 	}
+	matchID := ""
+	if a.session.room != nil {
+		matchID = a.session.room.CurrentMatchID()
+	}
 	select {
-	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: roomID, ReceiverID: a.session.currentGamePlayerID}:
+	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: roomID, ReceiverID: a.session.currentGamePlayerID, MatchID: matchID}:
 		return true
 	default:
 		return false

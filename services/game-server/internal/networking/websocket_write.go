@@ -57,9 +57,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		return false
 	}
 
-	if session.realtimeState.ReceiverID == "" || session.realtimeState.ReceiverID != session.currentGamePlayerID {
-		session.realtimeState = realtime.NewRealtimeSessionState(session.currentGamePlayerID)
-	}
+	resetRealtimeStateForCurrentIdentity(session)
 
 	result, err := realtime.BuildActiveRealtimeResultForGame(session.room.GameInstance(), session.currentGamePlayerID, session.realtimeState)
 	if err != nil {
@@ -72,6 +70,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 	}
 
 	drainedEventCount := 0
+	session.realtimeState = result.SessionState
 	for _, encoded := range result.EncodedLanePackets {
 		candidate := encoded.Candidate
 		encodedPacket := encoded.Encoded
@@ -183,6 +182,16 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		"encoded_bytes", result.TotalEncodedBytes,
 	)
 	return true
+}
+
+func resetRealtimeStateForCurrentIdentity(session *webSocketSession) {
+	if session == nil || session.room == nil {
+		return
+	}
+	matchID := session.room.CurrentMatchID()
+	if !session.realtimeState.IdentityMatches(session.currentGamePlayerID, matchID) {
+		session.realtimeState = realtime.NewRealtimeSessionState(session.currentGamePlayerID, matchID)
+	}
 }
 
 func countLaneCandidateKinds(candidates []realtime.RealtimeLaneCandidate, kind realtime.RealtimeLaneCandidateKind) int {
