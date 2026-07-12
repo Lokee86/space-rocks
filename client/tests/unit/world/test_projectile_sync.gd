@@ -280,6 +280,33 @@ func test_new_torpedo_uses_torpedo_scene_when_pool_empty() -> void:
 	assert_not_null(node)
 	assert_eq(node.name, "Torpedo")
 
+func test_deleted_projectile_tombstones_are_bounded_and_recreated() -> void:
+	var projectile_sync := _new_projectile_sync()
+	for index in range(ProjectileSync.DELETED_PROJECTILE_ID_CAP + 1):
+		projectile_sync.remove_projectile("bullet-%d" % index)
+
+	assert_eq(projectile_sync.deleted_projectile_ids.size(), ProjectileSync.DELETED_PROJECTILE_ID_CAP)
+	assert_false(projectile_sync.deleted_projectile_ids.has("bullet-0"))
+	assert_true(projectile_sync.deleted_projectile_ids.has("bullet-%d" % ProjectileSync.DELETED_PROJECTILE_ID_CAP))
+
+	var retained_id := "bullet-%d" % ProjectileSync.DELETED_PROJECTILE_ID_CAP
+	var state := {
+		Packets.FIELD_X: 10.0,
+		Packets.FIELD_Y: 20.0,
+		Packets.FIELD_ROTATION: 0.5,
+		Packets.FIELD_PROJECTILE_TYPE: "bullet",
+	}
+	projectile_sync.apply_projectile(retained_id, state, Vector2.ZERO, Vector2.ZERO)
+
+	assert_false(projectile_sync.deleted_projectile_ids.has(retained_id))
+	assert_false(projectile_sync._deleted_projectile_id_order.has(retained_id))
+	assert_true(projectile_sync.has_projectile(retained_id))
+
+	projectile_sync.remove_projectile(retained_id)
+	assert_true(projectile_sync.deleted_projectile_ids.has(retained_id))
+	assert_true(projectile_sync._deleted_projectile_id_order.has(retained_id))
+	assert_eq(projectile_sync.deleted_projectile_ids.size(), ProjectileSync.DELETED_PROJECTILE_ID_CAP)
+
 func test_reset_clears_active_pooled_and_interpolation_state() -> void:
 	var projectile_sync := _new_projectile_sync()
 	var state := {
@@ -310,6 +337,7 @@ func test_reset_clears_active_pooled_and_interpolation_state() -> void:
 	assert_true(projectile_sync.target_projectile_positions.is_empty())
 	assert_true(projectile_sync.target_projectile_rotations.is_empty())
 	assert_true(projectile_sync.deleted_projectile_ids.is_empty())
+	assert_true(projectile_sync._deleted_projectile_id_order.is_empty())
 
 func test_reset_allows_reusing_a_projectile_id_in_a_new_match() -> void:
 	var projectile_sync := _new_projectile_sync()

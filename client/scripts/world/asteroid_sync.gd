@@ -5,6 +5,7 @@ const AsteroidSyncState = preload("res://scripts/world/asteroid_sync_state.gd")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
+const DELETED_ASTEROID_ID_CAP := 2048
 
 var asteroids_layer: Node2D
 var asteroid_nodes := {}
@@ -16,6 +17,7 @@ var asteroid_server_positions := {}
 var asteroid_visual_positions := {}
 var asteroid_variants := {}
 var deleted_asteroid_ids := {}
+var _deleted_asteroid_id_order := []
 
 
 func configure(layer: Node2D) -> void:
@@ -35,6 +37,7 @@ func reset() -> void:
 	asteroid_visual_positions.clear()
 	asteroid_variants.clear()
 	deleted_asteroid_ids.clear()
+	_deleted_asteroid_id_order.clear()
 
 
 func get_asteroid_node(asteroid_id: String):
@@ -68,7 +71,7 @@ func apply_asteroid(
 	create_if_missing: bool = true
 ) -> void:
 	if create_if_missing:
-		deleted_asteroid_ids.erase(asteroid_id)
+		_clear_deleted_asteroid_id(asteroid_id)
 	elif deleted_asteroid_ids.has(asteroid_id):
 		return
 
@@ -121,13 +124,16 @@ func apply(
 
 
 func remove_asteroid(asteroid_id: String) -> void:
-	if !asteroid_nodes.has(asteroid_id):
+	if not deleted_asteroid_ids.has(asteroid_id):
 		deleted_asteroid_ids[asteroid_id] = true
+		_deleted_asteroid_id_order.append(asteroid_id)
+		while _deleted_asteroid_id_order.size() > DELETED_ASTEROID_ID_CAP:
+			deleted_asteroid_ids.erase(_deleted_asteroid_id_order.pop_front())
+	if !asteroid_nodes.has(asteroid_id):
 		return
 
 	asteroid_nodes[asteroid_id].queue_free()
 	asteroid_nodes.erase(asteroid_id)
-	deleted_asteroid_ids[asteroid_id] = true
 	warned_missing_asteroid_scale.erase(asteroid_id)
 	warned_missing_asteroid_variant.erase(asteroid_id)
 	initialized_asteroids.erase(asteroid_id)
@@ -135,6 +141,12 @@ func remove_asteroid(asteroid_id: String) -> void:
 	asteroid_server_positions.erase(asteroid_id)
 	asteroid_visual_positions.erase(asteroid_id)
 	asteroid_variants.erase(asteroid_id)
+
+func _clear_deleted_asteroid_id(asteroid_id: String) -> void:
+	if not deleted_asteroid_ids.has(asteroid_id):
+		return
+	deleted_asteroid_ids.erase(asteroid_id)
+	_deleted_asteroid_id_order.erase(asteroid_id)
 
 
 func is_deleted(asteroid_id: String) -> bool:

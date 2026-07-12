@@ -20,6 +20,7 @@ func test_snapshot_counts_store_dictionaries_and_total_entries() -> void:
 		},
 		"world_lane_state": {
 			"deleted_bullet_ids": {"bullet-1": true, "bullet-2": true},
+			"pending_bullet_updates": {"bullet-3": {}, "bullet-4": {}, "bullet-5": {}},
 		},
 	}
 	var world_sync := {
@@ -33,9 +34,10 @@ func test_snapshot_counts_store_dictionaries_and_total_entries() -> void:
 	assert_eq(result["applied_event_ids"], 3)
 	assert_eq(result["logged_applied_batch_ids"], 1)
 	assert_eq(result["world_lane_deleted_bullet_ids"], 2)
+	assert_eq(result["world_lane_pending_bullet_updates"], 3)
 	assert_eq(result["projectile_sync_deleted_projectile_ids"], 1)
 	assert_eq(result["asteroid_sync_deleted_asteroid_ids"], 2)
-	assert_eq(result["total_entries"], 11)
+	assert_eq(result["total_entries"], 14)
 
 
 func test_snapshot_returns_zero_for_missing_owners() -> void:

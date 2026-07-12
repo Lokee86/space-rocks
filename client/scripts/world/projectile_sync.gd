@@ -5,6 +5,7 @@ const ProjectileSceneResolver = preload("res://scripts/world/projectiles/project
 const ProjectileSyncState = preload("res://scripts/world/projectile_sync_state.gd")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
+const DELETED_PROJECTILE_ID_CAP := 4096
 
 var audio_flow := GameplayAudioFlow.new()
 var bullets_layer: Node2D
@@ -18,6 +19,7 @@ var released_projectile_node_count := 0
 var target_projectile_positions := {}
 var target_projectile_rotations := {}
 var deleted_projectile_ids := {}
+var _deleted_projectile_id_order := []
 
 
 func configure(layer: Node2D) -> void:
@@ -105,7 +107,7 @@ func apply_projectile(
 	create_if_missing: bool = true
 ) -> void:
 	if create_if_missing:
-		deleted_projectile_ids.erase(bullet_id)
+		_clear_deleted_projectile_id(bullet_id)
 	elif deleted_projectile_ids.has(bullet_id):
 		return
 
@@ -139,7 +141,11 @@ func apply(
 		apply_projectile(bullet_id, server_bullets[bullet_id], local_visual_position, local_server_position)
 
 func remove_projectile(bullet_id: String) -> void:
-	deleted_projectile_ids[bullet_id] = true
+	if not deleted_projectile_ids.has(bullet_id):
+		deleted_projectile_ids[bullet_id] = true
+		_deleted_projectile_id_order.append(bullet_id)
+		while _deleted_projectile_id_order.size() > DELETED_PROJECTILE_ID_CAP:
+			deleted_projectile_ids.erase(_deleted_projectile_id_order.pop_front())
 	if !projectile_nodes.has(bullet_id):
 		return
 
@@ -182,6 +188,13 @@ func reset() -> void:
 	target_projectile_positions.clear()
 	target_projectile_rotations.clear()
 	deleted_projectile_ids.clear()
+	_deleted_projectile_id_order.clear()
+
+func _clear_deleted_projectile_id(bullet_id: String) -> void:
+	if not deleted_projectile_ids.has(bullet_id):
+		return
+	deleted_projectile_ids.erase(bullet_id)
+	_deleted_projectile_id_order.erase(bullet_id)
 
 
 func metrics_snapshot() -> Dictionary:
