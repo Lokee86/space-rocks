@@ -184,9 +184,9 @@ func _accept_hot_delta(sequence, chunk_index, chunk_count, lane: String) -> bool
 	return true
 
 func _parse_hot_delta_sequence(sequence):
-	if sequence == null:
-		return null
 	if typeof(sequence) != TYPE_INT and typeof(sequence) != TYPE_FLOAT:
+		return null
+	if sequence < 0 or (typeof(sequence) == TYPE_FLOAT and (not is_finite(sequence) or sequence != floor(sequence))):
 		return null
 	return int(sequence)
 

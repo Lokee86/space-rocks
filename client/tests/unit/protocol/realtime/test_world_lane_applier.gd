@@ -1830,6 +1830,28 @@ func test_hot_lane_unchunked_defaults_remain_accepted() -> void:
 	assert_true(state.accept_bullet_delta_sequence(1))
 
 
+func test_asteroid_hot_lane_sequence_accepts_only_finite_non_negative_integers() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_asteroid_delta_sequence(0))
+	assert_true(state.accept_asteroid_delta_sequence(3.0))
+	assert_eq(state.latest_asteroid_delta_sequence, 3)
+
+	for sequence in [3.5, -1, "3", true, NAN, INF, -INF]:
+		assert_false(state.accept_asteroid_delta_sequence(sequence))
+		assert_eq(state.latest_asteroid_delta_sequence, 3)
+
+
+func test_bullet_hot_lane_sequence_accepts_only_finite_non_negative_integers() -> void:
+	var state := WorldLaneState.new()
+	assert_true(state.accept_bullet_delta_sequence(0))
+	assert_true(state.accept_bullet_delta_sequence(3.0))
+	assert_eq(state.latest_bullet_delta_sequence, 3)
+
+	for sequence in [3.5, -1, "3", false, NAN, INF, -INF]:
+		assert_false(state.accept_bullet_delta_sequence(sequence))
+		assert_eq(state.latest_bullet_delta_sequence, 3)
+
+
 func test_asteroid_hot_lane_applies_distinct_chunks_and_rejects_duplicate_replay() -> void:
 	var applier := WorldLaneApplier.new()
 	var state := WorldLaneState.new()
