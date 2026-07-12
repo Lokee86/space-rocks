@@ -28,12 +28,12 @@ func TestTypedPayloadRuntimeConsumersPreferPayload(t *testing.T) {
 
 func TestTypedHotLaneChunkReplacementRemainsTyped(t *testing.T) {
 	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
-		Type:     PacketFamilyBulletDelta,
-		Metadata: Metadata{Lane: LaneBullets, Sequence: 4, ChunkCount: 1, IsFinalChunk: true},
+		Type:          PacketFamilyBulletDelta,
+		Metadata:      Metadata{Lane: LaneBullets, Sequence: 4, ChunkCount: 1, IsFinalChunk: true},
 		BulletUpdates: []map[string]any{{"id": "bullet-1", "x": 12}},
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("chunk count = %d, want 1", len(chunks))
 	}

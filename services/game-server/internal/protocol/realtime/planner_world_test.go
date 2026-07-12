@@ -312,7 +312,7 @@ func TestAssembleRealtimeLaneCandidatesThrottlesChunkedAsteroidsTo30Hz(t *testin
 		}
 		if tick == 2 {
 			candidate, _ := findCandidateByLane(plan.Candidates, LaneAsteroids)
-			if len(ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})) <= 1 {
+			if len(mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})) <= 1 {
 				t.Fatal("expected asteroid candidate to expand into multiple chunks")
 			}
 		}
@@ -376,7 +376,7 @@ func TestAssembleRealtimeLaneCandidatesHonorsBulletChunkCadence(t *testing.T) {
 				}
 				if want {
 					candidate, _ := findCandidateByLane(plan.Candidates, LaneBullets)
-					if got := len(ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})); got != tc.wantChunks {
+					if got := len(mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})); got != tc.wantChunks {
 						t.Fatalf("tick %d expanded chunks=%d, want %d", tick, got, tc.wantChunks)
 					}
 				}

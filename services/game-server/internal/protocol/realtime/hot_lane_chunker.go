@@ -1,41 +1,51 @@
 package realtime
 
-func ExpandHotLaneCandidateChunks(candidates []RealtimeLaneCandidate) []RealtimeLaneCandidate {
+func ExpandRealtimeCandidateChunks(candidates []RealtimeLaneCandidate) ([]RealtimeLaneCandidate, error) {
 	if len(candidates) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	expanded := make([]RealtimeLaneCandidate, 0, len(candidates))
 	for _, candidate := range candidates {
-		chunks := expandHotLaneCandidateChunks(candidate)
+		chunks, err := expandRealtimeCandidate(candidate)
+		if err != nil {
+			return nil, err
+		}
 		expanded = append(expanded, chunks...)
 	}
-	return expanded
+	return expanded, nil
 }
 
-func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLaneCandidate {
+func expandRealtimeCandidate(candidate RealtimeLaneCandidate) ([]RealtimeLaneCandidate, error) {
+	hardCapChunks, err := expandHardCapCandidate(candidate)
+	if err != nil {
+		return nil, err
+	}
+	if candidate.Kind() == RealtimeLaneCandidateKindFull && candidate.Lane() == LaneWorld {
+		return hardCapChunks, nil
+	}
 	lane, kind := candidate.Lane(), candidate.Kind()
 	if kind != RealtimeLaneCandidateKindDelta {
-		return []RealtimeLaneCandidate{candidate}
+		return hardCapChunks, nil
 	}
 
 	switch lane {
 	case LaneBulletsLifecycle, LaneAsteroidsLifecycle:
-		return []RealtimeLaneCandidate{candidate}
+		return hardCapChunks, nil
 	case LaneBullets:
 		packet, ok := bulletWireDeltaPacketFromCandidate(candidate)
 		if !ok {
-			return []RealtimeLaneCandidate{candidate}
+			return []RealtimeLaneCandidate{candidate}, nil
 		}
 		packet.Metadata.MatchID = candidate.MatchID
 
 		if bulletWireDeltaChunkCount(packet) == 1 {
-			return []RealtimeLaneCandidate{normalizedBulletWireDeltaCandidate(candidate, packet, packet.BulletUpdates, 0, 1)}
+			return []RealtimeLaneCandidate{normalizedBulletWireDeltaCandidate(candidate, packet, packet.BulletUpdates, 0, 1)}, nil
 		}
 
 		chunkUpdates := greedyBulletWireDeltaChunks(packet)
 		if len(chunkUpdates) == 0 {
-			return []RealtimeLaneCandidate{candidate}
+			return []RealtimeLaneCandidate{candidate}, nil
 		}
 
 		chunks := make([]RealtimeLaneCandidate, 0, len(chunkUpdates))
@@ -43,21 +53,21 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		for index, updates := range chunkUpdates {
 			chunks = append(chunks, normalizedBulletWireDeltaCandidate(candidate, packet, updates, index, chunkCount))
 		}
-		return chunks
+		return chunks, nil
 	case LaneAsteroids:
 		packet, ok := asteroidWireDeltaPacketFromCandidate(candidate)
 		if !ok {
-			return []RealtimeLaneCandidate{candidate}
+			return []RealtimeLaneCandidate{candidate}, nil
 		}
 		packet.Metadata.MatchID = candidate.MatchID
 
 		if !asteroidWireDeltaRequiresChunking(packet) {
-			return []RealtimeLaneCandidate{normalizedAsteroidWireDeltaCandidate(candidate, packet, packet.AsteroidUpdates, 0, 1)}
+			return []RealtimeLaneCandidate{normalizedAsteroidWireDeltaCandidate(candidate, packet, packet.AsteroidUpdates, 0, 1)}, nil
 		}
 
 		chunkUpdates := greedyAsteroidWireDeltaChunks(packet)
 		if len(chunkUpdates) == 0 {
-			return []RealtimeLaneCandidate{candidate}
+			return []RealtimeLaneCandidate{candidate}, nil
 		}
 
 		chunks := make([]RealtimeLaneCandidate, 0, len(chunkUpdates))
@@ -65,9 +75,9 @@ func expandHotLaneCandidateChunks(candidate RealtimeLaneCandidate) []RealtimeLan
 		for index, updates := range chunkUpdates {
 			chunks = append(chunks, normalizedAsteroidWireDeltaCandidate(candidate, packet, updates, index, chunkCount))
 		}
-		return chunks
+		return chunks, nil
 	default:
-		return []RealtimeLaneCandidate{candidate}
+		return []RealtimeLaneCandidate{candidate}, nil
 	}
 }
 

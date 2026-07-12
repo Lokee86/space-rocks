@@ -3,6 +3,9 @@ extends RefCounted
 const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
 const WorldLaneState = preload("res://scripts/protocol/realtime/world_lane_state.gd")
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
+const WorldFullChunkAssembler = preload("res://scripts/protocol/realtime/world_full_chunk_assembler.gd")
+
+var _full_assembler := WorldFullChunkAssembler.new()
 
 func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: BaselineTracker, lane: String, world_packet: Dictionary) -> bool:
 	var baseline_id = world_packet.get("baseline_id")
@@ -12,16 +15,23 @@ func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: Baseli
 	var chunk_count: int = int(world_packet.get("chunk_count", 1))
 	var is_final_chunk: bool = bool(world_packet.get("is_final_chunk", true))
 
-	var accepted: bool
-	if is_final_chunk:
-		accepted = baseline_tracker.record_full_packet(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, true)
-	else:
-		accepted = baseline_tracker.record_full_chunk(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, false)
-	if not accepted:
+	var assembly := _full_assembler.accept(world_packet)
+	if assembly.status == WorldFullChunkAssembler.ERROR:
+		baseline_tracker.request_resync_for_lane(lane, assembly.reason)
 		return false
+	var accepted := baseline_tracker.record_full_chunk(lane, baseline_id, sequence, snapshot_id, chunk_index, chunk_count, is_final_chunk)
+	if not accepted:
+		_full_assembler.reset()
+		return false
+	if assembly.status != WorldFullChunkAssembler.COMPLETE:
+		return true
+	var assembled: Dictionary = assembly.packet
 	world_lane_state.clear_pending_bullet_updates()
-	world_lane_state.apply_full_lane(_decode_world_full_packet(world_packet))
+	world_lane_state.apply_full_lane(_decode_world_full_packet(assembled))
 	return true
+
+func reset() -> void:
+	_full_assembler.reset()
 
 func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: BaselineTracker, lane: String, world_packet: Dictionary) -> bool:
 	var baseline_id = world_packet.get("baseline_id")

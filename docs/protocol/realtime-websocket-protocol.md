@@ -354,7 +354,7 @@ Legacy long-key fields and older compact aliases remain accepted during decode f
 
 The readable server projection comes from `wire_packets.go`, `wire_reflect.go`, and the realtime projection records. The physical compact shape comes from `shared/packets/realtime_wire.toml` and generated descriptors consumed by `compact_wire_packet.go` and `compact_wire_descriptor.go`. Numeric quantization algorithms remain runtime code, while field-path policy assignments come from generated descriptors before compact encoding and `packetcodec` JSON encoding.
 
-Chunk metadata exists in the wire shape and scheduler records. For `asteroid_delta` and `bullet_delta`, oversized hot movement update lists are split into multiple real same-sequence lane candidates before scheduling and encoding. The current `HardCapBytes` construction threshold is 1,200 B. It is enforced before scheduling using conservative compact-JSON byte estimates, avoiding repeated trial JSON encoding on the hot path. Chunk construction is the hard-size guard for hot movement packets. A single movement update that cannot be split further may exceed the nominal threshold; it is still encoded and sent, with diagnostics recording the unsplittable case. The active encode path records the final encoded byte size for diagnostics and accounting, but it does not reject already-scheduled hot packets for size. Each sent chunk is written as its own WebRTC DataChannel message on `sr.asteroids` or `sr.bullets`. This is focused hot-lane chunking, not general fragmentation for all lane families.
+Chunk metadata exists in the wire shape and scheduler records. The roughly 1,200 B `HardCapBytes` construction limit covers `world_full`, `asteroids_lifecycle`, `bullets_lifecycle`, `asteroid_delta`, and `bullet_delta` candidates. Server expansion exact-encodes compact payloads while constructing chunks, preserves logical identity metadata, and splits oversized full/lifecycle or hot candidates before scheduling and encoding. A record that cannot fit individually returns an explicit construction error. This is candidate chunking for the active state families, not arbitrary fragmentation of every lane family.
 
 ### Hot movement cadence
 
@@ -526,7 +526,7 @@ It is not a hot movement lane.
 
 `RealtimeRouter` submits each lifecycle packet to `LifecycleLaneGate`. A packet applies immediately only when the world is synced and its explicit `baseline_id` matches the active world baseline; otherwise it is queued. Unsupported lanes, non-dictionary packets, missing or empty `baseline_id`, missing sequence, negative sequence, non-integral numeric sequence, strings, and booleans are rejected at the gate. Non-negative integral numeric values such as `1.0` are normalized to integer sequence `1`.
 
-Duplicate or lower lifecycle sequences are rejected when `sequence <= latest applied`. Sequence gaps are valid. Lifecycle lanes are not chunked, so a same-sequence lifecycle packet never receives the distinct-chunk exception used by hot lanes. `WorldLaneApplier` owns lifecycle payload validation and `WorldLaneState` mutation after gate acceptance; it does not own lifecycle baseline or sequence policy.
+Duplicate or lower lifecycle sequences are rejected when `sequence <= latest applied`. Sequence gaps are valid. Lifecycle lanes are assembled from explicit chunks before gate validation and application; duplicate, mismatched, interrupted, or invalid series fail closed and request world resync. `WorldLaneApplier` owns lifecycle payload validation and `WorldLaneState` mutation after gate acceptance; it does not own lifecycle baseline or sequence policy.
 
 After a matching `world_full` is completely applied and its baseline is recorded, `RealtimeRouter` drains pending packets for that baseline, sorting packets ascending within each lifecycle lane. There is no ordering contract between the two lifecycle lanes. A lifecycle sequence advances only after `WorldLaneApplier` successfully validates and mutates the payload.
 
@@ -796,7 +796,7 @@ This does not define a separate generated packet family named `control`.
 
 The current scheduler assigns delivery classes and priorities at whole-lane-candidate granularity and selects included candidates against an estimated byte budget.
 
-The size policies have three separate meanings: the hot-lane construction cap is a per-hot-message cap; the scheduler's 500 B `TargetBytes` is an advisory candidate-selection target; and there is no aggregate per-tick byte cap.
+The size policies have three separate meanings: the roughly 1,200 B construction cap applies to full, lifecycle, asteroid movement, and bullet movement candidates; the scheduler's 500 B `TargetBytes` is an advisory candidate-selection target; and there is no aggregate per-tick byte cap.
 
 ```text
 event_batch = critical/event-once
@@ -810,7 +810,7 @@ recovery full candidates = required only for the invalidated world, overlay, or 
 ```
 
 Lifecycle lanes are not hot-supersedable.
-Lifecycle lanes are not split by hot-lane chunking.
+Full and lifecycle candidates are split by the general realtime candidate expansion path when needed; hot movement candidates retain their same-sequence chunk semantics.
 
 The active path currently schedules whole lane candidates:
 

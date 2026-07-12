@@ -14,6 +14,7 @@ const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_read
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
 const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 const LifecycleLaneGate = preload("res://scripts/protocol/realtime/lifecycle_lane_gate.gd")
+const LifecycleChunkAssembler = preload("res://scripts/protocol/realtime/lifecycle_chunk_assembler.gd")
 
 var world_lane_state := WorldLaneState.new()
 var overlay_lane_state := OverlayLaneState.new()
@@ -23,6 +24,8 @@ var baseline_tracker := BaselineTracker.new()
 var gameplay_readiness := GameplayReadiness.new()
 var resync_state := ResyncState.new()
 var lifecycle_lane_gate := LifecycleLaneGate.new()
+var _asteroid_lifecycle_assembler := LifecycleChunkAssembler.new()
+var _bullet_lifecycle_assembler := LifecycleChunkAssembler.new()
 
 var _world_applier := WorldLaneApplier.new()
 var _overlay_applier := OverlayLaneApplier.new()
@@ -106,6 +109,13 @@ func _route_world_full(packet: Dictionary) -> bool:
 	return accepted
 
 func _route_asteroids_lifecycle(packet: Dictionary) -> void:
+	var assembly := _asteroid_lifecycle_assembler.accept(packet, "asteroid_creates", "asteroid_deletes")
+	if assembly.status == LifecycleChunkAssembler.ERROR:
+		_request_lifecycle_resync(assembly.reason)
+		return
+	if assembly.status != LifecycleChunkAssembler.COMPLETE:
+		return
+	packet = assembly.packet
 	var decision := lifecycle_lane_gate.submit(
 		LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
 		packet,
@@ -121,6 +131,13 @@ func _route_asteroids_lifecycle(packet: Dictionary) -> void:
 		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, decision.sequence)
 
 func _route_bullets_lifecycle(packet: Dictionary) -> void:
+	var assembly := _bullet_lifecycle_assembler.accept(packet, "bullet_creates", "bullet_deletes")
+	if assembly.status == LifecycleChunkAssembler.ERROR:
+		_request_lifecycle_resync(assembly.reason)
+		return
+	if assembly.status != LifecycleChunkAssembler.COMPLETE:
+		return
+	packet = assembly.packet
 	var decision := lifecycle_lane_gate.submit(
 		LaneMetadata.LANE_BULLETS_LIFECYCLE,
 		packet,
@@ -134,6 +151,15 @@ func _route_bullets_lifecycle(packet: Dictionary) -> void:
 		return
 	if _world_applier.apply_bullets_lifecycle(world_lane_state, packet):
 		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_BULLETS_LIFECYCLE, decision.sequence)
+
+func reset() -> void:
+	_world_applier.reset()
+	_asteroid_lifecycle_assembler.reset()
+	_bullet_lifecycle_assembler.reset()
+	lifecycle_lane_gate.reset()
+
+func _request_lifecycle_resync(reason: String) -> void:
+	baseline_tracker.request_resync_for_lane(LaneMetadata.LANE_WORLD, reason)
 
 func _route_resync(packet: Dictionary) -> void:
 	var packet_type = packet.get("type")

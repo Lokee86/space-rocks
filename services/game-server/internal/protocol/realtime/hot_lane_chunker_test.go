@@ -66,7 +66,7 @@ func TestBulletWireDeltaChunkCountAgreesWithExpansion(t *testing.T) {
 		packet := BulletWireDeltaPacket{Type: PacketFamilyBulletDelta, Metadata: Metadata{Lane: LaneBullets, Sequence: 10, SnapshotKind: SnapshotKind("delta")}, BulletUpdates: updates}
 		candidate := mustRealtimeLaneCandidate(packet, nil)
 		got := bulletWireDeltaChunkCount(packet)
-		if expanded := len(ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})); expanded != got {
+		if expanded := len(mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})); expanded != got {
 			t.Fatalf("updates=%d helper chunks=%d expansion chunks=%d", len(updates), got, expanded)
 		}
 	}
@@ -80,7 +80,7 @@ func assertConservativeEncodedBytes(t *testing.T, label string, candidate Realti
 	}
 }
 
-func TestExpandHotLaneCandidateChunksLeavesSmallAsteroidDeltaAsOneFinalChunk(t *testing.T) {
+func TestExpandRealtimeCandidateChunksLeavesSmallAsteroidDeltaAsOneFinalChunk(t *testing.T) {
 	candidate := mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
 		Type: PacketFamilyAsteroidDelta,
 		Metadata: Metadata{
@@ -93,7 +93,7 @@ func TestExpandHotLaneCandidateChunksLeavesSmallAsteroidDeltaAsOneFinalChunk(t *
 		},
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
@@ -113,7 +113,7 @@ func TestExpandHotLaneCandidateChunksLeavesSmallAsteroidDeltaAsOneFinalChunk(t *
 	}
 }
 
-func TestExpandHotLaneCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) {
+func TestExpandRealtimeCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) {
 	updates := make([]map[string]any, 0, 300)
 	for i := 1; i <= 300; i++ {
 		updates = append(updates, makeAsteroidUpdate(fmt.Sprintf("asteroid-%06d", i), i, i+1))
@@ -129,7 +129,7 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) 
 		AsteroidUpdates: updates,
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) <= 1 {
 		t.Fatalf("expected oversized asteroid delta to split, got %d chunk(s)", len(chunks))
 	}
@@ -173,7 +173,7 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedAsteroidDelta(t *testing.T) 
 	}
 }
 
-func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *testing.T) {
+func TestExpandRealtimeCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *testing.T) {
 	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
 		Type: PacketFamilyBulletDelta,
 		Metadata: Metadata{
@@ -186,7 +186,7 @@ func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *te
 		},
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
@@ -206,14 +206,14 @@ func TestExpandHotLaneCandidateChunksLeavesSmallBulletDeltaAsOneFinalChunk(t *te
 	}
 }
 
-func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing.T) {
+func TestExpandRealtimeCandidateChunksSmallAsteroidLifecycle(t *testing.T) {
 	candidate := mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
 		Type:            PacketFamilyAsteroidsLifecycle,
 		Metadata:        Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
-		AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
+		AsteroidCreates: []WorldAsteroidWireRecord{{ID: "asteroid-lifecycle-1", X: 1, Y: 2}},
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
@@ -227,19 +227,19 @@ func TestExpandHotLaneCandidateChunksLeavesAsteroidLifecycleUntouched(t *testing
 	if !ok {
 		t.Fatalf("expected AsteroidWireDeltaPacket, got %#v", chunks[0].Payload)
 	}
-	if packet.Metadata.Lane != LaneAsteroidsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 0 || packet.Metadata.IsFinalChunk != false {
+	if packet.Metadata.Lane != LaneAsteroidsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || packet.Metadata.IsFinalChunk != true {
 		t.Fatalf("asteroid lifecycle packet metadata = %#v, want index=0 count=0 final=false", packet.Metadata)
 	}
 }
 
-func TestExpandHotLaneCandidateChunksLeavesBulletLifecycleUntouched(t *testing.T) {
+func TestExpandRealtimeCandidateChunksSmallBulletLifecycle(t *testing.T) {
 	candidate := mustRealtimeLaneCandidate(BulletWireDeltaPacket{
 		Type:          PacketFamilyBulletsLifecycle,
 		Metadata:      Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
-		BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
+		BulletCreates: []WorldBulletWireRecord{{ID: "bullet-lifecycle-1", X: 1, Y: 2}},
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) != 1 {
 		t.Fatalf("expected one chunk, got %d", len(chunks))
 	}
@@ -253,12 +253,12 @@ func TestExpandHotLaneCandidateChunksLeavesBulletLifecycleUntouched(t *testing.T
 	if !ok {
 		t.Fatalf("expected BulletWireDeltaPacket, got %#v", chunks[0].Payload)
 	}
-	if packet.Metadata.Lane != LaneBulletsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 0 || packet.Metadata.IsFinalChunk != false {
+	if packet.Metadata.Lane != LaneBulletsLifecycle || packet.Metadata.ChunkIndex != 0 || packet.Metadata.ChunkCount != 1 || packet.Metadata.IsFinalChunk != true {
 		t.Fatalf("bullet lifecycle packet metadata = %#v, want index=0 count=0 final=false", packet.Metadata)
 	}
 }
 
-func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesAsFinalChunks(t *testing.T) {
+func TestExpandRealtimeCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesAsFinalChunks(t *testing.T) {
 	tests := []struct {
 		name           string
 		candidate      RealtimeLaneCandidate
@@ -271,22 +271,22 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 			candidate: mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{
 				Type:            PacketFamilyAsteroidsLifecycle,
 				Metadata:        Metadata{Lane: LaneAsteroidsLifecycle, Sequence: 23, SnapshotKind: SnapshotKind("delta")},
-				AsteroidUpdates: []map[string]any{makeAsteroidUpdate("asteroid-lifecycle-1", 1, 2)},
+				AsteroidCreates: []WorldAsteroidWireRecord{{ID: "asteroid-lifecycle-1", X: 1, Y: 2}},
 			}, nil),
 			wantChunkIndex: 0,
-			wantChunkCount: 0,
-			wantFinalChunk: false,
+			wantChunkCount: 1,
+			wantFinalChunk: true,
 		},
 		{
 			name: "bullet lifecycle",
 			candidate: mustRealtimeLaneCandidate(BulletWireDeltaPacket{
 				Type:          PacketFamilyBulletsLifecycle,
 				Metadata:      Metadata{Lane: LaneBulletsLifecycle, Sequence: 24, SnapshotKind: SnapshotKind("delta")},
-				BulletUpdates: []map[string]any{makeBulletUpdate("bullet-lifecycle-1", 1, 2)},
+				BulletCreates: []WorldBulletWireRecord{{ID: "bullet-lifecycle-1", X: 1, Y: 2}},
 			}, nil),
 			wantChunkIndex: 0,
-			wantChunkCount: 0,
-			wantFinalChunk: false,
+			wantChunkCount: 1,
+			wantFinalChunk: true,
 		},
 		{
 			name: "asteroid hot lane",
@@ -314,7 +314,7 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{tc.candidate})
+			chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{tc.candidate})
 			if len(chunks) != 1 {
 				t.Fatalf("expected one chunk, got %d", len(chunks))
 			}
@@ -354,7 +354,7 @@ func TestExpandHotLaneCandidateChunksTreatsLifecycleLanesAsUntouchedAndHotLanesA
 	}
 }
 
-func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
+func TestExpandRealtimeCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 	updates := make([]map[string]any, 0, 240)
 	for i := 1; i <= 240; i++ {
 		updates = append(updates, makeBulletUpdate(fmt.Sprintf("bullet-%06d", i), i, i+1))
@@ -370,7 +370,7 @@ func TestExpandHotLaneCandidateChunksSplitsOversizedBulletDelta(t *testing.T) {
 		BulletUpdates: updates,
 	}, nil)
 
-	chunks := ExpandHotLaneCandidateChunks([]RealtimeLaneCandidate{candidate})
+	chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
 	if len(chunks) <= 1 {
 		t.Fatalf("expected oversized bullet delta to split, got %d chunk(s)", len(chunks))
 	}

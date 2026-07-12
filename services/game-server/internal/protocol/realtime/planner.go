@@ -23,10 +23,14 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 	return RealtimeLanePlan{Candidates: candidates}
 }
 
-func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeSendPrepared {
+func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (RealtimeSendPrepared, error) {
 	state.AdvanceHotLaneTick()
 	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &state)
-	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
+	var err error
+	candidatePlan.Candidates, err = ExpandRealtimeCandidateChunks(candidatePlan.Candidates)
+	if err != nil {
+		return RealtimeSendPrepared{}, err
+	}
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
 	for i, candidate := range candidatePlan.Candidates {
@@ -38,5 +42,5 @@ func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state R
 		Records:       records,
 		SendPlan:      SelectSendPlan(records),
 		SessionState:  state,
-	}
+	}, nil
 }

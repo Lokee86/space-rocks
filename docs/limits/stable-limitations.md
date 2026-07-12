@@ -53,7 +53,7 @@ Revisit this limitation for endurance or persistent matches, normal gameplay app
 
 The following are not required follow-up work unless normal gameplay reaches this limit:
 
-- Further server hot-lane packet chunking changes.
+- Further server realtime candidate chunking changes beyond the current full/lifecycle and asteroid/bullet movement hard-cap path.
 - Async server write queues.
 - Projectile rendering rewrite.
 - Projectile pooling rewrite.

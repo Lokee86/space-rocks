@@ -43,7 +43,11 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 	preparedState := state
 	preparedState.AdvanceHotLaneTick()
 	candidatePlan := assembleRealtimeLaneCandidates(snapshot, preparedState, &preparedState)
-	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
+	var err error
+	candidatePlan.Candidates, err = ExpandRealtimeCandidateChunks(candidatePlan.Candidates)
+	if err != nil {
+		return ActiveRealtimeResult{}, fmt.Errorf("expand realtime candidate chunks: %w", err)
+	}
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
 	for i, candidate := range candidatePlan.Candidates {

@@ -31,7 +31,7 @@ These are the current project policy numbers for realtime gameplay traffic:
 - Realtime gameplay datagrams must stay below roughly 1,100-1,200 B.
 - Non-realtime, control, and debug payloads are separate from gameplay packet budgets and must not redefine the realtime budget.
 
-The roughly 1,200 B limit is a per-datagram construction cap for `asteroid_delta` and `bullet_delta` hot-lane messages. The hot-lane chunker enforces it by conservatively estimating final compact JSON size and splitting multi-update lists before scheduling. The scheduler's 500 B `TargetBytes` value is an advisory candidate-selection target, not an aggregate per-tick transport cap. One tick may emit multiple same-sequence hot chunks, so the total encoded bytes across all messages in that tick are not currently capped by `TargetBytes`. A single movement update cannot be split further and may exceed the nominal hard cap; diagnostics expose that unsplittable-record case.
+The roughly 1,200 B `HardCapBytes` limit is a per-candidate construction cap for `world_full`, `asteroids_lifecycle`, `bullets_lifecycle`, `asteroid_delta`, and `bullet_delta`. Server candidate expansion exact-encodes compact payloads while constructing chunks, preserves logical identity metadata, and explicitly errors when one record cannot fit. The scheduler's 500 B `TargetBytes` value is an advisory candidate-selection target, not an aggregate per-tick transport cap. One tick may emit multiple chunks, so the total encoded bytes across all messages in that tick are not currently capped by `TargetBytes`.
 
 ## Current Inputs
 
@@ -70,7 +70,7 @@ P1 answers whether the current lane-native realtime architecture can safely supp
 - `realtime lane metric` was removed from active runtime output.
 - Scheduler, budget, deferred, superseded, and CRUD-count fields are intentionally not emitted as current packet evidence, even though protocol/realtime has candidate-level send-plan records.
 - Active debug output does not prove contributor counts by delta section.
-- Lifecycle packets are required/critical reliable traffic and are not hot-supersedable movement chunks. Packet-budget pressure handling for hot chunks applies to `sr.asteroids` and `sr.bullets` movement updates, not lifecycle existence traffic.
+- Lifecycle packets are required/critical reliable traffic and are not hot-supersedable movement chunks. Their oversized full/lifecycle candidates are split by the same construction hard-cap path before reliable delivery; packet-budget pressure does not change their logical identity or ordering requirements.
 - `packet_count` is a count of encoded packets written, not unique lanes.
 - Encoded bandwidth evidence should be interpreted with write cadence: under peak stress, bandwidth may drop because write cadence drops even while entity pressure rises.
 - Hot movement cadence is enforced during candidate construction using an independent per-session 60 Hz cadence tick: asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
@@ -87,7 +87,7 @@ Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicate
 - Metrics must eventually prove included, deferred, and superseded counts by record or field group.
 - Metrics must compare estimated bytes with encoded bytes.
 - Metrics must distinguish target, warning, danger, and hard-cap outcomes.
-- Current hot-lane chunking keeps individual asteroid/bullet movement packets under the hard cap. That hard-size guard belongs to the hot-lane chunker. Scheduler and active encoding should not reject already-chunked hot movement packets for size; encoded-byte evidence should surface diagnostics or chunker invariant failures. Future metrics still need to prove included/deferred/superseded behavior and contributor counts at record or field-group granularity.
+- Current candidate chunking keeps splittable `world_full`, lifecycle, asteroid movement, and bullet movement candidates under the roughly 1,200 B hard cap. The expansion path exact-encodes compact payloads and rejects individually oversized records explicitly; scheduler and active encoding should not duplicate that construction guard. Future metrics still need to prove included/deferred/superseded behavior and contributor counts at record or field-group granularity.
 
 ### Ownership Rules
 
@@ -181,7 +181,7 @@ These display requirements are deferred until they are useful during active real
 
 ### Phase P1 Decision Gate
 
-Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, focused hot-lane chunking, and chunker-owned hot-lane hard-size guarding are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, interest filtering, stronger resync behavior, future binary representation, and future transport/versioning work.
+Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, full/lifecycle and hot candidate chunking, exact compact-payload encoding, and explicit oversized-record errors are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, interest filtering, stronger resync behavior, future binary representation, and future transport/versioning work.
 
 Outcome 1 - Continue remaining realtime protocol evolution aggressively
 
@@ -211,7 +211,7 @@ Remaining validation and protocol evolution families:
 
 - Record/entity-level prioritization, if current whole-candidate selection cannot keep important objects visible under pressure.
 - Interest filtering, if clients should not receive every entity or event in the room.
-- Deeper packet-budget policy, if current candidate-level send-plan selection and chunker-owned hot-lane hard-size guarding are not enough.
+- Deeper packet-budget policy, if current candidate-level send-plan selection and candidate expansion hard-size guarding are not enough.
 - Stronger resync behavior, if baseline mismatch, packet loss, or reconnect behavior needs more explicit recovery.
 - Binary, bit-packed, protobuf, or custom binary representation, if JSON compact aliases and tuple packing are still not enough.
 - Future transport/versioning work, if the current mixed WebRTC policy needs compatibility or negotiation support.

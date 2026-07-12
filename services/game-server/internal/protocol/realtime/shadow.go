@@ -19,7 +19,10 @@ type ShadowRealtimeResult struct {
 }
 
 func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (ShadowRealtimeResult, error) {
-	prepared := prepareRealtimeSendPlan(snapshot, state)
+	prepared, err := prepareRealtimeSendPlan(snapshot, state)
+	if err != nil {
+		return ShadowRealtimeResult{}, fmt.Errorf("expand shadow candidates: %w", err)
+	}
 	encodedBytes := make(map[Lane]int, len(prepared.CandidatePlan.Candidates))
 	for _, candidate := range prepared.CandidatePlan.Candidates {
 		_, recordedBytes, err := encodeLanePacket(candidate)
