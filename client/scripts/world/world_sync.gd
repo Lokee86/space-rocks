@@ -92,13 +92,16 @@ func apply_world_lane_state(world_lane_state_ref) -> void:
 
 
 func reset() -> void:
-	current_self_id = ""
+	set_current_self_id("")
 	if player_render_api != null:
 		player_render_api.reset()
+	if projectile_sync != null:
+		projectile_sync.reset()
 	if asteroid_sync != null:
 		asteroid_sync.reset()
 	if pickup_sync != null:
 		pickup_sync.reset()
+	world_lane_state = null
 	clear_view_target_player()
 
 

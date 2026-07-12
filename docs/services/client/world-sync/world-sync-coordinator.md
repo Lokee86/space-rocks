@@ -364,6 +364,7 @@ World-sync coordinator behavior is covered or should be covered by tests around:
 * `client/tests/unit/test_pickup_sync.gd`
 * `client/tests/unit/test_asteroid_sync_state.gd`
 * `client/tests/unit/test_projectile_sync_state.gd`
+* `client/tests/unit/world/test_projectile_sync.gd`
 * `client/tests/unit/gameplay/test_gameplay_target_candidate_flow.gd`
 * `client/tests/unit/gameplay/test_gameplay_flow_composer.gd`
 
@@ -374,7 +375,8 @@ Expected verification should confirm:
 * `WorldSync.apply_world_lane_state` passes the active anchor visual/server basis into non-player sync owners.
 * `WorldSync.interpolate` delegates interpolation to each sync owner.
 * `WorldSync.target_source()` returns a configured target-position source.
-* Reset behavior clears intended presentation state.
+* `WorldSync.reset()` clears `current_self_id` through `set_current_self_id("")`, which also clears `TargetPositionSource` identity state.
+* `WorldSync.reset()` resets `PlayerRenderApi`, `ProjectileSync`, `AsteroidSync`, and `PickupSync`, clears `world_lane_state`, and clears the view target.
 
 ## Related docs
 
@@ -394,6 +396,6 @@ Detailed ViewAnchor, render-anchor, toroidal wrap, and coordinate-conversion beh
 
 Detailed projectile, asteroid, and pickup node synchronization belongs in [Entity Sync Owners](entity-sync-owners.md).
 
-`WorldSync.reset()` currently resets `PlayerRenderApi`, `AsteroidSync`, and `PickupSync`, then clears the view target. It does not explicitly call `ProjectileSync.reset()` in the current implementation. That should be treated as current implementation behavior unless changed.
+`WorldSync.reset()` clears the current self identity by calling `set_current_self_id("")`, resets `PlayerRenderApi`, `ProjectileSync`, `AsteroidSync`, and `PickupSync`, clears `world_lane_state`, and clears the view target. Clearing the self identity through the setter also clears the identity held by `TargetPositionSource`.
 
 `TargetPositionSource.player_positions()` currently reports remote player `server_position` as the same value as `visual_position`; the local player entry uses separate values from `PlayerRenderApi`. Keep targeting documentation aware of that read-model shape.

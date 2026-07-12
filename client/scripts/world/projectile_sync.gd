@@ -169,16 +169,16 @@ func remove_missing(server_bullets: Dictionary) -> void:
 
 		remove_projectile(bullet_id)
 
-func clear_all_projectiles() -> void:
+func reset() -> void:
 	for projectile_node in projectile_nodes.values():
 		projectile_node.queue_free()
 	for pool in pooled_projectile_nodes_by_type.values():
 		for pooled_projectile_node in pool:
 			pooled_projectile_node.queue_free()
-		pool.clear()
 	projectile_nodes.clear()
 	projectile_node_types.clear()
 	initialized_projectiles.clear()
+	pooled_projectile_nodes_by_type.clear()
 	target_projectile_positions.clear()
 	target_projectile_rotations.clear()
 	deleted_projectile_ids.clear()

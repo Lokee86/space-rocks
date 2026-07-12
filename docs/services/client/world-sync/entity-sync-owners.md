@@ -198,6 +198,12 @@ Current responsibilities include:
 `ProjectileSync` treats WorldLaneState bullet dictionaries as the source of truth.
 Bullet pulse effects are scene-local presentation owned by `client/scripts/entities/bullet.gd`, not world-sync authority.
 
+### Projectile reset ownership
+
+`ProjectileSync.reset()` owns clearing projectile presentation state for a match or session reset. It queues both active and pooled projectile nodes for deletion, then clears its active-node, projectile-type, initialized-id, pool, interpolation-target, rotation-target, and deletion-tombstone state. Cumulative diagnostic counters are preserved.
+
+After reset, projectile IDs can be safely reused by a later match or session because no prior active, pooled, initialized, interpolation, rotation, or deletion-tombstone state remains.
+
 Projectile packet-facing field access belongs to:
 
 ```text

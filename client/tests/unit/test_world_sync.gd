@@ -554,6 +554,21 @@ func test_apply_world_lane_state_removes_direct_asteroid_ids() -> void:
 	assert_true(world_lane_state.dirty_asteroid_ids.is_empty())
 
 
+func test_reset_clears_projectile_world_lane_and_target_identity_state() -> void:
+	_apply_fixture_state()
+	world_sync.set_current_self_id(WorldStateFixture.LOCAL_PLAYER_ID)
+	world_sync.world_lane_state = WorldLaneState.new()
+	world_sync.projectile_sync.remove_projectile(WorldStateFixture.BULLET_ID)
+
+	world_sync.reset()
+
+	assert_true(_projectile_nodes().is_empty())
+	assert_true(_projectile_sync().get("pooled_projectile_nodes_by_type").is_empty())
+	assert_null(world_sync.world_lane_state)
+	assert_eq(world_sync.current_self_id, "")
+	assert_eq(world_sync.target_source().current_self_id, "")
+	assert_true(world_sync.target_source().player_positions().is_empty())
+
 func _apply_fixture_state() -> void:
 	_apply_state(WorldStateFixture.snapshot())
 

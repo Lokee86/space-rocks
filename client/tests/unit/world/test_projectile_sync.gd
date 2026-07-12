@@ -280,6 +280,53 @@ func test_new_torpedo_uses_torpedo_scene_when_pool_empty() -> void:
 	assert_not_null(node)
 	assert_eq(node.name, "Torpedo")
 
+func test_reset_clears_active_pooled_and_interpolation_state() -> void:
+	var projectile_sync := _new_projectile_sync()
+	var state := {
+		Packets.FIELD_X: 10.0,
+		Packets.FIELD_Y: 20.0,
+		Packets.FIELD_ROTATION: 0.5,
+		Packets.FIELD_PROJECTILE_TYPE: "bullet",
+	}
+	projectile_sync.apply_projectile("bullet-1", state, Vector2.ZERO, Vector2.ZERO)
+	var active_node = projectile_sync.projectile_nodes["bullet-1"]
+	projectile_sync.remove_projectile("bullet-1")
+	var pooled_node = projectile_sync.pooled_projectile_nodes_by_type["bullet"][0]
+	var torpedo_state := state.duplicate()
+	torpedo_state[Packets.FIELD_PROJECTILE_TYPE] = "torpedo"
+	projectile_sync.apply_projectile("torpedo-1", torpedo_state, Vector2.ZERO, Vector2.ZERO)
+	var second_active_node = projectile_sync.projectile_nodes["torpedo-1"]
+	projectile_sync.deleted_projectile_ids["stale-id"] = true
+
+	projectile_sync.reset()
+
+	assert_true(active_node.is_queued_for_deletion())
+	assert_true(pooled_node.is_queued_for_deletion())
+	assert_true(second_active_node.is_queued_for_deletion())
+	assert_true(projectile_sync.projectile_nodes.is_empty())
+	assert_true(projectile_sync.projectile_node_types.is_empty())
+	assert_true(projectile_sync.initialized_projectiles.is_empty())
+	assert_true(projectile_sync.pooled_projectile_nodes_by_type.is_empty())
+	assert_true(projectile_sync.target_projectile_positions.is_empty())
+	assert_true(projectile_sync.target_projectile_rotations.is_empty())
+	assert_true(projectile_sync.deleted_projectile_ids.is_empty())
+
+func test_reset_allows_reusing_a_projectile_id_in_a_new_match() -> void:
+	var projectile_sync := _new_projectile_sync()
+	var state := {
+		Packets.FIELD_X: 10.0,
+		Packets.FIELD_Y: 20.0,
+		Packets.FIELD_ROTATION: 0.5,
+		Packets.FIELD_PROJECTILE_TYPE: "bullet",
+	}
+	projectile_sync.apply_projectile("bullet-1", state, Vector2.ZERO, Vector2.ZERO)
+	projectile_sync.remove_projectile("bullet-1")
+	projectile_sync.reset()
+	projectile_sync.apply_projectile("bullet-1", state, Vector2.ZERO, Vector2.ZERO)
+
+	assert_true(projectile_sync.has_projectile("bullet-1"))
+	assert_false(projectile_sync.is_deleted("bullet-1"))
+
 func _new_projectile_sync() -> ProjectileSync:
 	var projectile_sync := ProjectileSync.new()
 	var bullets_layer := Node2D.new()
