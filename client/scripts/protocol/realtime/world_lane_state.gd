@@ -4,11 +4,15 @@ const SHIP_FIELDS := ["id", "x", "y", "rotation", "velocity_x", "velocity_y", "t
 const BULLET_FIELDS := ["id", "x", "y", "velocity_x", "velocity_y", "rotation", "owner_id", "lifespan_seconds", "weapon_id", "projectile_type"]
 const ASTEROID_FIELDS := ["id", "x", "y", "velocity_x", "velocity_y", "rotation", "size", "health", "scale", "variant"]
 const PICKUP_FIELDS := ["id", "type", "pickup_class", "x", "y", "health", "age_seconds", "lifespan_seconds"]
+const DELETED_BULLET_ID_CAP := 4096
+const PENDING_BULLET_UPDATE_CAP := 2048
 
 var ships := {}
 var bullets := {}
 var pending_bullet_updates := {}
 var deleted_bullet_ids := {}
+var _pending_bullet_update_order := []
+var _deleted_bullet_id_order := []
 var dirty_bullet_ids := {}
 var removed_bullet_ids := {}
 var bullet_full_sync_required := false
@@ -28,7 +32,9 @@ func clear_world() -> void:
 	ships.clear()
 	bullets.clear()
 	pending_bullet_updates.clear()
+	_pending_bullet_update_order.clear()
 	deleted_bullet_ids.clear()
+	_deleted_bullet_id_order.clear()
 	dirty_bullet_ids.clear()
 	removed_bullet_ids.clear()
 	bullet_full_sync_required = true
@@ -112,7 +118,7 @@ func merge_ship_update(record: Dictionary) -> void:
 func upsert_bullet(record: Dictionary) -> void:
 	var id = record.get("id")
 	if id != null:
-		deleted_bullet_ids.erase(id)
+		_clear_deleted_bullet_id(id)
 	_upsert_record(bullets, record, BULLET_FIELDS)
 	apply_pending_bullet_update(id)
 	mark_bullet_dirty(id)
@@ -133,6 +139,7 @@ func apply_pending_bullet_update(id) -> void:
 		merge_bullet_update(pending_bullet_updates[id])
 		mark_bullet_dirty(id)
 	pending_bullet_updates.erase(id)
+	_clear_pending_bullet_update_order(id)
 
 func merge_or_buffer_bullet_update(record: Dictionary) -> void:
 	var id = record.get("id")
@@ -143,13 +150,19 @@ func merge_or_buffer_bullet_update(record: Dictionary) -> void:
 		return
 	if deleted_bullet_ids.has(id):
 		return
+	if not pending_bullet_updates.has(id):
+		_pending_bullet_update_order.append(id)
 	pending_bullet_updates[id] = record.duplicate(true)
+	while _pending_bullet_update_order.size() > PENDING_BULLET_UPDATE_CAP:
+		pending_bullet_updates.erase(_pending_bullet_update_order.pop_front())
 
 func clear_pending_bullet_updates() -> void:
 	pending_bullet_updates.clear()
+	_pending_bullet_update_order.clear()
 
 func clear_pending_bullet_update(id) -> void:
 	pending_bullet_updates.erase(id)
+	_clear_pending_bullet_update_order(id)
 
 func accept_asteroid_delta_sequence(sequence, chunk_index = 0, chunk_count = 1) -> bool:
 	return _accept_hot_delta(sequence, chunk_index, chunk_count, "asteroid")
@@ -233,9 +246,22 @@ func delete_ship(id) -> void:
 
 func delete_bullet(id) -> void:
 	bullets.erase(id)
-	pending_bullet_updates.erase(id)
-	deleted_bullet_ids[id] = true
+	clear_pending_bullet_update(id)
+	if not deleted_bullet_ids.has(id):
+		deleted_bullet_ids[id] = true
+		_deleted_bullet_id_order.append(id)
+		while _deleted_bullet_id_order.size() > DELETED_BULLET_ID_CAP:
+			deleted_bullet_ids.erase(_deleted_bullet_id_order.pop_front())
 	mark_bullet_removed(id)
+
+func _clear_deleted_bullet_id(id) -> void:
+	if not deleted_bullet_ids.has(id):
+		return
+	deleted_bullet_ids.erase(id)
+	_deleted_bullet_id_order.erase(id)
+
+func _clear_pending_bullet_update_order(id) -> void:
+	_pending_bullet_update_order.erase(id)
 
 func delete_asteroid(id) -> void:
 	asteroids.erase(id)

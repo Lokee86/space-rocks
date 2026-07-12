@@ -61,6 +61,39 @@ func test_hot_asteroid_update_after_lifecycle_delete_is_ignored() -> void:
 	assert_false(asteroid_sync.get("target_asteroid_positions").has(asteroid_id))
 
 
+func test_deleted_asteroid_tombstones_are_bounded_and_recreated() -> void:
+	var asteroid_sync := _new_asteroid_sync()
+	for index in range(AsteroidSync.DELETED_ASTEROID_ID_CAP + 1):
+		asteroid_sync.remove_asteroid("asteroid-%d" % index)
+
+	assert_eq(asteroid_sync.deleted_asteroid_ids.size(), AsteroidSync.DELETED_ASTEROID_ID_CAP)
+	assert_false(asteroid_sync.deleted_asteroid_ids.has("asteroid-0"))
+	assert_true(asteroid_sync.deleted_asteroid_ids.has("asteroid-%d" % AsteroidSync.DELETED_ASTEROID_ID_CAP))
+
+	var retained_id := "asteroid-%d" % AsteroidSync.DELETED_ASTEROID_ID_CAP
+	var state := {
+		Packets.FIELD_X: 10.0,
+		Packets.FIELD_Y: 20.0,
+		Packets.FIELD_ROTATION: 0.5,
+		Packets.FIELD_SCALE: 1.0,
+		Packets.FIELD_VARIANT: 2,
+	}
+	asteroid_sync.apply_asteroid(retained_id, state, Vector2.ZERO, Vector2.ZERO)
+
+	assert_false(asteroid_sync.deleted_asteroid_ids.has(retained_id))
+	assert_false(asteroid_sync._deleted_asteroid_id_order.has(retained_id))
+	assert_true(asteroid_sync.asteroid_nodes.has(retained_id))
+
+	asteroid_sync.remove_asteroid(retained_id)
+	assert_true(asteroid_sync.deleted_asteroid_ids.has(retained_id))
+	assert_true(asteroid_sync._deleted_asteroid_id_order.has(retained_id))
+	assert_eq(asteroid_sync.deleted_asteroid_ids.size(), AsteroidSync.DELETED_ASTEROID_ID_CAP)
+
+	asteroid_sync.reset()
+	assert_true(asteroid_sync.deleted_asteroid_ids.is_empty())
+	assert_true(asteroid_sync._deleted_asteroid_id_order.is_empty())
+
+
 func _new_asteroid_sync() -> AsteroidSync:
 	var asteroid_sync := AsteroidSync.new()
 	var asteroids_layer := Node2D.new()

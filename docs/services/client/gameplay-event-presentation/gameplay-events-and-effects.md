@@ -231,7 +231,9 @@ event_batch
 
 Gameplay events enter the client through the `event_batch` packet payload after lane state or readiness has already been applied.
 
-`client/scripts/protocol/realtime/event_batch_applier.gd` applies and dedupes the packet events after compact expansion. `EventPresentationAdapter` then drains the newly applied event output and forwards that output to `GameplayEventLifecycleFlow`.
+`client/scripts/protocol/realtime/event_batch_applier.gd` applies and dedupes the packet events after compact expansion. `EventPresentationAdapter` then drains the newly applied event output and forwards it to `GameplayEventLifecycleFlow`.
+
+Duplicate suppression uses bounded match-scoped histories. Entries outside the retained replay window may be presented again; durable lifecycle truth still comes from the authoritative world, overlay, and session lanes. Exact history caps and eviction behavior are documented in [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md).
 
 If the packet event field is missing or is not an array, the applied event output is an empty array.
 
@@ -521,3 +523,30 @@ The underlying constants source belongs to shared data and the data-sync pipelin
 * `client/scripts/gameplay/lifecycle/gameplay_local_lifecycle_flow.gd` - Reconstructs active, pending-respawn, and eliminated local presentation from authoritative world/session state.
 
 ### Coordinate conversion collaborators
+
+* `client/scripts/world/world_sync.gd` - Converts server-space event positions into active visual coordinates.
+* `client/scripts/world/world_wrap.gd` - Provides wrap-aware world position and delta behavior used by visual positioning.
+* `client/scripts/world/player_render/player_render_api.gd` - Supplies the active view-anchor basis consumed by world visual positioning.
+
+## Tests
+
+Relevant client tests include:
+
+* `client/tests/unit/protocol/realtime/test_event_batch_and_resync.gd` - Event-batch application, duplicate suppression, bounded history retention, and resync behavior.
+* `client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd` - Event presentation fanout through the lane-native adapters.
+* `client/tests/unit/gameplay/test_gameplay_event_controller.gd` - Supported event routing and coordinate conversion coverage.
+* `client/tests/unit/gameplay/test_gameplay_event_lifecycle_flow.gd` - Event-flow wiring, forwarding, and reset coverage.
+* `client/tests/unit/gameplay/events/test_gameplay_death_flow.gd` - Local self-death and match-end handoff coverage.
+* `client/tests/unit/gameplay/effects/test_gameplay_effects.gd` - Effect creation, animation, audio, and cleanup coverage.
+
+## Related docs
+
+* [Gameplay State Application](../gameplay-runtime/gameplay-state-application.md)
+* [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
+* [World Sync](../world-sync/!INDEX.md)
+* [Entity Sync Owners](../world-sync/entity-sync-owners.md)
+* [Long-Match Store Diagnostics](../../../devtools/client/long-match-store-diagnostics.md)
+
+## Notes
+
+Event presentation remains best-effort and transient. Authoritative world, overlay, and session lanes remain the durable source for lifecycle truth; event-batch history retention only suppresses duplicates within its retained replay window.

@@ -7,6 +7,7 @@ static func snapshot(realtime_packet_pipeline, world_sync) -> Dictionary:
 		"applied_event_ids": 0,
 		"logged_applied_batch_ids": 0,
 		"world_lane_deleted_bullet_ids": 0,
+		"world_lane_pending_bullet_updates": 0,
 		"projectile_sync_deleted_projectile_ids": 0,
 		"asteroid_sync_deleted_asteroid_ids": 0,
 		"total_entries": 0,
@@ -20,6 +21,7 @@ static func snapshot(realtime_packet_pipeline, world_sync) -> Dictionary:
 
 	var world_lane_state = _owner_value(presentation_state, "world_lane_state")
 	counts["world_lane_deleted_bullet_ids"] = _dictionary_size(_owner_value(world_lane_state, "deleted_bullet_ids"))
+	counts["world_lane_pending_bullet_updates"] = _dictionary_size(_owner_value(world_lane_state, "pending_bullet_updates"))
 
 	var projectile_sync = _owner_value(world_sync, "projectile_sync")
 	counts["projectile_sync_deleted_projectile_ids"] = _dictionary_size(_owner_value(projectile_sync, "deleted_projectile_ids"))
@@ -32,6 +34,7 @@ static func snapshot(realtime_packet_pipeline, world_sync) -> Dictionary:
 		+ counts["applied_event_ids"]
 		+ counts["logged_applied_batch_ids"]
 		+ counts["world_lane_deleted_bullet_ids"]
+		+ counts["world_lane_pending_bullet_updates"]
 		+ counts["projectile_sync_deleted_projectile_ids"]
 		+ counts["asteroid_sync_deleted_asteroid_ids"]
 	)

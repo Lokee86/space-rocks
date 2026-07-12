@@ -1038,6 +1038,48 @@ func test_world_lane_state_preserves_ship_target_fields() -> void:
 	assert_eq(world_lane_state.ships["ship-1"]["target_kind"], "player")
 	assert_eq(world_lane_state.ships["ship-1"]["target_id"], "player-2")
 
+
+func test_bullet_tombstones_are_bounded_and_recreated_ids_retain_capacity() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	for index in range(WorldLaneState.DELETED_BULLET_ID_CAP + 1):
+		world_lane_state.delete_bullet("bullet-%d" % index)
+
+	assert_eq(world_lane_state.deleted_bullet_ids.size(), WorldLaneState.DELETED_BULLET_ID_CAP)
+	assert_false(world_lane_state.deleted_bullet_ids.has("bullet-0"))
+	assert_true(world_lane_state.deleted_bullet_ids.has("bullet-%d" % WorldLaneState.DELETED_BULLET_ID_CAP))
+
+	var retained_id := "bullet-%d" % WorldLaneState.DELETED_BULLET_ID_CAP
+	world_lane_state.upsert_bullet(_bullet_packet(retained_id, 5, 6))
+	assert_false(world_lane_state.deleted_bullet_ids.has(retained_id))
+	world_lane_state.delete_bullet(retained_id)
+	assert_true(world_lane_state.deleted_bullet_ids.has(retained_id))
+	assert_eq(world_lane_state.deleted_bullet_ids.size(), WorldLaneState.DELETED_BULLET_ID_CAP)
+
+
+func test_pending_bullet_updates_are_bounded_in_insertion_order() -> void:
+	var world_lane_state := WorldLaneState.new()
+
+	for index in range(WorldLaneState.PENDING_BULLET_UPDATE_CAP + 1):
+		world_lane_state.merge_or_buffer_bullet_update({"id": "bullet-%d" % index, "x": index})
+
+	assert_eq(world_lane_state.pending_bullet_updates.size(), WorldLaneState.PENDING_BULLET_UPDATE_CAP)
+	assert_false(world_lane_state.pending_bullet_updates.has("bullet-0"))
+	assert_true(world_lane_state.pending_bullet_updates.has("bullet-%d" % WorldLaneState.PENDING_BULLET_UPDATE_CAP))
+
+	world_lane_state.merge_or_buffer_bullet_update({"id": "bullet-1", "x": 1000})
+	world_lane_state.merge_or_buffer_bullet_update({"id": "bullet-after", "x": 2000})
+
+	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
+	assert_true(world_lane_state.pending_bullet_updates.has("bullet-2"))
+	assert_true(world_lane_state.pending_bullet_updates.has("bullet-after"))
+	assert_eq(world_lane_state.pending_bullet_updates.size(), WorldLaneState.PENDING_BULLET_UPDATE_CAP)
+
+	world_lane_state.clear_pending_bullet_updates()
+	assert_true(world_lane_state.pending_bullet_updates.is_empty())
+	assert_true(world_lane_state._pending_bullet_update_order.is_empty())
+
+
 static func _ship_packet(id: String, x: int, y: int) -> Dictionary:
 	return {
 		"id": id,

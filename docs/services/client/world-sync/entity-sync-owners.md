@@ -204,7 +204,7 @@ Bullet pulse effects are scene-local presentation owned by `client/scripts/entit
 
 After reset, projectile IDs can be safely reused by a later match or session because no prior active, pooled, initialized, interpolation, rotation, or deletion-tombstone state remains.
 
-Projectile and asteroid deletion tombstones are match-scoped, cleared by reset, and grow linearly within a match. This growth is covered by [Stable Limitations](../../../limits/stable-limitations.md). They must not be pruned without a protocol-safe stale-packet/replay boundary.
+Projectile deletion tombstones are match-scoped and bounded to 4096 IDs. Asteroid deletion tombstones are match-scoped and bounded to 2048 IDs. Both use oldest-entry eviction after reaching the cap. A create-capable lifecycle recreation clears the recreated ID from its tombstone dictionary and insertion-order state, and reset clears both tombstone dictionaries and their insertion-order arrays.
 
 Projectile packet-facing field access belongs to:
 
@@ -346,7 +346,6 @@ Use the normal client GUT verification flow when changing entity sync behavior.
 ## Related docs
 
 * [World Sync](./!INDEX.md)
-* [Stable Limitations](../../../limits/stable-limitations.md)
 * [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [World sync coordinator](world-sync-coordinator.md)
 * [View anchor and visual coordinates](view-anchor-and-visual-coordinates.md)

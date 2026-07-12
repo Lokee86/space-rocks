@@ -22,6 +22,7 @@ This folder owns docs for client-side development and debug tooling.
 - [debug-status-and-target-readmodels.md](debug-status-and-target-readmodels.md) - Client debug status and target readmodels documentation.
 - [devtools-window.md](devtools-window.md) - Client devtools window documentation.
 - [hitbox-overlays.md](hitbox-overlays.md) - Client hitbox overlays documentation.
+- [long-match-store-diagnostics.md](long-match-store-diagnostics.md) - Client bounded long-match store diagnostics.
 - [packet-routing-and-devtools-input.md](packet-routing-and-devtools-input.md) - Client packet routing and devtools input documentation.
 - [player-dev-labels.md](player-dev-labels.md) - Client player dev labels documentation.
 - [target-and-placement-debugging.md](target-and-placement-debugging.md) - Client target and placement debugging documentation.
