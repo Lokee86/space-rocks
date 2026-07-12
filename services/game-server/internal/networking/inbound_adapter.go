@@ -30,7 +30,7 @@ func (a inboundSessionAdapter) SessionID() string {
 }
 
 func (a inboundSessionAdapter) EnqueueOutboundMessage(message []byte) {
-	a.session.outbound <- message
+	a.session.enqueue(message)
 }
 
 func (a inboundSessionAdapter) EnqueueResyncRequest(context inbound.SessionContext, request realtime.ResyncRequest) bool {

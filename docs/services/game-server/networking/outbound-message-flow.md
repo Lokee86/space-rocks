@@ -426,7 +426,7 @@ Queued WebSocket write failures end the WebSocket write loop for that session. T
 
 WebRTC missing, not ready, or send failures prevent metadata advance and event drain for active gameplay packets. There is no WebSocket fallback for active gameplay.
 
-The session outbound queue is not a durable delivery guarantee. It is a bounded in-memory handoff. Senders that write into the queue can block when the buffer is full.
+The session outbound queue is not a durable delivery guarantee. It is a bounded in-memory handoff with capacity 16. Every queued WebSocket producer uses the session enqueue seam, which never blocks: when the queue is full, the server logs the slow-client condition once and closes that session's WebSocket. Normal connection teardown then removes the session from its room. This disconnect policy preserves correctness for control and room packets rather than silently dropping them, and prevents one slow client from blocking broadcast delivery to healthy sessions. The outbound channel remains open and is drained only by the writer loop; active gameplay WebRTC delivery is unchanged.
 
 ## Observability
 
@@ -474,6 +474,7 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/networking/websocket.go` - Creates sessions, starts read/write/lifecycle goroutines, and runs the write loop.
 - `services/game-server/internal/networking/websocket_write.go` - Owns the session write loop and ticker-driven outbound writes.
 - `services/game-server/internal/networking/websocket_session.go` - Defines `webSocketSession` and the per-session outbound channel.
+- `services/game-server/internal/networking/websocket_outbound_queue.go` - Owns bounded non-blocking enqueue and disconnect-on-overflow policy.
 - `services/game-server/internal/networking/webrtc_transport.go` - Owns the session WebRTC transport seam used by active realtime gameplay delivery.
 - `services/game-server/internal/networking/room_snapshot.go` - Builds and enqueues room snapshots.
 - `services/game-server/internal/networking/room_error.go` - Builds and enqueues room error packets.
@@ -543,6 +544,7 @@ The documented focused test paths for outbound routing are:
 - `services/game-server/internal/networking/room_snapshot_test.go`
 - `services/game-server/tests/networking/room_snapshot_test.go`
 - `services/game-server/internal/networking/room_error_test.go`
+- `services/game-server/internal/networking/outbound_backpressure_test.go`
 - `services/game-server/internal/networking/session_auth_test.go`
 - `services/game-server/tests/game/pause_test.go`
 - `services/game-server/internal/networking/packetmetrics/*_test.go`

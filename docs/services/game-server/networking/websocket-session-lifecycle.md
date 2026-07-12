@@ -348,7 +348,7 @@ The queue is created with capacity:
 
 Session handlers enqueue already encoded payloads through `session.enqueue(payload)`. Current producers include room errors, room snapshots, auth results, player pause state, and telemetry pong responses.
 
-The queue is an in-memory handoff to the write loop. It is not durable storage and does not provide retry or acknowledgement semantics.
+`session.enqueue(payload)` is bounded and non-blocking. If the queue is full, it logs the overflow once, closes the slow session WebSocket when a connection is present, and lets normal connection teardown remove the session from its room. No control or room packet is silently dropped while the session is treated as healthy. The queue is an in-memory handoff to the write loop; it is not durable storage and does not provide retry or acknowledgement semantics.
 
 ### Ordered resync control branch
 
@@ -552,6 +552,7 @@ websocket read failed
 websocket write closed
 websocket write failed
 websocket packet envelope decode failed
+websocket outbound queue full; closing slow session
 room member left
 broadcasting room snapshot after member left
 reported resolved match result before room exit
@@ -613,6 +614,7 @@ The session may carry identity and room references that downstream systems use f
 * `services/game-server/internal/networking/websocket_write.go` - Runs the four-input session write loop, consumes queued bytes and typed resync requests, and triggers active lane writes; active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - Per-session room game-over lifecycle ticker.
 * `services/game-server/internal/networking/websocket_close_logging.go` - Expected and unexpected read/write close logging.
+* `services/game-server/internal/networking/websocket_outbound_queue.go` - Owns the bounded non-blocking session enqueue and disconnect-on-overflow policy.
 
 ### Session adapter and downstream handlers
 
@@ -625,7 +627,7 @@ The session may carry identity and room references that downstream systems use f
 * `services/game-server/internal/networking/session_identity.go` - Guest and authenticated-account session identity model.
 * `services/game-server/internal/networking/session_admission.go` - Authenticated-account admission guard for multiplayer create/join.
 * `services/game-server/internal/networking/room_snapshot.go` - Room snapshot build, enqueue, and broadcast helpers.
-* `services/game-server/internal/networking/room_error.go` - Room error enqueue helper and generic session outbound enqueue.
+* `services/game-server/internal/networking/room_error.go` - Room-error packet construction and enqueueing only.
 * `services/game-server/internal/networking/player_pause_state.go` - Same-session pause-state enqueue helper.
 
 ### Outbound write helpers
@@ -669,6 +671,7 @@ Relevant tests include:
 * `services/game-server/internal/networking/room_sessions_test.go`
 * `services/game-server/internal/networking/room_snapshot_test.go`
 * `services/game-server/internal/networking/room_error_test.go`
+* `services/game-server/internal/networking/outbound_backpressure_test.go`
 * `services/game-server/internal/networking/gameplay_packets_test.go`
 * `services/game-server/internal/networking/first_packet_logging_test.go`
 * `services/game-server/internal/networking/outbound/gameplay_presentation_test.go`
@@ -678,6 +681,8 @@ Relevant tests include:
 * `services/game-server/tests/game/pause_test.go`
 
 `websocket_test.go` currently verifies that requested leave reports resolved match results before removing the room member and that disconnected leave skips already reported match results while clearing session room state.
+
+`outbound_backpressure_test.go` verifies that saturated session enqueue returns promptly and that a full earlier recipient does not prevent a later healthy recipient from receiving a room snapshot.
 
 `first_packet_logging_test.go` verifies that first input and first respawn diagnostics are logged once per match, reset together on match changes while remaining independent, and are isolated between sessions.
 

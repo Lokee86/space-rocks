@@ -23,7 +23,3 @@ func (session *webSocketSession) EnqueueRoomError(errorCode string, message stri
 
 	session.enqueue(payload)
 }
-
-func (session *webSocketSession) enqueue(payload []byte) {
-	session.outbound <- payload
-}

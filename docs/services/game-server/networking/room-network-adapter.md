@@ -14,6 +14,8 @@ The client sends generated lobby packets over `/ws`. The networking inbound rout
 
 Room ownership remains in `internal/rooms`. Networking adapts transport/session facts into room calls, attaches account or local-profile identity to members, activates or deactivates active game players when a room enters or leaves gameplay, and broadcasts generated `room_snapshot` packets after successful room changes.
 
+Queued room responses use the bounded, non-blocking session enqueue seam. Overflow disconnects the slow session rather than blocking room broadcasts.
+
 The adapter is intentionally not a second room rules layer. Room joinability, readiness, owner/start rules, state transitions, cleanup scheduling, and match lifecycle decisions come from the room domain.
 
 ## Code root
@@ -184,6 +186,7 @@ Primary implementation files:
 - `services/game-server/internal/networking/room_sessions.go` - Tracks live WebSocket sessions by room/member session ID for broadcast and activation.
 - `services/game-server/internal/networking/room_snapshot.go` - Builds and broadcasts generated room snapshot packets.
 - `services/game-server/internal/networking/room_error.go` - Encodes and enqueues generated room error packets.
+- `services/game-server/internal/networking/websocket_outbound_queue.go` - Owns bounded non-blocking session enqueue and overflow disconnect policy.
 - `services/game-server/internal/networking/player_activation.go` - Activates/deactivates active game player routing for connected room sessions.
 - `services/game-server/internal/networking/websocket.go` - Creates sessions, handles connection lifetime, and performs requested/disconnected room exit cleanup.
 - `services/game-server/internal/networking/session_admission.go` - Enforces authenticated-account admission for multiplayer room create/join.
@@ -226,6 +229,8 @@ Relevant tests:
   - Verifies room snapshot match-result projection behavior.
 - `services/game-server/internal/networking/room_error_test.go`
   - Verifies room errors enqueue generated outbound packets.
+- `services/game-server/internal/networking/outbound_backpressure_test.go`
+  - Verifies saturated enqueue returns promptly and does not block later healthy room snapshot recipients.
 - `services/game-server/internal/networking/websocket_test.go`
   - Verifies resolved match results are reported before requested leave or disconnect removes the room member.
 - `services/game-server/internal/rooms/manager_test.go`

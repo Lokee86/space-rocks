@@ -243,6 +243,8 @@ Encode failures are logged through the network logger and the snapshot is droppe
 
 Broadcast only targets attached live WebSocket sessions. It does not write directly to sockets and does not create a durable delivery queue.
 
+Each per-session enqueue is bounded and non-blocking. A saturated recipient is disconnected through the session overflow policy, so it does not prevent later healthy recipients from receiving their snapshots.
+
 ## Data ownership
 
 Room snapshot projection reads room data but does not own room data.
@@ -405,6 +407,10 @@ Related tests:
 * `services/game-server/internal/networking/room_sessions_test.go`
 
   * Verifies room session attachment behavior used by snapshot broadcast.
+
+* `services/game-server/internal/networking/outbound_backpressure_test.go`
+
+  * Verifies saturated enqueue returns promptly and a full recipient does not block a later healthy snapshot recipient.
 
 * `services/game-server/internal/networking/player_activation_test.go`
 

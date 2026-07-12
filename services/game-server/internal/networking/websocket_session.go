@@ -22,6 +22,7 @@ type webSocketSession struct {
 	context             SessionContext
 	rooms               *rooms.RoomManager
 	outbound            chan []byte
+	outboundOverflowOnce sync.Once
 	resyncRequests      chan queuedResyncRequest
 	identity            SessionIdentity
 	authVerifier        TokenVerifier
@@ -240,7 +241,7 @@ func (session *webSocketSession) enqueuePacket(packet map[string]any) {
 		)
 		return
 	}
-	session.outbound <- encoded
+	session.enqueue(encoded)
 }
 
 func (session *webSocketSession) HandleWebRTCOffer(descriptionType string, sdp string) {
