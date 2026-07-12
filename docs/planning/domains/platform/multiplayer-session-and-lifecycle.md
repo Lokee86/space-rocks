@@ -61,6 +61,10 @@ Current implementation does not yet fully have:
 active in-game reconnect
 member-disconnected room state
 paused active player reconnect handling
+gameplay-transport-loss state
+projection pause during transport loss
+bounded gameplay transport renegotiation
+all-active-player transport-loss simulation pause
 mid-session join
 queued join during Starting
 spectator capacity
@@ -88,6 +92,8 @@ Starting synchronized handoff
 join loading lifecycle
 mid-session join structure
 disconnect and active reconnect
+gameplay transport loss/recovery lifecycle
+all-active-player transport availability coordination
 member-local return-to-lobby
 room owner transfer
 kick and room-lifetime ban behavior
@@ -582,6 +588,32 @@ Reconnect timeout is a multiplayer no-action timeout because a disconnected acti
 
 Mode/match rules may define the final result of reconnect expiry.
 
+## Gameplay transport loss and bounded renegotiation
+
+Gameplay transport loss is distinct from WebSocket disconnect, room leave, and member expiry.
+
+A member may retain an authenticated WebSocket session and room membership while the WebRTC gameplay transport is unavailable.
+
+The planned transport-loss flow is:
+
+```text
+gameplay transport becomes unavailable
+-> keep SessionID, MemberID, PlayerID, room membership, and active-player ownership intact
+-> pause realtime projection for the affected member
+-> enter bounded gameplay transport renegotiation
+-> on successful renegotiation, attach the replacement transport
+-> force the normal realtime baseline/resync handoff before projection resumes
+-> if renegotiation expires, transition into the normal disconnect/reconnect or lifecycle-expiry policy
+```
+
+Renegotiation must be bounded by attempts and/or elapsed time. It must not leave a member indefinitely attached to a match without a usable gameplay transport.
+
+If every active player in the match lacks a usable gameplay transport, lifecycle must pause the authoritative simulation through the existing pause seam while renegotiation and lifecycle processing continue.
+
+Simulation resumes when gameplay transport participation is restored according to lifecycle and mode policy. Transport recovery must not rebuild or mutate locked results.
+
+Lifecycle owns transport-loss state, bounded recovery coordination, projection eligibility, and the all-active-player pause/resume decision. Networking/WebRTC owns signaling and transport mechanics. Realtime protocol owns baseline/resync payload behavior. Game simulation owns the pause mechanics.
+
 ## GameOver and return-to-lobby
 
 Return-to-lobby is an individual decision.
@@ -842,6 +874,14 @@ spectator_joined
 spectator_left
 active_player_paused_for_disconnect
 active_player_restored_after_reconnect
+gameplay_transport_lost
+gameplay_transport_renegotiation_started
+gameplay_transport_restored
+gameplay_transport_renegotiation_expired
+member_projection_paused
+member_projection_resumed
+simulation_paused_all_transports_lost
+simulation_resumed_transport_restored
 return_to_lobby_requested
 member_returned_to_lobby
 game_over_no_action_timeout
@@ -859,20 +899,23 @@ Not every event needs durable event infrastructure in the first implementation. 
 4. Add disconnected member state without treating disconnect as leave.
 5. Route active disconnect through the pause seam.
 6. Add reconnect claim handling that restores active ship control.
-7. Make `Starting` a real synchronized handoff state.
-8. Add countdown-to-Starting and Starting-to-InGame timing.
-9. Add loading confirmation and automatic confirmation timeout.
-10. Add casual failed-loading removal-and-continue behavior.
-11. Add queued join reservations, including queued joins during `Starting`.
-12. Add mid-session join structure for `InGame`.
-13. Add spectator capacity and spectator lifecycle state.
-14. Add member-local return-to-lobby behavior.
-15. Add GameOver join/result-viewing behavior.
-16. Add multiplayer no-action timeout for non-queue, non-lobby lifecycle states.
-17. Split owner removal into kick and room-lifetime ban.
-18. Add immediate owner transfer on disconnect/drop using join order.
-19. Add lifecycle diagnostics/log events.
-20. Preserve result finalization and reporting during disconnect, reconnect, return, and cleanup.
+7. Add gameplay-transport-loss state without treating it as leave; pause affected-member projection and perform bounded renegotiation.
+8. Pause simulation through the pause seam when all active players lack gameplay transport.
+9. Restore projection only after transport recovery plus realtime baseline/resync.
+10. Make `Starting` a real synchronized handoff state.
+11. Add countdown-to-Starting and Starting-to-InGame timing.
+12. Add loading confirmation and automatic confirmation timeout.
+13. Add casual failed-loading removal-and-continue behavior.
+14. Add queued join reservations, including queued joins during `Starting`.
+15. Add mid-session join structure for `InGame`.
+16. Add spectator capacity and spectator lifecycle state.
+17. Add member-local return-to-lobby behavior.
+18. Add GameOver join/result-viewing behavior.
+19. Add multiplayer no-action timeout for non-queue, non-lobby lifecycle states.
+20. Split owner removal into kick and room-lifetime ban.
+21. Add immediate owner transfer on disconnect/drop using join order.
+22. Add lifecycle diagnostics/log events.
+23. Preserve result finalization and reporting during disconnect, reconnect, return, and cleanup.
 
 ## Open decisions
 
@@ -881,6 +924,9 @@ Implementation-shape decisions remain:
 ```text
 exact timeout durations
 exact reconnect expiry result per mode
+exact gameplay transport renegotiation attempt/time bounds
+exact fallback into disconnect/reconnect expiry
+exact mode-specific simulation resume threshold
 exact kick/ban allowed states
 exact ban identity fallback for dev/no-auth multiplayer
 exact GameOver member/result-viewer capacity treatment
@@ -898,7 +944,11 @@ These are not open policy questions:
 whether V2 is the completed domain plan
 whether active reconnect belongs in V2
 whether disconnect is distinct from leave
+whether gameplay transport loss is distinct from leave
 whether active players pause through the pause seam on disconnect
+whether affected-member projection pauses during gameplay transport loss
+whether gameplay transport renegotiation is bounded
+whether all-active-player gameplay transport loss pauses authoritative simulation
 whether mid-session join is structurally supported
 whether Starting is a real synchronized handoff state
 whether queued joins reserve capacity
@@ -966,6 +1016,16 @@ Active in-game reconnect is required.
 Disconnected active players are paused through the pause seam.
 
 Reconnect restores active ship control.
+
+Gameplay transport loss is distinct from leave.
+
+Affected-member projection pauses during gameplay transport loss.
+
+Gameplay transport renegotiation is bounded.
+
+All-active-player gameplay transport loss pauses authoritative simulation.
+
+Projection resumes only after successful transport recovery and realtime baseline/resync.
 
 Room ownership transfers immediately when the owner drops or disconnects.
 

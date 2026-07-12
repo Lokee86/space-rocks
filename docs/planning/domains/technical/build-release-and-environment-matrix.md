@@ -108,6 +108,8 @@ It may use:
 * Real or test auth configuration.
 * Explicit debug, admin, or test affordances.
 
+Current controlled alpha multiplayer intentionally leaves runtime server devtools available to alpha testers and there is no plan to gate them during alpha. This is a non-production testing exception, not a public-player capability or production security model.
+
 Dev-hosted multiplayer is not production and should not replace hosted staging. It should not be treated as durable player-data authority, leaderboard authority, production release readiness, or public launch infrastructure.
 
 ## Hosted Staging
@@ -142,6 +144,7 @@ It should require:
 * No embedded SQLite for multiplayer.
 * No production client devtools capability.
 * Strongly gated server admin/devtool paths.
+* Inbound devtools commands must be disabled or server-authorized and integration-tested.
 * Rollback and recovery expectations.
 
 Production should block incompatible clients before login or gameplay access.
@@ -166,7 +169,7 @@ Local packaged single-player may use embedded SQLite for local profiles and loca
 | --------------------------------- | -------------------------------------------------- |
 | Local Development                 | Enabled/open.                                      |
 | Local Packaged Single-Player Beta | Likely enabled/open for testing.                   |
-| Dev-Hosted Multiplayer            | Explicitly gated; testing/admin use allowed.       |
+| Dev-Hosted Multiplayer            | Controlled alpha may be open to testers; post-alpha must be gated. |
 | Hosted Staging                    | Strongly gated.                                    |
 | Hosted Production Client          | Disabled completely.                               |
 | Hosted Production Server          | Strongly gated; some tools may become admin tools. |
@@ -174,6 +177,18 @@ Local packaged single-player may use embedded SQLite for local profiles and loca
 Production client builds must disable devtools capability entirely, including the ability to send devtools packets. This must be stronger than hiding UI toggles.
 
 Production server builds may retain strongly gated dev/admin tooling because some devtools may later double as admin tools. These paths must require explicit authorization and must not be reachable through normal player capability.
+
+### Alpha Devtools Exception And Post-Alpha Release Gate
+
+Current controlled alpha multiplayer intentionally leaves server runtime devtools available to alpha testers. There is no requirement to add player authorization or disable inbound devtools commands for alpha testing.
+
+This exception applies only to controlled, non-production alpha environments. It must not be carried into public post-alpha multiplayer.
+
+Before any public post-alpha multiplayer release, inbound server devtools commands must either be disabled entirely or require explicit server-side developer/admin authorization that ordinary players cannot obtain.
+
+Hiding client UI, removing hotkeys, or relying on a package-level build helper is not sufficient unless the inbound networking route actually enforces the gate. The current `nodevtools` helper must not be treated as satisfying this release gate until inbound command routing consults it and integration tests prove devtools commands are rejected.
+
+This is a release blocker, not an alpha blocker.
 
 ## Bot And TAS Policy
 
@@ -222,7 +237,7 @@ This doc should keep enough structure to support future decisions about hosted A
 2. Lock the local packaged single-player server to local-only behavior with the existing embedded storage policy.
 3. Define dev-hosted multiplayer constraints so hosted services can be used without becoming production assumptions.
 4. Keep hosted staging production-like for auth, compatibility, and observability checks.
-5. Tighten hosted production around compatibility admission, devtool gating, and rollback/recovery expectations.
+5. Tighten hosted production around compatibility admission, devtool gating, the post-alpha inbound devtools release gate, and rollback/recovery expectations.
 
 ## Related docs
 

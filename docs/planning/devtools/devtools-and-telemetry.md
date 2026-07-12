@@ -75,6 +75,8 @@ full telemetry needs a dedicated window instead of only an overlay
 scenario/load-test tooling is not established
 taint/integrity propagation is not implemented
 normal-event simulation for rewards and commerce is not implemented
+inbound server devtools commands are not yet protected by a production-ready authorization/disablement boundary
+the package-level `nodevtools` helper is not currently enough by itself
 ```
 
 ## Ownership boundary
@@ -209,7 +211,7 @@ session-limited or elevated access where practical
 | ------------------------ | --------------------------------------------- | ---------------------------- |
 | Local Development        | Enabled/open.                                 | Optional/local only.         |
 | Local Packaged Beta      | Likely enabled for diagnostics.               | Not normally needed.         |
-| Dev-Hosted Multiplayer   | Developer-gated.                              | Admin-gated where useful.    |
+| Dev-Hosted Multiplayer   | Controlled alpha may be open to testers; post-alpha developer-gated. | Admin-gated where useful.    |
 | Hosted Staging           | Strongly developer-gated.                     | Strongly admin-gated.        |
 | Hosted Production Client | Disabled completely.                          | No client admin tools.       |
 | Hosted Production Server | Exceptional developer-gated diagnostics only. | Narrow audited admin subset. |
@@ -217,6 +219,20 @@ session-limited or elevated access where practical
 Production client builds must not include devtools capability.
 
 Production server builds may retain strongly gated developer/admin paths. These paths must not be reachable through normal player capability.
+
+### Alpha Testing Exception
+
+Current controlled alpha multiplayer intentionally permits alpha testers to use runtime server devtools. There is no plan to add player authorization or disable inbound devtools commands during alpha testing.
+
+This is an explicit non-production testing exception. It does not define the public multiplayer capability model.
+
+### Post-Alpha Public Multiplayer Release Blocker
+
+Public post-alpha multiplayer must not ship while ordinary player sessions can invoke inbound server devtools commands.
+
+Before that release boundary, inbound commands must either be disabled entirely or require explicit server-side developer/admin authorization. Client UI removal, hidden hotkeys, and package-level availability helpers are insufficient unless inbound networking routing enforces the decision.
+
+The current `nodevtools` helper must not be counted as complete protection until the inbound route consults it and integration tests prove commands are rejected.
 
 ## Runtime developer tools
 
@@ -563,7 +579,7 @@ A system is also not tooling-complete if it can mutate state without owning-seam
 
 2. Add a tooling coverage registry table for current systems.
 
-3. Harden existing runtime devtools around command ownership, gates, and action logging.
+3. Harden existing runtime devtools around command ownership, gates, and action logging while preserving the intentional alpha exception and documenting the later gate.
 
 4. Add a telemetry window and make the world overlay configurable from it.
 
@@ -581,7 +597,7 @@ A system is also not tooling-complete if it can mutate state without owning-seam
 
 11. Separate production admin tooling from developer tooling.
 
-12. Add release-gate checks for production client devtools removal and production server admin/developer gating.
+12. Add release-gate checks for production client devtools removal and production server admin/developer gating; make inbound protection a public post-alpha release blocker with inbound integration coverage.
 
 ## Open decisions
 
@@ -611,6 +627,8 @@ Telemetry belongs primarily in a telemetry window, with a configurable world ove
 Content and source-of-truth tooling is related to devtooling but remains its own tooling category.
 Production client devtools capability must be absent.
 Production server developer/admin paths must be gated, tagged, and auditable.
+Controlled alpha may intentionally expose devtools to testers.
+Ordinary player access to inbound server devtools is forbidden for public post-alpha multiplayer.
 ```
 
 ## Related docs

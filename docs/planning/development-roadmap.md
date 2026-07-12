@@ -482,24 +482,31 @@ Make room/session lifecycle robust before matchmaking tries to place players int
 3. Add disconnected member state.
 4. Route active disconnect through the pause seam.
 5. Add reconnect claim and active ship-control restoration.
-6. Make Starting a real synchronized handoff state.
-7. Add loading confirmation and timeout behavior.
-8. Add queued join reservations.
-9. Add mid-session join structure.
-10. Add spectator capacity and lifecycle state.
-11. Add member-local return-to-lobby.
-12. Add GameOver result-viewing join behavior.
-13. Add no-action timeouts outside lobby and queue states.
-14. Split kick and room-lifetime ban.
-15. Add owner transfer by join order.
-16. Add lifecycle diagnostics.
+6. Add gameplay-transport-loss state.
+7. Add affected-member projection pause with bounded renegotiation.
+8. Add authoritative simulation pause when all active players lack gameplay transport.
+9. Make Starting a real synchronized handoff state.
+10. Add loading confirmation and timeout behavior.
+11. Add queued join reservations.
+12. Add mid-session join structure.
+13. Add spectator capacity and lifecycle state.
+14. Add member-local return-to-lobby.
+15. Add GameOver result-viewing join behavior.
+16. Add no-action timeouts outside lobby and queue states.
+17. Split kick and room-lifetime ban.
+18. Add owner transfer by join order.
+19. Add lifecycle diagnostics.
 ```
 
 ### Completion Criteria
 
 ```text
 disconnect is not leave
+gameplay transport loss is not leave
 active reconnect works
+affected-member projection pauses during bounded renegotiation
+projection resumes after transport recovery and realtime baseline/resync
+all-active-player transport loss pauses authoritative simulation through the pause seam
 Starting is a real lock/loading handoff
 return-to-lobby is member-local
 queued joins reserve capacity
