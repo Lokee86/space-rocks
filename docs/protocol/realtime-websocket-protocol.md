@@ -402,6 +402,8 @@ Known float-like fields use lane- and field-specific policies from `services/gam
 - `services/game-server/internal/protocol/realtime/planner.go`
 - `services/game-server/internal/protocol/realtime/wire_packets.go`
 
+World, overlay, and session quantization is fail-closed during candidate construction. Their candidate builders return quantization errors, `AssembleRealtimeLaneCandidates` returns `(RealtimeLanePlan, error)`, and active-result construction propagates the same failure to networking's existing `lane protocol gameplay build failed` boundary. A lane that fails quantization is not converted into an empty candidate list or silently omitted while other lanes continue. Realtime projection owns detecting and returning the error; networking owns logging and handling the build-failure boundary.
+
 Client numeric decode is exact-path only. `RealtimeWireGenerated.QUANTIZATION_POLICY_BY_PATH` determines which numeric values are dequantized; unregistered integers and floats are preserved unchanged. Named `float_generic` policies still exist for explicitly registered paths such as rotations and scales, but unmapped floats do not fall back to that policy.
 
 This is still JSON over WebSocket for auth, room, lobby, telemetry, and signaling packets, but active realtime gameplay packets now travel over lane-specific WebRTC DataChannels. WebRTCTransport uses repeated one-packet-per-lane round-robin passes, services reliable lifecycle lanes before the general lane group, rotates group start positions between polls, and preserves the existing `MAX_PACKETS_PER_POLL = 48` total and `MAX_PACKETS_PER_LANE_PER_POLL = 12` per-lane limits. WebRTCTransport does not coalesce bullet_delta packets; packets remain queued and receive pacing is not packet dropping. The current implementation does not have binary packet encoding, compression, protobuf encoding, schema negotiation, or version negotiation.
@@ -1443,6 +1445,7 @@ services/game-server/internal/protocol/realtime/candidate_policy.go
 services/game-server/internal/protocol/realtime/candidate_diagnostics.go
 services/game-server/internal/protocol/realtime/quantize_overlay.go
 services/game-server/internal/protocol/realtime/quantize_session.go
+services/game-server/internal/protocol/realtime/quantization_propagation_test.go
 services/game-server/internal/protocol/realtime/scheduler.go
 services/game-server/internal/protocol/realtime/priority.go
 services/game-server/internal/protocol/realtime/size_estimate.go
@@ -1557,7 +1560,7 @@ services/game-server/internal/networking/outbound/debug_shape_catalog_presentati
 services/game-server/internal/protocol/realtime/*_test.go
 ```
 
-Realtime protocol tests cover sparse delta omission in `wire_packets_test.go`, world/overlay/session wire delta serialization, quantized wire values, and planner baseline/delta behavior. Lifecycle coverage includes `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset state replacement/clear coverage, and server lifecycle metadata tests in `services/game-server/internal/protocol/realtime/wire_packets_test.go`.
+Realtime protocol tests cover sparse delta omission in `wire_packets_test.go`, world/overlay/session wire delta serialization, quantized wire values, and planner baseline/delta behavior. `services/game-server/internal/protocol/realtime/quantization_propagation_test.go` verifies that exported planner construction and active-result construction surface world, overlay, and session quantization failures rather than silently omitting a lane. Lifecycle coverage includes `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset state replacement/clear coverage, and server lifecycle metadata tests in `services/game-server/internal/protocol/realtime/wire_packets_test.go`.
 
 Relevant client tests include:
 

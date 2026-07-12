@@ -46,7 +46,7 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 	state.MarkBaselineReady(LaneSession)
 	state.UpdateLane(LaneEvent, Metadata{Sequence: 9, IsFinalChunk: true})
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	if got, want := len(plan.Candidates), 4; got != want {
 		t.Fatalf("candidate count = %d, want %d", got, want)
 	}
@@ -104,7 +104,7 @@ func TestAssembleRealtimeLaneCandidatesChoosesFullAndDeltaWithoutDraining(t *tes
 func TestAssembleRealtimeLaneCandidatesUsesNextOverlaySequenceForUnsyncedFull(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", PlayerSessions: map[string]game.PlayerSessionState{"player-1": {ID: "player-1"}}}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	candidate, ok := findCandidateByLane(plan.Candidates, LaneOverlay)
 	if !ok {
 		t.Fatalf("expected overlay candidate")

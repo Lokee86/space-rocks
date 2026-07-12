@@ -9,7 +9,7 @@ import (
 func TestAssembleRealtimeLaneCandidatesSkipsEventBatchWhenNoPendingEvents(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	for _, candidate := range plan.Candidates {
 		if candidate.Lane() == LaneEvent {
 			t.Fatalf("unexpected event lane candidate with no pending events: %#v", candidate)

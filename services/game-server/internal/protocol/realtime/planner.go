@@ -1,32 +1,49 @@
 package realtime
 
 import (
+	"fmt"
+
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
-func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeLanePlan {
+func AssembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (RealtimeLanePlan, error) {
 	return assembleRealtimeLaneCandidates(snapshot, state, nil)
 }
 
-func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) RealtimeLanePlan {
+func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) (RealtimeLanePlan, error) {
 	candidates := make([]RealtimeLaneCandidate, 0, 4)
 
-	candidates = append(candidates, buildWorldLaneCandidates(snapshot, state, sessionState)...)
+	worldCandidates, err := buildWorldLaneCandidates(snapshot, state, sessionState)
+	if err != nil {
+		return RealtimeLanePlan{}, err
+	}
+	candidates = append(candidates, worldCandidates...)
 
-	candidates = append(candidates, buildOverlayLaneCandidates(snapshot, state)...)
-	candidates = append(candidates, buildSessionLaneCandidates(snapshot, state)...)
+	overlayCandidates, err := buildOverlayLaneCandidates(snapshot, state)
+	if err != nil {
+		return RealtimeLanePlan{}, err
+	}
+	candidates = append(candidates, overlayCandidates...)
+
+	sessionCandidates, err := buildSessionLaneCandidates(snapshot, state)
+	if err != nil {
+		return RealtimeLanePlan{}, err
+	}
+	candidates = append(candidates, sessionCandidates...)
 	candidates = append(candidates, buildEventLaneCandidates(snapshot, state)...)
 	for index := range candidates {
 		candidates[index].MatchID = state.MatchID
 	}
 
-	return RealtimeLanePlan{Candidates: candidates}
+	return RealtimeLanePlan{Candidates: candidates}, nil
 }
 
 func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (RealtimeSendPrepared, error) {
 	state.AdvanceHotLaneTick()
-	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &state)
-	var err error
+	candidatePlan, err := assembleRealtimeLaneCandidates(snapshot, state, &state)
+	if err != nil {
+		return RealtimeSendPrepared{}, fmt.Errorf("assemble realtime lane candidates: %w", err)
+	}
 	candidatePlan.Candidates, err = ExpandRealtimeCandidateChunks(candidatePlan.Candidates)
 	if err != nil {
 		return RealtimeSendPrepared{}, err

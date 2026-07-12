@@ -11,7 +11,7 @@ import (
 func TestAssembleRealtimeLaneCandidatesUsesNextWorldSequenceForUnsyncedFull(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1"}
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, NewRealtimeSessionState("player-1", "match-1"))
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, NewRealtimeSessionState("player-1", "match-1"))
 	candidate, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatalf("expected world candidate")
@@ -34,7 +34,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldFullWhenNoBaseline(t *testing.T
 	state := NewRealtimeSessionState("player-1", "match-1")
 	state.UpdateLane(LaneWorld, Metadata{Sequence: 1, IsFinalChunk: true})
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatal("expected world candidate when no usable baseline exists")
@@ -58,7 +58,7 @@ func TestAssembleRealtimeLaneCandidatesOmitsWorldWhenStoredBaselineMatches(t *te
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	if _, ok := findCandidateByLane(plan.Candidates, LaneWorld); ok {
 		t.Fatalf("expected no world candidate when stored baseline matches, got %#v", plan.Candidates)
 	}
@@ -75,7 +75,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 0, Rotation: 0}}}, 1))
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatal("expected world delta candidate when stored baseline differs")
@@ -108,7 +108,7 @@ func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *t
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
 	state.HotLaneTick = 2
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatal("expected world candidate")
@@ -150,7 +150,7 @@ func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPr
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatal("expected world candidate under asteroid pressure")
@@ -199,7 +199,7 @@ func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderP
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
 	if !ok {
 		t.Fatal("expected world candidate under bullet pressure")
@@ -237,7 +237,7 @@ func TestAssembleRealtimeLaneCandidatesDoesNotEmitEmptyHotCandidate(t *testing.T
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
 
-	plan := AssembleRealtimeLaneCandidates(snapshot, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); ok {
 		t.Fatal("unexpected asteroid hot candidate with no offloaded updates")
 	}
@@ -255,7 +255,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsAsteroidLifecycleCandidateWhenAstero
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
 
-	plan := AssembleRealtimeLaneCandidates(current, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, current, state)
 	candidate, ok := findCandidateByLane(plan.Candidates, LaneAsteroidsLifecycle)
 	if !ok {
 		t.Fatal("expected asteroid lifecycle candidate")
@@ -286,7 +286,7 @@ func TestAssembleRealtimeLaneCandidatesHonorsAsteroidHotCadence(t *testing.T) {
 	for _, tick := range []int{1, 2} {
 		state := syncedWorldState(t, previous)
 		state.HotLaneTick = tick
-		plan := AssembleRealtimeLaneCandidates(current, state)
+		plan := mustAssembleRealtimeLaneCandidates(t, current, state)
 		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
 		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
 		if !hasHot || !hasWorld {
@@ -301,7 +301,7 @@ func TestAssembleRealtimeLaneCandidatesThrottlesChunkedAsteroidsTo30Hz(t *testin
 	for _, tick := range []int{1, 2, 3} {
 		state := syncedWorldState(t, previous)
 		state.HotLaneTick = tick
-		plan := AssembleRealtimeLaneCandidates(current, state)
+		plan := mustAssembleRealtimeLaneCandidates(t, current, state)
 		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
 		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
 		if (tick == 1 || tick == 3) && (hasHot || hasWorld) {
@@ -324,7 +324,7 @@ func TestAssembleRealtimeLaneCandidatesForcesHotLanesWithMovementAndCreation(t *
 	current.Asteroids["asteroid-2"] = runtime.AsteroidState{ID: "asteroid-2", X: 20, Y: 30, Size: 2, Health: 3, Scale: 1, Variant: 1}
 	state := syncedWorldState(t, previous)
 	state.HotLaneTick = 1
-	plan := AssembleRealtimeLaneCandidates(current, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, current, state)
 	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
 		if _, ok := findCandidateByLane(plan.Candidates, lane); !ok {
 			t.Fatalf("expected lane %q", lane)
@@ -338,7 +338,7 @@ func TestAssembleRealtimeLaneCandidatesEmitsLifecycleWithoutAsteroidHotMovement(
 	current.Asteroids = map[string]runtime.AsteroidState{"asteroid-1": {ID: "asteroid-1", X: 10, Y: 20, Size: 2, Health: 3, Scale: 1, Variant: 1}}
 	state := syncedWorldState(t, previous)
 	state.HotLaneTick = 1
-	plan := AssembleRealtimeLaneCandidates(current, state)
+	plan := mustAssembleRealtimeLaneCandidates(t, current, state)
 	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroidsLifecycle); !ok {
 		t.Fatal("expected asteroid lifecycle candidate")
 	}
@@ -367,7 +367,7 @@ func TestAssembleRealtimeLaneCandidatesHonorsBulletChunkCadence(t *testing.T) {
 			for _, tick := range []int{1, 2, 3} {
 				state := syncedWorldState(t, previous)
 				state.HotLaneTick = tick
-				plan := AssembleRealtimeLaneCandidates(current, state)
+				plan := mustAssembleRealtimeLaneCandidates(t, current, state)
 				_, hasHot := findCandidateByLane(plan.Candidates, LaneBullets)
 				_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
 				want := tc.target == 1 || tick == tc.target
