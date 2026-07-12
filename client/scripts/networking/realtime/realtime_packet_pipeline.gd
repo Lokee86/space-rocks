@@ -5,6 +5,7 @@ const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane
 const DescriptorIndex := preload("res://scripts/protocol/realtime/compact_wire_descriptor_index.gd")
 const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
 const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
+const RealtimeReceiveLimits := preload("res://scripts/protocol/realtime/realtime_receive_limits.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 signal gameplay_packet_applied(packet)
@@ -15,8 +16,13 @@ var _presentation_state: RealtimePresentationState
 var _lane_route_log_emitted := {}
 var _active_match_id := ""
 var _pending_match_packets := {}
+var _recovery_match_ids := {}
+var _recovery_match_order: Array[String] = []
+var _recovery_uncertain := false
+var _clock: Callable
 
-func _init() -> void:
+func _init(clock: Callable = Callable(Time, "get_ticks_msec")) -> void:
+	_clock = clock
 	_router = RealtimeRouter.new()
 	_presentation_state = RealtimePresentationState.new()
 	_presentation_state.update_from_router(_router)
@@ -33,16 +39,28 @@ func begin_match(match_id: String) -> void:
 		return
 	if _active_match_id == match_id:
 		return
+	_expire_pending_buckets()
 	_active_match_id = match_id
-	_reset_protocol_state()
-	var pending_packets: Array = _pending_match_packets.get(match_id, [])
+	var pending_bucket: Dictionary = _pending_match_packets.get(match_id, {})
+	var has_valid_pending_bucket := pending_bucket.has("packets")
+	var requires_recovery := _recovery_match_ids.has(match_id) or _recovery_uncertain
 	_pending_match_packets.clear()
-	for pending_packet in pending_packets:
+	_recovery_match_ids.clear()
+	_recovery_match_order.clear()
+	_recovery_uncertain = false
+	_reset_protocol_state()
+	if not has_valid_pending_bucket and requires_recovery:
+		_request_recovery_resync()
+		return
+	for pending_packet in pending_bucket.get("packets", []):
 		_apply_lane_packet(pending_packet)
 
 func end_match() -> void:
 	_active_match_id = ""
 	_pending_match_packets.clear()
+	_recovery_match_ids.clear()
+	_recovery_match_order.clear()
+	_recovery_uncertain = false
 	_reset_protocol_state()
 
 func is_gameplay_ready() -> bool:
@@ -71,10 +89,25 @@ func apply_packet(packet: Dictionary) -> void:
 	var packet_match_id := str(expanded_packet.get("match_id", ""))
 	if packet_match_id.is_empty():
 		return
+	_expire_pending_buckets()
 	if _active_match_id.is_empty():
+		if _recovery_match_ids.has(packet_match_id):
+			return
 		if !_pending_match_packets.has(packet_match_id):
-			_pending_match_packets[packet_match_id] = []
-		_pending_match_packets[packet_match_id].append(expanded_packet)
+			if _pending_match_packets.size() >= RealtimeReceiveLimits.MAX_PENDING_MATCH_BUCKETS:
+				_evict_oldest_pending_bucket()
+			_pending_match_packets[packet_match_id] = {"packets": [], "estimated_bytes": 0, "created_at": _now_msec()}
+		var bucket: Dictionary = _pending_match_packets[packet_match_id]
+		var packet_count: int = bucket["packets"].size() + 1
+		var estimated_bytes: int = bucket["estimated_bytes"] + _estimate_packet_bytes(expanded_packet)
+		if packet_count > RealtimeReceiveLimits.MAX_PACKETS_PER_MATCH:
+			_discard_bucket(packet_match_id, "packet_limit")
+			return
+		if estimated_bytes > RealtimeReceiveLimits.MAX_ESTIMATED_PACKET_BYTES_PER_MATCH:
+			_discard_bucket(packet_match_id, "byte_limit")
+			return
+		bucket["packets"].append(expanded_packet)
+		bucket["estimated_bytes"] = estimated_bytes
 		return
 	if packet_match_id != _active_match_id:
 		return
@@ -83,6 +116,9 @@ func apply_packet(packet: Dictionary) -> void:
 func reset() -> void:
 	_active_match_id = ""
 	_pending_match_packets.clear()
+	_recovery_match_ids.clear()
+	_recovery_match_order.clear()
+	_recovery_uncertain = false
 	_reset_protocol_state()
 
 func _reset_protocol_state() -> void:
@@ -90,6 +126,55 @@ func _reset_protocol_state() -> void:
 	_bind_router(_router)
 	_presentation_state.update_from_router(_router)
 	_lane_route_log_emitted.clear()
+
+func _request_recovery_resync() -> void:
+	for lane in ["world", "overlay", "session"]:
+		_router.baseline_tracker.request_resync_for_lane(lane, "pending_bucket_discarded")
+
+func _now_msec() -> int:
+	return int(_clock.call())
+
+func _estimate_packet_bytes(packet: Dictionary) -> int:
+	return JSON.stringify(packet).to_utf8_buffer().size()
+
+func _expire_pending_buckets() -> void:
+	var now := _now_msec()
+	for match_id in _pending_match_packets.keys():
+		var bucket: Dictionary = _pending_match_packets[match_id]
+		if now - int(bucket["created_at"]) >= RealtimeReceiveLimits.PENDING_BUCKET_LIFETIME_MSEC:
+			_discard_bucket(match_id, "expired")
+
+func _evict_oldest_pending_bucket() -> void:
+	var oldest_match_id := ""
+	var oldest_created_at := 0
+	for match_id in _pending_match_packets.keys():
+		var created_at: int = _pending_match_packets[match_id]["created_at"]
+		if oldest_match_id.is_empty() or created_at < oldest_created_at:
+			oldest_match_id = match_id
+			oldest_created_at = created_at
+	if not oldest_match_id.is_empty():
+		_discard_bucket(oldest_match_id, "evicted")
+
+func _discard_bucket(match_id: String, reason: String) -> void:
+	var bucket: Dictionary = _pending_match_packets.get(match_id, {})
+	_pending_match_packets.erase(match_id)
+	_mark_recovery(match_id)
+	ClientLogger.network_event(ClientLogger.LEVEL_WARN, "realtime_pending_bucket_discarded", "Realtime pending bucket discarded", {
+		"match_id": match_id,
+		"reason": reason,
+		"packet_count": bucket.get("packets", []).size(),
+		"estimated_bytes": bucket.get("estimated_bytes", 0),
+	})
+
+func _mark_recovery(match_id: String) -> void:
+	if _recovery_match_ids.has(match_id):
+		return
+	if _recovery_match_order.size() >= RealtimeReceiveLimits.MAX_PENDING_MATCH_BUCKETS:
+		var oldest_match_id: String = _recovery_match_order.pop_front()
+		_recovery_match_ids.erase(oldest_match_id)
+		_recovery_uncertain = true
+	_recovery_match_ids[match_id] = true
+	_recovery_match_order.append(match_id)
 
 func _bind_router(router: RealtimeRouter) -> void:
 	router.resync_request_required.connect(_on_resync_request_required)

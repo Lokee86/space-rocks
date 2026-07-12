@@ -112,3 +112,122 @@ func _packet_type(lane: String) -> String:
 
 func _state(router: RealtimeRouter, lane: String):
 	return router.world_lane_state.asteroids if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE else router.world_lane_state.bullets
+
+const WorldFullChunkAssembler := preload("res://scripts/protocol/realtime/world_full_chunk_assembler.gd")
+const RealtimeReceiveLimits := preload("res://scripts/protocol/realtime/realtime_receive_limits.gd")
+
+func _assembler_packet(index = 0, count = 1, final = true, sequence = 1, baseline = "world-baseline-1") -> Dictionary:
+	return {"match_id": "match-1", "lane": LaneMetadata.LANE_WORLD, "sequence": sequence, "baseline_id": baseline, "snapshot_id": "snapshot-1", "snapshot_kind": "full", "chunk_index": index, "chunk_count": count, "is_final_chunk": final, "ships": [], "bullets": [], "asteroids": [], "pickups": []}
+
+func test_direct_assembler_rejects_raw_metadata() -> void:
+	var assembler := WorldFullChunkAssembler.new()
+	for key_value in [["sequence", "1"], ["chunk_index", 1.5], ["chunk_count", true], ["baseline_id", 10], ["is_final_chunk", "true"]]:
+		var packet := _assembler_packet()
+		packet[key_value[0]] = key_value[1]
+		assert_eq(assembler.accept(packet).reason, "invalid_chunk_metadata")
+
+func test_direct_assembler_rejects_chunk_cap() -> void:
+	var assembler := WorldFullChunkAssembler.new()
+	assert_eq(assembler.accept(_assembler_packet(0, RealtimeReceiveLimits.MAX_WORLD_FULL_CHUNKS_PER_ASSEMBLY + 1, false)).reason, "chunk_limit")
+
+func test_direct_assembler_rejects_record_cap() -> void:
+	var assembler := WorldFullChunkAssembler.new()
+	var packet := _assembler_packet()
+	packet["ships"] = range(RealtimeReceiveLimits.MAX_WORLD_FULL_RECORDS_PER_ASSEMBLY + 1)
+	assert_eq(assembler.accept(packet).reason, "record_limit")
+
+func test_direct_assembler_rejects_byte_cap() -> void:
+	var assembler := WorldFullChunkAssembler.new()
+	var packet := _assembler_packet()
+	packet["padding"] = "x".repeat(RealtimeReceiveLimits.MAX_WORLD_FULL_ESTIMATED_BYTES_PER_ASSEMBLY)
+	assert_eq(assembler.accept(packet).reason, "byte_limit")
+
+func test_direct_assembler_expires_and_resets() -> void:
+	var now := [0]
+	var assembler := WorldFullChunkAssembler.new(func(): return now[0])
+	assert_eq(assembler.accept(_assembler_packet(0, 2, false)).status, WorldFullChunkAssembler.INCOMPLETE)
+	now[0] = RealtimeReceiveLimits.WORLD_FULL_ASSEMBLY_LIFETIME_MSEC
+	assert_eq(assembler.accept(_assembler_packet(1, 2, true)).reason, "expired")
+	assert_eq(assembler.accept(_assembler_packet()).status, WorldFullChunkAssembler.COMPLETE)
+
+func test_direct_assembler_accepts_bounded_two_chunk_series() -> void:
+	var assembler := WorldFullChunkAssembler.new()
+	var first := _assembler_packet(0, 2, false)
+	first["ships"] = [_ship("ship-1")]
+	var second := _assembler_packet(1, 2, true)
+	second["asteroids"] = [_asteroid("asteroid-1")]
+	assert_eq(assembler.accept(first).status, WorldFullChunkAssembler.INCOMPLETE)
+	var result := assembler.accept(second)
+	assert_eq(result.status, WorldFullChunkAssembler.COMPLETE)
+	assert_eq(result.packet.ships.size(), 1)
+	assert_eq(result.packet.asteroids.size(), 1)
+
+func test_router_assembly_limit_requests_world_resync_without_partial_state() -> void:
+	var router := RealtimeRouter.new()
+	var requests := []
+	router.resync_request_required.connect(func(lane, _baseline, _sequence, reason): requests.append([lane, reason]))
+	var packet := _world_chunk(0, false, [_ship("partial")], [])
+	packet["chunk_count"] = RealtimeReceiveLimits.MAX_WORLD_FULL_CHUNKS_PER_ASSEMBLY + 1
+	router.route_lane_packet(packet)
+	assert_eq(requests.size(), 1)
+	assert_eq(requests[0][0], LaneMetadata.LANE_WORLD)
+	assert_eq(requests[0][1], "chunk_limit")
+	assert_false(router.world_lane_state.ships.has("partial"))
+
+const LifecycleChunkAssembler := preload("res://scripts/protocol/realtime/lifecycle_chunk_assembler.gd")
+const LifecycleReceiveLimits := preload("res://scripts/protocol/realtime/realtime_receive_limits.gd")
+
+func _lifecycle_assembler_packet(index = 0, count = 1, final = true, sequence = 1, baseline = "world-baseline-1", creates: Array = [], deletes: Array = []) -> Dictionary:
+	return {"match_id": "match-1", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "sequence": sequence, "baseline_id": baseline, "snapshot_id": "snapshot-1", "snapshot_kind": "delta", "chunk_index": index, "chunk_count": count, "is_final_chunk": final, "asteroid_creates": creates, "asteroid_deletes": deletes}
+
+func test_direct_lifecycle_assembler_rejects_raw_metadata() -> void:
+	var assembler := LifecycleChunkAssembler.new()
+	for key_value in [["sequence", "1"], ["chunk_index", 1.5], ["chunk_count", true], ["baseline_id", 10], ["is_final_chunk", "true"]]:
+		var packet := _lifecycle_assembler_packet()
+		packet[key_value[0]] = key_value[1]
+		assert_eq(assembler.accept(packet, "asteroid_creates", "asteroid_deletes").reason, "invalid_lifecycle_chunk_metadata")
+
+func test_direct_lifecycle_assembler_rejects_chunk_cap() -> void:
+	var assembler := LifecycleChunkAssembler.new()
+	assert_eq(assembler.accept(_lifecycle_assembler_packet(0, LifecycleReceiveLimits.MAX_LIFECYCLE_CHUNKS_PER_ASSEMBLY + 1, false), "asteroid_creates", "asteroid_deletes").reason, "chunk_limit")
+
+func test_direct_lifecycle_assembler_rejects_record_cap() -> void:
+	var assembler := LifecycleChunkAssembler.new()
+	var packet := _lifecycle_assembler_packet()
+	packet["asteroid_creates"] = range(LifecycleReceiveLimits.MAX_LIFECYCLE_RECORDS_PER_ASSEMBLY + 1)
+	assert_eq(assembler.accept(packet, "asteroid_creates", "asteroid_deletes").reason, "record_limit")
+
+func test_direct_lifecycle_assembler_rejects_byte_cap() -> void:
+	var assembler := LifecycleChunkAssembler.new()
+	var packet := _lifecycle_assembler_packet()
+	packet["padding"] = "x".repeat(LifecycleReceiveLimits.MAX_LIFECYCLE_ESTIMATED_BYTES_PER_ASSEMBLY)
+	assert_eq(assembler.accept(packet, "asteroid_creates", "asteroid_deletes").reason, "byte_limit")
+
+func test_direct_lifecycle_assembler_expires_resets_and_accepts_again() -> void:
+	var now := [0]
+	var assembler := LifecycleChunkAssembler.new(func(): return now[0])
+	assert_eq(assembler.accept(_lifecycle_assembler_packet(0, 2, false), "asteroid_creates", "asteroid_deletes").status, LifecycleChunkAssembler.INCOMPLETE)
+	now[0] = LifecycleReceiveLimits.LIFECYCLE_ASSEMBLY_LIFETIME_MSEC
+	assert_eq(assembler.accept(_lifecycle_assembler_packet(1, 2, true), "asteroid_creates", "asteroid_deletes").reason, "expired")
+	assert_eq(assembler.accept(_lifecycle_assembler_packet(), "asteroid_creates", "asteroid_deletes").status, LifecycleChunkAssembler.COMPLETE)
+
+func test_direct_lifecycle_assembler_accepts_bounded_two_chunk_series() -> void:
+	var assembler := LifecycleChunkAssembler.new()
+	assert_eq(assembler.accept(_lifecycle_assembler_packet(0, 2, false, 1, "world-baseline-1", [{"id": "a"}], ["old"]), "asteroid_creates", "asteroid_deletes").status, LifecycleChunkAssembler.INCOMPLETE)
+	var result := assembler.accept(_lifecycle_assembler_packet(1, 2, true, 1, "world-baseline-1", [{"id": "b"}], []), "asteroid_creates", "asteroid_deletes")
+	assert_eq(result.status, LifecycleChunkAssembler.COMPLETE)
+	assert_eq(result.packet.asteroid_creates.size(), 2)
+	assert_eq(result.packet.asteroid_deletes.size(), 1)
+
+func test_router_lifecycle_assembly_limits_resync_without_partial_state() -> void:
+	for lane in [LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, LaneMetadata.LANE_BULLETS_LIFECYCLE]:
+		var router := RealtimeRouter.new()
+		var requests := []
+		router.resync_request_required.connect(func(requested_lane, _baseline, _sequence, reason): requests.append([requested_lane, reason]))
+		var packet := _lifecycle_chunk(_packet_type(lane), lane, 0, false, "world-baseline-1", [_record(lane, "partial")], [])
+		packet["chunk_count"] = LifecycleReceiveLimits.MAX_LIFECYCLE_CHUNKS_PER_ASSEMBLY + 1
+		router.route_lane_packet(packet)
+		assert_eq(requests.size(), 1)
+		assert_eq(requests[0][0], LaneMetadata.LANE_WORLD)
+		assert_eq(requests[0][1], "chunk_limit")
+		assert_false(_state(router, lane).has("partial"))

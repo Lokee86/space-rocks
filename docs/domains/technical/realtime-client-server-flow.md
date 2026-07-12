@@ -35,6 +35,14 @@ The realtime flow is not the same thing as gameplay session ownership. A WebSock
 * [Player Data](../../services/player-data/!INDEX.md) - owns durable stat/result routing after authoritative match facts leave the live realtime flow.
 * [API Server](../../services/api-server/!INDEX.md) - owns authenticated account auth and Rails-backed persistence outside the live realtime simulation path.
 
+## Client receive hardening
+
+The client applies defensive pre-match buffering limits before authoritative activation: at most 4 match buckets, 128 packets and 256 KiB of estimated expanded JSON per match, with a 5000 ms bucket lifetime. The oldest bucket is evicted when the bucket cap is reached. If the selected authoritative match has lost or expired buffered state, the client fails closed and requests world, overlay, and session recovery. These are client receive limits; they do not change the server's approximately 1200-byte candidate construction cap.
+
+`world_full`, asteroid lifecycle, and bullet lifecycle assemblies each allow at most 128 chunks, 16384 cumulative records, 2 MiB of estimated expanded JSON, and 5000 ms of assembly lifetime. Limit, expiry, malformed metadata, interrupted, duplicate, mismatched, and non-contiguous failures reset the incomplete assembly, apply no partial state, and request authoritative recovery.
+
+Baseline IDs must be non-empty strings. Sequence and chunk values must be finite, non-negative, integer-valued numerics; final-chunk metadata must be an actual boolean consistent with index/count. Valid stale deltas remain silently rejected.
+
 ## Authority boundaries
 
 The game server owns live authoritative state.

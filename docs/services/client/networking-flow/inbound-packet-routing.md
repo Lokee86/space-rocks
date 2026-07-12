@@ -214,6 +214,12 @@ Under hot-lane stress, multiple `asteroid_delta` or `bullet_delta` packets may a
 
 Presentation remains frame-coalesced and is intentionally unchanged in this stage.
 
+## Client receive hardening
+
+Before an authoritative match is active, the client buffers at most 4 match buckets. Each bucket is limited to 128 packets and 256 KiB of estimated expanded JSON and expires after 5000 ms; the oldest bucket is evicted at capacity. A selected match with lost or expired buffered state fails closed and requests world, overlay, and session recovery.
+
+`world_full`, asteroid lifecycle, and bullet lifecycle assembly are each limited to 128 chunks, 16384 cumulative records, 2 MiB of estimated expanded JSON, and 5000 ms. Limit, expiry, malformed metadata, interrupted, duplicate, mismatched, and non-contiguous failures reset the incomplete assembly, apply no partial state, and request authoritative recovery. Baseline IDs are non-empty strings; sequence/chunk values are finite, non-negative integer-valued numerics; final-chunk metadata is boolean and must agree with index/count. Valid stale deltas remain silent. These are defensive client receive limits, separate from the server's approximately 1200-byte candidate construction cap.
+
 ### Websocket auth result cache
 
 `ClientConnectionService` handles `authenticate_result` specially because websocket auth state is connection-level state. Its `auth_session_controller` field is a typed `AuthSessionController` reference.

@@ -186,6 +186,8 @@ func _on_resync_required(lane, baseline_id, sequence, reason) -> void:
 		resync_state.mark_lifecycle_queue_overflow(lane)
 	elif reason == ResyncState.REASON_MISSING_BASELINE:
 		resync_state.mark_missing_baseline(lane)
+	elif reason == ResyncState.REASON_STALE_OR_INVALID_SEQUENCE:
+		resync_state.mark_stale_or_invalid_sequence(lane)
 	else:
 		resync_state.mark_wrong_baseline(lane)
 	resync_request_required.emit(lane, baseline_id, sequence, reason)
