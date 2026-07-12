@@ -30,6 +30,7 @@ var client_inbound_coordinator: ClientInboundCoordinator
 var realtime_packet_pipeline: RealtimePacketPipeline
 var realtime_transport_session: RealtimeTransportSession
 var webrtc_transport_factory: Callable
+var server_clock_offset_ms := -1
 
 var has_started_connection := false
 var auth_session_controller
@@ -98,6 +99,7 @@ func reset_realtime_session() -> void:
 	if realtime_packet_pipeline != null:
 		realtime_packet_pipeline.reset()
 	_clear_realtime_transport_session()
+	server_clock_offset_ms = -1
 	ClientLogger.network_event(
 		ClientLogger.LEVEL_INFO,
 		"realtime_protocol_state_reset",
@@ -316,6 +318,12 @@ func _on_telemetry_pong_received(packet: Dictionary) -> void:
 	telemetry_pong_received.emit(packet)
 
 
+func set_server_clock_offset_ms(offset_ms: int) -> void:
+	server_clock_offset_ms = offset_ms
+	if realtime_transport_session != null:
+		realtime_transport_session.set_server_clock_offset_ms(offset_ms)
+
+
 func _on_realtime_transport_ready() -> void:
 	realtime_transport_ready.emit()
 
@@ -328,6 +336,7 @@ func _ensure_realtime_transport_session() -> void:
 	if realtime_transport_session != null:
 		return
 	realtime_transport_session = RealtimeTransportSession.new()
+	realtime_transport_session.set_server_clock_offset_ms(server_clock_offset_ms)
 	realtime_transport_session.transport_factory = webrtc_transport_factory
 	realtime_transport_session.dispatch_packet = func(packet: Dictionary) -> void:
 		if server_packet_dispatcher != null:

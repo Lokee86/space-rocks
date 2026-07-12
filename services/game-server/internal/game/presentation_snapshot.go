@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
@@ -18,6 +20,7 @@ type GameplayPresentationSnapshot struct {
 	PendingEvents   []PendingPresentationEvent
 	ServerSentMsec  int
 }
+
 // GameplayPresentationSnapshot returns a non-draining copy of the authoritative
 // presentation state for realtime projection.
 func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresentationSnapshot {
@@ -52,6 +55,7 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 	pendingEvents := make([]PendingPresentationEvent, len(pending))
 	copy(pendingEvents, pending)
 
+	serverSentMsec := int(time.Now().UnixMilli())
 	return GameplayPresentationSnapshot{
 		SelfID:          playerID,
 		Lives:           game.playerLives(playerID),
@@ -63,7 +67,6 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 		Pickups:         pickups,
 		TotalAsteroids:  game.spawner.TotalAsteroidsSpawned(),
 		PendingEvents:   pendingEvents,
-		ServerSentMsec:  0,
+		ServerSentMsec:  serverSentMsec,
 	}
 }
-

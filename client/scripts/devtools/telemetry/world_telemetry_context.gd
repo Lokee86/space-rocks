@@ -28,6 +28,8 @@ func reset() -> void:
 		network_metrics.reset()
 	if overlay_flow != null:
 		overlay_flow.reset()
+	if connection_service != null and connection_service.has_method("set_server_clock_offset_ms"):
+		connection_service.set_server_clock_offset_ms(-1)
 
 
 func apply_gameplay_state(state: Dictionary) -> void:
@@ -68,6 +70,9 @@ func telemetry_snapshot() -> Dictionary:
 func _on_telemetry_pong_received(packet: Dictionary) -> void:
 	if network_metrics != null:
 		network_metrics.apply_pong(packet)
+		var offset_ms := int(network_metrics.snapshot().get("server_clock_offset_ms", -1))
+		if offset_ms != -1 and connection_service != null and connection_service.has_method("set_server_clock_offset_ms"):
+			connection_service.set_server_clock_offset_ms(offset_ms)
 
 
 func _process_ping() -> void:

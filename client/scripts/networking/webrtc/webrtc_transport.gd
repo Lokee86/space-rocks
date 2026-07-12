@@ -27,9 +27,12 @@ signal failed(error_code: String, message: String)
 var peer_factory: Callable
 var ice_servers: Array = []
 var bullet_delta_received_count := 0
-var bullet_delta_max_age_msec := 0
-var bullet_delta_last_age_msec := 0
+var bullet_delta_max_age_msec := -1
+var bullet_delta_last_age_msec := -1
 var bullet_delta_missing_server_time_count := 0
+var bullet_delta_unsynchronized_server_time_count := 0
+var bullet_delta_clock_skew_count := 0
+var server_clock_offset_ms := -1
 var _peer: Variant
 var _channels: Dictionary = {}
 var _ready_channels: Dictionary = {}
@@ -56,6 +59,10 @@ func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
 
 func configure_ice_servers(servers: Array) -> void:
 	ice_servers = servers.duplicate(true)
+
+
+func set_server_clock_offset_ms(offset_ms: int) -> void:
+	server_clock_offset_ms = offset_ms
 
 
 func set_ice_servers_for_tests(servers: Array) -> void:
@@ -218,12 +225,18 @@ func _handle_decoded_packet(data: Dictionary) -> void:
 	if str(data.get("type", "")) == "bullet_delta":
 		bullet_delta_received_count += 1
 		var server_sent_msec = data.get("server_sent_msec", null)
-		if server_sent_msec != null:
-			var age_msec := Time.get_ticks_msec() - int(server_sent_msec)
+		if server_sent_msec == null or int(server_sent_msec) <= 0:
+			bullet_delta_missing_server_time_count += 1
+		elif server_clock_offset_ms == -1:
+			bullet_delta_unsynchronized_server_time_count += 1
+		else:
+			var client_sent_msec := int(server_sent_msec) - server_clock_offset_ms
+			var age_msec := Time.get_ticks_msec() - client_sent_msec
+			if age_msec < 0:
+				bullet_delta_clock_skew_count += 1
+				age_msec = 0
 			bullet_delta_last_age_msec = age_msec
 			bullet_delta_max_age_msec = maxi(bullet_delta_max_age_msec, age_msec)
-		else:
-			bullet_delta_missing_server_time_count += 1
 	if str(data.get("type", "")) == "webrtc_smoke":
 		smoke_received.emit(data)
 		return
@@ -243,6 +256,8 @@ func receive_metrics_snapshot() -> Dictionary:
 		"bullet_delta_last_age_msec": bullet_delta_last_age_msec,
 		"bullet_delta_max_age_msec": bullet_delta_max_age_msec,
 		"bullet_delta_missing_server_time_count": bullet_delta_missing_server_time_count,
+		"bullet_delta_unsynchronized_server_time_count": bullet_delta_unsynchronized_server_time_count,
+		"bullet_delta_clock_skew_count": bullet_delta_clock_skew_count,
 	}
 
 

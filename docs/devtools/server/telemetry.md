@@ -132,9 +132,9 @@ bullet
 pickup
 ```
 
-`telemetry_ping` and `telemetry_pong` are timing diagnostics only. The server preserves the client ping sequence and client send timestamp, then adds server receive and server send timestamps. The packet pair does not mutate room, player, or simulation state.
+`telemetry_ping` and `telemetry_pong` are timing diagnostics only. The server preserves the client ping sequence and client send timestamp, then adds server receive and server send timestamps. The client uses the pong midpoint to estimate the offset between the server's Unix-millisecond wall clock and the client's monotonic clock. The packet pair does not mutate room, player, or simulation state.
 
-Normal gameplay lane packets are also still stamped with `server_sent_msec` before outbound encoding. Client telemetry uses that timestamp together with ping/pong-derived clock offset estimates to calculate packet age. The newer runtime envelope inference for world/overlay/session packets removes redundant metadata fields, not this timestamp.
+Normal gameplay lane packets carry `server_sent_msec` from the authoritative `GameplayPresentationSnapshot`. The snapshot captures the server's live Unix-millisecond wall-clock time at snapshot creation; realtime lane projection preserves that timestamp through outbound encoding. Client telemetry maps that server clock into client monotonic time using the ping/pong-derived offset to calculate packet age. The newer runtime envelope inference for world/overlay/session packets removes redundant metadata fields, not this timestamp.
 
 When observability reads raw wire maps, omitted runtime metadata can appear as `nil` until inference or normalization fills it in. Packet-size interpretation should prefer the lane candidate/kind fields and inferred lane context over expecting a literal `wire_lane` field for `event_batch` packets.
 
@@ -185,7 +185,7 @@ debug_shape_catalog
   server sends once per room session when eligible
 
 state.server_sent_msec
-  server stamps every outgoing realtime gameplay lane packet
+  snapshot-time server Unix-millisecond timestamp carried by every outgoing realtime gameplay lane packet
 ```
 
 Debug commands can change facts later reported by telemetry, but telemetry is not the command path. For example, toggling invincibility changes server runtime state through the devtools command handler; a later `debug_status` packet reports the new `invincible` value.

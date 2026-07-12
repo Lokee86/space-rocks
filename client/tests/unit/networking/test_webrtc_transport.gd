@@ -435,18 +435,19 @@ func test_poll_tracks_bullet_delta_receive_metrics() -> void:
 	for channel in channels.values():
 		channel.ready_state = WebRTCDataChannel.STATE_OPEN
 
-	var server_sent_msec := Time.get_ticks_msec()
-	channels["bullets"].packets.append(JSON.stringify({
+	var server_clock_offset_ms := 250
+	peer.set_server_clock_offset_ms(server_clock_offset_ms)
+	var server_sent_msec := Time.get_ticks_msec() + server_clock_offset_ms
+	peer._handle_decoded_packet({
 		"type": "bullet_delta",
-		"lane": "bullets",
 		"server_sent_msec": server_sent_msec,
-	}).to_utf8_buffer())
-
-	peer.poll()
+	})
 
 	var metrics = peer.receive_metrics_snapshot()
 	assert_eq(metrics["bullet_delta_received_count"], 1)
 	assert_eq(metrics["bullet_delta_missing_server_time_count"], 0)
+	assert_eq(metrics["bullet_delta_unsynchronized_server_time_count"], 0)
+	assert_eq(metrics["bullet_delta_clock_skew_count"], 0)
 	assert_gte(metrics["bullet_delta_last_age_msec"], 0)
 	assert_gte(metrics["bullet_delta_max_age_msec"], 0)
 
@@ -476,6 +477,35 @@ func test_poll_tracks_bullet_delta_missing_server_time() -> void:
 
 	var metrics = peer.receive_metrics_snapshot()
 	assert_eq(metrics["bullet_delta_missing_server_time_count"], 1)
+	assert_eq(metrics["bullet_delta_last_age_msec"], -1)
+	assert_eq(metrics["bullet_delta_max_age_msec"], -1)
+
+func test_positive_server_timestamp_without_clock_sync_is_unavailable() -> void:
+	var peer := WebRTCTransportScript.new()
+	peer._handle_decoded_packet({"type": "bullet_delta", "server_sent_msec": 12345})
+	var metrics = peer.receive_metrics_snapshot()
+	assert_eq(metrics["bullet_delta_last_age_msec"], -1)
+	assert_eq(metrics["bullet_delta_max_age_msec"], -1)
+	assert_eq(metrics["bullet_delta_missing_server_time_count"], 0)
+	assert_eq(metrics["bullet_delta_unsynchronized_server_time_count"], 1)
+
+func test_missing_and_zero_server_timestamps_are_unavailable() -> void:
+	var peer := WebRTCTransportScript.new()
+	peer._handle_decoded_packet({"type": "bullet_delta"})
+	peer._handle_decoded_packet({"type": "bullet_delta", "server_sent_msec": 0})
+	var metrics = peer.receive_metrics_snapshot()
+	assert_eq(metrics["bullet_delta_missing_server_time_count"], 2)
+	assert_eq(metrics["bullet_delta_last_age_msec"], -1)
+	assert_eq(metrics["bullet_delta_max_age_msec"], -1)
+
+func test_future_converted_timestamp_is_clamped_and_counted_as_skew() -> void:
+	var peer := WebRTCTransportScript.new()
+	peer.set_server_clock_offset_ms(0)
+	peer._handle_decoded_packet({"type": "bullet_delta", "server_sent_msec": Time.get_ticks_msec() + 10000})
+	var metrics = peer.receive_metrics_snapshot()
+	assert_eq(metrics["bullet_delta_last_age_msec"], 0)
+	assert_eq(metrics["bullet_delta_max_age_msec"], 0)
+	assert_eq(metrics["bullet_delta_clock_skew_count"], 1)
 
 func test_send_json_writes_text_packet_when_open() -> void:
 	var peer := WebRTCTransportScript.new()

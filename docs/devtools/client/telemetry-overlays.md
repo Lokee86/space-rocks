@@ -84,7 +84,7 @@ The server also participates in packet timing diagnostics through `telemetry_pin
 
 This packet pair does not require room membership and does not mutate gameplay state.
 
-The server still stamps lane packets with `server_sent_msec` before outbound encoding. The client uses that value together with the estimated server clock offset from telemetry pong packets to calculate `packet_age_ms` in local monotonic-clock space. Runtime metadata inference removes redundant envelope fields for some gameplay lanes, but it does not remove or sample `server_sent_msec`.
+The authoritative `GameplayPresentationSnapshot` captures `server_sent_msec` as the server's Unix-millisecond wall-clock time when the snapshot is created. Realtime lane projection carries that value into lane metadata. The client uses it together with the estimated server clock offset from telemetry pong packets to calculate receive age in local monotonic-clock space. Runtime metadata inference removes redundant envelope fields for some gameplay lanes, but it does not remove or sample `server_sent_msec`.
 
 The authority boundary is:
 
@@ -218,7 +218,9 @@ packet_age_ms
   estimated age of the latest gameplay packet using server_sent_msec and server_clock_offset_ms
 ```
 
-`packet_staleness_ms` can be available without a server clock offset. `packet_age_ms` requires both `server_sent_msec` and an estimated server clock offset.
+`packet_staleness_ms` can be available without a server clock offset. `packet_age_ms` requires both `server_sent_msec` and an estimated server clock offset. The offset is propagated from `WorldTelemetryContext` through `ClientConnectionService` and `RealtimeTransportSession` into `WebRTCTransport`, where the server Unix timestamp is converted into the client's monotonic-clock domain before age calculation.
+
+The low-level receive-age counters currently cover `bullet_delta` packets, not every packet family. Missing or zero server timestamps remain unavailable. A positive timestamp received before clock synchronization is counted as unsynchronized and remains unavailable; converted future timestamps clamp age to zero and increment the clock-skew counter. Last/max age values remain `-1` until a valid synchronized timestamp is observed.
 
 ## Build/runtime gates
 
@@ -275,6 +277,8 @@ Client networking path for telemetry pong:
 
 ```text
 client/scripts/networking/client_connection_service.gd
+client/scripts/networking/webrtc/realtime_transport_session.gd
+client/scripts/networking/webrtc/webrtc_transport.gd
 client/scripts/networking/inbound/server_packet_dispatcher.gd
 client/scripts/networking/inbound/server_packet_router.gd
 client/scripts/generated/networking/packets/packets.gd
@@ -332,6 +336,9 @@ Focused telemetry tests:
 client/tests/unit/devtools/telemetry/test_world_telemetry_metrics.gd
 client/tests/unit/devtools/telemetry/test_network_telemetry_metrics.gd
 client/tests/unit/devtools/telemetry/test_world_telemetry_context.gd
+client/tests/unit/test_client_connection_service.gd
+client/tests/unit/networking/test_realtime_transport_session.gd
+client/tests/unit/networking/test_webrtc_transport.gd
 ```
 
 Related client tests:
@@ -343,7 +350,7 @@ client/tests/unit/protocol/realtime/test_lane_native_presentation_adapters.gd
 client/tests/unit/test_packet_codec.gd
 ```
 
-The telemetry metrics tests cover world counts, enemy fallback behavior, invalid source handling, packet interval timing, jitter availability, reset behavior, `server_sent_msec`, missing timestamp behavior, ping packet shape, RTT updates, unknown pong handling, reset clearing, and server clock offset calculation.
+The telemetry metrics tests cover world counts, enemy fallback behavior, invalid source handling, packet interval timing, jitter availability, reset behavior, `server_sent_msec`, missing timestamp behavior, ping packet shape, RTT updates, unknown pong handling, reset clearing, and server clock offset calculation. The connection and transport tests cover offset propagation/reset, WebRTC bullet-delta conversion, unavailable timestamps, unsynchronized positive timestamps, future-clock skew clamping, and last/max age initialization.
 
 The telemetry context test verifies that showing the overlay allows processing to send a `telemetry_ping`, and that a matching `telemetry_pong` updates RTT metrics.
 

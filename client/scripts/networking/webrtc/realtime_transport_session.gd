@@ -10,6 +10,7 @@ var dispatch_packet: Callable
 var send_offer: Callable
 var send_ice_candidate: Callable
 var send_failed: Callable
+var server_clock_offset_ms := -1
 var _smoke_sequence := 0
 
 func start() -> void:
@@ -18,6 +19,7 @@ func start() -> void:
 	transport = _create_transport()
 	if transport == null:
 		return
+	transport.set_server_clock_offset_ms(server_clock_offset_ms)
 	if !transport.offer_created.is_connected(_on_offer_created):
 		transport.offer_created.connect(_on_offer_created)
 	if !transport.ice_candidate_created.is_connected(_on_ice_candidate_created):
@@ -99,6 +101,11 @@ func close() -> void:
 	if transport != null:
 		transport.close()
 		transport = null
+
+func set_server_clock_offset_ms(offset_ms: int) -> void:
+	server_clock_offset_ms = offset_ms
+	if transport != null:
+		transport.set_server_clock_offset_ms(offset_ms)
 
 func _next_smoke_id() -> String:
 	_smoke_sequence += 1

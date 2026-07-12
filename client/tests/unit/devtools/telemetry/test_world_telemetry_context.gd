@@ -10,6 +10,10 @@ class FakeConnectionService:
 	signal telemetry_pong_received(packet: Dictionary)
 
 	var sent_packets: Array[Dictionary] = []
+	var server_clock_offset_ms := -1
+
+	func set_server_clock_offset_ms(offset_ms: int) -> void:
+		server_clock_offset_ms = offset_ms
 
 	func send_packet(packet: Dictionary) -> void:
 		sent_packets.append(packet)
@@ -44,7 +48,7 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 	var field_client_sent_msec := Packets.FIELD_CLIENT_SENT_MSEC
 	var type_telemetry_ping := Packets.TYPE_TELEMETRY_PING
 
-	var ping_packet := fake_connection.sent_packets[0]
+	var ping_packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(ping_packet[field_type], type_telemetry_ping)
 	assert_true(int(ping_packet[field_sequence]) >= 0)
 	assert_true(int(ping_packet[field_client_sent_msec]) >= 0)
@@ -60,6 +64,22 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 	telemetry_context.reset()
 	if is_instance_valid(overlay_node):
 		overlay_node.queue_free()
+
+
+func test_pong_forwards_offset_and_reset_clears_it() -> void:
+	var fake_connection := FakeConnectionService.new()
+	var telemetry_context := WorldTelemetryContext.new()
+	telemetry_context.configure(fake_connection)
+	var ping: Dictionary = telemetry_context.network_metrics.next_ping_packet()
+	var client_sent_msec: int = ping[Packets.FIELD_CLIENT_SENT_MSEC]
+	fake_connection.telemetry_pong_received.emit({
+		Packets.FIELD_SEQUENCE: ping[Packets.FIELD_SEQUENCE],
+		Packets.FIELD_SERVER_RECEIVED_MSEC: client_sent_msec + 100,
+		Packets.FIELD_SERVER_SENT_MSEC: client_sent_msec + 120,
+	})
+	assert_true(fake_connection.server_clock_offset_ms > -1)
+	telemetry_context.reset()
+	assert_eq(fake_connection.server_clock_offset_ms, -1)
 
 
 func test_apply_gameplay_state_updates_lane_counts_and_merges_connection_network_metrics() -> void:

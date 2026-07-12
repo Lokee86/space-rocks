@@ -324,6 +324,8 @@ events
 server_sent_msec
 ```
 
+`GameplayPresentationSnapshot` owns the capture point for `server_sent_msec`. It records the live server Unix-millisecond wall-clock time when the authoritative presentation snapshot is created. `protocol/realtime` carries that snapshot timestamp into lane metadata; the client later combines it with the telemetry ping/pong clock-offset estimate to map server time into client monotonic time. The aggregate does not calculate client packet age.
+
 `protocol/realtime` projects that player's pending presentation events into `event_batch`, and outbound networking clears only the drained event IDs after the active websocket write succeeds. This makes the event lane player-specific and packet-facing.
 
 ## Data ownership

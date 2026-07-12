@@ -27,9 +27,13 @@ func test_start_poll_and_close_delegate_once_and_clear_transport() -> void:
 	var session := RealtimeTransportSession.new()
 	var transport := FakeTransport.new()
 
+	session.set_server_clock_offset_ms(125)
 	session.transport_factory = func():
 		return transport
 	session.start()
+	assert_eq(transport.server_clock_offset_ms, 125)
+	session.set_server_clock_offset_ms(250)
+	assert_eq(transport.server_clock_offset_ms, 250)
 	session.poll()
 	session.close()
 

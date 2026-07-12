@@ -167,6 +167,21 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 	assert_false(service.get_realtime_packet_pipeline().is_gameplay_ready())
 
 
+func test_clock_offset_is_forwarded_and_reset() -> void:
+	var service := ClientConnectionService.new()
+	var peer := FakeTransportPeer.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	service.set_server_clock_offset_ms(125)
+	add_child_autofree(service)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+	assert_eq(service.realtime_transport_session.transport.server_clock_offset_ms, 125)
+	service.set_server_clock_offset_ms(250)
+	assert_eq(service.realtime_transport_session.transport.server_clock_offset_ms, 250)
+	service.reset_realtime_session()
+	assert_eq(service.server_clock_offset_ms, -1)
+
+
 func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	var service := ClientConnectionService.new()
 	add_child_autofree(service)
