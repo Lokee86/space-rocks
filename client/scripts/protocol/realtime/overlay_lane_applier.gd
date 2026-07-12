@@ -7,9 +7,9 @@ func apply_overlay_full(overlay_lane_state: OverlayLaneState, baseline_tracker: 
 	var baseline_id = overlay_packet.get("baseline_id")
 	var sequence = overlay_packet.get("sequence")
 	var snapshot_id = overlay_packet.get("snapshot_id")
-	var chunk_index: int = int(overlay_packet.get("chunk_index", 0))
-	var chunk_count: int = int(overlay_packet.get("chunk_count", 1))
-	var is_final_chunk: bool = bool(overlay_packet.get("is_final_chunk", true))
+	var chunk_index = overlay_packet.get("chunk_index", 0)
+	var chunk_count = overlay_packet.get("chunk_count", 1)
+	var is_final_chunk = overlay_packet.get("is_final_chunk", true)
 
 	var accepted: bool
 	if is_final_chunk:

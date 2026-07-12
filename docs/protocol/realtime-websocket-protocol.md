@@ -1630,6 +1630,12 @@ client/tests/unit/protocol/realtime/test_devtools_lane_state_adapter.gd
 
 The current implementation sends lane-native gameplay output on the server tick path over ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`. That is current protocol behavior, not the intended final realtime architecture. The client ICE-server seam exists, but this document does not prescribe a future TURN/STUN topology.
 
+## Client receive hardening
+
+Client pre-match buffering is capped at 4 match buckets, 128 packets and 256 KiB estimated expanded JSON per match, with a 5000 ms lifetime and oldest-bucket eviction. Lost or expired state for the selected authoritative match fails closed and requests world, overlay, and session recovery. `world_full`, asteroid lifecycle, and bullet lifecycle assemblies each allow 128 chunks, 16384 cumulative records, 2 MiB estimated expanded JSON, and 5000 ms. Any limit, expiry, malformed metadata, interrupted, duplicate, mismatched, or non-contiguous failure resets the incomplete assembly, applies no partial state, and requests authoritative recovery.
+
+Baseline IDs are non-empty strings; sequence and chunk values are finite, non-negative, integer-valued numerics; final-chunk metadata is boolean and must agree with index/count. Valid stale deltas remain silently rejected. These are defensive client receive limits, not changes to the server's approximately 1200-byte candidate construction cap.
+
 Deployment knobs currently include SPACE_ROCKS_WEBRTC_ADVERTISED_IPS, SPACE_ROCKS_WEBRTC_UDP_PORT_MIN, SPACE_ROCKS_WEBRTC_UDP_PORT_MAX, and WEBRTC_ICE_SERVERS. The client ICE-server seam exists for future deployment configuration, but this document does not prescribe TURN or other future ICE topology beyond noting that the seam exists.
 
 The current WebSocket protocol is transport/session scoped. Durable match-result persistence happens through player-data routing after authoritative match facts are produced; it is not a WebSocket delivery guarantee.

@@ -7,9 +7,9 @@ func apply_session_full(session_lane_state: SessionLaneState, baseline_tracker: 
 	var baseline_id = session_packet.get("baseline_id")
 	var sequence = session_packet.get("sequence")
 	var snapshot_id = session_packet.get("snapshot_id")
-	var chunk_index: int = int(session_packet.get("chunk_index", 0))
-	var chunk_count: int = int(session_packet.get("chunk_count", 1))
-	var is_final_chunk: bool = bool(session_packet.get("is_final_chunk", true))
+	var chunk_index = session_packet.get("chunk_index", 0)
+	var chunk_count = session_packet.get("chunk_count", 1)
+	var is_final_chunk = session_packet.get("is_final_chunk", true)
 
 	var accepted: bool
 	if is_final_chunk:

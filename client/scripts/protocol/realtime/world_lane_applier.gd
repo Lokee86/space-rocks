@@ -11,9 +11,9 @@ func apply_world_full(world_lane_state: WorldLaneState, baseline_tracker: Baseli
 	var baseline_id = world_packet.get("baseline_id")
 	var sequence = world_packet.get("sequence")
 	var snapshot_id = world_packet.get("snapshot_id")
-	var chunk_index: int = int(world_packet.get("chunk_index", 0))
-	var chunk_count: int = int(world_packet.get("chunk_count", 1))
-	var is_final_chunk: bool = bool(world_packet.get("is_final_chunk", true))
+	var chunk_index = world_packet.get("chunk_index", 0)
+	var chunk_count = world_packet.get("chunk_count", 1)
+	var is_final_chunk = world_packet.get("is_final_chunk", true)
 
 	var assembly := _full_assembler.accept(world_packet)
 	if assembly.status == WorldFullChunkAssembler.ERROR:

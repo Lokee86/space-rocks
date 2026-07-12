@@ -20,6 +20,13 @@ Accepted practical ceilings that are not active bugs or roadmap work belong in [
 - Local server launch from the Godot client is not implemented.
 - The current client expects a local Go server target during development.
 - Realtime candidate construction uses an approximately 1,200-byte `HardCapBytes` limit for `world_full`, asteroid/bullet lifecycle, and asteroid/bullet movement candidates; splittable candidates are chunked before encoding and an individually oversized record fails explicitly.
+
+#### Active client realtime receive limits
+
+- Pre-match buffering is bounded to 4 match buckets, 128 packets and 256 KiB estimated expanded JSON per match, with a 5000 ms lifetime and oldest-bucket eviction. A selected authoritative match with lost or expired buffered state fails closed and requests world, overlay, and session recovery.
+- `world_full`, asteroid lifecycle, and bullet lifecycle assembly are each bounded to 128 chunks, 16384 cumulative records, 2 MiB estimated expanded JSON, and 5000 ms lifetime.
+- Limit, expiry, malformed metadata, interrupted, duplicate, mismatched, and non-contiguous failures reset incomplete client assembly state, apply no partial state, and request authoritative recovery. These are active defensive client limits, not missing work and not changes to the server's approximately 1200-byte candidate construction cap.
+
 - `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. The intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet.
 - Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
 
