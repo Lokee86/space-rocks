@@ -119,6 +119,14 @@ func (a gameplayPacketTestAdapter) EnqueueResyncRequest(context inbound.SessionC
 	}
 }
 
+func (a gameplayPacketTestAdapter) ShouldLogFirstInputPacket(matchID string) bool {
+	return a.session.shouldLogFirstInputPacket(matchID)
+}
+
+func (a gameplayPacketTestAdapter) ShouldLogFirstRespawnPacket(matchID string) bool {
+	return a.session.shouldLogFirstRespawnPacket(matchID)
+}
+
 func cameraViewConfigForPlayer(t *testing.T, gameInstance *game.Game, playerID string) runtime.ClientConfig {
 	t.Helper()
 

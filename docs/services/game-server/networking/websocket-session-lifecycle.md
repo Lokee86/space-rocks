@@ -26,6 +26,7 @@ session identity
 outbound message queue
 auth verifier access
 match result reporter access
+per-match first-input and first-respawn diagnostic flags
 ```
 
 The WebSocket connection itself is session-only. It does not imply room membership, authenticated identity, or an active gameplay player.
@@ -158,15 +159,16 @@ networking.WebSocketHandlerWithAuthAndReporter(...)
 
 The WebSocket handler uses Gorilla WebSocket upgrade behavior with a custom origin check.
 
-Allowed origins currently include:
+The handler builds the origin policy once. An absent or empty `Origin` header is rejected. When `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is unset, the exact default allowlist is:
 
 ```text
-empty Origin header
 https://space-rocks-client.local
 http://localhost:8080
 http://127.0.0.1:8080
 http://[::1]:8080
 ```
+
+When set, `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is a comma-separated replacement allowlist; whitespace is trimmed and empty entries are ignored. Origins are matched exactly.
 
 If upgrade fails, the server logs:
 
@@ -194,6 +196,7 @@ resyncRequests      -> buffered typed resync request channel
 identity            -> Guest session identity
 authVerifier        -> configured token verifier, possibly nil
 matchResultReporter -> configured reporter or noop reporter
+first-packet state   -> per-match input/respawn diagnostic flags
 ```
 
 The session starts as Guest even when the client intends to authenticate. Authentication is a later packet-level handshake through `authenticate_request`.
@@ -581,8 +584,11 @@ SessionContext
 webSocketSession.identity
 webSocketSession.outbound
 webSocketSession.resyncRequests
+webSocketSession first-packet diagnostic state
 room-session registry attachment
 ```
+
+The first-input and first-respawn diagnostic flags are independent, protected by `webSocketSession.mu`, and reset whenever the active match ID changes. Session destruction discards both flags with the rest of the transient session state.
 
 It does not own durable player data, Rails auth data, Local Profile storage, account stats, match history storage, or packet schema data.
 
@@ -662,6 +668,7 @@ Relevant tests include:
 * `services/game-server/internal/networking/room_snapshot_test.go`
 * `services/game-server/internal/networking/room_error_test.go`
 * `services/game-server/internal/networking/gameplay_packets_test.go`
+* `services/game-server/internal/networking/first_packet_logging_test.go`
 * `services/game-server/internal/networking/outbound/gameplay_presentation_test.go`
 * `services/game-server/internal/networking/outbound/debug_status_presentation_test.go`
 * `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation_test.go`
@@ -669,6 +676,8 @@ Relevant tests include:
 * `services/game-server/tests/game/pause_test.go`
 
 `websocket_test.go` currently verifies that requested leave reports resolved match results before removing the room member and that disconnected leave skips already reported match results while clearing session room state.
+
+`first_packet_logging_test.go` verifies that first input and first respawn diagnostics are logged once per match, reset together on match changes while remaining independent, and are isolated between sessions.
 
 A focused verification command for this boundary is:
 
@@ -695,7 +704,7 @@ cd services/game-server && go test -buildvcs=false ./internal/networking ./inter
 
 ## Notes
 
-The current concurrency model is concrete: `webSocketSession.mu` protects session context, identity, WebRTC transport, and debug-catalog state; only `realtimeState` is write-loop-owned; room operations use `Room.mu`; and external game/reporter calls occur outside room locks.
+The current concurrency model is concrete: `webSocketSession.mu` protects session context, identity, WebRTC transport, debug-catalog state, and first-packet diagnostic state; only `realtimeState` is write-loop-owned; room operations use `Room.mu`; and external game/reporter calls occur outside room locks.
 
 The WebSocket lifecycle intentionally stays separate from room/game authority. Adding new room or gameplay behavior should usually extend the packet routing, room, or game seams rather than adding rules directly to WebSocket upgrade or read/write loop code.
 

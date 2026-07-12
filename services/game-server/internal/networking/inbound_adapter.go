@@ -78,6 +78,14 @@ func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {
 	a.session.handleReturnToLobbyRequest()
 }
 
+func (a inboundSessionAdapter) ShouldLogFirstInputPacket(matchID string) bool {
+	return a.session.shouldLogFirstInputPacket(matchID)
+}
+
+func (a inboundSessionAdapter) ShouldLogFirstRespawnPacket(matchID string) bool {
+	return a.session.shouldLogFirstRespawnPacket(matchID)
+}
+
 func (a inboundSessionAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
 }

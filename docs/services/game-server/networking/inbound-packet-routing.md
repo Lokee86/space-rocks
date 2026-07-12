@@ -119,6 +119,8 @@ HandleStartGameRequest
 HandleStartSinglePlayerRequest
 HandleReturnToLobbyRequest
 EnqueuePlayerPauseState
+ShouldLogFirstInputPacket
+ShouldLogFirstRespawnPacket
 ```
 
 This keeps the inbound package mostly pure and avoids passing the full networking session object into every packet-family handler.
@@ -274,6 +276,8 @@ the handler requires a current room and a current game player. If either is miss
 ```text
 context.Room.GameplayContext().Game.HandlePacket(context.GamePlayerID, packet)
 ```
+
+For `input` and `respawn`, the handler also requests first-packet diagnostics through the narrow inbound adapter methods `ShouldLogFirstInputPacket(matchID)` and `ShouldLogFirstRespawnPacket(matchID)`. This diagnostic state is session-owned rather than process-global: input and respawn are tracked independently per match ID, both reset on a match transition, and both disappear when the WebSocket session is destroyed.
 
 For target and pause packets, the handler first requires a current room and active game player, then routes by packet type:
 

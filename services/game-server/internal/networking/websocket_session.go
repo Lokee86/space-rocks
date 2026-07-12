@@ -29,6 +29,9 @@ type webSocketSession struct {
 	// realtimeState is owned exclusively by the write loop and intentionally not guarded by mu.
 	realtimeState               realtime.RealtimeSessionState
 	debugShapeCatalogSentRoomID string
+	firstPacketMatchID          string
+	firstInputPacketLogged      bool
+	firstRespawnPacketLogged    bool
 	webrtcTransport             *WebRTCTransport
 }
 
@@ -60,6 +63,37 @@ func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, a
 	session.mu.Lock()
 	session.identity = NewAuthenticatedAccountIdentity(userID, accountID, displayName)
 	session.mu.Unlock()
+}
+
+func (session *webSocketSession) shouldLogFirstInputPacket(matchID string) bool {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	session.resetFirstPacketLoggingLocked(matchID)
+	if session.firstInputPacketLogged {
+		return false
+	}
+	session.firstInputPacketLogged = true
+	return true
+}
+
+func (session *webSocketSession) shouldLogFirstRespawnPacket(matchID string) bool {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	session.resetFirstPacketLoggingLocked(matchID)
+	if session.firstRespawnPacketLogged {
+		return false
+	}
+	session.firstRespawnPacketLogged = true
+	return true
+}
+
+func (session *webSocketSession) resetFirstPacketLoggingLocked(matchID string) {
+	if session.firstPacketMatchID == matchID {
+		return
+	}
+	session.firstPacketMatchID = matchID
+	session.firstInputPacketLogged = false
+	session.firstRespawnPacketLogged = false
 }
 
 func (session *webSocketSession) hasReadyWebRTCGameplayTransport() bool {
