@@ -106,6 +106,7 @@ func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *t
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+	state.HotLaneTick = 3
 
 	plan := AssembleRealtimeLaneCandidates(snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -278,4 +279,91 @@ func TestAssembleRealtimeLaneCandidatesEmitsAsteroidLifecycleCandidateWhenAstero
 	if got, want := delta.Type, PacketFamilyAsteroidsLifecycle; got != want {
 		t.Fatalf("expected asteroid lifecycle packet type %q, got %q", want, got)
 	}
+}
+
+func TestAssembleRealtimeLaneCandidatesHonorsAsteroidHotCadence(t *testing.T) {
+	previous, current := syncedMovingAsteroidSnapshots(1)
+	for _, tick := range []int{1, 2} {
+		state := syncedWorldState(t, previous)
+		state.HotLaneTick = tick
+		plan := AssembleRealtimeLaneCandidates(current, state)
+		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
+		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
+		if tick == 1 && (hasHot || hasWorld) {
+			t.Fatalf("tick %d unexpectedly emitted hot/world candidates", tick)
+		}
+		if tick == 2 && (!hasHot || !hasWorld) {
+			t.Fatalf("tick %d omitted hot/world candidates", tick)
+		}
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesUsesFullOwnedCadenceForLargeAsteroidCohort(t *testing.T) {
+	count := DefaultAsteroidHotLaneEntityBudget*2 + 1
+	previous, current := syncedMovingAsteroidSnapshots(count)
+	for _, tick := range []int{1, 2, 3} {
+		state := syncedWorldState(t, previous)
+		state.HotLaneTick = tick
+		plan := AssembleRealtimeLaneCandidates(current, state)
+		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
+		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
+		if tick < 3 && (hasHot || hasWorld) {
+			t.Fatalf("tick %d unexpectedly emitted hot/world candidates", tick)
+		}
+		if tick == 3 && (!hasHot || !hasWorld) {
+			t.Fatalf("tick %d omitted hot/world candidates", tick)
+		}
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesForcesHotLanesWithMovementAndCreation(t *testing.T) {
+	previous, current := syncedMovingAsteroidSnapshots(1)
+	current.Asteroids["asteroid-2"] = runtime.AsteroidState{ID: "asteroid-2", X: 20, Y: 30, Size: 2, Health: 3, Scale: 1, Variant: 1}
+	state := syncedWorldState(t, previous)
+	state.HotLaneTick = 1
+	plan := AssembleRealtimeLaneCandidates(current, state)
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
+		if _, ok := findCandidateByLane(plan.Candidates, lane); !ok {
+			t.Fatalf("expected lane %q", lane)
+		}
+	}
+}
+
+func TestAssembleRealtimeLaneCandidatesEmitsLifecycleWithoutAsteroidHotMovement(t *testing.T) {
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	current := previous
+	current.Asteroids = map[string]runtime.AsteroidState{"asteroid-1": {ID: "asteroid-1", X: 10, Y: 20, Size: 2, Health: 3, Scale: 1, Variant: 1}}
+	state := syncedWorldState(t, previous)
+	state.HotLaneTick = 1
+	plan := AssembleRealtimeLaneCandidates(current, state)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroidsLifecycle); !ok {
+		t.Fatal("expected asteroid lifecycle candidate")
+	}
+	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); ok {
+		t.Fatal("did not expect asteroid hot candidate")
+	}
+	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if !ok || world.Projection == nil {
+		t.Fatalf("expected world candidate with projection, got %#v", world)
+	}
+}
+
+func syncedWorldState(t *testing.T, snapshot game.GameplayPresentationSnapshot) RealtimeSessionState {
+	t.Helper()
+	state := NewRealtimeSessionState("player-1", "match-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, snapshot, 1))
+	return state
+}
+
+func syncedMovingAsteroidSnapshots(count int) (game.GameplayPresentationSnapshot, game.GameplayPresentationSnapshot) {
+	previous := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	current := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
+	for i := 1; i <= count; i++ {
+		id := fmt.Sprintf("asteroid-%d", i)
+		previous.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i), Y: float64(i + 10), Size: 2, Health: 3, Scale: 1, Variant: 1}
+		current.Asteroids[id] = runtime.AsteroidState{ID: id, X: float64(i + 1), Y: float64(i + 11), Size: 2, Health: 3, Scale: 1, Variant: 1}
+	}
+	return previous, current
 }

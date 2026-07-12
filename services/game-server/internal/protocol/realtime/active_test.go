@@ -198,6 +198,28 @@ func TestBuildActiveRealtimeResultEncodesOnlyEnvelopePackets(t *testing.T) {
 	}
 }
 
+func TestBuildActiveRealtimeResultAdvancesHotLaneTickWhenCadenceSkips(t *testing.T) {
+	previous, current := syncedMovingAsteroidSnapshots(1)
+	state := syncedWorldState(t, previous)
+	state.HotLaneTick = 0
+
+	first := mustBuildActiveRealtimeResult(t, current, state)
+	if first.SessionState.HotLaneTick != 1 {
+		t.Fatalf("first hot lane tick = %d, want 1", first.SessionState.HotLaneTick)
+	}
+	if _, ok := findCandidateByLane(first.SelectedCandidates, LaneAsteroids); ok {
+		t.Fatal("did not expect asteroid hot candidate on skipped first tick")
+	}
+
+	second := mustBuildActiveRealtimeResult(t, current, first.SessionState)
+	if second.SessionState.HotLaneTick != 2 {
+		t.Fatalf("second hot lane tick = %d, want 2", second.SessionState.HotLaneTick)
+	}
+	if _, ok := findCandidateByLane(second.SelectedCandidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid hot candidate on second tick")
+	}
+}
+
 func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.T) {
 	previousAsteroids := make(map[string]runtime.AsteroidState, 300)
 	currentAsteroids := make(map[string]runtime.AsteroidState, 300)

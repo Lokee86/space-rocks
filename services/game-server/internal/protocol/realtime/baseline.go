@@ -31,6 +31,7 @@ type RealtimeSessionState struct {
 	BaselineReady       map[Lane]bool
 	baselineProjections map[Lane]any
 	HotLaneCohorts      HotLaneCohortState
+	HotLaneTick         int
 }
 
 func NewRealtimeSessionState(receiverID string, matchID string) RealtimeSessionState {
@@ -42,6 +43,14 @@ func NewRealtimeSessionState(receiverID string, matchID string) RealtimeSessionS
 		baselineProjections: make(map[Lane]any),
 		HotLaneCohorts:      NewHotLaneCohortState(),
 	}
+}
+
+func (state *RealtimeSessionState) AdvanceHotLaneTick() int {
+	state.HotLaneTick++
+	if state.HotLaneTick <= 0 {
+		state.HotLaneTick = 1
+	}
+	return state.HotLaneTick
 }
 
 func (state RealtimeSessionState) IdentityMatches(receiverID, matchID string) bool {

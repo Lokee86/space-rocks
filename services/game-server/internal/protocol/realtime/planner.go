@@ -24,6 +24,7 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 }
 
 func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) RealtimeSendPrepared {
+	state.AdvanceHotLaneTick()
 	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &state)
 	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
 
@@ -36,5 +37,6 @@ func prepareRealtimeSendPlan(snapshot game.GameplayPresentationSnapshot, state R
 		CandidatePlan: candidatePlan,
 		Records:       records,
 		SendPlan:      SelectSendPlan(records),
+		SessionState:  state,
 	}
 }

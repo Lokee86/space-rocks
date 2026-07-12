@@ -41,7 +41,8 @@ func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, 
 
 func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (ActiveRealtimeResult, error) {
 	preparedState := state
-	candidatePlan := assembleRealtimeLaneCandidates(snapshot, state, &preparedState)
+	preparedState.AdvanceHotLaneTick()
+	candidatePlan := assembleRealtimeLaneCandidates(snapshot, preparedState, &preparedState)
 	candidatePlan.Candidates = ExpandHotLaneCandidateChunks(candidatePlan.Candidates)
 
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
@@ -267,5 +268,3 @@ func laneFamilySummary(records []ScheduleRecord) string {
 	}
 	return strings.Join(parts, ",")
 }
-
-

@@ -58,4 +58,5 @@ type RealtimeSendPrepared struct {
 	CandidatePlan RealtimeLanePlan
 	Records       []ScheduleRecord
 	SendPlan      SendPlan
+	SessionState  RealtimeSessionState
 }

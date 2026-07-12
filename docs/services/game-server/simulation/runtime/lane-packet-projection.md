@@ -115,6 +115,8 @@ event_batch
 
 Asteroid and bullet lanes produce hot, high-priority, supersedable movement candidates. Lifecycle defines existence. Hot lanes update known entities only.
 
+Hot movement cadence is enforced during candidate construction using an independent per-session 60 Hz cadence tick. `full_owned_30hz` emits every second tick and `full_owned_20hz` emits every third tick. Non-hot world changes and asteroid/bullet lifecycle changes force immediate hot emission and advance the shared world projection chain. This is replication policy owned by protocol/realtime; networking owns invocation and successful-write handling.
+
 Lifecycle candidates are required/critical and must not be treated as hot-supersedable movement candidates.
 
 `player_pause_state` remains a separate same-session packet and is handled independently from lane-native realtime projection.

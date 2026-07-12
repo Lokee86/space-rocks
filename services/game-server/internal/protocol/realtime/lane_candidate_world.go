@@ -31,14 +31,16 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			if sessionState != nil {
 				sessionState.HotLaneCohorts = split.CohortState
 			}
-			if len(split.WorldDelta.Bullets.Creates) > 0 || len(split.WorldDelta.Bullets.Deletes) > 0 {
+			bulletLifecyclePresent := len(split.WorldDelta.Bullets.Creates) > 0 || len(split.WorldDelta.Bullets.Deletes) > 0
+			asteroidLifecyclePresent := len(split.WorldDelta.Asteroids.Creates) > 0 || len(split.WorldDelta.Asteroids.Deletes) > 0
+			if bulletLifecyclePresent {
 				if bulletCandidate, ok := buildBulletLifecycleCandidate(split.WorldDelta, state); ok {
 					candidates = append(candidates, bulletCandidate)
 					split.WorldDelta.Bullets.Creates = nil
 					split.WorldDelta.Bullets.Deletes = nil
 				}
 			}
-			if len(split.WorldDelta.Asteroids.Creates) > 0 || len(split.WorldDelta.Asteroids.Deletes) > 0 {
+			if asteroidLifecyclePresent {
 				if asteroidCandidate, ok := buildAsteroidLifecycleCandidate(split.WorldDelta, state); ok {
 					candidates = append(candidates, asteroidCandidate)
 					split.WorldDelta.Asteroids.Creates = nil
@@ -49,9 +51,11 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			asteroidHotPresent := split.AsteroidDelta != nil && len(split.AsteroidDelta.AsteroidUpdates) > 0
 			bulletHotPresent := split.BulletDelta != nil && len(split.BulletDelta.BulletUpdates) > 0
 			worldDeltaHasChanges := WorldWireDeltaHasChanges(split.WorldDelta)
+			forceHotSend := worldDeltaHasChanges || asteroidLifecyclePresent || bulletLifecyclePresent
 
-			asteroidHotAllowed := asteroidHotPresent
-			bulletHotAllowed := bulletHotPresent
+			asteroidHotAllowed := asteroidHotPresent && (forceHotSend || hotPacketCadenceAllows(split.CohortState.AsteroidMode, state.HotLaneTick))
+			bulletHotAllowed := bulletHotPresent && (forceHotSend || hotPacketCadenceAllows(split.CohortState.BulletMode, state.HotLaneTick))
+			allPresentHotAllowed := (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
 			asteroidState, asteroidSynced := state.LaneState(LaneAsteroids)
 			asteroidSequence := NextLaneSequence(asteroidState, asteroidSynced)
 			bulletState, bulletSynced := state.LaneState(LaneBullets)
@@ -76,7 +80,7 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 				metadata = metadata.WithChunk(0, 1)
 				split.BulletDelta.Metadata = metadata
 			}
-			if worldDeltaHasChanges || asteroidHotAllowed || bulletHotAllowed {
+			if forceHotSend || ((asteroidHotAllowed || bulletHotAllowed) && allPresentHotAllowed) {
 				chainedWorldProjection := quantizedWorldFull
 				chainedWorldProjection.Metadata = split.WorldDelta.Metadata
 				candidates = append(candidates, mustRealtimeLaneCandidate(split.WorldDelta, chainedWorldProjection))

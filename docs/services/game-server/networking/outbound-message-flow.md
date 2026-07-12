@@ -148,25 +148,26 @@ On each tick, gameplay lane output is eligible only when:
 - captured `SessionContext.Room` is not nil
 - captured `SessionContext.Room.GameplayContext()` is current and its match is valid
 
-When eligible, `writeServerMessages()` calls `writeGameplayLaneProtocolMessage(session, remoteAddr)`.
+When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(session, remoteAddr)` on every eligible tick. Networking owns this invocation and the successful writes; protocol/realtime advances the independent per-session `HotLaneTick` and may suppress movement-only hot candidates to their 30/20 Hz cadence.
 
 `writeGameplayLaneProtocolMessage()` currently:
 
 1. Writes debug shape catalog output first when eligible.
 2. Resets `session.realtimeState` when the receiver is empty or changes.
 3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
-4. Selects included lane candidates from the send plan, including lifecycle candidates before expanded asteroid/bullet hot chunks when needed.
-5. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
-6. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
-7. `CompactWirePacket` applies generated descriptor-driven aliases, value domains, ID codecs/selectors, record encodings, and event layouts.
-8. `packetcodec` encodes each selected candidate into `EncodedLanePackets`.
-9. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the transport is ready.
-10. Logs lane wire packet details after successful writes.
-11. Drains active event_batch events only after a successful WebRTC write.
-12. Persists lane metadata only after successful writes.
-13. Stores baseline projections for non-event lane packets only after successful writes.
-14. Marks a lane baseline ready after a final full packet.
-15. Emits a non-empty per-tick debug summary after packet writes.
+4. Advances `HotLaneTick` and applies cadence gating to movement-only asteroid/bullet hot candidates: `full_owned_30hz` every second tick and `full_owned_20hz` every third tick, while retaining forced sends for related non-hot world or lifecycle changes.
+5. Selects included lane candidates from the send plan, including lifecycle candidates before expanded asteroid/bullet hot chunks when needed.
+6. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
+7. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
+8. `CompactWirePacket` applies generated descriptor-driven aliases, value domains, ID codecs/selectors, record encodings, and event layouts.
+9. `packetcodec` encodes each selected candidate into `EncodedLanePackets`.
+10. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the transport is ready.
+11. Logs lane wire packet details after successful writes.
+12. Drains active event_batch events only after a successful WebRTC write.
+13. Persists lane metadata only after successful writes.
+14. Stores baseline projections for non-event lane packets only after successful writes.
+15. Marks a lane baseline ready after a final full packet.
+16. Emits a non-empty per-tick debug summary after packet writes; cadence-suppressed no-op ticks produce no wire log or write summary.
 
 The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. The physical compact-wire contract lives in `shared/packets/realtime_wire.toml`, with generated reference data in `docs/protocol/generated/realtime-wire-reference.md`. Realtime runtime owns projection, sparse omission, generic descriptor application, scheduling, chunking, and encoded-byte accounting. Generated descriptors own physical aliases, value domains, ID codecs/selectors, record encodings, event layouts, quantization assignments, and decode compatibility alternatives. Networking owns successful WebRTC gameplay delivery, queued WebSocket delivery, event-batch drain-after-success behavior, post-write lane metadata persistence, and successful-write diagnostics. `packetcodec` owns JSON encoding only. `event_batch` remains one ordered batch of pending presentation events; known events use registered layouts, while unknown event maps remain compatibility pass-through records. Sparse delta omission does not implement record-level splitting or entity-level prioritization.
 

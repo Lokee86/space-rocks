@@ -42,7 +42,7 @@ func BuildShadowRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 
 	return ShadowRealtimeResult{
 		Snapshot:          snapshot,
-		SessionState:      state,
+		SessionState:      prepared.SessionState,
 		Candidates:        prepared.CandidatePlan.Candidates,
 		PlannedRecords:    prepared.Records,
 		SendPlan:          prepared.SendPlan,

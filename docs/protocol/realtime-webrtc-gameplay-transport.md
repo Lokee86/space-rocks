@@ -246,6 +246,10 @@ bullet_delta on sr.bullets
 
 `world_delta` remains responsible for ships, pickups, and full/bootstrap/resync-safe presentation state. World serializer compatibility may still accept asteroid or bullet update sections, but regular active asteroid and bullet movement is split to the dedicated hot movement lanes.
 
+### Hot Movement Cadence
+
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Movement-only hot candidates use `full_owned_30hz` every second tick and `full_owned_20hz` every third tick. Non-hot world deltas or asteroid/bullet lifecycle creates/deletes force immediate related hot movement emission and advance the shared world projection chain. WebRTC does not own this timing policy; it sends the candidates selected by protocol/realtime.
+
 ## Control and Resync Boundary
 
 The current signaling/control path remains WebSocket-owned.
