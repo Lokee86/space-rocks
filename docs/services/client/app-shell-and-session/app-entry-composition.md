@@ -478,6 +478,8 @@ client/tests/unit/ui/menus/test_main_menu_auth_state.gd
 
 These tests verify the app-entry route wiring, shared profile-provider composition, signed-in and signed-out multiplayer routing, pending boot request selection, session-network gating, room-session behavior, gameplay-session handoff, and auth/menu presentation state.
 
+`test_app_entry_menu_flow.gd` instantiates `game.tscn` and verifies the composed gameplay ownership chain plus reset propagation through presentation, world sync, tombstones, player visibility, and HUD visibility.
+
 ## Related docs
 
 * [App Shell And Session](./!INDEX.md)

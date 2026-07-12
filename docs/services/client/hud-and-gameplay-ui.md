@@ -458,6 +458,8 @@ The loadout display reads generated packet field names and generated client cons
 
 These tests verify displayable weapon registration, display creation and clearing, ammo label behavior, cooldown overlay behavior, ready effects, and cooldown-finished signaling.
 
+`test_loadout_display_flow.gd` instantiates the real HUD and weapon display scenes and verifies ring movement, cooldown hiding, ready sweep and flash start, and animation completion and hide behavior.
+
 `test_weapon_display.gd` covers the scene-backed `WeaponDisplay` presentation path.
 
 ### Input protection tests
