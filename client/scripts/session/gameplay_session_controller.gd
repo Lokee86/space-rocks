@@ -2,6 +2,8 @@ extends Node
 
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const PresentationBridge := preload("res://scripts/protocol/realtime/presentation_bridge.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const LongMatchStoreMetrics := preload("res://scripts/devtools/telemetry/long_match_store_metrics.gd")
 
 var connection_service
 var hud: Control
@@ -19,6 +21,7 @@ var realtime_packet_pipeline
 
 var accepts_gameplay_packets := false
 var _logged_debug_shape_catalog_received := false
+var _gameplay_packet_acceptance_started_msec := -1
 
 signal return_to_pregame_requested(session_mode: String)
 signal replay_requested
@@ -101,6 +104,7 @@ func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
 func begin_accepting_gameplay_packets() -> void:
 	_log("accepting gameplay packets: realtime_packet_pipeline_null=%s presentation_state_null=%s" % [str(realtime_packet_pipeline == null), str(realtime_packet_pipeline == null or realtime_packet_pipeline.get_presentation_state() == null)])
 	accepts_gameplay_packets = true
+	_gameplay_packet_acceptance_started_msec = Time.get_ticks_msec()
 	if presentation_bridge != null:
 		presentation_bridge.activate()
 
@@ -142,7 +146,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func reset() -> void:
+	_log_long_match_store_summary()
 	accepts_gameplay_packets = false
+	_gameplay_packet_acceptance_started_msec = -1
 	if presentation_bridge != null:
 		presentation_bridge.reset()
 	if gameplay_composition != null:
@@ -214,3 +220,20 @@ func _on_gameplay_replay_requested() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
+
+
+func _log_long_match_store_summary() -> void:
+	if _gameplay_packet_acceptance_started_msec < 0:
+		return
+
+	var counts := LongMatchStoreMetrics.snapshot(
+		realtime_packet_pipeline,
+		gameplay_composition.world_sync if gameplay_composition != null else null
+	)
+	var fields := {
+		"match_id": realtime_packet_pipeline.active_match_id() if realtime_packet_pipeline != null and realtime_packet_pipeline.has_method("active_match_id") else "",
+		"duration_ms": max(Time.get_ticks_msec() - _gameplay_packet_acceptance_started_msec, 0),
+	}
+	for key in counts:
+		fields[key] = counts[key]
+	ClientLogger.network_event(ClientLogger.LEVEL_INFO, "long_match_store_summary", "Long-match store summary", fields)

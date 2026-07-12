@@ -204,6 +204,8 @@ Bullet pulse effects are scene-local presentation owned by `client/scripts/entit
 
 After reset, projectile IDs can be safely reused by a later match or session because no prior active, pooled, initialized, interpolation, rotation, or deletion-tombstone state remains.
 
+Projectile and asteroid deletion tombstones are match-scoped, cleared by reset, and grow linearly within a match. This growth is covered by [Stable Limitations](../../../limits/stable-limitations.md). They must not be pruned without a protocol-safe stale-packet/replay boundary.
+
 Projectile packet-facing field access belongs to:
 
 ```text
@@ -344,6 +346,7 @@ Use the normal client GUT verification flow when changing entity sync behavior.
 ## Related docs
 
 * [World Sync](./!INDEX.md)
+* [Stable Limitations](../../../limits/stable-limitations.md)
 * [Gameplay Runtime](../gameplay-runtime/!INDEX.md)
 * [World sync coordinator](world-sync-coordinator.md)
 * [View anchor and visual coordinates](view-anchor-and-visual-coordinates.md)

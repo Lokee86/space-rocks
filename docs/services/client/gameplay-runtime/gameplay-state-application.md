@@ -151,6 +151,8 @@ GameplayLocalLifecycleFlow
 
 The event path uses `EventBatchApplier` for `event_batch` delivery. Compact aliases such as `eb`, `ev`, `ei`, `bb`, `shd`, and `dmg` are wire details and should not leak into client presentation code.
 
+`EventBatchApplier`'s applied-batch, applied-event, and logged-batch dedupe dictionaries are match-scoped, replaced/reset at match boundaries, and grow linearly within a match. This behavior is covered by [Stable Limitations](../../../limits/stable-limitations.md); pruning requires a safe replay window.
+
 `PresentationAdapter` decodes session state once, passes the decoded state to `SessionPresentationAdapter`, then reuses that decoded session state when it calls `GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_state, self_id)`. Local lifecycle reconciliation runs after world, overlay, and session lane presentation and before `EventPresentationAdapter` drains event output.
 
 `GameplayLocalLifecycleFlow` reconstructs the local presentation state from authoritative lane data. It handles active, pending-respawn, and eliminated status without becoming an authority for lifecycle outcomes. Event presentation remains a separate best-effort immediate-effects path.
@@ -271,6 +273,7 @@ Relevant client tests include:
 ## Related docs
 
 * [Gameplay Runtime](./!INDEX.md)
+* [Stable Limitations](../../../limits/stable-limitations.md)
 * [World Sync](../world-sync/!INDEX.md)
 * [Runtime composition](runtime-composition.md)
 * [Gameplay session lifecycle](gameplay-session-lifecycle.md)

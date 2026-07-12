@@ -30,6 +30,25 @@ Client inbound apply cost or same-sequence hot-chunk merge behavior may also con
 
 This is accepted as an edge-case stress limitation for the current arcade gameplay target. The game is not designed to render unbounded projectile counts.
 
+### Match-scoped replay and deletion store growth
+
+The client keeps match-scoped dictionaries for applied event batch IDs, applied event IDs, logged applied batch IDs, world-lane deleted bullet IDs, projectile-sync deleted projectile IDs, and asteroid-sync deleted asteroid IDs. They prevent duplicate event presentation and stale/deleted entity resurrection. They are cleared by match/session reset, so this is within-match growth, not cross-match accumulation.
+
+The July 12, 2026 smoke measurement accumulated 3,706 entries over 211.2 seconds during normal gameplay, approximately 1,053 entries/minute. Sustained stress accumulated 44,929 entries over 163.5 seconds, approximately 16,488 entries/minute. In the stress run, the two bullet-deletion stores contained 18,768 entries each, about 83.6% of all measured entries combined.
+
+The synthetic Godot memory probe measured approximately 195-206 bytes per representative string-ID dictionary entry over 1,000 to 250,000 entries. Linear projections from those short runs are:
+
+| Match duration | Normal | Stress |
+| --- | ---: | ---: |
+| 1 hour | 11.7-12.4 MB | 184-194 MB |
+| 4 hours | 47.0-49.6 MB | 736-777 MB |
+| 8 hours | 94.0-99.3 MB | 1.47-1.55 GB |
+| 24 hours | 282-298 MB | 4.42-4.66 GB |
+
+These are linear projections from short runs, not long-duration validation. The accepted boundary is that ordinary match lengths are safe; endurance matches or modes sustaining extreme projectile churn are not supported without bounded replay windows or protocol-safe tombstone pruning.
+
+Revisit this limitation for endurance or persistent matches, normal gameplay approaching materially higher churn, sustained sessions causing noticeable memory growth, or protocol work that provides a safe pruning/replay window. No pruning work is active solely because of this limitation.
+
 ## Not active work
 
 The following are not required follow-up work unless normal gameplay reaches this limit:
