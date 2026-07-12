@@ -7,16 +7,37 @@ const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
 
 const TEST_TOKEN_PATH := "user://test_auth_session_controller_token.json"
 
+var _auth_state_change_count := 0
+
 
 class FakeAuthApiClient:
 	extends RefCounted
 
+	signal current_user_released
+	signal discord_sign_in_released
+
 	var current_user_result: ApiRequestResult
+	var discord_sign_in_result: ApiRequestResult
 	var logout_result: ApiRequestResult
+	var wait_for_current_user := false
+	var wait_for_discord_sign_in := false
 	var logout_tokens: Array[String] = []
 
 	func get_current_user(_token: String):
+		if wait_for_current_user:
+			await current_user_released
 		return current_user_result
+
+	func begin_discord_login_session():
+		if wait_for_discord_sign_in:
+			await discord_sign_in_released
+		return discord_sign_in_result
+
+	func release_current_user() -> void:
+		current_user_released.emit()
+
+	func release_discord_sign_in() -> void:
+		discord_sign_in_released.emit()
 
 	func logout(token: String):
 		logout_tokens.append(token)
@@ -24,6 +45,7 @@ class FakeAuthApiClient:
 
 
 func before_each() -> void:
+	_auth_state_change_count = 0
 	_cleanup_token_file()
 
 
@@ -103,6 +125,52 @@ func test_logout_clears_auth_session_and_token_store() -> void:
 	assert_eq(fake_client.logout_tokens, ["bearer-token"])
 
 
+func test_logout_supersedes_awaiting_saved_token_validation() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.wait_for_current_user = true
+	fake_client.current_user_result = ApiRequestResult.success(200, {
+		"user": {"id": 42, "display_name": "Ada Lovelace"},
+	})
+
+	var controller := _create_controller(fake_client)
+	controller.auth_token_store.save_token("old-token")
+	watch_signals(controller)
+	controller.auth_state_changed.connect(_count_auth_state_change)
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	controller.logout()
+	fake_client.release_current_user()
+	await get_tree().process_frame
+
+	assert_false(controller.get_session().is_signed_in())
+	assert_eq(controller.auth_token_store.load_token(), "")
+	assert_eq(_auth_state_change_count, 1)
+
+
+func test_logout_supersedes_awaiting_discord_sign_in_start() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.wait_for_discord_sign_in = true
+	fake_client.discord_sign_in_result = ApiRequestResult.success(200, {
+		"login_session_id": "session-id",
+		"poll_secret": "poll-secret",
+		"login_url": "https://discord.com",
+	})
+
+	var controller := _create_controller(fake_client)
+	watch_signals(controller)
+	controller.auth_state_changed.connect(_count_auth_state_change)
+	controller.request_discord_sign_in()
+	await get_tree().process_frame
+	controller.logout()
+	fake_client.release_discord_sign_in()
+	await get_tree().process_frame
+
+	assert_false(controller.get_session().is_signed_in())
+	assert_eq(controller.auth_token_store.load_token(), "")
+	assert_eq(_auth_state_change_count, 1)
+	assert_signal_not_emitted(controller, "auth_error")
+
+
 func _create_controller(fake_client) -> AuthSessionController:
 	var controller := AuthSessionController.new()
 	controller.auth_session = AuthSession.new()
@@ -111,6 +179,10 @@ func _create_controller(fake_client) -> AuthSessionController:
 	controller.auth_api_client = fake_client
 	add_child_autofree(controller)
 	return controller
+
+
+func _count_auth_state_change() -> void:
+	_auth_state_change_count += 1
 
 
 func _cleanup_token_file() -> void:
