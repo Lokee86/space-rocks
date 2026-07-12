@@ -8,6 +8,13 @@ Client tests use GUT and live under `client/tests/`.
 
 Keep client tests focused on generated packets, HUD behavior, `world_sync` coordination, extracted sync owners, and pure client logic.
 
+## Scene-Backed Runtime Integration Coverage
+
+Selected runtime integration tests instantiate real scenes while remaining headless and server-independent. Current coverage includes:
+
+- weapon cooldown visual transition lifecycle
+- full game-scene boot/reset propagation
+
 ## Player/Render Tests
 
 Active behavior tests should target `client/scripts/world/player_render` APIs.
@@ -35,7 +42,6 @@ Expected active test areas:
 
 These remain manual smoke tests for now:
 
-- opening the game scene
 - websocket connection
 - spawning asteroids
 - shooting/effects

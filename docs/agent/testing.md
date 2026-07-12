@@ -107,7 +107,9 @@ Run the client constants boundary scan:
 python3 -m pytest tools/tests/test_client_constants_boundary.py
 ```
 
-Full gameplay/network smoke testing remains manual for now: opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
+Selected scene-backed client integration tests run headlessly and without a server. They cover full game-scene boot/reset propagation and the weapon cooldown visual transition lifecycle.
+
+The remaining gameplay/network smoke boundary is manual: websocket connection, asteroid spawning, actual shooting/effects, pause/debug flow, and the full gameplay loop.
 
 ## Data-sync checks
 

@@ -219,6 +219,43 @@ func test_authoritative_cooldown_zero_triggers_ready_effects_after_active_cooldo
 	assert_true(ready_sweep.visible)
 
 
+func test_real_torpedo_cooldown_transition_spins_ring_and_finishes_ready_effects() -> void:
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 0.0,
+	}))
+
+	var ring_highlight := _display_ring_highlight()
+	assert_true(ring_highlight.visible)
+	var initial_angle: float = ring_highlight._angle
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_ne(ring_highlight._angle, initial_angle)
+
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 2.0,
+	}))
+	assert_false(ring_highlight.visible)
+
+	_flow.apply_player_state(_player_state({
+		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
+		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 0.0,
+	}))
+
+	var ready_sweep := _display_ready_sweep_highlight()
+	var ready_flash := _display_ready_flash()
+	assert_true(ring_highlight.visible)
+	assert_true(ready_sweep.visible)
+	assert_true(ready_flash.visible or ready_flash.is_playing())
+
+	await get_tree().create_timer(1.0).timeout
+
+	assert_false(ready_sweep.visible)
+	assert_false(ready_flash.visible)
+	assert_false(ready_flash.is_playing())
+
+
 func test_cooldown_ready_transition_clears_overlay_and_only_plays_ready_effects_once() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
