@@ -29,6 +29,19 @@ def _format_gds_value(value: Any) -> str:
         return _quote_string(value)
     if _is_vector2(value):
         return f"Vector2({repr(float(value[0]))}, {repr(float(value[1]))})"
+    if isinstance(value, list):
+        return "[" + ", ".join(_format_gds_value(item) for item in value) + "]"
+    if isinstance(value, dict):
+        if any(not isinstance(key, str) for key in value):
+            invalid_key = next(key for key in value if not isinstance(key, str))
+            raise ConstantsGenerationError(
+                f"unsupported GDScript dictionary key type: {type(invalid_key).__name__}"
+            )
+        entries = [
+            f"{_quote_string(key)}: {_format_gds_value(nested_value)}"
+            for key, nested_value in value.items()
+        ]
+        return "{" + ", ".join(entries) + "}"
     raise ConstantsGenerationError(f"unsupported constant value type: {type(value).__name__}")
 
 
