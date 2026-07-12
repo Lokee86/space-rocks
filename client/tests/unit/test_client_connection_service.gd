@@ -2,6 +2,7 @@ extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 
 class FakeNetworkClient:
@@ -42,6 +43,60 @@ class FakeTransportPeer:
 
 func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
 	return fake_peer
+
+
+func test_authenticated_integer_websocket_user_id_is_an_identity() -> void:
+	var service := ClientConnectionService.new()
+	service._on_authenticate_result_received({"authenticated": true, "user_id": 42})
+
+	assert_true(service.is_websocket_auth_authenticated())
+	assert_eq(service.websocket_auth_user_id, 42)
+	assert_true(service.has_websocket_auth_identity())
+
+
+func test_unauthenticated_or_malformed_websocket_user_id_uses_sentinel() -> void:
+	var cases := [
+		{"authenticated": false, "user_id": 42},
+		{"authenticated": true},
+		{"authenticated": true, "user_id": "42"},
+		{"authenticated": true, "user_id": 42.0},
+	]
+
+	for packet in cases:
+		var service := ClientConnectionService.new()
+		service._on_authenticate_result_received(packet)
+
+		assert_eq(service.websocket_auth_user_id, ClientConnectionService.NO_WEBSOCKET_AUTH_USER_ID)
+		assert_false(service.has_websocket_auth_identity())
+
+func test_missing_packet_sender_is_reported_once_then_resets_on_assignment() -> void:
+	ClientLogger.disable()
+	var service := ClientConnectionService.new()
+	service._missing_client_packet_sender_reported = false
+	service.send_input_packet({"type": "input"})
+	service.send_input_packet({"type": "input"})
+	assert_true(service._missing_client_packet_sender_reported)
+
+	var fake_network := FakeNetworkClient.new()
+	var sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.client_packet_sender = sender
+	service.send_input_packet({"type": "input"})
+	assert_false(service._missing_client_packet_sender_reported)
+	assert_eq(fake_network.sent_packets.size(), 1)
+	ClientLogger.reset_for_tests()
+
+
+func test_close_resets_websocket_auth_identity() -> void:
+	var service := ClientConnectionService.new()
+	service.websocket_auth_authenticated = true
+	service.websocket_auth_user_id = 42
+	service.websocket_auth_display_name = "Pilot"
+	service._on_closed()
+
+	assert_false(service.is_websocket_auth_authenticated())
+	assert_eq(service.websocket_auth_user_id, ClientConnectionService.NO_WEBSOCKET_AUTH_USER_ID)
+	assert_false(service.has_websocket_auth_identity())
+	assert_eq(service.websocket_auth_display_name, "")
 
 
 func test_protocol_match_begin_end_preserves_transport_without_close() -> void:

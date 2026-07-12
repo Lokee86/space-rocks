@@ -195,7 +195,7 @@ Inbound `resync_request` remains a compatibility route. It may mark the supplied
 
 ### Connection-service signal bridge
 
-`ClientConnectionService` owns the public connection facade, collaborator composition, polling, reset coordination, outbound API, and stable application-facing signal relay, including application-facing non-realtime dispatcher bindings. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings: `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings plus realtime expansion, validation, application, readiness, reset, presentation-state refresh, and applied notification. Raw WebRTC control packets and realtime gameplay packets are not re-emitted through `ClientConnectionService`.
+`ClientConnectionService` owns the public connection facade, collaborator composition, polling, reset coordination, outbound API, and stable application-facing signal relay, including application-facing non-realtime dispatcher bindings. It also owns a typed `AuthSessionController` reference for the websocket authentication handoff. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings: `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings plus realtime expansion, validation, application, readiness, reset, presentation-state refresh, and applied notification. Raw WebRTC control packets and realtime gameplay packets are not re-emitted through `ClientConnectionService`.
 
 RealtimePacketPipeline emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
 
@@ -216,7 +216,7 @@ Presentation remains frame-coalesced and is intentionally unchanged in this stag
 
 ### Websocket auth result cache
 
-`ClientConnectionService` handles `authenticate_result` specially because websocket auth state is connection-level state.
+`ClientConnectionService` handles `authenticate_result` specially because websocket auth state is connection-level state. Its `auth_session_controller` field is a typed `AuthSessionController` reference.
 
 On `authenticate_result`, the connection service updates:
 
@@ -225,6 +225,10 @@ websocket_auth_authenticated
 websocket_auth_user_id
 websocket_auth_display_name
 ```
+
+`websocket_auth_user_id` is an integer cache. `NO_WEBSOCKET_AUTH_USER_ID` (`-1`) represents no accepted websocket identity; the cache does not use `null`.
+
+An `authenticate_result` contributes an identity only when `authenticated` is `true` and `user_id` is an actual integer. Missing, string, float, or unauthenticated values use `NO_WEBSOCKET_AUTH_USER_ID`.
 
 and emits:
 

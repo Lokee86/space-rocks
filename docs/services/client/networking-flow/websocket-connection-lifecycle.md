@@ -32,6 +32,7 @@ perform graceful close
 ```text
 start connection polling
 compose NetworkClient / ClientPacketSender / ServerPacketDispatcher / ClientInboundCoordinator / RealtimePacketPipeline / RealtimeTransportSession
+own a typed AuthSessionController reference for websocket authentication
 configure ClientInboundCoordinator and RealtimeTransportSession callbacks
 forward connected and closed signals
 forward packet parse failures
@@ -39,7 +40,7 @@ dispatch decoded inbound packets
 expose connection-aware send methods
 reset realtime protocol state on connect and close
 send websocket authenticate request after connection when an auth token exists
-clear websocket auth identity on close
+clear websocket auth identity on close using NO_WEBSOCKET_AUTH_USER_ID (-1)
 ```
 
 The lifecycle boundary stops when a decoded packet dictionary is emitted or dispatched. Packet-type routing belongs to [Inbound Packet Routing](inbound-packet-routing.md). Client packet helper families belong to [Outbound Packet Sending](outbound-packet-sending.md). Client logging implementation behavior belongs to [Client Logging](../client-logging.md).
@@ -208,7 +209,7 @@ connection_closed
 ```text
 calls reset_realtime_session()
 websocket_auth_authenticated = false
-websocket_auth_user_id = null
+websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 websocket_auth_display_name = ""
 ```
 
@@ -394,7 +395,7 @@ NetworkClient.send_raw_packet(packet)
 
 The lifecycle layer does not validate the token, assign account identity, or enforce authorization. It only sends the authenticate request packet when an auth token is available.
 
-The websocket authenticate result is received through the inbound packet dispatch path and cached by `ClientConnectionService`. That result handling is mentioned here only because close handling clears the cached identity.
+The websocket authenticate result is received through the inbound packet dispatch path and cached by `ClientConnectionService`. `websocket_auth_user_id` is an integer cache using `NO_WEBSOCKET_AUTH_USER_ID` (`-1`) for no accepted identity, not `null`. An `authenticate_result` contributes an identity only when `authenticated` is `true` and `user_id` is an actual integer; missing, string, float, or unauthenticated values use the sentinel. That result handling is mentioned here only because close handling clears the cached identity.
 
 ### Signals
 
@@ -485,9 +486,8 @@ Related tests:
 ```text
 client/tests/unit/test_packet_codec.gd
 client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd
+client/tests/unit/test_client_connection_service.gd
 ```
-
-Important adjacent implementation files:
 
 ```text
 client/scripts/networking/inbound/server_packet_dispatcher.gd
@@ -503,6 +503,8 @@ The adjacent files are listed to show handoff boundaries. They do not belong to 
 Packet codec behavior is covered by `client/tests/unit/test_packet_codec.gd`.
 
 `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` covers connection-scoped pipeline reset and replacement of the router-owned realtime protocol state.
+
+`client/tests/unit/test_client_connection_service.gd` covers accepted integer websocket auth identities, malformed or unauthenticated results using `NO_WEBSOCKET_AUTH_USER_ID`, and close resetting the identity to the sentinel.
 
 Those tests cover:
 
@@ -547,7 +549,7 @@ A successful WebSocket connection is only transport readiness. Authentication, r
 
 `NetworkClient` records packet decode and encode failures in runtime metrics and reports them through structured `ClientLogger.network_event(...)` calls, but this document does not own the logger implementation details.
 
-`ClientConnectionService.reset_realtime_session()` preserves the `RealtimePacketPipeline` object identity while resetting its state, closing and clearing the active `RealtimeTransportSession`, and updating `ClientInboundCoordinator` with a null transport-session reference.
+`ClientConnectionService.reset_realtime_session()` preserves the `RealtimePacketPipeline` object identity while resetting its state, closing and clearing the active `RealtimeTransportSession`, and updating `ClientInboundCoordinator` with a null transport-session reference. Its websocket auth user-id cache uses the integer `NO_WEBSOCKET_AUTH_USER_ID` (`-1`) rather than `null` when no identity is accepted.
 
 `SessionNetworkController` still uses text-helper logging for some connection and packet parse lifecycle messages through its configured logger callable.
 
