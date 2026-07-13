@@ -7,22 +7,22 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	pickupentities "github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func TestDebugInvincibleToggleCanBeDisabled(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInvincible,
 	})
 	if !scenario.playerInvincible(playerID) {
 		t.Fatal("expected first toggle to make player invincible")
 	}
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInvincible,
 	})
 	if scenario.playerInvincible(playerID) {
@@ -35,7 +35,7 @@ func TestDebugInvincibleAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInvincible,
 	})
 	if !scenario.playerInvincible(playerA) {
@@ -45,7 +45,7 @@ func TestDebugInvincibleAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 		t.Fatal("expected setup to keep player B vulnerable")
 	}
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeToggleDebugInvincible,
 		TargetScope: "all_players",
 	})
@@ -57,7 +57,7 @@ func TestDebugInvincibleAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 		t.Fatal("expected all-players invincible toggle to affect player B")
 	}
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeToggleDebugInvincible,
 		TargetScope: "all_players",
 	})
@@ -74,25 +74,25 @@ func TestDebugStatusReflectsDebugToggles(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	initial := devtools.StatusFor(scenario.game, playerID)
+	initial := devtools.StatusFor(scenario.control, playerID)
 	if initial.Invincible || initial.InfiniteLives || initial.WorldFrozen || initial.PlayerFrozen {
 		t.Fatalf("expected initial debug status to be false, got %+v", initial)
 	}
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInvincible,
 	})
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInfiniteLives,
 	})
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezePlayer,
 	})
 
-	status := devtools.StatusFor(scenario.game, playerID)
+	status := devtools.StatusFor(scenario.control, playerID)
 	if !status.Invincible {
 		t.Fatal("expected debug status to report invincible")
 	}
@@ -111,16 +111,16 @@ func TestDebugStatusReportsGranularWorldFreezeFlags(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "asteroids",
 	})
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "collisions",
 	})
 
-	status := devtools.StatusFor(scenario.game, playerID)
+	status := devtools.StatusFor(scenario.control, playerID)
 	if !status.AsteroidsFrozen {
 		t.Fatal("expected debug status to report asteroids frozen")
 	}
@@ -145,7 +145,7 @@ func TestDebugInvinciblePlayerDoesNotDieFromAsteroidCollision(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInvincible,
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
@@ -165,14 +165,14 @@ func TestDebugInfiniteLivesToggleCanBeDisabled(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInfiniteLives,
 	})
 	if !scenario.playerInfiniteLives(playerID) {
 		t.Fatal("expected first toggle to enable infinite lives")
 	}
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInfiniteLives,
 	})
 	if scenario.playerInfiniteLives(playerID) {
@@ -185,7 +185,7 @@ func TestDebugInfiniteLivesAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInfiniteLives,
 	})
 	if !scenario.playerInfiniteLives(playerA) {
@@ -195,7 +195,7 @@ func TestDebugInfiniteLivesAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 		t.Fatal("expected setup to keep player B finite")
 	}
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeToggleDebugInfiniteLives,
 		TargetScope: "all_players",
 	})
@@ -207,7 +207,7 @@ func TestDebugInfiniteLivesAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 		t.Fatal("expected all-players infinite lives toggle to affect player B")
 	}
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeToggleDebugInfiniteLives,
 		TargetScope: "all_players",
 	})
@@ -227,7 +227,7 @@ func TestDebugInfiniteLivesPlayerDiesWithoutLosingLife(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugInfiniteLives,
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
@@ -279,7 +279,7 @@ func TestDebugFreezeWorldToggleCanBeDisabled(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	if !scenario.worldFrozen() {
@@ -298,7 +298,7 @@ func TestDebugFreezeWorldToggleCanBeDisabled(t *testing.T) {
 		t.Fatal("expected first toggle to freeze collisions")
 	}
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	if scenario.worldFrozen() {
@@ -323,37 +323,37 @@ func TestDebugFreezePlayerAllPlayersToggleAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezePlayer,
 	})
-	if !devtools.StatusFor(scenario.game, playerA).PlayerFrozen {
+	if !devtools.StatusFor(scenario.control, playerA).PlayerFrozen {
 		t.Fatal("expected setup to freeze player A")
 	}
-	if devtools.StatusFor(scenario.game, playerB).PlayerFrozen {
+	if devtools.StatusFor(scenario.control, playerB).PlayerFrozen {
 		t.Fatal("expected setup to keep player B unfrozen")
 	}
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeToggleDebugFreezePlayer,
 		TargetScope: "all_players",
 	})
 
-	if !devtools.StatusFor(scenario.game, playerA).PlayerFrozen {
+	if !devtools.StatusFor(scenario.control, playerA).PlayerFrozen {
 		t.Fatal("expected all-players freeze player toggle to affect player A")
 	}
-	if !devtools.StatusFor(scenario.game, playerB).PlayerFrozen {
+	if !devtools.StatusFor(scenario.control, playerB).PlayerFrozen {
 		t.Fatal("expected all-players freeze player toggle to affect player B")
 	}
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeToggleDebugFreezePlayer,
 		TargetScope: "all_players",
 	})
 
-	if devtools.StatusFor(scenario.game, playerA).PlayerFrozen {
+	if devtools.StatusFor(scenario.control, playerA).PlayerFrozen {
 		t.Fatal("expected second all-players freeze player toggle to unfreeze player A")
 	}
-	if devtools.StatusFor(scenario.game, playerB).PlayerFrozen {
+	if devtools.StatusFor(scenario.control, playerB).PlayerFrozen {
 		t.Fatal("expected second all-players freeze player toggle to unfreeze player B")
 	}
 }
@@ -362,7 +362,7 @@ func TestDebugFreezeWorldFromPartialFreezeEnablesAllFlags(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "asteroids",
 	})
@@ -373,7 +373,7 @@ func TestDebugFreezeWorldFromPartialFreezeEnablesAllFlags(t *testing.T) {
 		t.Fatal("expected asteroid-only freeze not to mark world as fully frozen")
 	}
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	if !scenario.worldFrozen() {
@@ -403,7 +403,7 @@ func TestDebugFrozenWorldDoesNotMoveAsteroids(t *testing.T) {
 		1,
 	)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	scenario.step(1)
@@ -430,7 +430,7 @@ func TestDebugFreezeAsteroidsOnlyStopsAsteroidMovement(t *testing.T) {
 		physics.Vector2{X: 80, Y: 40},
 	)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "asteroids",
 	})
@@ -474,7 +474,7 @@ func TestDebugFrozenWorldDoesNotMoveOrExpireBullets(t *testing.T) {
 	)
 	startLife := scenario.bulletLife("bullet-1")
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	scenario.step(startLife + 1)
@@ -502,7 +502,7 @@ func TestDebugFreezeBulletsOnlyStopsBulletMovementAndExpiry(t *testing.T) {
 	)
 	startLife := scenario.bulletLife("bullet-1")
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "bullets",
 	})
@@ -539,7 +539,7 @@ func TestDebugFrozenWorldDoesNotSpawnBullets(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	scenario.send(playerID, servergame.ClientPacket{
@@ -558,7 +558,7 @@ func TestDebugFrozenWorldDoesNotSpawnAsteroids(t *testing.T) {
 	playerID := scenario.addPlayer()
 	scenario.setAsteroidSpawnElapsed(constants.AsteroidSpawnInterval)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	scenario.step(constants.AsteroidSpawnInterval)
@@ -576,7 +576,7 @@ func TestDebugFreezeSpawningOnlyStopsAsteroidSpawning(t *testing.T) {
 	playerID := scenario.addPlayer()
 	scenario.setAsteroidSpawnElapsed(constants.AsteroidSpawnInterval)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "spawning",
 	})
@@ -609,7 +609,7 @@ func TestDebugFreezeSpawnsAliasFreezesSpawning(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "spawns",
 	})
@@ -635,7 +635,7 @@ func TestDebugFreezeUnknownTargetDoesNotChangeFreezeFlags(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "bogus",
 	})
@@ -664,7 +664,7 @@ func TestDebugFrozenWorldDoesNotRunShipAsteroidCollisions(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
@@ -687,7 +687,7 @@ func TestDebugFreezeCollisionsOnlyStopsCollisionConsequences(t *testing.T) {
 	player := scenario.playerState(playerID, playerID)
 	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: player.X, Y: player.Y}, 1)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "collisions",
 	})
@@ -728,7 +728,7 @@ func TestDebugFrozenWorldDoesNotRunBulletAsteroidCollisionsOrScore(t *testing.T)
 	scenario.placeBullet("bullet-1", playerID, position, physics.Vector2{})
 	scenario.placeAsteroid("asteroid-1", position, 1)
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
 	})
 	scenario.step(1.0 / float64(constants.ServerTickRate))
@@ -754,7 +754,7 @@ func TestDebugKillPlayerMarksDespawnQueuesDeathAndReducesLives(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeDebugKillPlayer,
 	})
 
@@ -789,7 +789,7 @@ func TestDebugKillPlayerCanKillAnotherActivePlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:           devtools.PacketTypeDebugKillPlayer,
 		TargetPlayerID: playerB,
 	})
@@ -822,7 +822,7 @@ func TestDebugKillPlayerAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugKillPlayer,
 		TargetScope: "all_players",
 	})
@@ -840,7 +840,7 @@ func TestDebugSetScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugSetScore,
 		TargetScope: "all_players",
 		Score:       44,
@@ -858,8 +858,7 @@ func TestSetPlayerScoreExportsSessionOwnedScoreInSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	change := scenario.game.SetPlayerScore(playerID, 37)
-	if !change.Found {
+	if !scenario.control.SetPlayerScore(playerID, 37) {
 		t.Fatalf("expected SetPlayerScore to find player %q", playerID)
 	}
 
@@ -873,8 +872,7 @@ func TestSetPlayerLivesExportsSessionOwnedLivesInSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	change := scenario.game.SetPlayerLives(playerID, 6)
-	if !change.Found {
+	if !scenario.control.SetPlayerLives(playerID, 6) {
 		t.Fatalf("expected SetPlayerLives to find player %q", playerID)
 	}
 
@@ -896,12 +894,12 @@ func TestDebugAddScoreAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugSetScore,
 		TargetScope: "all_players",
 		Score:       10,
 	})
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugAddScore,
 		TargetScope: "all_players",
 		Amount:      6,
@@ -920,7 +918,7 @@ func TestDebugSetLivesAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugSetLives,
 		TargetScope: "all_players",
 		Lives:       7,
@@ -939,12 +937,12 @@ func TestDebugAddLivesAllPlayersAppliesToEveryPlayer(t *testing.T) {
 	playerA := scenario.addPlayer()
 	playerB := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugSetLives,
 		TargetScope: "all_players",
 		Lives:       3,
 	})
-	devtools.HandleCommand(scenario.game, playerA, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerA, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugAddLives,
 		TargetScope: "all_players",
 		Amount:      2,
@@ -968,7 +966,7 @@ func TestDebugRespawnPlayerAllPlayersRespawnsEligiblePlayersAndIgnoresActivePlay
 	scenario.removePlayerEntity(respawnEligiblePlayerID)
 	scenario.setSessionSpawnPosition(respawnEligiblePlayerID, respawnPosition)
 
-	devtools.HandleCommand(scenario.game, activePlayerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, activePlayerID, devtools.DebugCommand{
 		Type:        devtools.PacketTypeDebugRespawnPlayer,
 		TargetScope: "all_players",
 	})
@@ -1003,7 +1001,7 @@ func TestDebugSpawnPickupCreatesPickup(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	ok := devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	ok := devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:       devtools.PacketTypeDebugSpawnPickup,
 		PickupType: "1_up",
 		X:          123,
@@ -1022,7 +1020,7 @@ func TestDebugSpawnPickupUsesRequestedPosition(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:       devtools.PacketTypeDebugSpawnPickup,
 		PickupType: "1_up",
 		X:          321,
@@ -1048,7 +1046,7 @@ func TestDebugSpawnPickupRejectsUnknownPickupType(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	ok := devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	ok := devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:       devtools.PacketTypeDebugSpawnPickup,
 		PickupType: "unknown",
 		X:          11,

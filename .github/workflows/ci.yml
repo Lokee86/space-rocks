@@ -5,30 +5,74 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  client-tests:
-    name: Client GUT tests
+  repository-checks:
+    name: Repository checks
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install Python tooling
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run repository checks
+        run: bash tools/ci/run_repo_checks.sh
 
+  go-tests:
+    name: Go tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: services/game-server/go.mod
+      - name: Run Go tests
+        run: bash tools/ci/run_go_tests.sh
+
+  client-tests:
+    name: Client GUT tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Install Xvfb
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: 4.4.1
+          version: 4.6.3
           use-dotnet: false
           include-templates: false
-
       - name: Verify Godot
         run: godot --version
-
-      - name: Import client project
-        run: godot --headless --path client --import --quit
-
-      - name: Run GUT unit tests
-        run: godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
+      - name: Run client checks
+        env:
+          GODOT_ARTIFACT_DIR: ${{ runner.temp }}/godot-artifacts
+          GODOT_REQUIRE_XVFB: '1'
+        run: bash tools/ci/run_client_tests.sh
+      - name: Upload Godot logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-logs-${{ github.run_id }}
+          path: ${{ runner.temp }}/godot-artifacts
+          if-no-files-found: warn

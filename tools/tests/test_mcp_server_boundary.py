@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -41,8 +42,9 @@ def test_hermes_tools_allow_hermes_cli_args_but_not_general_shells() -> None:
     # spawn is used for child process execution
     assert "spawn" in text
 
-    # exec is NOT used (must use spawn, not exec)
-    assert "exec" not in text
+    # General exec wrappers are forbidden, but the bounded executable lookup is allowed.
+    assert "execFileSync" in text
+    assert re.search(r"\bexec\s*\(", text) is None
 
     # shell: false is required for Hermes CLI execution
     assert "shell: false" in text

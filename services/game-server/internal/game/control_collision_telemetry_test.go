@@ -12,9 +12,9 @@ import (
 func TestControlCollisionBodiesByKindGroupsAuthoritativeCollisionBodies(t *testing.T) {
 	gameInstance := New()
 	gameInstance.collisionShapes = physics.CollisionShapeCatalog{
-		Bullet: physics.ImportedCollisionShape{Name: "bullet", Type: "circle", Radius: 3},
+		Bullet:  physics.ImportedCollisionShape{Name: "bullet", Type: "circle", Radius: 3},
 		Pickups: map[string]physics.ImportedCollisionShape{"powerup": {Name: "powerup", Type: "circle", Radius: 3}},
-		Ship: physics.ImportedCollisionShape{Name: "ship", Type: "rectangle", Size: []float64{4, 2}},
+		Ship:    physics.ImportedCollisionShape{Name: "ship", Type: "rectangle", Size: []float64{4, 2}},
 	}
 
 	gameInstance.entities.Players["player-1"] = &runtime.Ship{ID: "player-1", X: 10, Y: 20, Rotation: math.Pi / 2}
@@ -45,7 +45,7 @@ func TestControlCollisionBodiesByKindGroupsAuthoritativeCollisionBodies(t *testi
 	if got := bodies["player"][0].Shape.Type; got != "rectangle" {
 		t.Fatalf("expected player shape %q, got %q", "rectangle", got)
 	}
-	if len(bodies["player"][0].Shape.Points) != 4 {
-		t.Fatalf("expected raw player outline points, got %d", len(bodies["player"][0].Shape.Points))
+	if got := bodies["player"][0].Shape.Size; got.X != 4 || got.Y != 2 {
+		t.Fatalf("expected player rectangle size (4, 2), got %+v", got)
 	}
 }

@@ -23,7 +23,13 @@ lives
 
 Both counters are stored on `playerSession`, not on the live `runtime.Ship` avatar. The live ship owns movement, health, shields, weapons, input, targeting, invulnerability, and despawn state. The player session owns durable per-match player state that must survive live ship removal and respawn.
 
-The core mutation seam is:
+The normal Game mutation/result owner is:
+
+```text
+services/game-server/internal/game/player_counters.go
+```
+
+The presentation-visible Control adapter is:
 
 ```text
 services/game-server/internal/game/control_counters.go
@@ -38,7 +44,7 @@ SetPlayerLives
 AddPlayerLives
 ```
 
-Control counter methods delegate to the normal game counter methods and return the `Found` result. Each operation returns a `PlayerCounterChange` describing whether the player session was found, the previous value, the updated value, and the delta.
+Direct Game Set/Add methods return a `PlayerCounterChange` describing whether the player session was found, the previous value, the updated value, and the delta. They do not promise immediate presentation-frame publication. The Control adapter locks the game, uses the locked counter helpers, and republishes the immutable presentation frame only when a found counter actually changes; it returns the `Found` result.
 
 Counter values are clamped at zero. Negative set values become zero, and negative add operations cannot reduce a counter below zero.
 
@@ -74,7 +80,7 @@ Player counters own:
 * Returning `PlayerCounterChange` results for callers that need mutation feedback.
 * Keeping score and lives on `playerSession`.
 * Projecting score and lives through session lane and overlay lane readback.
-* Control counter methods delegate to the normal game counter methods and return the `Found` result.
+* Presentation-visible Control adapters lock, mutate through locked helpers, and republish only for found changes.
 * Supplying score and deaths to match-result summary facts.
 * Providing narrow game-owned devtools adapters for score/lives mutation commands through `control_counters.go`.
 
@@ -367,7 +373,7 @@ Control.SetPlayerLives
 Control.AddPlayerLives
 ```
 
-Those adapters delegate directly to the same public counter methods used by non-devtools setup and tests.
+Those adapters publish the presentation frame when a found counter changes. Direct Game methods remain the mutation/result seam for callers and tests that do not need immediate presentation publication.
 
 The devtools package resolves command targets and decides whether a debug command targets one player or all players. The game counter seam only mutates the requested player sessions.
 
@@ -465,6 +471,7 @@ Player counters must preserve these rules:
 Primary implementation files:
 
 ```text
+services/game-server/internal/game/player_counters.go
 services/game-server/internal/game/control_counters.go
 services/game-server/internal/game/session.go
 services/game-server/internal/game/scoring.go
@@ -488,7 +495,6 @@ services/game-server/internal/game/pickups/collection.go
 Devtools adapters and command handlers:
 
 ```text
-services/game-server/internal/game/control_counters.go
 services/game-server/internal/game/control_counters.go
 services/game-server/internal/devtools/player_counters.go
 ```
@@ -521,6 +527,8 @@ services/game-server/internal/game/pickup_effects_test.go
 services/game-server/internal/rooms/room_match_summary_test.go
 ```
 
+`player_counters_test.go` covers direct Game mutation results, including `Found` and `After`. Control-backed tests in the game and devtools suites cover presentation snapshots and therefore use the publishing Control seam.
+
 Important non-ownership boundaries:
 
 ```text
@@ -528,7 +536,6 @@ services/game-server/internal/game/scoring/
 services/game-server/internal/game/damage/
 services/game-server/internal/game/pickups/
 services/game-server/internal/game/weapons/
-services/game-server/internal/game/control_counters.go
 services/game-server/internal/devtools/
 services/game-server/internal/rooms/
 services/game-server/internal/networking/
@@ -588,7 +595,7 @@ Devtools tests cover:
 * debug add score for all players
 * debug set lives for all players
 * debug add lives for all players
-* direct counter seam updates appearing in lane packets
+* Control-backed counter mutations appearing in published presentation snapshots and lane projection
 * infinite lives allowing death without reducing lives
 
 Match-result tests cover:

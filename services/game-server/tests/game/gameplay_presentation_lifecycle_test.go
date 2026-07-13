@@ -15,6 +15,7 @@ func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllPlayers(t *tes
 	scenario.removePlayerEntity(pendingPlayerID)
 	scenario.setPlayerLives(eliminatedPlayerID, 0)
 	scenario.removePlayerEntity(eliminatedPlayerID)
+	scenario.step(0)
 
 	snapshot := scenario.presentationSnapshot(activePlayerID)
 

@@ -163,6 +163,8 @@ respawn packet
 
 `Game.HandlePacket` handles `respawn` before active-ship lookup because a valid respawn request normally arrives while the player has no active ship.
 
+Normal respawn through `Game.HandlePacket` mutates authoritative state immediately, but it has no dedicated success event. The recreated ship and active lifecycle become visible in the next published presentation frame, normally the next `Game.Step`. Request/lifecycle tests must explicitly advance publication before asserting presentation snapshots.
+
 `session.CanRespawn()` is true only when:
 
 ```text
@@ -226,6 +228,8 @@ respawn ship radius + blocker radius + PlayerRespawnBuffer
 ```
 
 The distance check uses toroidal world distance, so hazards near one world edge can block respawn candidates near the opposite edge.
+
+`Control.SafeRespawnPosition` is the direct read-only policy seam for placement-focused tests. It returns the selected position and a success boolean without requiring a respawn request or presentation snapshot. `Control.ForceRespawnPlayer` is the publishing devtools mutation seam for tests and commands that need to create a respawned ship and publish the resulting state.
 
 Collision-shape radius is approximated by shape type:
 
@@ -421,6 +425,8 @@ Important non-ownership boundaries:
   client gameplay/HUD code owns respawn presentation only.
 
 ## Tests
+
+Respawn placement policy tests should call `Control.SafeRespawnPosition` directly and check its success boolean before asserting buffer and wrap-boundary behavior. Request/lifecycle tests should use the normal respawn packet path and explicitly advance the simulation before reading presentation snapshots.
 
 Useful verification from `services/game-server/`:
 

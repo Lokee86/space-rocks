@@ -181,7 +181,7 @@ func TestGameplayPresentationSnapshotIncludesSpawnedPickups(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	spawnedPickup, ok, err := scenario.game.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 12, Y: 34})
+	spawnedPickup, ok, err := scenario.control.SpawnPickup(pickups.TypeOneUp, physics.Vector2{X: 12, Y: 34})
 	if err != nil {
 		t.Fatalf("expected pickup spawn to succeed, got error %v", err)
 	}
@@ -293,7 +293,7 @@ func TestPickupCollisionRespectsFreezeCollisions(t *testing.T) {
 	}
 
 	scenario.useCircleCollisionShapes()
-	devtools.HandleCommand(scenario.game, playerID, devtools.DebugCommand{
+	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
 		FreezeTarget: "collisions",
 	})
