@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/diagnostics"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
 )
 
 func testReport() diagnostics.DiagnosticReport {

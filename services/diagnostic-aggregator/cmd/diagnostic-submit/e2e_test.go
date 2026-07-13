@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/diagnosticapi"
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/diagnostics"
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/events"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnosticapi"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/events"
 )
 
 type e2eReportService struct {

@@ -11,8 +11,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/diagnosticapi"
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/diagnostics"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnosticapi"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
 )
 
 var (
