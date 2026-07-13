@@ -119,12 +119,9 @@ def test_invalid_constant_name_fails(generator) -> None:
     "generator",
     [
         go_constants.generate_constants,
-        gds_constants.generate_constants,
         ts_constants.generate_constants,
     ],
 )
 def test_unsupported_value_type_fails(generator) -> None:
-    if generator is gds_constants.generate_constants:
-        pytest.skip("GDScript supports Vector2 list values")
     with pytest.raises(ConstantsGenerationError):
         generator("constants.bad", (("vector_value", [1.0, 2.0]),))
