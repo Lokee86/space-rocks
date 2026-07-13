@@ -23,6 +23,12 @@ Use these rules to decide where a change belongs before editing. They govern own
 - Do not include unrelated cleanup, formatting churn, opportunistic refactors, or package/folder moves.
 - Generated/schema changes and scene/signal rewiring must be explicitly in scope.
 
+### Co-hosted service dependency invariant
+
+Process co-hosting permits composition-root construction, registration, and closure only. It does not permit service reach-through or imports from another service's domain or runtime packages. For diagnostic-aggregator, only the game-server composition-root adapter may import the public `services/diagnostic-aggregator/hosted` package. Game-server internal packages and all player-data packages must not import any diagnostic-aggregator package.
+
+Adding a diagnostic dependency to gameplay, networking, rooms, match reporting, player-data runtime/store code, or their constructors is an architecture violation. Stop and report rather than implementing that dependency. Use the transport/API boundary described in [Game-server Diagnostic-Aggregator Hosting](../services/game-server/integrations/diagnostic-aggregator-hosting.md). This invariant does not claim that an automated import guard currently exists.
+
 ### High-risk seam verification
 
 New seams at trust-sensitive boundaries require explicit verification expectations before the seam is considered complete. This includes networking, session and lifecycle ownership, world synchronization, authentication and identity, protocol or schema handling, authoritative simulation, persistence, and similar boundaries where a bypass can invalidate correctness or safety.

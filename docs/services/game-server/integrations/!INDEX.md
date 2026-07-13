@@ -20,6 +20,7 @@ This folder owns external-service integration points used by the game server.
 <!-- doc-ledger:files:start -->
 
 - [auth-verifier-integration.md](auth-verifier-integration.md) - Game-server API token verification integration documentation.
+- [diagnostic-aggregator-hosting.md](diagnostic-aggregator-hosting.md) - Temporary game-server process co-hosting and dependency boundaries for diagnostic-aggregator.
 - [match-result-reporting.md](match-result-reporting.md) - Game-server match result reporting documentation.
 - [player-data-http-hosting.md](player-data-http-hosting.md) - Game-server player-data HTTP hosting documentation.
 <!-- doc-ledger:files:end -->

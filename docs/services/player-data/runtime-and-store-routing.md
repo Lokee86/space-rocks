@@ -16,6 +16,12 @@ The current HTTP surface is co-hosted in the game-server executable/process. The
 
 The current direct runtime sink is temporary architectural debt. `RuntimeReporter` calls `RuntimeSink`, which invokes `playerdata.Runtime.Handle` in-process; this bypasses the service transport boundary and makes separation require replacing a direct call path. It is not the intended final seam and is not evidence that player-data is a game-server subsystem.
 
+## Diagnostic-Aggregator Non-Ownership Boundary
+
+Player-data does not host, import, call, persist for, or reach through to diagnostic-aggregator. Every player-data package must not import any diagnostic-aggregator package. Player-data must not receive diagnostic handlers, application services, report stores, or diagnostic-aggregator internal types through constructors, and must not call them directly.
+
+Player-data may eventually produce a bounded diagnostic report only through an outbound client/transport implementation of the diagnostic-report HTTP API. That optional diagnostic path is outside player-data persistence and behavior: a diagnostic transport or API failure must not affect player-data behavior or persistence. Current configuration defaults and producer integration are unchanged by this boundary.
+
 The runtime routes three identity kinds:
 
 | Identity kind           | Runtime route | Backing behavior                                                                                                         |
@@ -202,7 +208,7 @@ The dispatcher applies this validation to encoded `player_data_load_stats` and `
 
 Direct runtime methods such as `LoadStats`, `ListLocalProfiles`, and `CreateLocalProfile` do not receive a play-mode context. They rely on the caller or HTTP handler to resolve the identity and request shape before calling the runtime.
 
-## Runtime surfaces
+## Protocols and APIs
 
 ### Encoded packet surface
 
@@ -539,6 +545,7 @@ Current verified behavior includes:
 * [Player Data](./!INDEX.md)
 * [Game Server Player Data HTTP Hosting](../game-server/integrations/player-data-http-hosting.md)
 * [Game Server Match Result Reporting](../game-server/integrations/match-result-reporting.md)
+* [Game-server diagnostic-aggregator hosting](../game-server/integrations/diagnostic-aggregator-hosting.md)
 * [API Server Player Stats And Match Results](../api-server/player-stats-and-match-results.md)
 * [Platform Account And Identity Current State](../../domains/platform/account-and-identity-current-state.md)
 * [Trust And Eligibility Policy](../../domains/platform/security-and-admin/trust-and-eligibility-policy.md)

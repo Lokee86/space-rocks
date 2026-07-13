@@ -16,7 +16,7 @@ This doc keeps product logging, diagnostic-report intake, and redaction policy a
 
 Active planning.
 
-## Ownership Boundary
+## Ownership boundary
 
 This doc owns planning for:
 
@@ -118,6 +118,8 @@ Diagnostic-aggregator failure must not break gameplay. It should degrade diagnos
 ### Delivery Expectations
 
 Future service integrations must use bounded queues or submissions, small payloads, short timeouts, background delivery where appropriate, and local failure accounting. No simulation-critical path may make a synchronous call to the diagnostic aggregator. Delivery failure is observable, but must remain non-blocking and must degrade diagnostics rather than gameplay.
+
+The producer boundary is explicit: future game-server and player-data producers must use a bounded, non-blocking diagnostic client/transport and the diagnostic-report HTTP API. They must never import or call diagnostic handlers, application services, or report storage directly, including through constructor-injected diagnostic service objects. Diagnostic failure degrades diagnostics only; it must not affect gameplay or player-data persistence.
 
 The immediate Stage 2 baseline is hosted end-to-end operation: the game-server composition root loads the disabled-by-default hosted configuration, registers the diagnostic routes on the shared server, and owns process shutdown while diagnostic-aggregator owns report processing and storage. Client/API upload integration, production-scale dashboards, alerting, OpenTelemetry-style tracing, and continuous multi-instance collection remain deferred. Centralized collectors/search platforms such as Alloy/Loki/Grafana should remain deferred until continuous multi-instance operations justify them.
 

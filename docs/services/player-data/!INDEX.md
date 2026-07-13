@@ -8,6 +8,10 @@ Player-data service documentation lives here.
 
 This folder owns docs for the player-data service runtime and its implementation responsibility.
 
+## Permanent Non-Ownership And Dependency Rule
+
+Player-data does not host, import, call, persist for, or reach through to diagnostic-aggregator. It must not import any diagnostic-aggregator package or receive diagnostic handlers, services, stores, or internal types through its constructors. Any future bounded diagnostic report produced by player-data must use an outbound client/transport seam for the diagnostic-report HTTP API; failure on that optional path must not affect player-data behavior or persistence.
+
 ## Does Not Belong
 
 - Domain flow docs.
@@ -32,6 +36,7 @@ This folder owns docs for the player-data service runtime and its implementation
 ## Related Docs
 
 - [Services index](../!INDEX.md)
+- [Game-server diagnostic-aggregator hosting](../game-server/integrations/diagnostic-aggregator-hosting.md)
 
 ## Notes
 

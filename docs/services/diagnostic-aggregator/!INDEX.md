@@ -10,6 +10,12 @@ The diagnostic-aggregator owns diagnostic-report route registration, bearer auth
 
 The game-server composition root owns the HTTP mux, listener, shared server address, process signals, server shutdown, and the hosted service lifecycle. Co-hosting must not make gameplay, networking, or domain code depend on diagnostic implementation details.
 
+## Permanent Dependency Boundary
+
+Co-hosting permits only composition-root construction, registration, and closure of the hosted diagnostic-aggregator service. The sole external Go import is the game-server composition adapter importing the public `services/diagnostic-aggregator/hosted` package.
+
+Game-server internal/runtime/domain packages and every player-data package must not import any diagnostic-aggregator package. Game-server and player-data code must submit or retrieve reports only through a transport/client implementation of the diagnostic-report HTTP API, never through handler, application-service, or report-store calls. Diagnostic handlers, services, stores, and internal types must not be passed into game-server or player-data constructors.
+
 ## Hosted Configuration
 
 Hosted operation is disabled by default. Configuration is loaded from:
@@ -49,6 +55,7 @@ Future detachment should replace only process composition and addressing. Report
 ## Related Docs
 
 - [Services index](../!INDEX.md)
+- [Game-server diagnostic-aggregator hosting](../game-server/integrations/diagnostic-aggregator-hosting.md)
 - [Observability planning](../../planning/domains/technical/observability-logging-and-diagnostics.md)
 
 ## Notes
