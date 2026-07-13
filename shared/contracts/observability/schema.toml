@@ -1,0 +1,71 @@
+[schema]
+name = "observability"
+version = 1
+description = "Canonical observability event contract shared by Space Rocks services and clients."
+format = "toml"
+
+[envelope]
+name = "canonical_event"
+version = 1
+description = "Stable event envelope for structured logs, diagnostics, and audit records."
+required_fields = [
+  "event_id",
+  "timestamp",
+  "level",
+  "event",
+  "service",
+  "schema_version",
+  "service_instance_id"
+]
+optional_fields = [
+  "environment",
+  "build_version",
+  "category",
+  "message",
+  "trace_id",
+  "request_id",
+  "session_id",
+  "room_id",
+  "match_id",
+  "player_id",
+  "account_id",
+  "route",
+  "packet_type",
+  "error_code",
+  "failure_mode",
+  "duration_ms",
+  "degraded_state",
+  "idempotency_key",
+  "diagnostic_report_id",
+  "batch_id",
+  "source_event_id",
+  "source_service",
+  "source_service_instance_id",
+  "worker_id",
+  "process_id",
+  "audit_required",
+  "audit_type",
+  "actor_id",
+  "actor_type",
+  "target_type",
+  "target_id",
+  "action",
+  "reason_code",
+  "case_id",
+  "transaction_id",
+  "result_id",
+  "audit_event_id",
+  "fields"
+]
+
+[validation]
+unknown_fields = "rejected"
+field_names = "snake_case"
+event_specific_fields_key = "fields"
+event_specific_fields_type = "object"
+
+[[validation.conditional_requirement]]
+when_field = "audit_required"
+when_value = true
+requires_field = "audit_type"
+description = "Audit-required events must declare an audit type."

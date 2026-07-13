@@ -1,0 +1,281 @@
+[catalog]
+name = "observability_events"
+contract_version = 1
+description = "Stage 1 observability event catalog for aggregation, diagnostics, audit, and delivery."
+context_semantics = "required_context_fields are additional requirements beyond the canonical envelope."
+optional_context_semantics = "optional_context_fields are recommended event context, not an exhaustive allowlist; any canonical optional envelope field remains allowed."
+
+[[event]]
+name = "service_starting"
+description = "Service initialization has begun."
+category = "lifecycle"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["environment", "build_version"]
+aggregation_eligible = true
+
+[[event]]
+name = "service_started"
+description = "Service initialization completed successfully."
+category = "lifecycle"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["environment", "build_version", "duration_ms"]
+aggregation_eligible = true
+
+[[event]]
+name = "service_ready"
+description = "Service is ready to accept operational traffic."
+category = "lifecycle"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["environment", "build_version"]
+aggregation_eligible = true
+
+[[event]]
+name = "service_stopping"
+description = "Service shutdown has begun."
+category = "lifecycle"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["environment", "reason_code"]
+aggregation_eligible = true
+
+[[event]]
+name = "service_stopped"
+description = "Service shutdown completed."
+category = "lifecycle"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["environment", "duration_ms"]
+aggregation_eligible = true
+
+[[event]]
+name = "service_startup_failed"
+description = "Service initialization failed."
+category = "lifecycle"
+default_level = "critical"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["environment", "failure_mode", "reason_code"]
+aggregation_eligible = true
+
+[[event]]
+name = "configuration_invalid"
+description = "Service configuration failed validation."
+category = "environment"
+default_level = "error"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["environment", "failure_mode"]
+aggregation_eligible = true
+
+[[event]]
+name = "dependency_unavailable"
+description = "A required service dependency is unavailable."
+category = "environment"
+default_level = "error"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["environment", "failure_mode", "duration_ms"]
+aggregation_eligible = true
+
+[[event]]
+name = "environment_degraded"
+description = "The service environment entered a degraded state."
+category = "environment"
+default_level = "warn"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "degraded_state"]
+optional_context_fields = ["environment", "reason_code"]
+aggregation_eligible = true
+
+[[event]]
+name = "environment_recovered"
+description = "The service environment recovered from a degraded state."
+category = "environment"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["environment", "degraded_state", "duration_ms"]
+aggregation_eligible = true
+
+[[event]]
+name = "event_accepted"
+description = "An observability event passed ingestion validation."
+category = "ingestion"
+default_level = "debug"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["source_event_id", "source_service", "source_service_instance_id", "service", "service_instance_id"]
+optional_context_fields = ["trace_id", "request_id", "batch_id", "category", "worker_id", "process_id"]
+aggregation_eligible = false
+
+[[event]]
+name = "event_rejected_invalid_schema"
+description = "An observability event was rejected for schema validation failure."
+category = "ingestion"
+default_level = "warn"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["source_event_id", "source_service", "source_service_instance_id", "batch_id", "failure_mode"]
+aggregation_eligible = false
+
+[[event]]
+name = "event_rejected_unsafe_fields"
+description = "An observability event was rejected for unsafe fields."
+category = "ingestion"
+default_level = "warn"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["source_event_id", "source_service", "source_service_instance_id", "batch_id", "failure_mode"]
+aggregation_eligible = false
+
+[[event]]
+name = "duplicate_event_suppressed"
+description = "A duplicate observability event was suppressed."
+category = "ingestion"
+default_level = "debug"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["source_event_id", "source_service", "source_service_instance_id", "service", "service_instance_id"]
+optional_context_fields = ["trace_id", "request_id", "batch_id", "idempotency_key"]
+aggregation_eligible = false
+
+[[event]]
+name = "aggregation_storage_failed"
+description = "An event could not be persisted for aggregation."
+category = "aggregation"
+default_level = "error"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["source_event_id", "source_service", "source_service_instance_id", "batch_id", "failure_mode"]
+aggregation_eligible = false
+
+[[event]]
+name = "retention_policy_applied"
+description = "A retention policy was applied to stored observability events."
+category = "aggregation"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id"]
+optional_context_fields = ["batch_id", "worker_id", "process_id", "duration_ms", "reason_code"]
+aggregation_eligible = false
+
+[[event]]
+name = "event_grouped_into_diagnostic_chain"
+description = "An event was grouped into a diagnostic correlation chain."
+category = "aggregation"
+default_level = "debug"
+trace_requirement = "required"
+audit_required = false
+required_context_fields = ["event_id", "service", "service_instance_id", "trace_id"]
+optional_context_fields = ["request_id", "diagnostic_report_id"]
+aggregation_eligible = false
+
+[[event]]
+name = "diagnostic_bundle_created"
+description = "A diagnostic bundle was created from aggregated events."
+category = "diagnostics"
+default_level = "info"
+trace_requirement = "required"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "trace_id", "diagnostic_report_id"]
+optional_context_fields = ["request_id", "case_id"]
+aggregation_eligible = false
+
+[[event]]
+name = "diagnostic_bundle_creation_failed"
+description = "A diagnostic bundle could not be created."
+category = "diagnostics"
+default_level = "error"
+trace_requirement = "required"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "trace_id", "error_code"]
+optional_context_fields = ["request_id", "diagnostic_report_id", "failure_mode"]
+aggregation_eligible = false
+
+[[event]]
+name = "audit_grade_record_created"
+description = "An audit-grade record was created successfully."
+category = "audit"
+default_level = "info"
+trace_requirement = "required"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "trace_id", "audit_event_id", "audit_type"]
+optional_context_fields = ["request_id", "actor_id", "actor_type", "target_type", "target_id", "action", "reason_code", "case_id", "transaction_id", "result_id"]
+aggregation_eligible = false
+
+[[event]]
+name = "audit_grade_record_creation_failed"
+description = "An audit-grade record could not be created."
+category = "audit"
+default_level = "error"
+trace_requirement = "required"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "trace_id", "error_code"]
+optional_context_fields = ["request_id", "audit_type", "actor_id", "actor_type", "target_type", "target_id", "action", "reason_code", "case_id", "transaction_id", "result_id", "failure_mode"]
+aggregation_eligible = false
+
+[[event]]
+name = "event_delivery_failed"
+description = "Delivery of an observability event failed."
+category = "delivery"
+default_level = "error"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "source_event_id", "source_service", "source_service_instance_id", "error_code"]
+optional_context_fields = ["batch_id", "failure_mode", "duration_ms", "worker_id", "process_id"]
+aggregation_eligible = true
+
+[[event]]
+name = "event_delivery_recovered"
+description = "Observability event delivery recovered."
+category = "delivery"
+default_level = "info"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "source_event_id", "source_service", "source_service_instance_id"]
+optional_context_fields = ["batch_id", "duration_ms", "worker_id", "process_id"]
+aggregation_eligible = true
+
+[[event]]
+name = "delivery_queue_full"
+description = "The observability delivery queue reached capacity."
+category = "delivery"
+default_level = "warn"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["failure_mode"]
+aggregation_eligible = true
+
+[[event]]
+name = "events_dropped"
+description = "Observability events were dropped before delivery."
+category = "delivery"
+default_level = "error"
+trace_requirement = "optional"
+audit_required = false
+required_context_fields = ["service", "service_instance_id", "error_code"]
+optional_context_fields = ["failure_mode", "reason_code"]
+aggregation_eligible = true

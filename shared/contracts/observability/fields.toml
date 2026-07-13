@@ -1,0 +1,287 @@
+[[field]]
+name = "event_id"
+type = "string"
+required = true
+description = "UUID identifying this individual observability event."
+format = "uuid"
+
+[[field]]
+name = "timestamp"
+type = "string"
+required = true
+description = "Event occurrence time in RFC 3339 format."
+format = "date-time"
+
+[[field]]
+name = "level"
+type = "string"
+required = true
+description = "Operational severity of the event."
+enum = ["debug", "info", "warn", "error", "critical", "fatal"]
+
+[[field]]
+name = "event"
+type = "string"
+required = true
+description = "Stable machine-readable event name."
+pattern = "^[a-z][a-z0-9_]*$"
+
+[[field]]
+name = "service"
+type = "string"
+required = true
+description = "Logical service emitting the event."
+
+[[field]]
+name = "environment"
+type = "string"
+required = false
+description = "Deployment environment of the emitter."
+
+[[field]]
+name = "build_version"
+type = "string"
+required = false
+description = "Build or release identifier of the emitter."
+
+[[field]]
+name = "schema_version"
+type = "integer"
+required = true
+description = "Observability contract version used by this event."
+minimum = 1
+
+[[field]]
+name = "category"
+type = "string"
+required = false
+description = "Operational category for routing and filtering."
+
+[[field]]
+name = "message"
+type = "string"
+required = false
+description = "Concise human-readable event context."
+
+[[field]]
+name = "trace_id"
+type = "string"
+required = false
+description = "UUID correlation identifier for a distributed operation trace."
+format = "uuid"
+
+[[field]]
+name = "service_instance_id"
+type = "string"
+required = true
+description = "UUID identifying the running service instance that emitted the event."
+format = "uuid"
+
+[[field]]
+name = "request_id"
+type = "string"
+required = false
+description = "Existing request correlation identifier; preserve the originating domain format."
+
+[[field]]
+name = "session_id"
+type = "string"
+required = false
+description = "Existing gameplay or connection session identifier; preserve the originating domain format."
+
+[[field]]
+name = "room_id"
+type = "string"
+required = false
+description = "Existing room identifier; preserve the originating domain format."
+
+[[field]]
+name = "match_id"
+type = "string"
+required = false
+description = "Existing match identifier; preserve the originating domain format."
+
+[[field]]
+name = "player_id"
+type = "string"
+required = false
+description = "Existing player-facing identifier; preserve the originating domain format."
+
+[[field]]
+name = "account_id"
+type = "string"
+required = false
+description = "Existing account identifier; preserve the originating domain format."
+
+[[field]]
+name = "route"
+type = "string"
+required = false
+description = "API route, websocket route, or logical operation route when applicable."
+
+[[field]]
+name = "packet_type"
+type = "string"
+required = false
+description = "Packet or message type involved in the event when applicable."
+
+[[field]]
+name = "error_code"
+type = "string"
+required = false
+description = "Stable machine-readable error code when an operation fails."
+
+[[field]]
+name = "failure_mode"
+type = "string"
+required = false
+description = "Concise classification of the failure when applicable."
+
+[[field]]
+name = "duration_ms"
+type = "number"
+required = false
+description = "Elapsed operation duration in milliseconds."
+minimum = 0
+
+[[field]]
+name = "degraded_state"
+type = "string"
+required = false
+description = "Known degraded operating state when applicable."
+
+[[field]]
+name = "idempotency_key"
+type = "string"
+required = false
+description = "Existing idempotency key for a retriable or deduplicated operation; preserve the originating domain format."
+
+[[field]]
+name = "diagnostic_report_id"
+type = "string"
+required = false
+description = "UUID identifying the diagnostic report or bug report associated with the event."
+format = "uuid"
+
+[[field]]
+name = "audit_event_id"
+type = "string"
+required = false
+description = "UUID identifying the audit record for an audit-worthy action."
+format = "uuid"
+
+[[field]]
+name = "batch_id"
+type = "string"
+required = false
+description = "UUID identifying the aggregation or delivery batch."
+format = "uuid"
+
+[[field]]
+name = "source_event_id"
+type = "string"
+required = false
+description = "UUID identifying the source event represented by this meta-event."
+format = "uuid"
+
+[[field]]
+name = "source_service"
+type = "string"
+required = false
+description = "Logical service that produced the source event."
+
+[[field]]
+name = "source_service_instance_id"
+type = "string"
+required = false
+description = "UUID identifying the service instance that produced the source event."
+format = "uuid"
+
+[[field]]
+name = "worker_id"
+type = "string"
+required = false
+description = "Identifier of the worker processing the event."
+
+[[field]]
+name = "process_id"
+type = "integer"
+required = false
+description = "Operating-system process identifier of the event processor."
+minimum = 0
+
+[[field]]
+name = "audit_required"
+type = "boolean"
+required = false
+description = "Whether the event requires an audit record."
+
+[[field]]
+name = "audit_type"
+type = "string"
+required = false
+description = "Stable machine-readable audit classification."
+pattern = "^[a-z][a-z0-9_]*$"
+
+[[field]]
+name = "actor_id"
+type = "string"
+required = false
+description = "Existing identifier of the actor responsible for the action; preserve the originating domain format."
+
+[[field]]
+name = "actor_type"
+type = "string"
+required = false
+description = "Machine-readable type of the actor responsible for the action."
+
+[[field]]
+name = "target_type"
+type = "string"
+required = false
+description = "Machine-readable type of the action target."
+
+[[field]]
+name = "target_id"
+type = "string"
+required = false
+description = "Existing identifier of the action target; preserve the originating domain format."
+
+[[field]]
+name = "action"
+type = "string"
+required = false
+description = "Stable machine-readable action name."
+pattern = "^[a-z][a-z0-9_]*$"
+
+[[field]]
+name = "reason_code"
+type = "string"
+required = false
+description = "Stable machine-readable reason code for the action result."
+pattern = "^[a-z][a-z0-9_]*$"
+
+[[field]]
+name = "case_id"
+type = "string"
+required = false
+description = "Existing identifier of the related case; preserve the originating domain format."
+
+[[field]]
+name = "transaction_id"
+type = "string"
+required = false
+description = "Existing identifier of the related transaction; preserve the originating domain format."
+
+[[field]]
+name = "result_id"
+type = "string"
+required = false
+description = "Existing identifier of the action result; preserve the originating domain format."
+
+[[field]]
+name = "fields"
+type = "object"
+required = false
+description = "Bounded event-specific attributes; no event-specific fields are allowed at the envelope top level."
+additional_properties = true
