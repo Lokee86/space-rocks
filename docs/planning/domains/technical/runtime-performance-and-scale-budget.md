@@ -136,6 +136,16 @@ Contention readers request snapshots continuously and are deliberately harsher t
 
 Revisit this decision when rooms grow larger, sustained entity counts rise, runtime observation shows GC or memory pressure, or snapshot work consumes a material portion of the 16.67 ms tick budget.
 
+### Collision Broad-Phase Measurement Foundation
+
+The implemented collision path now uses a toroidal uniform grid behind the generic `spatial.Index` contract for projectile/asteroid, ship/asteroid, and player/pickup candidate discovery. Exact physics checks remain authoritative after candidate lookup. This removes the direct all-target narrow-phase scan from the current collision handlers, but it does not establish a hard production scale limit or measured multi-room capacity.
+
+`collision_spatial_benchmark_test.go` compares brute-force and spatial candidate paths at 100 asteroids/500 projectiles and 500 asteroids/2,000 projectiles. Each spatial benchmark operation includes one asteroid-index rebuild. No benchmark results are recorded here until the benchmark has been executed in a Go-capable environment; results must be captured from real benchmark output rather than inferred.
+
+The existing `Game.Step` contention benchmark remains separate. It freezes collisions, so it measures aggregate lock contention and basic step work rather than collision broad-phase cost.
+
+The canonical spatial-query ownership and behavior are documented in [Spatial Query Index](../../../services/game-server/simulation/world/spatial-query-index.md).
+
 Exact benchmark commands:
 
 ```bash
@@ -143,6 +153,7 @@ cd services/game-server
 go test ./internal/game -run '^$' -bench '^BenchmarkGameplayPresentationSnapshot$' -benchtime=250ms -count=3
 go test ./internal/game -run '^$' -bench '^BenchmarkGameplayPresentationFramePublication$' -benchtime=250ms -count=3
 go test ./internal/game -run '^$' -bench '^BenchmarkGameStepWithPresentationSnapshotContention$' -benchtime=100ms -count=3
+go test ./internal/game -run '^$' -bench '^BenchmarkProjectileAsteroidCollisionBroadPhase$' -benchtime=250ms -count=3
 ```
 
 Current presentation-frame ownership and publication behavior are documented canonically in [Game Aggregate](../../../services/game-server/simulation/runtime/game-aggregate.md).

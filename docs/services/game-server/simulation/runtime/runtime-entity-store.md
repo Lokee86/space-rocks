@@ -32,6 +32,8 @@ type EntityStore struct {
 
 `services/game-server/internal/game/runtime/`
 
+Spatial lookup is documented in [Toroidal Spatial Query Index](../world/spatial-query-index.md).
+
 ## Responsibilities
 
 The runtime entity store owns:
@@ -94,6 +96,10 @@ The store holds authoritative live entity references for the current match only:
 
 Because these are runtime maps, the store is intentionally mutable and in-memory. It is not a source of persistence, replay, or historical audit data.
 
+Spatial entries, grid buckets, and query deduplication state are transient derived lookup state over these authoritative entity maps. They are not another entity store and do not replace or duplicate the `EntityStore` maps.
+
+Candidate `Ref` values returned by a spatial query are resolved against the current authoritative entity maps before exact collision checks or gameplay consequences are applied.
+
 ## Code map
 
 Core runtime files:
@@ -112,6 +118,8 @@ services/game-server/internal/game/players.go
 services/game-server/internal/game/simulation_players.go
 services/game-server/internal/game/simulation_asteroids.go
 services/game-server/internal/game/simulation_bullets.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 services/game-server/internal/game/pickups.go
 services/game-server/internal/game/pickup_lifecycle.go
 services/game-server/internal/game/pickup_collisions.go
@@ -120,6 +128,10 @@ services/game-server/internal/game/asteroid_destruction.go
 services/game-server/internal/game/radial_spawning.go
 services/game-server/internal/game/simulation_radial_effects.go
 services/game-server/internal/game/player_world_state.go
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 services/game-server/internal/protocol/realtime/records.go
 services/game-server/internal/protocol/realtime/
 ```
@@ -157,9 +169,12 @@ Package-level tests may also exercise entity-map mutation indirectly through sim
 - [Game Server Simulation Combat](../combat/!INDEX.md)
 - [Game Server Simulation Pickups](../pickups/!INDEX.md)
 - [Game Server Simulation World](../world/!INDEX.md)
+- [Spatial Query Index](../world/spatial-query-index.md)
 
 ## Notes
 
 The store is deliberately simple: one aggregate-owned container for the live entity maps used during a match.
+
+Spatial entries, grid buckets, and query deduplication state are transient derived lookup state, not another entity store. `Game` derives transient `spatial.Entry` values from the current entity maps, rebuilds the interface-typed spatial indexes at collision-phase boundaries, and reuses their buffers. Spatial refs are resolved against the current maps before exact collision checks or consequences; missing, nil, and pending entities are skipped as required by the owning handler. The spatial index is a lookup snapshot, not an authoritative source of entity presence. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
 
 This document stays focused on ownership and map semantics. It does not duplicate player-session, pickup, combat, or lane-native realtime projection behavior documented elsewhere.

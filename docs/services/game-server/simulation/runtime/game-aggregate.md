@@ -26,6 +26,7 @@ Game
 -> spawn/scoring/drop/radial dependencies
 -> simulation options
 -> collision shape catalog
+-> interface-typed spatial index and reusable collision-query buffers
 -> lifecycle shell
 -> public game-facing APIs
 ```
@@ -46,6 +47,15 @@ Supporting runtime package:
 services/game-server/internal/game/runtime/
 ```
 
+Spatial-query packages and integration:
+
+```text
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
+```
+
 ## Responsibilities
 
 The game aggregate owns:
@@ -60,6 +70,8 @@ The game aggregate owns:
 * Simulation lifecycle shell through `New`, `Start`, `Stop`, `runSimulation`, and `Step`.
 * The synchronization boundary around simulation state through `Game.mu`.
 * Construction defaults for collision shapes, spawner, scoring policy, drop tables, radial effect store, entity store, and runtime maps.
+* The interface-typed `spatialIndex`, reusable `spatialEntries` and `spatialRefs` buffers, and reusable deterministic collision player/projectile ID buffers.
+* Rebuilding target-family spatial indexes and coordinating deterministic candidate ordering for collision handlers.
 * The authoritative game-facing API used by rooms, networking, devtools adapters, tests, and lane-native outbound projection inputs.
 * Authoritative mutation coordination for player input, respawn, pause, targeting, counters, pickups, combat consequences, radial effects, and world simulation options.
 * Lane-native realtime projection inputs consumed by `protocol/realtime`.
@@ -131,6 +143,11 @@ type Game struct {
     worldSimulationOptions    WorldSimulationOptions
     collisionShapes           physics.CollisionShapeCatalog
     entities                  runtime.EntityStore
+    spatialIndex              spatial.Index
+    spatialEntries            []spatial.Entry
+    spatialRefs               []spatial.Ref
+    collisionPlayerIDs        []string
+    collisionProjectileIDs    []string
     simulationStepObservers   []func(float64)
     cameraViews               map[string]*runtime.CameraView
     playerSessions            map[string]*playerSession
@@ -151,10 +168,13 @@ identity and spawn counters
 = nextID, nextPickupID, asteroidSpawnElapsed
 
 composed dependencies
-= spawner, scoringPolicy, dropTables, radialEffects, collisionShapes
+= spawner, scoringPolicy, dropTables, radialEffects, collisionShapes, spatialIndex
 
 runtime state stores
-= entities, playerSessions, cameraViews, pendingPresentationEvents, presentationFrame
+= entities, spatialEntries, spatialRefs, playerSessions, cameraViews, pendingPresentationEvents, presentationFrame
+
+spatial-query and deterministic ordering buffers
+= spatialIndex, spatialEntries, spatialRefs, collisionPlayerIDs, collisionProjectileIDs
 
 dev/runtime controls
 = worldSimulationOptions, simulationStepObservers
@@ -190,10 +210,16 @@ load collision shape catalog
 -> attach generated drop tables
 -> create radial effect store
 -> create runtime entity store
+-> create the current toroidal grid spatial index with space.DefaultBounds() and a 256-unit requested cell size
+-> retain the index through the spatial.Index interface
 -> publish an initial empty presentation frame
 ```
 
 The constructor does not start the simulation loop. It only prepares the aggregate and its default dependencies.
+
+`New()` constructs `spatialIndex` as `grid.New(space.DefaultBounds(), defaultSpatialCellSize)` while retaining the field as the interchangeable `spatial.Index` interface. The zero-value slices are not explicitly allocated by `New()`; they reuse capacity as they are populated. `Game` controls rebuild timing and deterministic ordering. The generic `spatial` package owns the contract, `grid` owns lookup mechanics, and `physics` owns exact collision truth. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
+
+The aggregate owns and reuses the capacity of the spatial entry, spatial reference, collision player ID, and collision projectile ID slices as they are populated.
 
 Collision shape loading is best-effort at construction time. If loading fails, the aggregate still exists and logs a warning through the game logger. Collision-dependent paths must handle missing shape lookup where relevant.
 
@@ -526,11 +552,16 @@ services/game-server/internal/game/simulation_players.go
 services/game-server/internal/game/simulation_weapons.go
 services/game-server/internal/game/simulation_asteroids.go
 services/game-server/internal/game/simulation_bullets.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 services/game-server/internal/game/simulation_radial_effects.go
 services/game-server/internal/game/pickup_lifecycle.go
 services/game-server/internal/game/pickup_collisions.go
 services/game-server/internal/game/pickups.go
 services/game-server/internal/game/combat.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
+services/game-server/internal/game/collision_spatial_benchmark_test.go
 services/game-server/internal/game/targeting.go
 services/game-server/internal/game/pause.go
 ```
@@ -542,6 +573,8 @@ services/game-server/internal/game/runtime/
 services/game-server/internal/game/motion/
 services/game-server/internal/game/space/
 services/game-server/internal/game/physics/
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
 services/game-server/internal/game/spawning/
 services/game-server/internal/game/scoring/
 services/game-server/internal/game/rules/
@@ -551,6 +584,8 @@ services/game-server/internal/game/pickups/
 services/game-server/internal/game/effects/radial/
 services/game-server/internal/game/events/
 services/game-server/internal/game/weapons/
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
 ```
 
 Room and networking integration points:
@@ -677,6 +712,7 @@ Expected behavioral coverage includes:
 * [Game Server Simulation Pickups](../pickups/!INDEX.md)
 * [Game Server Simulation Targeting](../targeting/!INDEX.md)
 * [Game Server Simulation World](../world/!INDEX.md)
+* [Spatial Query Index](../world/spatial-query-index.md)
 * [Runtime Entity Store](runtime-entity-store.md)
 * [Simulation Loop And Phase Order](simulation-loop-and-phase-order.md)
 * [Lane Packet Projection](lane-packet-projection.md)

@@ -57,8 +57,10 @@ func (game *Game) Step(delta float64) {
 
 func (game *Game) stepCollisions() {
 	if game.worldSimulationOptions.CanRunCollisions() {
+		game.rebuildAsteroidSpatialIndex()
 		game.handleShipAsteroidCollisions()
 		game.handleBulletAsteroidCollisions()
+		game.rebuildPickupSpatialIndex()
 		game.handlePlayerPickupCollisions()
 	}
 }

@@ -8,6 +8,9 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spatial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spatial/grid"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
@@ -28,6 +31,11 @@ type Game struct {
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	entities                  runtime.EntityStore
+	spatialIndex              spatial.Index
+	spatialEntries            []spatial.Entry
+	spatialRefs               []spatial.Ref
+	collisionPlayerIDs        []string
+	collisionProjectileIDs    []string
 	simulationStepObservers   []simulationStepObserver
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
@@ -52,6 +60,7 @@ func New() *Game {
 		dropTables:                drops.GeneratedTables,
 		radialEffects:             radial.NewStore(),
 		entities:                  runtime.NewEntityStore(),
+		spatialIndex:              grid.New(space.DefaultBounds(), defaultSpatialCellSize),
 	}
 	game.publishPresentationFrameLocked()
 	return game

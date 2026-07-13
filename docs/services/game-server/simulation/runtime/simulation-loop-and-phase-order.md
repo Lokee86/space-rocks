@@ -45,6 +45,10 @@ services/game-server/internal/game/motion/
 services/game-server/internal/game/space/
 services/game-server/internal/game/effects/radial/
 services/game-server/internal/game/physics/
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 services/game-server/internal/constants/
 ```
 
@@ -325,12 +329,14 @@ worldSimulationOptions.CanRunCollisions()
 When collisions are enabled, the current order is:
 
 ```text
-handleShipAsteroidCollisions()
-handleBulletAsteroidCollisions()
-handlePlayerPickupCollisions()
+1. rebuild asteroid spatial index once for the collision phase
+2. query ship/asteroid candidates, resolve current references, and run exact checks
+3. query projectile/asteroid candidates, resolve current references, run exact checks, and apply consequences
+4. rebuild pickup spatial index once for the collision phase
+5. query player/pickup candidates, resolve current references, and run exact checks
 ```
 
-This means player/asteroid damage, projectile/asteroid damage, and player/pickup collection share the same collision freeze gate, but each collision family keeps its own consequence logic.
+Each target-family index is rebuilt once per collision phase, not once per actor. Projectile/asteroid consequences run before the pickup rebuild, so same-phase projectile drops are included by the pickup rebuild. New asteroid fragments are not added to the existing asteroid snapshot; they enter asteroid collision handling in the next active collision phase. The Game-owned candidate policy resolves references against current entity maps and orders candidates deterministically, while exact collision truth and consequences remain with the existing handlers. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
 
 ### 11. Radial effects
 
@@ -442,9 +448,11 @@ Current routing:
 ```text
 stepCollisions
 -> if CanRunCollisions
--> handleShipAsteroidCollisions
--> handleBulletAsteroidCollisions
--> handlePlayerPickupCollisions
+-> rebuild asteroid spatial index once
+-> ship/asteroid candidates and exact checks
+-> projectile/asteroid candidates, exact checks, and consequences
+-> rebuild pickup spatial index once
+-> player/pickup candidates and exact checks
 ```
 
 `handleShipAsteroidCollisions` can apply player damage, mark fatal players pending despawn, decrement lives, set respawn cooldown, update camera view, and record ship-death or damage events.
@@ -454,6 +462,8 @@ stepCollisions
 `handlePlayerPickupCollisions` can remove collected pickups, resolve pickup collection rules, record pickup collection events, and apply pickup effect intents.
 
 Primitive collision shape math remains in the physics package. Damage math remains in the damage package. Pickup collection rules remain in the pickup rules package. The collision phase only orchestrates the game-owned runtime consequences.
+
+See also: [Spatial Query Index](../world/spatial-query-index.md).
 
 ## Simulation observers
 

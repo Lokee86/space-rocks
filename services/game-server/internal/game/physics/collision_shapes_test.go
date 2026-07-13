@@ -1,6 +1,32 @@
 package physics
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
+
+func TestBoundingRadius(t *testing.T) {
+	tests := []struct {
+		name  string
+		shape CollisionShape
+		want  float64
+	}{
+		{name: "circle", shape: NewCircleShape(3), want: 3},
+		{name: "capsule", shape: NewCapsuleShape(2, 10), want: 5},
+		{name: "capsule uses radius", shape: NewCapsuleShape(7, 4), want: 7},
+		{name: "rectangle", shape: NewRectangleShape(6, 8), want: 5},
+		{name: "polygon", shape: NewPolygonShape([]Vector2{{X: 1, Y: 2}, {X: -4, Y: 3}, {X: 2, Y: 1}}), want: 5},
+		{name: "empty", shape: CollisionShape{}, want: 0},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := BoundingRadius(test.shape); math.Abs(got-test.want) > 1e-9 {
+				t.Fatalf("BoundingRadius() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
 
 func TestCollisionShapeCatalogPickupShapeLoadsOneUp(t *testing.T) {
 	catalog := CollisionShapeCatalog{

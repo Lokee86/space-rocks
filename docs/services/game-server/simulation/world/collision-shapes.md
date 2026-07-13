@@ -10,7 +10,7 @@ It explains how the server loads shared collision-shape data, converts imported 
 
 ## Overview
 
-See also: [Collision Body Telemetry](../../../devtools/server/collision-body-telemetry.md)
+See also: [Collision Body Telemetry](../../../../devtools/server/collision-body-telemetry.md)
 
 Collision shapes are a game-server simulation support system implemented primarily under:
 
@@ -80,6 +80,7 @@ Collision-shape support owns the game-server side of:
 * Returning errors for missing pickup shape catalogs or unknown pickup shape keys.
 * Providing primitive body point-containment checks for server-side target click validation.
 * Providing body outline points for devtools collision telemetry via the current adapter and radial candidate radius derivation.
+* Providing conservative broad-phase radius derivation through `physics.BoundingRadius` for spatial-index entry projection and circle-query radii. See [Spatial Query Index](spatial-query-index.md).
 * Letting gameplay consumers skip collision behavior when a collision body cannot be built.
 
 ## Does not own
@@ -236,6 +237,8 @@ player -> pickup
 ```
 
 For wrapped-world collision checks, the asteroid or pickup body is temporarily placed in actor-local wrapped space before primitive detection runs. This keeps authoritative entity storage wrapped while still allowing cross-boundary hits.
+
+The collision broad phase projects eligible collision bodies into the spatial query index using the conservative local-space radius from `physics.BoundingRadius`. Circle queries use the same primitive-derived radius for candidate lookup. These results are candidates only; `physics.DetectCollision` remains authoritative, so conservative radii may admit false positives but must not exclude real overlaps. See [Spatial Query Index](spatial-query-index.md).
 
 ### Targeting
 
@@ -464,6 +467,7 @@ Focused physics and collision-shape tests cover:
 * capsule/polygon primitive collision
 * concave polygon miss behavior
 * outline point generation for rotated polygons and capsules
+* conservative bounding-radius derivation for circle, capsule, rectangle, polygon, and empty/unknown shapes
 
 Game integration tests cover collision-shape consumption through:
 

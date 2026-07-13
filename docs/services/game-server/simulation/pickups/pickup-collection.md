@@ -137,24 +137,48 @@ step player sessions
 -> step asteroids
 -> step bullets
 -> step pickups
--> step collisions
+-> projectile/asteroid consequences
+-> rebuild pickup spatial index
+-> step collisions: player/pickup handling
 -> step radial effects
 -> simulation step observers
 ```
 
-Pickup collection runs inside `stepCollisions` after ship/asteroid collision and bullet/asteroid collision:
+Pickup collection runs inside `stepCollisions` after projectile/asteroid consequences and the pickup-index rebuild:
 
 ```text
 handleShipAsteroidCollisions
--> handleBulletAsteroidCollisions
+-> handleBulletAsteroidCollisions and consequences
+-> rebuild pickup spatial index
 -> handlePlayerPickupCollisions
 ```
+
+The player/pickup flow is:
+
+```text
+for each player ID in lexical order
+-> resolve current player and skip pending-despawn player
+-> resolve player collision body once
+-> query conservative pickup candidates
+-> filter candidate IDs against the current pickup map
+-> resolve candidate references against current pickup map
+-> skip missing or already removed pickup
+-> exact detectPlayerPickupCollision check
+-> remove the pickup and apply existing collection consequences
+-> stop after the first collected pickup for that player
+```
+
+Pickup candidates are broad-phase results only. They do not confirm a collection. If an earlier player removes a pickup, later players skip its stale candidate reference when resolving the current map. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
+
+The rebuild occurs after projectile/asteroid consequences so pickups dropped during the same collision phase can be collected.
 
 The collision phase is gated by:
 
 ```go
 game.worldSimulationOptions.CanRunCollisions()
 ```
+
+The player/pickup handler uses the Game-owned pickup spatial index rather than scanning the full pickup map. The index is rebuilt after projectile/asteroid destruction and drop consequences and immediately before player/pickup handling, so a newly dropped pickup can be collected in the same collision phase. Players are processed in deterministic ID order; if an earlier player collects a pickup, later candidate references are resolved against the current map and the missing pickup is skipped. Candidate discovery is broad phase only; `detectPlayerPickupCollision` remains authoritative. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
 
 When collisions are frozen, player/pickup collision does not consume pickups or apply pickup effects.
 
@@ -218,11 +242,14 @@ The collision phase gate still applies. If collisions are frozen globally, picku
 The flow is:
 
 ```text
-for each active player
--> skip pending-despawn player
--> for each pickup
--> skip nil pickup
--> detect player/pickup collision
+for each player ID in lexical order
+-> resolve current player and skip pending-despawn player
+-> resolve player collision body once
+-> query conservative pickup candidates
+-> filter candidate IDs against the current pickup map
+-> resolve candidate references against current pickup map
+-> skip missing or already removed pickup
+-> exact detectPlayerPickupCollision check
 -> remove pickup from authoritative pickup map
 -> build pickup collection request
 -> resolve collection through internal/game/pickups
@@ -234,6 +261,8 @@ for each active player
 The pickup is removed before the effect intent is applied. Collection consumes the pickup entity even if the later effect application produces no gameplay mutation.
 
 A player can collect at most one pickup per collision pass because the inner pickup loop breaks after the first detected collection.
+
+Candidate lookup is broad phase only; exact collision detection remains authoritative. Later players skip candidate references for pickups already removed by earlier players in lexical order.
 
 ## Collection rule model
 
@@ -391,7 +420,7 @@ lives_after
 
 For `equip_weapon`, the current event includes the pickup identity, player identity, and effect type. The weapon/ammo result is primarily visible through later player and session state projection.
 
-Events are queued for player sessions and delivered through `event_batch`. The authoritative pickup removal is also visible through world lane pickup records, where the collected pickup is absent after collection. The pickup event itself is later shaped into sparse, quantized wire output for known event types. See [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Events are queued for player sessions and delivered through `event_batch`. The authoritative pickup removal is also visible through world lane pickup records, where the collected pickup is absent after collection. The pickup event itself is later shaped into sparse, quantized wire output for known event types. See [Realtime Compact Wire Mapping](../../networking/realtime-compact-wire-mapping.md).
 
 ## Data ownership
 
@@ -482,7 +511,13 @@ services/game-server/internal/game/pickup_collisions.go
 services/game-server/internal/game/pickup_effects.go
 services/game-server/internal/game/pickups/collection.go
 services/game-server/internal/game/collisions.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 services/game-server/internal/game/simulation.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
 services/game-server/internal/game/events.go
 services/game-server/internal/game/events/events.go
 services/game-server/internal/game/player_counters.go
@@ -503,6 +538,8 @@ services/game-server/internal/game/pickups.go
 services/game-server/internal/game/pickup_lifecycle.go
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
 services/game-server/internal/constants/constants.go
 ```
 
@@ -522,6 +559,10 @@ services/game-server/internal/game/pickup_effects_test.go
 services/game-server/internal/game/entities/pickups/pickup_test.go
 services/game-server/tests/game/pickups_test.go
 services/game-server/tests/game/collision_test.go
+services/game-server/internal/game/collision_spatial_integration_test.go
+services/game-server/internal/game/pickup_drops_test.go
+services/game-server/internal/game/spatial/*_test.go
+services/game-server/internal/game/spatial/grid/*_test.go
 ```
 
 Important non-ownership boundaries:
@@ -569,6 +610,9 @@ Game integration tests cover:
 * `1_up` incrementing player session lives.
 * updated lives appearing in world/session lane readback.
 * collection and effect events being emitted in order.
+* broad-phase pickup candidate lookup preserving exact collision behavior.
+* same-phase collection of pickups dropped by projectile consequences.
+* later lexical players skipping pickups removed by earlier players.
 
 Effect application tests cover:
 
@@ -602,6 +646,7 @@ go test -buildvcs=false ./internal/game/pickups ./tests/game -run 'Pickup|OneUp|
 * [Collision Shapes](../world/collision-shapes.md)
 * [Physics](../world/physics.md)
 * [Toroidal Space And Motion](../world/toroidal-space-and-motion.md)
+* [Spatial Query Index](../world/spatial-query-index.md)
 * [Lane Packet Projection](../runtime/lane-packet-projection.md)
 * [Player Pause And Suspension](../players/player-pause-and-suspension.md)
 * [Data](../../../../data/!INDEX.md)

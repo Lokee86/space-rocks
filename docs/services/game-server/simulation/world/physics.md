@@ -10,7 +10,7 @@ It covers server-side vector helpers, collision primitive definitions, collision
 
 ## Overview
 
-See also: [Collision Body Telemetry](../../../devtools/server/collision-body-telemetry.md)
+See also: [Collision Body Telemetry](../../../../devtools/server/collision-body-telemetry.md)
 
 The game-server physics boundary is a support package, not a full physics engine.
 
@@ -85,6 +85,7 @@ The physics boundary owns:
 * Primitive overlap checks through `DetectCollision`.
 * Point containment checks through `BodyContainsPoint`.
 * Collision outline point projection through `CollisionBodyOutlinePoints`.
+* Conservative local-space bounding-radius derivation through `BoundingRadius` for broad-phase spatial queries.
 * Imported collision shape conversion into runtime collision primitives.
 * Runtime loading of `shared/collisions/collision_shapes.json`.
 * Runtime catalog access for bullet, ship, asteroid, and pickup shapes.
@@ -158,7 +159,12 @@ Main primitive checks:
 func DetectCollision(a CollisionBody, b CollisionBody) (Collision, bool)
 func BodyContainsPoint(body CollisionBody, point Vector2) bool
 func CollisionBodyOutlinePoints(body CollisionBody) []Vector2
+func BoundingRadius(shape CollisionShape) float64
 ```
+
+`BoundingRadius` returns a conservative local-space enclosing radius for circle, capsule, rectangle, and polygon shapes. It returns zero for unknown or empty shapes. The current consumers use it to project collision bodies into the spatial index and to provide circle-query radii for the collision broad phase. It may produce false-positive candidates, but it must not exclude real overlaps.
+
+`DetectCollision` remains the authoritative exact collision detector. Broad-phase candidates must be resolved through exact collision checks before gameplay consequences are applied.
 
 Main catalog surfaces:
 
@@ -448,6 +454,7 @@ Current coverage includes:
 * capsule/polygon collision checks
 * concave polygon miss behavior
 * collision outline point projection for rotated polygons and capsules
+* conservative bounding-radius derivation for circle, capsule, rectangle, polygon, and empty/unknown shapes
 * collision-shape catalog loading
 * asteroid shape scaling by size
 * pickup shape lookup and missing-shape errors

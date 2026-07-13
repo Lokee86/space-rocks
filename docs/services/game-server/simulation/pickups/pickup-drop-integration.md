@@ -23,6 +23,8 @@ projectile destroys asteroid
 -> basic asteroid drop table is evaluated
 -> successful drop result spawns a pickup entity
 -> pickup_dropped event is recorded
+-> pickup spatial index is rebuilt after projectile/asteroid consequences
+-> pickup can enter same-phase player/pickup collection candidates
 -> pickup appears in world lane pickup records
 -> pickup lifecycle, collection, and effects run through normal pickup systems
 ```
@@ -321,6 +323,8 @@ The client may render the pickup and react to the event, but the server remains 
 
 The drop seam ends once a pickup has been spawned and the drop event has been recorded.
 
+When a pickup is spawned by projectile/asteroid consequences, the collision phase rebuilds the pickup spatial index after those consequences and before player/pickup handling. The dropped pickup can therefore be collected in the same collision phase. Candidate lookup remains broad phase only; exact pickup collision and all existing collection consequences remain authoritative in the pickup collection flow.
+
 After that point, normal pickup systems own behavior:
 
 ```text
@@ -355,6 +359,10 @@ pickup entity lifecycle
 pickup collection/effects
 = collect pickup and apply gameplay mutation
 ```
+
+## Spatial collision timing
+
+A successful projectile/asteroid destruction consequence may add a pickup to `game.entities.Pickups`. The collision coordinator rebuilds the pickup spatial index after those consequences and before `handlePlayerPickupCollisions`, making the new drop eligible for collection in the same collision phase. This timing does not change drop probability, pickup effects, or collection rules. Later players resolve candidate references against the current pickup map, so a pickup already consumed by an earlier player is skipped. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
 
 ## Data ownership
 
@@ -443,6 +451,10 @@ services/game-server/internal/game/pickup_lifecycle.go
 services/game-server/internal/game/pickup_collisions.go
 services/game-server/internal/game/pickup_effects.go
 services/game-server/internal/game/pickups/collection.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
 ```
 
 Source and generated data:
@@ -463,6 +475,8 @@ services/game-server/internal/game/pickup_drops_test.go
 services/game-server/internal/game/drops/table_test.go
 services/game-server/internal/game/drops/drop_tables_test.go
 services/game-server/tests/game/pickups_test.go
+services/game-server/internal/game/spatial/*_test.go
+services/game-server/internal/game/spatial/grid/*_test.go
 tools/data_sync/tests/test_drop_tables_toml.py
 tools/data_sync/tests/test_drop_tables_generators.py
 tools/data_sync/tests/test_drop_tables_sync.py
@@ -514,6 +528,7 @@ Current test coverage includes:
 * dropped pickups project into world lane pickup records
 * projectile asteroid destruction can trigger pickup drops
 * spawned pickups use definitions, lifecycle, state projection, collection, and expiry paths
+* same-phase pickup-index timing makes eligible projectile-consequence drops collectible
 
 Useful verification commands:
 
@@ -540,6 +555,7 @@ data-sync -validate -drop-tables
 * [Game Server Simulation Combat](../combat/!INDEX.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
 * [Game Server Simulation World](../world/!INDEX.md)
+* [Spatial Query Index](../world/spatial-query-index.md)
 * [Asteroid Spawning And Variants](../world/asteroid-spawning-and-variants.md)
 * [Game Server Simulation Runtime](../runtime/!INDEX.md)
 * [Lane Packet Projection](../runtime/lane-packet-projection.md)

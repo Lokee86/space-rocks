@@ -3,8 +3,8 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
@@ -13,7 +13,11 @@ func (game *Game) handleBulletAsteroidCollisions() {
 	hitAsteroids := map[string]*runtime.Asteroid{}
 	hitAsteroidOwners := map[string]string{}
 
-	for bulletID, bullet := range game.entities.Projectiles {
+	for _, bulletID := range game.collisionProjectileIDsSorted() {
+		bullet := game.entities.Projectiles[bulletID]
+		if bullet == nil {
+			continue
+		}
 		if hitBullets[bulletID] {
 			continue
 		}
@@ -21,7 +25,17 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			continue
 		}
 
-		for asteroidID, asteroid := range game.entities.Asteroids {
+		bulletBody, ok := bullet.CollisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
+
+		for _, asteroidRef := range game.asteroidCollisionCandidates(bulletBody) {
+			asteroidID := asteroidRef.ID
+			asteroid := game.entities.Asteroids[asteroidID]
+			if asteroid == nil {
+				continue
+			}
 			if _, ok := hitAsteroids[asteroidID]; ok {
 				continue
 			}
@@ -102,7 +116,11 @@ func (game *Game) applyProjectileAsteroidHitConsequences(
 func (game *Game) handleShipAsteroidCollisions() {
 	hitPlayers := map[string]*runtime.Ship{}
 
-	for playerID, player := range game.entities.Players {
+	for _, playerID := range game.collisionPlayerIDsSorted() {
+		player := game.entities.Players[playerID]
+		if player == nil {
+			continue
+		}
 		if player.IsPendingDespawn() {
 			continue
 		}
@@ -110,7 +128,17 @@ func (game *Game) handleShipAsteroidCollisions() {
 			continue
 		}
 
-		for asteroidID, asteroid := range game.entities.Asteroids {
+		playerBody, ok := player.CollisionBody(game.collisionShapes)
+		if !ok {
+			continue
+		}
+
+		for _, asteroidRef := range game.asteroidCollisionCandidates(playerBody) {
+			asteroidID := asteroidRef.ID
+			asteroid := game.entities.Asteroids[asteroidID]
+			if asteroid == nil {
+				continue
+			}
 			if asteroid.IsPendingDespawn() {
 				continue
 			}

@@ -55,6 +55,7 @@ Planning outputs for the remaining protocol work:
 - [Gameplay State Application](../../services/client/gameplay-runtime/gameplay-state-application.md)
 - [Lane Packet Projection](../../services/game-server/simulation/runtime/lane-packet-projection.md)
 - [Packet Schemas](../../data/packet-schemas.md)
+- [Spatial Query Index](../../services/game-server/simulation/world/spatial-query-index.md)
 - [Network Observability And Packet Budget](../domains/technical/network-observability-and-packet-budget.md)
 - [Testing And Smoke Strategy](../domains/technical/verification-and-quality-gates.md)
 - [Development Roadmap](../development-roadmap.md)
@@ -122,6 +123,13 @@ Current WebRTC physical gameplay channels are split into reliable/ordered lanes 
 
 Reliability and ordering remain per DataChannel; they do not establish cross-channel `sr.world`/lifecycle ordering. The implemented client lifecycle gate handles that arrival race by waiting for the referenced active world baseline.
 
+### Future Interest Management Boundary
+
+The game server now has a generic toroidal `spatial.Index` contract with circular and rectangular queries, backed by the current uniform-grid implementation. This foundation currently supports simulation collision broad phase only; record/entity prioritization and interest filtering remain future work. See [Spatial Query Index](../../services/game-server/simulation/world/spatial-query-index.md).
+
+The active collision index is mutable `Game`-owned simulation state. Realtime projection must not read it directly. When interest management is implemented, presentation-frame publication may build or carry a separate immutable presentation-owned spatial snapshot or index once per presentation generation. `protocol/realtime` would then own receiver-interest policy over that immutable presentation input, without moving interest policy into `game/spatial`.
+
+Future policy may include viewport margin or hysteresis, always-required entities, create/delete transitions, and consistent filtering across full, delta, lifecycle, and hot lanes. None of those receiver-interest sets or packet filters is implemented by this foundation.
 
 Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, deeper record/entity-level prioritization, further transport policy beyond the current asteroid/bullet unordered hot lanes where safe, and binary representation later.
 

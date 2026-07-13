@@ -3,6 +3,7 @@ package physics
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -10,6 +11,26 @@ import (
 )
 
 const DefaultShipCollisionShapeID = "v_wing"
+
+// BoundingRadius returns a conservative radius enclosing the local collision shape.
+func BoundingRadius(shape CollisionShape) float64 {
+	switch shape.Type {
+	case CollisionShapeCircle:
+		return shape.Radius
+	case CollisionShapeCapsule:
+		return math.Max(shape.Height*0.5, shape.Radius)
+	case CollisionShapeRectangle:
+		return shape.Size.Multiply(0.5).Length()
+	case CollisionShapePolygon:
+		radius := 0.0
+		for _, point := range shape.Points {
+			radius = math.Max(radius, point.Length())
+		}
+		return radius
+	default:
+		return 0
+	}
+}
 
 type CollisionShapeCatalog struct {
 	Bullet    ImportedCollisionShape   `json:"bullet"`

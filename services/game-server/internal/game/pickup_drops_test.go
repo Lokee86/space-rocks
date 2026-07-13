@@ -6,7 +6,9 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spatial"
 )
 
 func TestMaybeDropPickupFromAsteroidLockedCreatesPickup(t *testing.T) {
@@ -129,6 +131,11 @@ func TestApplyProjectileAsteroidHitConsequencesDropsPickup(t *testing.T) {
 	}
 	if pickup.X != asteroid.X || pickup.Y != asteroid.Y {
 		t.Fatalf("expected pickup position %v,%v, got %v,%v", asteroid.X, asteroid.Y, pickup.X, pickup.Y)
+	}
+	game.rebuildPickupSpatialIndex()
+	refs := game.spatialIndex.QueryCircle(nil, physics.Vector2{X: asteroid.X, Y: asteroid.Y}, 0, spatial.KindMask(spatial.KindPickup))
+	if len(refs) != 1 || refs[0].ID != pickup.ID {
+		t.Fatalf("expected same-tick pickup index entry, got %#v", refs)
 	}
 }
 

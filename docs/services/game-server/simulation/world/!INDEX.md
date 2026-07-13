@@ -22,6 +22,7 @@ This folder owns toroidal space, motion, visibility and despawn, asteroid spawni
 - [asteroid-spawning-and-variants.md](asteroid-spawning-and-variants.md) - Asteroid Spawning And Variants documentation.
 - [collision-shapes.md](collision-shapes.md) - Collision Shapes documentation.
 - [physics.md](physics.md) - Physics documentation.
+- [spatial-query-index.md](spatial-query-index.md) - Spatial Query Index documentation.
 - [toroidal-space-and-motion.md](toroidal-space-and-motion.md) - Toroidal space and motion documentation.
 - [visibility-and-despawn.md](visibility-and-despawn.md) - Visibility and despawn documentation.
 <!-- doc-ledger:files:end -->

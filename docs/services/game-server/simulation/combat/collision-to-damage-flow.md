@@ -17,6 +17,9 @@ The current runtime flow is:
 ```text
 simulation tick
 -> collision phase gate
+-> Game rebuilds target-family spatial index
+-> broad-phase spatial candidate lookup
+-> Game-owned deterministic candidate ordering
 -> collision fact detection
 -> damage request construction
 -> damage.ResolveSingle
@@ -27,6 +30,8 @@ simulation tick
 ```
 
 The collision phase is authoritative. The client may render ships, bullets, asteroids, hit effects, and UI feedback, but it does not decide whether a projectile hit, whether a player died, whether score was awarded, or whether an asteroid split.
+
+Collision handlers do not scan every target map directly. Game-owned phase coordination rebuilds the asteroid index once at the start of the collision phase, iterates sorted player and projectile IDs, queries conservative asteroid candidates, and orders those candidates by wrapped squared distance with ID tie-breaking. Existing exact pair detectors then produce collision facts; broad-phase candidates never confirm a collision. Damage resolution and all consequences remain unchanged and remain outside `spatial` and `grid`. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
 
 Current damage-producing collision pairs are:
 
@@ -43,8 +48,11 @@ Collision detection and damage resolution are separate seams:
 physics package
 = primitive overlap math and collision shape support
 
+spatial.Index and spatial/grid
+= conservative toroidal broad-phase candidate lookup
+
 collisions.go
-= game-pair collision fact detection
+= exact game-pair collision fact detection after candidate lookup
 
 combat.go
 = collision-to-damage orchestration and consequences
@@ -54,6 +62,8 @@ damage package
 ```
 
 The damage package does not inspect world maps, collision shapes, runtime stores, scoring, sessions, packets, or client state. Game-owned combat code supplies a `DamageResolutionRequest`, receives a `DamageResult`, and applies the result.
+
+Broad-phase candidates are not confirmed collisions. The spatial index narrows the candidate set; physics remains authoritative for exact overlap detection.
 
 ## Code root
 
@@ -213,12 +223,15 @@ Projectile/asteroid collision runs in `handleBulletAsteroidCollisions`.
 The flow is:
 
 ```text
-for each projectile
+for each projectile ID in lexical order
 -> skip projectile if already hit this pass
 -> skip projectile if pending despawn
--> for each asteroid
--> skip asteroid if already destroyed by another projectile this pass
--> skip asteroid if pending despawn
+-> resolve projectile collision body once
+-> query conservative asteroid candidates from the shared spatial index and start-of-phase asteroid snapshot
+-> order candidates by wrapped distance, then ID
+-> filter candidates against current asteroid entities
+-> resolve candidate references against current asteroid map
+-> skip asteroid if missing, already destroyed by another projectile this pass, or pending despawn
 -> detect projectile/asteroid collision
 -> build projectile asteroid damage request
 -> resolve damage
@@ -234,7 +247,11 @@ for each projectile
 
 A projectile can hit at most one asteroid in a collision pass.
 
+The shared asteroid index is a start-of-collision-phase target snapshot. Destroyed or pending-despawn asteroids are filtered against current maps before exact checks. Fragments created by projectile consequences are not added to that snapshot and participate in asteroid collision handling during the next active collision phase.
+
 An asteroid can be selected for destruction consequences at most once in a collision pass.
+
+The asteroid index is rebuilt once for the collision phase, not once per projectile. The shared asteroid snapshot is the set indexed for this phase. Asteroid fragments created by projectile consequences are not in that start-of-phase snapshot and participate in the next active collision phase.
 
 Nonfatal projectile hits are valid. A projectile can reduce asteroid health, emit `damage_applied`, trigger projectile impact metadata, and despawn without awarding score, spawning fragments, or dropping pickups.
 
@@ -312,11 +329,15 @@ Player/asteroid collision runs in `handleShipAsteroidCollisions`.
 The flow is:
 
 ```text
-for each active player ship
+for each player ID in lexical order
 -> skip player if pending despawn
 -> skip player if player cannot take collision damage
--> for each asteroid
--> skip asteroid if pending despawn
+-> resolve player collision body once
+-> query conservative asteroid candidates from the shared spatial index and start-of-phase asteroid snapshot
+-> order candidates by wrapped distance, then asteroid ID
+-> filter candidates against current asteroid entities
+-> resolve candidate references against current asteroid map
+-> skip asteroid if missing or pending despawn
 -> detect player/asteroid collision
 -> build player asteroid damage request
 -> resolve damage
@@ -327,6 +348,8 @@ for each active player ship
 ```
 
 Ship/asteroid collision damages the player. It does not damage or destroy the asteroid.
+
+The player/asteroid path uses the same asteroid index rebuilt once for the collision phase. Broad-phase candidates are only possible contacts; exact physics collision detection decides whether the collision fact exists.
 
 A nonfatal asteroid collision can reduce player health or shields, emit `damage_applied`, and leave the player active with lives unchanged.
 
@@ -538,6 +561,8 @@ services/game-server/internal/game/combat.go
 services/game-server/internal/game/combat_damage_requests.go
 services/game-server/internal/game/combat_damage_application.go
 services/game-server/internal/game/damage_events.go
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 services/game-server/internal/game/asteroid_destruction.go
 services/game-server/internal/game/scoring.go
 services/game-server/internal/game/pause.go
@@ -573,6 +598,10 @@ Collision and spatial support files:
 services/game-server/internal/game/physics/collision.go
 services/game-server/internal/game/physics/collision_shapes.go
 services/game-server/internal/game/space/space.go
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
+services/game-server/internal/game/collision_spatial_index.go
+services/game-server/internal/game/collision_candidates.go
 ```
 
 Related consequence files:
@@ -622,6 +651,9 @@ services/game-server/tests/game/collision_test.go
 services/game-server/tests/game/respawn_test.go
 services/game-server/tests/game/devtools_test.go
 services/game-server/tests/game/pickups_test.go
+services/game-server/internal/game/collision_spatial_integration_test.go
+services/game-server/internal/game/spatial/grid/equivalence_test.go
+services/game-server/internal/game/collision_spatial_benchmark_test.go
 ```
 
 Relevant package tests:
@@ -655,6 +687,9 @@ Current test coverage includes:
 * pickup collision respecting frozen collisions
 * physics primitive collision behavior
 * collision shape catalog loading
+* spatial broad-phase integration and collision-equivalence behavior
+* spatial grid query and toroidal-wrap behavior
+* spatial grid query/rebuild benchmarks
 
 Useful verification command:
 
@@ -683,6 +718,7 @@ go test -buildvcs=false ./tests/game -run 'Collision|Respawn|Devtools'
 * [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
 * [Game Server Simulation World](../world/!INDEX.md)
+* [Spatial Query Index](../world/spatial-query-index.md)
 * [Game Server Simulation Runtime](../runtime/!INDEX.md)
 * [Game Server Simulation Players](../players/!INDEX.md)
 * [Game Server Simulation Pickups](../pickups/!INDEX.md)

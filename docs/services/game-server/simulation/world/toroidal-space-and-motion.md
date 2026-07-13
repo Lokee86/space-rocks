@@ -203,6 +203,16 @@ space.NormalizePosition(position)
 
 These helpers are used by server systems that need toroidal spatial relationships without owning the wrap implementation.
 
+## Wrapped spatial grid
+
+The collision broad phase builds normalized spatial entries from the same bounded authoritative positions used by motion and exact collision checks. The current uniform grid inserts each entry into the cells covered by its conservative bounding circle.
+
+Query traversal wraps cell coordinates across each world seam. A query near an edge therefore visits the corresponding cells on the opposite edge. Entries reached through multiple wrapped cells are deduplicated so one indexed entry produces one candidate reference per query.
+
+Broad-phase lookup and exact narrow-phase collision-body placement use the same authoritative toroidal bounds. The grid narrows candidates; exact collision handling still places the candidate body in wrapped-local space using the shortest wrapped delta before physics overlap testing. The stored authoritative entity position is not rewritten for either lookup or wrapped-local exact placement.
+
+This grid behavior is owned by `internal/game/spatial/grid` behind the generic `internal/game/spatial` contract. See [Spatial Query Index](spatial-query-index.md) for the contract and lookup model.
+
 ## Motion integration
 
 The motion package owns entity-local stepping helpers and advance-with-wrap helpers.
@@ -535,6 +545,8 @@ services/game-server/internal/game/spawning.go
 services/game-server/internal/game/spawning/spawner.go
 services/game-server/internal/game/visibility.go
 services/game-server/internal/game/collisions.go
+services/game-server/internal/game/spatial/
+services/game-server/internal/game/spatial/grid/
 services/game-server/internal/game/session.go
 services/game-server/internal/game/effects/radial/step.go
 ```
@@ -581,6 +593,8 @@ services/game-server/tests/game/visibility_test.go
 services/game-server/tests/game/collision_test.go
 services/game-server/tests/game/respawn_test.go
 services/game-server/tests/game/pause_test.go
+services/game-server/internal/game/spatial/*_test.go
+services/game-server/internal/game/spatial/grid/*_test.go
 services/game-server/internal/game/world_simulation_options_test.go
 ```
 
@@ -599,6 +613,9 @@ Current tested behavior includes:
 * World simulation freeze gates.
 * Player pause/suspension blocking movement without owning motion internals.
 * Cross-edge collision behavior through wrapped spatial checks.
+* Normalized spatial entries and wrapped grid cell traversal.
+* Spatial-query deduplication for candidates reached across seams.
+* Broad-phase candidate lookup preserving exact wrapped collision behavior.
 * Visibility and despawn behavior near wrapped world edges.
 * Respawn safety using wrapped distance.
 
@@ -628,6 +645,7 @@ go test -buildvcs=false ./tests/space ./tests/game -run 'Wrap|Delta|Distance|Dir
 * [Player Camera View State](../players/player-camera-view-state.md)
 * [Player Respawn](../players/player-respawn.md)
 * [Collision To Damage Flow](../combat/collision-to-damage-flow.md)
+* [Spatial Query Index](spatial-query-index.md)
 * [Radial Effects](../combat/radial-effects.md)
 * [Pickup Entity Lifecycle](../pickups/pickup-entity-lifecycle.md)
 * [View Anchor And Visual Coordinates](../../../client/world-sync/view-anchor-and-visual-coordinates.md)
