@@ -472,11 +472,7 @@ var EventDefinitions = map[EventName]EventDefinition{
 
 func IsCanonicalLevel(value Level) bool {
 	switch value {
-	case LevelDebug:
-	case LevelInfo:
-	case LevelWarn:
-	case LevelError:
-	case LevelCritical:
+	case LevelDebug, LevelInfo, LevelWarn, LevelError, LevelCritical:
 		return true
 	default:
 		return false
@@ -495,10 +491,7 @@ func IsKnownEvent(value EventName) bool {
 
 func IsRetentionTier(value RetentionTier) bool {
 	switch value {
-	case RetentionTierAuditGrade:
-	case RetentionTierDiagnosticReport:
-	case RetentionTierEphemeralDev:
-	case RetentionTierOperational:
+	case RetentionTierAuditGrade, RetentionTierDiagnosticReport, RetentionTierEphemeralDev, RetentionTierOperational:
 		return true
 	default:
 		return false

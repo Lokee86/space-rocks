@@ -52,15 +52,20 @@ func TestStoreRejectsInvalidIDsAndMapsMissing(t *testing.T) {
 
 func TestStoreRejectsMalformedMismatchAndOversizedFiles(t *testing.T) {
 	root := t.TempDir()
-	store, err := New(root, 32)
+	const maxBytes int64 = 32
+	store, err := New(root, maxBytes)
 	if err != nil { t.Fatal(err) }
 	if err := store.Save(context.Background(), testBundle()); !errors.Is(err, ErrBundleTooLarge) { t.Fatal(err) }
+	store, err = New(root, 4096)
+	if err != nil { t.Fatal(err) }
 	path := filepath.Join(root, reportID+".json")
 	if err := os.WriteFile(path, []byte("{bad"), 0o644); err != nil { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), reportID); !errors.Is(err, ErrInvalidStoredData) { t.Fatal(err) }
 	if err := os.WriteFile(path, []byte(`{"diagnostic_report_id":"123e4567-e89b-12d3-a456-426614174002"}`), 0o644); err != nil { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), reportID); !errors.Is(err, ErrInvalidStoredData) { t.Fatal(err) }
-	if err := os.WriteFile(path, make([]byte, 33), 0o644); err != nil { t.Fatal(err) }
+	store, err = New(root, maxBytes)
+	if err != nil { t.Fatal(err) }
+	if err := os.WriteFile(path, make([]byte, int(maxBytes)+1), 0o644); err != nil { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), reportID); !errors.Is(err, ErrBundleTooLarge) { t.Fatal(err) }
 }
 

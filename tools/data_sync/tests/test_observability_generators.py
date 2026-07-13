@@ -90,3 +90,14 @@ def test_go_targets_are_byte_identical_from_one_generator() -> None:
     assert tuple(update.path for update in updates) == tuple(
         sorted(config.targets_for("observability", "go")[0].files)
     )
+
+
+def test_go_level_and_retention_switches_accept_every_known_value_only() -> None:
+    contract = _repository_contract()
+    output = generate_observability_go(contract)
+
+    assert "\tcase LevelDebug, LevelInfo, LevelWarn, LevelError, LevelCritical:\n\t\treturn true" in output
+    assert "\tcase RetentionTierAuditGrade, RetentionTierDiagnosticReport, RetentionTierEphemeralDev, RetentionTierOperational:\n\t\treturn true" in output
+    assert "\tcase LevelDebug:\n" not in output
+    assert "\tcase RetentionTierAuditGrade:\n" not in output
+    assert output.count("\t\treturn false") == 2

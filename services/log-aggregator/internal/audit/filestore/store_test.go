@@ -41,18 +41,24 @@ func TestStoreConcurrentSavesAndCleanup(t *testing.T) {
 }
 
 func TestStoreValidationAndLimits(t *testing.T) {
-	store, err := New(t.TempDir(), 32)
+	root := t.TempDir()
+	const maxBytes int64 = 32
+	store, err := New(root, maxBytes)
 	if err != nil { t.Fatal(err) }
 	if err := store.Save(context.Background(), audit.Record{AuditEventID: "bad"}); !errors.Is(err, audit.ErrInvalidAuditEventID) { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), "bad"); !errors.Is(err, audit.ErrInvalidAuditEventID) { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), recordID); !errors.Is(err, audit.ErrAuditRecordNotFound) { t.Fatal(err) }
 	if err := store.Save(context.Background(), testRecord()); !errors.Is(err, ErrRecordTooLarge) { t.Fatal(err) }
-	path := filepath.Join(store.root, recordID+".json")
+	store, err = New(root, 4096)
+	if err != nil { t.Fatal(err) }
+	path := filepath.Join(root, recordID+".json")
 	if err := os.WriteFile(path, []byte("{bad"), 0o644); err != nil { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), recordID); !errors.Is(err, ErrInvalidStoredData) { t.Fatal(err) }
 	if err := os.WriteFile(path, []byte(`{"audit_event_id":"123e4567-e89b-12d3-a456-426614174012"}`), 0o644); err != nil { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), recordID); !errors.Is(err, ErrInvalidStoredData) { t.Fatal(err) }
-	if err := os.WriteFile(path, make([]byte, 33), 0o644); err != nil { t.Fatal(err) }
+	store, err = New(root, maxBytes)
+	if err != nil { t.Fatal(err) }
+	if err := os.WriteFile(path, make([]byte, int(maxBytes)+1), 0o644); err != nil { t.Fatal(err) }
 	if _, err := store.Get(context.Background(), recordID); !errors.Is(err, ErrRecordTooLarge) { t.Fatal(err) }
 }
 
