@@ -30,6 +30,12 @@ Authoritative room match-over is the room-level end condition for both modes. Si
 
 `MatchEndFlow` does not calculate match winners, scores, deaths, persistence, or room state. Those facts come from server-owned room state and match-result payloads. The client only adapts those facts into presentation-safe UI rows and forwards user intent outward.
 
+## Concrete collaborator contracts
+
+The match-end seam uses concrete Godot script contracts rather than duck-typed method or signal discovery. `GameplayHudFlow`, `GameplayMenuFlow`, `GameplayEventFlow`, and `MatchResultsFlow` are the required collaborator types; optional session context is a `ClientSessionContext`. The configure methods reject incompatible collaborators at the Godot type boundary while preserving nullable optional collaborators.
+
+`MatchResultsFlow` signals are connected directly from their declared signal members. Its mounted result scene must satisfy the concrete `MatchResultWindow` contract; a scene-root mismatch fails fast instead of being mounted as an untyped generic object.
+
 ## Code root
 
 ```text

@@ -24,6 +24,8 @@ client/scenes/ui/dialogs/game_menu.tscn
 
 `GameplayMenuFlow` reads local session presentation context, configures a `GameMenu` UI instance for the current session state, forwards menu button intent through signals, and sends pause requests when opening or closing a live pause menu.
 
+The flow uses concrete collaborator contracts: `GameMenu` for rendered menu instances, `ClientSessionContext` for session mode, and `SpectateMenuState` for spectate availability. Declared `GameMenu` signals are connected directly; the flow does not discover optional methods or signals dynamically.
+
 There are two menu mounting paths:
 
 ```text
@@ -182,6 +184,8 @@ GameplayMenuFlow.set_match_over_overlay_enabled(true)
 
 When enabled, `GameplayMenuFlow` instantiates `game_menu.tscn` under the configured overlay parent and uses that menu as the active menu surface.
 
+The instantiated scene root must satisfy the `GameMenu` contract. A malformed overlay scene fails fast instead of being mounted as an untyped generic node.
+
 `GameplayComposition` configures the overlay parent as:
 
 ```text
@@ -286,7 +290,7 @@ These are intent signals. The menu flow does not perform the final route itself.
 
 ### Signals consumed from GameMenu
 
-`GameplayMenuFlow` connects to `GameMenu` signals when the rendered menu supports them:
+`GameplayMenuFlow` connects directly to the declared `GameMenu` signals:
 
 ```text
 resume_requested
@@ -295,7 +299,7 @@ lobby_requested
 spectate_requested
 ```
 
-The flow also contains a guarded connection path for `quit_requested` if a compatible menu exposes it, but the current `GameMenu` scene/script uses the menu button path for return-to-menu behavior.
+The current `GameMenu` scene/script uses the menu button path for return-to-menu behavior; there is no dynamic `quit_requested` compatibility path.
 
 ### Pause request API
 

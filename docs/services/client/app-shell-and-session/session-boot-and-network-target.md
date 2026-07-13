@@ -105,7 +105,7 @@ Each request method records the requested session mode, prepares the matching pe
 
 ### Session context
 
-`ClientSessionContext` tracks requested and active client mode.
+`ClientSessionContext` is the concrete Godot session-context contract shared by gameplay menu and match-end collaborators. It tracks requested and active client mode.
 
 It owns:
 
