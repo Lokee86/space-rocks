@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/storage"
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/storage"
 )
 
 type statusStore struct {

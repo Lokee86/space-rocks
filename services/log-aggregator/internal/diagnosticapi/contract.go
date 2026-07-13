@@ -38,6 +38,11 @@ var (
 
 type DiagnosticReportCreateRequest = diagnostics.DiagnosticSubmission
 type DiagnosticReport = diagnostics.DiagnosticReport
+type SourceContext = diagnostics.DiagnosticSourceContext
+type CorrelationContext = diagnostics.DiagnosticCorrelationContext
+type FailureContext = diagnostics.DiagnosticFailureContext
+type ReportSummary = diagnostics.DiagnosticReportSummary
+type EventTimeRange = diagnostics.TimeRange
 
 type ReportService interface {
 	Create(context.Context, DiagnosticReportCreateRequest) (DiagnosticReport, error)

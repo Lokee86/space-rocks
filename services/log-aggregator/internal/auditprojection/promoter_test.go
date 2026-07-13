@@ -61,9 +61,9 @@ func sourceRecord(required bool) storage.Record {
 
 func configuredPromoter(store Store) Promoter {
 	return Promoter{
-		Store: store,
+		Store:   store,
 		NewUUID: func() (string, error) { return auditID, nil },
-		Now: func() time.Time { return promotedTime },
+		Now:     func() time.Time { return promotedTime },
 		Sanitize: func(payload json.RawMessage) (json.RawMessage, error) {
 			return clonePayload(payload), nil
 		},
@@ -104,7 +104,9 @@ func TestPromoterSuccessfulPromotionMapsRecord(t *testing.T) {
 		"result": result.Record.ResultID, "match": result.Record.MatchID, "account": result.Record.AccountID,
 	}
 	for name, value := range checks {
-		if value == "" { t.Errorf("missing %s", name) }
+		if value == "" {
+			t.Errorf("missing %s", name)
+		}
 	}
 }
 
@@ -124,24 +126,33 @@ func TestPromoterDefensiveOwnership(t *testing.T) {
 		return nil
 	}
 	result, err := p.Promote(context.Background(), source)
-	if err != nil { t.Fatal(err) }
-	source.Payload[0] = 'x'; sanitized[0] = 'x'; policyPayload[0] = 'x'
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.Payload[0] = 'x'
+	sanitized[0] = 'x'
+	policyPayload[0] = 'x'
 	if string(store.record.Payload) != string(canonicalPayload()) || string(result.Record.Payload) != string(canonicalPayload()) {
 		t.Fatal("payload ownership was not preserved")
 	}
-	if string(original) != string(canonicalPayload()) { t.Fatal("source payload changed") }
+	if string(original) != string(canonicalPayload()) {
+		t.Fatal("source payload changed")
+	}
 }
 
 func TestPromoterSourceValidation(t *testing.T) {
 	for name, mutate := range map[string]func(*storage.Record){
-		"event": func(r *storage.Record) { r.EventID = "bad" },
-		"trace": func(r *storage.Record) { r.TraceID = "bad" },
+		"event":    func(r *storage.Record) { r.EventID = "bad" },
+		"trace":    func(r *storage.Record) { r.TraceID = "bad" },
 		"instance": func(r *storage.Record) { r.ServiceInstanceID = "bad" },
 	} {
 		t.Run(name, func(t *testing.T) {
-			r := sourceRecord(true); mutate(&r)
+			r := sourceRecord(true)
+			mutate(&r)
 			_, err := configuredPromoter(&fakeStore{}).Promote(context.Background(), r)
-			if !errors.Is(err, ErrInvalidSourceID) { t.Fatalf("got %v", err) }
+			if !errors.Is(err, ErrInvalidSourceID) {
+				t.Fatalf("got %v", err)
+			}
 		})
 	}
 }

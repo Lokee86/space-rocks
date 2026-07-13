@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	ErrStoreRequired          = errors.New("audit: store required")
-	ErrSanitizerRequired      = errors.New("audit: sanitizer required")
-	ErrInvalidSourceID        = errors.New("audit: invalid source id")
-	ErrInvalidPayload         = errors.New("audit: invalid payload")
-	ErrProjectionMismatch     = errors.New("audit: projection mismatch")
-	ErrAuditTypeRequired      = errors.New("audit: audit type required")
-	ErrInvalidAuditType       = errors.New("audit: invalid audit type")
-	ErrInvalidSanitizedOutput = errors.New("audit: invalid sanitized output")
+	ErrStoreRequired           = errors.New("audit: store required")
+	ErrSanitizerRequired       = errors.New("audit: sanitizer required")
+	ErrInvalidSourceID         = errors.New("audit: invalid source id")
+	ErrInvalidPayload          = errors.New("audit: invalid payload")
+	ErrProjectionMismatch      = errors.New("audit: projection mismatch")
+	ErrAuditTypeRequired       = errors.New("audit: audit type required")
+	ErrInvalidAuditType        = errors.New("audit: invalid audit type")
+	ErrInvalidSanitizedOutput  = errors.New("audit: invalid sanitized output")
 	ErrInvalidGeneratedAuditID = errors.New("audit: invalid generated audit id")
 )
 
@@ -99,7 +99,9 @@ func (p Promoter) Promote(ctx context.Context, source storage.Record) (Promotion
 		generator = newUUIDv4
 	}
 	auditID, err := generator()
-	if err != nil { return PromotionResult{}, err }
+	if err != nil {
+		return PromotionResult{}, err
+	}
 	if !validUUID(auditID) {
 		return PromotionResult{}, ErrInvalidGeneratedAuditID
 	}

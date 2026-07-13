@@ -47,18 +47,18 @@ func LoadWith(getenv EnvLookup, generateUUID UUIDGenerator) (Config, error) {
 		return Config{}, fmt.Errorf("config: environment lookup and UUID generator are required")
 	}
 	c := Config{
-		ListenAddress:     env(getenv, "LISTEN_ADDRESS", defaultListenAddress),
-		Environment:       env(getenv, "ENVIRONMENT", defaultEnvironment),
-		BuildVersion:      env(getenv, "BUILD_VERSION", defaultBuildVersion),
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      15 * time.Second,
-		IdleTimeout:       60 * time.Second,
-		ShutdownTimeout:   10 * time.Second,
-		ConsoleLogging:    true,
-		FileLogging:       true,
-		LogLevel:          "info",
-		LogDirectory:      defaultLogDirectory,
+		ListenAddress:             env(getenv, "LISTEN_ADDRESS", defaultListenAddress),
+		Environment:               env(getenv, "ENVIRONMENT", defaultEnvironment),
+		BuildVersion:              env(getenv, "BUILD_VERSION", defaultBuildVersion),
+		ReadHeaderTimeout:         5 * time.Second,
+		ReadTimeout:               15 * time.Second,
+		WriteTimeout:              15 * time.Second,
+		IdleTimeout:               60 * time.Second,
+		ShutdownTimeout:           10 * time.Second,
+		ConsoleLogging:            true,
+		FileLogging:               true,
+		LogLevel:                  "info",
+		LogDirectory:              defaultLogDirectory,
 		DiagnosticReportRetention: defaultDiagnosticReportRetention,
 	}
 	var err error

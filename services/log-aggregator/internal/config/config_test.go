@@ -30,11 +30,11 @@ func TestLoadWithDefaultsAndInjectedUUID(t *testing.T) {
 
 func TestLoadWithOverridesReadHeaderTimeout(t *testing.T) {
 	cfg, err := LoadWith(mapEnv(map[string]string{
-		"DIAGNOSTIC_AGGREGATOR_LISTEN_ADDRESS":      "0.0.0.0:9090",
-		"DIAGNOSTIC_AGGREGATOR_READ_HEADER_TIMEOUT": "2s",
-		"DIAGNOSTIC_AGGREGATOR_READ_TIMEOUT":        "3s",
-		"DIAGNOSTIC_AGGREGATOR_FILE_LOGGING":        "false",
-		"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL":           "WARN",
+		"DIAGNOSTIC_AGGREGATOR_LISTEN_ADDRESS":              "0.0.0.0:9090",
+		"DIAGNOSTIC_AGGREGATOR_READ_HEADER_TIMEOUT":         "2s",
+		"DIAGNOSTIC_AGGREGATOR_READ_TIMEOUT":                "3s",
+		"DIAGNOSTIC_AGGREGATOR_FILE_LOGGING":                "false",
+		"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL":                   "WARN",
 		"DIAGNOSTIC_AGGREGATOR_DIAGNOSTIC_REPORT_RETENTION": "504h",
 	}), fixedUUID)
 	if err != nil {

@@ -64,28 +64,28 @@ type DiagnosticFailureContext struct {
 // DiagnosticSubmission is the untrusted intake contract. Events remain raw
 // until each event is strictly decoded by the validation pipeline.
 type DiagnosticSubmission struct {
-	ReportVersion   int                         `json:"report_version"`
-	Trigger         DiagnosticTrigger           `json:"trigger"`
-	SubmittedAt     time.Time                   `json:"submitted_at"`
-	Source          DiagnosticSourceContext     `json:"source"`
+	ReportVersion   int                          `json:"report_version"`
+	Trigger         DiagnosticTrigger            `json:"trigger"`
+	SubmittedAt     time.Time                    `json:"submitted_at"`
+	Source          DiagnosticSourceContext      `json:"source"`
 	Correlation     DiagnosticCorrelationContext `json:"correlation"`
-	UserDescription string                      `json:"user_description,omitempty"`
-	Failure         *DiagnosticFailureContext   `json:"failure,omitempty"`
+	UserDescription string                       `json:"user_description,omitempty"`
+	Failure         *DiagnosticFailureContext    `json:"failure,omitempty"`
 	Events          []json.RawMessage            `json:"events"`
 }
 
 type DiagnosticReport struct {
-	DiagnosticReportID string                         `json:"diagnostic_report_id"`
-	ReportVersion      int                            `json:"report_version"`
-	Trigger            DiagnosticTrigger              `json:"trigger"`
-	CreatedAt          time.Time                      `json:"created_at"`
-	SubmittedAt        time.Time                      `json:"submitted_at"`
-	Source             DiagnosticSourceContext        `json:"source"`
-	Correlation        DiagnosticCorrelationContext   `json:"correlation"`
-	UserDescription    string                         `json:"user_description,omitempty"`
-	Failure            *DiagnosticFailureContext      `json:"failure,omitempty"`
-	Events             []events.Event                 `json:"events"`
-	Summary            DiagnosticReportSummary        `json:"summary"`
+	DiagnosticReportID string                       `json:"diagnostic_report_id"`
+	ReportVersion      int                          `json:"report_version"`
+	Trigger            DiagnosticTrigger            `json:"trigger"`
+	CreatedAt          time.Time                    `json:"created_at"`
+	SubmittedAt        time.Time                    `json:"submitted_at"`
+	Source             DiagnosticSourceContext      `json:"source"`
+	Correlation        DiagnosticCorrelationContext `json:"correlation"`
+	UserDescription    string                       `json:"user_description,omitempty"`
+	Failure            *DiagnosticFailureContext    `json:"failure,omitempty"`
+	Events             []events.Event               `json:"events"`
+	Summary            DiagnosticReportSummary      `json:"summary"`
 }
 
 type DiagnosticReportSummary struct {
