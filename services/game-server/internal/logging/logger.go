@@ -186,11 +186,6 @@ func buildHandler(level *slog.LevelVar) slog.Handler {
 	if logFile != nil {
 		handlers = append(handlers, slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level}))
 	}
-	aggregatorOutputState.Lock()
-	if aggregatorOutputState.sink != nil {
-		handlers = append(handlers, slog.NewJSONHandler(aggregatorOutputState.sink, &slog.HandlerOptions{Level: level}))
-	}
-	aggregatorOutputState.Unlock()
 	if len(handlers) == 1 {
 		return textHandler
 	}
