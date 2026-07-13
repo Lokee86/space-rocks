@@ -217,7 +217,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -232,7 +232,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -247,7 +247,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -262,7 +262,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -277,7 +277,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -293,7 +293,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -309,7 +309,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -324,7 +324,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -340,7 +340,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -370,7 +370,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -386,7 +386,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -402,7 +402,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -418,7 +418,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -1678,7 +1678,7 @@
       "audit_eligible": false,
       "category": "aggregator_lifecycle",
       "default_level": "error",
-      "description": "The log aggregator is unavailable; producers must remain non-blocking.",
+      "description": "The diagnostic aggregator is unavailable; producers must remain non-blocking.",
       "name": "aggregator_unavailable",
       "retention_tier": "operational",
       "services": [
@@ -1686,7 +1686,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1698,7 +1698,7 @@
       "name": "aggregator_event_accepted",
       "retention_tier": "ephemeral_dev",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1710,7 +1710,7 @@
       "name": "aggregator_event_rejected",
       "retention_tier": "operational",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1722,7 +1722,7 @@
       "name": "aggregator_event_redacted",
       "retention_tier": "operational",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1734,7 +1734,7 @@
       "name": "aggregator_duplicate_suppressed",
       "retention_tier": "ephemeral_dev",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1746,7 +1746,7 @@
       "name": "diagnostic_chain_grouped",
       "retention_tier": "diagnostic_report",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1758,7 +1758,7 @@
       "name": "aggregator_storage_failed",
       "retention_tier": "operational",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1770,7 +1770,7 @@
       "name": "aggregator_query_failed",
       "retention_tier": "operational",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1782,7 +1782,7 @@
       "name": "audit_record_created",
       "retention_tier": "audit_grade",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1794,7 +1794,7 @@
       "name": "audit_record_creation_failed",
       "retention_tier": "audit_grade",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1806,7 +1806,7 @@
       "name": "retention_policy_applied",
       "retention_tier": "operational",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -1820,7 +1820,7 @@
       "services": [
         "client",
         "game_server",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1833,7 +1833,7 @@
       "retention_tier": "diagnostic_report",
       "services": [
         "client",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1846,7 +1846,7 @@
       "retention_tier": "diagnostic_report",
       "services": [
         "client",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1859,7 +1859,7 @@
       "retention_tier": "diagnostic_report",
       "services": [
         "client",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1872,7 +1872,7 @@
       "retention_tier": "diagnostic_report",
       "services": [
         "client",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1885,7 +1885,7 @@
       "retention_tier": "diagnostic_report",
       "services": [
         "client",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1897,7 +1897,7 @@
       "name": "diagnostic_report_rejected",
       "retention_tier": "diagnostic_report",
       "services": [
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1910,7 +1910,7 @@
       "retention_tier": "diagnostic_report",
       "services": [
         "client",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1925,7 +1925,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -1940,7 +1940,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -1955,7 +1955,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -1970,7 +1970,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -1985,7 +1985,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -2001,7 +2001,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -2017,7 +2017,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -2033,7 +2033,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -2085,7 +2085,7 @@
         "api_server",
         "game_server",
         "player_data",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": false
     },
@@ -2099,7 +2099,7 @@
       "services": [
         "game_server",
         "api_server",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -2113,7 +2113,7 @@
       "services": [
         "game_server",
         "api_server",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -2127,7 +2127,7 @@
       "services": [
         "game_server",
         "api_server",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     },
@@ -2142,7 +2142,7 @@
         "client",
         "api_server",
         "game_server",
-        "log_aggregator"
+        "diagnostic_aggregator"
       ],
       "trace_required": true
     }

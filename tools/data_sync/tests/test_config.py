@@ -299,7 +299,7 @@ def test_loads_observability_targets(tmp_path: Path) -> None:
 [observability.go]
 enabled = true
 files = [
-  "services/log-aggregator/internal/observability/generated.go",
+  "services/diagnostic-aggregator/internal/observability/generated.go",
   "services/game-server/internal/observability/generated.go",
   "services/player-data/observability/generated.go",
 ]
@@ -336,7 +336,7 @@ owns = []
 
     assert config.enabled_languages("observability") == ("go", "gds", "ruby", "json", "docs")
     assert config.target("observability", "go").files == (
-        tmp_path / "services/log-aggregator/internal/observability/generated.go",
+        tmp_path / "services/diagnostic-aggregator/internal/observability/generated.go",
         tmp_path / "services/game-server/internal/observability/generated.go",
         tmp_path / "services/player-data/observability/generated.go",
     )

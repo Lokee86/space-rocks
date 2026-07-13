@@ -23,6 +23,7 @@ This folder owns the service documentation indexes for current Space Rocks servi
 
 - [api-server](api-server/!INDEX.md) - Api Server documentation.
 - [client](client/!INDEX.md) - Client documentation.
+- [diagnostic-aggregator](diagnostic-aggregator/!INDEX.md) - Diagnostic Aggregator documentation.
 - [game-server](game-server/!INDEX.md) - Game Server documentation.
 - [player-data](player-data/!INDEX.md) - Player Data documentation.
 - [web](web/!INDEX.md) - Web documentation.
