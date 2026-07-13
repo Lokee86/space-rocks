@@ -54,8 +54,8 @@ func TestAsteroidCandidatesNearestWrappedThenID(t *testing.T) {
 
 func TestPickupCandidatesNearestAndStaleFiltered(t *testing.T) {
 	game := spatialTestGame()
-	game.entities.Pickups["far"] = &pickupForTest("far", 5, 0)
-	game.entities.Pickups["near"] = &pickupForTest("near", 1, 0)
+	game.entities.Pickups["far"] = pickupForTest("far", 5, 0)
+	game.entities.Pickups["near"] = pickupForTest("near", 1, 0)
 	game.rebuildPickupSpatialIndex()
 	delete(game.entities.Pickups, "near")
 
@@ -65,8 +65,8 @@ func TestPickupCandidatesNearestAndStaleFiltered(t *testing.T) {
 	}
 }
 
-func pickupForTest(id string, x, y float64) pickups.Pickup {
-	return pickups.Pickup{ID: id, Type: pickups.TypeOneUp, X: x, Y: y}
+func pickupForTest(id string, x, y float64) *pickups.Pickup {
+	return &pickups.Pickup{ID: id, Type: pickups.TypeOneUp, X: x, Y: y}
 }
 
 

@@ -40,6 +40,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: services/game-server/go.mod
+          cache-dependency-path: services/game-server/go.sum
       - name: Run Go tests
         run: bash tools/ci/run_go_tests.sh
 
@@ -71,7 +72,7 @@ jobs:
         run: bash tools/ci/run_client_tests.sh
       - name: Upload Godot logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: godot-logs-${{ github.run_id }}
           path: ${{ runner.temp }}/godot-artifacts
