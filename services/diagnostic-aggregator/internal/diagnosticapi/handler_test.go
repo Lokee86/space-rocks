@@ -67,6 +67,21 @@ func TestAuthorizationPrecedesBodyAndService(t *testing.T) {
 	if response.Code != http.StatusUnauthorized || service.createCalls != 0 {
 		t.Fatalf("status=%d calls=%d", response.Code, service.createCalls)
 	}
+	if response.Header().Get("WWW-Authenticate") != "Bearer" {
+		t.Fatalf("WWW-Authenticate=%q", response.Header().Get("WWW-Authenticate"))
+	}
+	if strings.Contains(response.Body.String(), "configured-secret") || strings.Contains(response.Body.String(), "received-secret") {
+		t.Fatal("unauthorized response exposed bearer credentials")
+	}
+}
+
+func TestDiagnosticResponsesSetSecurityHeaders(t *testing.T) {
+	h := newTestHandler(t, &fakeReportService{}, HandlerConfig{MaxRequestBytes: 10, Authorize: func(*http.Request) bool { return true }})
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/outside", nil))
+	if response.Header().Get("Cache-Control") != "no-store" || response.Header().Get("X-Content-Type-Options") != "nosniff" {
+		t.Fatalf("security headers: Cache-Control=%q X-Content-Type-Options=%q", response.Header().Get("Cache-Control"), response.Header().Get("X-Content-Type-Options"))
+	}
 }
 
 type failingReader struct{}

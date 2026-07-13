@@ -29,6 +29,8 @@ func NewHandler(service ReportService, config HandlerConfig) (http.Handler, erro
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	if r.URL.Path == DiagnosticReportsPath {
 		if r.Method != http.MethodPost {
 			h.methodError(w, http.MethodPost)
@@ -65,6 +67,7 @@ func reportIDFromPath(path string) (string, bool) {
 
 func (h *handler) authorized(w http.ResponseWriter, r *http.Request) bool {
 	if !h.config.Authorize(r) {
+		w.Header().Set("WWW-Authenticate", "Bearer")
 		writeError(w, http.StatusUnauthorized, ErrorCodeUnauthorized)
 		return false
 	}
