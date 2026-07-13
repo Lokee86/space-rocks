@@ -51,6 +51,18 @@ func (writer *writer) flush() error {
 	return writer.buffer.Flush()
 }
 
+func (writer *writer) durableFlush() error {
+	writer.mu.Lock()
+	defer writer.mu.Unlock()
+	if writer.closed {
+		return errors.New("jsonlstore: writer is closed")
+	}
+	if err := writer.buffer.Flush(); err != nil {
+		return err
+	}
+	return writer.file.Sync()
+}
+
 func (writer *writer) close() error {
 	writer.once.Do(func() {
 		close(writer.stop)
