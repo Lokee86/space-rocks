@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
@@ -10,7 +15,18 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return runWithContext(ctx)
+}
+
+func runWithContext(ctx context.Context) int {
 	logging.Configure(os.Getenv(logging.EnvGlobalLevel))
+
 	logPath, err := logging.ConfigureFileOutput("logs/game-server", "game-server")
 	if err != nil {
 		logging.Server.Warn("server structured log file unavailable", logging.FieldError, err)
@@ -18,12 +34,31 @@ func main() {
 		logging.Server.Info("server structured log file configured", "path", logPath)
 	}
 
+	defer func() {
+		if err := logging.CloseFileOutput(); err != nil {
+			logging.Server.Error("server structured log file close failed", err)
+		}
+	}()
+	defer func() {
+		if err := closeAggregatorLogging(5 * time.Second); err != nil {
+			logging.Server.Warn("aggregator logging close failed", logging.FieldError, err)
+		}
+	}()
+
+	if enabled, err := configureAggregatorLoggingFromEnv(); err != nil {
+		logging.Server.Warn("aggregator logging configuration invalid; continuing without aggregation", logging.FieldError, err)
+	} else if enabled {
+		logging.Server.Info("aggregator logging enabled")
+	}
+
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
+
 	webRTCTransportConfig := buildWebRTCTransportConfigFromEnv()
 	networking.SetWebRTCTransportConfig(webRTCTransportConfig)
-	logging.Server.Info("web rtc transport config loaded",
+	logging.Server.Info(
+		"web rtc transport config loaded",
 		"advertised_ip_count", len(webRTCTransportConfig.AdvertisedIPs),
 		"udp_port_range_configured", webRTCTransportConfig.UDPPortMin != 0 && webRTCTransportConfig.UDPPortMax != 0,
 	)
@@ -31,21 +66,20 @@ func main() {
 	playerDataRuntime, err := buildPlayerDataRuntime()
 	if err != nil {
 		logging.Server.Error("player-data runtime initialization failed", err)
-		os.Exit(1)
+		return 1
 	}
 	playerDataSink := newPlayerDataSink(playerDataRuntime)
+
 	reporter, err := matchreporting.NewRuntimeReporter(playerDataSink)
 	if err != nil {
 		logging.Server.Error("player-data reporter initialization failed", err)
-		os.Exit(1)
+		return 1
 	}
 	authVerifier := buildAuthVerifierFromEnv()
 
-	// Core server routes.
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporter(rooms, authVerifier, reporter))
 
-	// Player-data routes.
 	playerDataProfileHandler := newPlayerDataProfileHTTPHandler(playerDataRuntime, authVerifier)
 	playerDataLocalProfilesHandler := newPlayerDataLocalProfilesHTTPHandler(playerDataRuntime)
 	mux.Handle("POST /api/player-data/profile", playerDataProfileHandler)
@@ -57,10 +91,17 @@ func main() {
 	mux.Handle("PUT /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 
 	logging.Server.Info("server starting", "addr", ":8080")
-	if err := newHTTPServer(mux).ListenAndServe(); err != nil {
+	server := newHTTPServer(mux)
+	listener, err := net.Listen("tcp", ":8080")
+	if err != nil {
 		logging.Server.Error("server stopped", err, "addr", ":8080")
-		os.Exit(1)
+		return 1
 	}
+	if err := serveHTTPServer(ctx, server, listener, 5*time.Second); err != nil {
+		logging.Server.Error("server stopped", err, "addr", ":8080")
+		return 1
+	}
+	return 0
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
