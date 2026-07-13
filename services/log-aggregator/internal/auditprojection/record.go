@@ -1,4 +1,4 @@
-package audit
+package auditprojection
 
 import (
 	"encoding/json"

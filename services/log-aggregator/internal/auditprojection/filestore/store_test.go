@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/audit"
+	audit "github.com/Lokee86/space-rocks/services/log-aggregator/internal/auditprojection"
 )
 
 const recordID = "123e4567-e89b-12d3-a456-426614174010"

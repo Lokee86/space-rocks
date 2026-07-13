@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/audit"
+	audit "github.com/Lokee86/space-rocks/services/log-aggregator/internal/auditprojection"
 )
 
 const DefaultMaxRecordBytes int64 = 4 << 20
