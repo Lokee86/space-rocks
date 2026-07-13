@@ -107,7 +107,7 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | aggregator_event_rejected | aggregator_ingestion | warn | The aggregator rejected an event or batch for schema or safety reasons. | diagnostic_aggregator | true | false | operational |
 | aggregator_query_failed | aggregator_query | error | An aggregator search or filtering query failed. | diagnostic_aggregator | true | false | operational |
 | aggregator_storage_failed | aggregator_storage | critical | Durable aggregator storage failed. | diagnostic_aggregator | true | false | operational |
-| aggregator_unavailable | aggregator_lifecycle | error | The diagnostic aggregator is unavailable; producers must remain non-blocking. | api_server, client, game_server, diagnostic_aggregator, player_data | true | false | operational |
+| aggregator_unavailable | aggregator_lifecycle | error | The diagnostic aggregator is unavailable; producers must remain non-blocking. | api_server, client, diagnostic_aggregator, game_server, player_data | true | false | operational |
 | api_rate_limit_triggered | api_request | warn | An API rate limit was triggered. | api_server | true | false | operational |
 | api_request_completed | api_request | debug | An API request completed successfully. | api_server | true | false | operational |
 | api_request_failed | api_request | error | An API request failed. | api_server | true | false | operational |
@@ -128,7 +128,7 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | bug_report_upload_failed | diagnostics | warn | A diagnostic report upload failed while local diagnostics remain available. | client, diagnostic_aggregator | true | false | diagnostic_report |
 | bug_report_upload_started | diagnostics | info | A diagnostic report upload began. | client, diagnostic_aggregator | true | false | diagnostic_report |
 | bug_report_upload_succeeded | diagnostics | info | A diagnostic report upload succeeded. | client, diagnostic_aggregator | true | false | diagnostic_report |
-| build_version_loaded | configuration | info | The build or release version was loaded. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| build_version_loaded | configuration | info | The build or release version was loaded. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | client_config_load_failed | client_startup | error | Client configuration could not be loaded. | client | false | false | diagnostic_report |
 | client_connected | client_network | info | The client established a network connection. | api_server, client, game_server | true | false | operational |
 | client_connection_failed | client_network | warn | A client network connection attempt failed. | api_server, client, game_server | true | false | diagnostic_report |
@@ -138,26 +138,26 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | client_startup_failed | client_startup | error | The client failed to boot its main scene or session shell. | client | true | false | diagnostic_report |
 | collision_shape_missing | simulation | warn | An authoritative simulation entity lacked a required collision shape. | game_server | false | false | operational |
 | compatibility_blocked | session_admission | warn | A client or session was blocked by compatibility checks. | api_server, client, game_server | true | true | audit_grade |
-| configuration_invalid | configuration | critical | Required or parsed configuration is invalid. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| configuration_unsafe | configuration | critical | Configuration would permit an unsafe release or environment behavior. | api_server, client, game_server, diagnostic_aggregator, player_data | false | true | audit_grade |
+| configuration_invalid | configuration | critical | Required or parsed configuration is invalid. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| configuration_unsafe | configuration | critical | Configuration would permit an unsafe release or environment behavior. | api_server, client, diagnostic_aggregator, game_server, player_data | false | true | audit_grade |
 | connection_attempt_started | client_network | debug | A client network connection attempt began. | client | true | false | ephemeral_dev |
-| contract_version_loaded | configuration | info | The protocol, API, or data contract version was loaded. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| contract_version_loaded | configuration | info | The protocol, API, or data contract version was loaded. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | copy_diagnostics_generated | diagnostics | info | Safe copyable diagnostics were generated for a user or tester. | client, diagnostic_aggregator | true | false | diagnostic_report |
 | database_migration_failed | player_data | critical | A database migration failed. | player_data | true | true | audit_grade |
 | database_unavailable | player_data | error | The player-data database or storage dependency is unavailable. | player_data | true | false | operational |
-| dependency_health_failed | health_readiness | error | A required dependency failed health checks. | api_server, game_server, diagnostic_aggregator, player_data | true | false | operational |
-| dependency_initialization_failed | service_lifecycle | error | A required dependency failed during initialization. | api_server, game_server, diagnostic_aggregator, player_data | true | false | operational |
+| dependency_health_failed | health_readiness | error | A required dependency failed health checks. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational |
+| dependency_initialization_failed | service_lifecycle | error | A required dependency failed during initialization. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational |
 | devtools_command_applied | devtools_admin | info | A state-changing devtools command was applied. | client, game_server | true | true | audit_grade |
 | devtools_command_rejected | devtools_admin | warn | A devtools command was rejected by capability or validation policy. | client, game_server | true | true | audit_grade |
 | devtools_enabled | devtools_admin | info | Devtools capability was enabled in an allowed environment. | client, game_server | false | true | audit_grade |
-| diagnostic_bundle_created | diagnostics | info | A bounded diagnostic bundle was created. | client, game_server, diagnostic_aggregator | true | false | diagnostic_report |
+| diagnostic_bundle_created | diagnostics | info | A bounded diagnostic bundle was created. | client, diagnostic_aggregator, game_server | true | false | diagnostic_report |
 | diagnostic_chain_grouped | aggregator_query | info | Events were grouped into a correlation-preserving diagnostic chain. | diagnostic_aggregator | true | false | diagnostic_report |
 | diagnostic_redaction_failed | diagnostics | critical | Required diagnostic redaction failed, preventing safe export or storage. | client, diagnostic_aggregator | true | false | diagnostic_report |
 | diagnostic_report_rejected | diagnostics | warn | A diagnostic report was rejected for unsafe or invalid fields. | diagnostic_aggregator | true | false | diagnostic_report |
 | entity_count_threshold_crossed | runtime_threshold | warn | Active entity count crossed its configured warning threshold. | game_server | false | false | operational |
-| environment_degraded | health_readiness | warn | The operating environment entered a degraded condition. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| environment_recovered | health_readiness | info | The operating environment recovered from degradation. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| environment_selected | configuration | info | The runtime environment was selected. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| environment_degraded | health_readiness | warn | The operating environment entered a degraded condition. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| environment_recovered | health_readiness | info | The operating environment recovered from degradation. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| environment_selected | configuration | info | The runtime environment was selected. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | feature_mode_loaded | configuration | info | A feature flag, devtools mode, or release capability was loaded. | api_server, client, game_server | false | false | ephemeral_dev |
 | frame_pressure_threshold_crossed | runtime_threshold | warn | Client frame pressure crossed its configured warning threshold. | client | false | false | operational |
 | game_over_detected | simulation | info | The authoritative simulation detected game over. | game_server | true | false | operational |
@@ -172,16 +172,16 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | integrity_check_failed | integrity | warn | An integrity check failed or produced a suspicious result. | api_server, client, game_server | true | true | audit_grade |
 | integrity_eligibility_changed | integrity | warn | A player's or result's integrity eligibility changed. | api_server, player_data | true | true | audit_grade |
 | invalid_entity_state_detected | simulation | error | The authoritative simulation detected an invalid entity state. | game_server | true | false | diagnostic_report |
-| liveness_check_failed | health_readiness | error | Internal liveness checks failed. | api_server, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| load_scenario_completed | runtime_threshold | info | A bounded load or soak scenario completed. | api_server, game_server, diagnostic_aggregator | true | false | ephemeral_dev |
-| load_scenario_failed | runtime_threshold | error | A bounded load or soak scenario failed. | api_server, game_server, diagnostic_aggregator | true | false | diagnostic_report |
-| load_scenario_started | runtime_threshold | info | A bounded load or soak scenario began. | api_server, game_server, diagnostic_aggregator | true | false | ephemeral_dev |
+| liveness_check_failed | health_readiness | error | Internal liveness checks failed. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| load_scenario_completed | runtime_threshold | info | A bounded load or soak scenario completed. | api_server, diagnostic_aggregator, game_server | true | false | ephemeral_dev |
+| load_scenario_failed | runtime_threshold | error | A bounded load or soak scenario failed. | api_server, diagnostic_aggregator, game_server | true | false | diagnostic_report |
+| load_scenario_started | runtime_threshold | info | A bounded load or soak scenario began. | api_server, diagnostic_aggregator, game_server | true | false | ephemeral_dev |
 | local_server_connected | client_startup | info | The client connected to its bundled local server. | client, game_server | true | false | operational |
 | local_server_exited_unexpectedly | client_startup | error | The bundled local server exited without an expected shutdown. | client, game_server | true | false | diagnostic_report |
 | local_server_launch_failed | client_startup | error | The bundled local server failed to launch. | client, game_server | true | false | diagnostic_report |
 | local_server_launch_requested | client_startup | info | The client requested launch of the bundled local server. | client | true | false | operational |
-| maintenance_mode_entered | health_readiness | warn | A service or environment entered maintenance mode. | api_server, game_server, diagnostic_aggregator, player_data | false | true | audit_grade |
-| maintenance_mode_exited | health_readiness | info | A service or environment exited maintenance mode. | api_server, game_server, diagnostic_aggregator, player_data | false | true | audit_grade |
+| maintenance_mode_entered | health_readiness | warn | A service or environment entered maintenance mode. | api_server, diagnostic_aggregator, game_server, player_data | false | true | audit_grade |
+| maintenance_mode_exited | health_readiness | info | A service or environment exited maintenance mode. | api_server, diagnostic_aggregator, game_server, player_data | false | true | audit_grade |
 | match_ended | simulation | info | Authoritative match simulation ended. | game_server | true | false | operational |
 | match_result_duplicate_suppressed | match_results | info | A duplicate or idempotent match result was suppressed. | api_server, player_data | true | true | audit_grade |
 | match_result_marked_pending | match_results | warn | A match result was preserved as pending for later delivery or processing. | api_server, game_server, player_data | true | true | audit_grade |
@@ -192,9 +192,9 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | match_result_retry_scheduled | match_results | warn | A failed match result operation was scheduled for retry. | api_server, player_data | true | true | audit_grade |
 | match_result_retry_succeeded | match_results | info | A retried match result operation succeeded. | api_server, player_data | true | true | audit_grade |
 | match_started | simulation | info | Authoritative match simulation started. | game_server | true | false | operational |
-| memory_growth_threshold_crossed | runtime_threshold | warn | Observed memory growth crossed its configured warning threshold. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| memory_growth_threshold_crossed | runtime_threshold | warn | Observed memory growth crossed its configured warning threshold. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | moderation_action_applied | integrity | warn | A moderation or enforcement action was applied. | api_server, game_server | true | true | audit_grade |
-| observability_unavailable | health_readiness | error | Telemetry or logging was unavailable before or after launch. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| observability_unavailable | health_readiness | error | Telemetry or logging was unavailable before or after launch. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | outbound_packet_encode_failed | game_networking | error | A game-server outbound packet could not be encoded. | game_server | true | false | operational |
 | packet_decode_failed | networking | warn | A received packet could not be decoded. | client, game_server | true | false | operational |
 | packet_envelope_decode_failed | game_networking | warn | A game-server packet envelope could not be decoded. | game_server | true | false | operational |
@@ -211,7 +211,7 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | profile_migration_failed | profile_migration | error | A local profile migration failed. | client, player_data | true | false | diagnostic_report |
 | profile_migration_started | profile_migration | info | A local profile migration began. | client, player_data | true | false | diagnostic_report |
 | profile_migration_succeeded | profile_migration | info | A local profile migration completed successfully. | client, player_data | true | false | diagnostic_report |
-| readiness_check_failed | health_readiness | warn | A service failed readiness checks. | api_server, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| readiness_check_failed | health_readiness | warn | A service failed readiness checks. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | reconnect_attempt_scheduled | client_network | warn | A client reconnect attempt was scheduled after connection loss. | client | true | false | diagnostic_report |
 | reconnect_failed | client_network | warn | A client reconnect attempt failed. | client, game_server | true | false | diagnostic_report |
 | reconnect_succeeded | client_network | info | A client reconnect attempt succeeded. | client, game_server | true | false | operational |
@@ -231,16 +231,16 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | room_player_removed | rooms | info | A player was removed from a room by timeout or an administrative action. | game_server | true | true | audit_grade |
 | room_ready_state_changed | rooms | debug | A room changed its readiness state. | game_server | true | false | ephemeral_dev |
 | service_entered_admission_blocked_state | service_lifecycle | warn | A service is running but blocks new admissions. | api_server, game_server, player_data | false | false | operational |
-| service_entered_degraded_state | service_lifecycle | warn | A service entered a named degraded operating state. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| service_recovered | service_lifecycle | info | A service recovered from a degraded, offline, or blocked state. | api_server, client, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| service_started | service_lifecycle | info | A service completed startup and is available for normal operation. | api_server, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| service_starting | service_lifecycle | info | A service has begun startup. | api_server, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| service_startup_failed | service_lifecycle | critical | A service could not complete startup. | api_server, game_server, diagnostic_aggregator, player_data | true | false | operational |
-| service_stopped | service_lifecycle | info | A service completed shutdown. | api_server, game_server, diagnostic_aggregator, player_data | false | false | operational |
-| service_stopping | service_lifecycle | info | A service has begun an intentional shutdown. | api_server, game_server, diagnostic_aggregator, player_data | false | false | operational |
+| service_entered_degraded_state | service_lifecycle | warn | A service entered a named degraded operating state. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| service_recovered | service_lifecycle | info | A service recovered from a degraded, offline, or blocked state. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| service_started | service_lifecycle | info | A service completed startup and is available for normal operation. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| service_starting | service_lifecycle | info | A service has begun startup. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| service_startup_failed | service_lifecycle | critical | A service could not complete startup. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational |
+| service_stopped | service_lifecycle | info | A service completed shutdown. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational |
+| service_stopping | service_lifecycle | info | A service has begun an intentional shutdown. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational |
 | simulation_panic_recovered | simulation | critical | The game server recovered from a simulation panic or unsafe failure. | game_server | true | false | diagnostic_report |
 | slow_tick_threshold_crossed | runtime_threshold | warn | Simulation tick duration crossed its configured warning threshold. | game_server | false | false | operational |
-| soak_degradation_detected | runtime_threshold | error | A soak run detected sustained runtime degradation. | api_server, client, game_server, diagnostic_aggregator | true | false | diagnostic_report |
+| soak_degradation_detected | runtime_threshold | error | A soak run detected sustained runtime degradation. | api_server, client, diagnostic_aggregator, game_server | true | false | diagnostic_report |
 | storage_backend_invalid | player_data | critical | The configured storage backend is invalid for the environment. | player_data | false | false | operational |
 | storage_backend_selected | player_data | info | The player-data storage backend was selected. | player_data | false | false | operational |
 | suspicious_packet_rejected | integrity | warn | A suspicious or invalid packet was rejected. | game_server | true | true | audit_grade |
