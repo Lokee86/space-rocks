@@ -10,9 +10,11 @@ It exists to keep player-data routing owned by `services/player-data` instead of
 
 ## Overview
 
-`services/player-data` owns the runtime boundary that accepts player-data commands, validates packet-level mode and identity combinations, routes reads and writes by identity kind, and delegates storage behavior to the configured store.
+`services/player-data` is a logically independent service. It owns the runtime boundary that accepts player-data commands, validates packet-level mode and identity combinations, routes reads and writes by identity kind, and delegates storage behavior to the configured store.
 
-The current runtime is hosted in-process by the game-server process. That hosting detail does not make player-data a game-server subsystem. The game server builds the runtime, mounts HTTP handlers, and reports match results through a sink, but it does not choose the backing store for a player request and does not read or write SQLite, Rails, or Postgres tables directly.
+The current HTTP surface is co-hosted in the game-server executable/process. The game-server composition root may start or mount the player-data service and provide process-level dependencies, but gameplay, networking, and match-reporting code must communicate through the player-data service transport/API boundary. Co-hosting does not make player-data a game-server subsystem.
+
+The current direct runtime sink is temporary architectural debt. `RuntimeReporter` calls `RuntimeSink`, which invokes `playerdata.Runtime.Handle` in-process; this bypasses the service transport boundary and makes separation require replacing a direct call path. It is not the intended final seam and is not evidence that player-data is a game-server subsystem.
 
 The runtime routes three identity kinds:
 
@@ -127,7 +129,18 @@ It does not configure the local SQLite path. The game-server composition root su
 
 ## Game-server hosting
 
-The game server currently hosts the player-data runtime in-process.
+The game server currently co-hosts the player-data service in-process.
+
+The intended flow for both co-hosted and detached deployments is:
+
+```text
+game-server match reporter
+-> player-data client/transport
+-> player-data service API
+-> runtime/store router
+```
+
+Detaching player-data should require changing process composition and addressing, not changing game-server match-reporting/domain code.
 
 At startup, `services/game-server/cmd/game-server/main.go`:
 
@@ -199,13 +212,13 @@ The encoded runtime surface is:
 Runtime.Handle(payload []byte) ([]byte, error)
 ```
 
-It is used by the in-process runtime sink:
+It is currently used by the in-process runtime sink:
 
 ```text
 RuntimeSink.HandlePlayerDataCommand(payload)
 ```
 
-The game-server match reporter sends encoded player-data commands through this sink.
+The game-server match reporter currently sends encoded player-data commands through this sink. That direct call is the documented reach-through violation; the intended caller path is a player-data client/transport invoking the service API boundary.
 
 Current generated packet types are:
 
@@ -534,7 +547,7 @@ Current verified behavior includes:
 
 ## Notes
 
-The player-data runtime is currently hosted in-process by the game server, but its store-routing boundary is intentionally extractable. A future separate player-data server can replace the in-process transport without moving store selection into gameplay or room code.
+The player-data service is currently co-hosted in-process by the game server, but its service transport/API boundary is intentionally extractable. The current direct runtime sink is architectural debt. A future separate player-data server should require only process composition and addressing changes, without moving store selection into gameplay or room code.
 
 `display_name` and callsign values are presentation identity. Store routing uses `identity_kind`, `account_id`, and `local_profile_id`.
 

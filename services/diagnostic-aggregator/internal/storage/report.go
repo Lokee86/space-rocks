@@ -3,8 +3,11 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 )
+
+var ErrReportNotFound = errors.New("storage: diagnostic report not found")
 
 // Report is the narrow persistence projection for a finalized diagnostic report.
 type Report struct {

@@ -4,91 +4,84 @@ Parent index: [Diagnostic Aggregator](./!INDEX.md)
 
 ## Purpose
 
-The diagnostic aggregator is the bounded service for triggered diagnostic reports. It accepts diagnostic material, applies validation and redaction policy, constructs a report or bundle, stores it for bounded retrieval, and exposes service health and lifecycle state.
+The diagnostic aggregator is the bounded service for triggered diagnostic reports. It accepts diagnostic material, applies validation and safety policy, constructs a finalized report, stores it for bounded retrieval, and exposes the report API.
 
-## Runtime
+## Co-hosted Runtime
 
-The executable is `services/diagnostic-aggregator/cmd/diagnostic-aggregator/`.
+There is no standalone diagnostic-aggregator executable, listener, process configuration package, process logger, service identity package, or standalone health/readiness surface. The manual producer remains at `services/diagnostic-aggregator/cmd/diagnostic-submit/`.
 
-Current Stage 2 runtime responsibilities include:
+The current runtime is co-hosted by the game-server process:
 
-- loading environment-scoped configuration
-- writing service-owned rolling logs when file logging is enabled
-- serving the diagnostic-report HTTP surface
-- exposing readiness and liveness health behavior
-- closing the report store during shutdown
-- draining the HTTP server with the configured shutdown timeout, then force-closing if needed
+```text
+game-server composition root
+  -> creates the shared HTTP mux, listener, and server
+  -> loads DIAGNOSTIC_AGGREGATOR_* hosted configuration
+  -> constructs hosted diagnostic-aggregator when enabled
+  -> registers /v1/diagnostic-reports and /v1/diagnostic-reports/
+  -> owns process signals and server shutdown
+```
 
-The default listen address is `127.0.0.1:8091`. The default diagnostic-report retention is 14 days and can be configured through the service environment.
+Hosted operation is disabled by default. The current environment variables are:
 
-## Report flow
+- `DIAGNOSTIC_AGGREGATOR_ENABLED`
+- `DIAGNOSTIC_AGGREGATOR_TOKEN`
+- `DIAGNOSTIC_AGGREGATOR_STORAGE_ROOT`
+- `DIAGNOSTIC_AGGREGATOR_RETENTION`
+- `DIAGNOSTIC_AGGREGATOR_MAX_REQUEST_BYTES`
 
-The intended bounded flow is:
+The default storage root is `data/diagnostic-reports`, the default request limit is 4 MiB, and the default report retention is 14 days. The shared game-server base URL is currently `http://127.0.0.1:8080`; report routes are under `/v1/diagnostic-reports`.
+
+## Permitted Co-hosting Boundary
+
+The game-server composition root owns:
+
+- the HTTP mux and listener
+- the shared HTTP server and address
+- process signals
+- server shutdown and process-level error reporting
+
+The diagnostic-aggregator owns:
+
+- route registration
+- bearer authentication
+- submission envelope validation
+- complete-payload safety inspection and rejection
+- canonical event decoding
+- finalized report construction and validation
+- bounded report storage and retrieval
+- startup retention enforcement
+- report-store closure
+
+The diagnostic package does not listen, create an HTTP server, handle signals, forward continuous logs, or shut down the game-server process.
+
+## Report Flow
+
+The bounded flow is:
 
 ```text
 manual bug report or allowlisted severe failure/crash
-  -> bounded diagnostic upload
-  -> intake authentication and rate limiting [later integration]
+  -> bounded diagnostic submission to the shared game-server base URL
+  -> bearer authentication
   -> request and payload validation
-  -> redaction of unsafe or sensitive fields
-  -> diagnostic report/bundle construction
-  -> bounded durable storage
+  -> safety inspection and rejection of unsafe material
+  -> canonical event decoding
+  -> finalized diagnostic report construction
+  -> bounded durable JSONL storage
   -> retrieval by the diagnostic-report surface
 ```
 
-Validation and redaction are service-owned processing stages. Report construction preserves diagnostic context without making arbitrary application logs the service's data source.
+Reports are not a continuous stream. Ordinary service logs remain owned by their producing services and are not continuously forwarded to diagnostic-aggregator. Diagnostic failure must not affect gameplay.
 
-Public client uploads are not a continuous stream. In the later client/API integration, uploads are expected to be bounded, authenticated, and rate-limited. They are triggered by manual bug reports or allowlisted severe failures/crashes, not by every ordinary client event or by continuous telemetry forwarding. The public upload integration is not yet wired into the current Stage 2 service boundary; this document labels that policy explicitly rather than describing it as implemented runtime behavior.
+## Storage and Retention
 
-## Logging boundary
+The diagnostic-aggregator owns bounded report storage for accepted reports. The default retention window is 14 days and is enforced when the hosted service starts. This storage is diagnostic evidence, not authoritative audit storage.
 
-Ordinary service logs remain owned by the service that produced them and are written to that service's rolling files. They are not continuously sent to the diagnostic aggregator.
+## Future Detachment
 
-The aggregator may receive selected diagnostic context when a bounded report is created, but it is not a general log-search platform, log warehouse, or continuous log-forwarding target.
+Future detachment should replace process composition and addressing only. Producers and API contracts should continue to use the same hosted service contract and report routes. A future standalone deployment is not implemented by the current architecture.
 
-## Storage and retrieval
-
-The service owns bounded diagnostic-report storage and retrieval for its accepted reports. The default retention window is 14 days; the configured retention value is applied by the report storage layer.
-
-This storage is diagnostic evidence, not authoritative audit storage. Audit-grade records and their durability guarantees remain owned by the appropriate audit or business-data boundary. A diagnostic report may contain audit-relevant context, but storing a report here does not make it the system of record.
-
-## Health and shutdown
-
-The service reports lifecycle and health state through its runtime HTTP surface. Startup marks the service ready after the listener is bound and required dependencies are available. Server failure marks the service stopping and closes the store.
-
-On context cancellation, the runtime:
-
-1. marks the service stopping
-2. calls HTTP server shutdown with the configured timeout
-3. force-closes the server if graceful draining fails
-4. waits for the serving goroutine to return
-5. closes the report store exactly once
-6. records service-stopped lifecycle output
-
-This is service-process shutdown. It does not own client disconnect behavior, game-server room cleanup, ordinary producer log rotation, or audit-record finalization.
-
-## Ownership boundaries
-
-This service owns:
-
-- triggered diagnostic-report intake
-- validation and rejection of unsafe or invalid payloads
-- redaction before storage or export
-- diagnostic report and bundle construction
-- bounded report storage and retrieval
-- service health, readiness, and lifecycle reporting
-- HTTP draining and report-store closure during shutdown
-
-It does not own:
-
-- continuous service-log collection
-- general log search
-- gameplay outcomes or client session state
-- public authentication and rate-limit infrastructure before later integration
-- authoritative audit storage
-
-## Related docs
+## Related Docs
 
 - [Diagnostic Aggregator](./!INDEX.md)
 - [Services](../!INDEX.md)
-- [Observability contract](../../observability/!INDEX.md)
+- [Observability planning](../../planning/domains/technical/observability-logging-and-diagnostics.md)

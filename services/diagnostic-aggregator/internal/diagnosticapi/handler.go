@@ -8,6 +8,8 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnosticreports"
 )
 
 type handler struct {
@@ -130,6 +132,16 @@ func (h *handler) get(w http.ResponseWriter, r *http.Request, id string) {
 
 func writeServiceError(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, diagnosticreports.ErrInvalid):
+		writeError(w, http.StatusUnprocessableEntity, ErrorCodeInvalidDiagnosticReport)
+	case errors.Is(err, diagnosticreports.ErrRejected):
+		writeError(w, http.StatusUnprocessableEntity, ErrorCodeDiagnosticReportRejected)
+	case errors.Is(err, diagnosticreports.ErrInvalidID):
+		writeError(w, http.StatusBadRequest, ErrorCodeInvalidReportID)
+	case errors.Is(err, diagnosticreports.ErrNotFound):
+		writeError(w, http.StatusNotFound, ErrorCodeDiagnosticReportNotFound)
+	case errors.Is(err, diagnosticreports.ErrUnavailable):
+		writeError(w, http.StatusServiceUnavailable, ErrorCodeServiceUnavailable)
 	case errors.Is(err, ErrInvalidReport):
 		writeError(w, http.StatusUnprocessableEntity, ErrorCodeInvalidDiagnosticReport)
 	case errors.Is(err, ErrRejectedReport):

@@ -100,19 +100,18 @@ Logging is observational. Logs, metrics, telemetry, diagnostics, and aggregation
 
 The current implementation owner is `services/diagnostic-aggregator/`. This is a triggered diagnostic-report service, not a continuous product-log aggregation service.
 
-The service receives bounded submissions for manual bug reports, crashes, or allowlisted severe failures. It validates input, applies redaction, constructs diagnostic reports or bundles, stores them with the configured bounded retention, and exposes retrieval and health surfaces.
+The service receives bounded submissions for manual bug reports, crashes, or allowlisted severe failures. It validates input, applies safety rejection, constructs finalized diagnostic reports, stores them with the configured bounded retention, and exposes retrieval through the shared game-server HTTP server. It is logically independent but currently co-hosted by the game-server process through the public hosted package.
 
 Public client upload integration is not yet complete. In later integration, public uploads are expected to be bounded, authenticated, and rate-limited, and triggered by manual bug reports or allowlisted severe failures/crashes rather than continuous streaming.
 
-The service should support:
+The service supports:
 
 * bounded diagnostic-report intake,
-* validation and redaction,
+* validation and safety inspection,
 * correlation-preserving report construction,
 * bounded diagnostic storage and retrieval,
-* health/readiness reporting,
-* graceful shutdown,
-* rejected and redacted submission diagnostics.
+* rejected unsafe submissions,
+* startup retention enforcement and report-store closure through the host lifecycle.
 
 Diagnostic-aggregator failure must not break gameplay. It should degrade diagnostics and reporting while service-owned local logs and copy diagnostics remain available. The service is not a general log-search platform and is not authoritative audit storage.
 
@@ -120,7 +119,7 @@ Diagnostic-aggregator failure must not break gameplay. It should degrade diagnos
 
 Future service integrations must use bounded queues or submissions, small payloads, short timeouts, background delivery where appropriate, and local failure accounting. No simulation-critical path may make a synchronous call to the diagnostic aggregator. Delivery failure is observable, but must remain non-blocking and must degrade diagnostics rather than gameplay.
 
-The immediate Stage 2 baseline is the service implementation and shared contract. Client/API upload integration, production-scale dashboards, alerting, OpenTelemetry-style tracing, and continuous multi-instance collection remain deferred. Centralized collectors/search platforms such as Alloy/Loki/Grafana should remain deferred until continuous multi-instance operations justify them.
+The immediate Stage 2 baseline is hosted end-to-end operation: the game-server composition root loads the disabled-by-default hosted configuration, registers the diagnostic routes on the shared server, and owns process shutdown while diagnostic-aggregator owns report processing and storage. Client/API upload integration, production-scale dashboards, alerting, OpenTelemetry-style tracing, and continuous multi-instance collection remain deferred. Centralized collectors/search platforms such as Alloy/Loki/Grafana should remain deferred until continuous multi-instance operations justify them.
 
 ## Local Single-Player Diagnostics
 
@@ -955,7 +954,7 @@ Release-shaped builds should verify that:
 ## Implementation sequence
 
 1. Define the product observability SSoT and generated consumers.
-2. Maintain the `services/diagnostic-aggregator/` service for bounded diagnostic intake, validation, redaction, report construction/storage/retrieval, health, retention, and graceful shutdown.
+2. Operate the logically independent `services/diagnostic-aggregator/` report service co-hosted by game-server for bounded intake, validation, safety rejection, report construction/storage/retrieval, and retention.
 3. Add non-blocking triggered submissions and preserve correlation across the client/game-server/API/player-data chain.
 4. Make local packaged single-player retain diagnostics locally and support copy diagnostics plus bounded report creation.
 5. Verify release contracts, redaction, accounting, upload failure degradation, and service-owned log behavior in hosted staging.

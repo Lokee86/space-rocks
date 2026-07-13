@@ -4,13 +4,13 @@ Parent index: [Game Server Integrations](./!INDEX.md)
 
 ## Purpose
 
-This document describes how the game server hosts player-data HTTP handlers inside the game-server process.
+This document describes the permitted co-hosting arrangement in which the logically independent player-data service HTTP surface is mounted inside the game-server process.
 
 This is the game-server integration boundary for player-data HTTP access. It covers route mounting, runtime construction, handler adaptation, auth-verifier bridging, and the limits of what the game-server process owns when it exposes player-data HTTP surfaces.
 
 ## Overview
 
-The game server owns the HTTP process that currently exposes both realtime game entry points and player-data HTTP routes on the same `net/http` mux.
+The game server currently owns the HTTP process that exposes both realtime game entry points and the player-data service HTTP routes on the same `net/http` mux. This is process co-hosting, not ownership of player-data by the game server.
 
 At startup, the game server:
 
@@ -39,7 +39,7 @@ The game-server player-data HTTP hosting integration owns:
 * passing player-data runtime configuration from process environment and local store configuration
 * mounting player-data HTTP routes on the game-server HTTP mux
 * adapting the game-server auth verifier to the player-data HTTP auth verifier interface
-* sharing the same runtime with match-result reporting and profile/local-profile HTTP handlers
+* providing process-level dependencies to the player-data service and its hosted handlers
 * failing startup if the player-data runtime or match reporter cannot initialize
 * keeping player-data HTTP route hosting separate from room, simulation, and WebSocket ownership
 
@@ -116,7 +116,7 @@ GET    /api/player-data/local-profiles/default
 PUT    /api/player-data/local-profiles/default
 ```
 
-The mounted routes are served by handlers from `services/player-data/httpapi/`.
+The mounted routes are served by handlers from `services/player-data/httpapi/`. They are the current player-data service API surface, even though the route host is the game-server process.
 
 The game-server route table owns where these handlers are reachable. The player-data HTTP handlers own what each request means.
 
@@ -166,7 +166,20 @@ Local profile creation can seed the new profile from guest stats when `seed_from
 
 ## Runtime and store routing
 
-The game server hosts a player-data runtime, but the runtime's store-routing behavior belongs to the player-data service.
+The game server co-hosts the player-data service runtime, but runtime and store-routing behavior belong to the player-data service. Game-server gameplay, networking, and match-reporting code must not reach through the hosted runtime directly; they must use the player-data service transport/API boundary.
+
+The current `RuntimeReporter -> RuntimeSink -> playerdata.Runtime.Handle` path is a temporary in-process reach-through violation. It is architectural debt to replace, not the intended boundary or evidence that player-data is a game-server subsystem.
+
+The target flow is the same whether the service is co-hosted or detached:
+
+```text
+game-server match reporter
+-> player-data client/transport
+-> player-data service API
+-> runtime/store router
+```
+
+Detaching the service should require changing process composition and addressing only; game-server match-reporting and domain code should remain unchanged.
 
 The configured runtime routes identities across separate stores:
 

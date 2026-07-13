@@ -23,7 +23,18 @@ room game-over lifecycle
 -> in-process services/player-data runtime sink
 ```
 
-The game server does not write player-data stores directly. It maps authoritative match facts into player-data commands and sends those commands across the player-data packet boundary. The player-data runtime validates the mode/identity pairing and routes the command to the correct backing behavior.
+The game server does not write player-data stores directly. It maps authoritative match facts into player-data commands. The current `RuntimeReporter -> RuntimeSink -> playerdata.Runtime.Handle` path is a precise architectural violation: it calls the player-data runtime in-process and bypasses the player-data service transport/API boundary. This direct runtime sink is temporary architectural debt, not the intended final seam and not evidence that player-data is a game-server subsystem.
+
+The intended flow for both co-hosted and detached deployments is:
+
+```text
+game-server match reporter
+-> player-data client/transport
+-> player-data service API
+-> runtime/store router
+```
+
+The game-server composition root may co-host/mount the logically independent player-data service and provide process-level dependencies. Gameplay, networking, and match-reporting code must nevertheless communicate through the player-data service transport/API boundary. Detaching player-data should require changing process composition or addressing, not game-server match-reporting/domain code.
 
 Related upstream boundaries:
 
@@ -85,7 +96,7 @@ Current roles:
 * Authoritative match fact producer.
 * Match summary resolver.
 * Player-data command mapper.
-* In-process player-data runtime caller.
+* Player-data service client/transport caller (the current implementation is an in-process reach-through and is temporary debt).
 * Retry-safe reporting gate for resolved room summaries.
 
 The game server remains the gameplay authority. Player-data remains the identity and store-routing authority. API-server remains the authenticated-account persistence owner.
@@ -94,7 +105,7 @@ The game server remains the gameplay authority. Player-data remains the identity
 
 The game-server reporting surface is not a public HTTP endpoint and not a client WebSocket packet.
 
-It is an internal service boundary between the game-server room lifecycle and the in-process player-data runtime. The game server consumes the `rooms.MatchResultReporter` interface, and the concrete runtime reporter sends generated player-data packets through a `PlayerDataSink`. The data crossing the boundary is a trusted resolved match result: match ID, result ID, play mode, identity, score, ship deaths, and win flag. The boundary does not own player-data validation, storage selection, aggregate stat mutation, or presentation-safe room snapshot output.
+It is an internal service boundary between the game-server room lifecycle and the player-data service. The game server consumes the `rooms.MatchResultReporter` interface, and the concrete reporter should send generated player-data packets through a player-data client/transport and service API. The current `PlayerDataSink` invokes `playerdata.Runtime.Handle` directly, which bypasses that boundary and must not be normalized as the intended architecture. The data crossing the boundary is a trusted resolved match result: match ID, result ID, play mode, identity, score, ship deaths, and win flag. The boundary does not own player-data validation, storage selection, aggregate stat mutation, or presentation-safe room snapshot output.
 
 ### Room reporter interface
 

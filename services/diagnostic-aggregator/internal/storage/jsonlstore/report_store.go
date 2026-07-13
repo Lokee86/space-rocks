@@ -11,7 +11,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/storage"
 )
 
-var ErrReportNotFound = errors.New("jsonlstore: diagnostic report not found")
+var ErrReportNotFound = storage.ErrReportNotFound
 
 type ReportStore struct {
 	mu           sync.Mutex

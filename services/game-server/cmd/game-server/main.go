@@ -41,6 +41,12 @@ func runWithContext(ctx context.Context) int {
 	}()
 
 	mux := http.NewServeMux()
+	diagnosticService, err := registerDiagnosticAggregator(mux)
+	if err != nil {
+		logging.Server.Error("diagnostic aggregator initialization failed", err)
+		return 1
+	}
+	defer closeDiagnosticAggregator(diagnosticService)
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
 
