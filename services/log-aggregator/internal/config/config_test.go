@@ -17,7 +17,7 @@ func TestLoadWithDefaultsAndInjectedUUID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.ListenAddress != defaultListenAddress || cfg.ReadHeaderTimeout != 5*time.Second {
+	if cfg.ListenAddress != defaultListenAddress || cfg.ReadHeaderTimeout != 5*time.Second || cfg.DiagnosticReportRetention != 14*24*time.Hour {
 		t.Fatalf("unexpected defaults: %+v", cfg)
 	}
 	if !cfg.ConsoleLogging || !cfg.FileLogging || cfg.LogDirectory != defaultLogDirectory || cfg.LogLevel != "info" {
@@ -35,11 +35,12 @@ func TestLoadWithOverridesReadHeaderTimeout(t *testing.T) {
 		"DIAGNOSTIC_AGGREGATOR_READ_TIMEOUT":        "3s",
 		"DIAGNOSTIC_AGGREGATOR_FILE_LOGGING":        "false",
 		"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL":           "WARN",
+		"DIAGNOSTIC_AGGREGATOR_DIAGNOSTIC_REPORT_RETENTION": "504h",
 	}), fixedUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.ListenAddress != "0.0.0.0:9090" || cfg.ReadHeaderTimeout != 2*time.Second || cfg.ReadTimeout != 3*time.Second || cfg.FileLogging || cfg.LogLevel != "warn" {
+	if cfg.ListenAddress != "0.0.0.0:9090" || cfg.ReadHeaderTimeout != 2*time.Second || cfg.ReadTimeout != 3*time.Second || cfg.FileLogging || cfg.LogLevel != "warn" || cfg.DiagnosticReportRetention != 21*24*time.Hour {
 		t.Fatalf("unexpected config: %+v", cfg)
 	}
 }
@@ -48,6 +49,9 @@ func TestLoadWithRejectsInvalidValues(t *testing.T) {
 	cases := []struct{ key, value, want string }{
 		{"DIAGNOSTIC_AGGREGATOR_LISTEN_ADDRESS", "localhost", "listen address"},
 		{"DIAGNOSTIC_AGGREGATOR_READ_HEADER_TIMEOUT", "nope", "positive duration"},
+		{"DIAGNOSTIC_AGGREGATOR_DIAGNOSTIC_REPORT_RETENTION", "nope", "positive duration"},
+		{"DIAGNOSTIC_AGGREGATOR_DIAGNOSTIC_REPORT_RETENTION", "0s", "positive duration"},
+		{"DIAGNOSTIC_AGGREGATOR_DIAGNOSTIC_REPORT_RETENTION", "-1s", "positive duration"},
 		{"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL", "trace", "invalid log level"},
 		{"DIAGNOSTIC_AGGREGATOR_SERVICE_INSTANCE_ID", "not-a-uuid", "valid UUID"},
 	}

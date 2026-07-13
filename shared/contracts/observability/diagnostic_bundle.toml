@@ -12,9 +12,16 @@ safe_to_copy_field = "safe_to_copy"
 max_events = 500
 max_event_bytes = 65536
 max_total_bytes = 5242880
+max_request_bytes = 5242880
+max_embedded_event_count = 500
+max_user_description_bytes = 4096
+max_embedded_event_message_bytes = 4096
 max_metadata_fields = 32
 max_correlation_fields = 16
 max_redaction_summary_entries = 32
+
+[trigger_policy]
+allowed_triggers = ["manual_bug_report", "development_submission", "crash", "startup_failure", "unrecoverable_state", "recovery_exhausted"]
 
 [sections.metadata]
 required = true

@@ -165,9 +165,14 @@ class DiagnosticBundle:
     max_events: int
     max_event_bytes: int
     max_total_bytes: int
+    max_request_bytes: int
+    max_embedded_event_count: int
+    max_user_description_bytes: int
+    max_embedded_event_message_bytes: int
     max_metadata_fields: int
     max_correlation_fields: int
     max_redaction_summary_entries: int
+    allowed_triggers: tuple[str, ...]
     metadata: DiagnosticBundleSection
     correlation: DiagnosticBundleSection
     redaction_summary: DiagnosticBundleSection

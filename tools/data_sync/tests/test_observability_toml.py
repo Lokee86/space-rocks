@@ -68,6 +68,19 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert contract.event("service_startup_failed").trace_required is True
     assert contract.retention_tier("audit_grade").durability == "durable"
     assert contract.diagnostic_bundle.events_ordered_by == "timestamp_ascending"
+    assert contract.diagnostic_bundle.max_request_bytes == 5242880
+    assert contract.diagnostic_bundle.max_embedded_event_count == 500
+    assert contract.diagnostic_bundle.max_user_description_bytes == 4096
+    assert contract.diagnostic_bundle.max_embedded_event_message_bytes == 4096
+    assert contract.diagnostic_bundle.allowed_triggers == (
+        "manual_bug_report",
+        "development_submission",
+        "crash",
+        "startup_failure",
+        "unrecoverable_state",
+        "recovery_exhausted",
+    )
+    assert contract.retention_tier("diagnostic_report").default_age_seconds == 1209600
 
 
 def test_rejects_missing_source_kind(tmp_path: Path) -> None:

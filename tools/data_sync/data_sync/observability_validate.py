@@ -279,12 +279,28 @@ def _validate_diagnostic_bundle(contract: ObservabilityContract, errors: list[st
         ("diagnostic_bundle.max_events", bundle.max_events),
         ("diagnostic_bundle.max_event_bytes", bundle.max_event_bytes),
         ("diagnostic_bundle.max_total_bytes", bundle.max_total_bytes),
+        ("diagnostic_bundle.max_request_bytes", bundle.max_request_bytes),
+        ("diagnostic_bundle.max_embedded_event_count", bundle.max_embedded_event_count),
+        ("diagnostic_bundle.max_user_description_bytes", bundle.max_user_description_bytes),
+        ("diagnostic_bundle.max_embedded_event_message_bytes", bundle.max_embedded_event_message_bytes),
         ("diagnostic_bundle.max_metadata_fields", bundle.max_metadata_fields),
         ("diagnostic_bundle.max_correlation_fields", bundle.max_correlation_fields),
         ("diagnostic_bundle.max_redaction_summary_entries", bundle.max_redaction_summary_entries),
     ):
         if value <= 0:
             errors.append(f"{name} must be positive: {value}")
+    if bundle.max_request_bytes != bundle.max_total_bytes:
+        errors.append("diagnostic_bundle.max_request_bytes must match max_total_bytes")
+    if bundle.max_embedded_event_count != bundle.max_events:
+        errors.append("diagnostic_bundle.max_embedded_event_count must match max_events")
+    if bundle.max_user_description_bytes != contract.schema.limits.max_string_bytes:
+        errors.append("diagnostic_bundle.max_user_description_bytes must match schema.limits.max_string_bytes")
+    if bundle.max_embedded_event_message_bytes != contract.schema.limits.max_string_bytes:
+        errors.append("diagnostic_bundle.max_embedded_event_message_bytes must match schema.limits.max_string_bytes")
+    _nonempty_unique_casefold(bundle.allowed_triggers, "diagnostic trigger", errors)
+    for trigger in bundle.allowed_triggers:
+        if not SNAKE_CASE.fullmatch(trigger):
+            errors.append(f"diagnostic trigger must be snake_case: {trigger!r}")
 
     markers = {
         action.replacement_marker
