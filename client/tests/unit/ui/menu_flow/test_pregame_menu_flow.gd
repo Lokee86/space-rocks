@@ -5,18 +5,14 @@ const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.g
 
 
 class FakePregameMenu:
-	extends Control
-
-	signal back_requested
-	signal play_endless_requested
-	signal create_game_requested
-	signal join_game_requested
-	signal logout_requested
-	signal profile_requested
+	extends PregameMenu
 
 	var single_player_calls := 0
 	var multiplayer_calls := 0
 	var last_callsign := ""
+
+	func _ready() -> void:
+		pass
 
 	func show_single_player_mode() -> void:
 		single_player_calls += 1
@@ -29,7 +25,7 @@ class FakePregameMenu:
 
 
 class FakeProfileContextProvider:
-	extends RefCounted
+	extends ProfileContextProvider
 
 	var last_mode := ""
 
@@ -49,10 +45,13 @@ class FakeProfileContextProvider:
 
 
 class FakeTransmissionFlow:
-	extends RefCounted
+	extends TransmissionFlow
 
 	var active := false
 	var clear_calls := 0
+
+	func has_active_subpanel() -> bool:
+		return false
 
 	func has_active_transmission() -> bool:
 		return active
@@ -63,15 +62,15 @@ class FakeTransmissionFlow:
 
 
 class FakeProfileFlow:
-	extends Control
+	extends ProfileFlow
 
 	var show_calls := 0
 	var last_mode := ""
 
-	func show_profile(mode: String) -> void:
+	func show_profile(mode: String) -> ProfileReadout:
 		show_calls += 1
 		last_mode = mode
-		await get_tree().process_frame
+		return null
 
 
 class ReturnToMainMenuProbe:
@@ -265,7 +264,6 @@ func test_profile_requested_calls_profile_flow_with_single_player_mode() -> void
 	var profile_flow := FakeProfileFlow.new()
 
 	add_child_autofree(menu)
-	add_child_autofree(profile_flow)
 	flow.configure(menu, Callable(), Callable(), Callable(), Callable(), Callable(), Callable(), profile_context_provider, profile_flow)
 	await flow.show_single_player()
 
@@ -283,7 +281,6 @@ func test_profile_requested_calls_profile_flow_with_multiplayer_mode() -> void:
 	var profile_flow := FakeProfileFlow.new()
 
 	add_child_autofree(menu)
-	add_child_autofree(profile_flow)
 	flow.configure(menu, Callable(), Callable(), Callable(), Callable(), Callable(), Callable(), profile_context_provider, profile_flow)
 	flow.show_multiplayer()
 

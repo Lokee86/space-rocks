@@ -16,15 +16,15 @@ const SignInFlow := preload("res://scripts/ui/sign_in/sign_in_flow.gd")
 
 var canvas_layer: CanvasLayer
 var main_menu: Control
-var pregame_menu: Control
+var pregame_menu: PregameMenu
 var sign_in_screen: Control
 var join_dialog: Control
-var pregame_menu_flow
+var pregame_menu_flow: PregameMenuFlow
 var join_dialog_flow
 var sign_in_flow
-var auth_session_controller
-var profile_context_provider
-var profile_stats_provider
+var auth_session_controller: AuthSessionController
+var profile_context_provider: ProfileContextProvider
+var profile_stats_provider: ProfileStatsProvider
 var profile_stats_provider_is_shared := false
 var start_single_player_callable: Callable
 var request_discord_sign_in_callable: Callable
@@ -42,8 +42,8 @@ func configure(
 		create_room_callable_ref: Callable = Callable(),
 		join_room_callable_ref: Callable = Callable(),
 		logout_callable_ref: Callable = Callable(),
-		auth_session_controller_ref = null,
-		profile_stats_provider_ref = null) -> void:
+		auth_session_controller_ref: AuthSessionController = null,
+		profile_stats_provider_ref: ProfileStatsProvider = null) -> void:
 	canvas_layer = canvas_layer_ref
 	main_menu = main_menu_ref
 	start_single_player_callable = start_single_player_callable_ref
@@ -55,15 +55,15 @@ func configure(
 	profile_stats_provider_is_shared = profile_stats_provider_ref != null
 	if profile_context_provider == null:
 		profile_context_provider = ProfileContextProviderScript.new()
-	if profile_context_provider != null and profile_context_provider.has_method("configure"):
+	if profile_context_provider != null:
 		profile_context_provider.configure(auth_session_controller)
 	if profile_stats_provider_ref != null:
 		profile_stats_provider = profile_stats_provider_ref
 	elif profile_stats_provider == null:
 		profile_stats_provider = ProfileStatsProviderScript.new()
-		if profile_stats_provider != null and profile_stats_provider.has_method("configure"):
+		if profile_stats_provider != null:
 			profile_stats_provider.configure(auth_session_controller)
-	elif !profile_stats_provider_is_shared and profile_stats_provider != null and profile_stats_provider.has_method("configure"):
+	elif !profile_stats_provider_is_shared and profile_stats_provider != null:
 		profile_stats_provider.configure(auth_session_controller)
 	current_route = MenuRoute.MAIN_MENU
 	if main_menu != null:
@@ -171,7 +171,9 @@ func _show_pregame() -> void:
 		main_menu.hide()
 
 	if pregame_menu == null or not is_instance_valid(pregame_menu):
-		pregame_menu = PregameMenuScene.instantiate()
+		pregame_menu = PregameMenuScene.instantiate() as PregameMenu
+		if pregame_menu == null:
+			return
 		if canvas_layer != null:
 			canvas_layer.add_child(pregame_menu)
 		pregame_menu_flow = PregameMenuFlowScript.new()
@@ -184,7 +186,7 @@ func _show_pregame() -> void:
 
 	if profile_context_provider == null:
 		profile_context_provider = ProfileContextProviderScript.new()
-	if profile_context_provider != null and profile_context_provider.has_method("configure"):
+	if profile_context_provider != null:
 		profile_context_provider.configure(auth_session_controller)
 
 	var profile_flow := ProfileFlowScript.new()
@@ -231,7 +233,7 @@ func get_current_route() -> String:
 	return current_route
 
 
-func get_pregame_menu() -> Control:
+func get_pregame_menu() -> PregameMenu:
 	return pregame_menu
 
 
@@ -244,10 +246,10 @@ func get_join_dialog() -> Control:
 
 
 func get_single_player_profile_context() -> Dictionary:
-	if pregame_menu_flow != null and pregame_menu_flow.has_method("get_single_player_profile_context"):
+	if pregame_menu_flow != null:
 		return pregame_menu_flow.get_single_player_profile_context()
 
-	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+	if profile_context_provider != null:
 		return profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
 
 	return {

@@ -5,13 +5,13 @@ const PlayerDataProfileApiClientScript := preload("res://scripts/profile/player_
 const GuestTransientStatsProviderScript := preload("res://scripts/profile/guest_transient_stats_provider.gd")
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 
-var auth_session_controller
-var player_data_profile_api_client
-var guest_stats_provider
+var auth_session_controller: AuthSessionController
+var player_data_profile_api_client: PlayerDataProfileApiClient
+var guest_stats_provider: GuestTransientStatsProvider
 var cached_account_stats := {}
 
 
-func configure(auth_session_controller_ref, player_data_profile_api_client_ref = null, guest_stats_provider_ref = null) -> void:
+func configure(auth_session_controller_ref: AuthSessionController = null, player_data_profile_api_client_ref: PlayerDataProfileApiClient = null, guest_stats_provider_ref: GuestTransientStatsProvider = null) -> void:
 	auth_session_controller = auth_session_controller_ref
 	player_data_profile_api_client = player_data_profile_api_client_ref if player_data_profile_api_client_ref != null else PlayerDataProfileApiClientScript.new()
 	guest_stats_provider = guest_stats_provider_ref if guest_stats_provider_ref != null else GuestTransientStatsProviderScript.new()
@@ -111,11 +111,11 @@ func _empty_profile(identity_kind: String) -> Dictionary:
 
 
 func _session_token() -> String:
-	if auth_session_controller == null or !auth_session_controller.has_method("get_session"):
+	if auth_session_controller == null:
 		return ""
 
-	var session = auth_session_controller.get_session()
-	if session == null or !session.has_method("is_signed_in") or !session.is_signed_in():
+	var session: AuthSession = auth_session_controller.get_session()
+	if session == null or !session.is_signed_in():
 		return ""
 
 	return str(session.token)

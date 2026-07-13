@@ -38,16 +38,14 @@ class JoinProbe:
 
 
 class FakeAuthSessionController:
-	extends RefCounted
+	extends AuthSessionController
 
-	var session := AuthSession.new()
-
-	func get_session():
-		return session
+	func _init() -> void:
+		auth_session = AuthSession.new()
 
 
 class FakeProfileStatsProvider:
-	extends RefCounted
+	extends ProfileStatsProvider
 
 	var load_calls := 0
 	var last_context := {}
@@ -71,7 +69,7 @@ class FakeProfileStatsProvider:
 
 
 class FakePlayerDataProfileApiClient:
-	extends RefCounted
+	extends PlayerDataProfileApiClient
 
 	var call_count := 0
 	var last_play_mode := ""
@@ -103,12 +101,29 @@ class FakePlayerDataProfileApiClient:
 
 
 class FakePregameMenuFlow:
-	extends RefCounted
+	extends PregameMenuFlow
 
-	func configure(_pregame_menu, _return_to_main_menu, _start_single_player, _create_room, _show_join_dialog, _logout, _clear_for_room_transition, _profile_context_provider, _profile_flow, _transmission_flow) -> void:
+	func configure(
+			_pregame_menu: PregameMenu,
+			_return_to_main_menu: Callable,
+			_start_single_player: Callable = Callable(),
+			_create_room: Callable = Callable(),
+			_show_join_dialog: Callable = Callable(),
+			_logout: Callable = Callable(),
+			_clear_for_room_transition: Callable = Callable(),
+			_profile_context_provider: ProfileContextProvider = null,
+			_profile_flow: ProfileFlow = null,
+			_transmission_flow: TransmissionFlow = null) -> void:
 		pass
 
 	func show_single_player() -> void:
+		pass
+
+
+class FakePregameMenu:
+	extends PregameMenu
+
+	func _ready() -> void:
 		pass
 
 
@@ -179,8 +194,7 @@ func test_profile_button_mounts_profile_readout_in_single_player_pregame() -> vo
 
 	var pregame_menu := controller.get_pregame_menu()
 	controller.profile_context_provider.select_guest_profile()
-	if pregame_menu.has_method("set_callsign"):
-		pregame_menu.set_callsign("Guest")
+	pregame_menu.set_callsign("Guest")
 	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -245,8 +259,7 @@ func test_profile_button_uses_profile_api_for_guest_stats() -> void:
 
 	var pregame_menu := controller.get_pregame_menu()
 	controller.profile_context_provider.select_guest_profile()
-	if pregame_menu.has_method("set_callsign"):
-		pregame_menu.set_callsign("Guest")
+	pregame_menu.set_callsign("Guest")
 	(pregame_menu.get_node_or_null("%ProfileButton") as BaseButton).emit_signal("pressed")
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -316,7 +329,7 @@ func test_clear_for_gameplay_removes_pregame_and_keeps_main_menu_hidden() -> voi
 func test_clear_for_gameplay_keeps_selected_local_profile_for_replay() -> void:
 	var controller := await _create_controller()
 	controller.profile_context_provider.select_local_profile("local-profile-replay", "ACE")
-	controller.pregame_menu = Control.new()
+	controller.pregame_menu = FakePregameMenu.new()
 	add_child_autofree(controller.pregame_menu)
 	controller.pregame_menu_flow = FakePregameMenuFlow.new()
 
@@ -334,7 +347,7 @@ func test_clear_for_gameplay_keeps_selected_local_profile_for_replay() -> void:
 
 func test_clear_for_gameplay_uses_guest_when_no_local_profile_selected() -> void:
 	var controller := await _create_controller()
-	controller.pregame_menu = Control.new()
+	controller.pregame_menu = FakePregameMenu.new()
 	add_child_autofree(controller.pregame_menu)
 	controller.pregame_menu_flow = FakePregameMenuFlow.new()
 
@@ -471,7 +484,7 @@ func test_join_dialog_cancel_returns_to_multiplayer_pregame() -> void:
 
 func test_clear_for_room_transition_clears_pregame_sign_in_join_and_hides_main() -> void:
 	var controller := await _create_controller()
-	var pregame_menu := Control.new()
+	var pregame_menu := FakePregameMenu.new()
 	var sign_in_screen := Control.new()
 	var join_dialog := Control.new()
 
@@ -616,7 +629,7 @@ func _create_controller(auth_session_controller = null, profile_stats_provider =
 
 func _signed_in_auth_session_controller(display_name: String) -> FakeAuthSessionController:
 	var auth_session_controller := FakeAuthSessionController.new()
-	auth_session_controller.session.set_signed_in("bearer-token", {
+	auth_session_controller.auth_session.set_signed_in("bearer-token", {
 		"id": 7,
 		"display_name": display_name,
 	})

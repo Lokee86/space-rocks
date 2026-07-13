@@ -1,4 +1,5 @@
 extends Control
+class_name ProfileReadout
 
 
 func apply_profile(profile: Dictionary) -> void:

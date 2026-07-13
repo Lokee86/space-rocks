@@ -6,7 +6,7 @@ const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.g
 
 
 class FakeContextProvider:
-	extends RefCounted
+	extends ProfileContextProvider
 
 	var context := {
 		"play_mode": "single_player",
@@ -22,7 +22,7 @@ class FakeContextProvider:
 
 
 class FakeStatsProvider:
-	extends RefCounted
+	extends ProfileStatsProvider
 
 	var profile := {
 		"callsign": "Guest",
@@ -44,7 +44,7 @@ class FakeStatsProvider:
 
 
 class FakeTransmissionFlow:
-	extends RefCounted
+	extends TransmissionFlow
 
 	var last_scene: PackedScene
 
@@ -146,6 +146,6 @@ func test_show_profile_calls_apply_profile_on_mounted_readout() -> void:
 
 	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
 
-	assert_true(mounted.has_method("apply_profile"))
+	assert_true(mounted is ProfileReadout)
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: Guest")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: OFFLINE")

@@ -6,7 +6,7 @@ const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
 
 
 class FakePlayerDataProfileApiClient:
-	extends RefCounted
+	extends PlayerDataProfileApiClient
 
 	var call_count := 0
 	var last_play_mode := ""
@@ -38,21 +38,15 @@ class FakePlayerDataProfileApiClient:
 
 
 class FakeSession:
-	extends RefCounted
-
-	var token := ""
-	var signed_in := false
-
-	func is_signed_in() -> bool:
-		return signed_in
+	extends AuthSession
 
 
 class FakeAuthSessionController:
-	extends RefCounted
+	extends AuthSessionController
 
-	var session
+	var session: AuthSession
 
-	func get_session():
+	func get_session() -> AuthSession:
 		return session
 
 

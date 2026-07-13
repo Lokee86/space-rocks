@@ -1,4 +1,5 @@
 extends Control
+class_name EnterPilotId
 
 signal confirm_requested(callsign: String)
 signal cancel_requested
@@ -38,7 +39,7 @@ func configure_label(label_text: String, initial_callsign := "") -> void:
 		callsign_input.text = initial_callsign
 		callsign_input.placeholder_text = ""
 		callsign_input.call_deferred("grab_focus")
-		if initial_callsign != "" and callsign_input.has_method("select_all"):
+		if initial_callsign != "":
 			callsign_input.call_deferred("select_all")
 	if confirm_button != null:
 		confirm_button.disabled = false
