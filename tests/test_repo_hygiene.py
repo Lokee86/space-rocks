@@ -20,7 +20,10 @@ def test_no_python_cache_artifacts_in_doc_ledgers_worktree() -> None:
 
 def _walk_repo_files(root: Path):
     for current_root, dirnames, filenames in os.walk(root):
-        dirnames[:] = [name for name in dirnames if name != ".git"]
+        dirnames[:] = [
+            name for name in dirnames
+            if name not in {".git", ".worktrees", ".workingtrees"}
+        ]
         current_root_path = Path(current_root)
         for filename in filenames:
             yield current_root_path / filename

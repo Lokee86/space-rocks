@@ -337,7 +337,7 @@ func test_lobby_leave_return_destination_opens_multiplayer_pregame() -> void:
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "MULTIPLAYER")
 
 
-func _create_game() -> Control:
+func _create_game() -> Node2D:
 	var game := GameScene.instantiate()
 	add_child_autofree(game)
 	await get_tree().process_frame
