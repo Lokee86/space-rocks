@@ -42,6 +42,7 @@ func TestRadialProjectileCreatesRadialEffectOnAsteroidHit(t *testing.T) {
 
 	before := game.radialEffects.Len()
 
+	game.rebuildAsteroidSpatialIndex()
 	game.handleBulletAsteroidCollisions()
 
 	if got, want := game.radialEffects.Len(), before+1; got != want {
@@ -85,6 +86,7 @@ func TestTorpedoImpactDamageZeroStillDestroysAsteroidWithRadialDamage(t *testing
 		Y:              0,
 	}
 
+	game.rebuildAsteroidSpatialIndex()
 	game.handleBulletAsteroidCollisions()
 
 	if asteroid.Health <= 0 || asteroid.IsPendingDespawn() {
