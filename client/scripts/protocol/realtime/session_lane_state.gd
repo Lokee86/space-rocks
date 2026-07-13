@@ -1,4 +1,5 @@
 extends RefCounted
+class_name SessionLaneState
 
 var player_sessions := {}
 var player_lifecycle := {}

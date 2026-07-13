@@ -121,6 +121,8 @@ It configures the local lifecycle flow with the directly injected `world_sync`, 
 `GameplayRuntimeContext` creates and owns `world_sync`. `GameplayShellFlow` captures that reference immediately after runtime-context world configuration and threads it directly into `GameplayFlowComposer`. `GameplayComposition` exposes the owned `WorldSync` and `GameplayHudFlow` through `get_world_sync()` and `get_gameplay_hud_flow()` for presentation consumers; it does not inject a separate world-sync dependency into `PresentationBridge`.
 
 
+The local lifecycle composition boundary is concrete: `GameplayLocalLifecycleFlow` accepts `WorldSync`, `GameplayRespawnFlow`, `GameplayHudFlow`, `MatchEndFlow`, and `Player` collaborators, plus `WorldLaneState` and `SessionLaneState` lane inputs. `GameplayRuntimeContext.respawn_flow` and the threaded `world_sync` reference must satisfy those script contracts; composition callers cannot substitute generic `RefCounted` objects.
+
 ## Protocols and APIs
 
 ### Runtime construction path

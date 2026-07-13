@@ -16,17 +16,17 @@ const CYCLE_VIEW_PATH := "CenterContainer/GameOverContainer/MarginContainer2/Cyc
 const GAME_MENU_PATH := "CenterContainer/GameOverContainer/MarginContainer2/GameMenu"
 
 var hud: Control
-var game_over_container
-var game_over_margin_container
-var cycle_view
-var game_menu
+var game_over_container: Control = null
+var game_over_margin_container: Control = null
+var cycle_view: Control = null
+var game_menu: GameMenu = null
 var overlay_parent
-var overlay_game_menu
+var overlay_game_menu: GameMenu = null
 var uses_match_over_overlay_menu := false
 var connection_service
 var player: Player
-var spectate_menu_state
-var session_context
+var spectate_menu_state: SpectateMenuState = null
+var session_context: ClientSessionContext = null
 var room_state_provider: Callable
 var is_gameplay_paused := false
 var is_game_over := false
@@ -36,17 +36,17 @@ func configure(
 	hud_ref: Control,
 	connection_service_ref = null,
 	player_ref: Player = null,
-	session_context_ref = null
+	session_context_ref: ClientSessionContext = null
 ) -> void:
 	hud = hud_ref
 	connection_service = connection_service_ref
 	player = player_ref
 	session_context = session_context_ref
 	if hud != null:
-		game_over_container = hud.get_node_or_null(GAME_OVER_CONTAINER_PATH)
-		game_over_margin_container = hud.get_node_or_null(GAME_OVER_MARGIN_CONTAINER_PATH)
-		cycle_view = hud.get_node_or_null(CYCLE_VIEW_PATH)
-		game_menu = hud.get_node_or_null(GAME_MENU_PATH)
+		game_over_container = hud.get_node_or_null(GAME_OVER_CONTAINER_PATH) as Control
+		game_over_margin_container = hud.get_node_or_null(GAME_OVER_MARGIN_CONTAINER_PATH) as Control
+		cycle_view = hud.get_node_or_null(CYCLE_VIEW_PATH) as Control
+		game_menu = hud.get_node_or_null(GAME_MENU_PATH) as GameMenu
 		_log_missing_live_pause_paths()
 	hide_live_pause_menu()
 	is_gameplay_paused = false
@@ -55,27 +55,22 @@ func configure(
 		return
 
 	var resume_callable := Callable(self, "_on_resume_requested")
-	if game_menu.has_signal("resume_requested") && !game_menu.resume_requested.is_connected(resume_callable):
+	if !game_menu.resume_requested.is_connected(resume_callable):
 		game_menu.resume_requested.connect(resume_callable)
-
-	var quit_callable := Callable(self, "_on_quit_requested")
-	if game_menu.has_signal("quit_requested") && !game_menu.quit_requested.is_connected(quit_callable):
-		game_menu.quit_requested.connect(quit_callable)
-
 	var menu_callable := Callable(self, "_on_menu_requested")
-	if game_menu.has_signal("menu_requested") && !game_menu.menu_requested.is_connected(menu_callable):
+	if !game_menu.menu_requested.is_connected(menu_callable):
 		game_menu.menu_requested.connect(menu_callable)
 
 	var lobby_callable := Callable(self, "_on_lobby_requested")
-	if game_menu.has_signal("lobby_requested") && !game_menu.lobby_requested.is_connected(lobby_callable):
+	if !game_menu.lobby_requested.is_connected(lobby_callable):
 		game_menu.lobby_requested.connect(lobby_callable)
 
 	var spectate_callable := Callable(self, "_on_spectate_requested")
-	if game_menu.has_signal("spectate_requested") && !game_menu.spectate_requested.is_connected(spectate_callable):
+	if !game_menu.spectate_requested.is_connected(spectate_callable):
 		game_menu.spectate_requested.connect(spectate_callable)
 
 
-func configure_spectate_menu_state(spectate_menu_state_ref) -> void:
+func configure_spectate_menu_state(spectate_menu_state_ref: SpectateMenuState) -> void:
 	spectate_menu_state = spectate_menu_state_ref
 
 
@@ -128,7 +123,7 @@ func close_menu() -> void:
 
 
 func show_menu() -> bool:
-	var active_game_menu: Control = _active_game_menu()
+	var active_game_menu: GameMenu = _active_game_menu()
 	if active_game_menu == null:
 		return false
 
@@ -186,7 +181,7 @@ func show_live_pause_menu() -> bool:
 	game_over_container.show()
 	game_over_margin_container.hide()
 	cycle_view.hide()
-	var active_game_menu: Control = _active_game_menu()
+	var active_game_menu: GameMenu = _active_game_menu()
 	if active_game_menu != null:
 		active_game_menu.show()
 	return true
@@ -270,10 +265,6 @@ func _on_resume_requested() -> void:
 		connection_service.send_pause_request()
 
 
-func _on_quit_requested() -> void:
-	close_menu()
-	quit_to_main_menu_requested.emit()
-
 
 func _on_menu_requested() -> void:
 	close_menu()
@@ -345,7 +336,7 @@ func _log_missing_path(path: String, node) -> void:
 		ClientLogger.shell_error("GameplayMenuFlow missing expected HUD path: %s" % path)
 
 
-func _active_game_menu() -> Control:
+func _active_game_menu() -> GameMenu:
 	if uses_match_over_overlay_menu:
 		_ensure_overlay_game_menu()
 		if overlay_game_menu != null:
@@ -357,28 +348,26 @@ func _ensure_overlay_game_menu() -> void:
 	if overlay_game_menu != null || overlay_parent == null:
 		return
 
-	overlay_game_menu = GameMenuScene.instantiate()
+	overlay_game_menu = GameMenuScene.instantiate() as GameMenu
+	if overlay_game_menu == null:
+		push_error("Game menu scene must instantiate GameMenu")
+		return
 	overlay_parent.add_child(overlay_game_menu)
 	overlay_game_menu.hide()
 
 	var resume_callable := Callable(self, "_on_resume_requested")
-	if overlay_game_menu.has_signal("resume_requested") && !overlay_game_menu.resume_requested.is_connected(resume_callable):
+	if !overlay_game_menu.resume_requested.is_connected(resume_callable):
 		overlay_game_menu.resume_requested.connect(resume_callable)
-
-	var quit_callable := Callable(self, "_on_quit_requested")
-	if overlay_game_menu.has_signal("quit_requested") && !overlay_game_menu.quit_requested.is_connected(quit_callable):
-		overlay_game_menu.quit_requested.connect(quit_callable)
-
 	var menu_callable := Callable(self, "_on_menu_requested")
-	if overlay_game_menu.has_signal("menu_requested") && !overlay_game_menu.menu_requested.is_connected(menu_callable):
+	if !overlay_game_menu.menu_requested.is_connected(menu_callable):
 		overlay_game_menu.menu_requested.connect(menu_callable)
 
 	var lobby_callable := Callable(self, "_on_lobby_requested")
-	if overlay_game_menu.has_signal("lobby_requested") && !overlay_game_menu.lobby_requested.is_connected(lobby_callable):
+	if !overlay_game_menu.lobby_requested.is_connected(lobby_callable):
 		overlay_game_menu.lobby_requested.connect(lobby_callable)
 
 	var spectate_callable := Callable(self, "_on_spectate_requested")
-	if overlay_game_menu.has_signal("spectate_requested") && !overlay_game_menu.spectate_requested.is_connected(spectate_callable):
+	if !overlay_game_menu.spectate_requested.is_connected(spectate_callable):
 		overlay_game_menu.spectate_requested.connect(spectate_callable)
 
 

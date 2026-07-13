@@ -113,6 +113,7 @@ single_player -> replay_requested
 multiplayer   -> return_to_lobby_requested
 ```
 
+`MatchResultsFlow` mounts only a concrete `MatchResultWindow` scene root. It connects the window's declared signals directly, calls its typed mode and row APIs directly, and fails fast when the configured scene does not satisfy that contract. Result-window presentation therefore does not depend on dynamic signal or method probing.
 
 ### MatchResultWindow
 

@@ -12,6 +12,7 @@ It explains how the client applies world lane state to world presentation seams,
 
 `WorldSync` is the client-side coordinator for rendering server-authoritative world state.
 
+`WorldSync` is a concrete Godot `class_name` contract used by gameplay lifecycle and presentation composition. `WorldLaneState` is the typed world-lane input contract at this boundary; callers pass accumulated lane state directly rather than relying on dynamic method compatibility.
 
 It does not parse raw packets and does not decide gameplay outcomes. RealtimeRouter mutates world lane state, the RealtimePacketPipeline refreshes `RealtimePresentationState`, and WorldPresentationAdapter receives `world_lane_state` from that wrapper before forwarding it into WorldSync. `WorldSync` then delegates the actual player, projectile, asteroid, and pickup presentation work to focused sync owners.
 

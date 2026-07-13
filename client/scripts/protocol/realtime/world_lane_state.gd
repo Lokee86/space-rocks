@@ -1,4 +1,5 @@
 extends RefCounted
+class_name WorldLaneState
 
 const SHIP_FIELDS := ["id", "x", "y", "rotation", "velocity_x", "velocity_y", "thrusting", "health", "shields", "ship_type", "target_kind", "target_id"]
 const BULLET_FIELDS := ["id", "x", "y", "velocity_x", "velocity_y", "rotation", "owner_id", "lifespan_seconds", "weapon_id", "projectile_type"]

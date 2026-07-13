@@ -4,11 +4,8 @@ const MatchEndFlow := preload("res://scripts/gameplay/match_end/match_end_flow.g
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
-class FakeSessionContext:
-	extends RefCounted
-
-	var active_mode := ""
-
+class FakeSessionContext extends ClientSessionContext:
+	pass
 
 class FakeRoomStateProvider:
 	extends RefCounted
@@ -28,12 +25,12 @@ class FakeMatchResultProvider:
 		return match_result
 
 
-class FakeHudFlow:
-	extends RefCounted
-
-	var hud := Control.new()
+class FakeHudFlow extends GameplayHudFlow:
 	var last_lives := -1
 	var game_over_calls := 0
+
+	func _init() -> void:
+		hud = Control.new()
 
 	func apply_lives(lives) -> void:
 		last_lives = lives
@@ -42,8 +39,7 @@ class FakeHudFlow:
 		game_over_calls += 1
 
 
-class FakeMenuFlow:
-	extends RefCounted
+class FakeMenuFlow extends GameplayMenuFlow:
 
 	var game_over_calls := 0
 
@@ -51,8 +47,7 @@ class FakeMenuFlow:
 		game_over_calls += 1
 
 
-class FakeEventFlow:
-	extends RefCounted
+class FakeEventFlow extends GameplayEventFlow:
 
 	var play_game_over_sound_after_delay_calls := 0
 
@@ -60,8 +55,7 @@ class FakeEventFlow:
 		play_game_over_sound_after_delay_calls += 1
 
 
-class FakeMatchResultsFlow:
-	extends RefCounted
+class FakeMatchResultsFlow extends MatchResultsFlow:
 
 	var show_results_calls := 0
 	var last_session_mode := ""

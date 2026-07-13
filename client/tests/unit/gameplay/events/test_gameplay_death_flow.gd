@@ -3,7 +3,7 @@ extends GutTest
 const GameplayDeathFlow = preload("res://scripts/gameplay/events/gameplay_death_flow.gd")
 
 
-class FakeHudFlow:
+class FakeHudFlow extends GameplayHudFlow:
 	var last_lives := -1
 	var dead_calls := 0
 	var game_over_calls := 0
@@ -18,7 +18,7 @@ class FakeHudFlow:
 		game_over_calls += 1
 
 
-class FakeMatchEndFlow:
+class FakeMatchEndFlow extends MatchEndFlow:
 	var calls := 0
 	var last_event: Dictionary = {}
 

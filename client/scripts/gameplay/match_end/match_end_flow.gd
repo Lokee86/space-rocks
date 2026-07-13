@@ -8,35 +8,47 @@ signal return_to_lobby_requested
 signal return_to_pregame_requested
 signal quit_to_main_menu_requested
 
-var hud_flow
-var menu_flow
-var event_flow
-var match_results_flow
-var session_context
+var hud_flow: GameplayHudFlow = null
+var menu_flow: GameplayMenuFlow = null
+var event_flow: GameplayEventFlow = null
+var match_results_flow: MatchResultsFlow = null
+var session_context: ClientSessionContext = null
 var match_result_provider: Callable
 var room_state_provider: Callable
 var room_match_over_handled := false
 var local_player_eliminated_handled := false
 
 
-func configure(hud_flow_ref, menu_flow_ref, session_context_ref = null) -> void:
+func configure(
+	hud_flow_ref: GameplayHudFlow,
+	menu_flow_ref: GameplayMenuFlow,
+	session_context_ref: ClientSessionContext = null
+) -> void:
 	hud_flow = hud_flow_ref
 	menu_flow = menu_flow_ref
 	session_context = session_context_ref
 
 
-func configure_event_flow(event_flow_ref) -> void:
+func configure_event_flow(event_flow_ref: GameplayEventFlow) -> void:
 	event_flow = event_flow_ref
 
 
-func configure_match_results_flow(match_results_flow_ref) -> void:
+func configure_match_results_flow(match_results_flow_ref: MatchResultsFlow) -> void:
 	match_results_flow = match_results_flow_ref
 	if match_results_flow == null:
 		return
-	_connect_match_results_signal("replay_requested", Callable(self, "_on_replay_requested"))
-	_connect_match_results_signal("return_to_lobby_requested", Callable(self, "_on_return_to_lobby_requested"))
-	_connect_match_results_signal("return_to_pregame_requested", Callable(self, "_on_return_to_pregame_requested"))
-	_connect_match_results_signal("quit_to_main_menu_requested", Callable(self, "_on_quit_to_main_menu_requested"))
+	var replay_callable := Callable(self, "_on_replay_requested")
+	if !match_results_flow.replay_requested.is_connected(replay_callable):
+		match_results_flow.replay_requested.connect(replay_callable)
+	var lobby_callable := Callable(self, "_on_return_to_lobby_requested")
+	if !match_results_flow.return_to_lobby_requested.is_connected(lobby_callable):
+		match_results_flow.return_to_lobby_requested.connect(lobby_callable)
+	var pregame_callable := Callable(self, "_on_return_to_pregame_requested")
+	if !match_results_flow.return_to_pregame_requested.is_connected(pregame_callable):
+		match_results_flow.return_to_pregame_requested.connect(pregame_callable)
+	var quit_callable := Callable(self, "_on_quit_to_main_menu_requested")
+	if !match_results_flow.quit_to_main_menu_requested.is_connected(quit_callable):
+		match_results_flow.quit_to_main_menu_requested.connect(quit_callable)
 
 
 func configure_room_state_provider(provider: Callable) -> void:
@@ -62,13 +74,13 @@ func handle_local_player_eliminated(lives: int) -> void:
 	if _current_session_mode() != Constants.SESSION_MODE_MULTIPLAYER:
 		return
 	local_player_eliminated_handled = true
-	if hud_flow != null && hud_flow.has_method("apply_lives"):
+	if hud_flow != null:
 		hud_flow.apply_lives(lives)
-	if hud_flow != null && hud_flow.has_method("set_game_over"):
+	if hud_flow != null:
 		hud_flow.set_game_over()
-	if menu_flow != null && menu_flow.has_method("set_game_over"):
+	if menu_flow != null:
 		menu_flow.set_game_over()
-	if event_flow != null && event_flow.has_method("play_game_over_sound_after_delay"):
+	if event_flow != null:
 		event_flow.play_game_over_sound_after_delay()
 
 
@@ -77,51 +89,47 @@ func handle_room_match_over() -> void:
 		return
 	room_match_over_handled = true
 	hide_hud_for_match_over()
-	if menu_flow != null && menu_flow.has_method("set_match_over_overlay_enabled"):
+	if menu_flow != null:
 		menu_flow.set_match_over_overlay_enabled(true)
-	if menu_flow != null && menu_flow.has_method("set_game_over"):
+	if menu_flow != null:
 		menu_flow.set_game_over()
-	if event_flow != null && event_flow.has_method("play_game_over_sound_after_delay"):
+	if event_flow != null:
 		event_flow.play_game_over_sound_after_delay()
-	if match_results_flow != null && match_results_flow.has_method("show_results"):
+	if match_results_flow != null:
 		match_results_flow.show_results(_current_session_mode(), _current_match_result_rows())
 
 
 func has_stale_dead_presentation() -> bool:
-	if hud_flow != null && _flow_flag_true(hud_flow, "is_dead"):
+	if hud_flow != null && hud_flow.is_dead:
 		return true
-	if hud_flow != null && _flow_flag_true(hud_flow, "is_game_over"):
+	if hud_flow != null && hud_flow.is_game_over:
 		return true
-	if menu_flow != null && _flow_flag_true(menu_flow, "is_game_over"):
+	if menu_flow != null && menu_flow.is_game_over:
 		return true
 	return false
 
 
 func handle_alive_restored() -> void:
 	local_player_eliminated_handled = false
-	if hud_flow != null && hud_flow.has_method("set_alive"):
+	if hud_flow != null:
 		hud_flow.set_alive()
-	if menu_flow != null && menu_flow.has_method("set_alive"):
+	if menu_flow != null:
 		menu_flow.set_alive()
 
 
 func reset() -> void:
 	room_match_over_handled = false
 	local_player_eliminated_handled = false
-	if hud_flow != null && hud_flow.has_method("clear_match_over_visibility_lock"):
+	if hud_flow != null:
 		hud_flow.clear_match_over_visibility_lock()
-	if menu_flow != null && menu_flow.has_method("set_match_over_overlay_enabled"):
+	if menu_flow != null:
 		menu_flow.set_match_over_overlay_enabled(false)
 
 
 func hide_hud_for_match_over() -> void:
 	if hud_flow == null:
 		return
-	if hud_flow.has_method("hide_for_match_over"):
-		hud_flow.hide_for_match_over()
-		return
-	if hud_flow.hud != null && hud_flow.hud.has_method("hide"):
-		hud_flow.hud.hide()
+	hud_flow.hide_for_match_over()
 
 
 func _current_session_mode() -> String:
@@ -139,12 +147,11 @@ func _current_match_result_rows() -> Array:
 		return []
 
 	var players = []
-	if match_result is Dictionary:
-		players = match_result.get("players", [])
-	elif match_result is Object and match_result.has_method("get"):
-		players = match_result.get("players")
+	if not match_result is Dictionary:
+		return []
+	players = match_result.get("players", [])
 
-	if players == null || players.is_empty():
+	if not players is Array or players.is_empty():
 		return []
 
 	var rows: Array = []
@@ -158,13 +165,6 @@ func _current_match_result_rows() -> Array:
 			})
 	return rows
 
-
-func _flow_flag_true(flow, flag_name: String) -> bool:
-	if flow == null:
-		return false
-	if !flow.has_method("get"):
-		return false
-	return bool(flow.get(flag_name))
 
 
 func _on_replay_requested() -> void:
@@ -181,8 +181,3 @@ func _on_return_to_pregame_requested() -> void:
 
 func _on_quit_to_main_menu_requested() -> void:
 	quit_to_main_menu_requested.emit()
-
-
-func _connect_match_results_signal(signal_name: StringName, handler: Callable) -> void:
-	if match_results_flow.has_signal(signal_name) and !match_results_flow.is_connected(signal_name, handler):
-		match_results_flow.connect(signal_name, handler)

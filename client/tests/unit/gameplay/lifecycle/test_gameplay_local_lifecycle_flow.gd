@@ -4,14 +4,14 @@ const GameplayLocalLifecycleFlow = preload("res://scripts/gameplay/lifecycle/gam
 const GameplayRespawnFlow = preload("res://scripts/gameplay/respawn/gameplay_respawn_flow.gd")
 
 
-class FakeWorldSync:
+class FakeWorldSync extends WorldSync:
 	var clear_view_target_player_calls := 0
 
 	func clear_view_target_player() -> void:
 		clear_view_target_player_calls += 1
 
 
-class FakeRespawnFlow:
+class FakeRespawnFlow extends GameplayRespawnFlow:
 	var should_restore_result := false
 	var use_restore_policy := false
 	var should_restore_calls := 0
@@ -20,10 +20,9 @@ class FakeRespawnFlow:
 	var last_self_id := ""
 	var last_player
 	var last_has_stale_dead_presentation := false
-	var awaiting_respawn_confirmation := false
 	var clear_awaiting_confirmation_calls := 0
 
-	func should_restore_alive_hud(world_ships: Dictionary, player_lifecycle: Dictionary, self_id: String, player, has_stale_dead_presentation := false) -> bool:
+	func should_restore_alive_hud(world_ships: Dictionary, player_lifecycle: Dictionary, self_id: String, player: Player, has_stale_dead_presentation := false) -> bool:
 		should_restore_calls += 1
 		last_world_ships = world_ships
 		last_player_lifecycle = player_lifecycle
@@ -44,11 +43,7 @@ class FakeRespawnFlow:
 		clear_awaiting_confirmation_calls += 1
 
 
-class FakeHudFlow:
-	var is_dead := false
-	var can_respawn := false
-	var hidden_for_match_over := false
-	var is_game_over := false
+class FakeHudFlow extends GameplayHudFlow:
 	var set_alive_calls := 0
 	var clear_dead_presentation_calls := 0
 	var set_dead_calls := 0
@@ -77,7 +72,7 @@ class FakeHudFlow:
 		return is_dead or can_respawn
 
 
-class FakeMatchEndFlow:
+class FakeMatchEndFlow extends MatchEndFlow:
 	var handle_alive_restored_calls := 0
 	var local_player_eliminated_calls := 0
 	var last_eliminated_lives := -1
@@ -93,20 +88,19 @@ class FakeMatchEndFlow:
 		last_eliminated_lives = lives
 
 
-class FakePlayer:
+class FakePlayer extends Player:
 	var stop_transient_effects_calls := 0
 
 	func stop_transient_effects() -> void:
 		stop_transient_effects_calls += 1
 
 
-class FakeWorldLaneState:
-	var ships := {}
+class FakeWorldLaneState extends WorldLaneState:
+	pass
 
 
-class FakeSessionLaneState:
-	var player_lifecycle := {}
-	var player_sessions := {}
+class FakeSessionLaneState extends SessionLaneState:
+	pass
 
 
 func _make_flow(
@@ -117,6 +111,8 @@ func _make_flow(
 	player
 ) -> GameplayLocalLifecycleFlow:
 	var flow := GameplayLocalLifecycleFlow.new()
+	if player != null:
+		autofree(player)
 	flow.configure(world_sync, respawn_flow, hud_flow, match_end_flow, player)
 	return flow
 

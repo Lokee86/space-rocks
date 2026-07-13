@@ -5,11 +5,8 @@ const GameMenuScene := preload("res://scenes/ui/dialogs/game_menu.tscn")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
-class FakeSessionContext:
-	extends RefCounted
-
-	var active_mode := ""
-
+class FakeSessionContext extends ClientSessionContext:
+	pass
 
 func test_menu_requested_emits_return_to_pregame_with_active_session_mode() -> void:
 	var hud := _create_hud_with_menu()

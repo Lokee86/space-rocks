@@ -2,6 +2,7 @@ extends GutTest
 
 const GameplayFlowComposer = preload("res://scripts/gameplay/runtime/gameplay_flow_composer.gd")
 const GameplayHudFlow = preload("res://scripts/shell/gameplay_hud_flow.gd")
+const GameplayRespawnFlow = preload("res://scripts/gameplay/respawn/gameplay_respawn_flow.gd")
 const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 var nodes_to_free: Array[Node] = []
@@ -71,7 +72,7 @@ class FakeOverlay:
 	extends FakeHitboxOverlay
 
 
-class FakeWorldSync:
+class FakeWorldSync extends WorldSync:
 	func visual_position_for_server_position(value):
 		return value
 
@@ -87,7 +88,7 @@ class FakeWorldSync:
 
 class FakeRuntimeContext:
 	var world_sync := FakeWorldSync.new()
-	var respawn_flow := RefCounted.new()
+	var respawn_flow: GameplayRespawnFlow = GameplayRespawnFlow.new()
 
 	func request_respawn(_required_lane_baselines_synced: bool) -> void:
 		pass

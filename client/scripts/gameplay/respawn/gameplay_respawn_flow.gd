@@ -5,13 +5,13 @@ const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecyc
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var connection_service
-var hud_flow
+var hud_flow: GameplayHudFlow = null
 var awaiting_respawn_confirmation := false
 var _logged_respawn_send := false
 var _logged_respawn_blocked := {}
 
 
-func configure(connection_service_ref, hud_flow_ref) -> void:
+func configure(connection_service_ref, hud_flow_ref: GameplayHudFlow) -> void:
 	connection_service = connection_service_ref
 	hud_flow = hud_flow_ref
 
@@ -74,7 +74,7 @@ func should_restore_alive_hud(
 	world_ships: Dictionary,
 	player_lifecycle: Dictionary,
 	self_id: String,
-	player,
+	player: Player,
 	has_stale_dead_presentation := false
 ) -> bool:
 	if !awaiting_respawn_confirmation && !has_stale_dead_presentation:
@@ -92,9 +92,7 @@ func should_restore_alive_hud(
 		var self_state_dictionary: Dictionary = self_state
 		has_valid_server_state = !self_state_dictionary.is_empty()
 
-	var player_visible := false
-	if player != null and player.get("visible") != null:
-		player_visible = bool(player.get("visible"))
+	var player_visible := player != null and player.visible
 
 	return player_visible or has_valid_server_state
 

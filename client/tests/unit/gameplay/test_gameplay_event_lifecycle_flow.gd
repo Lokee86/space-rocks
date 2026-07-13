@@ -51,7 +51,7 @@ class FakeDeathFlow:
 		apply_self_death_event_call_count += 1
 
 
-class FakeMatchEndFlow:
+class FakeMatchEndFlow extends MatchEndFlow:
 	var local_player_eliminated_call_count := 0
 	var received_lives := -1
 
@@ -60,7 +60,7 @@ class FakeMatchEndFlow:
 		received_lives = lives
 
 
-class FakeHudFlow:
+class FakeHudFlow extends GameplayHudFlow:
 	var last_lives := -1
 	var game_over_calls := 0
 	var dead_calls := 0
