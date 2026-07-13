@@ -23,6 +23,19 @@ Use these rules to decide where a change belongs before editing. They govern own
 - Do not include unrelated cleanup, formatting churn, opportunistic refactors, or package/folder moves.
 - Generated/schema changes and scene/signal rewiring must be explicitly in scope.
 
+### High-risk seam verification
+
+New seams at trust-sensitive boundaries require explicit verification expectations before the seam is considered complete. This includes networking, session and lifecycle ownership, world synchronization, authentication and identity, protocol or schema handling, authoritative simulation, persistence, and similar boundaries where a bypass can invalidate correctness or safety.
+
+For each new high-risk seam, document:
+
+- the owning system;
+- the bypass or reach-through behavior that must remain forbidden;
+- focused behavioral or contract tests for the seam; and
+- whether the invariant is statically detectable and should receive a configuration-driven architecture-guard rule.
+
+Architecture guards should be narrow and evidence-based, not speculative or brittle. Existing guards are intentionally incomplete; expand them when concrete risk justifies it rather than requiring a guard for every ordinary feature. When future cleanup repeatedly finds the same ownership violation, reach-through, forbidden dependency, or duplicated authority, the cleanup should normally add or strengthen a focused guard or test so that class of drift does not return.
+
 Line-count guardrails for handwritten production files:
 
 - Prefer files under roughly 200 lines when practical.

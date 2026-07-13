@@ -381,6 +381,8 @@ The largest pressure is `SessionNetworkController`, because boot/auth gating is 
 
 This document should not hide that pressure, but it should not prescribe a refactor as current fact. A future split could move boot connection/auth-gate behavior into a narrower boot gate flow while leaving room/gameplay packet routing under networking/session routing.
 
+The current response to this pressure is to monitor it, not to treat it as an automatic mandate for an immediate broad rewrite. Do not preemptively refactor `SessionNetworkController` solely because it is broad today, and do not add unrelated responsibilities to it. When a new responsibility or material growth appears, create or extract the smallest concrete owner rather than extending the controller. A future split should be triggered by real growth, repeated change pressure, test friction, or ownership ambiguity.
+
 ## Code map
 
 ### Primary boot files

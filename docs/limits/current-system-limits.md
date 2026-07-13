@@ -27,7 +27,7 @@ Accepted practical ceilings that are not active bugs or roadmap work belong in [
 - `world_full`, asteroid lifecycle, and bullet lifecycle assembly are each bounded to 128 chunks, 16384 cumulative records, 2 MiB estimated expanded JSON, and 5000 ms lifetime.
 - Limit, expiry, malformed metadata, interrupted, duplicate, mismatched, and non-contiguous failures reset incomplete client assembly state, apply no partial state, and request authoritative recovery. These are active defensive client limits, not missing work and not changes to the server's approximately 1200-byte candidate construction cap.
 
-- `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. The intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet.
+- `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. This is a bounded but real identity-enforcement gap, not merely a product omission: the intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet. This must be closed before hosted/public account-enabled release shapes rely on strict Guest/Local Profile versus Authenticated Account separation.
 - Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
 
 ### Combat Systems

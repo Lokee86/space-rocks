@@ -17,6 +17,7 @@ Canonical client runtime documentation lives under `docs/services/client/`.
 - Do not hand-edit generated client packet/constants files.
 - Route packet schema changes through shared source files and data-sync.
 - Keep Main Menu and app-shell code as routing/composition where existing docs say so.
+- Treat [`SessionNetworkController`](../services/client/app-shell-and-session/session-boot-and-network-target.md) as a known pressure point: route existing behavior through it as required, but do not add unrelated policy or new ownership there; use a concrete seam when a new responsibility appears.
 - Inspect current scenes/scripts before changing UI flow.
 - Keep broad HUD containers from swallowing clicks unless they are intentionally interactive.
 

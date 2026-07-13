@@ -116,6 +116,20 @@ They should verify:
 
 Generated contract drift should block release-shaped builds. Local development can remain looser unless the changed surface directly depends on regenerated output.
 
+## Architecture Seam Gate
+
+The architecture seam gate protects high-risk ownership boundaries, including networking, session and lifecycle flow, world synchronization, authentication and identity, protocol/schema handling, authoritative simulation, persistence, and similar trust-sensitive seams.
+
+Before a new high-risk seam is treated as complete, its enforcement evidence must include:
+
+* focused runtime, behavioral, or contract tests proving the seam's required behavior;
+* the owner and the forbidden bypass or reach-through behavior being checked; and
+* a narrow, configuration-driven static architecture rule when the violation can be checked reliably.
+
+The configuration-driven architecture guard runs in repository checks, but it does not prove all architecture automatically. Existing guards are intentionally incomplete and should expand when concrete risk justifies them. If recurring cleanup findings or regressions expose the same ownership violation, reach-through, forbidden dependency, or duplicated authority, strengthen the focused tests or architecture rules instead of relying on memory or documentation alone.
+
+Do not require a static guard when detection would be vague, noisy, speculative, brittle, or easy to evade. Use the smallest reliable proof: a focused test, a static rule, or both when each verifies a distinct part of the invariant. Ordinary features do not require speculative architecture rules.
+
 ## Local Packaged Beta Gate
 
 Local packaged beta is the first release-shaped testing target.

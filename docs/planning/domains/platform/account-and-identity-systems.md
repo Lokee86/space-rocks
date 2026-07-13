@@ -67,6 +67,7 @@ Current implementation facts:
 
 Planned changes from current implementation:
 
+* Add server-side single-player identity enforcement: `start_single_player_request` must explicitly reject an already-authenticated session; single-player remains Guest or Local Profile only; enforcement belongs at the game-server request/admission boundary, not only in downstream player-data validation or client behavior; and the rejection must be test-covered.
 * Add Google OAuth as the second provider.
 * Add/enable manual login and signup.
 * Require email verification for manual signup.
@@ -82,6 +83,8 @@ Planned changes from current implementation:
 ### Production admission
 
 * Production multiplayer create/join requires Authenticated Account identity.
+* Server-side single-player identity enforcement is required before broader hosted/public account expansion: `start_single_player_request` must explicitly reject an already-authenticated session, while single-player remains Guest or Local Profile only.
+* Single-player identity enforcement belongs at the game-server request/admission boundary, not only in downstream player-data validation or client behavior, and the rejection must be test-covered.
 * Missing auth verifier returns `auth_unavailable`.
 * Live deployed servers must never allow auth bypass.
 * Development-only auth bypass is planned, but it must be build-flagged, environment-gated, and unavailable on live deployed servers.
@@ -311,25 +314,26 @@ Devtools planning owns:
 
 ## Implementation sequence
 
-1. Define the account display identity policy and validation rules.
-2. Add strict display-name moderation policy before public display-name editing expands.
-3. Add manual signup/login product flow.
-4. Add email verification for manual signup.
-5. Block unverified manual accounts from online multiplayer.
-6. Plan and implement password reset and account recovery.
-7. Upgrade opaque bearer tokens to JWTs or a better selected token/session model.
-8. Define token expiry, refresh, logout, revocation, password-reset invalidation, recovery invalidation, and account-disabled/deleted invalidation behavior.
-9. Add Google OAuth as the second provider.
-10. Define provider linking with current-session proof and new-provider proof.
-11. Define provider conflict handling so already-linked providers reject linking and route to the existing linked account login/recovery path.
-12. Define provider unlinking rules after recovery and alternate-login requirements are in place.
-13. Add account deletion/deactivation identity behavior.
-14. Add legal/product-specific retention and anonymization details when available.
-15. Define preferences/settings export behavior, preferring online to offline.
-16. If offline to online preferences/settings import is ever supported, define screening and trust verification first.
-17. Define development-only auth bypass as build-flagged and environment-gated.
-18. Ensure development-only auth bypass cannot exist on live deployed servers and cannot create online-trusted facts.
-19. Keep account merge and local-to-online migration explicitly unsupported.
+1. Close the server-side single-player identity enforcement gap: reject an already-authenticated `start_single_player_request` at the game-server request/admission boundary, preserve Guest or Local Profile as the only single-player identities, and add explicit test coverage for the rejection.
+2. Define the account display identity policy and validation rules.
+3. Add strict display-name moderation policy before public display-name editing expands.
+4. Add manual signup/login product flow.
+5. Add email verification for manual signup.
+6. Block unverified manual accounts from online multiplayer.
+7. Plan and implement password reset and account recovery.
+8. Upgrade opaque bearer tokens to JWTs or a better selected token/session model.
+9. Define token expiry, refresh, logout, revocation, password-reset invalidation, recovery invalidation, and account-disabled/deleted invalidation behavior.
+10. Add Google OAuth as the second provider.
+11. Define provider linking with current-session proof and new-provider proof.
+12. Define provider conflict handling so already-linked providers reject linking and route to the existing linked account login/recovery path.
+13. Define provider unlinking rules after recovery and alternate-login requirements are in place.
+14. Add account deletion/deactivation identity behavior.
+15. Add legal/product-specific retention and anonymization details when available.
+16. Define preferences/settings export behavior, preferring online to offline.
+17. If offline to online preferences/settings import is ever supported, define screening and trust verification first.
+18. Define development-only auth bypass as build-flagged and environment-gated.
+19. Ensure development-only auth bypass cannot exist on live deployed servers and cannot create online-trusted facts.
+20. Keep account merge and local-to-online migration explicitly unsupported.
 
 ## Related docs
 
