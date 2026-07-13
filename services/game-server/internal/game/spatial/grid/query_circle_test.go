@@ -38,8 +38,8 @@ func TestQueryCircleFiltersKindsAndDeduplicates(t *testing.T) {
 func TestQueryCircleWrapsAllSeams(t *testing.T) {
 	index := queryGrid()
 	index.Rebuild([]spatial.Entry{
-		queryEntry(spatial.KindAsteroid, "horizontal", 9.5, 5, 0),
-		queryEntry(spatial.KindAsteroid, "vertical", 5, 9.5, 0),
+		queryEntry(spatial.KindAsteroid, "horizontal", 9.5, 0.5, 0),
+		queryEntry(spatial.KindAsteroid, "vertical", 0.5, 9.5, 0),
 		queryEntry(spatial.KindAsteroid, "corner", 9.5, 9.5, 0),
 	})
 	refs := index.QueryCircle(nil, physics.Vector2{X: 0, Y: 0}, 1, spatial.AllKinds)

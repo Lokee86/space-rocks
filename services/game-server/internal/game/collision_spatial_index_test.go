@@ -36,13 +36,18 @@ func TestRebuildAsteroidSpatialIndexProjectsActiveEntries(t *testing.T) {
 	game := spatialTestGame()
 	game.entities.Asteroids["active"] = &runtime.Asteroid{ID: "active", X: 10, Y: 20, Size: 1}
 	game.entities.Asteroids["pending"] = &runtime.Asteroid{ID: "pending", PendingDespawn: true, Size: 1}
+	body, ok := game.entities.Asteroids["active"].CollisionBody(game.collisionShapes)
+	if !ok {
+		t.Fatal("active asteroid collision body was not created")
+	}
+	expectedRadius := physics.BoundingRadius(body.Shape)
 
 	game.rebuildAsteroidSpatialIndex()
 	refs := game.spatialIndex.QueryCircle(nil, physics.Vector2{X: 10, Y: 20}, 0, spatial.AllKinds)
 	if len(refs) != 1 || refs[0].Kind != spatial.KindAsteroid || refs[0].ID != "active" {
 		t.Fatalf("asteroid refs = %#v", refs)
 	}
-	if len(game.spatialEntries) != 1 || game.spatialEntries[0].Radius != 4 {
+	if len(game.spatialEntries) != 1 || game.spatialEntries[0].Radius != expectedRadius {
 		t.Fatalf("projected entries = %#v", game.spatialEntries)
 	}
 }

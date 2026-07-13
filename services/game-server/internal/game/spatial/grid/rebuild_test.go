@@ -30,10 +30,10 @@ func TestRebuildNormalizesPositionAndClampsRadius(t *testing.T) {
 	index := testGrid()
 	index.Rebuild([]spatial.Entry{testEntry("normalized", -1, 11, -2)})
 
-	if len(index.buckets[0]) != 1 {
-		t.Fatalf("normalized entry was not inserted into bucket 0")
+	if len(index.buckets[4]) != 1 {
+		t.Fatalf("normalized entry was not inserted into bucket 4 (position 9,1)")
 	}
-	entry := index.buckets[0][0]
+	entry := index.buckets[4][0]
 	if entry.Position != (physics.Vector2{X: 9, Y: 1}) || entry.Radius != 0 {
 		t.Fatalf("stored entry = %#v, want normalized position and zero radius", entry)
 	}

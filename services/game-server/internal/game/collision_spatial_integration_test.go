@@ -7,10 +7,12 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 )
 
 func integrationGame() *Game {
 	game := spatialTestGame()
+	game.spawner = spawning.New()
 	game.collisionShapes.Ship = physics.ImportedCollisionShape{Type: "circle", Radius: 2}
 	game.collisionShapes.Bullet = physics.ImportedCollisionShape{Type: "circle", Radius: 1}
 	return game

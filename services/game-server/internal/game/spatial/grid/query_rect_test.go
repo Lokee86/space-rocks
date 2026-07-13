@@ -36,8 +36,8 @@ func TestQueryRectFiltersMasksAndAdjacentCells(t *testing.T) {
 func TestQueryRectWrapsHorizontalVerticalAndCornerSeams(t *testing.T) {
 	index := rectGrid()
 	index.Rebuild([]spatial.Entry{
-		rectEntry(spatial.KindAsteroid, "horizontal", 9.5, 5, 0),
-		rectEntry(spatial.KindAsteroid, "vertical", 5, 9.5, 0),
+		rectEntry(spatial.KindAsteroid, "horizontal", 9.5, 0.5, 0),
+		rectEntry(spatial.KindAsteroid, "vertical", 0.5, 9.5, 0),
 		rectEntry(spatial.KindAsteroid, "corner", 9.5, 9.5, 0),
 	})
 	refs := index.QueryRect(nil, spatial.Rect{Center: physics.Vector2{}, HalfExtents: physics.Vector2{X: 1, Y: 1}}, spatial.AllKinds)

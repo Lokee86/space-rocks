@@ -296,7 +296,7 @@ observability, logging, and diagnostics
 4. P3D build/release/environment/compatibility gates.
 ```
 
-P3B includes the observability SSoT, canonical envelope, minimal aggregator service, cross-service correlation, service integration, diagnostic bundles, redaction, bounded non-blocking delivery, the durable storage boundary, health/readiness, and release verification. Aggregator failure must degrade diagnostics rather than gameplay. Production-scale dashboards, alerting, OpenTelemetry-style tracing, and long-term hosted retention remain deferred.
+P3B includes the observability SSoT, canonical envelope, minimal aggregator service, cross-service correlation, service integration, diagnostic bundles, redaction, bounded non-blocking delivery, the durable storage boundary, health/readiness, and release verification. Every product service owns independently useful, bounded local structured JSONL logs; the aggregator receives a correlated second copy and is not the sole source of diagnostics. Service-owned files use managed rolling segments with rotation by age and size, compression of completed segments, crash recovery, retention by age and total bytes, and non-fatal behavior on logging failure. Long-running file guards are required for both the game-server and API-server. API-server logging must be safe for future Puma worker scaling: active files are owned per worker/process, shared-file writes are unsafe and prohibited, and retention cleanup is coordinated. The desired observability flows and call-site inventory are already documented in the observability planning document; implementation proceeds through a gap matrix and workflow-based rollout rather than redesigning the inventory. Aggregator failure must degrade diagnostics rather than gameplay. Production-scale dashboards, alerting, OpenTelemetry-style tracing, and long-term hosted retention remain deferred.
 
 ### Completion Criteria
 
@@ -315,6 +315,11 @@ unsafe fields are rejected or redacted
 aggregator outage does not block gameplay
 diagnostic bundles can reconstruct a correlated failure chain
 delivery drop/reject/redaction accounting is visible
+each product service retains independently useful bounded local structured JSONL logs
+service-owned rolling segments support age/size rotation, completed-segment compression, crash recovery, age/byte retention, and non-fatal logging failure
+long-running file guards exist for the game-server and API-server
+API-server active files are per-worker/process-owned, avoid shared-file writes, and use coordinated retention cleanup
+implementation follows the documented observability flows and call-site inventory through a gap matrix and workflow-based rollout
 ```
 
 ## Phase P4 - Player Experience Foundation
