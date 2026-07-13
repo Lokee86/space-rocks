@@ -1,4 +1,5 @@
 extends Control
+class_name ConfirmDelete
 
 signal confirm_requested(item: Dictionary)
 signal cancel_requested

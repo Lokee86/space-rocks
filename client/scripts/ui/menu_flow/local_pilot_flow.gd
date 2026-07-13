@@ -8,38 +8,40 @@ const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.g
 const ProfileIdentityKindScript := preload("res://scripts/profile/profile_identity_kind.gd")
 const LocalPilotApiClientScript := preload("res://scripts/profile/local_pilot_api_client.gd")
 
-var transmission_flow
+var transmission_flow: TransmissionFlow
 var callsign_updated_callable: Callable
-var profile_context_provider
-var local_pilot_api_client
-var selector: Control
-var active_entry_scene: Control
+var profile_context_provider: ProfileContextProvider
+var local_pilot_api_client: LocalPilotApiClient
+var selector: SelectPilotReadout
+var active_pilot_editor: EnterPilotId
+var active_delete_confirmation: ConfirmDelete
 var active_edit_item: Dictionary = {}
 
 
-func configure(transmission_flow_ref, callsign_updated_callable_ref: Callable = Callable(), profile_context_provider_ref = null) -> void:
+func configure(transmission_flow_ref: TransmissionFlow = null, callsign_updated_callable_ref: Callable = Callable(), profile_context_provider_ref: ProfileContextProvider = null) -> void:
 	transmission_flow = transmission_flow_ref
 	callsign_updated_callable = callsign_updated_callable_ref
 	profile_context_provider = profile_context_provider_ref
 	local_pilot_api_client = LocalPilotApiClientScript.new()
 
 
-func show_selector() -> Control:
+func show_selector() -> SelectPilotReadout:
 	if transmission_flow == null:
 		return null
 
-	selector = transmission_flow.mount(SelectPilotReadoutScene)
+	selector = transmission_flow.mount(SelectPilotReadoutScene) as SelectPilotReadout
 	if selector == null:
+		transmission_flow.clear()
 		return null
 
-	if selector.has_signal("load_requested"):
-		selector.connect("load_requested", Callable(self, "_on_load_requested"))
-	if selector.has_signal("create_requested"):
-		selector.connect("create_requested", Callable(self, "_on_create_requested"))
-	if selector.has_signal("edit_requested"):
-		selector.connect("edit_requested", Callable(self, "_on_edit_requested"))
-	if selector.has_signal("delete_requested"):
-		selector.connect("delete_requested", Callable(self, "_on_delete_requested"))
+	if not selector.load_requested.is_connected(_on_load_requested):
+		selector.load_requested.connect(_on_load_requested)
+	if not selector.create_requested.is_connected(_on_create_requested):
+		selector.create_requested.connect(_on_create_requested)
+	if not selector.edit_requested.is_connected(_on_edit_requested):
+		selector.edit_requested.connect(_on_edit_requested)
+	if not selector.delete_requested.is_connected(_on_delete_requested):
+		selector.delete_requested.connect(_on_delete_requested)
 
 	_refresh_selector()
 	return selector
@@ -73,7 +75,7 @@ func apply_saved_default() -> void:
 			_apply_guest_default()
 			return
 
-		if profile_context_provider != null and profile_context_provider.has_method("select_local_profile"):
+		if profile_context_provider != null:
 			profile_context_provider.select_local_profile(local_profile_id, display_name)
 		if callsign_updated_callable.is_valid():
 			callsign_updated_callable.call(display_name)
@@ -89,7 +91,7 @@ func _on_load_requested(item: Dictionary) -> void:
 		if guest_result == null or !guest_result.ok:
 			return
 
-		if profile_context_provider != null and profile_context_provider.has_method("select_guest_profile"):
+		if profile_context_provider != null:
 			profile_context_provider.select_guest_profile()
 		if callsign_updated_callable.is_valid():
 			callsign_updated_callable.call("Guest")
@@ -102,14 +104,14 @@ func _on_load_requested(item: Dictionary) -> void:
 		if local_profile_result == null or !local_profile_result.ok:
 			return
 
-		if profile_context_provider != null and profile_context_provider.has_method("select_local_profile"):
+		if profile_context_provider != null:
 			profile_context_provider.select_local_profile(local_profile_id, display_name)
 		if callsign_updated_callable.is_valid():
 			callsign_updated_callable.call(display_name)
 
 
 func _apply_guest_default() -> void:
-	if profile_context_provider != null and profile_context_provider.has_method("select_guest_profile"):
+	if profile_context_provider != null:
 		profile_context_provider.select_guest_profile()
 	if callsign_updated_callable.is_valid():
 		callsign_updated_callable.call("Guest")
@@ -119,18 +121,19 @@ func _on_create_requested() -> void:
 	if transmission_flow == null:
 		return
 
-	var mounted_scene: Control = transmission_flow.mount_subpanel(EnterPilotIdScene)
+	var mounted_scene := transmission_flow.mount_subpanel(EnterPilotIdScene) as EnterPilotId
 	if mounted_scene == null:
+		transmission_flow.clear_subpanel()
 		return
-	active_entry_scene = mounted_scene
+	active_delete_confirmation = null
+	active_pilot_editor = mounted_scene
 
-	if mounted_scene.has_method("configure_create"):
-		mounted_scene.configure_create()
+	mounted_scene.configure_create()
 
-	if mounted_scene.has_signal("cancel_requested"):
-		mounted_scene.connect("cancel_requested", Callable(self, "_on_subpanel_cancel_requested"))
-	if mounted_scene.has_signal("confirm_requested"):
-		mounted_scene.connect("confirm_requested", Callable(self, "_on_create_confirmed"))
+	if not mounted_scene.cancel_requested.is_connected(_on_subpanel_cancel_requested):
+		mounted_scene.cancel_requested.connect(_on_subpanel_cancel_requested)
+	if not mounted_scene.confirm_requested.is_connected(_on_create_confirmed):
+		mounted_scene.confirm_requested.connect(_on_create_confirmed)
 
 
 func _on_edit_requested(item: Dictionary) -> void:
@@ -145,28 +148,29 @@ func _on_edit_requested(item: Dictionary) -> void:
 	if local_profile_id == "":
 		return
 
-	var mounted_scene: Control = transmission_flow.mount_subpanel(EnterPilotIdScene)
+	var mounted_scene := transmission_flow.mount_subpanel(EnterPilotIdScene) as EnterPilotId
 	if mounted_scene == null:
+		transmission_flow.clear_subpanel()
 		return
-	active_entry_scene = mounted_scene
+	active_delete_confirmation = null
+	active_pilot_editor = mounted_scene
 	active_edit_item = item.duplicate(true)
 
 	var display_name := str(item.get("display_name", ""))
-	if mounted_scene.has_method("configure_label"):
-		mounted_scene.configure_label("ENTER NEW CALLSIGN", display_name)
+	mounted_scene.configure_label("ENTER NEW CALLSIGN", display_name)
 
-	if mounted_scene.has_signal("cancel_requested"):
-		mounted_scene.connect("cancel_requested", Callable(self, "_on_subpanel_cancel_requested"))
-	if mounted_scene.has_signal("confirm_requested"):
-		mounted_scene.connect("confirm_requested", Callable(self, "_on_edit_confirmed"))
+	if not mounted_scene.cancel_requested.is_connected(_on_subpanel_cancel_requested):
+		mounted_scene.cancel_requested.connect(_on_subpanel_cancel_requested)
+	if not mounted_scene.confirm_requested.is_connected(_on_edit_confirmed):
+		mounted_scene.confirm_requested.connect(_on_edit_confirmed)
 
 
 func _on_subpanel_cancel_requested() -> void:
+	active_pilot_editor = null
+	active_delete_confirmation = null
+	active_edit_item = {}
 	if transmission_flow == null:
 		return
-
-	active_entry_scene = null
-	active_edit_item = {}
 	transmission_flow.clear_subpanel()
 
 
@@ -175,7 +179,7 @@ func _on_create_confirmed(callsign: String) -> void:
 		return
 
 	var seed_from_guest_stats := true
-	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+	if profile_context_provider != null:
 		var context: Dictionary = profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
 		var identity_kind := str(context.get("identity_kind", ""))
 		if identity_kind == ProfileIdentityKindScript.GUEST:
@@ -183,13 +187,13 @@ func _on_create_confirmed(callsign: String) -> void:
 		elif identity_kind == ProfileIdentityKindScript.LOCAL_PROFILE:
 			seed_from_guest_stats = false
 
-	if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_create_submitting"):
-		active_entry_scene.show_create_submitting()
+	if active_pilot_editor != null and is_instance_valid(active_pilot_editor):
+		active_pilot_editor.show_create_submitting()
 
 	var result = await local_pilot_api_client.create_profile(callsign, seed_from_guest_stats)
 	if result == null or !result.ok:
-		if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_create_failed"):
-			active_entry_scene.show_create_failed("CREATE FAILED")
+		if active_pilot_editor != null and is_instance_valid(active_pilot_editor):
+			active_pilot_editor.show_create_failed("CREATE FAILED")
 		return
 
 	await _refresh_selector()
@@ -208,29 +212,29 @@ func _on_edit_confirmed(callsign: String) -> void:
 	if local_profile_id == "":
 		return
 
-	if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_submitting"):
-		active_entry_scene.show_submitting("UPDATING...")
+	if active_pilot_editor != null and is_instance_valid(active_pilot_editor):
+		active_pilot_editor.show_submitting("UPDATING...")
 
 	var result = await local_pilot_api_client.update_profile_display_name(local_profile_id, callsign)
 	if result == null or !result.ok:
-		if active_entry_scene != null and is_instance_valid(active_entry_scene) and active_entry_scene.has_method("show_failed"):
-			active_entry_scene.show_failed("UPDATE FAILED")
+		if active_pilot_editor != null and is_instance_valid(active_pilot_editor):
+			active_pilot_editor.show_failed("UPDATE FAILED")
 		return
 
 	var should_update_active_profile := false
-	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+	if profile_context_provider != null:
 		var context: Dictionary = profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
 		if str(context.get("identity_kind", "")) == ProfileIdentityKindScript.LOCAL_PROFILE and str(context.get("local_profile_id", "")) == local_profile_id:
 			should_update_active_profile = true
 
 	if should_update_active_profile:
-		if profile_context_provider != null and profile_context_provider.has_method("select_local_profile"):
+		if profile_context_provider != null:
 			profile_context_provider.select_local_profile(local_profile_id, callsign)
 		if callsign_updated_callable.is_valid():
 			callsign_updated_callable.call(callsign)
 
 	await _refresh_selector()
-	if selector != null and is_instance_valid(selector) and selector.has_method("select_item_by_identity"):
+	if selector != null and is_instance_valid(selector):
 		selector.select_item_by_identity(ProfileIdentityKindScript.LOCAL_PROFILE, local_profile_id)
 
 	_on_subpanel_cancel_requested()
@@ -248,17 +252,19 @@ func _on_delete_requested(item: Dictionary) -> void:
 	if local_profile_id == "":
 		return
 
-	var mounted_scene: Control = transmission_flow.mount_subpanel(ConfirmDeleteScene)
+	var mounted_scene := transmission_flow.mount_subpanel(ConfirmDeleteScene) as ConfirmDelete
 	if mounted_scene == null:
+		transmission_flow.clear_subpanel()
 		return
-	active_entry_scene = mounted_scene
+	active_pilot_editor = null
+	active_edit_item = {}
+	active_delete_confirmation = mounted_scene
 
-	if mounted_scene.has_method("configure_delete"):
-		mounted_scene.configure_delete(item)
-	if mounted_scene.has_signal("cancel_requested"):
-		mounted_scene.connect("cancel_requested", Callable(self, "_on_subpanel_cancel_requested"))
-	if mounted_scene.has_signal("confirm_requested"):
-		mounted_scene.connect("confirm_requested", Callable(self, "_on_delete_confirmed"))
+	mounted_scene.configure_delete(item)
+	if not mounted_scene.cancel_requested.is_connected(_on_subpanel_cancel_requested):
+		mounted_scene.cancel_requested.connect(_on_subpanel_cancel_requested)
+	if not mounted_scene.confirm_requested.is_connected(_on_delete_confirmed):
+		mounted_scene.confirm_requested.connect(_on_delete_confirmed)
 
 
 func _on_delete_confirmed(item: Dictionary) -> void:
@@ -278,7 +284,7 @@ func _on_delete_confirmed(item: Dictionary) -> void:
 		return
 
 	var should_apply_guest_default := false
-	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+	if profile_context_provider != null:
 		var context: Dictionary = profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
 		if str(context.get("identity_kind", "")) == ProfileIdentityKindScript.LOCAL_PROFILE and str(context.get("local_profile_id", "")) == local_profile_id:
 			should_apply_guest_default = true
@@ -294,8 +300,7 @@ func _refresh_selector() -> void:
 	if selector == null or !is_instance_valid(selector):
 		return
 	if local_pilot_api_client == null:
-		if selector.has_method("populate_pilots"):
-			selector.populate_pilots([])
+		selector.populate_pilots([])
 		return
 
 	var result = await local_pilot_api_client.list_profiles()
@@ -304,25 +309,21 @@ func _refresh_selector() -> void:
 
 	if result != null and result.ok and result.body is Dictionary:
 		var body: Dictionary = result.body
-		if body.has("profiles") and body["profiles"] is Array and selector.has_method("populate_pilots"):
+		if body.has("profiles") and body["profiles"] is Array:
 			selector.populate_pilots(body["profiles"])
 			_select_selector_default_row()
 			return
 
-	if selector.has_method("populate_pilots"):
-		selector.populate_pilots([])
-		_select_selector_default_row()
+	selector.populate_pilots([])
+	_select_selector_default_row()
 
 
 func _select_selector_default_row() -> void:
 	if selector == null or !is_instance_valid(selector):
 		return
-	if !selector.has_method("select_item_by_identity"):
-		return
-
 	var identity_kind := ProfileIdentityKindScript.GUEST
 	var local_profile_id := ""
-	if profile_context_provider != null and profile_context_provider.has_method("context_for_mode"):
+	if profile_context_provider != null:
 		var context: Dictionary = profile_context_provider.context_for_mode(PregameMenuMode.SINGLE_PLAYER)
 		identity_kind = str(context.get("identity_kind", ProfileIdentityKindScript.GUEST))
 		local_profile_id = str(context.get("local_profile_id", ""))

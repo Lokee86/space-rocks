@@ -1,4 +1,5 @@
 extends Control
+class_name SelectPilotReadout
 
 const GUEST_DISPLAY_NAME := "GUEST"
 const ProfileIdentityKindScript := preload("res://scripts/profile/profile_identity_kind.gd")

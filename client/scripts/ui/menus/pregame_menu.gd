@@ -1,4 +1,5 @@
 extends Control
+class_name PregameMenu
 
 const PregameModePresenterScript := preload("res://scripts/ui/menus/pregame_mode_presenter.gd")
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")

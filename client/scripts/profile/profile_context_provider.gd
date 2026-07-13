@@ -4,13 +4,13 @@ class_name ProfileContextProvider
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 const ProfileIdentityKindScript := preload("res://scripts/profile/profile_identity_kind.gd")
 
-var auth_session_controller
+var auth_session_controller: AuthSessionController
 var selected_single_player_identity_kind := ProfileIdentityKindScript.GUEST
 var selected_local_profile_id := ""
 var selected_local_display_name := "Guest"
 
 
-func configure(auth_session_controller_ref) -> void:
+func configure(auth_session_controller_ref: AuthSessionController = null) -> void:
 	auth_session_controller = auth_session_controller_ref
 
 
@@ -60,7 +60,7 @@ func _single_player_context() -> Dictionary:
 
 func _multiplayer_context() -> Dictionary:
 	var callsign := "Guest"
-	var session = _session()
+	var session: AuthSession = _session()
 	if session == null or !session.is_signed_in():
 		return _guest_context("OFFLINE")
 
@@ -76,7 +76,7 @@ func _multiplayer_context() -> Dictionary:
 	}
 
 
-func _session():
-	if auth_session_controller == null or !auth_session_controller.has_method("get_session"):
+func _session() -> AuthSession:
+	if auth_session_controller == null:
 		return null
 	return auth_session_controller.get_session()

@@ -3,11 +3,11 @@ extends RefCounted
 
 const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
 
-var menu_flow_controller
-var auth_session_controller
+var menu_flow_controller: MenuFlowController
+var auth_session_controller: AuthSessionController
 
 
-func configure(menu_flow_controller_ref, auth_session_controller_ref) -> void:
+func configure(menu_flow_controller_ref: MenuFlowController = null, auth_session_controller_ref: AuthSessionController = null) -> void:
 	menu_flow_controller = menu_flow_controller_ref
 	auth_session_controller = auth_session_controller_ref
 
@@ -34,14 +34,8 @@ func _is_signed_in() -> bool:
 	if auth_session_controller == null:
 		return false
 
-	if not auth_session_controller.has_method("get_session"):
-		return false
-
-	var session = auth_session_controller.get_session()
+	var session: AuthSession = auth_session_controller.get_session()
 	if session == null:
-		return false
-
-	if not session.has_method("is_signed_in"):
 		return false
 
 	return session.is_signed_in()

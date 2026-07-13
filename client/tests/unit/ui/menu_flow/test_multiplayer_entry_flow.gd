@@ -5,27 +5,19 @@ const MenuRoute := preload("res://scripts/ui/menu_flow/menu_route.gd")
 
 
 class FakeSession:
-	extends RefCounted
-
-	var signed_in := false
-
-	func is_signed_in() -> bool:
-		return signed_in
+	extends AuthSession
 
 
 class FakeAuthSessionController:
-	extends RefCounted
+	extends AuthSessionController
 
-	var session = FakeSession.new()
-
-	func get_session():
-		return session
+	func _init() -> void:
+		auth_session = FakeSession.new()
 
 
 class FakeMenuFlowController:
-	extends RefCounted
+	extends MenuFlowController
 
-	var current_route := ""
 	var sign_in_calls := 0
 	var multiplayer_pregame_calls := 0
 
@@ -46,7 +38,7 @@ func test_request_multiplayer_signed_out_opens_sign_in() -> void:
 	var menu_flow_controller = FakeMenuFlowController.new()
 	var auth_session_controller = FakeAuthSessionController.new()
 
-	auth_session_controller.session.signed_in = false
+	auth_session_controller.auth_session.signed_in = false
 	flow.configure(menu_flow_controller, auth_session_controller)
 
 	flow.request_multiplayer()
@@ -60,7 +52,7 @@ func test_request_multiplayer_signed_in_opens_multiplayer_pregame() -> void:
 	var menu_flow_controller = FakeMenuFlowController.new()
 	var auth_session_controller = FakeAuthSessionController.new()
 
-	auth_session_controller.session.signed_in = true
+	auth_session_controller.auth_session.signed_in = true
 	flow.configure(menu_flow_controller, auth_session_controller)
 
 	flow.request_multiplayer()
@@ -75,7 +67,7 @@ func test_auth_state_changed_on_sign_in_screen_routes_signed_in_to_pregame() -> 
 	var auth_session_controller = FakeAuthSessionController.new()
 
 	menu_flow_controller.current_route = MenuRoute.SIGN_IN_SCREEN
-	auth_session_controller.session.signed_in = true
+	auth_session_controller.auth_session.signed_in = true
 	flow.configure(menu_flow_controller, auth_session_controller)
 
 	flow.handle_auth_state_changed()
@@ -89,7 +81,7 @@ func test_auth_state_changed_outside_sign_in_screen_does_not_route() -> void:
 	var auth_session_controller = FakeAuthSessionController.new()
 
 	menu_flow_controller.current_route = MenuRoute.MAIN_MENU
-	auth_session_controller.session.signed_in = true
+	auth_session_controller.auth_session.signed_in = true
 	flow.configure(menu_flow_controller, auth_session_controller)
 
 	flow.handle_auth_state_changed()
@@ -103,7 +95,7 @@ func test_auth_state_changed_signed_out_on_sign_in_screen_does_not_route() -> vo
 	var auth_session_controller = FakeAuthSessionController.new()
 
 	menu_flow_controller.current_route = MenuRoute.SIGN_IN_SCREEN
-	auth_session_controller.session.signed_in = false
+	auth_session_controller.auth_session.signed_in = false
 	flow.configure(menu_flow_controller, auth_session_controller)
 
 	flow.handle_auth_state_changed()

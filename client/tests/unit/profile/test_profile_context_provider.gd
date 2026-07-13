@@ -5,21 +5,15 @@ const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.g
 
 
 class FakeSession:
-	extends RefCounted
-
-	var signed_in := false
-	var display_name := ""
-
-	func is_signed_in() -> bool:
-		return signed_in
+	extends AuthSession
 
 
 class FakeAuthSessionController:
-	extends RefCounted
+	extends AuthSessionController
 
-	var session
+	var session: AuthSession
 
-	func get_session():
+	func get_session() -> AuthSession:
 		return session
 
 
