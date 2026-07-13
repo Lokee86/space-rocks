@@ -131,7 +131,7 @@ func TestNormalizeControlPlayerIDValidationAndReservation(t *testing.T) {
 	control := NewControl(gameInstance)
 	gameInstance.playerSessions["player-9"] = newPlayerSession("player-9", physics.Vector2{})
 	gameInstance.entities.Players["player-2"] = &runtime.Ship{ID: "player-2"}
-	gameInstance.entities.Players["Player-6"] = &runtime.Ship{ID: "Player-6"}
+	gameInstance.entities.Players["pLaYeR-6"] = &runtime.Ship{ID: "pLaYeR-6"}
 
 	if !control.PlayerIDOccupied("Player-2") {
 		t.Fatal("expected canonical collision for Player-2 and player-2")

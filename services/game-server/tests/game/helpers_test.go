@@ -276,8 +276,7 @@ func (scenario *scenario) setPlayerInvulnerability(playerID string, seconds floa
 func (scenario *scenario) setPlayerLives(playerID string, lives int) {
 	scenario.t.Helper()
 
-	change := scenario.game.SetPlayerLives(playerID, lives)
-	if !change.Found {
+	if !scenario.control.SetPlayerLives(playerID, lives) {
 		scenario.t.Fatalf("expected SetPlayerLives to find player %q", playerID)
 	}
 }

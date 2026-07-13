@@ -10,106 +10,107 @@ func TestSetPlayerScoreSetsExactValue(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerScore(playerID, 42)
-
-	assertPlayerSessionScore(t, game, playerID, 42)
+	change := game.SetPlayerScore(playerID, 42)
+	assertPlayerCounterChange(t, change, 42)
 }
 
 func TestSetPlayerScoreClampsNegativeToZero(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerScore(playerID, -10)
-
-	assertPlayerSessionScore(t, game, playerID, 0)
+	change := game.SetPlayerScore(playerID, -10)
+	assertPlayerCounterChange(t, change, 0)
 }
 
 func TestAddPlayerScoreIncreases(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerScore(playerID, 10)
-	game.AddPlayerScore(playerID, 5)
-
-	assertPlayerSessionScore(t, game, playerID, 15)
+	setChange := game.SetPlayerScore(playerID, 10)
+	assertPlayerCounterChange(t, setChange, 10)
+	addChange := game.AddPlayerScore(playerID, 5)
+	assertPlayerCounterChange(t, addChange, 15)
 }
 
 func TestAddPlayerScoreCanReduce(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerScore(playerID, 10)
-	game.AddPlayerScore(playerID, -3)
-
-	assertPlayerSessionScore(t, game, playerID, 7)
+	setChange := game.SetPlayerScore(playerID, 10)
+	assertPlayerCounterChange(t, setChange, 10)
+	addChange := game.AddPlayerScore(playerID, -3)
+	assertPlayerCounterChange(t, addChange, 7)
 }
 
 func TestAddPlayerScoreClampsBelowZero(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerScore(playerID, 2)
-	game.AddPlayerScore(playerID, -5)
-
-	assertPlayerSessionScore(t, game, playerID, 0)
+	setChange := game.SetPlayerScore(playerID, 2)
+	assertPlayerCounterChange(t, setChange, 2)
+	addChange := game.AddPlayerScore(playerID, -5)
+	assertPlayerCounterChange(t, addChange, 0)
 }
 
 func TestSetPlayerLivesSetsExactValue(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerLives(playerID, 5)
-
-	assertPlayerSessionLives(t, game, playerID, 5)
+	change := game.SetPlayerLives(playerID, 5)
+	assertPlayerCounterChange(t, change, 5)
 }
 
 func TestSetPlayerLivesClampsNegativeToZero(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerLives(playerID, -10)
-
-	assertPlayerSessionLives(t, game, playerID, 0)
+	change := game.SetPlayerLives(playerID, -10)
+	assertPlayerCounterChange(t, change, 0)
 }
 
 func TestAddPlayerLivesIncreases(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerLives(playerID, 3)
-	game.AddPlayerLives(playerID, 2)
-
-	assertPlayerSessionLives(t, game, playerID, 5)
+	setChange := game.SetPlayerLives(playerID, 3)
+	assertPlayerCounterChange(t, setChange, 3)
+	addChange := game.AddPlayerLives(playerID, 2)
+	assertPlayerCounterChange(t, addChange, 5)
 }
 
 func TestAddPlayerLivesCanReduce(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerLives(playerID, 3)
-	game.AddPlayerLives(playerID, -1)
-
-	assertPlayerSessionLives(t, game, playerID, 2)
+	setChange := game.SetPlayerLives(playerID, 3)
+	assertPlayerCounterChange(t, setChange, 3)
+	addChange := game.AddPlayerLives(playerID, -1)
+	assertPlayerCounterChange(t, addChange, 2)
 }
 
 func TestAddPlayerLivesClampsBelowZero(t *testing.T) {
 	game := servergame.New()
 	playerID := game.AddPlayer()
 
-	game.SetPlayerLives(playerID, 1)
-	game.AddPlayerLives(playerID, -5)
-
-	assertPlayerSessionLives(t, game, playerID, 0)
+	setChange := game.SetPlayerLives(playerID, 1)
+	assertPlayerCounterChange(t, setChange, 1)
+	addChange := game.AddPlayerLives(playerID, -5)
+	assertPlayerCounterChange(t, addChange, 0)
 }
 
 func TestPlayerSessionReportsCounterSeamUpdates(t *testing.T) {
 	game := servergame.New()
+	control := servergame.NewControl(game)
 	playerID := game.AddPlayer()
 	expectedScore := 77
 	expectedLives := 4
 
-	game.SetPlayerScore(playerID, expectedScore)
-	game.SetPlayerLives(playerID, expectedLives)
+	if !control.SetPlayerScore(playerID, expectedScore) {
+		t.Fatalf("expected SetPlayerScore to find player %q", playerID)
+	}
+	if !control.SetPlayerLives(playerID, expectedLives) {
+		t.Fatalf("expected SetPlayerLives to find player %q", playerID)
+	}
 
 	snapshot := game.GameplayPresentationSnapshot(playerID)
 	session, ok := snapshot.PlayerSessions[playerID]
@@ -127,31 +128,13 @@ func TestPlayerSessionReportsCounterSeamUpdates(t *testing.T) {
 	}
 }
 
-func assertPlayerSessionScore(t *testing.T, game *servergame.Game, playerID string, expected int) {
+func assertPlayerCounterChange(t *testing.T, change servergame.PlayerCounterChange, expectedAfter int) {
 	t.Helper()
 
-	snapshot := game.GameplayPresentationSnapshot(playerID)
-	session, ok := snapshot.PlayerSessions[playerID]
-	if !ok {
-		t.Fatalf("expected player session %q in gameplay snapshot", playerID)
+	if !change.Found {
+		t.Fatalf("expected player counter change to find player")
 	}
-	if session.Score != expected {
-		t.Fatalf("expected player score %d, got %d", expected, session.Score)
-	}
-}
-
-func assertPlayerSessionLives(t *testing.T, game *servergame.Game, playerID string, expected int) {
-	t.Helper()
-
-	snapshot := game.GameplayPresentationSnapshot(playerID)
-	session, ok := snapshot.PlayerSessions[playerID]
-	if !ok {
-		t.Fatalf("expected player session %q in gameplay snapshot", playerID)
-	}
-	if snapshot.Lives != expected {
-		t.Fatalf("expected snapshot lives %d, got %d", expected, snapshot.Lives)
-	}
-	if session.Lives != expected {
-		t.Fatalf("expected player lives %d, got %d", expected, session.Lives)
+	if change.After != expectedAfter {
+		t.Fatalf("expected player counter after %d, got %d", expectedAfter, change.After)
 	}
 }

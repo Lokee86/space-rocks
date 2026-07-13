@@ -858,8 +858,7 @@ func TestSetPlayerScoreExportsSessionOwnedScoreInSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	change := scenario.game.SetPlayerScore(playerID, 37)
-	if !change.Found {
+	if !scenario.control.SetPlayerScore(playerID, 37) {
 		t.Fatalf("expected SetPlayerScore to find player %q", playerID)
 	}
 
@@ -873,8 +872,7 @@ func TestSetPlayerLivesExportsSessionOwnedLivesInSnapshot(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 
-	change := scenario.game.SetPlayerLives(playerID, 6)
-	if !change.Found {
+	if !scenario.control.SetPlayerLives(playerID, 6) {
 		t.Fatalf("expected SetPlayerLives to find player %q", playerID)
 	}
 

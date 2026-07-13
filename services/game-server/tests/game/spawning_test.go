@@ -6,8 +6,9 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 )
 
 func TestAsteroidSpawningUsesClientCameraView(t *testing.T) {
@@ -60,21 +61,26 @@ func TestAsteroidStateIncludesResolvedScale(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
 	const asteroidSize = 3
-	scenario.placeAsteroid("asteroid-1", physics.Vector2{X: 100, Y: 100}, asteroidSize)
+	asteroid := scenario.control.ApplyAsteroidSpawnPlan(spawning.AsteroidSpawnPlan{
+		EntityType: spawning.SpawnEntityTypeAsteroid,
+		Reason:     spawning.SpawnReasonDebugAsteroid,
+		Position:   physics.Vector2{X: 100, Y: 100},
+		Size:       asteroidSize,
+	})
 
-	asteroid, ok := scenario.asteroidSnapshot(playerID, "asteroid-1")
+	asteroidSnapshot, ok := scenario.asteroidSnapshot(playerID, asteroid.ID)
 	if !ok {
 		t.Fatal("expected gameplay snapshot world projection to include asteroid")
 	}
-	if asteroid.Size != asteroidSize {
-		t.Fatalf("expected asteroid size %d, got %d", asteroidSize, asteroid.Size)
+	if asteroidSnapshot.Size != asteroidSize {
+		t.Fatalf("expected asteroid size %d, got %d", asteroidSize, asteroidSnapshot.Size)
 	}
-	if asteroid.Health != constants.AsteroidHealth {
-		t.Fatalf("expected asteroid health %d, got %d", constants.AsteroidHealth, asteroid.Health)
+	if asteroidSnapshot.Health != constants.AsteroidHealth {
+		t.Fatalf("expected asteroid health %d, got %d", constants.AsteroidHealth, asteroidSnapshot.Health)
 	}
 
 	expectedScale := float64(asteroidSize) * constants.AsteroidSizeScale
-	if asteroid.Scale != expectedScale {
-		t.Fatalf("expected asteroid scale %v, got %v", expectedScale, asteroid.Scale)
+	if asteroidSnapshot.Scale != expectedScale {
+		t.Fatalf("expected asteroid scale %v, got %v", expectedScale, asteroidSnapshot.Scale)
 	}
 }
