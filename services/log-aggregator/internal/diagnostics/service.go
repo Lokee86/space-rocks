@@ -7,7 +7,9 @@ import (
 
 var (
 	ErrInvalidDiagnosticReportID = errors.New("diagnostics: invalid diagnostic report id")
-	ErrBundleNotFound            = errors.New("diagnostics: stored bundle not found")
+	// ErrBundleNotFound is retained for current callers and is identical to the
+	// canonical diagnostic-report storage sentinel.
+	ErrBundleNotFound = ErrDiagnosticReportNotFound
 )
 
 type InvalidDiagnosticReportIDError struct{ DiagnosticReportID string }
@@ -23,7 +25,7 @@ type BundleNotFoundError struct{ DiagnosticReportID string }
 func (e *BundleNotFoundError) Error() string {
 	return "diagnostics: stored bundle not found " + e.DiagnosticReportID
 }
-func (*BundleNotFoundError) Unwrap() error   { return ErrBundleNotFound }
+func (*BundleNotFoundError) Unwrap() error { return ErrDiagnosticReportNotFound }
 
 type Service struct {
 	Builder Builder
