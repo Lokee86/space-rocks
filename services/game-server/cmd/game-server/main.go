@@ -39,17 +39,6 @@ func runWithContext(ctx context.Context) int {
 			logging.Server.Error("server structured log file close failed", err)
 		}
 	}()
-	defer func() {
-		if err := closeAggregatorLogging(5 * time.Second); err != nil {
-			logging.Server.Warn("aggregator logging close failed", logging.FieldError, err)
-		}
-	}()
-
-	if enabled, err := configureAggregatorLoggingFromEnv(); err != nil {
-		logging.Server.Warn("aggregator logging configuration invalid; continuing without aggregation", logging.FieldError, err)
-	} else if enabled {
-		logging.Server.Info("aggregator logging enabled")
-	}
 
 	mux := http.NewServeMux()
 	rooms := networking.NewRoomManager()
