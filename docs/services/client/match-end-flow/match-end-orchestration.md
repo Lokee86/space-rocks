@@ -30,6 +30,7 @@ Authoritative room match-over is the room-level end condition for both modes. Si
 
 `MatchEndFlow` does not calculate match winners, scores, deaths, persistence, or room state. Those facts come from server-owned room state and match-result payloads. The client only adapts those facts into presentation-safe UI rows and forwards user intent outward.
 
+
 ## Code root
 
 ```text

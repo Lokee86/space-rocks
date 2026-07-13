@@ -24,6 +24,7 @@ client/scenes/ui/dialogs/game_menu.tscn
 
 `GameplayMenuFlow` reads local session presentation context, configures a `GameMenu` UI instance for the current session state, forwards menu button intent through signals, and sends pause requests when opening or closing a live pause menu.
 
+
 There are two menu mounting paths:
 
 ```text
@@ -181,6 +182,7 @@ GameplayMenuFlow.set_match_over_overlay_enabled(true)
 ```
 
 When enabled, `GameplayMenuFlow` instantiates `game_menu.tscn` under the configured overlay parent and uses that menu as the active menu surface.
+
 
 `GameplayComposition` configures the overlay parent as:
 

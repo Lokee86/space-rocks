@@ -113,6 +113,7 @@ single_player -> replay_requested
 multiplayer   -> return_to_lobby_requested
 ```
 
+
 ### MatchResultWindow
 
 `MatchResultWindow` is the visible result-window UI controller.
