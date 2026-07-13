@@ -9,65 +9,89 @@ import (
 	"testing"
 )
 
-func TestTraceHandlerForwardsUUIDLimitAndRawEvents(t *testing.T) {
-	fake := &fakeEventQuerier{result: Result{Events: []json.RawMessage{json.RawMessage(`{"trace_id":"123e4567-e89b-12d3-a456-426614174000","message":"hello"}`)}, Total: 1}}
-	req := httptest.NewRequest(http.MethodGet, TracesPathPrefix+"123e4567-e89b-12d3-a456-426614174000?limit=5", nil)
-	rec := httptest.NewRecorder()
-	NewTraceHandler(fake).ServeHTTP(rec, req)
+const testTraceID = "123e4567-e89b-12d3-a456-426614174000"
 
-	if rec.Code != http.StatusOK || fake.filter.TraceID != "123e4567-e89b-12d3-a456-426614174000" || fake.filter.Limit != 5 {
-		t.Fatalf("status=%d filter=%+v body=%s", rec.Code, fake.filter, rec.Body.String())
+func TestTraceHandlerForwardsLimitAndRawEvents(t *testing.T) {
+	fake := &fakeEventQuerier{result: Result{
+		Events: []json.RawMessage{json.RawMessage(`{"trace_id":"123e4567-e89b-12d3-a456-426614174000","message":"hello"}`)},
+		Total:  1,
+	}}
+	rec := httptest.NewRecorder()
+	NewTraceHandler(fake).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, TracesPathPrefix+testTraceID+"?limit=5", nil))
+	if rec.Code != http.StatusOK || fake.calls != 1 || fake.filter.TraceID != testTraceID || fake.filter.Limit != 5 {
+		t.Fatalf("status=%d calls=%d filter=%+v", rec.Code, fake.calls, fake.filter)
 	}
 	var response EventsResponse
 	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil || len(response.Events) != 1 || string(response.Events[0]) != `{"trace_id":"123e4567-e89b-12d3-a456-426614174000","message":"hello"}` {
-		t.Fatalf("response=%s err=%v", rec.Body.String(), err)
+		t.Fatalf("response=%s", rec.Body.String())
 	}
 }
 
-func TestTraceHandlerRejectsInvalidIDsPathsAndFilters(t *testing.T) {
-	for _, path := range []string{
-		"/v1/traces/123e4567-e89b-12d3-a456-426614174000/extra",
-		"/v1/traces/123e4567-e89b-12d3-a456-426614174000/",
-	} {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
+func TestTraceHandlerDefaultAndConfiguredLimits(t *testing.T) {
+	fake := &fakeEventQuerier{}
+	NewTraceHandler(fake).ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, TracesPathPrefix+testTraceID, nil))
+	if fake.filter.Limit != 100 {
+		t.Fatalf("default limit=%d", fake.filter.Limit)
+	}
+	fake = &fakeEventQuerier{}
+	rec := httptest.NewRecorder()
+	NewTraceHandlerWithPolicy(fake, LimitPolicy{Default: 2, Maximum: 3}).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, TracesPathPrefix+testTraceID, nil))
+	if rec.Code != http.StatusOK || fake.filter.Limit != 2 {
+		t.Fatalf("status=%d limit=%d", rec.Code, fake.filter.Limit)
+	}
+	fake = &fakeEventQuerier{}
+	rec = httptest.NewRecorder()
+	NewTraceHandlerWithPolicy(fake, LimitPolicy{Default: 2, Maximum: 3}).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, TracesPathPrefix+testTraceID+"?limit=3", nil))
+	if rec.Code != http.StatusOK || fake.filter.Limit != 3 {
+		t.Fatalf("status=%d limit=%d", rec.Code, fake.filter.Limit)
+	}
+}
+
+func TestTraceHandlerRejectsInvalidRequestsWithoutQuerying(t *testing.T) {
+	for _, query := range []string{"?limit=4", "?limit=1&limit=2", "?limit=nope", "?limit=0", "?limit=-1", "?unknown=x"} {
+		fake := &fakeEventQuerier{}
 		rec := httptest.NewRecorder()
-		NewTraceHandler(&fakeEventQuerier{}).ServeHTTP(rec, req)
-		if rec.Code != http.StatusNotFound {
-			t.Fatalf("path=%s status=%d", path, rec.Code)
+		NewTraceHandlerWithPolicy(fake, LimitPolicy{Default: 2, Maximum: 3}).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, TracesPathPrefix+testTraceID+query, nil))
+		if rec.Code != http.StatusBadRequest || fake.calls != 0 {
+			t.Fatalf("query=%s status=%d calls=%d", query, rec.Code, fake.calls)
 		}
 	}
-	for _, traceID := range []string{"not-a-uuid", "123e4567-e89b-12d3-a456-42661417400"} {
-		req := httptest.NewRequest(http.MethodGet, TracesPathPrefix+traceID, nil)
+	for _, id := range []string{"not-a-uuid", "123E4567-e89b-12d3-a456-426614174000"} {
+		fake := &fakeEventQuerier{}
 		rec := httptest.NewRecorder()
-		NewTraceHandler(&fakeEventQuerier{}).ServeHTTP(rec, req)
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("trace_id=%s status=%d", traceID, rec.Code)
+		NewTraceHandler(fake).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, TracesPathPrefix+id, nil))
+		if rec.Code != http.StatusBadRequest || fake.calls != 0 {
+			t.Fatalf("id=%s status=%d calls=%d", id, rec.Code, fake.calls)
 		}
 	}
-	for _, query := range []string{"?unknown=x", "?limit=1&limit=2", "?limit=0", "?limit=nope"} {
-		req := httptest.NewRequest(http.MethodGet, TracesPathPrefix+"123e4567-e89b-12d3-a456-426614174000"+query, nil)
+}
+
+func TestTraceHandlerRejectsInvalidPathsWithoutQuerying(t *testing.T) {
+	for _, path := range []string{TracesPathPrefix + testTraceID + "/extra", TracesPathPrefix + testTraceID + "/"} {
+		fake := &fakeEventQuerier{}
 		rec := httptest.NewRecorder()
-		NewTraceHandler(&fakeEventQuerier{}).ServeHTTP(rec, req)
-		if rec.Code != http.StatusBadRequest {
-			t.Fatalf("query=%s status=%d body=%s", query, rec.Code, rec.Body.String())
+		NewTraceHandler(fake).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if rec.Code != http.StatusNotFound || fake.calls != 0 {
+			t.Fatalf("path=%s status=%d calls=%d", path, rec.Code, fake.calls)
 		}
 	}
 }
 
 func TestTraceHandlerMethodRejection(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, TracesPathPrefix+"123e4567-e89b-12d3-a456-426614174000", nil)
-	rec := httptest.NewRecorder()
-	NewTraceHandler(&fakeEventQuerier{}).ServeHTTP(rec, req)
-	if rec.Code != http.StatusMethodNotAllowed || rec.Header().Get("Allow") != http.MethodGet {
-		t.Fatalf("status=%d allow=%q", rec.Code, rec.Header().Get("Allow"))
+	for _, traceID := range []string{testTraceID, "not-a-uuid"} {
+		fake := &fakeEventQuerier{}
+		rec := httptest.NewRecorder()
+		NewTraceHandler(fake).ServeHTTP(rec, httptest.NewRequest(http.MethodPost, TracesPathPrefix+traceID, nil))
+		if rec.Code != http.StatusMethodNotAllowed || rec.Header().Get("Allow") != http.MethodGet || fake.calls != 0 {
+			t.Fatalf("trace_id=%s status=%d calls=%d", traceID, rec.Code, fake.calls)
+		}
 	}
 }
 
 func TestTraceHandlerServiceFailureIsSanitized(t *testing.T) {
 	fake := &fakeEventQuerier{err: errors.New("secret storage details")}
-	req := httptest.NewRequest(http.MethodGet, TracesPathPrefix+"123e4567-e89b-12d3-a456-426614174000", nil)
 	rec := httptest.NewRecorder()
-	NewTraceHandler(fake).ServeHTTP(rec, req)
+	NewTraceHandler(fake).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, TracesPathPrefix+testTraceID, nil))
 	if rec.Code != http.StatusServiceUnavailable || strings.Contains(rec.Body.String(), "secret") {
 		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
 	}
