@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/storage"
 )
 
@@ -20,33 +21,35 @@ type storageStatus struct {
 }
 
 type statusResponse struct {
+	Service  string        `json:"service"`
 	Snapshot Snapshot      `json:"snapshot"`
 	Storage  storageStatus `json:"storage"`
 }
 
 type healthResponse struct {
-	Status string `json:"status"`
+	Service string `json:"service"`
+	Status  string `json:"status"`
 }
 
 func NewHandler(state *State, store StoreStatusReader) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/live", method(http.MethodGet, func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, healthResponse{Status: "live"})
+		writeJSON(w, http.StatusOK, healthResponse{Service: serviceidentity.ServiceName, Status: "live"})
 	}))
 	mux.HandleFunc("/ready", method(http.MethodGet, func(w http.ResponseWriter, r *http.Request) {
 		if state == nil || store == nil || !state.Snapshot().Ready {
-			writeJSON(w, http.StatusServiceUnavailable, healthResponse{Status: "not_ready"})
+			writeJSON(w, http.StatusServiceUnavailable, healthResponse{Service: serviceidentity.ServiceName, Status: "not_ready"})
 			return
 		}
 		status, err := store.Status(r.Context())
 		if err != nil || !status.Ready {
-			writeJSON(w, http.StatusServiceUnavailable, healthResponse{Status: "not_ready"})
+			writeJSON(w, http.StatusServiceUnavailable, healthResponse{Service: serviceidentity.ServiceName, Status: "not_ready"})
 			return
 		}
-		writeJSON(w, http.StatusOK, healthResponse{Status: "ready"})
+		writeJSON(w, http.StatusOK, healthResponse{Service: serviceidentity.ServiceName, Status: "ready"})
 	}))
 	mux.HandleFunc("/status", method(http.MethodGet, func(w http.ResponseWriter, r *http.Request) {
-		response := statusResponse{}
+		response := statusResponse{Service: serviceidentity.ServiceName}
 		if state != nil {
 			response.Snapshot = state.Snapshot()
 		}

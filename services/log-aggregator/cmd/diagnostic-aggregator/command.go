@@ -8,6 +8,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/config"
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/logging"
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 )
 
 const (
@@ -59,16 +60,16 @@ func run(ctx context.Context, stderr io.Writer, loadConfig ConfigLoader, openSer
 		return exitConfig
 	}
 	if degraded {
-		logger.Warn("log aggregator environment degraded", "event", "environment_degraded", "error_code", "service_log_file_unavailable")
+		logger.Warn("diagnostic aggregator environment degraded", "event", "environment_degraded", "error_code", "service_log_file_unavailable")
 	}
 	if buildApp == nil {
-		logger.Error("log aggregator startup failed", "event", "service_startup_failed", "error_code", "runtime_build_failed")
+		logger.Error("diagnostic aggregator startup failed", "event", "service_startup_failed", "error_code", "runtime_build_failed")
 		_ = closeServiceLog(stderr, serviceLog)
 		return exitFailure
 	}
 	app, err := buildApp(cfg, logger)
 	if err != nil {
-		logger.Error("log aggregator startup failed", "event", "service_startup_failed", "error_code", "runtime_build_failed")
+		logger.Error("diagnostic aggregator startup failed", "event", "service_startup_failed", "error_code", "runtime_build_failed")
 		_ = closeServiceLog(stderr, serviceLog)
 		return exitFailure
 	}
@@ -95,5 +96,5 @@ func bootstrapError(stderr io.Writer, code, message string) {
 	if stderr == nil {
 		stderr = io.Discard
 	}
-	_ = json.NewEncoder(stderr).Encode(map[string]string{"event": "service_startup_failed", "service": "log-aggregator", "error_code": code, "message": message})
+	_ = json.NewEncoder(stderr).Encode(map[string]string{"event": "service_startup_failed", "service": serviceidentity.ServiceName, "error_code": code, "message": message})
 }

@@ -30,11 +30,11 @@ func TestLoadWithDefaultsAndInjectedUUID(t *testing.T) {
 
 func TestLoadWithOverridesReadHeaderTimeout(t *testing.T) {
 	cfg, err := LoadWith(mapEnv(map[string]string{
-		"LOG_AGGREGATOR_LISTEN_ADDRESS":      "0.0.0.0:9090",
-		"LOG_AGGREGATOR_READ_HEADER_TIMEOUT": "2s",
-		"LOG_AGGREGATOR_READ_TIMEOUT":        "3s",
-		"LOG_AGGREGATOR_FILE_LOGGING":        "false",
-		"LOG_AGGREGATOR_LOG_LEVEL":           "WARN",
+		"DIAGNOSTIC_AGGREGATOR_LISTEN_ADDRESS":      "0.0.0.0:9090",
+		"DIAGNOSTIC_AGGREGATOR_READ_HEADER_TIMEOUT": "2s",
+		"DIAGNOSTIC_AGGREGATOR_READ_TIMEOUT":        "3s",
+		"DIAGNOSTIC_AGGREGATOR_FILE_LOGGING":        "false",
+		"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL":           "WARN",
 	}), fixedUUID)
 	if err != nil {
 		t.Fatal(err)
@@ -46,10 +46,10 @@ func TestLoadWithOverridesReadHeaderTimeout(t *testing.T) {
 
 func TestLoadWithRejectsInvalidValues(t *testing.T) {
 	cases := []struct{ key, value, want string }{
-		{"LOG_AGGREGATOR_LISTEN_ADDRESS", "localhost", "listen address"},
-		{"LOG_AGGREGATOR_READ_HEADER_TIMEOUT", "nope", "positive duration"},
-		{"LOG_AGGREGATOR_LOG_LEVEL", "trace", "invalid log level"},
-		{"LOG_AGGREGATOR_SERVICE_INSTANCE_ID", "not-a-uuid", "valid UUID"},
+		{"DIAGNOSTIC_AGGREGATOR_LISTEN_ADDRESS", "localhost", "listen address"},
+		{"DIAGNOSTIC_AGGREGATOR_READ_HEADER_TIMEOUT", "nope", "positive duration"},
+		{"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL", "trace", "invalid log level"},
+		{"DIAGNOSTIC_AGGREGATOR_SERVICE_INSTANCE_ID", "not-a-uuid", "valid UUID"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.key, func(t *testing.T) {
@@ -58,6 +58,25 @@ func TestLoadWithRejectsInvalidValues(t *testing.T) {
 				t.Fatalf("error = %v, want %q", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestLoadWithNewPrefixTakesPrecedenceOverLegacy(t *testing.T) {
+	cfg, err := LoadWith(mapEnv(map[string]string{
+		"DIAGNOSTIC_AGGREGATOR_LOG_LEVEL": "debug",
+		"LOG_AGGREGATOR_LOG_LEVEL":        "error",
+	}), fixedUUID)
+	if err != nil || cfg.LogLevel != "debug" {
+		t.Fatalf("config = %+v, error = %v", cfg, err)
+	}
+}
+
+func TestLoadWithLegacyPrefixFallback(t *testing.T) {
+	cfg, err := LoadWith(mapEnv(map[string]string{
+		"LOG_AGGREGATOR_LOG_LEVEL": "warn",
+	}), fixedUUID)
+	if err != nil || cfg.LogLevel != "warn" {
+		t.Fatalf("config = %+v, error = %v", cfg, err)
 	}
 }
 

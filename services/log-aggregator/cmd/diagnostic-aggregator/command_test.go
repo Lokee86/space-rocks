@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/config"
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 )
 
 type testApp struct{ err error }
@@ -41,7 +42,7 @@ func TestRunConfigurationFailure(t *testing.T) {
 	if err := json.Unmarshal(stderr.Bytes(), &record); err != nil {
 		t.Fatal(err)
 	}
-	if record["event"] != "service_startup_failed" || record["service"] != "log-aggregator" || record["error_code"] != "configuration_invalid" || strings.Contains(stderr.String(), "secret") {
+	if record["event"] != "service_startup_failed" || record["service"] != serviceidentity.ServiceName || record["error_code"] != "configuration_invalid" || strings.Contains(stderr.String(), "secret") {
 		t.Fatalf("unexpected bootstrap record: %s", stderr.String())
 	}
 }

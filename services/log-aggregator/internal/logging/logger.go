@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/config"
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 )
 
 func New(cfg config.Config, consoleWriter, fileWriter io.Writer) (*slog.Logger, error) {
@@ -37,7 +38,7 @@ func New(cfg config.Config, consoleWriter, fileWriter io.Writer) (*slog.Logger, 
 	default:
 		handler = newFanout(handlers...)
 	}
-	return slog.New(handler).With("service", "log-aggregator", "service_instance_id", cfg.ServiceInstanceID, "environment", cfg.Environment, "build_version", cfg.BuildVersion), nil
+	return slog.New(handler).With("service", serviceidentity.ServiceName, "service_instance_id", cfg.ServiceInstanceID, "environment", cfg.Environment, "build_version", cfg.BuildVersion), nil
 }
 
 func NewLogger(cfg config.Config, consoleWriter, fileWriter io.Writer) (*slog.Logger, error) {
