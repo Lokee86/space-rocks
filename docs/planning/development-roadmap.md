@@ -44,18 +44,13 @@ public website surfaces
 
 ## Top Priorities
 
-The top priority systems are:
+Current technical sequencing is:
 
 ```text
-network observability and packet budget
-realtime protocol architecture
-```
-
-Recommended order:
-
-```text
-1. Network observability and packet budget.
-2. Realtime protocol architecture.
+P1 initial measurement checkpoint complete.
+P2 active protocol baseline established; remaining advanced work is evidence-driven.
+P3A automated verification baseline implemented.
+P3B observability contracts plus minimal product log aggregation are the next major block.
 ```
 
 Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
@@ -270,6 +265,17 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
+### Ordered Subphases
+
+```text
+P3A. Verification and architecture gates.
+P3B. Observability contracts and log aggregation.
+P3C. Runtime measurement and operational readiness.
+P3D. Build, release, environment, and compatibility gates.
+```
+
+P3A is the implemented automated verification baseline. P3B is the next major block; P3C and P3D follow in order as evidence and release needs justify them.
+
 ### Scope
 
 ```text
@@ -284,13 +290,13 @@ observability, logging, and diagnostics
 ### Priority Order
 
 ```text
-1. Verification and quality gates.
-2. Build/release/environment matrix.
-3. Compatibility, versioning, and migrations.
-4. Operational readiness and failure modes.
-5. Runtime performance and scale budget.
-6. Logging and diagnostics hardening.
+1. P3A verification and architecture gates.
+2. P3B observability contracts and log aggregation.
+3. P3C runtime measurement and operational readiness.
+4. P3D build/release/environment/compatibility gates.
 ```
+
+P3B includes the observability SSoT, canonical envelope, minimal aggregator service, cross-service correlation, service integration, diagnostic bundles, redaction, bounded non-blocking delivery, the durable storage boundary, health/readiness, and release verification. Aggregator failure must degrade diagnostics rather than gameplay. Production-scale dashboards, alerting, OpenTelemetry-style tracing, and long-term hosted retention remain deferred.
 
 ### Completion Criteria
 
@@ -299,9 +305,16 @@ local development sanity gate exists
 documentation and contract gate exists
 local packaged single-player beta gate exists
 dev-hosted multiplayer gate exists
-hosted staging gate is defined
+hosted staging gate requires validated central log aggregation
 production candidate blockers are explicit
 runtime-heavy features require measurement before release-shaped expansion
+shared observability contract and canonical envelope exist
+minimal aggregator accepts and validates batched events
+correlation survives the client/game-server/API/player-data chain
+unsafe fields are rejected or redacted
+aggregator outage does not block gameplay
+diagnostic bundles can reconstruct a correlated failure chain
+delivery drop/reject/redaction accounting is visible
 ```
 
 ## Phase P4 - Player Experience Foundation

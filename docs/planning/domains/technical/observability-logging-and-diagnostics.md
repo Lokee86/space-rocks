@@ -71,7 +71,7 @@ The client has a GDScript logging helper with levels, categories, helper methods
 * `input`
 * `packets`
 
-Current client and server JSONL outputs are local diagnostic capture, not product log aggregation transport. Product log aggregation remains future work. Default logging stays quiet, and successful gameplay packet-write diagnostics are current debug or category-gated output rather than normal default logging. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
+Current client and server JSONL outputs are local diagnostic capture, not product log aggregation transport. A minimal product log aggregation service is immediate technical-release foundation work. Default logging stays quiet, and successful gameplay packet-write diagnostics are current debug or category-gated output rather than normal default logging. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
 
 ## Product Observability Model
 
@@ -85,7 +85,7 @@ Space Rocks should use one product-wide observability model across:
 * website,
 * devtools/admin tools,
 * future workers or jobs,
-* future product log aggregation service.
+* product log aggregation service.
 
 The model is:
 
@@ -99,9 +99,11 @@ Logging is observational. Logs, metrics, telemetry, diagnostics, and aggregation
 
 ## Product Log Aggregation Service
 
-Space Rocks should plan a future product log aggregation service.
+The minimal product log aggregation service is immediate technical-release work, not generic future work. Its initial owner is `services/log-aggregator/`.
 
 The log aggregation service should collect, normalize, group, search, and retain product events from all services.
+
+The initial service should provide HTTP batch ingestion, validation and redaction, correlation-preserving durable storage, search/filtering, diagnostic bundle generation, health/readiness endpoints, and rejected, dropped, and redacted event counters. It should establish the durable storage boundary without committing the product to production-scale hosted retention.
 
 It should support:
 
@@ -120,6 +122,12 @@ Error aggregation is a use case of log aggregation. A separate error aggregation
 Audit-grade records are also handled by the log aggregation system when triggered by audit-worthy events. A separate audit aggregation service is not required.
 
 Aggregator failure must not break gameplay. It should degrade diagnostics and reporting. For audit-grade events, failed submission should use pending/retry where practical.
+
+### Delivery Expectations
+
+Service integrations must use bounded queues, small batches, short timeouts, background flushing, and local spool/drop accounting. No simulation-critical path may make a synchronous call to the aggregator. Delivery failure is observable and counted, but must remain non-blocking and must degrade diagnostics rather than gameplay.
+
+The immediate release baseline includes the service contract, integration of the relevant product services, release verification, and diagnostic bundle behavior. Production-scale dashboards, alerting, OpenTelemetry-style tracing, and long-term hosted retention remain deferred.
 
 ## Local Single-Player Diagnostics
 
@@ -933,7 +941,7 @@ Logs should capture meaningful events, failures, summaries, and thresholds. Metr
 | Local Development      | Local logs; shared fields where practical.                                                                                         |
 | Local Packaged Beta    | Client plus bundled-server diagnostics; copy diagnostics.                                                                          |
 | Dev-Hosted Multiplayer | Cross-service logs manually reconcilable by shared IDs.                                                                            |
-| Hosted Staging         | Central aggregation should exist or be scaffolded enough to validate grouping.                                                     |
+| Hosted Staging         | Central aggregation is required and must be validated for ingestion, grouping, correlation, and failure degradation.             |
 | Hosted Production      | Aggregated logs support incident diagnosis, bug reports, admin review, audit-grade records, recovery, and release-readiness gates. |
 
 ## Verification Expectations
@@ -952,12 +960,12 @@ Release-shaped builds should verify that:
 
 ## Implementation sequence
 
-1. Keep the existing client structured logging helper, level controls, category controls, and optional JSONL diagnostic file output aligned with the shared observability model.
-2. Define the product observability source of truth and its generated consumers.
-3. Keep the client helper foundation current while product observability SSoT, generated observability constants, aggregation schemas, durable log aggregation, copy diagnostics bundles, audit-grade promotion, and release-shaped gates remain future work.
-4. Make local packaged single-player participate in local diagnostic aggregation.
-5. Keep bug reports and copy diagnostics attached to the aggregated event stream when possible.
-6. Preserve redaction, audit-trigger, and retention rules before broadening incident tooling.
+1. Define the product observability SSoT and generated consumers.
+2. Build the minimal `services/log-aggregator/` service with batched ingestion, validation, correlation-preserving durable storage, search, bundles, and health/readiness.
+3. Add non-blocking service integrations and preserve correlation across the client/game-server/API/player-data chain.
+4. Make local packaged single-player participate in local aggregation and diagnostic bundle generation.
+5. Verify release contracts, redaction, accounting, outage degradation, and central aggregation in hosted staging.
+6. Expand audit-grade handling and production-scale incident tooling later.
 7. Leave service-specific logging implementation in the owning service docs.
 
 ## Related docs
