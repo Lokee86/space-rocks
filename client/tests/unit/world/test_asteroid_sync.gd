@@ -2,6 +2,14 @@ extends GutTest
 
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const AsteroidSync := preload("res://scripts/world/asteroid_sync.gd")
+const AsteroidPresentation := preload("res://scripts/entities/asteroid.gd")
+const AsteroidScene := preload("res://scenes/asteroid.tscn")
+
+func test_asteroid_scene_root_satisfies_asteroid_presentation_contract() -> void:
+	var node := AsteroidScene.instantiate()
+	add_child_autofree(node)
+	assert_true(node is Node2D)
+	assert_true(node is AsteroidPresentation)
 
 func test_unknown_hot_asteroid_update_does_not_create_node() -> void:
 	var asteroid_sync := _new_asteroid_sync()

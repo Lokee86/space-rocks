@@ -53,11 +53,11 @@ class FakeDeathFlow:
 
 class FakeMatchEndFlow:
 	var local_player_eliminated_call_count := 0
-	var last_event: Dictionary = {}
+	var received_lives := -1
 
-	func handle_local_player_eliminated(event: Dictionary) -> void:
+	func handle_local_player_eliminated(lives: int) -> void:
 		local_player_eliminated_call_count += 1
-		last_event = event
+		received_lives = lives
 
 
 class FakeHudFlow:
@@ -204,7 +204,7 @@ func test_apply_self_death_event_final_death_uses_game_end_handoff() -> void:
 
 	assert_eq(hud_flow.last_lives, 0)
 	assert_eq(match_end_flow.local_player_eliminated_call_count, 1)
-	assert_eq(match_end_flow.last_event["lives"], 0)
+	assert_eq(match_end_flow.received_lives, 0)
 
 
 func test_apply_self_death_event_non_final_death_uses_dead_presentation() -> void:

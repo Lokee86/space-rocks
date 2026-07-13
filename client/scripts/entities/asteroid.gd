@@ -1,4 +1,5 @@
 extends CharacterBody2D
+class_name AsteroidPresentation
 
 const AsteroidVariantsScript = preload("res://scripts/generated/asteroids/asteroid_variants.gd")
 

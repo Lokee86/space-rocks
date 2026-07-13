@@ -1,6 +1,7 @@
 extends GutTest
 
 const PickupSync := preload("res://scripts/world/pickup_sync.gd")
+const PickupPresentation := preload("res://scripts/entities/pickup.gd")
 
 
 class FakePickupNode:
@@ -78,6 +79,7 @@ func test_powerup_pickup_class_creates_powerup_pickup_scene() -> void:
 	var pickup_node: Node = pickup_sync.pickup_nodes.get("pickup-1")
 	assert_not_null(pickup_node)
 	assert_true(pickup_node is Node2D)
+	assert_true(pickup_node is PickupPresentation)
 
 	var badge: Node = pickup_node.get_node_or_null("Badge")
 	assert_not_null(badge)
@@ -109,6 +111,7 @@ func test_weapon_pickup_class_creates_weapon_pickup_scene() -> void:
 	var pickup_node: Node = pickup_sync.pickup_nodes.get("pickup-2")
 	assert_not_null(pickup_node)
 	assert_true(pickup_node is Node2D)
+	assert_true(pickup_node is PickupPresentation)
 
 	var badge: Node = pickup_node.get_node_or_null("Badge")
 	assert_not_null(badge)

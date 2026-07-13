@@ -5,6 +5,8 @@ const AsteroidSyncState = preload("res://scripts/world/asteroid_sync_state.gd")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
+const AsteroidPresentation = preload("res://scripts/entities/asteroid.gd")
+const ClientLogger = preload("res://scripts/logging/logger.gd")
 const DELETED_ASTEROID_ID_CAP := 2048
 
 var asteroids_layer: Node2D
@@ -26,7 +28,8 @@ func configure(layer: Node2D) -> void:
 
 func reset() -> void:
 	for asteroid_id in asteroid_nodes.keys():
-		asteroid_nodes[asteroid_id].queue_free()
+		var asteroid_node: AsteroidPresentation = asteroid_nodes[asteroid_id]
+		asteroid_node.queue_free()
 
 	asteroid_nodes.clear()
 	initialized_asteroids.clear()
@@ -40,18 +43,40 @@ func reset() -> void:
 	_deleted_asteroid_id_order.clear()
 
 
-func get_asteroid_node(asteroid_id: String):
+func _contract_violation(asteroid_node: Node) -> void:
+	var actual_script: Script = asteroid_node.get_script()
+	var actual_script_path := ""
+	if actual_script is Script:
+		actual_script_path = actual_script.resource_path
+	ClientLogger.event(
+		ClientLogger.CATEGORY_WORLD_SYNC,
+		ClientLogger.LEVEL_ERROR,
+		"asteroid_presentation_contract_violation",
+		"Asteroid scene root does not satisfy its presentation contract",
+		{
+			"actual_class": asteroid_node.get_class(),
+			"actual_script": actual_script_path,
+		}
+	)
+
+
+func get_asteroid_node(asteroid_id: String) -> AsteroidPresentation:
 	if asteroid_nodes.has(asteroid_id):
 		return asteroid_nodes[asteroid_id]
 
-	var asteroid_node = ASTEROID_SCENE.instantiate()
+	var scene_root: Node = ASTEROID_SCENE.instantiate()
+	var asteroid_node := scene_root as AsteroidPresentation
+	if asteroid_node == null:
+		_contract_violation(scene_root)
+		scene_root.queue_free()
+		return null
 	asteroids_layer.add_child(asteroid_node)
 	asteroid_nodes[asteroid_id] = asteroid_node
 
 	return asteroid_node
 
 
-func apply_asteroid_scale(asteroid_id: String, asteroid_node: Node2D, state: Dictionary) -> void:
+func apply_asteroid_scale(asteroid_id: String, asteroid_node: AsteroidPresentation, state: Dictionary) -> void:
 	if state.has(Packets.FIELD_SCALE):
 		asteroid_node.scale = Vector2.ONE * float(state[Packets.FIELD_SCALE])
 		return
@@ -78,7 +103,9 @@ func apply_asteroid(
 	if !create_if_missing and !asteroid_nodes.has(asteroid_id):
 		return
 
-	var asteroid_node = get_asteroid_node(asteroid_id)
+	var asteroid_node: AsteroidPresentation = get_asteroid_node(asteroid_id)
+	if asteroid_node == null:
+		return
 	var raw_server_position := AsteroidSyncState.server_position(state)
 	var visual_position: Vector2
 
@@ -132,7 +159,8 @@ func remove_asteroid(asteroid_id: String) -> void:
 	if !asteroid_nodes.has(asteroid_id):
 		return
 
-	asteroid_nodes[asteroid_id].queue_free()
+	var asteroid_node: AsteroidPresentation = asteroid_nodes[asteroid_id]
+	asteroid_node.queue_free()
 	asteroid_nodes.erase(asteroid_id)
 	warned_missing_asteroid_scale.erase(asteroid_id)
 	warned_missing_asteroid_variant.erase(asteroid_id)
@@ -166,7 +194,7 @@ func interpolate(weight: float) -> void:
 		if !target_asteroid_positions.has(asteroid_id):
 			continue
 
-		var asteroid_node = asteroid_nodes[asteroid_id]
+		var asteroid_node: AsteroidPresentation = asteroid_nodes[asteroid_id]
 		asteroid_node.global_position = asteroid_node.global_position.lerp(
 			target_asteroid_positions[asteroid_id],
 			weight
@@ -178,7 +206,7 @@ func asteroid_target_positions() -> Dictionary:
 	for asteroid_id in asteroid_visual_positions.keys():
 		if not asteroid_server_positions.has(asteroid_id):
 			continue
-		var asteroid_node = asteroid_nodes.get(asteroid_id, null)
+		var asteroid_node: AsteroidPresentation = asteroid_nodes.get(asteroid_id, null)
 		var visual_scale := 1.0
 		if asteroid_node != null:
 			visual_scale = float(asteroid_node.scale.x)

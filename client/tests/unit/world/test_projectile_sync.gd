@@ -2,6 +2,23 @@ extends GutTest
 
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ProjectileSync := preload("res://scripts/world/projectile_sync.gd")
+const BulletPresentation := preload("res://scripts/entities/bullet.gd")
+const TorpedoPresentation := preload("res://scripts/entities/torpedo.gd")
+const BulletScene := preload("res://scenes/bullet.tscn")
+const TorpedoScene := preload("res://scenes/projectiles/torpedo.tscn")
+
+func test_bullet_scene_root_satisfies_bullet_presentation_contract() -> void:
+	var node := BulletScene.instantiate()
+	add_child_autofree(node)
+	assert_true(node is Node2D)
+	assert_true(node is BulletPresentation)
+
+
+func test_torpedo_scene_root_satisfies_torpedo_presentation_contract() -> void:
+	var node := TorpedoScene.instantiate()
+	add_child_autofree(node)
+	assert_true(node is Node2D)
+	assert_true(node is TorpedoPresentation)
 
 func test_remove_projectile_returns_node_to_pool() -> void:
 	var projectile_sync := _new_projectile_sync()
@@ -103,6 +120,9 @@ func test_apply_projectile_reuses_pooled_node() -> void:
 	)
 
 	var old_node = projectile_sync.projectile_nodes["bullet-1"]
+	old_node.modulate = Color(0.25, 0.5, 0.75, 0.9)
+	old_node.rotation = 1.25
+	old_node.scale = Vector2(2.0, 3.0)
 	projectile_sync.remove_projectile("bullet-1")
 
 	projectile_sync.apply_projectile(
@@ -110,7 +130,7 @@ func test_apply_projectile_reuses_pooled_node() -> void:
 		{
 			Packets.FIELD_X: 30.0,
 			Packets.FIELD_Y: 40.0,
-			Packets.FIELD_ROTATION: 1.0,
+			Packets.FIELD_ROTATION: 0.0,
 			Packets.FIELD_PROJECTILE_TYPE: "bullet",
 		},
 		Vector2.ZERO,
@@ -120,6 +140,9 @@ func test_apply_projectile_reuses_pooled_node() -> void:
 	var new_node = projectile_sync.projectile_nodes["bullet-2"]
 
 	assert_eq(new_node, old_node)
+	assert_eq(new_node.modulate, Color.WHITE)
+	assert_eq(new_node.rotation, 0.0)
+	assert_eq(new_node.scale, Vector2.ONE)
 	assert_eq(projectile_sync.pool_size(), 0)
 	assert_true(new_node.visible)
 	assert_false(projectile_sync.projectile_nodes.has("bullet-1"))
@@ -145,7 +168,7 @@ func test_projectile_pool_metrics_track_create_release_reuse() -> void:
 		{
 			Packets.FIELD_X: 30.0,
 			Packets.FIELD_Y: 40.0,
-			Packets.FIELD_ROTATION: 1.0,
+			Packets.FIELD_ROTATION: 0.0,
 			Packets.FIELD_PROJECTILE_TYPE: "bullet",
 		},
 		Vector2.ZERO,
@@ -184,7 +207,7 @@ func test_torpedo_does_not_reuse_bullet_pool_node() -> void:
 		{
 			Packets.FIELD_X: 30.0,
 			Packets.FIELD_Y: 40.0,
-			Packets.FIELD_ROTATION: 1.0,
+			Packets.FIELD_ROTATION: 0.0,
 			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
 		},
 		Vector2.ZERO,
@@ -244,7 +267,7 @@ func test_torpedo_reuses_torpedo_pool_node() -> void:
 		{
 			Packets.FIELD_X: 30.0,
 			Packets.FIELD_Y: 40.0,
-			Packets.FIELD_ROTATION: 1.0,
+			Packets.FIELD_ROTATION: 0.0,
 			Packets.FIELD_PROJECTILE_TYPE: "torpedo",
 		},
 		Vector2.ZERO,

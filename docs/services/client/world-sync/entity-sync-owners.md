@@ -34,6 +34,19 @@ They share the same general pattern:
 
 They do not decide whether an entity should exist. They render the server state they are given.
 
+## Concrete presentation contracts
+
+Each entity scene has a concrete presentation root contract:
+
+```text
+bullet  -> BulletPresentation
+torpedo -> TorpedoPresentation
+asteroid -> AsteroidPresentation
+pickup  -> PickupPresentation
+```
+
+The corresponding sync owner casts each instantiated scene root immediately. Invalid roots are rejected before they are added to the presentation layer or stored in an owner dictionary. Contract violations emit a structured `world_sync` error event named `*_presentation_contract_violation`, including the relevant entity type or class and available actual class/script information.
+
 ## Code root
 
 * `client/`
@@ -50,7 +63,7 @@ They do not decide whether an entity should exist. They render the server state 
 * Apply asteroid scale and variant presentation from server state.
 * Select pickup presentation scenes by pickup class.
 * Apply pickup type presentation to pickup nodes.
-* Forward pickup lifespan state to pickup presentation nodes when supported.
+* Forward pickup lifespan state to `PickupPresentation` nodes.
 * Apply z-index and presentation-layer constants to rendered entities.
 * Keep entity-family rendering concerns split by projectile, asteroid, and pickup ownership.
 
@@ -80,6 +93,8 @@ It creates projectile nodes, chooses projectile scenes through `ProjectileSceneR
 
 Fresh projectile nodes resolve their scene from the server `projectile_type`, so torpedo projectiles use the torpedo scene even when the torpedo pool is empty. Projectile sync renders server state only and does not own projectile authority.
 
+Projectile nodes implement the explicit `BulletPresentation` or `TorpedoPresentation` contract. `ProjectileSync` maintains separate per-type pools and calls `reset_from_pool()` when a node is acquired and `reset_for_pool()` when it is released. The presentation reset methods return pooled nodes to an inactive/hidden state; `ProjectileSync` activates them when applying a newly acquired projectile.
+
 ### Asteroid presentation owner
 
 `AsteroidSync` owns client-side asteroid node presentation.
@@ -92,7 +107,7 @@ Asteroid sync also tracks previous server and visual positions so existing aster
 
 `PickupSync` owns client-side pickup node presentation.
 
-It creates pickup nodes, chooses the scene family through `PickupPresentationCatalog`, applies pickup type presentation, forwards lifespan state where supported by the node, tracks server and visual positions, removes stale nodes, and interpolates nodes across updates.
+It creates pickup nodes, chooses the scene family through `PickupPresentationCatalog`, applies pickup type presentation, forwards lifespan state to `PickupPresentation`, tracks server and visual positions, removes stale nodes, and interpolates nodes across updates.
 
 Pickup sync renders pickup presence and presentation. Pickup gameplay effects remain server-owned.
 
@@ -249,13 +264,13 @@ Current responsibilities include:
 * creating pickup scene nodes
 * selecting pickup scene families by pickup class
 * applying pickup type presentation
-* forwarding lifespan state to pickup nodes when supported
+* forward lifespan state to `PickupPresentation` nodes
 * tracking target visual positions
 * tracking previous server positions
 * tracking previous visual positions
 * removing pickups missing from `world_lane_state.pickups`
 * interpolating pickup nodes
-* playing pickup spawn presentation when applicable
+* playing pickup spawn presentation through `PickupPresentation`
 * exposing pickup positions to target-position read models
 
 Pickup scene-family selection belongs to:
@@ -288,7 +303,10 @@ Pickup sync does not decide what a pickup does when collected. It only presents 
 
 ### Scene and presentation selection
 
-* `client/scripts/entities/bullet.gd`
+* `client/scripts/entities/bullet.gd` (`BulletPresentation`)
+* `client/scripts/entities/torpedo.gd` (`TorpedoPresentation`)
+* `client/scripts/entities/asteroid.gd` (`AsteroidPresentation`)
+* `client/scripts/entities/pickup.gd` (`PickupPresentation`)
 * `client/scripts/world/projectiles/projectile_scene_resolver.gd`
 * `client/scripts/world/pickups/pickup_presentation_catalog.gd`
 

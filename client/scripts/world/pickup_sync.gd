@@ -6,8 +6,9 @@ const PICKUP_CLASS_WEAPON := "weapon"
 
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const PickupPresentation = preload("res://scripts/entities/pickup.gd")
 
-var pickups_layer = null
+var pickups_layer: Node2D
 var audio_flow := GameplayAudioFlow.new()
 var pickup_nodes = {}
 var pickup_types = {}
@@ -24,7 +25,7 @@ func configure(layer: Node2D) -> void:
 
 func reset() -> void:
 	for pickup_id in pickup_nodes.keys():
-		var pickup_node = pickup_nodes[pickup_id]
+		var pickup_node: PickupPresentation = pickup_nodes[pickup_id]
 		if pickup_node != null:
 			if is_instance_valid(pickup_node):
 				pickup_node.queue_free()
@@ -38,8 +39,8 @@ func reset() -> void:
 	pickup_visual_positions.clear()
 
 
-func _scene_for_class(pickup_class: String):
-	var pickup_scene = PickupPresentationCatalog.scene_for_class(pickup_class)
+func _scene_for_class(pickup_class: String) -> PackedScene:
+	var pickup_scene: PackedScene = PickupPresentationCatalog.scene_for_class(pickup_class)
 	if pickup_scene != null:
 		return pickup_scene
 
@@ -53,9 +54,46 @@ func _scene_for_class(pickup_class: String):
 	return null
 
 
-func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: String):
+func _contract_violation(pickup_class: String, pickup_node: Node) -> void:
+	var actual_script: Script = pickup_node.get_script()
+	var actual_script_path := ""
+	if actual_script is Script:
+		actual_script_path = actual_script.resource_path
+	ClientLogger.event(
+		ClientLogger.CATEGORY_WORLD_SYNC,
+		ClientLogger.LEVEL_ERROR,
+		"pickup_presentation_contract_violation",
+		"Pickup scene root does not satisfy its presentation contract",
+		{
+			"pickup_class": pickup_class,
+			"actual_class": pickup_node.get_class(),
+			"actual_script": actual_script_path,
+		}
+	)
+
+
+func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: String) -> PickupPresentation:
 	if pickup_nodes.has(pickup_id):
-		return pickup_nodes[pickup_id]
+		var stored_value: Variant = pickup_nodes[pickup_id]
+		var stored_node := stored_value as Node
+		if stored_node == null:
+			ClientLogger.event(
+				ClientLogger.CATEGORY_WORLD_SYNC,
+				ClientLogger.LEVEL_ERROR,
+				"pickup_presentation_contract_violation",
+				"Stored pickup value is not a presentation node",
+				{
+					"pickup_class": pickup_class,
+					"actual_class": typeof(stored_value),
+					"actual_script": "",
+				}
+			)
+			return null
+		var pickup_node := stored_node as PickupPresentation
+		if pickup_node == null:
+			_contract_violation(pickup_class, stored_node)
+			return null
+		return pickup_node
 
 	if pickups_layer == null:
 		ClientLogger.event(
@@ -70,12 +108,15 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 	if pickup_scene == null:
 		return null
 
-	var pickup_node = pickup_scene.instantiate()
+	var scene_root: Node = pickup_scene.instantiate()
+	var pickup_node := scene_root as PickupPresentation
+	if pickup_node == null:
+		_contract_violation(pickup_class, scene_root)
+		scene_root.queue_free()
+		return null
 	pickups_layer.add_child(pickup_node)
-	if pickup_node.has_method("play_spawn_sound"):
-		pickup_node.play_spawn_sound(audio_flow)
-	if pickup_node.has_method("apply_pickup_presentation"):
-		pickup_node.apply_pickup_presentation(pickup_type)
+	pickup_node.play_spawn_sound(audio_flow)
+	pickup_node.apply_pickup_presentation(pickup_type)
 	pickup_nodes[pickup_id] = pickup_node
 	pickup_types[pickup_id] = pickup_type
 	pickup_classes[pickup_id] = pickup_class
@@ -92,7 +133,7 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 		var resolved_pickup_id = str(pickup_id)
 		var pickup_type = PickupSyncState.pickup_type(state)
 		var pickup_class = PickupSyncState.pickup_class(state)
-		var pickup_node = get_pickup_node(resolved_pickup_id, pickup_type, pickup_class)
+		var pickup_node: PickupPresentation = get_pickup_node(resolved_pickup_id, pickup_type, pickup_class)
 		if pickup_node == null:
 			continue
 
@@ -121,8 +162,7 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 			initialized_pickups[resolved_pickup_id] = true
 			pickup_node.global_position = visual_position
 
-		if pickup_node.has_method("apply_lifespan_state"):
-			pickup_node.apply_lifespan_state(age_seconds, lifespan_seconds)
+		pickup_node.apply_lifespan_state(age_seconds, lifespan_seconds)
 
 
 func remove_missing(server_pickups: Dictionary) -> void:
@@ -133,7 +173,7 @@ func remove_missing(server_pickups: Dictionary) -> void:
 			stale_pickup_ids.append(pickup_id)
 
 	for pickup_id in stale_pickup_ids:
-		var pickup_node = pickup_nodes[pickup_id]
+		var pickup_node: PickupPresentation = pickup_nodes[pickup_id]
 		if pickup_node != null:
 			if is_instance_valid(pickup_node):
 				pickup_node.queue_free()
@@ -169,7 +209,7 @@ func interpolate(weight: float) -> void:
 		if not target_pickup_positions.has(pickup_id):
 			continue
 
-		var pickup_node = pickup_nodes[pickup_id]
+		var pickup_node: PickupPresentation = pickup_nodes[pickup_id]
 		if pickup_node == null:
 			continue
 		if not is_instance_valid(pickup_node):

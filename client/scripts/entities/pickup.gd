@@ -1,4 +1,5 @@
 extends Node2D
+class_name PickupPresentation
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 
@@ -59,12 +60,10 @@ func collision_radius() -> float:
 	return circle_shape.radius
 
 
-func play_spawn_sound(audio_flow) -> void:
+func play_spawn_sound(audio_flow: GameplayAudioFlow) -> void:
 	if audio_flow == null:
 		return
 	if spawn_sound == null:
-		return
-	if !audio_flow.has_method("play_pickup_spawned_sound"):
 		return
 	audio_flow.play_pickup_spawned_sound(spawn_sound)
 

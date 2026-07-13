@@ -1,18 +1,25 @@
 extends GutTest
 
 const PickupPresentationCatalog := preload("res://scripts/world/pickups/pickup_presentation_catalog.gd")
+const PickupPresentation := preload("res://scripts/entities/pickup.gd")
 
 
 func test_scene_for_class_returns_powerup_scene() -> void:
 	var scene: PackedScene = PickupPresentationCatalog.scene_for_class("powerup")
 
 	assert_not_null(scene)
+	var root := scene.instantiate()
+	add_child_autofree(root)
+	assert_true(root is PickupPresentation)
 
 
 func test_scene_for_class_returns_weapon_scene() -> void:
 	var scene: PackedScene = PickupPresentationCatalog.scene_for_class("weapon")
 
 	assert_not_null(scene)
+	var root := scene.instantiate()
+	add_child_autofree(root)
+	assert_true(root is PickupPresentation)
 
 
 func test_scene_for_class_returns_null_for_unknown_class() -> void:

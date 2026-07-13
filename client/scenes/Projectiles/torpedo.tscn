@@ -2,12 +2,14 @@
 
 [ext_resource type="Texture2D" uid="uid://bc2g4l0har0yx" path="res://assets/torpedo.png" id="1_wap2v"]
 [ext_resource type="AudioStream" uid="uid://nn5ir4hjg8ha" path="res://audio/torpedo_launch.ogg" id="2_rlhp3"]
+[ext_resource type="Script" path="res://scripts/entities/torpedo.gd" id="3_torpedo"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lqdwr"]
 radius = 3.8018112
 height = 38.0
 
 [node name="Torpedo" type="Node2D" unique_id=2016467437]
+script = ExtResource("3_torpedo")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1915195623]
 scale = Vector2(0.5, 0.5)

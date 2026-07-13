@@ -92,7 +92,7 @@ powerup -> res://scenes/pickups/powerup_pickup.tscn
 weapon  -> res://scenes/pickups/weapon_pickup.tscn
 ```
 
-The catalog also exposes available pickup types by inspecting `Badge` children in pickup scenes. Devtools uses that list for pickup selection, but devtools spawn authority remains separate.
+The catalog also exposes available pickup types by inspecting `Badge` children in pickup scenes. Before inspecting `Badge`, it validates each catalog scene root as `PickupPresentation`. Invalid roots are freed and reported as structured `world_sync` error events named `pickup_presentation_contract_violation`, with the known `pickup_class` and available actual class/script information. Devtools uses that list for pickup selection, but devtools spawn authority remains separate.
 
 ### Pickup scene node
 
@@ -153,7 +153,7 @@ lifespan_seconds
 
 ### Scene-family selection
 
-`PickupSync` asks `PickupPresentationCatalog.scene_for_class(pickup_class)` for the scene to instantiate.
+`PickupSync` asks `PickupPresentationCatalog.scene_for_class(pickup_class)` for the scene to instantiate, then requires the root to satisfy the concrete `PickupPresentation` contract before adding or storing it.
 
 Unknown pickup classes return `null` and do not create a pickup node.
 
@@ -200,7 +200,7 @@ This is presentation cleanup only. It does not decide whether the pickup was col
 
 ### Lifespan presentation
 
-`PickupSync.apply(...)` forwards pickup age and lifespan to pickup nodes that implement:
+`PickupSync.apply(...)` forwards pickup age and lifespan to `PickupPresentation` through:
 
 ```gdscript
 apply_lifespan_state(age_seconds, lifespan_seconds)
@@ -216,7 +216,7 @@ When remaining lifetime enters the configured end-of-life warning window, the pi
 
 ### Spawn sound
 
-When `PickupSync` creates a pickup node, it calls `play_spawn_sound(audio_flow)` if the node implements that method.
+When `PickupSync` creates a pickup node, it calls the required `PickupPresentation.play_spawn_sound(audio_flow)` operation.
 
 The pickup node then delegates sound playback to `GameplayAudioFlow`.
 
@@ -298,6 +298,8 @@ Current scene roots:
 PowerupPickup
 WeaponPickup
 ```
+
+Both roots use the concrete `PickupPresentation` contract. The contract requires pickup type application, lifespan-state application, and spawn-sound delegation operations in addition to the scene presentation nodes below.
 
 Current pickup scenes:
 

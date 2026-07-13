@@ -5,6 +5,9 @@ const ProjectileSceneResolver = preload("res://scripts/world/projectiles/project
 const ProjectileSyncState = preload("res://scripts/world/projectile_sync_state.gd")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
+const WorldSyncLogger = preload("res://scripts/logging/logger.gd")
+const BulletPresentation = preload("res://scripts/entities/bullet.gd")
+const TorpedoPresentation = preload("res://scripts/entities/torpedo.gd")
 const DELETED_PROJECTILE_ID_CAP := 4096
 
 var audio_flow := GameplayAudioFlow.new()
@@ -53,45 +56,84 @@ func _pool_for_type(projectile_type: String) -> Array:
 	return pooled_projectile_nodes_by_type[projectile_type]
 
 
+func _contract_violation(projectile_type: String, projectile_node: Node) -> void:
+	var actual_script: Script = projectile_node.get_script()
+	var actual_script_path := ""
+	if actual_script is Script:
+		actual_script_path = actual_script.resource_path
+	WorldSyncLogger.event(
+		WorldSyncLogger.CATEGORY_WORLD_SYNC,
+		WorldSyncLogger.LEVEL_ERROR,
+		"projectile_presentation_contract_violation",
+		"Projectile scene root does not satisfy its presentation contract",
+		{
+			"projectile_type": projectile_type,
+			"actual_class": projectile_node.get_class(),
+			"actual_script": actual_script_path,
+		}
+	)
+
+
+func _presentation_for_node(projectile_type: String, projectile_node: Node) -> Node2D:
+	var node_2d := projectile_node as Node2D
+	if node_2d == null:
+		_contract_violation(projectile_type, projectile_node)
+		return null
+	if projectile_type == "torpedo":
+		var torpedo_presentation := node_2d as TorpedoPresentation
+		if torpedo_presentation == null:
+			_contract_violation(projectile_type, projectile_node)
+			return null
+		return torpedo_presentation
+	var bullet_presentation := node_2d as BulletPresentation
+	if bullet_presentation == null:
+		_contract_violation(projectile_type, projectile_node)
+		return null
+	return bullet_presentation
+
+
 func is_deleted(bullet_id: String) -> bool:
 	return deleted_projectile_ids.has(bullet_id)
 
 
-func get_projectile_node(bullet_id: String, state: Dictionary):
+func get_projectile_node(bullet_id: String, state: Dictionary) -> Node2D:
 	if projectile_nodes.has(bullet_id):
 		return projectile_nodes[bullet_id]
 
 	var projectile_type := _projectile_type_from_state(state)
 	return _acquire_projectile_node(bullet_id, projectile_type)
 
-func _acquire_projectile_node(bullet_id: String, projectile_type: String):
+func _acquire_projectile_node(bullet_id: String, projectile_type: String) -> Node2D:
 	var pool := _pool_for_type(projectile_type)
 	if not pool.is_empty():
+		var pooled_node: Node = pool.pop_back()
+		var pooled_presentation := _presentation_for_node(projectile_type, pooled_node)
+		if pooled_presentation == null:
+			pooled_node.queue_free()
+			return null
 		reused_projectile_node_count += 1
-		var pooled_node = pool.pop_back()
-		if pooled_node.has_method("reset_from_pool"):
-			pooled_node.reset_from_pool()
+		if projectile_type == "torpedo":
+			(pooled_presentation as TorpedoPresentation).reset_from_pool()
 		else:
-			if pooled_node is CanvasItem:
-				pooled_node.modulate = Color.WHITE
-			if pooled_node is Node2D:
-				pooled_node.rotation = 0.0
-				pooled_node.scale = Vector2.ONE
-		pooled_node.visible = false
-		projectile_nodes[bullet_id] = pooled_node
+			(pooled_presentation as BulletPresentation).reset_from_pool()
+		projectile_nodes[bullet_id] = pooled_presentation
 		projectile_node_types[bullet_id] = projectile_type
-		return pooled_node
+		return pooled_presentation
 
-	created_projectile_node_count += 1
 	var state_for_scene := {
 		Packets.FIELD_PROJECTILE_TYPE: projectile_type
 	}
-	var bullet_node = ProjectileSceneResolver.scene_for_state(state_for_scene).instantiate()
-	bullets_layer.add_child(bullet_node)
-	projectile_nodes[bullet_id] = bullet_node
+	var scene_node: Node = ProjectileSceneResolver.scene_for_state(state_for_scene).instantiate()
+	var presentation_node := _presentation_for_node(projectile_type, scene_node)
+	if presentation_node == null:
+		scene_node.queue_free()
+		return null
+	created_projectile_node_count += 1
+	bullets_layer.add_child(presentation_node)
+	projectile_nodes[bullet_id] = presentation_node
 	projectile_node_types[bullet_id] = projectile_type
 
-	return bullet_node
+	return presentation_node
 
 func _play_projectile_firing_sound(projectile_node: Node) -> void:
 	var sound := projectile_node.get_node_or_null("FiringSound") as AudioStreamPlayer2D
@@ -114,7 +156,9 @@ func apply_projectile(
 	if !create_if_missing and !projectile_nodes.has(bullet_id):
 		return
 
-	var bullet_node = get_projectile_node(bullet_id, state)
+	var bullet_node: Node2D = get_projectile_node(bullet_id, state)
+	if bullet_node == null:
+		return
 	var server_position := ProjectileSyncState.server_position(state)
 	var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
 		local_server_position,
@@ -158,14 +202,16 @@ func _release_projectile_node(bullet_id: String) -> void:
 	released_projectile_node_count += 1
 	var projectile_type := str(projectile_node_types.get(bullet_id, "bullet"))
 	projectile_node_types.erase(bullet_id)
-	var bullet_node = projectile_nodes[bullet_id]
+	var bullet_node: Node2D = projectile_nodes[bullet_id]
 	projectile_nodes.erase(bullet_id)
 	initialized_projectiles.erase(bullet_id)
 	target_projectile_positions.erase(bullet_id)
 	target_projectile_rotations.erase(bullet_id)
 	bullet_node.visible = false
-	if bullet_node.has_method("reset_for_pool"):
-		bullet_node.reset_for_pool()
+	if projectile_type == "torpedo":
+		(bullet_node as TorpedoPresentation).reset_for_pool()
+	else:
+		(bullet_node as BulletPresentation).reset_for_pool()
 	_pool_for_type(projectile_type).append(bullet_node)
 
 func remove_missing(server_bullets: Dictionary) -> void:
