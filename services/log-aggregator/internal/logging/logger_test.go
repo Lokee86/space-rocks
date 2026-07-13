@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/config"
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 )
 
 func logConfig() config.Config {
@@ -27,6 +28,9 @@ func TestNewLoggerSinkTogglesAndBaseContext(t *testing.T) {
 		var record map[string]any
 		if err := json.Unmarshal([]byte(output), &record); err != nil {
 			t.Fatalf("%s JSON: %v", name, err)
+		}
+		if record["service"] != serviceidentity.ServiceName {
+			t.Fatalf("%s service = %v, want %s", name, record["service"], serviceidentity.ServiceName)
 		}
 		for _, field := range []string{"service", "service_instance_id", "environment", "build_version"} {
 			if record[field] == nil {

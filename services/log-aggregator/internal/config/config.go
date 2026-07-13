@@ -8,13 +8,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 )
 
 const (
 	defaultListenAddress = "127.0.0.1:8091"
 	defaultEnvironment   = "development"
 	defaultBuildVersion  = "dev"
-	defaultLogDirectory  = "logs/log-aggregator"
+	defaultLogDirectory  = serviceidentity.DefaultLogDirectory
 )
 
 type Config struct {
@@ -90,7 +92,10 @@ func LoadWith(getenv EnvLookup, generateUUID UUIDGenerator) (Config, error) {
 }
 
 func env(getenv EnvLookup, name, fallback string) string {
-	if value, ok := getenv("LOG_AGGREGATOR_" + name); ok {
+	if value, ok := getenv(serviceidentity.EnvPrefix + name); ok {
+		return strings.TrimSpace(value)
+	}
+	if value, ok := getenv(serviceidentity.LegacyEnvPrefix + name); ok {
 		return strings.TrimSpace(value)
 	}
 	return fallback
@@ -103,7 +108,7 @@ func duration(getenv EnvLookup, name string, fallback time.Duration) (time.Durat
 	}
 	d, err := time.ParseDuration(value)
 	if err != nil || d <= 0 {
-		return 0, fmt.Errorf("config: LOG_AGGREGATOR_%s must be a positive duration: %q", name, value)
+		return 0, fmt.Errorf("config: %s%s must be a positive duration: %q", serviceidentity.EnvPrefix, name, value)
 	}
 	return d, nil
 }
@@ -115,7 +120,7 @@ func boolean(getenv EnvLookup, name string, fallback bool) (bool, error) {
 	}
 	result, err := strconv.ParseBool(value)
 	if err != nil {
-		return false, fmt.Errorf("config: LOG_AGGREGATOR_%s must be boolean: %q", name, value)
+		return false, fmt.Errorf("config: %s%s must be boolean: %q", serviceidentity.EnvPrefix, name, value)
 	}
 	return result, nil
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/storage"
+	"github.com/Lokee86/space-rocks/services/log-aggregator/internal/serviceidentity"
 )
 
 type statusStore struct {
@@ -31,18 +32,20 @@ func TestHandlerLiveReadyAndStatus(t *testing.T) {
 		}
 		return recorder.Body.String()
 	}
-	if !strings.Contains(check("/live", http.StatusOK), `"status":"live"`) {
+	liveBody := check("/live", http.StatusOK)
+	if !strings.Contains(liveBody, `"service":"`+serviceidentity.ServiceName+`"`) || !strings.Contains(liveBody, `"status":"live"`) {
 		t.Fatal("live response missing status")
 	}
 	if check("/ready", http.StatusServiceUnavailable) == "" {
 		t.Fatal("empty not-ready response")
 	}
 	state.MarkReady()
-	if !strings.Contains(check("/ready", http.StatusOK), `"status":"ready"`) {
+	readyBody := check("/ready", http.StatusOK)
+	if !strings.Contains(readyBody, `"service":"`+serviceidentity.ServiceName+`"`) || !strings.Contains(readyBody, `"status":"ready"`) {
 		t.Fatal("ready response missing status")
 	}
 	body := check("/status", http.StatusOK)
-	if !strings.Contains(body, `"events_accepted":0`) || !strings.Contains(body, `"record_count":4`) {
+	if !strings.Contains(body, `"service":"`+serviceidentity.ServiceName+`"`) || !strings.Contains(body, `"events_accepted":0`) || !strings.Contains(body, `"record_count":4`) {
 		t.Fatalf("unexpected status response: %s", body)
 	}
 }
