@@ -1,4 +1,5 @@
 extends RefCounted
+class_name WorldSync
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 const AsteroidSyncScript = preload("res://scripts/world/asteroid_sync.gd")

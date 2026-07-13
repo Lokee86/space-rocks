@@ -1,4 +1,5 @@
 extends RefCounted
+class_name ClientSessionContext
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 

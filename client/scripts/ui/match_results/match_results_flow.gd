@@ -8,8 +8,8 @@ signal return_to_lobby_requested
 signal return_to_pregame_requested
 signal quit_to_main_menu_requested
 
-var mount_parent
-var window
+var mount_parent: Node = null
+var window: MatchResultWindow = null
 var current_session_mode := ""
 
 
@@ -22,17 +22,23 @@ func show_results(session_mode: String, rows: Array = []) -> Control:
 	if mount_parent == null:
 		return null
 
-	window = MatchResultWindowScene.instantiate()
+	window = MatchResultWindowScene.instantiate() as MatchResultWindow
+	if window == null:
+		push_error("Match result window scene must instantiate MatchResultWindow")
+		return null
 	mount_parent.add_child(window)
-	if window != null:
-		window.move_to_front()
-		_connect_window_signal("lobby_replay_requested", Callable(self, "_on_lobby_replay_requested"))
-		_connect_window_signal("menu_requested", Callable(self, "_on_menu_requested"))
-		_connect_window_signal("quit_requested", Callable(self, "_on_quit_requested"))
-		if window.has_method("configure_for_mode"):
-			window.configure_for_mode(session_mode)
-		if window.has_method("apply_rows"):
-			window.apply_rows(rows)
+	window.move_to_front()
+	var replay_callable := Callable(self, "_on_lobby_replay_requested")
+	if !window.lobby_replay_requested.is_connected(replay_callable):
+		window.lobby_replay_requested.connect(replay_callable)
+	var menu_callable := Callable(self, "_on_menu_requested")
+	if !window.menu_requested.is_connected(menu_callable):
+		window.menu_requested.connect(menu_callable)
+	var quit_callable := Callable(self, "_on_quit_requested")
+	if !window.quit_requested.is_connected(quit_callable):
+		window.quit_requested.connect(quit_callable)
+	window.configure_for_mode(session_mode)
+	window.apply_rows(rows)
 	current_session_mode = session_mode
 	return window
 
@@ -59,10 +65,3 @@ func _on_menu_requested() -> void:
 
 func _on_quit_requested() -> void:
 	quit_to_main_menu_requested.emit()
-
-
-func _connect_window_signal(signal_name: StringName, handler: Callable) -> void:
-	if window == null:
-		return
-	if window.has_signal(signal_name) and !window.is_connected(signal_name, handler):
-		window.connect(signal_name, handler)

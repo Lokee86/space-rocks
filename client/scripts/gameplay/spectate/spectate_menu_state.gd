@@ -1,4 +1,5 @@
 extends RefCounted
+class_name SpectateMenuState
 
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
