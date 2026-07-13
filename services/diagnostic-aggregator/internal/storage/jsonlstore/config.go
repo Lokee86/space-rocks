@@ -6,27 +6,33 @@ import (
 	"time"
 )
 
+// DefaultDiagnosticReportRetention is the local default until the shared
+// retention contract exposes a generated duration for this service.
+const DefaultDiagnosticReportRetention = 14 * 24 * time.Hour
+
 // Config controls the rolling JSONL storage backend.
 type Config struct {
-	Root              string
-	SegmentMaxBytes   int64
-	SegmentMaxAge     time.Duration
-	RetentionMaxAge   time.Duration
-	RetentionMaxBytes int64
-	Compression       bool
-	FlushInterval     time.Duration
+	Root                      string
+	SegmentMaxBytes           int64
+	SegmentMaxAge             time.Duration
+	RetentionMaxAge           time.Duration
+	RetentionMaxBytes         int64
+	DiagnosticReportRetention time.Duration
+	Compression               bool
+	FlushInterval             time.Duration
 }
 
 // DefaultConfig returns the agreed production defaults rooted at root.
 func DefaultConfig(root string) Config {
 	return Config{
-		Root:              root,
-		SegmentMaxBytes:   64 * 1024 * 1024,
-		SegmentMaxAge:     time.Hour,
-		RetentionMaxAge:   14 * 24 * time.Hour,
-		RetentionMaxBytes: 1 * 1024 * 1024 * 1024,
-		Compression:       true,
-		FlushInterval:     time.Second,
+		Root:                      root,
+		SegmentMaxBytes:           64 * 1024 * 1024,
+		SegmentMaxAge:             time.Hour,
+		RetentionMaxAge:           14 * 24 * time.Hour,
+		RetentionMaxBytes:         1 * 1024 * 1024 * 1024,
+		DiagnosticReportRetention: DefaultDiagnosticReportRetention,
+		Compression:               true,
+		FlushInterval:             time.Second,
 	}
 }
 
@@ -55,6 +61,9 @@ func (config Config) Validate() error {
 	}
 	if config.RetentionMaxBytes <= 0 {
 		return fmt.Errorf("jsonlstore: retention max bytes must be greater than zero, got %d", config.RetentionMaxBytes)
+	}
+	if config.DiagnosticReportRetention <= 0 {
+		return fmt.Errorf("jsonlstore: diagnostic report retention must be greater than zero, got %s", config.DiagnosticReportRetention)
 	}
 	if config.FlushInterval < 0 {
 		return fmt.Errorf("jsonlstore: flush interval cannot be negative, got %s", config.FlushInterval)
