@@ -105,7 +105,7 @@ outputs = ["server_drop_tables"]
 [observability.go]
 enabled = true
 files = [
-  "services/log-aggregator/internal/observability/generated.go",
+  "services/diagnostic-aggregator/internal/observability/generated.go",
   "services/game-server/internal/observability/generated.go",
   "services/player-data/observability/generated.go",
 ]

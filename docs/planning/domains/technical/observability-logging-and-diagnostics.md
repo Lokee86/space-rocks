@@ -4,13 +4,13 @@ Parent index: [Technical Planning](./!INDEX.md)
 
 ## Purpose
 
-This doc plans product-wide observability, logging, diagnostics, and log aggregation for Space Rocks.
+This doc plans product-wide observability, logging, diagnostics, and triggered diagnostic-report handling for Space Rocks.
 
-It defines what each service should log, at what level, with which shared fields, how logs are grouped across services, how sensitive data and noise are controlled, how local and hosted diagnostics are gathered, and how aggregated logs support bug reports, operational readiness, admin review, audit-grade records, and future incident response.
+It defines what each service should log, at what level, with which shared fields, how sensitive data and noise are controlled, how bounded diagnostic submissions support bug reports and operational readiness, and how shared observability schemas support future incident response without making ordinary logs a continuously streamed product-wide feed.
 
 ## Overview
 
-This doc keeps product logging, diagnostics, aggregation, and redaction policy aligned so failures stay diagnosable without turning logs into gameplay or analytics noise.
+This doc keeps product logging, diagnostic-report intake, and redaction policy aligned so failures stay diagnosable without turning logs into gameplay or analytics noise.
 
 ## Current status
 
@@ -24,13 +24,12 @@ This doc owns planning for:
 * log levels,
 * stable event names,
 * canonical log fields,
-* product log aggregation,
-* error aggregation as a log-aggregation use case,
+* triggered diagnostic-report submissions,
 * diagnostic bundles and copy diagnostics,
-* audit trigger fields and audit-grade aggregated records,
+* audit trigger fields and audit-grade records at their owning boundary,
 * observability SSoT consumption,
 * redaction and forbidden fields,
-* local single-player diagnostic aggregation,
+* local single-player diagnostics,
 * launch-shaped observability expectations.
 
 Service docs own exact logging implementation. Domain docs own the meaning of domain events, such as enforcement actions, reward grants, purchases, integrity flags, and admin corrections.
@@ -52,7 +51,7 @@ Service docs own exact logging implementation. Domain docs own the meaning of do
 
 Space Rocks already has partial logging foundations.
 
-The game-server has structured/category logging through a Go `slog` wrapper plus sequential local JSONL diagnostic file output. Current game-server categories include:
+Each service owns its bounded rolling JSONL logs. The game-server has structured/category logging through a Go `slog` wrapper plus sequential local JSONL diagnostic file output. Current game-server categories include:
 
 * `server`
 * `network`
@@ -71,7 +70,7 @@ The client has a GDScript logging helper with levels, categories, helper methods
 * `input`
 * `packets`
 
-Current client and server JSONL outputs are local diagnostic capture, not product log aggregation transport. A minimal product log aggregation service is immediate technical-release foundation work. Default logging stays quiet, and successful gameplay packet-write diagnostics are current debug or category-gated output rather than normal default logging. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
+Current client and service JSONL outputs are service-owned rolling files, not continuous product-log transport. The diagnostic aggregator receives only triggered, bounded diagnostic submissions for manual bug reports, crashes, or allowlisted severe failures. Release clients retain logs locally by default; continuous submission is limited to future controlled development/QA modes. Default logging stays quiet, and successful gameplay packet-write diagnostics are current debug or category-gated output rather than normal default logging. Network packet observability is planned separately in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). Operational readiness already depends on copy diagnostics, bug reports, telemetry/logging readiness, health checks, and future incident-platform support.
 
 ## Product Observability Model
 
@@ -85,71 +84,67 @@ Space Rocks should use one product-wide observability model across:
 * website,
 * devtools/admin tools,
 * future workers or jobs,
-* product log aggregation service.
+* diagnostic aggregator.
 
 The model is:
 
 ```text
-product services emit structured logs/events
--> product log aggregator collects and correlates them
--> errors, diagnostics, incidents, bug reports, and audit-grade records are consumers or tiered outputs of the aggregated event stream
+each service emits structured events to its own bounded rolling JSONL files
+-> a manual bug report, crash, or allowlisted severe failure creates a bounded diagnostic submission
+-> diagnostic aggregator validates, redacts, constructs, stores, and serves the report
 ```
 
 Logging is observational. Logs, metrics, telemetry, diagnostics, and aggregation must not change gameplay state, persistence behavior, auth behavior, packet routing, reward behavior, or enforcement behavior by themselves.
 
-## Product Log Aggregation Service
+## Diagnostic Report Service
 
-The minimal product log aggregation service is immediate technical-release work, not generic future work. Its initial owner is `services/log-aggregator/`.
+The current implementation owner is `services/diagnostic-aggregator/`. This is a triggered diagnostic-report service, not a continuous product-log aggregation service.
 
-The log aggregation service should collect, normalize, group, search, and retain product events from all services.
+The service receives bounded submissions for manual bug reports, crashes, or allowlisted severe failures. It validates input, applies redaction, constructs diagnostic reports or bundles, stores them with the configured bounded retention, and exposes retrieval and health surfaces.
 
-The initial service should provide HTTP batch ingestion, validation and redaction, correlation-preserving durable storage, search/filtering, diagnostic bundle generation, health/readiness endpoints, and rejected, dropped, and redacted event counters. It should establish the durable storage boundary without committing the product to production-scale hosted retention.
+Public client upload integration is not yet complete. In later integration, public uploads are expected to be bounded, authenticated, and rate-limited, and triggered by manual bug reports or allowlisted severe failures/crashes rather than continuous streaming.
 
-It should support:
+The service should support:
 
-* cross-service event grouping,
-* error aggregation,
-* bug report attachment,
-* diagnostic bundle generation,
-* pending/retry investigation,
-* admin and support review,
-* operational incident diagnosis,
-* audit-grade persistence when triggered,
-* future dashboards and alerting.
+* bounded diagnostic-report intake,
+* validation and redaction,
+* correlation-preserving report construction,
+* bounded diagnostic storage and retrieval,
+* health/readiness reporting,
+* graceful shutdown,
+* rejected and redacted submission diagnostics.
 
-Error aggregation is a use case of log aggregation. A separate error aggregation service is not required.
-
-Audit-grade records are also handled by the log aggregation system when triggered by audit-worthy events. A separate audit aggregation service is not required.
-
-Aggregator failure must not break gameplay. It should degrade diagnostics and reporting. For audit-grade events, failed submission should use pending/retry where practical.
+Diagnostic-aggregator failure must not break gameplay. It should degrade diagnostics and reporting while service-owned local logs and copy diagnostics remain available. The service is not a general log-search platform and is not authoritative audit storage.
 
 ### Delivery Expectations
 
-Service integrations must use bounded queues, small batches, short timeouts, background flushing, and local spool/drop accounting. No simulation-critical path may make a synchronous call to the aggregator. Delivery failure is observable and counted, but must remain non-blocking and must degrade diagnostics rather than gameplay.
+Future service integrations must use bounded queues or submissions, small payloads, short timeouts, background delivery where appropriate, and local failure accounting. No simulation-critical path may make a synchronous call to the diagnostic aggregator. Delivery failure is observable, but must remain non-blocking and must degrade diagnostics rather than gameplay.
 
-The immediate release baseline includes the service contract, integration of the relevant product services, release verification, and diagnostic bundle behavior. Production-scale dashboards, alerting, OpenTelemetry-style tracing, and long-term hosted retention remain deferred.
+The immediate Stage 2 baseline is the service implementation and shared contract. Client/API upload integration, production-scale dashboards, alerting, OpenTelemetry-style tracing, and continuous multi-instance collection remain deferred. Centralized collectors/search platforms such as Alloy/Loki/Grafana should remain deferred until continuous multi-instance operations justify them.
 
 ## Local Single-Player Diagnostics
 
 Local packaged single-player must participate in observability.
 
-Local packaged single-player should aggregate client and bundled-server diagnostics locally. It must not require hosted services for diagnostic collection.
+Local packaged single-player should retain client and bundled-server diagnostics locally. It must not require hosted services for diagnostic collection or continuously submit logs.
 
 Expected behavior:
 
 | Situation                 | Behavior                                                                    |
 | ------------------------- | --------------------------------------------------------------------------- |
-| Offline single-player     | Aggregate locally; expose copy diagnostics or saved diagnostic report.      |
-| Online services available | May offer upload or auto-upload depending beta/production reporting policy. |
-| Upload fails              | Preserve local diagnostics and avoid creating a second failure loop.        |
+| Offline single-player     | Retain logs locally; expose copy diagnostics or a saved diagnostic report. |
+| Online services available | May offer a bounded upload after a manual report or eligible failure.     |
+| Upload fails              | Preserve local diagnostics and avoid creating a second failure loop.      |
 
-The bundled local server may own the local aggregation endpoint or module because it already exists in single-player and can collect server-side context.
+The bundled local server may participate in local report construction because it already exists in single-player and can provide server-side context. This is local diagnostic capture, not continuous forwarding to a hosted collector.
 
 ## Bug Reports And Copy Diagnostics
 
 Bug reporting is the user/tester-facing surface of diagnostics.
 
-Bug reports should attach or reference an aggregated diagnostic bundle when available. Copy diagnostics is the fallback when automatic upload is unavailable, disabled, or fails.
+Bug reports should attach or reference a bounded diagnostic bundle when available. Copy diagnostics is the default local fallback when upload is unavailable, disabled, or fails.
+
+Manual bug reports, crashes, and allowlisted severe failures are the triggers for diagnostic submissions. Ordinary successful gameplay and ordinary service logs do not continuously generate uploads. Release clients retain logs locally by default; controlled development/QA modes may later enable continuous submission under an explicit policy.
 
 Copy diagnostics should be safe to paste unless explicitly marked otherwise.
 
@@ -202,7 +197,7 @@ The SSoT should generate:
 | GDScript client     | Event constants, field constants, diagnostic bundle constants.      |
 | Ruby API-server     | Event constants, field constants, audit type constants.             |
 | Player-data service | Event, field, audit, and storage-related constants.                 |
-| Log aggregator      | Validation schema, grouping fields, redaction rules, audit rules.   |
+| Diagnostic aggregator | Validation schema, diagnostic-report fields, redaction rules, and correlation fields. |
 | Documentation       | Human-readable event and field catalog.                             |
 | Verification gates  | Drift checks for generated observability outputs.                   |
 
@@ -712,27 +707,27 @@ When these exist, log carefully.
 
 Never log payment card data, payment secrets, or raw provider payloads unless explicitly redacted and gated.
 
-### Product Log Aggregation Service
+### Diagnostic Aggregator
 
-The aggregator should log its own lifecycle and failures.
+The diagnostic aggregator should log its own lifecycle, bounded report intake, processing, storage, retrieval, and upload failures.
 
-| Event                               | Level          |
-| ----------------------------------- | -------------- |
-| aggregation service started         | Info           |
-| aggregation service unavailable     | Error          |
-| event accepted                      | Debug          |
-| event rejected invalid schema       | Warn           |
-| event rejected unsafe fields        | Warn/Error     |
-| event grouped into diagnostic chain | Debug/Info     |
-| audit-grade record created          | Info           |
-| audit-grade record creation failed  | Error/Critical |
-| aggregation storage failed          | Error/Critical |
-| duplicate event suppressed          | Debug          |
-| retention policy applied            | Info           |
-| bug-report bundle created           | Info           |
-| bug-report upload failed            | Warn/Error     |
+| Event                                  | Level          |
+| -------------------------------------- | -------------- |
+| diagnostic service started             | Info           |
+| diagnostic service unavailable         | Error          |
+| diagnostic report accepted             | Debug          |
+| diagnostic report rejected             | Warn           |
+| diagnostic report redacted             | Warn/Error     |
+| diagnostic report constructed          | Info           |
+| diagnostic report stored               | Info           |
+| diagnostic report retrieval failed     | Warn/Error     |
+| diagnostic storage failed              | Error/Critical |
+| duplicate submission suppressed        | Debug          |
+| retention policy applied               | Info           |
+| diagnostic upload failed               | Warn/Error     |
+| diagnostic shutdown/store close failed | Error/Critical |
 
-Accepted events should not be Info by default or the aggregator will become noisy.
+Accepted reports should not be Info by default or the diagnostic aggregator will become noisy. Ordinary service log lines remain in their owning service's rolling files.
 
 ### Bug Reports And Copy Diagnostics
 
@@ -793,7 +788,7 @@ Raw high-frequency measurements should be metrics/devtools, not normal logs.
 
 ## Audit-Grade Records
 
-The log aggregator should create audit-grade records when triggered by audit-worthy structured events.
+Authoritative audit persistence belongs to the owning domain transaction or its durable outbox. Diagnostic logs and diagnostic reports are best-effort evidence and must not be treated as the system of record for audit-grade actions.
 
 Audit-worthy events should include:
 
@@ -820,20 +815,19 @@ result_id
 account_id
 ```
 
-`audit_required` means the aggregator must validate, preserve, and promote the event into an audit-grade record. It is clearer than `auditable`.
+`audit_required` identifies an action that requires authoritative domain persistence. It is clearer than `auditable`. The shared observability schema should carry this vocabulary and the correlation fields needed to connect diagnostic evidence to the authoritative record, without making the diagnostic aggregator responsible for final audit durability.
 
-Aggregator behavior:
+Diagnostic behavior when an audit-relevant event is included in a bounded report:
 
 ```text
 audit_required=true
 -> validate required audit fields
 -> redact or reject unsafe fields
--> group with related logs
--> persist audit-grade aggregated record
--> attach or return audit_event_id where applicable
+-> preserve correlation with the domain transaction or outbox reference
+-> store diagnostic evidence with its diagnostic retention tier
 ```
 
-Domains decide which actions are audit-worthy and what domain-specific payload is required. The aggregator owns shared collection, validation, correlation, retention tiering, and audit-grade persistence.
+Domains decide which actions are audit-worthy, persist the authoritative record, and define the domain-specific payload. The diagnostic aggregator owns bounded report validation, redaction, correlation, and diagnostic retention only.
 
 ## Audit Boundary
 
@@ -841,15 +835,15 @@ Observability owns:
 
 * audit trigger fields,
 * audit reference fields,
-* audit-grade aggregation behavior,
 * shared event schema,
 * redaction rules,
-* correlation with logs.
+* correlation with diagnostic reports.
 
 Domain docs own:
 
 * which actions are audit-worthy,
 * what domain-specific payload is required,
+* authoritative persistence in the domain transaction or durable outbox,
 * policy consequences,
 * appeals,
 * reversals,
@@ -872,16 +866,16 @@ Audit-grade events may include:
 
 ## Retention And Durability Tiers
 
-The aggregator should support different retention and durability tiers.
+Diagnostic reports should support different retention and durability tiers. Finalized diagnostic reports default to 14 days, with the value configurable through the shared/service configuration path. Ordinary service log retention remains owned and configured by each service.
 
 | Tier              | Use                                                            |
 | ----------------- | -------------------------------------------------------------- |
 | Ephemeral/Dev     | Local debugging.                                               |
 | Operational       | Production diagnosis.                                          |
-| Diagnostic Report | Bug report and copy diagnostics.                               |
+| Diagnostic Report | Bug report and copy diagnostics; 14-day default, configurable. |
 | Audit-Grade       | Enforcement, economy, admin, disputes, purchases, eligibility. |
 
-Exact retention durations are open.
+Audit-grade retention and durability are determined by the owning domain and its durable outbox or transaction boundary, not by diagnostic-report retention.
 
 ## Privacy And Redaction
 
@@ -941,31 +935,31 @@ Logs should capture meaningful events, failures, summaries, and thresholds. Metr
 | Local Development      | Local logs; shared fields where practical.                                                                                         |
 | Local Packaged Beta    | Client plus bundled-server diagnostics; copy diagnostics.                                                                          |
 | Dev-Hosted Multiplayer | Cross-service logs manually reconcilable by shared IDs.                                                                            |
-| Hosted Staging         | Central aggregation is required and must be validated for ingestion, grouping, correlation, and failure degradation.             |
-| Hosted Production      | Aggregated logs support incident diagnosis, bug reports, admin review, audit-grade records, recovery, and release-readiness gates. |
+| Hosted Staging          | Service-owned logs and bounded diagnostic submissions; central aggregation is not a prerequisite.                                |
+| Hosted Production       | Bounded diagnostic reports support incident diagnosis and bug reports; future centralized observability remains optional.        |
 
 ## Verification Expectations
 
 Release-shaped builds should verify that:
 
 * generated observability constants are current,
-* generated aggregator validation schema is current,
+* generated diagnostic-aggregator validation schema is current,
 * generated observability docs are current,
 * audit-required events include required audit fields,
 * forbidden fields are rejected or redacted,
 * copy diagnostics excludes unsafe fields,
 * important cross-service flows preserve correlation IDs,
-* log aggregation failure does not break gameplay,
+* diagnostic-aggregator or upload failure does not break gameplay,
 * production client devtools logging capability follows build policy.
 
 ## Implementation sequence
 
 1. Define the product observability SSoT and generated consumers.
-2. Build the minimal `services/log-aggregator/` service with batched ingestion, validation, correlation-preserving durable storage, search, bundles, and health/readiness.
-3. Add non-blocking service integrations and preserve correlation across the client/game-server/API/player-data chain.
-4. Make local packaged single-player participate in local aggregation and diagnostic bundle generation.
-5. Verify release contracts, redaction, accounting, outage degradation, and central aggregation in hosted staging.
-6. Expand audit-grade handling and production-scale incident tooling later.
+2. Maintain the `services/diagnostic-aggregator/` service for bounded diagnostic intake, validation, redaction, report construction/storage/retrieval, health, retention, and graceful shutdown.
+3. Add non-blocking triggered submissions and preserve correlation across the client/game-server/API/player-data chain.
+4. Make local packaged single-player retain diagnostics locally and support copy diagnostics plus bounded report creation.
+5. Verify release contracts, redaction, accounting, upload failure degradation, and service-owned log behavior in hosted staging.
+6. Keep authoritative audit persistence in domain transactions or durable outboxes; expand optional centralized observability only when continuous multi-instance operations justify it.
 7. Leave service-specific logging implementation in the owning service docs.
 
 ## Related docs
@@ -991,15 +985,14 @@ Release-shaped builds should verify that:
 * Which generator owns observability constants and validators?
 * Which events are required before local packaged beta?
 * Which events are required before hosted production?
-* What backend stores aggregated logs?
-* What backend stores audit-grade aggregated records?
-* What retention durations apply to each tier?
+* If continuous multi-instance operations later justify it, which centralized observability backend should be adopted?
+* What retention and durability policy applies to each audit domain and its durable outbox?
 * Which production logs are sampled or rate-limited?
 * Which single-player diagnostic uploads require explicit consent?
 * Which audit types are required at launch versus later?
-* Does the aggregator return `audit_event_id` synchronously or attach it asynchronously?
 * What admin/incident dashboard shape comes first?
 * What exact bug-report upload policy applies to beta and production builds?
+* Which development/QA modes, if any, may enable controlled continuous submission?
 
 ## Notes
 
