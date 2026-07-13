@@ -1,8 +1,6 @@
 package query
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,45 +8,12 @@ import (
 
 const EventsPath = "/v1/events"
 
-type Filter struct {
-	From               time.Time
-	To                 time.Time
-	Service            string
-	ServiceInstanceID  string
-	Level              string
-	Event              string
-	TraceID            string
-	RequestID          string
-	SessionID          string
-	RoomID             string
-	MatchID            string
-	PlayerID           string
-	AccountID          string
-	EventID            string
-	DiagnosticReportID string
-	AuditEventID       string
-	IdempotencyKey     string
-	AuditRequired      *bool
-	Limit              int
-}
-
-type Result struct {
-	Events  []json.RawMessage
-	Total   uint64
-	Limited bool
-}
-
-type EventsResponse struct {
-	Events  []json.RawMessage `json:"events"`
-	Total   uint64           `json:"total"`
-	Limited bool             `json:"limited"`
-}
-
-type EventQuerier interface {
-	Query(context.Context, Filter) (Result, error)
-}
-
 func NewEventsHandler(querier EventQuerier) http.Handler {
+	return NewEventsHandlerWithPolicy(querier, LimitPolicy{})
+}
+
+func NewEventsHandlerWithPolicy(querier EventQuerier, policy LimitPolicy) http.Handler {
+	policy = policy.normalized()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.Header().Set("Allow", http.MethodGet)
@@ -56,7 +21,7 @@ func NewEventsHandler(querier EventQuerier) http.Handler {
 			return
 		}
 
-		filter, err := parseFilter(r)
+		filter, err := parseFilter(r, policy)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"code": err.Error()})
 			return
@@ -70,11 +35,13 @@ func NewEventsHandler(querier EventQuerier) http.Handler {
 	})
 }
 
-func parseFilter(r *http.Request) (Filter, error) {
+func parseFilter(r *http.Request, policy LimitPolicy) (Filter, error) {
+	policy = policy.normalized()
 	values := r.URL.Query()
 	allowed := map[string]bool{
-		"from": true, "to": true, "service": true, "service_instance_id": true,
-		"level": true, "event": true, "trace_id": true, "request_id": true,
+		"from": true, "to": true, "schema_version": true, "environment": true,
+		"build_version": true, "service": true, "service_instance_id": true,
+		"category": true, "level": true, "event": true, "trace_id": true, "request_id": true,
 		"session_id": true, "room_id": true, "match_id": true, "player_id": true,
 		"account_id": true, "event_id": true, "diagnostic_report_id": true,
 		"audit_event_id": true, "idempotency_key": true, "audit_required": true,
@@ -89,6 +56,7 @@ func parseFilter(r *http.Request) (Filter, error) {
 		}
 	}
 	for _, name := range []string{
+		"schema_version", "environment", "build_version", "category",
 		"service", "service_instance_id", "level", "event", "trace_id",
 		"request_id", "session_id", "room_id", "match_id", "player_id",
 		"account_id", "event_id", "diagnostic_report_id", "audit_event_id",
@@ -100,8 +68,12 @@ func parseFilter(r *http.Request) (Filter, error) {
 	}
 
 	filter := Filter{
+		SchemaVersion:      values.Get("schema_version"),
+		Environment:        values.Get("environment"),
+		BuildVersion:       values.Get("build_version"),
 		Service:            values.Get("service"),
 		ServiceInstanceID:  values.Get("service_instance_id"),
+		Category:           values.Get("category"),
 		Level:              values.Get("level"),
 		Event:              values.Get("event"),
 		TraceID:            values.Get("trace_id"),
@@ -115,6 +87,11 @@ func parseFilter(r *http.Request) (Filter, error) {
 		DiagnosticReportID: values.Get("diagnostic_report_id"),
 		AuditEventID:       values.Get("audit_event_id"),
 		IdempotencyKey:     values.Get("idempotency_key"),
+	}
+	for _, value := range []string{filter.ServiceInstanceID, filter.TraceID, filter.EventID, filter.DiagnosticReportID, filter.AuditEventID} {
+		if value != "" && !validUUID(value) {
+			return Filter{}, errInvalidFilter
+		}
 	}
 	var err error
 	if raw, present := values["from"]; present {
@@ -153,10 +130,12 @@ func parseFilter(r *http.Request) (Filter, error) {
 			return Filter{}, errInvalidFilter
 		}
 		value, parseErr := strconv.Atoi(raw[0])
-		if parseErr != nil || value <= 0 {
+		if parseErr != nil || value <= 0 || value > policy.Maximum {
 			return Filter{}, errInvalidFilter
 		}
 		filter.Limit = value
+	} else {
+		filter.Limit = policy.Default
 	}
 	return filter, nil
 }
@@ -166,9 +145,3 @@ var errInvalidFilter = &filterError{}
 type filterError struct{}
 
 func (*filterError) Error() string { return "invalid_filter" }
-
-func writeJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
-}

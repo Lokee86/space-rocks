@@ -1,7 +1,6 @@
 package query
 
 import (
-	"encoding/hex"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,19 +9,24 @@ import (
 const TracesPathPrefix = "/v1/traces/"
 
 func NewTraceHandler(querier EventQuerier) http.Handler {
+	return NewTraceHandlerWithPolicy(querier, LimitPolicy{})
+}
+
+func NewTraceHandlerWithPolicy(querier EventQuerier, policy LimitPolicy) http.Handler {
+	policy = policy.normalized()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		traceID, shaped := traceIDFromPath(r.URL.Path)
 		if !shaped {
 			writeJSON(w, http.StatusNotFound, map[string]string{"code": "not_found"})
 			return
 		}
-		if !validUUID(traceID) {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"code": "invalid_trace_id"})
-			return
-		}
 		if r.Method != http.MethodGet {
 			w.Header().Set("Allow", http.MethodGet)
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"code": "method_not_allowed"})
+			return
+		}
+		if !validUUID(traceID) {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"code": "invalid_trace_id"})
 			return
 		}
 		if len(r.URL.Query()) > 0 {
@@ -36,11 +40,13 @@ func NewTraceHandler(querier EventQuerier) http.Handler {
 		filter := Filter{TraceID: traceID}
 		if raw, present := r.URL.Query()["limit"]; present {
 			limit, err := strconv.Atoi(raw[0])
-			if err != nil || limit <= 0 {
+			if err != nil || limit <= 0 || limit > policy.Maximum {
 				writeJSON(w, http.StatusBadRequest, map[string]string{"code": "invalid_limit"})
 				return
 			}
 			filter.Limit = limit
+		} else {
+			filter.Limit = policy.Default
 		}
 		result, err := querier.Query(r.Context(), filter)
 		if err != nil {
@@ -58,14 +64,4 @@ func traceIDFromPath(path string) (string, bool) {
 	}
 	return parts[3], true
 }
-
-func validUUID(value string) bool {
-	if len(value) != 36 || value[8] != '-' || value[13] != '-' || value[18] != '-' || value[23] != '-' {
-		return false
-	}
-	compact := strings.ReplaceAll(value, "-", "")
-	_, err := hex.DecodeString(compact)
-	return err == nil
-}
-
 
