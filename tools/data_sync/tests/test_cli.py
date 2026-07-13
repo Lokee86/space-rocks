@@ -143,9 +143,30 @@ def test_realtime_wire_accepts_json_and_docs_outputs() -> None:
     assert args.output_kinds == ("json", "docs")
 
 
+def test_observability_accepts_all_output_kinds() -> None:
+    args = parse_args(["-diff", "-observability", "-go", "-gds", "-ruby", "-json", "-docs"])
+
+    assert args.domains == ("observability",)
+    assert args.languages == ("go", "gds", "ruby")
+    assert args.output_kinds == ("json", "docs")
+
+
+def test_observability_ruby_is_a_language() -> None:
+    args = parse_args(["-push", "-observability", "-ruby"])
+
+    assert args.languages == ("ruby",)
+
+
 def test_json_output_requires_realtime_wire() -> None:
     with pytest.raises(SystemExit) as exc:
         parse_args(["-diff", "-packets", "-json"])
+
+    assert exc.value.code == 2
+
+
+def test_ruby_output_requires_observability() -> None:
+    with pytest.raises(SystemExit) as exc:
+        parse_args(["-diff", "-realtime-wire", "-ruby"])
 
     assert exc.value.code == 2
 

@@ -1,0 +1,51 @@
+schema_version = 1
+
+[policy]
+age_values_are_configuration_metadata = true
+production_legal_retention_commitment = false
+unset_age_value = 0
+age_unit = "seconds"
+
+[[tiers]]
+name = "ephemeral_dev"
+purpose = "Local development and temporary subsystem debugging."
+durability = "best_effort"
+compression = "optional"
+delete_policy = "delete_on_shutdown_or_when_configured_age_expires"
+default_age_seconds = 0
+max_age_seconds = 0
+age_is_configurable = true
+legal_commitment = false
+
+[[tiers]]
+name = "operational"
+purpose = "Routine operational diagnosis and cross-service event investigation."
+durability = "durable"
+compression = "recommended"
+delete_policy = "delete_when_configured_age_expires_or_storage_pressure_requires_eviction"
+default_age_seconds = 0
+max_age_seconds = 0
+age_is_configurable = true
+legal_commitment = false
+
+[[tiers]]
+name = "diagnostic_report"
+purpose = "User- or tester-facing bug reports, copy diagnostics, and bounded diagnostic bundles."
+durability = "durable_until_report_expiry"
+compression = "recommended"
+delete_policy = "delete_when_configured_report_age_expires_or_report_is_expunged"
+default_age_seconds = 0
+max_age_seconds = 0
+age_is_configurable = true
+legal_commitment = false
+
+[[tiers]]
+name = "audit_grade"
+purpose = "Audit-worthy aggregated records created by an explicit audit trigger."
+durability = "durable"
+compression = "lossless_or_integrity_preserving"
+delete_policy = "retain_until_configured_audit_age_expires_or_authorized_disposition"
+default_age_seconds = 0
+max_age_seconds = 0
+age_is_configurable = true
+legal_commitment = false

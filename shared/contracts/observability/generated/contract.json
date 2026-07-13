@@ -1,0 +1,2856 @@
+{
+  "diagnostic_bundle": {
+    "allowed_event_fields": [
+      {
+        "name": "timestamp",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "level",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "event",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "service",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "schema_version",
+        "required": false,
+        "type": "integer"
+      },
+      {
+        "name": "environment",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "build_version",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "event_id",
+        "required": false,
+        "type": "uuid"
+      },
+      {
+        "name": "trace_id",
+        "required": false,
+        "type": "uuid"
+      },
+      {
+        "name": "category",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "message",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "error_code",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "failure_mode",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "duration_ms",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "name": "request_id",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "session_id",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "room_id",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "match_id",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "player_id",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "account_id",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "service_instance_id",
+        "required": false,
+        "type": "uuid"
+      },
+      {
+        "name": "diagnostic_report_id",
+        "required": false,
+        "type": "uuid"
+      },
+      {
+        "name": "retention_tier",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "name": "fields",
+        "required": false,
+        "type": "object"
+      },
+      {
+        "name": "redaction_applied",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "correlation": {
+      "allowed_fields": [
+        "trace_id",
+        "request_id",
+        "session_id",
+        "room_id",
+        "match_id",
+        "diagnostic_report_id",
+        "audit_event_id"
+      ],
+      "name": "correlation",
+      "required": true
+    },
+    "diagnostic_report_id_required": true,
+    "diagnostic_report_id_type": "UUID",
+    "events_ordered_by": "timestamp_ascending",
+    "events_required": true,
+    "forbidden_content_behavior": "redact_when_safe_otherwise_reject",
+    "max_correlation_fields": 16,
+    "max_event_bytes": 65536,
+    "max_events": 500,
+    "max_metadata_fields": 32,
+    "max_redaction_summary_entries": 32,
+    "max_total_bytes": 5242880,
+    "metadata": {
+      "allowed_fields": [
+        "service",
+        "environment",
+        "build_version",
+        "schema_version",
+        "generated_at",
+        "client_version",
+        "server_version",
+        "platform",
+        "locale",
+        "diagnostic_report_id"
+      ],
+      "name": "metadata",
+      "required": true
+    },
+    "name": "diagnostic_bundle",
+    "raw_value_preserved": false,
+    "redaction_failure_behavior": "reject_bundle",
+    "redaction_summary": {
+      "allowed_fields": [
+        "redaction_applied",
+        "redacted_event_count",
+        "redacted_field_count",
+        "rejected_event_count",
+        "rejected_field_count",
+        "replacement_marker",
+        "policy_version"
+      ],
+      "name": "redaction_summary",
+      "required": true
+    },
+    "redaction_summary_must_count_rejected_content": true,
+    "rejected_event_included": false,
+    "rejected_field_included": false,
+    "replacement_marker": "[REDACTED]",
+    "safe_to_copy_default": true,
+    "safe_to_copy_field": "safe_to_copy",
+    "schema_version": 1,
+    "truncated_when_limit_exceeded": true,
+    "unknown_event_field_behavior": "reject_event"
+  },
+  "events": [
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "info",
+      "description": "A service has begun startup.",
+      "name": "service_starting",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "info",
+      "description": "A service completed startup and is available for normal operation.",
+      "name": "service_started",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "info",
+      "description": "A service has begun an intentional shutdown.",
+      "name": "service_stopping",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "info",
+      "description": "A service completed shutdown.",
+      "name": "service_stopped",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "critical",
+      "description": "A service could not complete startup.",
+      "name": "service_startup_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "configuration",
+      "default_level": "critical",
+      "description": "Required or parsed configuration is invalid.",
+      "name": "configuration_invalid",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": true,
+      "category": "configuration",
+      "default_level": "critical",
+      "description": "Configuration would permit an unsafe release or environment behavior.",
+      "name": "configuration_unsafe",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "error",
+      "description": "A required dependency failed during initialization.",
+      "name": "dependency_initialization_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "warn",
+      "description": "A service entered a named degraded operating state.",
+      "name": "service_entered_degraded_state",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "warn",
+      "description": "A service is running but blocks new admissions.",
+      "name": "service_entered_admission_blocked_state",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "service_lifecycle",
+      "default_level": "info",
+      "description": "A service recovered from a degraded, offline, or blocked state.",
+      "name": "service_recovered",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "configuration",
+      "default_level": "info",
+      "description": "The runtime environment was selected.",
+      "name": "environment_selected",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "configuration",
+      "default_level": "info",
+      "description": "The build or release version was loaded.",
+      "name": "build_version_loaded",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "configuration",
+      "default_level": "info",
+      "description": "The protocol, API, or data contract version was loaded.",
+      "name": "contract_version_loaded",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "configuration",
+      "default_level": "info",
+      "description": "A feature flag, devtools mode, or release capability was loaded.",
+      "name": "feature_mode_loaded",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "client",
+        "api_server",
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": true,
+      "category": "configuration",
+      "default_level": "critical",
+      "description": "A production build exposed a forbidden client or server capability.",
+      "name": "production_capability_violation",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "info",
+      "description": "The client has begun startup.",
+      "name": "client_starting",
+      "retention_tier": "operational",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "error",
+      "description": "The client failed to boot its main scene or session shell.",
+      "name": "client_startup_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "error",
+      "description": "Client configuration could not be loaded.",
+      "name": "client_config_load_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "error",
+      "description": "The packaged client runtime does not match its expected release contract.",
+      "name": "client_runtime_mismatch",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "info",
+      "description": "The client requested launch of the bundled local server.",
+      "name": "local_server_launch_requested",
+      "retention_tier": "operational",
+      "services": [
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "error",
+      "description": "The bundled local server failed to launch.",
+      "name": "local_server_launch_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "info",
+      "description": "The client connected to its bundled local server.",
+      "name": "local_server_connected",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_startup",
+      "default_level": "error",
+      "description": "The bundled local server exited without an expected shutdown.",
+      "name": "local_server_exited_unexpectedly",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "debug",
+      "description": "A client network connection attempt began.",
+      "name": "connection_attempt_started",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "info",
+      "description": "The client established a network connection.",
+      "name": "client_connected",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "warn",
+      "description": "A client network connection attempt failed.",
+      "name": "client_connection_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "game_server",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "warn",
+      "description": "The client lost a connection unexpectedly or completed an expected disconnect.",
+      "name": "client_disconnected",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "warn",
+      "description": "A client reconnect attempt was scheduled after connection loss.",
+      "name": "reconnect_attempt_scheduled",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "info",
+      "description": "A client reconnect attempt succeeded.",
+      "name": "reconnect_succeeded",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "client_network",
+      "default_level": "warn",
+      "description": "A client reconnect attempt failed.",
+      "name": "reconnect_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "networking",
+      "default_level": "warn",
+      "description": "A received packet could not be decoded.",
+      "name": "packet_decode_failed",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "networking",
+      "default_level": "warn",
+      "description": "A decoded packet had no known route.",
+      "name": "packet_route_unknown",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "session_admission",
+      "default_level": "warn",
+      "description": "A client or session was blocked by compatibility checks.",
+      "name": "compatibility_blocked",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "auth",
+      "default_level": "info",
+      "description": "An authentication flow began.",
+      "name": "auth_flow_started",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "auth",
+      "default_level": "info",
+      "description": "An authentication provider callback was received without recording credentials.",
+      "name": "auth_callback_received",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "auth",
+      "default_level": "info",
+      "description": "Authentication completed successfully.",
+      "name": "auth_succeeded",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "auth",
+      "default_level": "warn",
+      "description": "Authentication failed.",
+      "name": "auth_failed",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "auth",
+      "default_level": "error",
+      "description": "An authentication provider was unavailable.",
+      "name": "auth_provider_unavailable",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "session_admission",
+      "default_level": "warn",
+      "description": "Session admission failed after authentication or environment checks.",
+      "name": "admission_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server",
+        "api_server",
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "session_admission",
+      "default_level": "warn",
+      "description": "A banned or suspended account was blocked from admission.",
+      "name": "account_restriction_blocked",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "debug",
+      "description": "An API request began.",
+      "name": "api_request_started",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "debug",
+      "description": "An API request completed successfully.",
+      "name": "api_request_completed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "error",
+      "description": "An API request failed.",
+      "name": "api_request_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "warn",
+      "description": "An API request failed input validation.",
+      "name": "api_validation_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "warn",
+      "description": "An API request was unauthorized or forbidden.",
+      "name": "api_unauthorized",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "warn",
+      "description": "An API rate limit was triggered.",
+      "name": "api_rate_limit_triggered",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "error",
+      "description": "An API upstream dependency was unavailable.",
+      "name": "api_upstream_unavailable",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "api_request",
+      "default_level": "warn",
+      "description": "An API request exceeded its timeout.",
+      "name": "api_request_timeout",
+      "retention_tier": "operational",
+      "services": [
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "api_request",
+      "default_level": "warn",
+      "description": "An idempotency key conflicted with an existing operation.",
+      "name": "idempotency_conflict",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "info",
+      "description": "The player-data store initialized successfully.",
+      "name": "player_data_store_initialized",
+      "retention_tier": "operational",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "critical",
+      "description": "The player-data store failed initialization.",
+      "name": "player_data_store_initialization_failed",
+      "retention_tier": "operational",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "info",
+      "description": "The player-data storage backend was selected.",
+      "name": "storage_backend_selected",
+      "retention_tier": "operational",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "critical",
+      "description": "The configured storage backend is invalid for the environment.",
+      "name": "storage_backend_invalid",
+      "retention_tier": "operational",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "error",
+      "description": "A player-data read failed.",
+      "name": "player_data_read_failed",
+      "retention_tier": "operational",
+      "services": [
+        "player_data",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "error",
+      "description": "A player-data write failed.",
+      "name": "player_data_write_failed",
+      "retention_tier": "operational",
+      "services": [
+        "player_data",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "player_data",
+      "default_level": "error",
+      "description": "The player-data database or storage dependency is unavailable.",
+      "name": "database_unavailable",
+      "retention_tier": "operational",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "player_data",
+      "default_level": "critical",
+      "description": "A database migration failed.",
+      "name": "database_migration_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "profile_migration",
+      "default_level": "info",
+      "description": "A local profile migration began.",
+      "name": "profile_migration_started",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "profile_migration",
+      "default_level": "info",
+      "description": "A local profile migration completed successfully.",
+      "name": "profile_migration_succeeded",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "profile_migration",
+      "default_level": "error",
+      "description": "A local profile migration failed.",
+      "name": "profile_migration_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "profile_migration",
+      "default_level": "error",
+      "description": "A local profile migration backup failed.",
+      "name": "profile_backup_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "info",
+      "description": "A match result report began.",
+      "name": "match_result_report_started",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server",
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "info",
+      "description": "A match result report was accepted and persisted.",
+      "name": "match_result_report_succeeded",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server",
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "error",
+      "description": "A match result report failed.",
+      "name": "match_result_report_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server",
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "warn",
+      "description": "A match result was preserved as pending for later delivery or processing.",
+      "name": "match_result_marked_pending",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server",
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "warn",
+      "description": "A failed match result operation was scheduled for retry.",
+      "name": "match_result_retry_scheduled",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "info",
+      "description": "A retried match result operation succeeded.",
+      "name": "match_result_retry_succeeded",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "error",
+      "description": "All configured retries for a match result operation were exhausted.",
+      "name": "match_result_retry_exhausted",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "match_results",
+      "default_level": "info",
+      "description": "A duplicate or idempotent match result was suppressed.",
+      "name": "match_result_duplicate_suppressed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "progression",
+      "default_level": "error",
+      "description": "Reward calculation for a completed result failed.",
+      "name": "reward_calculation_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "progression",
+      "default_level": "error",
+      "description": "A reward grant failed.",
+      "name": "reward_grant_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "progression",
+      "default_level": "info",
+      "description": "A reward grant completed successfully.",
+      "name": "reward_grant_succeeded",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "warn",
+      "description": "A game-server WebSocket upgrade failed.",
+      "name": "game_server_connection_upgrade_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "info",
+      "description": "A client connected to the game server.",
+      "name": "game_server_client_connected",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "warn",
+      "description": "A client disconnected unexpectedly from the game server.",
+      "name": "game_server_client_disconnected",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "warn",
+      "description": "A game-server socket read failed unexpectedly.",
+      "name": "game_server_read_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "error",
+      "description": "A game-server socket write failed.",
+      "name": "game_server_write_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "warn",
+      "description": "A game-server packet envelope could not be decoded.",
+      "name": "packet_envelope_decode_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "warn",
+      "description": "A game-server packet could not be routed.",
+      "name": "packet_route_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "game_networking",
+      "default_level": "error",
+      "description": "A game-server outbound packet could not be encoded.",
+      "name": "outbound_packet_encode_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "warn",
+      "description": "A packet size warning or danger threshold was crossed.",
+      "name": "packet_size_threshold_crossed",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "warn",
+      "description": "A game-server write exceeded its latency threshold.",
+      "name": "game_server_write_slow",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A game-server room was created.",
+      "name": "room_created",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "error",
+      "description": "A game-server room could not be created.",
+      "name": "room_creation_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "warn",
+      "description": "A player could not join a room.",
+      "name": "room_join_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "debug",
+      "description": "A room changed its readiness state.",
+      "name": "room_ready_state_changed",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A room starting countdown began.",
+      "name": "room_countdown_started",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A room starting countdown was canceled.",
+      "name": "room_countdown_canceled",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A room started a match.",
+      "name": "room_match_started",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A room ended a match.",
+      "name": "room_match_ended",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A room was cleaned up after its lifecycle ended.",
+      "name": "room_cleaned_up",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "rooms",
+      "default_level": "info",
+      "description": "A player was removed from a room by timeout or an administrative action.",
+      "name": "room_player_removed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "info",
+      "description": "Authoritative match simulation started.",
+      "name": "match_started",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "info",
+      "description": "Authoritative match simulation ended.",
+      "name": "match_ended",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "info",
+      "description": "The authoritative simulation detected game over.",
+      "name": "game_over_detected",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "info",
+      "description": "A player avatar died in authoritative simulation.",
+      "name": "player_died",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "warn",
+      "description": "A requested player respawn was blocked.",
+      "name": "respawn_blocked",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "warn",
+      "description": "An authoritative simulation entity lacked a required collision shape.",
+      "name": "collision_shape_missing",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "error",
+      "description": "The authoritative simulation detected an invalid entity state.",
+      "name": "invalid_entity_state_detected",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "simulation",
+      "default_level": "critical",
+      "description": "The game server recovered from a simulation panic or unsafe failure.",
+      "name": "simulation_panic_recovered",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "devtools_admin",
+      "default_level": "info",
+      "description": "Devtools capability was enabled in an allowed environment.",
+      "name": "devtools_enabled",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": true,
+      "category": "devtools_admin",
+      "default_level": "info",
+      "description": "A state-changing devtools command was applied.",
+      "name": "devtools_command_applied",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "devtools_admin",
+      "default_level": "warn",
+      "description": "A devtools command was rejected by capability or validation policy.",
+      "name": "devtools_command_rejected",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "devtools_admin",
+      "default_level": "info",
+      "description": "An administrative state-changing action was requested.",
+      "name": "admin_action_requested",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "devtools_admin",
+      "default_level": "info",
+      "description": "An administrative state-changing action was applied.",
+      "name": "admin_action_applied",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "devtools_admin",
+      "default_level": "error",
+      "description": "An administrative state-changing action failed.",
+      "name": "admin_action_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "integrity",
+      "default_level": "warn",
+      "description": "A moderation or enforcement action was applied.",
+      "name": "moderation_action_applied",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "integrity",
+      "default_level": "warn",
+      "description": "An integrity check failed or produced a suspicious result.",
+      "name": "integrity_check_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server",
+        "api_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "integrity",
+      "default_level": "warn",
+      "description": "A suspicious or invalid packet was rejected.",
+      "name": "suspicious_packet_rejected",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "integrity",
+      "default_level": "warn",
+      "description": "An impossible state or input was detected.",
+      "name": "impossible_state_detected",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "integrity",
+      "default_level": "warn",
+      "description": "A bot or tool-assisted-run flag was attached to a run or result.",
+      "name": "bot_tas_flag_applied",
+      "retention_tier": "audit_grade",
+      "services": [
+        "game_server",
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "integrity",
+      "default_level": "warn",
+      "description": "A player's or result's integrity eligibility changed.",
+      "name": "integrity_eligibility_changed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "player_data"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_lifecycle",
+      "default_level": "error",
+      "description": "The log aggregator is unavailable; producers must remain non-blocking.",
+      "name": "aggregator_unavailable",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_ingestion",
+      "default_level": "debug",
+      "description": "The aggregator accepted an event or batch.",
+      "name": "aggregator_event_accepted",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_ingestion",
+      "default_level": "warn",
+      "description": "The aggregator rejected an event or batch for schema or safety reasons.",
+      "name": "aggregator_event_rejected",
+      "retention_tier": "operational",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_ingestion",
+      "default_level": "warn",
+      "description": "The aggregator redacted unsafe or sensitive event fields.",
+      "name": "aggregator_event_redacted",
+      "retention_tier": "operational",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_ingestion",
+      "default_level": "debug",
+      "description": "The aggregator suppressed a duplicate event.",
+      "name": "aggregator_duplicate_suppressed",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_query",
+      "default_level": "info",
+      "description": "Events were grouped into a correlation-preserving diagnostic chain.",
+      "name": "diagnostic_chain_grouped",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_storage",
+      "default_level": "critical",
+      "description": "Durable aggregator storage failed.",
+      "name": "aggregator_storage_failed",
+      "retention_tier": "operational",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_query",
+      "default_level": "error",
+      "description": "An aggregator search or filtering query failed.",
+      "name": "aggregator_query_failed",
+      "retention_tier": "operational",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "aggregator_storage",
+      "default_level": "info",
+      "description": "An audit-required event was validated and promoted to an audit-grade record.",
+      "name": "audit_record_created",
+      "retention_tier": "audit_grade",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "aggregator_storage",
+      "default_level": "critical",
+      "description": "The aggregator could not persist an audit-grade record.",
+      "name": "audit_record_creation_failed",
+      "retention_tier": "audit_grade",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "aggregator_retention",
+      "default_level": "info",
+      "description": "Configured retention policy was applied to aggregated records.",
+      "name": "retention_policy_applied",
+      "retention_tier": "operational",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "info",
+      "description": "A bounded diagnostic bundle was created.",
+      "name": "diagnostic_bundle_created",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "game_server",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "info",
+      "description": "Safe copyable diagnostics were generated for a user or tester.",
+      "name": "copy_diagnostics_generated",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "info",
+      "description": "A bug report was created with diagnostic context.",
+      "name": "bug_report_created",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "info",
+      "description": "A diagnostic report upload began.",
+      "name": "bug_report_upload_started",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "info",
+      "description": "A diagnostic report upload succeeded.",
+      "name": "bug_report_upload_succeeded",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "warn",
+      "description": "A diagnostic report upload failed while local diagnostics remain available.",
+      "name": "bug_report_upload_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "warn",
+      "description": "A diagnostic report was rejected for unsafe or invalid fields.",
+      "name": "diagnostic_report_rejected",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "diagnostics",
+      "default_level": "critical",
+      "description": "Required diagnostic redaction failed, preventing safe export or storage.",
+      "name": "diagnostic_redaction_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "health_readiness",
+      "default_level": "error",
+      "description": "Internal liveness checks failed.",
+      "name": "liveness_check_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "health_readiness",
+      "default_level": "warn",
+      "description": "A service failed readiness checks.",
+      "name": "readiness_check_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "health_readiness",
+      "default_level": "error",
+      "description": "A required dependency failed health checks.",
+      "name": "dependency_health_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "category": "health_readiness",
+      "default_level": "warn",
+      "description": "A service or environment entered maintenance mode.",
+      "name": "maintenance_mode_entered",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": true,
+      "category": "health_readiness",
+      "default_level": "info",
+      "description": "A service or environment exited maintenance mode.",
+      "name": "maintenance_mode_exited",
+      "retention_tier": "audit_grade",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "health_readiness",
+      "default_level": "warn",
+      "description": "The operating environment entered a degraded condition.",
+      "name": "environment_degraded",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "health_readiness",
+      "default_level": "info",
+      "description": "The operating environment recovered from degradation.",
+      "name": "environment_recovered",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "health_readiness",
+      "default_level": "error",
+      "description": "Telemetry or logging was unavailable before or after launch.",
+      "name": "observability_unavailable",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "warn",
+      "description": "Simulation tick duration crossed its configured warning threshold.",
+      "name": "slow_tick_threshold_crossed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "warn",
+      "description": "Client frame pressure crossed its configured warning threshold.",
+      "name": "frame_pressure_threshold_crossed",
+      "retention_tier": "operational",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "warn",
+      "description": "Active entity count crossed its configured warning threshold.",
+      "name": "entity_count_threshold_crossed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "warn",
+      "description": "Observed memory growth crossed its configured warning threshold.",
+      "name": "memory_growth_threshold_crossed",
+      "retention_tier": "operational",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "player_data",
+        "log_aggregator"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "info",
+      "description": "A bounded load or soak scenario began.",
+      "name": "load_scenario_started",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "game_server",
+        "api_server",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "info",
+      "description": "A bounded load or soak scenario completed.",
+      "name": "load_scenario_completed",
+      "retention_tier": "ephemeral_dev",
+      "services": [
+        "game_server",
+        "api_server",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "error",
+      "description": "A bounded load or soak scenario failed.",
+      "name": "load_scenario_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "game_server",
+        "api_server",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "category": "runtime_threshold",
+      "default_level": "error",
+      "description": "A soak run detected sustained runtime degradation.",
+      "name": "soak_degradation_detected",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "api_server",
+        "game_server",
+        "log_aggregator"
+      ],
+      "trace_required": true
+    }
+  ],
+  "fields": [
+    {
+      "description": "Event creation time as an RFC3339 timestamp with nanosecond precision, normalized to UTC.",
+      "name": "timestamp",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Operational severity; one of debug, info, warn, error, or critical.",
+      "name": "level",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Stable snake_case event name used for grouping, search, and automation.",
+      "name": "event",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Product service or client component that emitted the event.",
+      "name": "service",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Runtime environment in which the event was emitted.",
+      "name": "environment",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Build or release version of the emitting component.",
+      "name": "build_version",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Observability event schema version; the permanent contract currently defines version 1.",
+      "name": "schema_version",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "integer"
+    },
+    {
+      "description": "Stable subsystem category used for filtering and category-level log controls.",
+      "name": "category",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Human-readable context; tooling must use event rather than parsing this text.",
+      "name": "message",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Unique identifier for this event; newly created values must use UUID format.",
+      "name": "event_id",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "uuid"
+    },
+    {
+      "description": "UUID correlating one distributed operation or investigation chain.",
+      "name": "trace_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "uuid"
+    },
+    {
+      "description": "Existing domain-owned identifier for an API or HTTP request.",
+      "name": "request_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Existing domain-owned identifier for a gameplay or service session.",
+      "name": "session_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Existing domain-owned identifier for a room flow.",
+      "name": "room_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Existing domain-owned identifier for a match or match-result flow.",
+      "name": "match_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Readable player-facing identifier, such as Player-1; do not replace it with a UUID for observability.",
+      "name": "player_id",
+      "required": false,
+      "sensitivity": "personal",
+      "type": "string"
+    },
+    {
+      "description": "Existing domain-owned identifier for an account when account context is relevant.",
+      "name": "account_id",
+      "required": false,
+      "sensitivity": "personal",
+      "type": "string"
+    },
+    {
+      "description": "API, HTTP, or logical route associated with the event; exclude credentials and raw secrets.",
+      "name": "route",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Packet type associated with a network event, without including the packet payload.",
+      "name": "packet_type",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Stable machine-readable error code.",
+      "name": "error_code",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Categorized reason or mode for an observed failure.",
+      "name": "failure_mode",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Bounded duration measurement in milliseconds for the operation summarized by the event.",
+      "name": "duration_ms",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "number"
+    },
+    {
+      "description": "Named degraded, offline, maintenance, or admission-blocked state.",
+      "name": "degraded_state",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Bounded opaque key used to correlate retries and suppress duplicate effects; never include secrets.",
+      "name": "idempotency_key",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "UUID identifying a diagnostic report or bundle.",
+      "name": "diagnostic_report_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "uuid"
+    },
+    {
+      "description": "UUID reference for an audit-grade record, when one is created.",
+      "name": "audit_event_id",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "uuid"
+    },
+    {
+      "description": "Existing domain-owned identifier for the actor responsible for an audit-worthy action.",
+      "name": "actor_id",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "Category of actor, such as player, service, admin, or system.",
+      "name": "actor_type",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "Existing domain-owned identifier for the target of an audit-worthy action.",
+      "name": "target_id",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "Category of target affected by an audit-worthy action.",
+      "name": "target_type",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "Stable action name for an audit-worthy state change.",
+      "name": "action",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "Stable non-sensitive reason code for an action or decision.",
+      "name": "reason_code",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "UUID identifying a support, moderation, dispute, or administrative case.",
+      "name": "case_id",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "uuid"
+    },
+    {
+      "description": "UUID identifying a transaction or entitlement operation without exposing payment data.",
+      "name": "transaction_id",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "uuid"
+    },
+    {
+      "description": "UUID identifying a competitive or persisted match result.",
+      "name": "result_id",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "uuid"
+    },
+    {
+      "description": "When true, the aggregator validates, preserves, and promotes the event into an audit-grade record.",
+      "name": "audit_required",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "boolean"
+    },
+    {
+      "description": "Domain-defined audit classification used when audit_required is true.",
+      "name": "audit_type",
+      "required": false,
+      "sensitivity": "confidential",
+      "type": "string"
+    },
+    {
+      "description": "UUID identifying the running service instance that emitted the event.",
+      "name": "service_instance_id",
+      "required": true,
+      "sensitivity": "internal",
+      "type": "uuid"
+    },
+    {
+      "description": "Worker name or index for the worker or job execution that emitted the event.",
+      "name": "worker_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Operating-system process identifier for local diagnostics.",
+      "name": "pid",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "integer"
+    },
+    {
+      "description": "UUID assigned to an ingestion request or batch by the receiving aggregator.",
+      "name": "ingestion_id",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "uuid"
+    },
+    {
+      "description": "RFC3339-nanosecond UTC time at which the aggregator accepted the event.",
+      "name": "ingested_at",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Named source or transport from which the aggregator received the event.",
+      "name": "ingestion_source",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Positive bounded attempt number for delivery or retry ingestion.",
+      "name": "ingestion_attempt",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "integer"
+    },
+    {
+      "description": "Indicates that one or more unsafe or sensitive values were removed or transformed before storage or export.",
+      "name": "redaction_applied",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "boolean"
+    },
+    {
+      "description": "Retention classification: ephemeral_dev, operational, diagnostic_report, or audit_grade.",
+      "name": "retention_tier",
+      "required": false,
+      "sensitivity": "internal",
+      "type": "string"
+    },
+    {
+      "description": "Bounded event-specific key/value data; keys and scalar values must obey schema limits and redaction rules.",
+      "name": "fields",
+      "required": false,
+      "sensitivity": "restricted",
+      "type": "object"
+    }
+  ],
+  "redaction": {
+    "actions": [
+      {
+        "description": "Reject the event, field, or bundle when unsafe content cannot be safely removed.",
+        "name": "reject",
+        "replacement_marker": null,
+        "replacement_used": false,
+        "value_preserved": false
+      },
+      {
+        "description": "Remove the unsafe value and retain only the safe replacement marker.",
+        "name": "redact",
+        "replacement_marker": "[REDACTED]",
+        "replacement_used": true,
+        "value_preserved": false
+      }
+    ],
+    "ambiguous_match_action": "reject",
+    "case_sensitive": false,
+    "exact_rules": [
+      {
+        "action": "reject",
+        "category": "secrets",
+        "keys": [
+          "secret",
+          "secret_key",
+          "client_secret",
+          "private_key",
+          "encryption_key",
+          "signing_key",
+          "api_key",
+          "access_key",
+          "credential",
+          "credentials"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "auth_headers",
+        "keys": [
+          "authorization",
+          "proxy_authorization",
+          "www_authenticate",
+          "x_api_key",
+          "x_auth_token",
+          "cookie_header",
+          "set_cookie"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "cookies",
+        "keys": [
+          "cookie",
+          "cookies",
+          "session_cookie",
+          "refresh_cookie"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "oauth_codes",
+        "keys": [
+          "oauth_code",
+          "authorization_code",
+          "auth_code",
+          "code_verifier",
+          "access_token",
+          "refresh_token",
+          "id_token"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "passwords",
+        "keys": [
+          "password",
+          "password_confirmation",
+          "passwd",
+          "passphrase",
+          "pin",
+          "security_answer"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "payment_data",
+        "keys": [
+          "card_number",
+          "card_cvv",
+          "cvv",
+          "cvc",
+          "expiry_date",
+          "bank_account",
+          "routing_number",
+          "payment_method",
+          "payment_token"
+        ]
+      },
+      {
+        "action": "redact",
+        "category": "raw_private_profile_data",
+        "keys": [
+          "profile_blob",
+          "private_profile",
+          "raw_profile",
+          "profile_data",
+          "private_metadata",
+          "personal_data"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "raw_packet_payload_dumps",
+        "keys": [
+          "packet_payload",
+          "raw_packet",
+          "packet_dump",
+          "payload",
+          "raw_payload",
+          "request_body",
+          "response_body",
+          "body_dump"
+        ]
+      }
+    ],
+    "forbidden_value_handling": "reject_or_redact",
+    "fragment_rules": [
+      {
+        "action": "reject",
+        "category": "secrets",
+        "fragments": [
+          "secret",
+          "credential",
+          "private_key",
+          "signing_key",
+          "encryption_key",
+          "api_key"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "auth_headers",
+        "fragments": [
+          "authorization",
+          "auth_header",
+          "bearer",
+          "token_header"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "cookies",
+        "fragments": [
+          "cookie",
+          "set_cookie"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "oauth_codes",
+        "fragments": [
+          "oauth",
+          "access_token",
+          "refresh_token",
+          "id_token",
+          "authorization_code",
+          "code_verifier"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "passwords",
+        "fragments": [
+          "password",
+          "passwd",
+          "passphrase",
+          "secret_answer"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "payment_data",
+        "fragments": [
+          "card_number",
+          "cardholder",
+          "credit_card",
+          "debit_card",
+          "cvv",
+          "cvc",
+          "payment",
+          "bank_account",
+          "routing_number"
+        ]
+      },
+      {
+        "action": "redact",
+        "category": "raw_private_profile_data",
+        "fragments": [
+          "profile_blob",
+          "raw_profile",
+          "private_profile",
+          "profile_data",
+          "personal_data",
+          "private_metadata"
+        ]
+      },
+      {
+        "action": "reject",
+        "category": "raw_packet_payload_dumps",
+        "fragments": [
+          "raw_packet",
+          "packet_dump",
+          "packet_payload",
+          "raw_payload",
+          "request_body",
+          "response_body",
+          "payload_dump"
+        ]
+      }
+    ],
+    "key_matching": "unicode_casefold",
+    "missing_action": "reject",
+    "raw_forbidden_values_may_be_logged": false,
+    "redaction_failure_action": "reject",
+    "rejected_content_must_be_discarded": true,
+    "rejected_values_must_be_preserved": false,
+    "schema_version": 1
+  },
+  "retention_tiers": {
+    "policy": {
+      "age_unit": "seconds",
+      "age_values_are_configuration_metadata": true,
+      "production_legal_retention_commitment": false,
+      "unset_age_value": 0
+    },
+    "tiers": [
+      {
+        "age_is_configurable": true,
+        "compression": "optional",
+        "default_age_seconds": 0,
+        "delete_policy": "delete_on_shutdown_or_when_configured_age_expires",
+        "durability": "best_effort",
+        "legal_commitment": false,
+        "max_age_seconds": 0,
+        "name": "ephemeral_dev",
+        "purpose": "Local development and temporary subsystem debugging."
+      },
+      {
+        "age_is_configurable": true,
+        "compression": "recommended",
+        "default_age_seconds": 0,
+        "delete_policy": "delete_when_configured_age_expires_or_storage_pressure_requires_eviction",
+        "durability": "durable",
+        "legal_commitment": false,
+        "max_age_seconds": 0,
+        "name": "operational",
+        "purpose": "Routine operational diagnosis and cross-service event investigation."
+      },
+      {
+        "age_is_configurable": true,
+        "compression": "recommended",
+        "default_age_seconds": 0,
+        "delete_policy": "delete_when_configured_report_age_expires_or_report_is_expunged",
+        "durability": "durable_until_report_expiry",
+        "legal_commitment": false,
+        "max_age_seconds": 0,
+        "name": "diagnostic_report",
+        "purpose": "User- or tester-facing bug reports, copy diagnostics, and bounded diagnostic bundles."
+      },
+      {
+        "age_is_configurable": true,
+        "compression": "lossless_or_integrity_preserving",
+        "default_age_seconds": 0,
+        "delete_policy": "retain_until_configured_audit_age_expires_or_authorized_disposition",
+        "durability": "durable",
+        "legal_commitment": false,
+        "max_age_seconds": 0,
+        "name": "audit_grade",
+        "purpose": "Audit-worthy aggregated records created by an explicit audit trigger."
+      }
+    ]
+  },
+  "schema": {
+    "envelope": {
+      "allowed_top_level_fields": [
+        "timestamp",
+        "level",
+        "event",
+        "service",
+        "environment",
+        "build_version",
+        "schema_version",
+        "category",
+        "message",
+        "event_id",
+        "trace_id",
+        "request_id",
+        "session_id",
+        "room_id",
+        "match_id",
+        "player_id",
+        "account_id",
+        "route",
+        "packet_type",
+        "error_code",
+        "failure_mode",
+        "duration_ms",
+        "degraded_state",
+        "idempotency_key",
+        "diagnostic_report_id",
+        "audit_event_id",
+        "actor_id",
+        "actor_type",
+        "target_id",
+        "target_type",
+        "action",
+        "reason_code",
+        "case_id",
+        "transaction_id",
+        "result_id",
+        "audit_required",
+        "audit_type",
+        "service_instance_id",
+        "worker_id",
+        "pid",
+        "ingestion_id",
+        "ingested_at",
+        "ingestion_source",
+        "ingestion_attempt",
+        "redaction_applied",
+        "retention_tier",
+        "fields"
+      ],
+      "canonical_levels": [
+        "debug",
+        "info",
+        "warn",
+        "error",
+        "critical"
+      ],
+      "event_name_pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+      "reject_unknown_top_level_fields": true,
+      "required_fields": [
+        "timestamp",
+        "level",
+        "event",
+        "event_id",
+        "service",
+        "environment",
+        "build_version",
+        "schema_version",
+        "service_instance_id"
+      ],
+      "timestamp_format": "RFC3339-nanosecond-UTC"
+    },
+    "free_form_fields": {
+      "key_pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "value_types": [
+        "string",
+        "boolean",
+        "integer",
+        "number"
+      ],
+      "values_must_be_redacted": true
+    },
+    "identifiers": {
+      "new_id_format": "UUID",
+      "new_id_version": "any",
+      "uuid_pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "limits": {
+      "max_batch_events": 100,
+      "max_collection_items": 128,
+      "max_event_bytes": 65536,
+      "max_event_fields": 64,
+      "max_free_form_fields": 32,
+      "max_free_form_value_bytes": 4096,
+      "max_string_bytes": 4096
+    },
+    "schema_version": 1,
+    "validation": {
+      "null_values_allowed": false,
+      "unknown_top_level_field_action": "reject",
+      "unsafe_field_action": "redact_or_reject"
+    }
+  }
+}

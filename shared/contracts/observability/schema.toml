@@ -1,27 +1,32 @@
-[schema]
-name = "observability"
-version = 1
-description = "Canonical observability event contract shared by Space Rocks services and clients."
-format = "toml"
+schema_version = 1
 
 [envelope]
-name = "canonical_event"
-version = 1
-description = "Stable event envelope for structured logs, diagnostics, and audit records."
+canonical_levels = ["debug", "info", "warn", "error", "critical"]
 required_fields = [
+  "timestamp",
+  "level",
+  "event",
   "event_id",
+  "service",
+  "environment",
+  "build_version",
+  "schema_version",
+  "service_instance_id",
+]
+timestamp_format = "RFC3339-nanosecond-UTC"
+event_name_pattern = "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+reject_unknown_top_level_fields = true
+allowed_top_level_fields = [
   "timestamp",
   "level",
   "event",
   "service",
-  "schema_version",
-  "service_instance_id"
-]
-optional_fields = [
   "environment",
   "build_version",
+  "schema_version",
   "category",
   "message",
+  "event_id",
   "trace_id",
   "request_id",
   "session_id",
@@ -37,35 +42,50 @@ optional_fields = [
   "degraded_state",
   "idempotency_key",
   "diagnostic_report_id",
-  "batch_id",
-  "source_event_id",
-  "source_service",
-  "source_service_instance_id",
-  "worker_id",
-  "process_id",
-  "audit_required",
-  "audit_type",
+  "audit_event_id",
   "actor_id",
   "actor_type",
-  "target_type",
   "target_id",
+  "target_type",
   "action",
   "reason_code",
   "case_id",
   "transaction_id",
   "result_id",
-  "audit_event_id",
-  "fields"
+  "audit_required",
+  "audit_type",
+  "service_instance_id",
+  "worker_id",
+  "pid",
+  "ingestion_id",
+  "ingested_at",
+  "ingestion_source",
+  "ingestion_attempt",
+  "redaction_applied",
+  "retention_tier",
+  "fields",
 ]
 
-[validation]
-unknown_fields = "rejected"
-field_names = "snake_case"
-event_specific_fields_key = "fields"
-event_specific_fields_type = "object"
+[identifiers]
+new_id_format = "UUID"
+new_id_version = "any"
+uuid_pattern = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
 
-[[validation.conditional_requirement]]
-when_field = "audit_required"
-when_value = true
-requires_field = "audit_type"
-description = "Audit-required events must declare an audit type."
+[limits]
+max_batch_events = 100
+max_event_bytes = 65536
+max_event_fields = 64
+max_string_bytes = 4096
+max_collection_items = 128
+max_free_form_fields = 32
+max_free_form_value_bytes = 4096
+
+[free_form_fields]
+key_pattern = "^[a-z][a-z0-9_]{0,63}$"
+value_types = ["string", "boolean", "integer", "number"]
+values_must_be_redacted = true
+
+[validation]
+unknown_top_level_field_action = "reject"
+unsafe_field_action = "redact_or_reject"
+null_values_allowed = false

@@ -1,0 +1,169 @@
+schema_version = 1
+
+[bundle]
+name = "diagnostic_bundle"
+schema_version = 1
+diagnostic_report_id_type = "UUID"
+diagnostic_report_id_required = true
+safe_to_copy_default = true
+safe_to_copy_field = "safe_to_copy"
+
+[limits]
+max_events = 500
+max_event_bytes = 65536
+max_total_bytes = 5242880
+max_metadata_fields = 32
+max_correlation_fields = 16
+max_redaction_summary_entries = 32
+
+[sections.metadata]
+required = true
+allowed_fields = ["service", "environment", "build_version", "schema_version", "generated_at", "client_version", "server_version", "platform", "locale", "diagnostic_report_id"]
+
+[sections.correlation]
+required = true
+allowed_fields = ["trace_id", "request_id", "session_id", "room_id", "match_id", "diagnostic_report_id", "audit_event_id"]
+
+[sections.redaction_summary]
+required = true
+allowed_fields = ["redaction_applied", "redacted_event_count", "redacted_field_count", "rejected_event_count", "rejected_field_count", "replacement_marker", "policy_version"]
+
+[events]
+required = true
+ordered_by = "timestamp_ascending"
+truncated_when_limit_exceeded = true
+
+[[allowed_event_fields]]
+name = "timestamp"
+type = "string"
+required = true
+
+[[allowed_event_fields]]
+name = "level"
+type = "string"
+required = true
+
+[[allowed_event_fields]]
+name = "event"
+type = "string"
+required = true
+
+[[allowed_event_fields]]
+name = "service"
+type = "string"
+required = true
+
+[[allowed_event_fields]]
+name = "schema_version"
+type = "integer"
+required = false
+
+[[allowed_event_fields]]
+name = "environment"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "build_version"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "event_id"
+type = "uuid"
+required = false
+
+[[allowed_event_fields]]
+name = "trace_id"
+type = "uuid"
+required = false
+
+[[allowed_event_fields]]
+name = "category"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "message"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "error_code"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "failure_mode"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "duration_ms"
+type = "number"
+required = false
+
+[[allowed_event_fields]]
+name = "request_id"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "session_id"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "room_id"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "match_id"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "player_id"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "account_id"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "service_instance_id"
+type = "uuid"
+required = false
+
+[[allowed_event_fields]]
+name = "diagnostic_report_id"
+type = "uuid"
+required = false
+
+[[allowed_event_fields]]
+name = "retention_tier"
+type = "string"
+required = false
+
+[[allowed_event_fields]]
+name = "fields"
+type = "object"
+required = false
+
+[[allowed_event_fields]]
+name = "redaction_applied"
+type = "boolean"
+required = false
+
+[forbidden_content]
+behavior = "redact_when_safe_otherwise_reject"
+raw_value_preserved = false
+rejected_event_included = false
+rejected_field_included = false
+replacement_marker = "[REDACTED]"
+redaction_summary_must_count_rejected_content = true
+redaction_failure_behavior = "reject_bundle"
+unknown_event_field_behavior = "reject_event"

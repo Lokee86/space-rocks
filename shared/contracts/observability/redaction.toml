@@ -1,136 +1,107 @@
+schema_version = 1
+
 [policy]
-name = "observability_redaction"
-version = 1
-description = "Mandatory rejection and future redaction policy for unsafe observability data."
-recursive = true
-scan_paths = ["envelope", "fields"]
-
-[key_matching]
 case_sensitive = false
-normalize_before_matching = true
-normalized_separators = ["_", "-", ".", "/", "\\", " "]
-separator_replacement = ""
-configured_keys_follow_normalization = true
-configured_key_normalization = "Configured rule keys are normalized with these same case and separator rules before matching incoming keys."
+key_matching = "unicode_casefold"
+forbidden_value_handling = "reject_or_redact"
+rejected_values_must_be_preserved = false
+raw_forbidden_values_may_be_logged = false
 
-[actions]
-supported = ["reject_event", "redact_value", "drop_field"]
-initial_mandatory_action = "reject_event"
+[action.reject]
+name = "reject"
+description = "Reject the event, field, or bundle when unsafe content cannot be safely removed."
+value_preserved = false
+replacement_used = false
 
-[rejection_metadata]
-allowed_fields = ["rule_id", "normalized_field_path", "reason_code"]
-rejected_value_allowed = false
+[action.redact]
+name = "redact"
+description = "Remove the unsafe value and retain only the safe replacement marker."
+value_preserved = false
+replacement_used = true
+replacement_marker = "[REDACTED]"
 
-[redaction]
-replacement = "[REDACTED]"
+[[forbidden_exact_keys]]
+category = "secrets"
+action = "reject"
+keys = ["secret", "secret_key", "client_secret", "private_key", "encryption_key", "signing_key", "api_key", "access_key", "credential", "credentials"]
 
-[[rule]]
-id = "forbidden_auth_transport_fields"
-description = "Reject authorization credentials, authentication headers, and cookies."
-action = "reject_event"
-match = "exact_key"
-keys = [
-  "authorization",
-  "auth",
-  "auth_header",
-  "authentication",
-  "authentication_header",
-  "cookie",
-  "cookies",
-  "set_cookie"
-]
-reason_code = "forbidden_auth_data"
+[[forbidden_exact_keys]]
+category = "auth_headers"
+action = "reject"
+keys = ["authorization", "proxy_authorization", "www_authenticate", "x_api_key", "x_auth_token", "cookie_header", "set_cookie"]
 
-[[rule]]
-id = "forbidden_credential_fields"
-description = "Reject access, refresh, bearer, identity, OAuth, API-key, password, secret, and one-time credential fields."
-action = "reject_event"
-match = "exact_key"
-keys = [
-  "access_token",
-  "access_token_value",
-  "refresh_token",
-  "refresh_token_value",
-  "bearer_token",
-  "id_token",
-  "identity_token",
-  "oauth_code",
-  "oauth_token",
-  "api_key",
-  "apikey",
-  "api_secret",
-  "password",
-  "passphrase",
-  "secret",
-  "secret_key",
-  "private_key",
-  "signing_key",
-  "encryption_key",
-  "otp",
-  "otp_code",
-  "mfa_code",
-  "one_time_code"
-]
-reason_code = "forbidden_credential_data"
+[[forbidden_exact_keys]]
+category = "cookies"
+action = "reject"
+keys = ["cookie", "cookies", "session_cookie", "refresh_cookie"]
 
-[[rule]]
-id = "forbidden_financial_fields"
-description = "Reject payment-card and bank-account data."
-action = "reject_event"
-match = "exact_key"
-keys = [
-  "card_number",
-  "cardholder_name",
-  "card_expiry",
-  "expiration_date",
-  "cvv",
-  "cvc",
-  "pin",
-  "bank_account",
-  "bank_account_number",
-  "account_number",
-  "routing_number",
-  "iban",
-  "swift_code"
-]
-reason_code = "forbidden_financial_data"
+[[forbidden_exact_keys]]
+category = "oauth_codes"
+action = "reject"
+keys = ["oauth_code", "authorization_code", "auth_code", "code_verifier", "access_token", "refresh_token", "id_token"]
 
-[[rule]]
-id = "forbidden_raw_content_fields"
-description = "Reject raw profiles, packets, payloads, bodies, provider data, webhook data, and unrestricted header containers."
-action = "reject_event"
-match = "exact_key"
-keys = [
-  "private_profile",
-  "raw_profile",
-  "raw_packet",
-  "raw_packets",
-  "packet_payload",
-  "raw_payload",
-  "payload",
-  "request_body",
-  "response_body",
-  "body",
-  "provider_payload",
-  "webhook_payload",
-  "headers",
-  "request_headers",
-  "response_headers"
-]
-reason_code = "forbidden_raw_content"
+[[forbidden_exact_keys]]
+category = "passwords"
+action = "reject"
+keys = ["password", "password_confirmation", "passwd", "passphrase", "pin", "security_answer"]
 
-[[rule]]
-id = "bearer_credential_value"
-description = "Reject explicit Bearer credentials wherever they occur in a scalar value."
-action = "reject_event"
-match = "value_pattern"
-pattern = "(?i)^\\s*Bearer\\s+[^\\s]+\\s*$"
-reason_code = "forbidden_bearer_credential"
+[[forbidden_exact_keys]]
+category = "payment_data"
+action = "reject"
+keys = ["card_number", "card_cvv", "cvv", "cvc", "expiry_date", "bank_account", "routing_number", "payment_method", "payment_token"]
 
-[[rule]]
-id = "private_key_pem_header"
-description = "Reject private-key PEM material wherever it occurs in a scalar value."
-action = "reject_event"
-match = "value_pattern"
-pattern = "-----BEGIN (?:RSA |EC |OPENSSH |DSA |ENCRYPTED )?PRIVATE KEY-----"
-reason_code = "forbidden_private_key_material"
+[[forbidden_exact_keys]]
+category = "raw_private_profile_data"
+action = "redact"
+keys = ["profile_blob", "private_profile", "raw_profile", "profile_data", "private_metadata", "personal_data"]
+
+[[forbidden_exact_keys]]
+category = "raw_packet_payload_dumps"
+action = "reject"
+keys = ["packet_payload", "raw_packet", "packet_dump", "payload", "raw_payload", "request_body", "response_body", "body_dump"]
+
+[[forbidden_key_fragments]]
+category = "secrets"
+action = "reject"
+fragments = ["secret", "credential", "private_key", "signing_key", "encryption_key", "api_key"]
+
+[[forbidden_key_fragments]]
+category = "auth_headers"
+action = "reject"
+fragments = ["authorization", "auth_header", "bearer", "token_header"]
+
+[[forbidden_key_fragments]]
+category = "cookies"
+action = "reject"
+fragments = ["cookie", "set_cookie"]
+
+[[forbidden_key_fragments]]
+category = "oauth_codes"
+action = "reject"
+fragments = ["oauth", "access_token", "refresh_token", "id_token", "authorization_code", "code_verifier"]
+
+[[forbidden_key_fragments]]
+category = "passwords"
+action = "reject"
+fragments = ["password", "passwd", "passphrase", "secret_answer"]
+
+[[forbidden_key_fragments]]
+category = "payment_data"
+action = "reject"
+fragments = ["card_number", "cardholder", "credit_card", "debit_card", "cvv", "cvc", "payment", "bank_account", "routing_number"]
+
+[[forbidden_key_fragments]]
+category = "raw_private_profile_data"
+action = "redact"
+fragments = ["profile_blob", "raw_profile", "private_profile", "profile_data", "personal_data", "private_metadata"]
+
+[[forbidden_key_fragments]]
+category = "raw_packet_payload_dumps"
+action = "reject"
+fragments = ["raw_packet", "packet_dump", "packet_payload", "raw_payload", "request_body", "response_body", "payload_dump"]
+
+[validation]
+missing_action = "reject"
+ambiguous_match_action = "reject"
+redaction_failure_action = "reject"
+rejected_content_must_be_discarded = true

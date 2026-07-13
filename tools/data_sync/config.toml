@@ -34,6 +34,16 @@ paths = [
   "shared/player_data/match_result.toml",
 ]
 
+[sot.observability]
+paths = [
+  "shared/contracts/observability/schema.toml",
+  "shared/contracts/observability/events.toml",
+  "shared/contracts/observability/fields.toml",
+  "shared/contracts/observability/redaction.toml",
+  "shared/contracts/observability/retention_tiers.toml",
+  "shared/contracts/observability/diagnostic_bundle.toml",
+]
+
 [constants.scan]
 include = ["services/game-server/internal/constants/*.go", "client/scripts/generated/constants/*.gd"]
 exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]
@@ -91,4 +101,38 @@ files = ["services/game-server/internal/game/drops/drop_tables.go"]
 sections = []
 owns = []
 outputs = ["server_drop_tables"]
+
+[observability.go]
+enabled = true
+files = [
+  "services/log-aggregator/internal/observability/generated.go",
+  "services/game-server/internal/observability/generated.go",
+  "services/player-data/observability/generated.go",
+]
+sections = []
+owns = []
+
+[observability.gds]
+enabled = true
+files = ["client/scripts/generated/observability/contract_generated.gd"]
+sections = []
+owns = []
+
+[observability.ruby]
+enabled = true
+files = ["services/api-server/app/lib/observability/contract_generated.rb"]
+sections = []
+owns = []
+
+[observability.json]
+enabled = true
+files = ["shared/contracts/observability/generated/contract.json"]
+sections = []
+owns = []
+
+[observability.docs]
+enabled = true
+files = ["docs/observability/generated/contract-reference.md"]
+sections = []
+owns = []
 
