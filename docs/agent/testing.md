@@ -9,6 +9,8 @@ This document owns testing and verification guidance for agents.
 
 Use this document for test commands, verification checkpoints, generated data checks, and validation planning.
 
+GitHub Actions runs three independent jobs: repository checks, Go tests, and Godot/GUT client tests. The jobs use read-only repository permissions, bounded job timeouts, and cancellation of superseded runs. The repository and client jobs use Python tooling where needed; the Go job reads its Go version from `services/game-server/go.mod`.
+
 ## Rules
 
 - Focused, safe terminal checks are allowed when useful.
@@ -18,6 +20,20 @@ Use this document for test commands, verification checkpoints, generated data ch
 - Keep collision export guidance tied to verification and the data pipeline, not broad implementation documentation.
 
 ## Server checks
+
+The shared Go CI runner is:
+
+```bash
+bash tools/ci/run_go_tests.sh
+```
+
+It executes all three stages, even if an earlier stage fails:
+
+- `player-data`: `go test -buildvcs=false ./...`
+- `game-server default`: `go test -buildvcs=false ./...`
+- `game-server nodevtools`: `go test -tags nodevtools -buildvcs=false ./...`
+
+The runner reports each stage and returns nonzero if any stage fails.
 
 Run server tests:
 
@@ -107,7 +123,7 @@ Run the configuration-driven architecture guard:
 python tools/architecture_guard/main.py
 ```
 
-The guard reads `tools/architecture_guard/rules.toml`; repository-specific invariants remain narrow TOML rules rather than Python logic.
+The guard reads `tools/architecture_guard/rules.toml`; repository-specific invariants remain narrow TOML rules rather than Python logic. Current high-confidence boundaries prevent client scripts from directly reading selected server-owned player, respawn, and asteroid constants, and prevent non-owner client scripts from reaching through `runtime_context.world_sync`. Keep the full rule definitions and exclusions in the TOML file rather than duplicating them here.
 
 Shared local/CI runners are available from the repository root:
 
@@ -117,7 +133,7 @@ bash tools/ci/run_go_tests.sh
 bash tools/ci/run_client_tests.sh
 ```
 
-The client runner uses Godot 4.6.3 in CI, checks out LFS assets, performs a 1200-frame first-run editor bootstrap under Xvfb with the compatibility renderer, imports headlessly, and runs the existing GUT selection under `tests/unit`. Local runs use Xvfb when available and retain a headless bootstrap fallback. Bootstrap, import, and GUT timeouts are configurable with `GODOT_BOOTSTRAP_TIMEOUT`, `GODOT_IMPORT_TIMEOUT`, and `GODOT_GUT_TIMEOUT`; `GODOT_ARTIFACT_DIR` stores streamed stage output and Godot engine logs.
+The client runner uses Godot 4.6.3 in CI, checks out LFS assets, performs a 1200-frame first-run editor bootstrap under Xvfb with the compatibility renderer and OpenGL 3 software driver, imports headlessly, and runs the existing GUT selection under `tests/unit`. Each stage has a timeout, streams stdout to the console and an artifact directory, and records a Godot engine log; CI uploads that directory unconditionally. Local runs use Xvfb when available and retain a headless bootstrap fallback. Bootstrap, import, and GUT timeouts are configurable with `GODOT_BOOTSTRAP_TIMEOUT`, `GODOT_IMPORT_TIMEOUT`, and `GODOT_GUT_TIMEOUT`; `GODOT_ARTIFACT_DIR` stores streamed stage output and Godot engine logs.
 
 Full gameplay/network smoke testing remains manual for now: opening the game scene, websocket connection, asteroid spawning, shooting/effects, pause/debug flow, and the full gameplay loop.
 
@@ -175,6 +191,15 @@ godot --headless --path client -s res://tools/export_collision_shapes.gd
 ```
 
 Pickup collision JSON should use class keys such as `powerup` and `weapon`, not per-type keys such as `1_up` or `torpedo`.
+
+## Test design guidance
+
+Keep tests aligned with the seam whose behavior they claim to verify:
+
+- Mutation-semantics tests should call direct mutation methods and assert their returned change (`Found` and resulting value), rather than expecting a presentation snapshot to update immediately.
+- Presentation tests should establish state through a publishing `game.Control` seam, or run an explicit `Game.Step` (including a zero-delta step when appropriate) before reading a presentation snapshot.
+- When respawn placement policy is the subject, call `Control.SafeRespawnPosition` directly and assert its success boolean before checking the position. Use packet/request plus snapshot coverage when testing publication or lifecycle behavior.
+- Do not parameterize a known-supported implementation only to skip it at runtime. Avoidable collected skips are not acceptable; the repository gate is expected to complete with zero skips.
 
 ## Test layout
 

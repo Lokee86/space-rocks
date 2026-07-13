@@ -16,7 +16,17 @@ This doc keeps verification and release gates aligned so code, docs, contracts, 
 
 ## Current status
 
-Active planning.
+The current automated CI baseline is implemented. Release-shaped planning remains active for packaged beta, dev-hosted multiplayer, hosted staging, production candidate, runtime-heavy feature, migration/compatibility, and operational readiness gates.
+
+## Current automated baseline
+
+GitHub Actions currently runs three independent jobs: repository checks, Go tests, and Godot/GUT client tests. The shared local/CI runners are the operational entry points; exact commands and environment variables are maintained in [Agent Testing Rules](../../../agent/testing.md).
+
+* Repository checks run the Python suite, data-sync drift checks, and configuration-driven architecture rules.
+* Go tests run player-data plus game-server default and `nodevtools` variants.
+* Client tests run the Godot 4.6.3 clean-runner sequence: editor bootstrap, headless import, and GUT, with logs and bounded stage timeouts.
+
+This baseline is current development confidence, not a claim that packaged, staging, production, runtime, migration, or operational gates are complete.
 
 ## Ownership Boundary
 
@@ -283,6 +293,15 @@ Risky verification targets include:
 * broad checks that are hard to diagnose when they fail.
 
 Broad smoke tests can exist, but they should not replace seam-focused verification.
+
+Concrete server test rules from the current hardening work:
+
+* Mutation-semantics tests assert direct mutation results, including whether the target was found and the resulting value, rather than relying on a presentation snapshot.
+* Presentation tests establish publication through a publishing `Control` seam or an explicit simulation step before reading snapshots.
+* Respawn placement tests call `SafeRespawnPosition` directly when placement policy is the subject and check its success result before asserting the position.
+* Known-supported implementations must not be parameterized only to skip them at runtime; avoidable collected skips are not acceptable.
+
+Operational commands and environment variables for these checks belong in [Agent Testing Rules](../../../agent/testing.md).
 
 ## Launch-Shaped Verification
 

@@ -72,6 +72,20 @@ The configured main scene is:
 res://scenes/game.tscn
 ```
 
+## Verification quickstart
+
+Detailed testing guidance lives in [Agent Testing Rules](./agent/testing.md). The shared CI runners are:
+
+```bash
+bash tools/ci/run_repo_checks.sh
+bash tools/ci/run_go_tests.sh
+bash tools/ci/run_client_tests.sh
+```
+
+GitHub Actions runs repository checks, Go tests, and Godot/GUT client tests as separate jobs. The Go runner covers player-data plus game-server default and nodevtools variants. The client job uses LFS, Godot 4.6.3, Xvfb, compatibility/software rendering, bounded stages, streamed logs, and uploaded artifacts.
+
+For server tests, assert direct mutation results for mutation semantics; use a publishing `game.Control` seam or an explicit `Game.Step` before reading presentation snapshots; and test respawn placement through `Control.SafeRespawnPosition` when placement policy is the subject. Avoidable collected skips are not acceptable; the repository gate is expected to complete with zero skips.
+
 The repo path used in many local commands is:
 
 ```text
