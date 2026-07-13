@@ -10,6 +10,7 @@ from data_sync.config import ConfigError, DataSyncConfig, load_config
 from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.constants_sync import ConstantsSyncError, apply_updates, plan_constants_updates, unified_diff
 from data_sync.drop_tables_sync import DropTablesSyncError, plan_drop_tables_updates
+from data_sync.observability_sync import ObservabilitySyncError, plan_observability_updates
 from data_sync.packets_sync import PacketsSyncError, plan_packets_updates
 from data_sync.realtime_wire_sync import RealtimeWireSyncError, plan_realtime_wire_updates
 from data_sync.packet_toml import PacketTomlError, load_packet_schema_files
@@ -44,6 +45,12 @@ def run(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
+        if "observability" in args.domains:
+            print(
+                "pull error: The shared observability contract is authoritative; edit files under shared/contracts/observability/.",
+                file=sys.stderr,
+            )
+            return 2
         try:
             pull_constants(config, args.languages[0])
         except (PullError, TomlStoreError) as exc:
@@ -64,10 +71,13 @@ def run(argv: list[str] | None = None) -> int:
             updates.extend(plan_packets_updates(config, packet_schema, args.languages))
         if "realtime_wire" in args.domains:
             updates.extend(plan_realtime_wire_updates(config, (*args.languages, *args.output_kinds)))
+        if "observability" in args.domains:
+            updates.extend(plan_observability_updates(config, (*args.languages, *args.output_kinds)))
     except (
         ConstantsSyncError,
         ConstantsStoreError,
         DropTablesSyncError,
+        ObservabilitySyncError,
         PacketsSyncError,
         RealtimeWireSyncError,
         PacketTomlError,

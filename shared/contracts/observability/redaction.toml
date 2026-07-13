@@ -1,0 +1,107 @@
+schema_version = 1
+
+[policy]
+case_sensitive = false
+key_matching = "unicode_casefold"
+forbidden_value_handling = "reject_or_redact"
+rejected_values_must_be_preserved = false
+raw_forbidden_values_may_be_logged = false
+
+[action.reject]
+name = "reject"
+description = "Reject the event, field, or bundle when unsafe content cannot be safely removed."
+value_preserved = false
+replacement_used = false
+
+[action.redact]
+name = "redact"
+description = "Remove the unsafe value and retain only the safe replacement marker."
+value_preserved = false
+replacement_used = true
+replacement_marker = "[REDACTED]"
+
+[[forbidden_exact_keys]]
+category = "secrets"
+action = "reject"
+keys = ["secret", "secret_key", "client_secret", "private_key", "encryption_key", "signing_key", "api_key", "access_key", "credential", "credentials"]
+
+[[forbidden_exact_keys]]
+category = "auth_headers"
+action = "reject"
+keys = ["authorization", "proxy_authorization", "www_authenticate", "x_api_key", "x_auth_token", "cookie_header", "set_cookie"]
+
+[[forbidden_exact_keys]]
+category = "cookies"
+action = "reject"
+keys = ["cookie", "cookies", "session_cookie", "refresh_cookie"]
+
+[[forbidden_exact_keys]]
+category = "oauth_codes"
+action = "reject"
+keys = ["oauth_code", "authorization_code", "auth_code", "code_verifier", "access_token", "refresh_token", "id_token"]
+
+[[forbidden_exact_keys]]
+category = "passwords"
+action = "reject"
+keys = ["password", "password_confirmation", "passwd", "passphrase", "pin", "security_answer"]
+
+[[forbidden_exact_keys]]
+category = "payment_data"
+action = "reject"
+keys = ["card_number", "card_cvv", "cvv", "cvc", "expiry_date", "bank_account", "routing_number", "payment_method", "payment_token"]
+
+[[forbidden_exact_keys]]
+category = "raw_private_profile_data"
+action = "redact"
+keys = ["profile_blob", "private_profile", "raw_profile", "profile_data", "private_metadata", "personal_data"]
+
+[[forbidden_exact_keys]]
+category = "raw_packet_payload_dumps"
+action = "reject"
+keys = ["packet_payload", "raw_packet", "packet_dump", "payload", "raw_payload", "request_body", "response_body", "body_dump"]
+
+[[forbidden_key_fragments]]
+category = "secrets"
+action = "reject"
+fragments = ["secret", "credential", "private_key", "signing_key", "encryption_key", "api_key"]
+
+[[forbidden_key_fragments]]
+category = "auth_headers"
+action = "reject"
+fragments = ["authorization", "auth_header", "bearer", "token_header"]
+
+[[forbidden_key_fragments]]
+category = "cookies"
+action = "reject"
+fragments = ["cookie", "set_cookie"]
+
+[[forbidden_key_fragments]]
+category = "oauth_codes"
+action = "reject"
+fragments = ["oauth", "access_token", "refresh_token", "id_token", "authorization_code", "code_verifier"]
+
+[[forbidden_key_fragments]]
+category = "passwords"
+action = "reject"
+fragments = ["password", "passwd", "passphrase", "secret_answer"]
+
+[[forbidden_key_fragments]]
+category = "payment_data"
+action = "reject"
+fragments = ["card_number", "cardholder", "credit_card", "debit_card", "cvv", "cvc", "payment", "bank_account", "routing_number"]
+
+[[forbidden_key_fragments]]
+category = "raw_private_profile_data"
+action = "redact"
+fragments = ["profile_blob", "raw_profile", "private_profile", "profile_data", "personal_data", "private_metadata"]
+
+[[forbidden_key_fragments]]
+category = "raw_packet_payload_dumps"
+action = "reject"
+fragments = ["raw_packet", "packet_dump", "packet_payload", "raw_payload", "request_body", "response_body", "payload_dump"]
+
+[validation]
+missing_action = "reject"
+ambiguous_match_action = "reject"
+redaction_failure_action = "reject"
+rejected_content_must_be_discarded = true

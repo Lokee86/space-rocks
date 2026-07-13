@@ -9,8 +9,9 @@ from typing import Sequence
 
 
 OPERATIONS = ("push", "pull", "diff", "check", "validate")
-DOMAINS = ("constants", "packets", "realtime_wire", "drop_tables", "player_data")
+DOMAINS = ("constants", "packets", "realtime_wire", "drop_tables", "player_data", "observability")
 LANGUAGES = ("go", "gds", "ts")
+OBSERVABILITY_LANGUAGES = ("go", "gds", "ruby")
 OUTPUT_KINDS = ("json", "docs")
 
 
@@ -54,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
             continue
         parser.add_argument(f"-{domain}", action="store_true", help=f"include {domain}")
 
-    for language in LANGUAGES + OUTPUT_KINDS:
+    for language in LANGUAGES + ("ruby",) + OUTPUT_KINDS:
         parser.add_argument(f"-{language}", action="store_true", help=f"include {language}")
 
     parser.add_argument("-config", type=Path, help="path to data-sync config TOML")
@@ -73,20 +74,26 @@ def parse_args(argv: Sequence[str] | None = None) -> CliArgs:
     operation = selected_operations[0]
     domains = tuple(name for name in DOMAINS if getattr(namespace, name))
     languages = tuple(name for name in LANGUAGES if getattr(namespace, name))
+    if getattr(namespace, "ruby"):
+        languages = (*languages, "ruby")
     output_kinds = tuple(name for name in OUTPUT_KINDS if getattr(namespace, name))
 
-    if output_kinds and "realtime_wire" not in domains:
-        parser.error("-json and -docs are only supported with -realtime-wire")
+    if output_kinds and not {"realtime_wire", "observability"}.intersection(domains):
+        parser.error("-json and -docs are only supported with -realtime-wire or -observability")
     if "realtime_wire" in domains and "ts" in languages:
         parser.error("-realtime-wire does not support -ts")
+    if "observability" in domains and any(language not in OBSERVABILITY_LANGUAGES for language in languages):
+        parser.error("-observability supports only -go, -gds, and -ruby")
+    if "ruby" in languages and "observability" not in domains:
+        parser.error("-ruby is only supported with -observability")
 
     if operation in {"push", "pull", "diff", "check"}:
         if not domains:
             parser.error(f"-{operation} requires at least one domain: -constants and/or -packets")
         if "player_data" in domains:
             parser.error("-player_data is only supported with -validate for now")
-        if not languages and not ("realtime_wire" in domains and output_kinds):
-            parser.error(f"-{operation} requires at least one language or realtime-wire output: -go, -gds, -ts, -json, and/or -docs")
+        if not languages and not output_kinds:
+            parser.error(f"-{operation} requires at least one language or output: -go, -gds, -ts, -ruby, -json, and/or -docs")
         if "drop_tables" in domains and "go" not in languages:
             parser.error(f"-{operation} with -drop-tables requires -go")
 

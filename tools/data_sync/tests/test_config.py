@@ -281,6 +281,69 @@ def test_default_packet_sot_paths_include_webrtc() -> None:
     )
 
 
+def test_default_observability_sot_paths_are_ordered() -> None:
+    assert DEFAULT_SOT_PATHS["observability"] == (
+        "shared/contracts/observability/schema.toml",
+        "shared/contracts/observability/events.toml",
+        "shared/contracts/observability/fields.toml",
+        "shared/contracts/observability/redaction.toml",
+        "shared/contracts/observability/retention_tiers.toml",
+        "shared/contracts/observability/diagnostic_bundle.toml",
+    )
+
+
+def test_loads_observability_targets(tmp_path: Path) -> None:
+    config_path = write_config(
+        tmp_path,
+        """
+[observability.go]
+enabled = true
+files = [
+  "services/log-aggregator/internal/observability/generated.go",
+  "services/game-server/internal/observability/generated.go",
+  "services/player-data/observability/generated.go",
+]
+sections = []
+owns = []
+
+[observability.gds]
+enabled = true
+files = ["client/scripts/generated/observability/contract_generated.gd"]
+sections = []
+owns = []
+
+[observability.ruby]
+enabled = true
+files = ["services/api-server/app/lib/observability/contract_generated.rb"]
+sections = []
+owns = []
+
+[observability.json]
+enabled = true
+files = ["shared/contracts/observability/generated/contract.json"]
+sections = []
+owns = []
+
+[observability.docs]
+enabled = true
+files = ["docs/observability/generated/contract-reference.md"]
+sections = []
+owns = []
+""".strip(),
+    )
+
+    config = load_config(config_path)
+
+    assert config.enabled_languages("observability") == ("go", "gds", "ruby", "json", "docs")
+    assert config.target("observability", "go").files == (
+        tmp_path / "services/log-aggregator/internal/observability/generated.go",
+        tmp_path / "services/game-server/internal/observability/generated.go",
+        tmp_path / "services/player-data/observability/generated.go",
+    )
+    assert config.target("observability", "go").sections == ()
+    assert config.target("observability", "go").owns == ()
+
+
 def test_loads_per_domain_sot_paths(tmp_path: Path) -> None:
     config_text = valid_config().replace(
         """

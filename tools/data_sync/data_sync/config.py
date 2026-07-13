@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from data_sync.cli import DOMAINS, LANGUAGES, OUTPUT_KINDS
+from data_sync.cli import DOMAINS, LANGUAGES, OBSERVABILITY_LANGUAGES, OUTPUT_KINDS
 
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.toml"
@@ -33,6 +33,14 @@ DEFAULT_SOT_PATHS = {
     "player_data": (
         "shared/player_data/stats.toml",
         "shared/player_data/match_result.toml",
+    ),
+    "observability": (
+        "shared/contracts/observability/schema.toml",
+        "shared/contracts/observability/events.toml",
+        "shared/contracts/observability/fields.toml",
+        "shared/contracts/observability/redaction.toml",
+        "shared/contracts/observability/retention_tiers.toml",
+        "shared/contracts/observability/diagnostic_bundle.toml",
     ),
 }
 REQUIRED_DOMAIN_KEYS = ("files", "sections", "owns")
@@ -109,7 +117,12 @@ class DataSyncConfig:
             for key_domain, key_language in self.targets_by_domain_language
         ):
             return ()
-        kinds = LANGUAGES + OUTPUT_KINDS if domain == "realtime_wire" else LANGUAGES
+        if domain == "realtime_wire":
+            kinds = LANGUAGES + OUTPUT_KINDS
+        elif domain == "observability":
+            kinds = OBSERVABILITY_LANGUAGES + OUTPUT_KINDS
+        else:
+            kinds = LANGUAGES
         return tuple(
             language
             for language in kinds
@@ -155,6 +168,8 @@ def load_config(config_path: Path | str | None = None, sot_override: Path | str 
             domain_languages = ("go",)
         elif domain == "realtime_wire":
             domain_languages = LANGUAGES + OUTPUT_KINDS
+        elif domain == "observability":
+            domain_languages = OBSERVABILITY_LANGUAGES + OUTPUT_KINDS
         else:
             domain_languages = LANGUAGES
         for language in domain_languages:
@@ -373,7 +388,7 @@ def _load_domain_language_config(
 
     if enabled and domain != "drop_tables" and not files:
         raise ConfigError(f"[{label}].files must not be empty")
-    if enabled and domain not in {"drop_tables", "realtime_wire"} and not sections:
+    if enabled and domain not in {"drop_tables", "realtime_wire", "observability"} and not sections:
         raise ConfigError(f"[{label}].sections must not be empty")
 
     unknown_owns = [section for section in owns if section not in sections]

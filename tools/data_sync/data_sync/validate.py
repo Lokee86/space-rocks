@@ -13,6 +13,8 @@ from data_sync.constants_store import ConstantsStore, ConstantsStoreError
 from data_sync.discovery import discover_constants_files
 from data_sync.model.constants import ConstantValue
 from data_sync.model.packets import PacketDefinition, PacketSchema, PacketSchemaField
+from data_sync.observability_toml import ObservabilityTomlError
+from data_sync.observability_validate import ObservabilityValidationError, validate_observability
 from data_sync.player_data_toml import PlayerDataTomlError, load_player_data_schema
 from data_sync.realtime_wire_toml import RealtimeWireTomlError
 from data_sync.packet_rendering import GO_PRIMITIVES, PacketRenderingError, parse_rich_type
@@ -67,6 +69,8 @@ def validate(config: DataSyncConfig, domains: tuple[str, ...], languages: tuple[
         _validate_player_data_sot(config.sot_paths("player_data"), errors)
     if "realtime_wire" in request.domains:
         _validate_realtime_wire_source(config, errors)
+    if "observability" in request.domains:
+        _validate_observability_source(config, errors)
 
     _validate_configured_files_and_blocks(config, request, errors)
 
@@ -95,6 +99,13 @@ def _validate_realtime_wire_source(config: DataSyncConfig, errors: list[str]) ->
         validate_realtime_wire(path, packet_schema)
     except (RealtimeWireTomlError, RealtimeWireValidationError) as exc:
         errors.extend(exc.errors if isinstance(exc, RealtimeWireValidationError) else [str(exc)])
+
+
+def _validate_observability_source(config: DataSyncConfig, errors: list[str]) -> None:
+    try:
+        validate_observability(config.sot_paths("observability"))
+    except (ObservabilityTomlError, ObservabilityValidationError) as exc:
+        errors.extend(exc.errors if isinstance(exc, ObservabilityValidationError) else [str(exc)])
 
 
 def _load_store(path: Path, errors: list[str]) -> TomlStore | None:
@@ -471,7 +482,7 @@ def _validate_configured_files_and_blocks(
                     text = _read_configured_file(path, errors)
                     if text is None:
                         continue
-                    if domain in {"packets", "realtime_wire"}:
+                    if domain in {"packets", "realtime_wire", "observability"}:
                         continue
                     for section_name in target.sections:
                         try:

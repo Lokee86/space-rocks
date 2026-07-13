@@ -1,0 +1,328 @@
+[[fields]]
+name = "timestamp"
+type = "string"
+required = true
+description = "Event creation time as an RFC3339 timestamp with nanosecond precision, normalized to UTC."
+sensitivity = "internal"
+
+[[fields]]
+name = "level"
+type = "string"
+required = true
+description = "Operational severity; one of debug, info, warn, error, or critical."
+sensitivity = "internal"
+
+[[fields]]
+name = "event"
+type = "string"
+required = true
+description = "Stable snake_case event name used for grouping, search, and automation."
+sensitivity = "internal"
+
+[[fields]]
+name = "service"
+type = "string"
+required = true
+description = "Product service or client component that emitted the event."
+sensitivity = "internal"
+
+[[fields]]
+name = "environment"
+type = "string"
+required = true
+description = "Runtime environment in which the event was emitted."
+sensitivity = "internal"
+
+[[fields]]
+name = "build_version"
+type = "string"
+required = true
+description = "Build or release version of the emitting component."
+sensitivity = "internal"
+
+[[fields]]
+name = "schema_version"
+type = "integer"
+required = true
+description = "Observability event schema version; the permanent contract currently defines version 1."
+sensitivity = "internal"
+
+[[fields]]
+name = "category"
+type = "string"
+required = false
+description = "Stable subsystem category used for filtering and category-level log controls."
+sensitivity = "internal"
+
+[[fields]]
+name = "message"
+type = "string"
+required = false
+description = "Human-readable context; tooling must use event rather than parsing this text."
+sensitivity = "internal"
+
+[[fields]]
+name = "event_id"
+type = "uuid"
+required = true
+description = "Unique identifier for this event; newly created values must use UUID format."
+sensitivity = "internal"
+
+[[fields]]
+name = "trace_id"
+type = "uuid"
+required = false
+description = "UUID correlating one distributed operation or investigation chain."
+sensitivity = "internal"
+
+[[fields]]
+name = "request_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for an API or HTTP request."
+sensitivity = "internal"
+
+[[fields]]
+name = "session_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for a gameplay or service session."
+sensitivity = "internal"
+
+[[fields]]
+name = "room_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for a room flow."
+sensitivity = "internal"
+
+[[fields]]
+name = "match_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for a match or match-result flow."
+sensitivity = "internal"
+
+[[fields]]
+name = "player_id"
+type = "string"
+required = false
+description = "Readable player-facing identifier, such as Player-1; do not replace it with a UUID for observability."
+sensitivity = "personal"
+
+[[fields]]
+name = "account_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for an account when account context is relevant."
+sensitivity = "personal"
+
+[[fields]]
+name = "route"
+type = "string"
+required = false
+description = "API, HTTP, or logical route associated with the event; exclude credentials and raw secrets."
+sensitivity = "internal"
+
+[[fields]]
+name = "packet_type"
+type = "string"
+required = false
+description = "Packet type associated with a network event, without including the packet payload."
+sensitivity = "internal"
+
+[[fields]]
+name = "error_code"
+type = "string"
+required = false
+description = "Stable machine-readable error code."
+sensitivity = "internal"
+
+[[fields]]
+name = "failure_mode"
+type = "string"
+required = false
+description = "Categorized reason or mode for an observed failure."
+sensitivity = "internal"
+
+[[fields]]
+name = "duration_ms"
+type = "number"
+required = false
+description = "Bounded duration measurement in milliseconds for the operation summarized by the event."
+sensitivity = "internal"
+
+[[fields]]
+name = "degraded_state"
+type = "string"
+required = false
+description = "Named degraded, offline, maintenance, or admission-blocked state."
+sensitivity = "internal"
+
+[[fields]]
+name = "idempotency_key"
+type = "string"
+required = false
+description = "Bounded opaque key used to correlate retries and suppress duplicate effects; never include secrets."
+sensitivity = "internal"
+
+[[fields]]
+name = "diagnostic_report_id"
+type = "uuid"
+required = false
+description = "UUID identifying a diagnostic report or bundle."
+sensitivity = "internal"
+
+[[fields]]
+name = "audit_event_id"
+type = "uuid"
+required = false
+description = "UUID reference for an audit-grade record, when one is created."
+sensitivity = "confidential"
+
+[[fields]]
+name = "actor_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for the actor responsible for an audit-worthy action."
+sensitivity = "confidential"
+
+[[fields]]
+name = "actor_type"
+type = "string"
+required = false
+description = "Category of actor, such as player, service, admin, or system."
+sensitivity = "confidential"
+
+[[fields]]
+name = "target_id"
+type = "string"
+required = false
+description = "Existing domain-owned identifier for the target of an audit-worthy action."
+sensitivity = "confidential"
+
+[[fields]]
+name = "target_type"
+type = "string"
+required = false
+description = "Category of target affected by an audit-worthy action."
+sensitivity = "confidential"
+
+[[fields]]
+name = "action"
+type = "string"
+required = false
+description = "Stable action name for an audit-worthy state change."
+sensitivity = "confidential"
+
+[[fields]]
+name = "reason_code"
+type = "string"
+required = false
+description = "Stable non-sensitive reason code for an action or decision."
+sensitivity = "confidential"
+
+[[fields]]
+name = "case_id"
+type = "uuid"
+required = false
+description = "UUID identifying a support, moderation, dispute, or administrative case."
+sensitivity = "confidential"
+
+[[fields]]
+name = "transaction_id"
+type = "uuid"
+required = false
+description = "UUID identifying a transaction or entitlement operation without exposing payment data."
+sensitivity = "confidential"
+
+[[fields]]
+name = "result_id"
+type = "uuid"
+required = false
+description = "UUID identifying a competitive or persisted match result."
+sensitivity = "confidential"
+
+[[fields]]
+name = "audit_required"
+type = "boolean"
+required = false
+description = "When true, the aggregator validates, preserves, and promotes the event into an audit-grade record."
+sensitivity = "confidential"
+
+[[fields]]
+name = "audit_type"
+type = "string"
+required = false
+description = "Domain-defined audit classification used when audit_required is true."
+sensitivity = "confidential"
+
+[[fields]]
+name = "service_instance_id"
+type = "uuid"
+required = true
+description = "UUID identifying the running service instance that emitted the event."
+sensitivity = "internal"
+
+[[fields]]
+name = "worker_id"
+type = "string"
+required = false
+description = "Worker name or index for the worker or job execution that emitted the event."
+sensitivity = "internal"
+
+[[fields]]
+name = "pid"
+type = "integer"
+required = false
+description = "Operating-system process identifier for local diagnostics."
+sensitivity = "internal"
+
+[[fields]]
+name = "ingestion_id"
+type = "uuid"
+required = false
+description = "UUID assigned to an ingestion request or batch by the receiving aggregator."
+sensitivity = "internal"
+
+[[fields]]
+name = "ingested_at"
+type = "string"
+required = false
+description = "RFC3339-nanosecond UTC time at which the aggregator accepted the event."
+sensitivity = "internal"
+
+[[fields]]
+name = "ingestion_source"
+type = "string"
+required = false
+description = "Named source or transport from which the aggregator received the event."
+sensitivity = "internal"
+
+[[fields]]
+name = "ingestion_attempt"
+type = "integer"
+required = false
+description = "Positive bounded attempt number for delivery or retry ingestion."
+sensitivity = "internal"
+
+[[fields]]
+name = "redaction_applied"
+type = "boolean"
+required = false
+description = "Indicates that one or more unsafe or sensitive values were removed or transformed before storage or export."
+sensitivity = "internal"
+
+[[fields]]
+name = "retention_tier"
+type = "string"
+required = false
+description = "Retention classification: ephemeral_dev, operational, diagnostic_report, or audit_grade."
+sensitivity = "internal"
+
+[[fields]]
+name = "fields"
+type = "object"
+required = false
+description = "Bounded event-specific key/value data; keys and scalar values must obey schema limits and redaction rules."
+sensitivity = "restricted"

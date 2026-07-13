@@ -1,0 +1,1485 @@
+schema_version = 1
+
+# Permanent stable event catalog for current technical-release observability.
+# Event names are intentionally lifecycle-, failure-, degradation-, audit-, or
+# threshold-oriented; high-frequency success samples remain metrics/devtools data.
+
+[[events]]
+name = "service_starting"
+category = "service_lifecycle"
+default_level = "info"
+description = "A service has begun startup."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_started"
+category = "service_lifecycle"
+default_level = "info"
+description = "A service completed startup and is available for normal operation."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_stopping"
+category = "service_lifecycle"
+default_level = "info"
+description = "A service has begun an intentional shutdown."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_stopped"
+category = "service_lifecycle"
+default_level = "info"
+description = "A service completed shutdown."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_startup_failed"
+category = "service_lifecycle"
+default_level = "critical"
+description = "A service could not complete startup."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "configuration_invalid"
+category = "configuration"
+default_level = "critical"
+description = "Required or parsed configuration is invalid."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "configuration_unsafe"
+category = "configuration"
+default_level = "critical"
+description = "Configuration would permit an unsafe release or environment behavior."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "dependency_initialization_failed"
+category = "service_lifecycle"
+default_level = "error"
+description = "A required dependency failed during initialization."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_entered_degraded_state"
+category = "service_lifecycle"
+default_level = "warn"
+description = "A service entered a named degraded operating state."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_entered_admission_blocked_state"
+category = "service_lifecycle"
+default_level = "warn"
+description = "A service is running but blocks new admissions."
+services = ["api_server", "game_server", "player_data"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "service_recovered"
+category = "service_lifecycle"
+default_level = "info"
+description = "A service recovered from a degraded, offline, or blocked state."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "environment_selected"
+category = "configuration"
+default_level = "info"
+description = "The runtime environment was selected."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "build_version_loaded"
+category = "configuration"
+default_level = "info"
+description = "The build or release version was loaded."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "contract_version_loaded"
+category = "configuration"
+default_level = "info"
+description = "The protocol, API, or data contract version was loaded."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "feature_mode_loaded"
+category = "configuration"
+default_level = "info"
+description = "A feature flag, devtools mode, or release capability was loaded."
+services = ["client", "api_server", "game_server"]
+trace_required = false
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "production_capability_violation"
+category = "configuration"
+default_level = "critical"
+description = "A production build exposed a forbidden client or server capability."
+services = ["client", "game_server"]
+trace_required = false
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "client_starting"
+category = "client_startup"
+default_level = "info"
+description = "The client has begun startup."
+services = ["client"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "client_startup_failed"
+category = "client_startup"
+default_level = "error"
+description = "The client failed to boot its main scene or session shell."
+services = ["client"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "client_config_load_failed"
+category = "client_startup"
+default_level = "error"
+description = "Client configuration could not be loaded."
+services = ["client"]
+trace_required = false
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "client_runtime_mismatch"
+category = "client_startup"
+default_level = "error"
+description = "The packaged client runtime does not match its expected release contract."
+services = ["client"]
+trace_required = false
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "local_server_launch_requested"
+category = "client_startup"
+default_level = "info"
+description = "The client requested launch of the bundled local server."
+services = ["client"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "local_server_launch_failed"
+category = "client_startup"
+default_level = "error"
+description = "The bundled local server failed to launch."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "local_server_connected"
+category = "client_startup"
+default_level = "info"
+description = "The client connected to its bundled local server."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "local_server_exited_unexpectedly"
+category = "client_startup"
+default_level = "error"
+description = "The bundled local server exited without an expected shutdown."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "connection_attempt_started"
+category = "client_network"
+default_level = "debug"
+description = "A client network connection attempt began."
+services = ["client"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "client_connected"
+category = "client_network"
+default_level = "info"
+description = "The client established a network connection."
+services = ["client", "game_server", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "client_connection_failed"
+category = "client_network"
+default_level = "warn"
+description = "A client network connection attempt failed."
+services = ["client", "game_server", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "client_disconnected"
+category = "client_network"
+default_level = "warn"
+description = "The client lost a connection unexpectedly or completed an expected disconnect."
+services = ["client", "game_server", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "reconnect_attempt_scheduled"
+category = "client_network"
+default_level = "warn"
+description = "A client reconnect attempt was scheduled after connection loss."
+services = ["client"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "reconnect_succeeded"
+category = "client_network"
+default_level = "info"
+description = "A client reconnect attempt succeeded."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "reconnect_failed"
+category = "client_network"
+default_level = "warn"
+description = "A client reconnect attempt failed."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "packet_decode_failed"
+category = "networking"
+default_level = "warn"
+description = "A received packet could not be decoded."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "packet_route_unknown"
+category = "networking"
+default_level = "warn"
+description = "A decoded packet had no known route."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "compatibility_blocked"
+category = "session_admission"
+default_level = "warn"
+description = "A client or session was blocked by compatibility checks."
+services = ["client", "game_server", "api_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "auth_flow_started"
+category = "auth"
+default_level = "info"
+description = "An authentication flow began."
+services = ["client", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "auth_callback_received"
+category = "auth"
+default_level = "info"
+description = "An authentication provider callback was received without recording credentials."
+services = ["api_server", "client"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "auth_succeeded"
+category = "auth"
+default_level = "info"
+description = "Authentication completed successfully."
+services = ["client", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "auth_failed"
+category = "auth"
+default_level = "warn"
+description = "Authentication failed."
+services = ["client", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "auth_provider_unavailable"
+category = "auth"
+default_level = "error"
+description = "An authentication provider was unavailable."
+services = ["api_server", "client"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "admission_failed"
+category = "session_admission"
+default_level = "warn"
+description = "Session admission failed after authentication or environment checks."
+services = ["game_server", "api_server", "client"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "account_restriction_blocked"
+category = "session_admission"
+default_level = "warn"
+description = "A banned or suspended account was blocked from admission."
+services = ["api_server", "game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "api_request_started"
+category = "api_request"
+default_level = "debug"
+description = "An API request began."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "api_request_completed"
+category = "api_request"
+default_level = "debug"
+description = "An API request completed successfully."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "api_request_failed"
+category = "api_request"
+default_level = "error"
+description = "An API request failed."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "api_validation_failed"
+category = "api_request"
+default_level = "warn"
+description = "An API request failed input validation."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "api_unauthorized"
+category = "api_request"
+default_level = "warn"
+description = "An API request was unauthorized or forbidden."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "api_rate_limit_triggered"
+category = "api_request"
+default_level = "warn"
+description = "An API rate limit was triggered."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "api_upstream_unavailable"
+category = "api_request"
+default_level = "error"
+description = "An API upstream dependency was unavailable."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "api_request_timeout"
+category = "api_request"
+default_level = "warn"
+description = "An API request exceeded its timeout."
+services = ["api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "idempotency_conflict"
+category = "api_request"
+default_level = "warn"
+description = "An idempotency key conflicted with an existing operation."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "player_data_store_initialized"
+category = "player_data"
+default_level = "info"
+description = "The player-data store initialized successfully."
+services = ["player_data"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "player_data_store_initialization_failed"
+category = "player_data"
+default_level = "critical"
+description = "The player-data store failed initialization."
+services = ["player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "storage_backend_selected"
+category = "player_data"
+default_level = "info"
+description = "The player-data storage backend was selected."
+services = ["player_data"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "storage_backend_invalid"
+category = "player_data"
+default_level = "critical"
+description = "The configured storage backend is invalid for the environment."
+services = ["player_data"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "player_data_read_failed"
+category = "player_data"
+default_level = "error"
+description = "A player-data read failed."
+services = ["player_data", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "player_data_write_failed"
+category = "player_data"
+default_level = "error"
+description = "A player-data write failed."
+services = ["player_data", "api_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "database_unavailable"
+category = "player_data"
+default_level = "error"
+description = "The player-data database or storage dependency is unavailable."
+services = ["player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "database_migration_failed"
+category = "player_data"
+default_level = "critical"
+description = "A database migration failed."
+services = ["player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "profile_migration_started"
+category = "profile_migration"
+default_level = "info"
+description = "A local profile migration began."
+services = ["client", "player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "profile_migration_succeeded"
+category = "profile_migration"
+default_level = "info"
+description = "A local profile migration completed successfully."
+services = ["client", "player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "profile_migration_failed"
+category = "profile_migration"
+default_level = "error"
+description = "A local profile migration failed."
+services = ["client", "player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "profile_backup_failed"
+category = "profile_migration"
+default_level = "error"
+description = "A local profile migration backup failed."
+services = ["client", "player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "match_result_report_started"
+category = "match_results"
+default_level = "info"
+description = "A match result report began."
+services = ["game_server", "api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_report_succeeded"
+category = "match_results"
+default_level = "info"
+description = "A match result report was accepted and persisted."
+services = ["game_server", "api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_report_failed"
+category = "match_results"
+default_level = "error"
+description = "A match result report failed."
+services = ["game_server", "api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_marked_pending"
+category = "match_results"
+default_level = "warn"
+description = "A match result was preserved as pending for later delivery or processing."
+services = ["game_server", "api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_retry_scheduled"
+category = "match_results"
+default_level = "warn"
+description = "A failed match result operation was scheduled for retry."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_retry_succeeded"
+category = "match_results"
+default_level = "info"
+description = "A retried match result operation succeeded."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_retry_exhausted"
+category = "match_results"
+default_level = "error"
+description = "All configured retries for a match result operation were exhausted."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_result_duplicate_suppressed"
+category = "match_results"
+default_level = "info"
+description = "A duplicate or idempotent match result was suppressed."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "reward_calculation_failed"
+category = "progression"
+default_level = "error"
+description = "Reward calculation for a completed result failed."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "reward_grant_failed"
+category = "progression"
+default_level = "error"
+description = "A reward grant failed."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "reward_grant_succeeded"
+category = "progression"
+default_level = "info"
+description = "A reward grant completed successfully."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "game_server_connection_upgrade_failed"
+category = "game_networking"
+default_level = "warn"
+description = "A game-server WebSocket upgrade failed."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "game_server_client_connected"
+category = "game_networking"
+default_level = "info"
+description = "A client connected to the game server."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "game_server_client_disconnected"
+category = "game_networking"
+default_level = "warn"
+description = "A client disconnected unexpectedly from the game server."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "game_server_read_failed"
+category = "game_networking"
+default_level = "warn"
+description = "A game-server socket read failed unexpectedly."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "game_server_write_failed"
+category = "game_networking"
+default_level = "error"
+description = "A game-server socket write failed."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "packet_envelope_decode_failed"
+category = "game_networking"
+default_level = "warn"
+description = "A game-server packet envelope could not be decoded."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "packet_route_failed"
+category = "game_networking"
+default_level = "warn"
+description = "A game-server packet could not be routed."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "outbound_packet_encode_failed"
+category = "game_networking"
+default_level = "error"
+description = "A game-server outbound packet could not be encoded."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "packet_size_threshold_crossed"
+category = "runtime_threshold"
+default_level = "warn"
+description = "A packet size warning or danger threshold was crossed."
+services = ["client", "game_server"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "game_server_write_slow"
+category = "runtime_threshold"
+default_level = "warn"
+description = "A game-server write exceeded its latency threshold."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_created"
+category = "rooms"
+default_level = "info"
+description = "A game-server room was created."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_creation_failed"
+category = "rooms"
+default_level = "error"
+description = "A game-server room could not be created."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_join_failed"
+category = "rooms"
+default_level = "warn"
+description = "A player could not join a room."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_ready_state_changed"
+category = "rooms"
+default_level = "debug"
+description = "A room changed its readiness state."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "room_countdown_started"
+category = "rooms"
+default_level = "info"
+description = "A room starting countdown began."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_countdown_canceled"
+category = "rooms"
+default_level = "info"
+description = "A room starting countdown was canceled."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_match_started"
+category = "rooms"
+default_level = "info"
+description = "A room started a match."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_match_ended"
+category = "rooms"
+default_level = "info"
+description = "A room ended a match."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_cleaned_up"
+category = "rooms"
+default_level = "info"
+description = "A room was cleaned up after its lifecycle ended."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "room_player_removed"
+category = "rooms"
+default_level = "info"
+description = "A player was removed from a room by timeout or an administrative action."
+services = ["game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "match_started"
+category = "simulation"
+default_level = "info"
+description = "Authoritative match simulation started."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "match_ended"
+category = "simulation"
+default_level = "info"
+description = "Authoritative match simulation ended."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "game_over_detected"
+category = "simulation"
+default_level = "info"
+description = "The authoritative simulation detected game over."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "player_died"
+category = "simulation"
+default_level = "info"
+description = "A player avatar died in authoritative simulation."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "respawn_blocked"
+category = "simulation"
+default_level = "warn"
+description = "A requested player respawn was blocked."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "collision_shape_missing"
+category = "simulation"
+default_level = "warn"
+description = "An authoritative simulation entity lacked a required collision shape."
+services = ["game_server"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "invalid_entity_state_detected"
+category = "simulation"
+default_level = "error"
+description = "The authoritative simulation detected an invalid entity state."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "simulation_panic_recovered"
+category = "simulation"
+default_level = "critical"
+description = "The game server recovered from a simulation panic or unsafe failure."
+services = ["game_server"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "devtools_enabled"
+category = "devtools_admin"
+default_level = "info"
+description = "Devtools capability was enabled in an allowed environment."
+services = ["client", "game_server"]
+trace_required = false
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "devtools_command_applied"
+category = "devtools_admin"
+default_level = "info"
+description = "A state-changing devtools command was applied."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "devtools_command_rejected"
+category = "devtools_admin"
+default_level = "warn"
+description = "A devtools command was rejected by capability or validation policy."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "admin_action_requested"
+category = "devtools_admin"
+default_level = "info"
+description = "An administrative state-changing action was requested."
+services = ["api_server", "game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "admin_action_applied"
+category = "devtools_admin"
+default_level = "info"
+description = "An administrative state-changing action was applied."
+services = ["api_server", "game_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "admin_action_failed"
+category = "devtools_admin"
+default_level = "error"
+description = "An administrative state-changing action failed."
+services = ["api_server", "game_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "moderation_action_applied"
+category = "integrity"
+default_level = "warn"
+description = "A moderation or enforcement action was applied."
+services = ["api_server", "game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "integrity_check_failed"
+category = "integrity"
+default_level = "warn"
+description = "An integrity check failed or produced a suspicious result."
+services = ["client", "game_server", "api_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "suspicious_packet_rejected"
+category = "integrity"
+default_level = "warn"
+description = "A suspicious or invalid packet was rejected."
+services = ["game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "impossible_state_detected"
+category = "integrity"
+default_level = "warn"
+description = "An impossible state or input was detected."
+services = ["client", "game_server"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "bot_tas_flag_applied"
+category = "integrity"
+default_level = "warn"
+description = "A bot or tool-assisted-run flag was attached to a run or result."
+services = ["game_server", "api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "integrity_eligibility_changed"
+category = "integrity"
+default_level = "warn"
+description = "A player's or result's integrity eligibility changed."
+services = ["api_server", "player_data"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "aggregator_unavailable"
+category = "aggregator_lifecycle"
+default_level = "error"
+description = "The log aggregator is unavailable; producers must remain non-blocking."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "aggregator_event_accepted"
+category = "aggregator_ingestion"
+default_level = "debug"
+description = "The aggregator accepted an event or batch."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "aggregator_event_rejected"
+category = "aggregator_ingestion"
+default_level = "warn"
+description = "The aggregator rejected an event or batch for schema or safety reasons."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "aggregator_event_redacted"
+category = "aggregator_ingestion"
+default_level = "warn"
+description = "The aggregator redacted unsafe or sensitive event fields."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "aggregator_duplicate_suppressed"
+category = "aggregator_ingestion"
+default_level = "debug"
+description = "The aggregator suppressed a duplicate event."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "diagnostic_chain_grouped"
+category = "aggregator_query"
+default_level = "info"
+description = "Events were grouped into a correlation-preserving diagnostic chain."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "aggregator_storage_failed"
+category = "aggregator_storage"
+default_level = "critical"
+description = "Durable aggregator storage failed."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "aggregator_query_failed"
+category = "aggregator_query"
+default_level = "error"
+description = "An aggregator search or filtering query failed."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "audit_record_created"
+category = "aggregator_storage"
+default_level = "info"
+description = "An audit-required event was validated and promoted to an audit-grade record."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "audit_record_creation_failed"
+category = "aggregator_storage"
+default_level = "critical"
+description = "The aggregator could not persist an audit-grade record."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "retention_policy_applied"
+category = "aggregator_retention"
+default_level = "info"
+description = "Configured retention policy was applied to aggregated records."
+services = ["log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "diagnostic_bundle_created"
+category = "diagnostics"
+default_level = "info"
+description = "A bounded diagnostic bundle was created."
+services = ["client", "game_server", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "copy_diagnostics_generated"
+category = "diagnostics"
+default_level = "info"
+description = "Safe copyable diagnostics were generated for a user or tester."
+services = ["client", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "bug_report_created"
+category = "diagnostics"
+default_level = "info"
+description = "A bug report was created with diagnostic context."
+services = ["client", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "bug_report_upload_started"
+category = "diagnostics"
+default_level = "info"
+description = "A diagnostic report upload began."
+services = ["client", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "bug_report_upload_succeeded"
+category = "diagnostics"
+default_level = "info"
+description = "A diagnostic report upload succeeded."
+services = ["client", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "bug_report_upload_failed"
+category = "diagnostics"
+default_level = "warn"
+description = "A diagnostic report upload failed while local diagnostics remain available."
+services = ["client", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "diagnostic_report_rejected"
+category = "diagnostics"
+default_level = "warn"
+description = "A diagnostic report was rejected for unsafe or invalid fields."
+services = ["log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "diagnostic_redaction_failed"
+category = "diagnostics"
+default_level = "critical"
+description = "Required diagnostic redaction failed, preventing safe export or storage."
+services = ["client", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "liveness_check_failed"
+category = "health_readiness"
+default_level = "error"
+description = "Internal liveness checks failed."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "readiness_check_failed"
+category = "health_readiness"
+default_level = "warn"
+description = "A service failed readiness checks."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "dependency_health_failed"
+category = "health_readiness"
+default_level = "error"
+description = "A required dependency failed health checks."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "maintenance_mode_entered"
+category = "health_readiness"
+default_level = "warn"
+description = "A service or environment entered maintenance mode."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "maintenance_mode_exited"
+category = "health_readiness"
+default_level = "info"
+description = "A service or environment exited maintenance mode."
+services = ["api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = true
+retention_tier = "audit_grade"
+
+[[events]]
+name = "environment_degraded"
+category = "health_readiness"
+default_level = "warn"
+description = "The operating environment entered a degraded condition."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "environment_recovered"
+category = "health_readiness"
+default_level = "info"
+description = "The operating environment recovered from degradation."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "observability_unavailable"
+category = "health_readiness"
+default_level = "error"
+description = "Telemetry or logging was unavailable before or after launch."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "slow_tick_threshold_crossed"
+category = "runtime_threshold"
+default_level = "warn"
+description = "Simulation tick duration crossed its configured warning threshold."
+services = ["game_server"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "frame_pressure_threshold_crossed"
+category = "runtime_threshold"
+default_level = "warn"
+description = "Client frame pressure crossed its configured warning threshold."
+services = ["client"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "entity_count_threshold_crossed"
+category = "runtime_threshold"
+default_level = "warn"
+description = "Active entity count crossed its configured warning threshold."
+services = ["game_server"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "memory_growth_threshold_crossed"
+category = "runtime_threshold"
+default_level = "warn"
+description = "Observed memory growth crossed its configured warning threshold."
+services = ["client", "api_server", "game_server", "player_data", "log_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
+name = "load_scenario_started"
+category = "runtime_threshold"
+default_level = "info"
+description = "A bounded load or soak scenario began."
+services = ["game_server", "api_server", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "load_scenario_completed"
+category = "runtime_threshold"
+default_level = "info"
+description = "A bounded load or soak scenario completed."
+services = ["game_server", "api_server", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "ephemeral_dev"
+
+[[events]]
+name = "load_scenario_failed"
+category = "runtime_threshold"
+default_level = "error"
+description = "A bounded load or soak scenario failed."
+services = ["game_server", "api_server", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "soak_degradation_detected"
+category = "runtime_threshold"
+default_level = "error"
+description = "A soak run detected sustained runtime degradation."
+services = ["client", "api_server", "game_server", "log_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
