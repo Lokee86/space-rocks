@@ -36,9 +36,8 @@ func test_torpedo_display_contains_ready_sweep_highlight() -> void:
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
 	}))
 
-	var ready_sweep := _display_ready_sweep_highlight()
-	assert_not_null(ready_sweep)
-	assert_true(ready_sweep.has_method("play"))
+	var ready_sweep: ReadySweepHighlight = _display_ready_sweep_highlight()
+	assert_true(ready_sweep is ReadySweepHighlight)
 	assert_false(ready_sweep.visible)
 
 
@@ -56,7 +55,7 @@ func test_torpedo_display_uses_generic_weapon_display_scene() -> void:
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
 	}))
 
-	var display := _loadout_container().get_child(0)
+	var display := _loadout_container().get_child(0) as WeaponDisplay
 
 	assert_eq(display.scene_file_path, "res://scenes/ui/weapon_displays/weapon_display.tscn")
 
@@ -284,35 +283,6 @@ func test_cooldown_ready_transition_clears_overlay_and_only_plays_ready_effects_
 	assert_false(ready_flash.visible)
 
 
-func test_play_ready_sweep_does_not_error_when_ready_sweep_exists() -> void:
-	_flow.apply_player_state(_player_state({
-		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
-	}))
-
-	_flow._play_ready_sweep(_loadout_container().get_child(0))
-
-	assert_not_null(_display_ready_sweep_highlight())
-
-
-func test_play_ready_flash_does_not_error_when_ready_sweep_exists() -> void:
-	_flow.apply_player_state(_player_state({
-		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
-	}))
-
-	_flow._play_ready_flash(_loadout_container().get_child(0))
-
-	assert_not_null(_display_ready_flash())
-
-
-func test_play_ready_flash_returns_gracefully_when_ready_sweep_is_missing() -> void:
-	var fake_display := Control.new()
-	add_child_autofree(fake_display)
-
-	_flow._play_ready_flash(fake_display)
-
-	assert_true(true)
-
-
 func test_switching_from_torpedo_to_unknown_weapon_clears_the_display() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
@@ -327,36 +297,47 @@ func test_switching_from_torpedo_to_unknown_weapon_clears_the_display() -> void:
 	assert_eq(_loadout_container().get_child_count(), 0)
 
 
+func test_ensure_display_rejects_scene_with_non_weapon_display_root() -> void:
+	var invalid_scene := _create_scene(Control.new())
+
+	var display := _flow._ensure_display_for_slot("secondary", "invalid", invalid_scene)
+	assert_push_error("Weapon display scene for 'invalid' did not instantiate a WeaponDisplay.")
+
+	assert_null(display)
+	assert_eq(_loadout_container().get_child_count(), 0)
+	await get_tree().process_frame
+
+
 func _loadout_container() -> HBoxContainer:
 	return _hud.get_node("%LoadoutContainer") as HBoxContainer
 
 
 func _display_ammo_label() -> Label:
-	var display := _loadout_container().get_child(0)
+	var display := _loadout_container().get_child(0) as WeaponDisplay
 	return display.get_node("%AmmoLabel") as Label
 
 
-func _display_ring_highlight() -> CanvasItem:
-	var display := _loadout_container().get_child(0)
-	return display.get_node("%RingHighlight") as CanvasItem
+func _display_ring_highlight() -> RingHighlight:
+	var display := _loadout_container().get_child(0) as WeaponDisplay
+	return display.get_node("%RingHighlight") as RingHighlight
 
 
-func _display_cooldown_overlay() -> Control:
-	var display := _loadout_container().get_child(0)
-	return display.get_node("%CooldownOverlay") as Control
+func _display_cooldown_overlay() -> CooldownOverlay:
+	var display := _loadout_container().get_child(0) as WeaponDisplay
+	return display.get_node("%CooldownOverlay") as CooldownOverlay
 
 
 func _display_cooldown_label() -> Label:
 	return _display_cooldown_overlay().get_node("CooldownLabel") as Label
 
 
-func _display_ready_sweep_highlight() -> CanvasItem:
-	var display := _loadout_container().get_child(0)
-	return display.get_node("%ReadySweepHighlight") as CanvasItem
+func _display_ready_sweep_highlight() -> ReadySweepHighlight:
+	var display := _loadout_container().get_child(0) as WeaponDisplay
+	return display.get_node("%ReadySweepHighlight") as ReadySweepHighlight
 
 
 func _display_ready_flash() -> AnimatedSprite2D:
-	var display := _loadout_container().get_child(0)
+	var display := _loadout_container().get_child(0) as WeaponDisplay
 	return display.get_node("%ReadyFlash") as AnimatedSprite2D
 
 
@@ -376,3 +357,10 @@ func _player_state(fields: Dictionary) -> Dictionary:
 		state[key] = fields[key]
 
 	return state
+
+
+func _create_scene(root: Node) -> PackedScene:
+	var scene := PackedScene.new()
+	assert_eq(scene.pack(root), OK)
+	root.free()
+	return scene

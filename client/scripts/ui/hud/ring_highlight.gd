@@ -1,4 +1,5 @@
 extends Control
+class_name RingHighlight
 
 @export var radius_ratio: float = 0.5
 @export var arc_degrees: float = 3.0

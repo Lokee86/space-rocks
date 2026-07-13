@@ -58,7 +58,7 @@ func apply_player_state(player_state: Dictionary) -> void:
 
 
 func _clear_slot(slot: String) -> void:
-	var display_node: Node = display_nodes.get(slot, null)
+	var display_node: WeaponDisplay = display_nodes.get(slot, null)
 	if display_node != null and is_instance_valid(display_node):
 		display_node.queue_free()
 	display_nodes[slot] = null
@@ -78,8 +78,8 @@ func _float_or_default(value, default_value: float) -> float:
 	return float(value)
 
 
-func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScene) -> Node:
-	var display_node: Node = display_nodes.get(slot, null)
+func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScene) -> WeaponDisplay:
+	var display_node: WeaponDisplay = display_nodes.get(slot, null)
 	if displayed_weapon_ids.get(slot, "") == weapon_id and is_instance_valid(display_node):
 		_connect_cooldown_finished(display_node)
 		return display_node
@@ -89,14 +89,20 @@ func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScen
 		return null
 
 	var new_node := scene.instantiate()
-	loadout_container.add_child(new_node)
-	display_nodes[slot] = new_node
+	if not new_node is WeaponDisplay:
+		push_error("Weapon display scene for '%s' did not instantiate a WeaponDisplay." % weapon_id)
+		new_node.queue_free()
+		return null
+
+	var new_display := new_node as WeaponDisplay
+	loadout_container.add_child(new_display)
+	display_nodes[slot] = new_display
 	displayed_weapon_ids[slot] = weapon_id
-	_connect_cooldown_finished(new_node)
-	return new_node
+	_connect_cooldown_finished(new_display)
+	return new_display
 
 
-func _apply_display_state(display: Node, slot_state: Dictionary, _cooldown_total: float) -> void:
+func _apply_display_state(display: WeaponDisplay, slot_state: Dictionary, _cooldown_total: float) -> void:
 	var slot := str(slot_state.get("slot", ""))
 	var cooldown_total: float = float(_cooldown_total)
 	var ammo_remaining: int = int(slot_state.get("ammo_remaining", 0))
@@ -113,15 +119,11 @@ func _apply_display_state(display: Node, slot_state: Dictionary, _cooldown_total
 	if cooldown_remaining > 0.0:
 		ready_effect_played_for_cooldown[slot] = false
 
-	if display.has_method("apply_weapon_display_state"):
-		display.apply_weapon_display_state(display_state)
+	display.apply_weapon_display_state(display_state)
 
 	if previous_remaining > 0.0 and cooldown_remaining <= 0.0:
 		if not bool(ready_effect_played_for_cooldown.get(slot, true)):
-			if display.has_method("play_ready_effects"):
-				display.play_ready_effects()
-			else:
-				_play_ready_effects_for_display(display)
+			display.play_ready_effects()
 			ready_effect_played_for_cooldown[slot] = true
 
 	previous_cooldown_remaining[slot] = cooldown_remaining
@@ -143,83 +145,25 @@ func _apply_slot(slot_state: Dictionary) -> void:
 	_apply_display_state(display, slot_state, float(definition.get("cooldown_total", 0.0)))
 
 
-func _connect_cooldown_finished(display: Node) -> void:
-	var cooldown_overlay := display.get_node_or_null("%CooldownOverlay")
-	if cooldown_overlay == null or not cooldown_overlay.has_signal("cooldown_finished"):
-		return
-
+func _connect_cooldown_finished(display: WeaponDisplay) -> void:
 	var callback := Callable(self, "_on_display_cooldown_finished").bind(display)
-	if not cooldown_overlay.cooldown_finished.is_connected(callback):
-		cooldown_overlay.cooldown_finished.connect(callback)
+	if not display.cooldown_finished.is_connected(callback):
+		display.cooldown_finished.connect(callback)
 
 
-func _on_display_cooldown_finished(display: Node) -> void:
+func _on_display_cooldown_finished(display: WeaponDisplay) -> void:
 	if display == null or not is_instance_valid(display):
 		return
 
 	var slot := _slot_for_display(display)
 	if slot != "":
 		ready_effect_played_for_cooldown[slot] = true
-	if display.has_method("play_ready_effects"):
-		display.play_ready_effects()
-	else:
-		_play_ready_effects_for_display(display)
+	display.play_ready_effects()
 
 
-func _play_ready_effects_for_display(display: Node) -> void:
-	if display == null or not is_instance_valid(display):
-		return
-
-	var ring_highlight := display.get_node_or_null("%RingHighlight") as CanvasItem
-	if ring_highlight != null:
-		ring_highlight.show()
-	_play_ready_sweep(display)
-	_play_ready_flash(display)
-
-
-func _slot_for_display(display: Node) -> String:
+func _slot_for_display(display: WeaponDisplay) -> String:
 	for slot in [SLOT_PRIMARY, SLOT_SECONDARY]:
-		var display_node: Node = display_nodes.get(slot, null)
+		var display_node: WeaponDisplay = display_nodes.get(slot, null)
 		if display_node == display:
 			return slot
 	return ""
-
-
-func _play_ready_sweep(display: Node) -> void:
-	if display == null or not is_instance_valid(display):
-		return
-
-	var ready_sweep := display.get_node_or_null("%ReadySweepHighlight")
-	if ready_sweep == null:
-		return
-
-	if not ready_sweep.has_method("play"):
-		return
-
-	ready_sweep.play()
-
-
-func _play_ready_flash(display: Node) -> void:
-	if display == null or not is_instance_valid(display):
-		return
-
-	var ready_flash := display.get_node_or_null("%ReadyFlash") as AnimatedSprite2D
-	if ready_flash == null:
-		return
-
-	var callback := Callable(self, "_on_ready_flash_animation_finished").bind(ready_flash)
-	if not ready_flash.animation_finished.is_connected(callback):
-		ready_flash.animation_finished.connect(callback)
-
-	ready_flash.show()
-	ready_flash.stop()
-	ready_flash.frame = 0
-	ready_flash.play()
-
-
-func _on_ready_flash_animation_finished(ready_flash: AnimatedSprite2D) -> void:
-	if ready_flash == null or not is_instance_valid(ready_flash):
-		return
-
-	ready_flash.stop()
-	ready_flash.hide()

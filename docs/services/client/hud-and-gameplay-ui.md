@@ -203,6 +203,8 @@ It reads loadout and cooldown state from overlay-lane HUD inputs and creates a d
 
 `LoadoutDisplayFlow` instantiates weapon display scene nodes from `weapon_display.tscn`.
 
+Each instantiated scene root must be typed as `WeaponDisplay`. Malformed scene definitions are rejected and freed before they are mounted under the HUD.
+
 Current behavior:
 
 * `torpedo` is displayable.
@@ -216,6 +218,8 @@ Current behavior:
 `client/scenes/ui/weapon_displays/weapon_display.tscn` is the scene backing `WeaponDisplay`.
 
 `WeaponDisplay` owns per-slot icon, ammo, cooldown, and ready-effect presentation.
+
+Its concrete child contract includes `CooldownOverlay`, `RingHighlight`, `ReadySweepHighlight`, the ready-flash sprite, the ammo label, and the weapon icon. `WeaponDisplay` relays cooldown completion through its public `cooldown_finished` signal and owns ready-effect playback. `LoadoutDisplayFlow` does not traverse these child nodes or discover methods and signals dynamically.
 
 ### Input protection
 
@@ -456,11 +460,11 @@ The loadout display reads generated packet field names and generated client cons
 * `client/tests/unit/ui/hud/test_weapon_display.gd`
 * `client/tests/unit/ui/hud/test_cooldown_overlay.gd`
 
-These tests verify displayable weapon registration, display creation and clearing, ammo label behavior, cooldown overlay behavior, ready effects, and cooldown-finished signaling.
+These tests verify displayable weapon registration, display creation and clearing, typed child contracts, ammo label behavior, cooldown overlay behavior, ready effects, cooldown signal relay, invalid scene-root rejection, and cooldown-finished signaling.
 
 `test_loadout_display_flow.gd` instantiates the real HUD and weapon display scenes and verifies ring movement, cooldown hiding, ready sweep and flash start, and animation completion and hide behavior.
 
-`test_weapon_display.gd` covers the scene-backed `WeaponDisplay` presentation path.
+`test_weapon_display.gd` covers the scene-backed `WeaponDisplay` presentation path, including its typed child contract and cooldown signal relay. `test_loadout_display_flow.gd` covers invalid scene-root rejection in addition to the real HUD cooldown and ready-effect transitions.
 
 ### Input protection tests
 

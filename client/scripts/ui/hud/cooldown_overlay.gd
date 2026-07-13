@@ -1,4 +1,5 @@
 extends Control
+class_name CooldownOverlay
 
 signal cooldown_finished
 
