@@ -1,3 +1,4 @@
+class_name MultiplayerLobby
 extends Control
 
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")

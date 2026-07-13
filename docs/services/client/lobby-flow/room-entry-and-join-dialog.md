@@ -123,6 +123,8 @@ It resolves:
 %CancelButton
 ```
 
+`JoinDialogFlow` requires a typed `JoinDialog` and connects its declared `join_requested` and `cancel_requested` signals directly. It uses the declared `set_status()` API for local validation text.
+
 It emits:
 
 ```text

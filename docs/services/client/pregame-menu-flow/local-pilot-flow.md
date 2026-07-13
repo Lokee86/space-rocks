@@ -17,6 +17,8 @@ The local pilot flow lets the player choose whether single-player runs as Guest 
 The local pilot UI scenes emit intent only. They do not own API calls, persistence, or identity policy.
 The selector helper components handle list scrolling, row focus, row styling, and row selection feedback inside the local pilot selection UI.
 
+`DiscreteListView` uses the small `DiscreteListRow` contract: rows declare `selected(item: Dictionary)` and `configure(display_text: String, item_data: Dictionary)`. `PilotSelectRow` implements this contract. A row scene with the wrong type is reported, freed, and skipped.
+
 ## Code root
 
 ```text
@@ -168,6 +170,7 @@ Related tests:
 
 ```text
 client/tests/unit/profile/test_profile_context_provider.gd
+client/tests/unit/ui/menus/test_discrete_list_view.gd
 ```
 
 Important non-ownership boundaries:

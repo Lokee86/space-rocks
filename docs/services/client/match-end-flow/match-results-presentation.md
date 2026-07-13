@@ -117,7 +117,7 @@ multiplayer   -> return_to_lobby_requested
 
 `MatchResultWindow` is the visible result-window UI controller.
 
-It owns the scene-local button signal wiring, button label mode, row clearing, and row application. It emits scene-local signals:
+It owns the scene-local button signal wiring, button label mode, row clearing, and row application. Before mounting each score row, it validates that the scene instantiates `PlayerScoreRow`; invalid instances are reported, freed, and skipped, while valid rows receive a direct `apply_row()` call. It emits scene-local signals:
 
 ```text
 lobby_replay_requested

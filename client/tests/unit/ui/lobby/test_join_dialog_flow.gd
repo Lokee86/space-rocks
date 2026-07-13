@@ -1,13 +1,11 @@
 extends GutTest
 
 const JoinDialogFlow := preload("res://scripts/ui/lobby/join_dialog_flow.gd")
+const JoinDialog := preload("res://scripts/ui/lobby/join_dialog.gd")
 
 
 class FakeJoinDialog:
-	extends Control
-
-	signal join_requested(room_code: String)
-	signal cancel_requested
+	extends JoinDialog
 
 	var status_text := ""
 

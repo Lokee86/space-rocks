@@ -20,17 +20,15 @@ func test_apply_rows_renders_player_score_row_without_kills_label() -> void:
 	await get_tree().process_frame
 
 	var score_container := window.get_node("%ScoreContainer")
-	var score_rows: Array = []
+	var score_rows: Array[PlayerScoreRow] = []
 	for child in score_container.get_children():
-		var child_node: Node = child
-		if child_node is PlayerScoreRow:
-			score_rows.append(child_node)
-		elif child_node.name == "PlayerScoreRow":
-			score_rows.append(child_node)
+		var child_row := child as PlayerScoreRow
+		if child_row != null:
+			score_rows.append(child_row)
 
 	assert_eq(score_rows.size(), 1)
 
-	var row: Node = score_rows[0]
+	var row: PlayerScoreRow = score_rows[0]
 	assert_eq((row.get_node("%PlayerIDLabel") as Label).text, "player-1")
 	assert_eq((row.get_node("%GameDeathsLabel") as Label).text, "2")
 	assert_eq((row.get_node("%GameScoreLabel") as Label).text, "450")

@@ -1,3 +1,4 @@
+class_name LobbySessionState
 extends RefCounted
 
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")

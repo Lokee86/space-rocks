@@ -1,6 +1,4 @@
-extends HBoxContainer
-
-signal selected(item: Dictionary)
+extends DiscreteListRow
 
 @export var normal_style: StyleBox
 @export var hover_style: StyleBox

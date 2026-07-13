@@ -176,6 +176,8 @@ room_state == Lobby
 
 `MultiplayerLobbyPresenter` owns the lifecycle of the `multiplayer_lobby.tscn` instance.
 
+It mounts a typed `MultiplayerLobby`, consumes `LobbySessionState`, and connects the declared `ready_requested`, `start_game_requested`, and `leave_requested` signals directly to the supplied optional callbacks.
+
 It:
 
 * Instantiates the lobby scene when needed.
@@ -243,7 +245,7 @@ It currently:
 
 `LobbyPlayerListView` owns rendering member rows into the player-list container.
 
-On each render, it clears existing child rows, instantiates one row per member, and calls `set_member()` when the row supports it.
+On each render, it clears existing child rows, instantiates one `PlayerRow` per member, and calls its required `set_member()` contract directly. A scene that does not instantiate `PlayerRow` is reported, freed, and skipped.
 
 ### Player row
 
@@ -454,6 +456,8 @@ Relevant tests include:
 * `client/tests/unit/test_lobby_status_view_model.gd`
 * `client/tests/unit/lobby/test_lobby_shell_flow.gd`
 * `client/tests/unit/lobby/test_lobby_return_flow.gd`
+* `client/tests/unit/ui/lobby/test_multiplayer_lobby_presenter.gd`
+* `client/tests/unit/ui/lobby/test_lobby_player_list_view.gd`
 * `client/tests/unit/test_room_session_controller.gd`
 
 Current coverage verifies:

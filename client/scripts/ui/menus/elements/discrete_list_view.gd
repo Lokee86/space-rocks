@@ -143,14 +143,15 @@ func _render_rows() -> void:
 
 		var item := item_variant as Dictionary
 		var display_name := str(item.get("display_name", item.get("name", "")))
-		var row = row_scene.instantiate()
+		var row_instance: Node = row_scene.instantiate()
+		var row := row_instance as DiscreteListRow
+		if row == null:
+			push_error("Discrete list row scene must instantiate DiscreteListRow; got %s" % row_instance.get_class())
+			row_instance.queue_free()
+			continue
 		rows.add_child(row)
-
-		if row.has_method("configure"):
-			row.call("configure", display_name, item.duplicate(true))
-
-		if row.has_signal("selected"):
-			row.connect("selected", Callable(self, "_on_row_selected").bind(absolute_index))
+		row.configure(display_name, item.duplicate(true))
+		row.selected.connect(_on_row_selected.bind(absolute_index))
 
 		if absolute_index == selected_index:
 			row.call_deferred("grab_focus")

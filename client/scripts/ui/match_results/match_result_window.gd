@@ -32,9 +32,13 @@ func apply_rows(rows: Array) -> void:
 
 	var score_container := %ScoreContainer as Control
 	for row in rows:
-		var score_row := PlayerScoreRowScene.instantiate()
-		if score_row.has_method("apply_row"):
-			score_row.apply_row(row)
+		var score_row_instance: Node = PlayerScoreRowScene.instantiate()
+		var score_row := score_row_instance as PlayerScoreRow
+		if score_row == null:
+			push_error("Player score row scene must instantiate PlayerScoreRow; got %s" % score_row_instance.get_class())
+			score_row_instance.queue_free()
+			continue
+		score_row.apply_row(row)
 		score_container.add_child(score_row)
 
 

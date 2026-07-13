@@ -1,3 +1,4 @@
+class_name PlayerRow
 extends HBoxContainer
 
 @onready var player_name_label: Label = find_child("PlayerNameLabel", true, false) as Label
