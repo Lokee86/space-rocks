@@ -77,3 +77,40 @@ func TestHandlerServiceFailureIsStructured(t *testing.T) {
 		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
 	}
 }
+
+func TestHandlerConfigLimitsAuthAndNilIngestor(t *testing.T) {
+	config := HandlerConfig{MaxRequestBytes: 8, MaxEvents: 1, Authorize: func(r *http.Request) bool { return r.Header.Get("X-Test-Auth") == "ok" }}
+	cases := []struct {
+		name, body, auth, code string
+		status                 int
+	}{
+		{"unauthorized", `{}`, "", "unauthorized", http.StatusUnauthorized},
+		{"request too large", `{"request":"too-large"}`, "ok", "request_too_large", http.StatusRequestEntityTooLarge},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, EventsPath, bytes.NewBufferString(tc.body))
+			req.Header.Set("X-Test-Auth", tc.auth)
+			rec := httptest.NewRecorder()
+			NewHandlerWithConfig(&fakeBatchIngestor{}, config).ServeHTTP(rec, req)
+			if rec.Code != tc.status || !strings.Contains(rec.Body.String(), `"code":"`+tc.code+`"`) {
+				t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+			}
+		})
+	}
+
+	config = HandlerConfig{MaxEvents: 1}
+	req := httptest.NewRequest(http.MethodPost, EventsPath, bytes.NewBufferString(`{"events":[{},{}]}`))
+	rec := httptest.NewRecorder()
+	NewHandlerWithConfig(&fakeBatchIngestor{}, config).ServeHTTP(rec, req)
+	if rec.Code != http.StatusRequestEntityTooLarge || !strings.Contains(rec.Body.String(), "batch_too_large") {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	req = httptest.NewRequest(http.MethodPost, EventsPath, bytes.NewBufferString(`{"events":[{}]}`))
+	rec = httptest.NewRecorder()
+	NewHandlerWithConfig(nil, config).ServeHTTP(rec, req)
+	if rec.Code != http.StatusServiceUnavailable || !strings.Contains(rec.Body.String(), "ingestion_unavailable") {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+	}
+}
