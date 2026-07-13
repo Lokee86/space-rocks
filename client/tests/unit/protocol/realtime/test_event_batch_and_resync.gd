@@ -13,33 +13,24 @@ const RealtimePresentationState := preload("res://scripts/networking/realtime/re
 const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 
 
-class FakeEventSink:
-	var handled_events: Array = []
-
-	func handle_presentation_event(event_type, payload, event_packet) -> void:
-		handled_events.append({
-			"type": event_type,
-			"payload": payload,
-			"packet": event_packet,
-		})
-
-
-class FakePresentationTarget:
+class FakeWorldSyncTarget extends WorldSync:
 	var last_world_lane_state = null
-	var last_overlay_lane_state = null
-	var last_session_lane_state = null
 
 	func apply_world_lane_state(world_lane_state) -> void:
 		last_world_lane_state = world_lane_state
 
+class FakeHudFlowTarget extends GameplayHudFlow:
+	var last_overlay_lane_state = null
+	var last_session_lane_state = null
+
 	func apply_overlay_lane_state(overlay_lane_state) -> void:
 		last_overlay_lane_state = overlay_lane_state
 
-	func apply_session_lane_state(session_lane_state, self_id: String) -> void:
+	func apply_session_lane_state(session_lane_state, self_id: String = "") -> void:
 		last_session_lane_state = session_lane_state
 
 
-class FakeEventFlow:
+class FakeEventFlow extends GameplayEventLifecycleFlow:
 	var apply_server_events_call_count := 0
 	var received_event_count := 0
 	var received_event_types: Array = []
@@ -51,7 +42,7 @@ class FakeEventFlow:
 			received_event_types.append(str(event.get("type", "")))
 
 
-class FakeLocalLifecycleFlow:
+class FakeLocalLifecycleFlow extends GameplayLocalLifecycleFlow:
 	var world_lane_state = null
 	var session_lane_state = null
 	var self_id := ""
@@ -64,7 +55,6 @@ class FakeLocalLifecycleFlow:
 
 func test_event_batch_applies_events_once() -> void:
 	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
 
 	var applied := applier.apply_event_batch(
 		{
@@ -73,12 +63,11 @@ func test_event_batch_applies_events_once() -> void:
 				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 			],
 		},
-		sink
 	)
 
 	assert_true(applied)
-	assert_eq(sink.handled_events.size(), 1)
-	assert_eq(sink.handled_events[0]["type"], "spark")
+	assert_eq(applier.get_applied_events().size(), 1)
+	assert_eq(applier.get_applied_events()[0]["type"], "spark")
 
 
 func test_compact_event_batch_tuple_expansion_still_applies_and_dedupes() -> void:
@@ -94,21 +83,20 @@ func test_compact_event_batch_tuple_expansion_still_applies_and_dedupes() -> voi
 	})
 
 	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
 
-	var applied := applier.apply_event_batch(expanded, sink)
-	var reapplied := applier.apply_event_batch(expanded, sink)
+	var applied := applier.apply_event_batch(expanded)
+	var reapplied := applier.apply_event_batch(expanded)
 
 	assert_true(applied)
 	assert_false(reapplied)
-	assert_eq(sink.handled_events.size(), 2)
-	assert_eq(sink.handled_events[0]["type"], "bullet_blast")
-	assert_eq(sink.handled_events[0]["packet"]["event_id"], "presentation-event-1")
-	assert_eq(sink.handled_events[0]["packet"]["x"], 12.3)
-	assert_eq(sink.handled_events[0]["packet"]["y"], 56.8)
-	assert_eq(sink.handled_events[1]["type"], "ship_death")
-	assert_eq(sink.handled_events[1]["packet"]["player_id"], "player-1")
-	assert_eq(sink.handled_events[1]["packet"]["respawn_delay"], 3.5)
+	assert_eq(applier.get_applied_events().size(), 2)
+	assert_eq(applier.get_applied_events()[0]["type"], "bullet_blast")
+	assert_eq(applier.get_applied_events()[0]["event_id"], "presentation-event-1")
+	assert_eq(applier.get_applied_events()[0]["x"], 12.3)
+	assert_eq(applier.get_applied_events()[0]["y"], 56.8)
+	assert_eq(applier.get_applied_events()[1]["type"], "ship_death")
+	assert_eq(applier.get_applied_events()[1]["player_id"], "player-1")
+	assert_eq(applier.get_applied_events()[1]["respawn_delay"], 3.5)
 
 
 func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
@@ -134,36 +122,34 @@ func test_compact_event_batch_expands_before_application_and_dedupes() -> void:
 	assert_eq(expanded["events"][1]["respawn_delay"], 3500)
 
 	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
 
-	var first_applied := applier.apply_event_batch(expanded, sink)
-	var second_applied := applier.apply_event_batch(expanded, sink)
+	var first_applied := applier.apply_event_batch(expanded)
+	var second_applied := applier.apply_event_batch(expanded)
 
 	assert_true(first_applied)
 	assert_false(second_applied)
-	assert_eq(sink.handled_events.size(), 2)
-	assert_eq(sink.handled_events[0]["type"], "bullet_blast")
-	assert_eq(sink.handled_events[0]["packet"]["x"], 12.3)
-	assert_eq(sink.handled_events[0]["packet"]["y"], 56.8)
-	assert_eq(sink.handled_events[1]["type"], "ship_death")
-	assert_eq(sink.handled_events[1]["packet"]["respawn_delay"], 3.5)
+	assert_eq(applier.get_applied_events().size(), 2)
+	assert_eq(applier.get_applied_events()[0]["type"], "bullet_blast")
+	assert_eq(applier.get_applied_events()[0]["x"], 12.3)
+	assert_eq(applier.get_applied_events()[0]["y"], 56.8)
+	assert_eq(applier.get_applied_events()[1]["type"], "ship_death")
+	assert_eq(applier.get_applied_events()[1]["respawn_delay"], 3.5)
 	assert_eq(applier.get_applied_events()[0]["x"], 12.3)
 
 
 func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow() -> void:
 	var applier := EventBatchApplier.new()
-	var presentation_state := {
-		"world_lane_state": WorldLaneState.new(),
-		"overlay_lane_state": OverlayLaneState.new(),
-		"session_lane_state": SessionLaneState.new(),
-		"event_batch_applier": applier,
-	}
+	var presentation_state := RealtimePresentationState.new()
+	presentation_state.world_lane_state = WorldLaneState.new()
+	presentation_state.overlay_lane_state = OverlayLaneState.new()
+	presentation_state.session_lane_state = SessionLaneState.new()
+	presentation_state.event_batch_applier = applier
 	var presentation_adapter := PresentationAdapter.new()
-	var world_sync := FakePresentationTarget.new()
-	var hud_flow := FakePresentationTarget.new()
+	var world_sync := FakeWorldSyncTarget.new()
+	var hud_flow := FakeHudFlowTarget.new()
 	var event_flow := FakeEventFlow.new()
 
-	presentation_state["overlay_lane_state"].self_id = "player-1"
+	presentation_state.overlay_lane_state.self_id = "player-1"
 
 	applier.apply_event_batch(
 		{
@@ -171,8 +157,7 @@ func test_presentation_adapter_forwards_applied_event_batch_once_to_event_flow()
 			"events": [
 				{"event_id": "presentation-event-1", "type": "bullet_blast", "payload": {"value": 1}},
 			],
-		},
-		null
+		}
 	)
 
 	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
@@ -194,8 +179,8 @@ func test_presentation_adapter_forwards_decoded_session_state_to_local_lifecycle
 	}
 
 	var presentation_adapter := PresentationAdapter.new()
-	var world_sync := FakePresentationTarget.new()
-	var hud_flow := FakePresentationTarget.new()
+	var world_sync := FakeWorldSyncTarget.new()
+	var hud_flow := FakeHudFlowTarget.new()
 	var event_flow := FakeEventFlow.new()
 	var local_lifecycle_flow := FakeLocalLifecycleFlow.new()
 
@@ -290,8 +275,8 @@ func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 	presentation_state.overlay_lane_state.primary_cooldown_remaining = null
 	presentation_state.overlay_lane_state.secondary_cooldown_remaining = null
 
-	var world_sync := FakePresentationTarget.new()
-	var hud_flow := FakePresentationTarget.new()
+	var world_sync := FakeWorldSyncTarget.new()
+	var hud_flow := FakeHudFlowTarget.new()
 	var event_flow := FakeEventFlow.new()
 
 	presentation_adapter.fanout_lane_states(presentation_state, world_sync, hud_flow, event_flow)
@@ -306,7 +291,6 @@ func test_presentation_adapter_handles_null_overlay_cooldowns() -> void:
 
 func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
 	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
 
 	applier.apply_event_batch(
 		{
@@ -315,7 +299,6 @@ func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
 				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 			],
 		},
-		sink
 	)
 	var applied := applier.apply_event_batch(
 		{
@@ -324,17 +307,15 @@ func test_repeated_batch_id_still_applies_unseen_event_ids() -> void:
 				{"event_id": "presentation-event-2", "type": "spark", "payload": {"value": 2}},
 			],
 		},
-		sink
 	)
 
 	assert_true(applied)
-	assert_eq(sink.handled_events.size(), 2)
-	assert_eq(sink.handled_events[1]["type"], "spark")
+	assert_eq(applier.get_applied_events().size(), 2)
+	assert_eq(applier.get_applied_events()[1]["type"], "spark")
 
 
 func test_repeated_batch_id_skips_missing_event_id_defensively() -> void:
 	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
 
 	applier.apply_event_batch(
 		{
@@ -343,7 +324,6 @@ func test_repeated_batch_id_skips_missing_event_id_defensively() -> void:
 				{"type": "spark", "payload": {"value": 1}},
 			],
 		},
-		sink
 	)
 	var applied := applier.apply_event_batch(
 		{
@@ -352,16 +332,14 @@ func test_repeated_batch_id_skips_missing_event_id_defensively() -> void:
 				{"type": "spark", "payload": {"value": 2}},
 			],
 		},
-		sink
 	)
 
 	assert_false(applied)
-	assert_eq(sink.handled_events.size(), 1)
+	assert_eq(applier.get_applied_events().size(), 1)
 
 
 func test_duplicate_event_id_is_suppressed() -> void:
 	var applier := EventBatchApplier.new()
-	var sink := FakeEventSink.new()
 
 	applier.apply_event_batch(
 		{
@@ -370,7 +348,6 @@ func test_duplicate_event_id_is_suppressed() -> void:
 				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 1}},
 			],
 		},
-		sink
 	)
 	var applied := applier.apply_event_batch(
 		{
@@ -379,11 +356,10 @@ func test_duplicate_event_id_is_suppressed() -> void:
 				{"event_id": "presentation-event-1", "type": "spark", "payload": {"value": 2}},
 			],
 		},
-		sink
 	)
 
 	assert_false(applied)
-	assert_eq(sink.handled_events.size(), 1)
+	assert_eq(applier.get_applied_events().size(), 1)
 
 
 func test_event_dedupe_histories_are_bounded_without_duplicate_order_entries() -> void:

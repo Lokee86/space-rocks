@@ -1,5 +1,7 @@
 extends GutTest
 
+
+
 const WorldPresentationAdapter := preload("res://scripts/protocol/realtime/world_presentation_adapter.gd")
 const OverlayPresentationAdapter := preload("res://scripts/protocol/realtime/overlay_presentation_adapter.gd")
 const SessionPresentationAdapter := preload("res://scripts/protocol/realtime/session_presentation_adapter.gd")
@@ -15,9 +17,8 @@ const EventBatchApplier := preload("res://scripts/protocol/realtime/event_batch_
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 
-class FakeWorldSync:
+class FakeWorldSync extends WorldSync:
 	var applied_world_lane_state = null
-	var current_self_id := ""
 
 	func set_current_self_id(self_id: String) -> void:
 		current_self_id = self_id
@@ -26,7 +27,7 @@ class FakeWorldSync:
 		applied_world_lane_state = world_lane_state
 
 
-class FakeHudFlow:
+class FakeHudFlow extends GameplayHudFlow:
 	var overlay_lane_state = null
 	var session_lane_state = null
 	var applied_events: Array = []
@@ -42,6 +43,11 @@ class FakeHudFlow:
 	func apply_server_events(events: Array, self_id: String) -> void:
 		applied_events.append({"events": events, "self_id": self_id})
 
+class FakeEventFlow extends GameplayEventLifecycleFlow:
+	var applied_events: Array = []
+
+	func apply_server_events(events: Array, self_id: String) -> void:
+		applied_events.append({"events": events, "self_id": self_id})
 
 func test_world_adapter_applies_lane_state_without_full_read_model() -> void:
 	var adapter := WorldPresentationAdapter.new()
@@ -201,7 +207,7 @@ func test_gameplay_hud_flow_session_lane_does_not_overwrite_overlay_owned_torped
 
 func test_event_adapter_displays_once_and_suppresses_duplicates() -> void:
 	var adapter := EventPresentationAdapter.new()
-	var hud_flow := FakeHudFlow.new()
+	var hud_flow := FakeEventFlow.new()
 	var applier := EventBatchApplier.new()
 
 	applier.apply_event_batch(
@@ -210,8 +216,7 @@ func test_event_adapter_displays_once_and_suppresses_duplicates() -> void:
 			"events": [
 				{"event_id": "event-1", "type": "spark", "payload": {"value": 1}},
 			],
-		},
-		null
+		}
 	)
 	adapter.apply_event_batch_output(hud_flow, applier, "player-1")
 	adapter.apply_event_batch_output(hud_flow, applier, "player-1")

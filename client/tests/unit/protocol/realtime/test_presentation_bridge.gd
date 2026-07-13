@@ -1,18 +1,13 @@
 extends GutTest
 
 const PresentationBridge := preload("res://scripts/protocol/realtime/presentation_bridge.gd")
+const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
+const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
+const PresentationAdapter := preload("res://scripts/protocol/realtime/presentation_adapter.gd")
 
-class FakeLogger:
-	var messages: Array = []
-
-	func record(message: String) -> void:
-		messages.append(message)
-
-class FakePacketPipeline:
-	extends RefCounted
-
+class FakePacketPipeline extends RealtimePacketPipeline:
 	var gameplay_ready := true
-	var presentation_state := {"presentation": true}
+	var presentation_state := RealtimePresentationState.new()
 
 	func is_gameplay_ready() -> bool:
 		return gameplay_ready
@@ -20,15 +15,49 @@ class FakePacketPipeline:
 	func get_presentation_state():
 		return presentation_state
 
-class FakeGameplayComposition:
-	extends RefCounted
+class FakePresentationAdapter extends PresentationAdapter:
+	var calls: Array = []
 
-	var world_sync := "world-sync"
-	var gameplay_hud_flow := "hud-flow"
+	func fanout_lane_states(presentation_state: RealtimePresentationState, world_sync_ref: WorldSync = null, gameplay_hud_flow_ref: GameplayHudFlow = null, event_flow_ref: GameplayEventLifecycleFlow = null, local_lifecycle_flow_ref: GameplayLocalLifecycleFlow = null) -> void:
+		calls.append({
+			"presentation_state": presentation_state,
+			"world_sync": world_sync_ref,
+			"gameplay_hud_flow": gameplay_hud_flow_ref,
+			"event_flow": event_flow_ref,
+			"local_lifecycle_flow": local_lifecycle_flow_ref,
+		})
+
+class FakeWorldSync extends WorldSync:
+	pass
+
+class FakeGameplayHudFlow extends GameplayHudFlow:
+	pass
+
+class FakeEventLifecycleFlow extends GameplayEventLifecycleFlow:
+	pass
+
+class FakeLocalLifecycleFlow extends GameplayLocalLifecycleFlow:
+	pass
+
+class FakeLogger:
+	var messages: Array = []
+
+	func record(message: String) -> void:
+		messages.append(message)
+
+class FakeGameplayComposition:
+	extends GameplayComposition
+
 	var devtools_states: Array = []
 	var call_order: Array = []
-	var event_lifecycle_flow := "event-flow"
-	var local_lifecycle_flow := "local-flow"
+	var event_lifecycle_flow: GameplayEventLifecycleFlow
+	var local_lifecycle_flow: GameplayLocalLifecycleFlow
+
+	func _init() -> void:
+		world_sync = FakeWorldSync.new()
+		gameplay_hud_flow = FakeGameplayHudFlow.new()
+		event_lifecycle_flow = FakeEventLifecycleFlow.new()
+		local_lifecycle_flow = FakeLocalLifecycleFlow.new()
 
 	func get_event_lifecycle_flow():
 		call_order.append("get_event_lifecycle_flow")
@@ -38,23 +67,15 @@ class FakeGameplayComposition:
 		call_order.append("get_local_lifecycle_flow")
 		return local_lifecycle_flow
 
+	func get_world_sync() -> WorldSync:
+		return world_sync
+
+	func get_gameplay_hud_flow() -> GameplayHudFlow:
+		return gameplay_hud_flow
+
 	func apply_devtools_gameplay_state(state: Dictionary) -> void:
 		call_order.append("apply_devtools_gameplay_state")
 		devtools_states.append(state)
-
-class FakePresentationAdapter:
-	extends RefCounted
-
-	var calls: Array = []
-
-	func fanout_lane_states(presentation_state, world_sync_ref = null, gameplay_hud_flow_ref = null, event_flow_ref = null, local_lifecycle_flow_ref = null) -> void:
-		calls.append({
-			"presentation_state": presentation_state,
-			"world_sync": world_sync_ref,
-			"gameplay_hud_flow": gameplay_hud_flow_ref,
-			"event_flow": event_flow_ref,
-			"local_lifecycle_flow": local_lifecycle_flow_ref,
-		})
 
 func _make_bridge(active := true, ready := true) -> Dictionary:
 	var bridge := PresentationBridge.new()
@@ -63,7 +84,7 @@ func _make_bridge(active := true, ready := true) -> Dictionary:
 	var presentation_adapter := FakePresentationAdapter.new()
 	var composition := FakeGameplayComposition.new()
 	var logger := FakeLogger.new()
-	bridge.configure(pipeline, presentation_adapter, composition, composition.world_sync, Callable(logger, "record"))
+	bridge.configure(pipeline, presentation_adapter, composition, Callable(logger, "record"))
 	if active:
 		bridge.activate()
 	return {
@@ -144,10 +165,10 @@ func test_flush_pending_fanout_order_runs_before_devtools() -> void:
 		"get_local_lifecycle_flow",
 		"apply_devtools_gameplay_state",
 	])
-	assert_eq(presentation_adapter.calls[0]["world_sync"], "world-sync")
-	assert_eq(presentation_adapter.calls[0]["gameplay_hud_flow"], "hud-flow")
-	assert_eq(presentation_adapter.calls[0]["event_flow"], "event-flow")
-	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], "local-flow")
+	assert_eq(presentation_adapter.calls[0]["world_sync"], composition.world_sync)
+	assert_eq(presentation_adapter.calls[0]["gameplay_hud_flow"], composition.gameplay_hud_flow)
+	assert_eq(presentation_adapter.calls[0]["event_flow"], composition.event_lifecycle_flow)
+	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], composition.local_lifecycle_flow)
 
 func test_non_event_packet_flush_passes_local_lifecycle_without_event_flow() -> void:
 	var fixture := _make_bridge()
@@ -160,7 +181,7 @@ func test_non_event_packet_flush_passes_local_lifecycle_without_event_flow() -> 
 	assert_true(bridge.flush_pending())
 	assert_eq(composition.call_order, ["get_local_lifecycle_flow", "apply_devtools_gameplay_state"])
 	assert_eq(presentation_adapter.calls.size(), 1)
-	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], "local-flow")
+	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], composition.local_lifecycle_flow)
 	assert_null(presentation_adapter.calls[0]["event_flow"])
 
 func test_deactivate_clears_owned_pending_state() -> void:

@@ -1,4 +1,5 @@
 extends Node
+class_name ClientConnectionService
 
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")

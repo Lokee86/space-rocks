@@ -1,4 +1,5 @@
 extends RefCounted
+class_name EventBatchApplier
 
 const RealtimeQuantize := preload("res://scripts/protocol/realtime/realtime_quantize.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -27,7 +28,7 @@ func drain_applied_events() -> Array:
 	_applied_events.clear()
 	return events
 
-func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
+func apply_event_batch(event_batch_packet: Dictionary) -> bool:
 	var batch_id = event_batch_packet.get("batch_id")
 	var batch_already_applied := batch_id != null and _applied_batch_ids.has(batch_id)
 
@@ -41,7 +42,7 @@ func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 			continue
 		if batch_already_applied and event_id == "":
 			continue
-		if not _apply_event(event_sink, decoded_event):
+		if not _apply_event(decoded_event):
 			continue
 		applied_any = true
 		newly_applied_events.append(decoded_event)
@@ -61,16 +62,10 @@ func apply_event_batch(event_batch_packet: Dictionary, event_sink) -> bool:
 		)
 	return applied_any
 
-func _apply_event(event_sink, event: Dictionary) -> bool:
+func _apply_event(event: Dictionary) -> bool:
 	var event_id = event.get("event_id")
 	if event_id != null and _applied_event_ids.has(event_id):
 		return false
-
-	var event_type = event.get("type")
-	var payload = event.get("payload", {})
-	if event_sink != null and event_sink.has_method("handle_presentation_event"):
-		event_sink.handle_presentation_event(event_type, payload, event)
-
 
 	if event_id != null:
 		_event_id_record(event_id)

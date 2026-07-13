@@ -1,4 +1,5 @@
 extends RefCounted
+class_name GameplayReadiness
 
 const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
 

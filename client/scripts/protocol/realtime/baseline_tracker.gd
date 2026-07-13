@@ -3,20 +3,21 @@ extends RefCounted
 const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const LaneSyncState = preload("res://scripts/protocol/realtime/lane_sync_state.gd")
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
+const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
 
 const LANES := [LaneMetadata.LANE_WORLD, LaneMetadata.LANE_OVERLAY, LaneMetadata.LANE_SESSION]
 
 signal resync_required(lane, baseline_id, last_accepted_sequence, reason)
 
 var _lane_state := {}
-var _readiness = null
+var _readiness: GameplayReadiness
 
 func _init() -> void:
 	for lane in LANES:
 		_lane_state[lane] = _make_lane_state()
 
-func bind_readiness(readiness) -> void:
-	_readiness = readiness
+func bind_readiness(readiness_ref: GameplayReadiness) -> void:
+	_readiness = readiness_ref
 	_refresh_readiness()
 
 func get_lane_state(lane: String) -> Dictionary:
@@ -184,5 +185,5 @@ func _refresh_readiness() -> void:
 		_refresh_readiness_for_lane(lane)
 
 func _refresh_readiness_for_lane(lane: String) -> void:
-	if _readiness != null and _readiness.has_method("set_lane_synced"):
+	if _readiness != null:
 		_readiness.set_lane_synced(lane, is_lane_synced(lane))

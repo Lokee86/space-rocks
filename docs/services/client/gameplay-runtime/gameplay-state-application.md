@@ -155,9 +155,13 @@ The event path uses `EventBatchApplier` for `event_batch` delivery. Compact alia
 
 `EventBatchApplier` retains match-scoped dedupe histories with bounded insertion-order retention: 4096 applied batch IDs, 8192 applied event IDs, and 4096 logged batch IDs. When a history reaches its cap, the oldest retained ID is evicted. Recording a duplicate ID does not consume additional capacity or change its retained order. The histories are replaced or reset at match boundaries.
 
+`EventBatchApplier` is an accumulation, deduplication, and drain owner only. `EventPresentationAdapter` consumes its output through `drain_applied_events()`; there is no event-sink callback path.
+
 `WorldLaneState` retains at most 4096 deleted bullet IDs and 2048 pending updates for unknown bullet IDs. Recreating a bullet removes its tombstone from both the public dictionary and insertion-order state; deleting it again records it through the same bounded path. Clear and reset operations keep the dictionaries and insertion-order arrays synchronized.
 
 `PresentationAdapter` decodes session state once, passes the decoded state to `SessionPresentationAdapter`, then reuses that decoded session state when it calls `GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_state, self_id)`. Local lifecycle reconciliation runs after world, overlay, and session lane presentation and before `EventPresentationAdapter` drains event output.
+
+Lane adapter ownership is explicit: `WorldPresentationAdapter` consumes `WorldSync`; overlay and session adapters consume `GameplayHudFlow`; event presentation consumes `GameplayEventLifecycleFlow` and `EventBatchApplier`; local lifecycle presentation consumes `GameplayLocalLifecycleFlow`. `PresentationAdapter` coordinates `RealtimePresentationState` and these typed collaborators.
 
 `GameplayLocalLifecycleFlow` reconstructs the local presentation state from authoritative lane data. It handles active, pending-respawn, and eliminated status without becoming an authority for lifecycle outcomes. Event presentation remains a separate best-effort immediate-effects path.
 
@@ -178,8 +182,11 @@ RealtimePacketPipeline
 RealtimeRouter
 = coordinates lane-specific routing, lifecycle gate decisions, and matching pending lifecycle drains beneath RealtimePacketPipeline
 
-BaselineTracker
+`BaselineTracker`
 = owns world, overlay, and session synchronization plus active world baseline identity; it does not track lifecycle lanes independently
+
+`GameplayReadiness`
+= receives concrete `BaselineTracker` lane-sync updates and determines whether all required lanes are synchronized
 
 LifecycleLaneGate
 = owns lifecycle validation, independent per-lane sequence state, world-baseline-keyed pending queues, duplicate tracking, bounded capacity, explicit resync-on-capacity-loss, and obsolete parsed-baseline disposal
@@ -202,9 +209,19 @@ PresentationAdapter
 GameplayComposition
 = exposes the local lifecycle flow through shell/runtime composition without owning lane application itself
 
-DevtoolsLaneStateAdapter
+`DevtoolsLaneStateAdapter`
 = builds devtools readmodel dictionaries separately from primary gameplay presentation fanout
 ```
+
+The canonical readiness route is:
+
+```text
+BaselineTracker -> GameplayReadiness
+RealtimePacketPipeline.is_gameplay_ready()
+-> RealtimeRouter.is_presentable()
+```
+
+The completed core-contract chain uses concrete typed contracts across `ClientConnectionService`, `GameplaySessionController`, `SessionNetworkController`, `RealtimePacketPipeline`, `PresentationBridge`, `PresentationAdapter`, `GameplayComposition`, `WorldSync`, the lane adapters, `GameplayReadiness`, and `EventBatchApplier`. Fixed APIs are invoked directly after null checks rather than discovered with `has_method()`; optional devtools and UI boundaries remain outside this guarantee.
 
 ## World rendering boundary
 

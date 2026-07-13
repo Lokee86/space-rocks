@@ -28,8 +28,7 @@ func test_lane_packet_families_route_directly() -> void:
 func test_realtime_router_exposes_gameplay_readiness() -> void:
 	var router := RealtimeRouter.new()
 
-	assert_not_null(router.get_gameplay_readiness())
-	assert_eq(router.get_gameplay_readiness(), router.gameplay_readiness)
+	assert_not_null(router.gameplay_readiness)
 
 
 func test_realtime_router_is_presentable_after_required_baselines() -> void:

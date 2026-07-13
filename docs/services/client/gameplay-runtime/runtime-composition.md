@@ -28,7 +28,7 @@ GameplaySessionController
 
 `GameplayComposition` is the top-level client runtime composition seam. It wires the gameplay shell, HUD flow, gameplay menu flow, match-end flow, match-results flow, spectate flow, devtools session flow, and gameplay presentation flow, and it provides the concrete runtime presentation targets and focused entry points used by `PresentationBridge`.
 
-`GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, `GameplayComposition.world_sync`, and logger.
+`GameplaySessionController` constructs `PresentationAdapter`, constructs `PresentationBridge`, constructs `GameplayComposition`, and configures `PresentationBridge` with `RealtimePacketPipeline`, `PresentationAdapter`, `GameplayComposition`, and logger. The bridge obtains `WorldSync` and `GameplayHudFlow` through explicit composition ownership accessors.
 
 `GameplaySessionController` connects `RealtimePacketPipeline.gameplay_packet_applied` to `PresentationBridge.handle_gameplay_packet`. `GameplayComposition` supplies the presentation targets and focused entry points that the bridge uses; it is not the direct signal consumer.
 
@@ -118,7 +118,8 @@ gameplay process flow
 
 It configures the local lifecycle flow with the directly injected `world_sync`, `GameplayRuntimeContext.respawn_flow`, `GameplayHudFlow`, `MatchEndFlow`, and the local `Player`. It retains `GameplayRuntimeContext` for respawn and per-frame runtime responsibilities.
 
-`GameplayRuntimeContext` creates and owns `world_sync`. `GameplayShellFlow` captures that reference immediately after runtime-context world configuration and threads it directly into `GameplayFlowComposer`. `GameplayComposition` then captures `GameplayShellFlow.world_sync` and injects it directly into `GameplayPresentationFlow`, `DevToolsSessionFlow`, and `PresentationBridge` through `GameplaySessionController`.
+`GameplayRuntimeContext` creates and owns `world_sync`. `GameplayShellFlow` captures that reference immediately after runtime-context world configuration and threads it directly into `GameplayFlowComposer`. `GameplayComposition` exposes the owned `WorldSync` and `GameplayHudFlow` through `get_world_sync()` and `get_gameplay_hud_flow()` for presentation consumers; it does not inject a separate world-sync dependency into `PresentationBridge`.
+
 
 ## Protocols and APIs
 
@@ -158,6 +159,17 @@ GameplayComposition.apply_devtools_gameplay_state(state)
 `PresentationBridge` orchestrates calls to the composition-owned presentation targets.
 
 GameplayComposition and its focused flows own those targets. `GameplayComposition.get_local_lifecycle_flow()` delegates through `GameplayShellFlow` to `GameplayFlowComposer` so `PresentationBridge` can provide the local lifecycle flow to `PresentationAdapter` during each ready flush.
+
+The composition ownership accessors are:
+
+```text
+GameplayComposition.get_world_sync() -> WorldSync
+GameplayComposition.get_gameplay_hud_flow() -> GameplayHudFlow
+GameplayComposition.get_event_lifecycle_flow() -> GameplayEventLifecycleFlow
+GameplayComposition.get_local_lifecycle_flow() -> GameplayLocalLifecycleFlow
+```
+
+The completed session/presentation chain uses concrete typed contracts for `ClientConnectionService`, `GameplaySessionController`, `SessionNetworkController`, `RealtimePacketPipeline`, `PresentationBridge`, `PresentationAdapter`, `GameplayComposition`, `WorldSync`, the lane adapters, `GameplayReadiness`, and `EventBatchApplier`. Fixed APIs are called directly after null checks; this does not mean optional devtools or UI boundaries are all typed.
 
 Composition-owned presentation targets currently include:
 

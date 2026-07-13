@@ -105,6 +105,12 @@ func get_local_lifecycle_flow():
 		return null
 	return gameplay_shell_flow.get_local_lifecycle_flow()
 
+func get_world_sync() -> WorldSync:
+	return world_sync
+
+func get_gameplay_hud_flow() -> GameplayHudFlow:
+	return gameplay_hud_flow
+
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if gameplay_shell_flow == null:
 		return

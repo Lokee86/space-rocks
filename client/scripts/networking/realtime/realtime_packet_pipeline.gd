@@ -66,13 +66,7 @@ func end_match() -> void:
 func is_gameplay_ready() -> bool:
 	if _router == null:
 		return false
-	if _router.has_method("is_presentable"):
-		return _router.is_presentable()
-	if _router.has_method("get_gameplay_readiness"):
-		var gameplay_readiness = _router.get_gameplay_readiness()
-		if gameplay_readiness != null and gameplay_readiness.has_method("is_gameplay_ready"):
-			return gameplay_readiness.is_gameplay_ready()
-	return false
+	return _router.is_presentable()
 
 func apply_packet(packet: Dictionary) -> void:
 	if _router == null:

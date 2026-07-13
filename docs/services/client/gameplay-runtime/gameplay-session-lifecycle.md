@@ -16,6 +16,8 @@ The client gameplay-session lifecycle is owned by `GameplaySessionController` an
 
 `GameplaySessionController` is the lifecycle bridge between the network/session layer and gameplay runtime composition. It owns the `accepts_gameplay_packets` gameplay-session/input/pause acceptance state, activates and resets the `PresentationBridge`, forwards player pause state into runtime only while that gate is open, sequences frame processing, forwards control and debug packets into gameplay composition, routes input through HUD and devtools policy, and runs gameplay composition processing each frame.
 
+The session-to-connection orchestration boundary uses concrete `ClientConnectionService`, `GameplaySessionController`, and `SessionNetworkController` contracts. Fixed connection and session APIs are called directly through typed collaborators after null checks; optional devtools and UI boundaries are not implied to be fully typed.
+
 Gameplay exits are routed back through `GameplayComposition` signals. `GameplaySessionController` translates those signals into connection actions, reset behavior, session-context clearing, boot-flow clearing, main-menu visibility updates, and higher-level replay or pregame-return signals.
 
 This lifecycle is client presentation/session orchestration only. The server remains authoritative for room state, match lifecycle, active gameplay state, match-over status, and gameplay outcomes.
@@ -199,7 +201,7 @@ Current behavior:
 
 ```text
 1. Log gameplay replay request.
-2. Await connection_service.close_gracefully() when available.
+2. Await the typed `ClientConnectionService.close_gracefully()` API.
 3. Reset gameplay lifecycle state.
 4. Clear session context.
 5. Clear shell boot flow.
@@ -230,7 +232,7 @@ Current behavior:
 
 ```text
 1. Log gameplay return-to-pregame request.
-2. Begin graceful network close when available.
+2. Call the typed `ClientConnectionService.begin_graceful_close()` API.
 3. Reset gameplay lifecycle state.
 4. Clear session context.
 5. Clear shell boot flow.

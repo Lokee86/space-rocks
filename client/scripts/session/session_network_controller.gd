@@ -1,11 +1,14 @@
 extends RefCounted
+class_name SessionNetworkController
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
+const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 
-var connection_service
+var connection_service: ClientConnectionService
 var shell_boot_flow
 var room_session_controller
-var gameplay_session_controller
+var gameplay_session_controller: GameplaySessionController
 var logger: Callable
 var handlers := {}
 var _webrtc_gameplay_ready := false
@@ -13,7 +16,7 @@ var _coordinated_active_match_id := ""
 
 
 func configure(
-	connection_service_ref,
+	connection_service_ref: ClientConnectionService,
 	shell_boot_flow_ref,
 	logger_callable: Callable,
 	handlers_ref: Dictionary
@@ -28,7 +31,7 @@ func configure_room_session_controller(room_session_controller_ref) -> void:
 	room_session_controller = room_session_controller_ref
 
 
-func configure_gameplay_session_controller(gameplay_session_controller_ref) -> void:
+func configure_gameplay_session_controller(gameplay_session_controller_ref: GameplaySessionController) -> void:
 	gameplay_session_controller = gameplay_session_controller_ref
 
 
@@ -158,8 +161,7 @@ func _on_debug_shape_catalog_received(packet: Dictionary) -> void:
 func _on_debug_status_received(packet: Dictionary) -> void:
 	if gameplay_session_controller == null:
 		return
-	if gameplay_session_controller.has_method("handle_debug_status_packet"):
-		gameplay_session_controller.handle_debug_status_packet(packet)
+	gameplay_session_controller.handle_debug_status_packet(packet)
 
 
 func _on_player_pause_state_received(packet: Dictionary) -> void:
@@ -196,7 +198,7 @@ func _end_coordinated_match() -> void:
 
 
 func _refresh_match_end_state() -> void:
-	if gameplay_session_controller != null && gameplay_session_controller.has_method("refresh_match_end_state"):
+	if gameplay_session_controller != null:
 		gameplay_session_controller.refresh_match_end_state()
 
 

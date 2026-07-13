@@ -1,10 +1,11 @@
 extends GutTest
 
 const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
+const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
 
 
-class FakeConnectionService:
-	extends Node
+class FakeConnectionService extends ClientConnectionService:
 
 	var close_calls := 0
 	var events: Array[String] = []
@@ -52,8 +53,7 @@ class FakePresentationState:
 	var event_batch_applier = null
 
 
-class FakePresentationBridge:
-	extends RefCounted
+class FakePresentationBridge extends PresentationBridge:
 
 	var active_calls := 0
 	var flush_calls := 0
@@ -76,13 +76,10 @@ class FakePresentationBridge:
 		reset_calls += 1
 
 
-class FakeRealtimePacketPipeline:
-	extends RefCounted
-
-	signal gameplay_packet_applied(packet: Dictionary)
+class FakeRealtimePacketPipeline extends RealtimePacketPipeline:
 
 	var ready := true
-	var presentation_state := FakePresentationState.new()
+	var presentation_state := RealtimePresentationState.new()
 	var connected_targets: Array = []
 
 	func is_gameplay_ready() -> bool:
@@ -105,17 +102,18 @@ class FakeGameplayShellFlow:
 	var runtime_context := FakeRuntimeContext.new()
 
 
-class FakeGameplayComposition:
-	extends RefCounted
+class FakeGameplayComposition extends GameplayComposition:
 
-	var gameplay_shell_flow := FakeGameplayShellFlow.new()
-	var gameplay_hud_flow := {"hud": true}
 	var process_count := 0
 	var events: Array = []
 	var required_lane_baselines_synced_values: Array = []
 	var devtools_states: Array = []
 	var restore_calls := 0
 	var reset_calls := 0
+
+	func _init() -> void:
+		gameplay_shell_flow = FakeGameplayShellFlow.new()
+		gameplay_hud_flow = {"hud": true}
 
 	func set_required_lane_baselines_synced(value: bool) -> void:
 		required_lane_baselines_synced_values.append(value)

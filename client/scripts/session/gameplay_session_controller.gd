@@ -1,11 +1,13 @@
 extends Node
+class_name GameplaySessionController
 
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const PresentationBridge := preload("res://scripts/protocol/realtime/presentation_bridge.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const LongMatchStoreMetrics := preload("res://scripts/devtools/telemetry/long_match_store_metrics.gd")
+const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 
-var connection_service
+var connection_service: ClientConnectionService
 var hud: Control
 var gameplay_user_interface: Control
 var main_menu: Control
@@ -13,11 +15,11 @@ var session_context
 var shell_boot_flow
 var logger: Callable
 
-var gameplay_composition
+var gameplay_composition: GameplayComposition
 var gameplay_state_flow
-var gameplay_presentation_adapter
-var presentation_bridge
-var realtime_packet_pipeline
+var gameplay_presentation_adapter: PresentationAdapter
+var presentation_bridge: PresentationBridge
+var realtime_packet_pipeline: RealtimePacketPipeline
 
 var accepts_gameplay_packets := false
 var _logged_debug_shape_catalog_received := false
@@ -75,7 +77,7 @@ func configure(
 	gameplay_state_flow = GameplayStateFlow.new()
 	gameplay_state_flow.configure(gameplay_composition)
 	if presentation_bridge != null:
-		presentation_bridge.configure(realtime_packet_pipeline, gameplay_presentation_adapter, gameplay_composition, gameplay_composition.world_sync, logger)
+		presentation_bridge.configure(realtime_packet_pipeline, gameplay_presentation_adapter, gameplay_composition, logger)
 		var gameplay_packet_callable := Callable(presentation_bridge, "handle_gameplay_packet")
 		if realtime_packet_pipeline != null and not realtime_packet_pipeline.gameplay_packet_applied.is_connected(gameplay_packet_callable):
 			realtime_packet_pipeline.gameplay_packet_applied.connect(gameplay_packet_callable)
@@ -112,7 +114,7 @@ func _process(delta: float) -> void:
 	var required_lane_baselines_synced := false
 	if realtime_packet_pipeline != null:
 		required_lane_baselines_synced = realtime_packet_pipeline.is_gameplay_ready()
-	if gameplay_composition != null and gameplay_composition.has_method("set_required_lane_baselines_synced"):
+	if gameplay_composition != null:
 		gameplay_composition.set_required_lane_baselines_synced(required_lane_baselines_synced)
 	if presentation_bridge != null:
 		presentation_bridge.flush_pending()
@@ -197,7 +199,7 @@ func _on_gameplay_return_to_lobby_requested() -> void:
 
 func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 	_log("Gameplay return to pregame requested: %s" % session_mode)
-	if connection_service != null && connection_service.has_method("begin_graceful_close"):
+	if connection_service != null:
 		connection_service.begin_graceful_close()
 	reset()
 	if session_context != null:
@@ -208,7 +210,7 @@ func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 
 func _on_gameplay_replay_requested() -> void:
 	_log("Gameplay replay requested")
-	if connection_service != null && connection_service.has_method("close_gracefully"):
+	if connection_service != null:
 		await connection_service.close_gracefully()
 	reset()
 	if session_context != null:
@@ -231,7 +233,7 @@ func _log_long_match_store_summary() -> void:
 		gameplay_composition.world_sync if gameplay_composition != null else null
 	)
 	var fields := {
-		"match_id": realtime_packet_pipeline.active_match_id() if realtime_packet_pipeline != null and realtime_packet_pipeline.has_method("active_match_id") else "",
+		"match_id": realtime_packet_pipeline.active_match_id() if realtime_packet_pipeline != null else "",
 		"duration_ms": max(Time.get_ticks_msec() - _gameplay_packet_acceptance_started_msec, 0),
 	}
 	for key in counts:

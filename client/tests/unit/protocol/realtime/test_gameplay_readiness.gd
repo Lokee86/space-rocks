@@ -48,14 +48,11 @@ func test_event_batch_does_not_mark_gameplay_ready() -> void:
 	var tracker := BaselineTracker.new()
 	tracker.bind_readiness(readiness)
 	var event_batch_applier := EventBatchApplier.new()
-	var sink := _FakeEventSink.new()
-
 	event_batch_applier.apply_event_batch(
 		{
 			"batch_id": "batch-1",
 			"events": [{"event_id": "event-1", "type": "spark", "payload": {}}],
 		},
-		sink
 	)
 
 	assert_false(readiness.is_gameplay_ready())
@@ -97,9 +94,3 @@ func test_wrong_baseline_resync_needed_clears_readiness() -> void:
 	tracker.record_delta(LaneMetadata.LANE_WORLD, "baseline-2", 2)
 
 	assert_false(readiness.is_gameplay_ready())
-
-
-class _FakeEventSink:
-	func handle_presentation_event(_event_type, _payload, _event_packet) -> void:
-		pass
-

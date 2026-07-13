@@ -69,7 +69,7 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 		"session_delta":
 			_session_applier.apply_session_delta(session_lane_state, baseline_tracker, LaneMetadata.LANE_SESSION, expanded_packet)
 		"event_batch":
-			event_batch_applier.apply_event_batch(expanded_packet, self)
+			event_batch_applier.apply_event_batch(expanded_packet)
 		"resync_request", "resync_required":
 			_route_resync(expanded_packet)
 	if accepted_final_full:
@@ -78,10 +78,6 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			resync_state.clear_resync(full_lane)
 	return {}
 
-
-
-func get_gameplay_readiness():
-	return gameplay_readiness
 
 
 func is_presentable() -> bool:

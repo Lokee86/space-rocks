@@ -1,22 +1,13 @@
 extends GutTest
 
 const SessionNetworkController := preload("res://scripts/session/session_network_controller.gd")
+const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 
-class FakeConnectionService:
-	extends Node
+class FakeConnectionService extends ClientConnectionService:
 
-	signal connected
-	signal closed
-	signal packet_parse_failed(text: String)
-	signal unknown_packet_received(packet: Dictionary)
-	signal websocket_auth_result_received(packet: Dictionary)
-	signal realtime_transport_ready
-	signal room_snapshot_received(packet: Dictionary)
-	signal room_state_changed(packet: Dictionary)
-
-	var websocket_auth_authenticated := false
 	var sent_single_player := 0
 	var last_local_profile_id := ""
 	var sent_create_room := 0
@@ -80,8 +71,7 @@ class FakeRoomSessionController:
 		room_state = str(packet.get("room_state", room_state))
 
 
-class FakeGameplaySessionController:
-	extends RefCounted
+class FakeGameplaySessionController extends GameplaySessionController:
 
 	var events: Array[String] = []
 

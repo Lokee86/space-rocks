@@ -1,12 +1,17 @@
 extends RefCounted
+class_name PresentationBridge
 
 const DevtoolsLaneStateAdapter = preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const RealtimePacketPipelineScript = preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
+const PresentationAdapterScript = preload("res://scripts/protocol/realtime/presentation_adapter.gd")
+const GameplayCompositionScript = preload("res://scripts/gameplay/gameplay_composition.gd")
+const WorldSyncScript = preload("res://scripts/world/world_sync.gd")
 
-var realtime_packet_pipeline
-var presentation_adapter
-var gameplay_composition
-var world_sync
+var realtime_packet_pipeline: RealtimePacketPipelineScript
+var presentation_adapter: PresentationAdapterScript
+var gameplay_composition: GameplayCompositionScript
+var world_sync: WorldSyncScript
 var logger: Callable
 var _active := false
 var _presentation_pending := false
@@ -18,11 +23,11 @@ var _logged_debug_shape_catalog_received := false
 var _pending_event_lifecycle_flow = null
 
 
-func configure(pipeline_ref, presentation_adapter_ref, gameplay_composition_ref, world_sync_ref, logger_callable) -> void:
+func configure(pipeline_ref: RealtimePacketPipelineScript, presentation_adapter_ref: PresentationAdapterScript, gameplay_composition_ref: GameplayCompositionScript, logger_callable: Callable) -> void:
 	realtime_packet_pipeline = pipeline_ref
 	presentation_adapter = presentation_adapter_ref
 	gameplay_composition = gameplay_composition_ref
-	world_sync = world_sync_ref
+	world_sync = gameplay_composition.get_world_sync()
 	logger = logger_callable
 
 
@@ -64,7 +69,7 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 	if !_logged_gameplay_ready and realtime_packet_pipeline.is_gameplay_ready():
 		_log("Gameplay lane baselines ready")
 		_logged_gameplay_ready = true
-	if packet.get("type") == "event_batch" and gameplay_composition != null and gameplay_composition.has_method("get_event_lifecycle_flow"):
+	if packet.get("type") == "event_batch" and gameplay_composition != null:
 		_pending_event_lifecycle_flow = gameplay_composition.get_event_lifecycle_flow()
 		if !_logged_event_lifecycle_flow_ready and _pending_event_lifecycle_flow != null:
 			_log("Gameplay event fanout target ready: event_lifecycle_flow_null=%s" % str(_pending_event_lifecycle_flow == null))
@@ -93,10 +98,8 @@ func flush_pending() -> bool:
 		_logged_first_fanout = true
 	var event_lifecycle_flow = _pending_event_lifecycle_flow
 	_pending_event_lifecycle_flow = null
-	var local_lifecycle_flow = null
-	if gameplay_composition.has_method("get_local_lifecycle_flow"):
-		local_lifecycle_flow = gameplay_composition.get_local_lifecycle_flow()
-	var gameplay_hud_flow = gameplay_composition.gameplay_hud_flow
+	var local_lifecycle_flow = gameplay_composition.get_local_lifecycle_flow()
+	var gameplay_hud_flow = gameplay_composition.get_gameplay_hud_flow()
 	var presentation_state = realtime_packet_pipeline.get_presentation_state()
 	presentation_adapter.fanout_lane_states(presentation_state, world_sync, gameplay_hud_flow, event_lifecycle_flow, local_lifecycle_flow)
 	var devtools_state: Dictionary = DevtoolsLaneStateAdapter.new().build_state(presentation_state)

@@ -17,7 +17,7 @@ Packet ingress is the only input path for this bridge; it does not consume lane-
 - Coalescing multiple routed gameplay notifications into one frame flush.
 - Retaining pending presentation while required gameplay lane baselines are not ready.
 - Reading the latest `RealtimePresentationState` at flush time.
-- Using the directly injected `world_sync` for world presentation while resolving HUD, event, local lifecycle, and devtools targets through `GameplayComposition`.
+- Resolving `WorldSync`, HUD, event, local lifecycle, and devtools targets through `GameplayComposition` ownership accessors.
 - Obtaining the local lifecycle flow through `GameplayComposition` for each ready presentation flush.
 - Calling `PresentationAdapter` for lane-native presentation fanout.
 - Building the devtools gameplay read model through `DevtoolsLaneStateAdapter`.
@@ -48,7 +48,6 @@ Packet ingress is the only input path for this bridge; it does not consume lane-
 RealtimePacketPipeline
 PresentationAdapter
 GameplayComposition
-WorldSync
 logger Callable
 ```
 
@@ -56,7 +55,7 @@ logger Callable
 
 `PresentationAdapter` performs stateless lane-native fanout.
 
-`GameplaySessionController` injects `GameplayComposition.world_sync` directly into `PresentationBridge`; `WorldSync` is the world presentation target. `GameplayComposition` continues to provide HUD, event/local lifecycle, and devtools entry points.
+`GameplayComposition.get_world_sync()` provides the owned `WorldSync` target. `GameplayComposition.get_gameplay_hud_flow()` provides the owned `GameplayHudFlow`; the composition also provides event/local lifecycle and devtools entry points.
 
 ## Applied Packet Handoff
 
@@ -85,7 +84,7 @@ The bridge receives a routed-packet notification after `RealtimePacketPipeline` 
 GameplaySessionController.configure(...)
 -> construct PresentationAdapter
 -> construct PresentationBridge
--> configure PresentationBridge with pipeline, adapter, composition, world sync, and logger
+-> configure PresentationBridge with pipeline, adapter, composition, and logger
 ```
 
 The configured bridge remains inactive until the gameplay session is activated.
@@ -144,7 +143,7 @@ pending and gameplay not ready
 
 pending and gameplay ready
 -> read latest RealtimePresentationState
--> use the injected world sync and resolve the remaining targets through GameplayComposition
+-> resolve WorldSync and the remaining targets through GameplayComposition
 -> obtain GameplayLocalLifecycleFlow through GameplayComposition
 -> PresentationAdapter.fanout_lane_states(..., local_lifecycle_flow)
 -> build and apply devtools gameplay state
@@ -209,13 +208,19 @@ PresentationAdapter
 
 During a successful flush, the bridge resolves:
 
-* World presentation through directly injected `WorldSync` from `GameplayComposition.world_sync`.
-* Overlay and session HUD presentation through `GameplayComposition.gameplay_hud_flow`.
+* World presentation through `GameplayComposition.get_world_sync()`.
+* Overlay and session HUD presentation through `GameplayComposition.get_gameplay_hud_flow()`.
 * Applied event presentation through `GameplayComposition.get_event_lifecycle_flow()`.
 * Local lifecycle presentation through `GameplayComposition.get_local_lifecycle_flow()`, delegated through the shell and flow composer.
 * Devtools gameplay presentation through `GameplayComposition.apply_devtools_gameplay_state(...)`.
 
 The bridge owns the order of these calls, but the target systems own their implementation.
+
+## Concrete contracts
+
+The session/presentation chain uses concrete contracts for `RealtimePacketPipeline`, `PresentationBridge`, `PresentationAdapter`, `GameplayComposition`, `WorldSync`, the lane adapters, `GameplayReadiness`, and `EventBatchApplier`. Fixed APIs are invoked directly after null checks rather than discovered with `has_method()`. Optional devtools, UI, and other extension boundaries are not implied to be fully typed by this contract hardening.
+
+`PresentationAdapter` receives `RealtimePresentationState`, `WorldSync`, `GameplayHudFlow`, `GameplayEventLifecycleFlow`, and `GameplayLocalLifecycleFlow`. Its event lane receives `EventBatchApplier` and drains accumulated events through `drain_applied_events()`.
 
 `GameplayLocalLifecycleFlow` is passed as the fifth argument to `PresentationAdapter.fanout_lane_states(...)` during every ready flush. The bridge does not reconstruct local lifecycle state itself.
 
