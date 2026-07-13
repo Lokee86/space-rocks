@@ -127,6 +127,14 @@
         "type": "boolean"
       }
     ],
+    "allowed_triggers": [
+      "manual_bug_report",
+      "development_submission",
+      "crash",
+      "startup_failure",
+      "unrecoverable_state",
+      "recovery_exhausted"
+    ],
     "correlation": {
       "allowed_fields": [
         "trace_id",
@@ -146,11 +154,15 @@
     "events_required": true,
     "forbidden_content_behavior": "redact_when_safe_otherwise_reject",
     "max_correlation_fields": 16,
+    "max_embedded_event_count": 500,
+    "max_embedded_event_message_bytes": 4096,
     "max_event_bytes": 65536,
     "max_events": 500,
     "max_metadata_fields": 32,
     "max_redaction_summary_entries": 32,
+    "max_request_bytes": 5242880,
     "max_total_bytes": 5242880,
+    "max_user_description_bytes": 4096,
     "metadata": {
       "allowed_fields": [
         "service",
@@ -2728,7 +2740,7 @@
       {
         "age_is_configurable": true,
         "compression": "recommended",
-        "default_age_seconds": 0,
+        "default_age_seconds": 1209600,
         "delete_policy": "delete_when_configured_report_age_expires_or_report_is_expunged",
         "durability": "durable_until_report_expiry",
         "legal_commitment": false,

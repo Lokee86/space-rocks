@@ -11,26 +11,28 @@ import (
 )
 
 const (
-	defaultListenAddress = "127.0.0.1:8091"
-	defaultEnvironment   = "development"
-	defaultBuildVersion  = "dev"
-	defaultLogDirectory  = "logs/log-aggregator"
+	defaultListenAddress             = "127.0.0.1:8091"
+	defaultEnvironment               = "development"
+	defaultBuildVersion              = "dev"
+	defaultLogDirectory              = "logs/log-aggregator"
+	defaultDiagnosticReportRetention = 14 * 24 * time.Hour
 )
 
 type Config struct {
-	ListenAddress     string
-	Environment       string
-	BuildVersion      string
-	ServiceInstanceID string
-	ReadHeaderTimeout time.Duration
-	ReadTimeout       time.Duration
-	WriteTimeout      time.Duration
-	IdleTimeout       time.Duration
-	ShutdownTimeout   time.Duration
-	ConsoleLogging    bool
-	FileLogging       bool
-	LogLevel          string
-	LogDirectory      string
+	ListenAddress             string
+	Environment               string
+	BuildVersion              string
+	ServiceInstanceID         string
+	ReadHeaderTimeout         time.Duration
+	ReadTimeout               time.Duration
+	WriteTimeout              time.Duration
+	IdleTimeout               time.Duration
+	ShutdownTimeout           time.Duration
+	ConsoleLogging            bool
+	FileLogging               bool
+	LogLevel                  string
+	LogDirectory              string
+	DiagnosticReportRetention time.Duration
 }
 
 type EnvLookup func(string) (string, bool)
@@ -55,6 +57,7 @@ func LoadWith(getenv EnvLookup, generateUUID UUIDGenerator) (Config, error) {
 		FileLogging:       true,
 		LogLevel:          "info",
 		LogDirectory:      defaultLogDirectory,
+		DiagnosticReportRetention: defaultDiagnosticReportRetention,
 	}
 	var err error
 	for _, setting := range []struct {
@@ -63,6 +66,7 @@ func LoadWith(getenv EnvLookup, generateUUID UUIDGenerator) (Config, error) {
 	}{
 		{"READ_HEADER_TIMEOUT", &c.ReadHeaderTimeout}, {"READ_TIMEOUT", &c.ReadTimeout},
 		{"WRITE_TIMEOUT", &c.WriteTimeout}, {"IDLE_TIMEOUT", &c.IdleTimeout}, {"SHUTDOWN_TIMEOUT", &c.ShutdownTimeout},
+		{"DIAGNOSTIC_REPORT_RETENTION", &c.DiagnosticReportRetention},
 	} {
 		if *setting.target, err = duration(getenv, setting.name, *setting.target); err != nil {
 			return Config{}, err
