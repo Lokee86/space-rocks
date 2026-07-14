@@ -22,6 +22,10 @@ run_stage() {
   fi
 }
 
+pushd shared/go/servicelog >/dev/null
+run_stage "shared/go/servicelog" go test -buildvcs=false ./...
+popd >/dev/null
+
 pushd services/player-data >/dev/null
 run_stage "player-data" go test -buildvcs=false ./...
 popd >/dev/null
