@@ -1,7 +1,5 @@
 package asteroids
 
-import "math/rand"
-
 type Variant struct {
 	ID                  string
 	Index               int
@@ -126,20 +124,20 @@ func DebugSpawnVariants() []Variant {
 	})
 }
 
-func RandomTimedSpawnVariantIndex() int {
-	return randomWeightedVariantIndex(func(variant Variant) float64 {
+func TimedSpawnVariantIndex(roll float64) int {
+	return weightedVariantIndex(roll, func(variant Variant) float64 {
 		return variant.TimedSpawnWeight
 	})
 }
 
-func RandomFragmentSpawnVariantIndex() int {
-	return randomWeightedVariantIndex(func(variant Variant) float64 {
+func FragmentSpawnVariantIndex(roll float64) int {
+	return weightedVariantIndex(roll, func(variant Variant) float64 {
 		return variant.FragmentSpawnWeight
 	})
 }
 
-func RandomDebugSpawnVariantIndex() int {
-	return randomWeightedVariantIndex(func(variant Variant) float64 {
+func DebugSpawnVariantIndex(roll float64) int {
+	return weightedVariantIndex(roll, func(variant Variant) float64 {
 		return variant.DebugSpawnWeight
 	})
 }
@@ -154,7 +152,7 @@ func spawnVariants(weightFn func(Variant) float64) []Variant {
 	return spawnable
 }
 
-func randomWeightedVariantIndex(weightFn func(Variant) float64) int {
+func weightedVariantIndex(roll float64, weightFn func(Variant) float64) int {
 	var totalWeight float64
 	for _, variant := range Variants {
 		weight := weightFn(variant)
@@ -167,7 +165,7 @@ func randomWeightedVariantIndex(weightFn func(Variant) float64) int {
 		return 0
 	}
 
-	threshold := rand.Float64() * totalWeight
+	threshold := roll * totalWeight
 	var cumulativeWeight float64
 	for _, variant := range Variants {
 		weight := weightFn(variant)

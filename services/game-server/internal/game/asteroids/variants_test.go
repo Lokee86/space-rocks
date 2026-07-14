@@ -71,30 +71,87 @@ func TestCurrentVariantsKeepRequiredFieldsAndWeights(t *testing.T) {
 	}
 }
 
-func TestWeightedSelectionSkipsZeroWeightVariants(t *testing.T) {
-	originalVariants := Variants
-	t.Cleanup(func() {
-		Variants = originalVariants
+func TestTimedSpawnVariantIndexUsesDeterministicWeightedSelection(t *testing.T) {
+	withVariants(t, []Variant{
+		{ID: "asteroid_one", Index: 0, TimedSpawnWeight: 1.0},
+		{ID: "asteroid_two", Index: 1, TimedSpawnWeight: 2.0},
+		{ID: "asteroid_three", Index: 2, TimedSpawnWeight: 3.0},
+	}, func(t *testing.T) {
+		tests := []struct {
+			name string
+			roll float64
+			want int
+		}{
+			{name: "first bucket", roll: 0.0, want: 0},
+			{name: "second bucket", roll: 0.25, want: 1},
+			{name: "third bucket", roll: 0.50, want: 2},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				if got := TimedSpawnVariantIndex(tc.roll); got != tc.want {
+					t.Fatalf("TimedSpawnVariantIndex(%v) = %d, want %d", tc.roll, got, tc.want)
+				}
+			})
+		}
 	})
+}
 
-	Variants = []Variant{
-		{
-			ID:               "asteroid_zero",
-			Index:            0,
-			TimedSpawnWeight: 0.0,
-		},
-		{
-			ID:               "asteroid_one",
-			Index:            1,
-			TimedSpawnWeight: 1.0,
-		},
-	}
+func TestTimedSpawnVariantIndexSkipsZeroWeightVariants(t *testing.T) {
+	withVariants(t, []Variant{
+		{ID: "asteroid_zero", Index: 0, TimedSpawnWeight: 0.0},
+		{ID: "asteroid_one", Index: 1, TimedSpawnWeight: 1.0},
+	}, func(t *testing.T) {
+		if got, want := TimedSpawnVariantIndex(0.0), 1; got != want {
+			t.Fatalf("TimedSpawnVariantIndex(0.0) = %d, want %d", got, want)
+		}
+	})
+}
 
-	if got, want := randomWeightedVariantIndex(func(variant Variant) float64 {
-		return variant.TimedSpawnWeight
-	}), 1; got != want {
-		t.Fatalf("randomWeightedVariantIndex() = %d, want %d", got, want)
-	}
+func TestTimedSpawnVariantIndexUsesFirstAndLastBoundaries(t *testing.T) {
+	withVariants(t, []Variant{
+		{ID: "asteroid_one", Index: 0, TimedSpawnWeight: 1.0},
+		{ID: "asteroid_two", Index: 1, TimedSpawnWeight: 1.0},
+		{ID: "asteroid_three", Index: 2, TimedSpawnWeight: 1.0},
+	}, func(t *testing.T) {
+		if got, want := TimedSpawnVariantIndex(0.0), 0; got != want {
+			t.Fatalf("TimedSpawnVariantIndex(0.0) = %d, want %d", got, want)
+		}
+		if got, want := TimedSpawnVariantIndex(1.0), 2; got != want {
+			t.Fatalf("TimedSpawnVariantIndex(1.0) = %d, want %d", got, want)
+		}
+	})
+}
+
+func TestTimedSpawnVariantIndexFallsBackWhenAllWeightsAreZero(t *testing.T) {
+	withVariants(t, []Variant{
+		{ID: "asteroid_zero", Index: 0, TimedSpawnWeight: 0.0},
+		{ID: "asteroid_one", Index: 1, TimedSpawnWeight: 0.0},
+	}, func(t *testing.T) {
+		if got, want := TimedSpawnVariantIndex(0.5), 0; got != want {
+			t.Fatalf("TimedSpawnVariantIndex(0.5) = %d, want %d", got, want)
+		}
+	})
+}
+
+func TestSpawnVariantSelectorsUseTheirOwnWeightFields(t *testing.T) {
+	withVariants(t, []Variant{
+		{ID: "asteroid_one", Index: 0, TimedSpawnWeight: 3.0, FragmentSpawnWeight: 0.0, DebugSpawnWeight: 0.0},
+		{ID: "asteroid_two", Index: 1, TimedSpawnWeight: 0.0, FragmentSpawnWeight: 3.0, DebugSpawnWeight: 0.0},
+		{ID: "asteroid_three", Index: 2, TimedSpawnWeight: 0.0, FragmentSpawnWeight: 0.0, DebugSpawnWeight: 3.0},
+	}, func(t *testing.T) {
+		const roll = 0.5
+
+		if got, want := TimedSpawnVariantIndex(roll), 0; got != want {
+			t.Fatalf("TimedSpawnVariantIndex(%v) = %d, want %d", roll, got, want)
+		}
+		if got, want := FragmentSpawnVariantIndex(roll), 1; got != want {
+			t.Fatalf("FragmentSpawnVariantIndex(%v) = %d, want %d", roll, got, want)
+		}
+		if got, want := DebugSpawnVariantIndex(roll), 2; got != want {
+			t.Fatalf("DebugSpawnVariantIndex(%v) = %d, want %d", roll, got, want)
+		}
+	})
 }
 
 func assertCurrentVariants(t *testing.T, variants []Variant) {
@@ -110,4 +167,16 @@ func assertCurrentVariants(t *testing.T, variants []Variant) {
 			t.Fatalf("variant %d ID = %q, want %q", i, variant.ID, wantID)
 		}
 	}
+}
+
+func withVariants(t *testing.T, variants []Variant, fn func(t *testing.T)) {
+	t.Helper()
+
+	originalVariants := Variants
+	Variants = variants
+	t.Cleanup(func() {
+		Variants = originalVariants
+	})
+
+	fn(t)
 }
