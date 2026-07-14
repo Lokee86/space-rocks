@@ -9,3 +9,33 @@ def test_repository_architecture_rules() -> None:
     formatted = "\n".join(finding.format() for finding in findings)
 
     assert findings == [], f"Architecture guard findings:\n{formatted}"
+
+
+def test_repository_rules_file_flags_gameplay_math_rand_but_not_rng_or_tests(tmp_path: Path) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    config = tmp_path / "tools" / "architecture_guard" / "rules.toml"
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.write_text((repo_root / "tools" / "architecture_guard" / "rules.toml").read_text(encoding="utf-8"), encoding="utf-8")
+
+    gameplay_file = tmp_path / "services/game-server/internal/game/spawning.go"
+    gameplay_file.parent.mkdir(parents=True, exist_ok=True)
+    gameplay_file.write_text("package game\n\nimport \"math/rand\"\n", encoding="utf-8")
+
+    devtools_file = tmp_path / "services/game-server/internal/devtools/seed_debug.go"
+    devtools_file.parent.mkdir(parents=True, exist_ok=True)
+    devtools_file.write_text("package devtools\n\nimport \"math/rand\"\n", encoding="utf-8")
+
+    rng_file = tmp_path / "services/game-server/internal/game/rng/seed.go"
+    rng_file.parent.mkdir(parents=True, exist_ok=True)
+    rng_file.write_text("package rng\n\nimport \"math/rand\"\n", encoding="utf-8")
+
+    test_file = tmp_path / "services/game-server/internal/game/spawning_test.go"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text("package game\n\nimport \"math/rand\"\n", encoding="utf-8")
+
+    findings = run_guard(tmp_path, config)
+
+    assert {(finding.rule_id, finding.path, finding.line) for finding in findings} == {
+        ("game-server-no-process-global-math-rand", "services/game-server/internal/game/spawning.go", 3),
+        ("game-server-no-process-global-math-rand", "services/game-server/internal/devtools/seed_debug.go", 3),
+    }

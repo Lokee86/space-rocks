@@ -28,6 +28,17 @@ func newScenario(t *testing.T) *scenario {
 	}
 }
 
+func newScenarioWithSeed(t *testing.T, seed int64) *scenario {
+	t.Helper()
+
+	game := servergame.NewWithSeed(seed)
+	return &scenario{
+		t:       t,
+		game:    game,
+		control: servergame.NewControl(game),
+	}
+}
+
 func (scenario *scenario) addPlayer() string {
 	scenario.t.Helper()
 
