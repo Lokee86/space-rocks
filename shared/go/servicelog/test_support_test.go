@@ -23,10 +23,6 @@ func (c *fakeClock) now() time.Time {
 	return c.current
 }
 
-func (c *fakeClock) advance(delta time.Duration) {
-	c.current = c.current.Add(delta)
-}
-
 type fakeTicker struct {
 	ch        chan time.Time
 	stopCount int
