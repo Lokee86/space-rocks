@@ -77,7 +77,7 @@ func (spawner *Spawner) PlanTimedAsteroidSpawn(position physics.Vector2, targetP
 		Position:   position,
 		Velocity:   velocity,
 		Size:       spawner.rngSource.Intn(4) + 1,
-		Variant:    asteroids.RandomTimedSpawnVariantIndex(),
+		Variant:    asteroids.TimedSpawnVariantIndex(spawner.rngSource.Float64()),
 	}
 }
 
@@ -97,7 +97,7 @@ func (spawner *Spawner) PlanAsteroidFragmentSpawns(asteroid *runtime.Asteroid) [
 			Position:   position,
 			Velocity:   direction.Multiply(spawner.randomAsteroidSpeed()),
 			Size:       fragmentSize,
-			Variant:    asteroids.RandomFragmentSpawnVariantIndex(),
+			Variant:    asteroids.FragmentSpawnVariantIndex(spawner.rngSource.Float64()),
 		})
 	}
 	return plans

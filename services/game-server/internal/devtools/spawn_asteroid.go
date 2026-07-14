@@ -20,7 +20,7 @@ func buildDebugAsteroidSpawnPlan(target Target, request SpawnEntityRequest) spaw
 		Position:   normalizedPosition,
 		Velocity:   direction.Multiply(speed),
 		Size:       rand.Intn(4) + 1,
-		Variant:    asteroids.RandomDebugSpawnVariantIndex(),
+		Variant:    asteroids.DebugSpawnVariantIndex(rand.Float64()),
 	}
 }
 
