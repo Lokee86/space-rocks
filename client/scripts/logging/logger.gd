@@ -1,5 +1,7 @@
 extends RefCounted
 
+const RollingJSONLWriter := preload("res://scripts/logging/rolling_jsonl_writer.gd")
+
 const LEVEL_DEBUG := 10
 const LEVEL_INFO := 20
 const LEVEL_WARN := 30
@@ -18,9 +20,7 @@ const CATEGORY_PACKETS := "packets"
 
 static var default_level := LEVEL_INFO
 static var category_levels := {}
-static var file_output_enabled := false
-static var file_output_path := ""
-static var file_output_handle = null
+static var _file_writer = RollingJSONLWriter.new()
 
 
 static func set_default_level(level: int) -> void:
@@ -46,9 +46,19 @@ static func disable() -> void:
 
 
 static func reset_for_tests() -> void:
-	close_file_output()
+	_reset_file_writer_for_tests()
 	default_level = LEVEL_INFO
 	category_levels = {}
+
+
+static func _set_file_writer_for_tests(writer: RefCounted) -> void:
+	close_file_output()
+	_file_writer = writer
+
+
+static func _reset_file_writer_for_tests() -> void:
+	close_file_output()
+	_file_writer = RollingJSONLWriter.new()
 
 
 static func debug(category: String, message: String) -> void:
@@ -158,43 +168,18 @@ static func format_json_line(record: Dictionary) -> String:
 	return JSON.stringify(record)
 
 
-static func configure_file_output(base_dir: String = "user://logs", prefix: String = "client") -> bool:
-	close_file_output()
-
-	var make_error := DirAccess.make_dir_recursive_absolute(base_dir)
-	if make_error != OK:
-		return false
-
-	for index in range(1, 1000000):
-		var candidate_name := _build_numbered_log_filename(prefix, index)
-		var candidate_path := base_dir.path_join(candidate_name)
-		if FileAccess.file_exists(candidate_path):
-			continue
-
-		var handle = FileAccess.open(candidate_path, FileAccess.WRITE)
-		if handle == null:
-			return false
-
-		file_output_enabled = true
-		file_output_path = candidate_path
-		file_output_handle = handle
-		return true
-
-	return false
+static func configure_file_output(base_dir: String = "user://logs", prefix: String = "client", policy: Dictionary = {}) -> bool:
+	if policy.is_empty():
+		return _file_writer.configure(base_dir, prefix)
+	return _file_writer.configure(base_dir, prefix, policy)
 
 
 static func close_file_output() -> void:
-	if file_output_handle != null:
-		file_output_handle.flush()
-		file_output_handle.close()
-
-	file_output_enabled = false
-	file_output_path = ""
-	file_output_handle = null
+	_file_writer.close()
 
 
 static func current_file_output_path() -> String:
-	return file_output_path
+	return _file_writer.current_path
 
 
 static func shell_debug(message: String) -> void:
@@ -345,9 +330,7 @@ static func _output_record(record: Dictionary) -> void:
 		_:
 			print(line)
 
-	if file_output_enabled && file_output_handle != null:
-		file_output_handle.store_line(format_json_line(record))
-		file_output_handle.flush()
+	_file_writer.write_line(format_json_line(record))
 
 
 static func _should_log(category: String, level: int) -> bool:
@@ -359,7 +342,7 @@ static func _should_log(category: String, level: int) -> bool:
 
 
 static func _build_numbered_log_filename(prefix: String, index: int) -> String:
-	return "%s-%06d.jsonl" % [prefix, index]
+	return RollingJSONLWriter.build_numbered_filename(prefix, index)
 
 
 static func _format_field_value(value) -> String:
