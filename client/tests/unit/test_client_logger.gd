@@ -11,10 +11,10 @@ class FakeWriter extends RefCounted:
 	var enabled := false
 	var current_path := ""
 
-	func configure(base_dir: String, prefix: String) -> bool:
+	func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> bool:
 		configure_calls.append([base_dir, prefix])
 		enabled = true
-		current_path = base_dir.path_join("%s-fake.jsonl" % prefix)
+		current_path = base_dir.path_join("active").path_join("%s.jsonl.open" % prefix)
 		return true
 
 	func write_line(line: String) -> void:
@@ -244,11 +244,6 @@ func test_disabled_category_blocks_event_path_via_should_log_and_helpers() -> vo
 	assert_eq(record["event"], "packet_decode_failed")
 
 
-func test_build_numbered_log_filename_formats_sequential_name() -> void:
-	assert_eq(ClientLogger._build_numbered_log_filename("client", 1), "client-000001.jsonl")
-	assert_eq(ClientLogger._build_numbered_log_filename("client", 42), "client-000042.jsonl")
-
-
 func test_configure_file_output_creates_a_file_in_test_directory() -> void:
 	var configured := ClientLogger.configure_file_output(TEST_LOG_DIR, TEST_LOG_PREFIX)
 	var path := ClientLogger.current_file_output_path()
@@ -256,8 +251,8 @@ func test_configure_file_output_creates_a_file_in_test_directory() -> void:
 	assert_true(configured)
 	assert_true(ClientLogger._file_writer.enabled)
 	assert_ne(path, "")
-	assert_true(path.begins_with(TEST_LOG_DIR.path_join(TEST_LOG_PREFIX)))
-	assert_true(path.ends_with(".jsonl"))
+	assert_true(path.begins_with(TEST_LOG_DIR.path_join("active")))
+	assert_true(path.ends_with(".jsonl.open"))
 	assert_true(FileAccess.file_exists(path))
 
 
@@ -305,7 +300,7 @@ func test_file_output_delegates_to_replaceable_writer() -> void:
 
 	assert_true(ClientLogger.configure_file_output("user://fake-logs", "fake-client"))
 	assert_eq(writer.configure_calls, [["user://fake-logs", "fake-client"]])
-	assert_eq(ClientLogger.current_file_output_path(), "user://fake-logs/fake-client-fake.jsonl")
+	assert_eq(ClientLogger.current_file_output_path(), "user://fake-logs/active/fake-client.jsonl.open")
 
 	ClientLogger.event(
 		ClientLogger.CATEGORY_NETWORK,
@@ -328,15 +323,19 @@ func test_file_output_delegates_to_replaceable_writer() -> void:
 
 func _cleanup_test_log_files() -> void:
 	ClientLogger.close_file_output()
-	DirAccess.make_dir_recursive_absolute(TEST_LOG_DIR)
-	var dir := DirAccess.open(TEST_LOG_DIR)
-	if dir == null:
-		return
+	for subdir in ["active", "archive"]:
+		var dir_path := TEST_LOG_DIR.path_join(subdir)
+		DirAccess.make_dir_recursive_absolute(dir_path)
+		var dir := DirAccess.open(dir_path)
+		if dir == null:
+			continue
 
-	dir.list_dir_begin()
-	var file_name := dir.get_next()
-	while file_name != "":
-		if !dir.current_is_dir() && file_name.begins_with(TEST_LOG_PREFIX) && file_name.ends_with(".jsonl"):
-			dir.remove(file_name)
-		file_name = dir.get_next()
-	dir.list_dir_end()
+		dir.list_dir_begin()
+		var file_name := dir.get_next()
+		while file_name != "":
+			if !dir.current_is_dir() and file_name.begins_with(TEST_LOG_PREFIX):
+				dir.remove(file_name)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+		DirAccess.remove_absolute(dir_path)
+	DirAccess.remove_absolute(TEST_LOG_DIR)
