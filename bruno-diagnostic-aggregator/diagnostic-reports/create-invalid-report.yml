@@ -1,0 +1,67 @@
+info:
+  name: create-invalid-report
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{base_url}}/v1/diagnostic-reports"
+  headers:
+    - name: Authorization
+      value: Bearer {{bearer_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "report_version": 2,
+        "trigger": "manual_bug_report",
+        "submitted_at": "2026-07-13T12:01:00Z",
+        "source": {
+          "service": "client",
+          "service_instance_id": "550e8400-e29b-41d4-a716-446655440001",
+          "environment": "test",
+          "build_version": "1.0.0",
+          "platform": "windows"
+        },
+        "correlation": {},
+        "events": [
+          {
+            "event_id": "550e8400-e29b-41d4-a716-446655440000",
+            "timestamp": "2026-07-13T12:00:00Z",
+            "level": "info",
+            "event": "ingest_accepted",
+            "service": "client",
+            "schema_version": 1,
+            "service_instance_id": "550e8400-e29b-41d4-a716-446655440001"
+          }
+        ]
+      }
+  auth: inherit
+
+docs: |-
+  # Create Invalid Report
+
+  Sends an authenticated report payload with an unsupported `report_version`.
+  The expected rejection is HTTP 422 with `code=invalid_diagnostic_report`.
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 422) {
+          throw new Error(`Expected HTTP 422, got ${res.getStatus()}`);
+        }
+
+        const body = res.getBody();
+
+        if (!body || body.code !== "invalid_diagnostic_report") {
+          throw new Error(`Expected code invalid_diagnostic_report, got ${body && body.code}`);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

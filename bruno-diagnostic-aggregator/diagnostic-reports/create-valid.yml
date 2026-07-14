@@ -1,0 +1,70 @@
+info:
+  name: create-valid
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/v1/diagnostic-reports"
+  headers:
+    - name: Authorization
+      value: Bearer {{bearer_token}}
+  body:
+    type: json
+    data: |-
+      {
+        "report_version": 1,
+        "trigger": "manual_bug_report",
+        "submitted_at": "2026-07-13T12:01:00Z",
+        "source": {
+          "service": "client",
+          "service_instance_id": "550e8400-e29b-41d4-a716-446655440001",
+          "environment": "test",
+          "build_version": "1.0.0",
+          "platform": "windows"
+        },
+        "events": [
+          {
+            "event_id": "550e8400-e29b-41d4-a716-446655440000",
+            "timestamp": "2026-07-13T12:00:00Z",
+            "level": "info",
+            "event": "ingest_accepted",
+            "service": "client",
+            "schema_version": 1,
+            "service_instance_id": "550e8400-e29b-41d4-a716-446655440001"
+          }
+        ]
+      }
+  auth: inherit
+
+docs: |-
+  # Create Valid Diagnostic Report
+
+  Sends the canonical happy-path POST payload used by the hosted service test.
+  Run this before `get-created`; the response script saves `diagnostic_report_id` for the follow-up GET.
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 201) {
+          throw new Error(`Expected HTTP 201, got ${res.getStatus()}`);
+        }
+
+        const body = res.getBody();
+
+        if (!body || !String(body.diagnostic_report_id || "").trim()) {
+          throw new Error("Create response did not include a nonblank diagnostic_report_id");
+        }
+
+        if (body.report_version !== 1) {
+          throw new Error(`Expected report_version 1, got ${body.report_version}`);
+        }
+
+        bru.setVar("diagnostic_report_id", body.diagnostic_report_id);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,51 @@
+info:
+  name: get-created
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{base_url}}/v1/diagnostic-reports/{{diagnostic_report_id}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{bearer_token}}
+  auth: inherit
+
+docs: |-
+  # Get Created Diagnostic Report
+
+  Follow-up read for the report created by `create-valid`.
+  Run `create-valid` first so `diagnostic_report_id` is populated.
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 200) {
+          throw new Error(`Expected HTTP 200, got ${res.getStatus()}`);
+        }
+
+        const capturedReportId = String(bru.getVar("diagnostic_report_id") || "").trim();
+        if (!capturedReportId) {
+          throw new Error("Expected diagnostic_report_id to be captured before get-created");
+        }
+
+        const body = res.getBody();
+
+        if (!body || !String(body.diagnostic_report_id || "").trim()) {
+          throw new Error("Get response did not include a nonblank diagnostic_report_id");
+        }
+
+        if (String(body.diagnostic_report_id).trim() !== capturedReportId) {
+          throw new Error(`Expected diagnostic_report_id ${capturedReportId}, got ${body.diagnostic_report_id}`);
+        }
+
+        if (body.report_version !== 1) {
+          throw new Error(`Expected report_version 1, got ${body.report_version}`);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
