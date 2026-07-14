@@ -17,7 +17,7 @@ func (c *fakeClock) now() time.Time {
 
 type fakeFilesystem struct {
 	mkdir    func(string, fs.FileMode) error
-	openFile func(string, int, fs.FileMode) (*os.File, error)
+	openFile func(string, int, fs.FileMode) (io.WriteCloser, error)
 	readDir  func(string) ([]os.DirEntry, error)
 	rename   func(string, string) error
 	remove   func(string) error

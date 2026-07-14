@@ -4,16 +4,21 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
-// ErrFileOutputUnsupported indicates that file output was requested before
-// the rolling file sink is available.
+// ErrFileOutputUnsupported is retained for compatibility with earlier stages.
+// Open no longer returns it now that file output is active.
 var ErrFileOutputUnsupported = errors.New("servicelog: file output is not supported yet")
 
 // Runtime owns the configured servicelog logger and its lifecycle.
 type Runtime struct {
-	logger    *slog.Logger
+	logger   *slog.Logger
+	file     io.Closer
+	closeErr error
+
 	closeOnce sync.Once
 	mu        sync.RWMutex
 	closed    bool
@@ -28,14 +33,28 @@ func openWithDependencies(config Config, dependencies runtimeDependencies) (*Run
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
-	if config.FileEnabled {
-		return nil, ErrFileOutputUnsupported
-	}
 
-	var handlers []slog.Handler
+	handlers := make([]slog.Handler, 0, 2)
 	if config.ConsoleEnabled {
 		handlers = append(handlers, slog.NewTextHandler(dependencies.consoleWriter, nil))
-	} else {
+	}
+
+	var activeFile io.Closer
+	if config.FileEnabled {
+		if err := dependencies.mkdir(config.File.Directory, 0o755); err != nil {
+			return nil, err
+		}
+
+		filePath := filepath.Join(config.File.Directory, config.File.Prefix+".jsonl.open")
+		fileHandle, err := dependencies.openFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err != nil {
+			return nil, err
+		}
+		activeFile = fileHandle
+		handlers = append(handlers, slog.NewJSONHandler(fileHandle, nil))
+	}
+
+	if len(handlers) == 0 {
 		handlers = append(handlers, slog.NewTextHandler(io.Discard, nil))
 	}
 
@@ -52,7 +71,7 @@ func openWithDependencies(config Config, dependencies runtimeDependencies) (*Run
 		logger = logger.With(slog.String("build_version", config.Identity.Version))
 	}
 
-	return &Runtime{logger: logger}, nil
+	return &Runtime{logger: logger, file: activeFile}, nil
 }
 
 // Logger returns the runtime's structured logger.
@@ -69,10 +88,21 @@ func (r *Runtime) Status() Status {
 
 // Close marks the runtime closed. Repeated calls are safe and return nil.
 func (r *Runtime) Close() error {
+	didClose := false
 	r.closeOnce.Do(func() {
+		didClose = true
 		r.mu.Lock()
 		r.closed = true
+		file := r.file
+		r.file = nil
 		r.mu.Unlock()
+
+		if file != nil {
+			r.closeErr = file.Close()
+		}
 	})
+	if didClose {
+		return r.closeErr
+	}
 	return nil
 }
