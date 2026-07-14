@@ -210,6 +210,19 @@ def _validate_retention(contract: ObservabilityContract, errors: list[str]) -> N
         errors.append("retention policy production/legal commitment must be false")
     if policy.unset_age_value < 0:
         errors.append(f"retention policy unset age must be nonnegative: {policy.unset_age_value}")
+    if contract.file_logging.max_active_segment_age_seconds <= 0:
+        errors.append(
+            "file logging max active segment age must be positive: "
+            f"{contract.file_logging.max_active_segment_age_seconds}"
+        )
+
+    tier_defaults = {tier.name: tier.default_age_seconds for tier in contract.retention_tiers}
+    for tier_name in ("operational", "diagnostic_report"):
+        if tier_defaults.get(tier_name) != 1209600:
+            errors.append(
+                f"retention tier {tier_name} default age must be 1209600 seconds: "
+                f"{tier_defaults.get(tier_name)!r}"
+            )
 
     tier_names = tuple(tier.name for tier in contract.retention_tiers)
     _unique(tier_names, "retention tier", errors)

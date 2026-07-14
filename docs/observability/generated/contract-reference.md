@@ -307,7 +307,12 @@ timestamp, level, event, event_id, service, environment, build_version, schema_v
 | audit_grade | Audit-worthy aggregated records created by an explicit audit trigger. | durable | lossless_or_integrity_preserving | retain_until_configured_audit_age_expires_or_authorized_disposition | 0 | 0 | true | false |
 | diagnostic_report | User- or tester-facing bug reports, copy diagnostics, and bounded diagnostic bundles. | durable_until_report_expiry | recommended | delete_when_configured_report_age_expires_or_report_is_expunged | 1209600 | 0 | true | false |
 | ephemeral_dev | Local development and temporary subsystem debugging. | best_effort | optional | delete_on_shutdown_or_when_configured_age_expires | 0 | 0 | true | false |
-| operational | Routine operational diagnosis and cross-service event investigation. | durable | recommended | delete_when_configured_age_expires_or_storage_pressure_requires_eviction | 0 | 0 | true | false |
+| operational | Routine operational diagnosis and cross-service event investigation. | durable | recommended | delete_when_configured_age_expires_or_storage_pressure_requires_eviction | 1209600 | 0 | true | false |
+
+### Shared file-logging defaults
+
+- Maximum active segment age: `3600` seconds
+- Compression enabled: `true`
 
 ## Diagnostic bundle
 

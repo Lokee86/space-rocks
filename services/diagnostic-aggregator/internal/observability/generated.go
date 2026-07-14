@@ -23,6 +23,15 @@ const (
 	RetentionTierOperational RetentionTier = "operational"
 )
 
+const (
+	RetentionDefaultAgeAuditGradeSeconds = 0
+	RetentionDefaultAgeDiagnosticReportSeconds = 1209600
+	RetentionDefaultAgeEphemeralDevSeconds = 0
+	RetentionDefaultAgeOperationalSeconds = 1209600
+	FileLoggingMaxActiveSegmentAgeSeconds = 3600
+	FileLoggingCompressionEnabled = true
+)
+
 type FieldName string
 
 const (

@@ -239,6 +239,12 @@ const RETENTION_TIER_AUDIT_GRADE := "audit_grade"
 const RETENTION_TIER_DIAGNOSTIC_REPORT := "diagnostic_report"
 const RETENTION_TIER_EPHEMERAL_DEV := "ephemeral_dev"
 const RETENTION_TIER_OPERATIONAL := "operational"
+const RETENTION_DEFAULT_AGE_SECONDS_AUDIT_GRADE := 0
+const RETENTION_DEFAULT_AGE_SECONDS_DIAGNOSTIC_REPORT := 1209600
+const RETENTION_DEFAULT_AGE_SECONDS_EPHEMERAL_DEV := 0
+const RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL := 1209600
+const FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS := 3600
+const FILE_LOGGING_COMPRESSION_ENABLED := true
 
 const CANONICAL_LEVELS := ["debug","info","warn","error","critical"]
 const REQUIRED_FIELDS := ["timestamp","level","event","event_id","service","environment","build_version","schema_version","service_instance_id"]

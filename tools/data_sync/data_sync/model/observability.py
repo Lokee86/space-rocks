@@ -128,6 +128,12 @@ class ObservabilityRetentionPolicy:
 
 
 @dataclass(frozen=True)
+class ObservabilityFileLoggingDefaults:
+    max_active_segment_age_seconds: int
+    compression_enabled: bool
+
+
+@dataclass(frozen=True)
 class ObservabilityRetentionTier:
     name: str
     purpose: str
@@ -197,6 +203,7 @@ class ObservabilityContract:
     events: tuple[ObservabilityEvent, ...]
     redaction: ObservabilityRedactionPolicy
     retention_policy: ObservabilityRetentionPolicy
+    file_logging: ObservabilityFileLoggingDefaults
     retention_tiers: tuple[ObservabilityRetentionTier, ...]
     diagnostic_bundle: DiagnosticBundle
 
@@ -227,6 +234,7 @@ class ObservabilityContract:
                 "redaction": self.redaction,
                 "retention_tiers": {
                     "policy": self.retention_policy,
+                    "file_logging": self.file_logging,
                     "tiers": self.retention_tiers,
                 },
                 "diagnostic_bundle": self.diagnostic_bundle,

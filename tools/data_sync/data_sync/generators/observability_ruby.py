@@ -121,6 +121,14 @@ def generate_observability_ruby(contract: ObservabilityContract) -> str:
         f"    {_constant('RETENTION_TIER', tier.name)} = {_quote(tier.name)}"
         for tier in tiers
     )
+    lines.extend(
+        f"    {_constant('RETENTION_DEFAULT_AGE_SECONDS', tier.name)} = {tier.default_age_seconds}"
+        for tier in tiers
+    )
+    lines.extend([
+        f"    FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS = {contract.file_logging.max_active_segment_age_seconds}",
+        f"    FILE_LOGGING_COMPRESSION_ENABLED = {_literal(contract.file_logging.compression_enabled)}",
+    ])
     lines.extend([
         "",
         "    CANONICAL_LEVELS = [" + ", ".join(_constant("LEVEL", level) for level in envelope.canonical_levels) + "].freeze",
