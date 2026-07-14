@@ -276,6 +276,8 @@ P3D. Build, release, environment, and compatibility gates.
 
 P3A is the implemented automated verification baseline. P3B is the next major block; P3C and P3D follow in order as evidence and release needs justify them.
 
+P3D is the release gate for local-profile schema changes that ship in public packaged beta, release candidate, or launch builds. Disposable local development and testing profiles do not need backup or migration protection. Before a public packaged beta, release candidate, or launch build introduces or ships a local-profile schema change, the gate requires schema versioning, a forward migration path, automatic pre-migration backup, validation, visible safe failure, preservation of the original data, and migration tests.
+
 ### Scope
 
 ```text

@@ -115,9 +115,13 @@ OpenAPI and generated clients should be treated as source-of-truth contract surf
 
 ## Local Profile Migration
 
-Local profile migration should protect existing progress before upgrading.
+Disposable local development and testing profiles do not need backup or migration protection.
 
-Local profile upgrades should either create an automatic backup before migration or offer the user a backup option before migration. Automatic backup is the preferred default when practical.
+Local profile migration for public packaged beta, release candidate, or launch builds should protect existing progress before upgrading.
+
+Local-profile-to-online-account migration is out of scope.
+
+Release-shaped local profile changes should be schema-versioned, forward-moving, automatically backed up before migration, validated, with visible safe failure, and tested so the original data is preserved.
 
 Local profile migration should be forward-only unless a rollback path is explicitly planned.
 
@@ -168,14 +172,14 @@ Old migration support may be removed later, but only after the supported-version
 
 ## Release Gates
 
-Compatibility gates should apply to release-shaped builds.
+Compatibility gates should apply to release-shaped builds, not disposable local development or testing profiles.
 
 A release-shaped build should not pass if:
 
 * client/server compatibility is known to be broken,
 * generated contracts are stale,
 * required migrations are missing,
-* local profile migration risks data loss without backup,
+* a release-shaped local-profile schema change lacks schema versioning, a forward migration path, automatic pre-migration backup, validation, visible safe failure, preservation of the original data, or migration tests,
 * hosted data migration lacks backup or rollback planning,
 * or incompatible production clients can reach normal login/gameplay paths.
 
@@ -186,7 +190,7 @@ Exact checks may vary by build shape.
 1. Keep each compatibility surface versioned independently unless a shared contract truly changes.
 2. Apply package-controlled compatibility for local packaged single-player builds.
 3. Use connection-level checks and safe failure for realtime protocol mismatches.
-4. Require backup, rollback, and failure visibility for local profile and hosted data migrations.
+4. Require backup, rollback, and failure visibility for release-shaped local profile and hosted data migrations.
 5. Block release-shaped builds when generated contracts drift from source-of-truth definitions.
 6. Tighten hosted production admission around incompatible clients and unsafe deprecations.
 
