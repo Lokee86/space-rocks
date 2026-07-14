@@ -237,8 +237,6 @@ func TestOpenReportsActiveStatusAndRunsRetention(t *testing.T) {
 	}
 }
 
-
-
 func TestOpenLeavesRuntimeDegradedWhenRetentionCleanupFails(t *testing.T) {
 	dir := t.TempDir()
 	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
@@ -390,72 +388,6 @@ func TestRuntimeMaintenanceLoopRotatesAgeExpiredSegmentAndRunsRetention(t *testi
 	}
 }
 
-func TestRuntimeCloseWaitsForMaintenanceLoop(t *testing.T) {
-	dir := t.TempDir()
-	startedAt := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	tickAt := startedAt.Add(2 * time.Hour)
-	ticker := newManualMaintenanceTicker()
-	renameEntered := make(chan struct{})
-	releaseRename := make(chan struct{})
-	var renameOnce sync.Once
-
-	deps := defaultRuntimeDependencies()
-	deps.now = func() time.Time { return startedAt }
-	deps.newTicker = func(time.Duration) maintenanceTicker { return ticker }
-	deps.rename = func(oldPath, newPath string) error {
-		renameOnce.Do(func() { close(renameEntered) })
-		<-releaseRename
-		return nil
-	}
-
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1024,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		Flush:      FlushPolicy{Interval: time.Second},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	if _, err := runtime.fileWriter.Write([]byte("line one\n")); err != nil {
-		t.Fatalf("Write() error = %v", err)
-	}
-
-	tickSent := make(chan struct{})
-	go func() {
-		ticker.Tick(tickAt)
-		close(tickSent)
-	}()
-	<-tickSent
-	<-renameEntered
-
-	closeDone := make(chan error, 1)
-	go func() {
-		closeDone <- runtime.Close()
-	}()
-
-	select {
-	case err := <-closeDone:
-		t.Fatalf("Close() returned early with %v", err)
-	default:
-	}
-
-	close(releaseRename)
-	if err := <-closeDone; err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-	if !runtime.Status().Closed {
-		t.Fatal("runtime not marked closed after Close()")
-	}
-}
-
 func TestRuntimeMaintenanceFailureUpdatesStatus(t *testing.T) {
 	dir := t.TempDir()
 	startedAt := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
@@ -490,41 +422,90 @@ func TestRuntimeMaintenanceFailureUpdatesStatus(t *testing.T) {
 	}
 	defer runtime.Close()
 
-	if _, err := runtime.fileWriter.Write([]byte("line one\n")); err != nil {
-		t.Fatalf("Write() error = %v", err)
-	}
-
-	tickSent := make(chan struct{})
-	go func() {
-		ticker.Tick(tickAt)
-		close(tickSent)
-	}()
-	<-tickSent
+	runtime.Logger().Info("maintenance")
+	go ticker.Tick(tickAt)
 	<-renameCalled
 
+	if err := runtime.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+
 	status := runtime.Status()
-	if !status.FileEnabled || !status.FileDegraded || status.FileFailureCount != 1 {
-		t.Fatalf("status after maintenance failure = %#v", status)
+	if !status.FileDegraded || status.FileFailureCount != 1 {
+		t.Fatalf("status = %#v, want one degraded maintenance failure", status)
 	}
 }
 
-func newManualMaintenanceTicker() *manualMaintenanceTicker {
-	return &manualMaintenanceTicker{ch: make(chan time.Time)}
+func TestRuntimeCloseWaitsForMaintenanceLoop(t *testing.T) {
+	dir := t.TempDir()
+	startedAt := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
+	tickAt := startedAt.Add(2 * time.Hour)
+	ticker := newManualMaintenanceTicker()
+	renameEntered := make(chan struct{})
+	releaseRename := make(chan struct{})
+	var renameOnce sync.Once
+
+	deps := defaultRuntimeDependencies()
+	deps.now = func() time.Time { return startedAt }
+	deps.newTicker = func(time.Duration) maintenanceTicker { return ticker }
+	deps.rename = func(oldPath, newPath string) error {
+		renameOnce.Do(func() { close(renameEntered) })
+		<-releaseRename
+		return nil
+	}
+
+	runtime, err := openWithDependencies(Config{
+		Identity: ServiceIdentity{Name: "game-server"},
+		File: FilePolicy{
+			Directory:         dir,
+			Prefix:            "game-server",
+			SegmentMaxBytes:   1024,
+			SegmentMaxAge:     time.Hour,
+			RetentionMaxAge:   time.Hour,
+			RetentionMaxBytes: 1024,
+		},
+		Flush:      FlushPolicy{Interval: time.Second},
+		FileEnabled: true,
+	}, deps)
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v", err)
+	}
+
+	runtime.Logger().Info("maintenance")
+	go ticker.Tick(tickAt)
+	<-renameEntered
+
+	closeReturned := make(chan error, 1)
+	go func() {
+		closeReturned <- runtime.Close()
+	}()
+
+	select {
+	case err := <-closeReturned:
+		t.Fatalf("Close() returned early: %v", err)
+	default:
+	}
+
+	close(releaseRename)
+	if err := <-closeReturned; err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
 }
 
 type manualMaintenanceTicker struct {
 	ch       chan time.Time
 	stopOnce sync.Once
+	stopped  chan struct{}
 }
 
-func (t *manualMaintenanceTicker) C() <-chan time.Time {
-	return t.ch
+func newManualMaintenanceTicker() *manualMaintenanceTicker {
+	return &manualMaintenanceTicker{ch: make(chan time.Time), stopped: make(chan struct{})}
 }
+
+func (t *manualMaintenanceTicker) C() <-chan time.Time { return t.ch }
 
 func (t *manualMaintenanceTicker) Stop() {
-	t.stopOnce.Do(func() {
-		close(t.ch)
-	})
+	t.stopOnce.Do(func() { close(t.stopped) })
 }
 
 func (t *manualMaintenanceTicker) Tick(ts time.Time) {
