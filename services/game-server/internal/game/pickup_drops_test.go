@@ -1,6 +1,7 @@
 package game
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
@@ -94,7 +95,34 @@ func TestMaybeDropPickupFromAsteroidLockedDoesNotCreatePickupWhenChanceIsZero(t 
 	}
 }
 
+func TestMaybeDropPickupFromAsteroidLockedIsDeterministicForSeed(t *testing.T) {
+	const seed int64 = 8675309
 
+	gameA := NewWithSeed(seed)
+	gameB := NewWithSeed(seed)
+	gameA.dropTables = basicAsteroidsDropTablesWithChance(0.5, 4)
+	gameB.dropTables = basicAsteroidsDropTablesWithChance(0.5, 4)
+
+	asteroids := []*runtime.Asteroid{
+		{ID: "asteroid-1", Size: 2, X: 123, Y: 456},
+		{ID: "asteroid-2", Size: 3, X: 234, Y: 567},
+		{ID: "asteroid-3", Size: 4, X: 345, Y: 678},
+	}
+
+	for index, asteroid := range asteroids {
+		gameA.mu.Lock()
+		gameA.maybeDropPickupFromAsteroidLocked(asteroid)
+		gameA.mu.Unlock()
+
+		gameB.mu.Lock()
+		gameB.maybeDropPickupFromAsteroidLocked(asteroid)
+		gameB.mu.Unlock()
+
+		if !reflect.DeepEqual(gameA.entities.Pickups, gameB.entities.Pickups) {
+			t.Fatalf("after asteroid %d: game A pickups %#v, game B pickups %#v", index, gameA.entities.Pickups, gameB.entities.Pickups)
+		}
+	}
+}
 
 func TestApplyProjectileAsteroidHitConsequencesDropsPickup(t *testing.T) {
 	game := New()
