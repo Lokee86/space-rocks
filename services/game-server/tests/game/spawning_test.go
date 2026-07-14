@@ -1,7 +1,6 @@
 package gametests
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
@@ -31,8 +30,7 @@ func TestAsteroidSpawningUsesClientCameraView(t *testing.T) {
 }
 
 func TestAsteroidSpawningNearBoundaryStoresWrappedPosition(t *testing.T) {
-	rand.Seed(1)
-	scenario := newScenario(t)
+	scenario := newScenarioWithSeed(t, 1)
 	playerID := scenario.addPlayer()
 	scenario.setPlayerPosition(playerID, physics.Vector2{
 		X: constants.WorldWidth - 1,

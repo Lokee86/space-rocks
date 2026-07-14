@@ -31,3 +31,11 @@ pattern = "runtime_context\\.world_sync"
 include = ["client/scripts/**/*.gd"]
 exclude = ["client/scripts/shell/gameplay_shell_flow.gd"]
 message = "use the owning composition seam instead of reaching through runtime_context.world_sync"
+
+[[content_rules]]
+id = "game-server-no-process-global-math-rand"
+kind = "literal"
+pattern = "math/rand"
+include = ["services/game-server/internal/game/*.go", "services/game-server/internal/game/**/*.go", "services/game-server/internal/devtools/*.go", "services/game-server/internal/devtools/**/*.go"]
+exclude = ["services/game-server/internal/game/rng/**", "**/*_test.go"]
+message = "authoritative gameplay and devtools production code must not import process-global math/rand; use the seeded rng package instead"
