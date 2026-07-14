@@ -26,7 +26,7 @@ Current high-level startup flow:
 ```text
 main()
   configure logging levels
-  configure sequential JSONL file logging
+  configure shared servicelog file output
   create HTTP mux
   create room manager
   defer room manager StopAll
@@ -59,7 +59,7 @@ Supporting service roots:
 The game-server startup boundary owns:
 
 * configuring game-server logging levels from environment variables
-* configuring sequential JSONL diagnostic file output
+* configuring shared servicelog diagnostic file output
 * creating the process HTTP mux
 * creating the room manager
 * registering process shutdown cleanup through `defer rooms.StopAll()`
@@ -130,20 +130,13 @@ LOG_SERVER
 
 The default level is `warn`. The `server starting` event is logged through `logging.Server.Info`, so it is visible only when `LOG_SERVER=info` or `LOG_LEVEL=info` enables info-level output.
 
-After level configuration, startup enables sequential structured file output:
+After level configuration, startup enables shared servicelog structured file output:
 
 ```go
 logging.ConfigureFileOutput("logs/game-server", "game-server")
 ```
 
-When the server runs from `services/game-server`, the JSONL path is relative to that module directory.
-
-Current file naming is sequential:
-
-```text
-logs/game-server/game-server-000001.jsonl
-logs/game-server/game-server-000002.jsonl
-```
+When the server runs from `services/game-server`, the active file path is `logs/game-server/game-server.jsonl.open`.
 
 Startup logs file-output status through the existing logging flow:
 
@@ -152,9 +145,9 @@ Startup logs file-output status through the existing logging flow:
 * failure log message: `server structured log file unavailable`
 * failure field: `error`
 
-File-output failure is diagnostic degradation, not startup failure. Startup continues serving with stderr text logging even when JSONL file output is unavailable.
+The file-policy values are passed through to shared servicelog at this stage. This boundary does not claim rotation, compression, recovery, or retention enforcement mechanics beyond configuration. File-output failure is diagnostic degradation, not startup failure. Startup continues serving with stderr text logging even when JSONL file output is unavailable.
 
-Startup owns wiring this behavior. The `internal/logging` package owns file creation, fanout, and handler internals.
+Startup owns wiring this behavior. The game-server adapter owns category, level, environment, and byte-limit policy, while shared servicelog owns generic console/file fanout and active-file lifecycle.
 
 ### HTTP mux creation
 
@@ -527,8 +520,9 @@ Primary startup files:
 Game-server dependencies constructed during startup:
 
 * `services/game-server/internal/logging/logger.go`
-* `services/game-server/internal/logging/file_output.go`
-* `services/game-server/internal/logging/fanout_handler.go`
+* `shared/go/servicelog/config.go`
+* `shared/go/servicelog/logger.go`
+* `shared/go/servicelog/fanout.go`
 * `services/game-server/internal/networking/rooms.go`
 * `services/game-server/internal/networking/webrtc_transport.go`
 * `services/game-server/internal/networking/websocket.go`

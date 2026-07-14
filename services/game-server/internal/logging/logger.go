@@ -1,9 +1,15 @@
 package logging
 
 import (
+	"context"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/observability"
+	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 )
 
 const (
@@ -30,15 +36,21 @@ const (
 	FieldRoomID     = "room_id"
 )
 
-const levelOff slog.Level = slog.LevelError + 1
+const (
+	levelOff slog.Level = slog.LevelError + 1
+
+	serviceName                 = "game-server"
+	fileSegmentMaxBytes   int64 = 64 * 1024 * 1024
+	fileRetentionMaxBytes int64 = 1 * 1024 * 1024 * 1024
+)
 
 var (
-	level        = new(slog.LevelVar)
+	rootLevel    = new(slog.LevelVar)
 	gameLevel    = new(slog.LevelVar)
 	networkLevel = new(slog.LevelVar)
 	roomsLevel   = new(slog.LevelVar)
 	serverLevel  = new(slog.LevelVar)
-	logFile      *os.File
+	logRuntime   *servicelog.Runtime
 )
 
 var (
@@ -49,93 +61,109 @@ var (
 )
 
 type CategoryLogger struct {
-	name   string
-	level  *slog.LevelVar
-	logger *slog.Logger
+	name  string
+	level *slog.LevelVar
 }
 
 func newCategoryLogger(name string, level *slog.LevelVar) CategoryLogger {
 	return CategoryLogger{
-		name:   name,
-		level:  level,
-		logger: slog.New(buildHandler(level)),
+		name:  name,
+		level: level,
 	}
 }
 
 func (logger CategoryLogger) Debug(message string, args ...any) {
-	logger.logger.Debug(message, logger.args(args)...)
+	logger.log(slog.LevelDebug, message, args...)
 }
 
 func (logger CategoryLogger) Info(message string, args ...any) {
-	logger.logger.Info(message, logger.args(args)...)
+	logger.log(slog.LevelInfo, message, args...)
 }
 
 func (logger CategoryLogger) Warn(message string, args ...any) {
-	logger.logger.Warn(message, logger.args(args)...)
+	logger.log(slog.LevelWarn, message, args...)
 }
 
 func (logger CategoryLogger) Error(message string, err error, args ...any) {
 	args = append(args, FieldError, err)
-	logger.logger.Error(message, logger.args(args)...)
+	logger.log(slog.LevelError, message, args...)
 }
 
-func (logger CategoryLogger) args(args []any) []any {
-	return append([]any{FieldCategory, logger.name}, args...)
+func (logger CategoryLogger) log(messageLevel slog.Level, message string, args ...any) {
+	if logger.level == nil || messageLevel < logger.level.Level() {
+		return
+	}
+
+	runtimeLogger().With(slog.String(FieldCategory, logger.name)).Log(context.Background(), messageLevel, message, args...)
 }
 
 func init() {
-	level.Set(slog.LevelWarn)
+	rootLevel.Set(slog.LevelWarn)
 	configureCategoryLevels(slog.LevelWarn)
 	rebuildLoggers()
 }
 
 func Configure(configuredLevel string) {
 	defaultLevel := parseLevel(configuredLevel)
-	level.Set(defaultLevel)
+	rootLevel.Set(defaultLevel)
 	configureCategoryLevels(defaultLevel)
 	rebuildLoggers()
 }
 
 func ConfigureFileOutput(baseDir string, prefix string) (string, error) {
-	file, path, err := openSequentialLogFile(baseDir, prefix)
+	runtime, err := servicelog.Open(fileRuntimeConfig(baseDir, prefix))
 	if err != nil {
 		return "", err
 	}
 
-	if err := closeLogFile(); err != nil {
-		file.Close()
-		return "", err
+	oldRuntime := logRuntime
+	logRuntime = runtime
+	rebuildLoggers()
+
+	if oldRuntime != nil {
+		if err := oldRuntime.Close(); err != nil {
+			return activeFilePath(baseDir, prefix), err
+		}
 	}
 
-	logFile = file
-	rebuildLoggers()
-	return path, nil
+	return activeFilePath(baseDir, prefix), nil
 }
 
 func CloseFileOutput() error {
-	if err := closeLogFile(); err != nil {
-		return err
+	oldRuntime := logRuntime
+	logRuntime = nil
+	rebuildLoggers()
+
+	if oldRuntime == nil {
+		return nil
 	}
 
-	rebuildLoggers()
-	return nil
+	return oldRuntime.Close()
 }
 
 func Debug(message string, args ...any) {
-	slog.Debug(message, args...)
+	emit(slog.LevelDebug, message, args...)
 }
 
 func Info(message string, args ...any) {
-	slog.Info(message, args...)
+	emit(slog.LevelInfo, message, args...)
 }
 
 func Warn(message string, args ...any) {
-	slog.Warn(message, args...)
+	emit(slog.LevelWarn, message, args...)
 }
 
 func Error(message string, err error, args ...any) {
 	args = append(args, FieldError, err)
-	slog.Error(message, args...)
+	emit(slog.LevelError, message, args...)
+}
+
+func emit(messageLevel slog.Level, message string, args ...any) {
+	if messageLevel < rootLevel.Level() {
+		return
+	}
+
+	runtimeLogger().Log(context.Background(), messageLevel, message, args...)
 }
 
 func parseLevel(configuredLevel string) slog.Level {
@@ -171,33 +199,55 @@ func parseLevelOrDefault(configuredLevel string, defaultLevel slog.Level) slog.L
 }
 
 func rebuildLoggers() {
-	slog.SetDefault(slog.New(buildHandler(level)))
 	Game = newCategoryLogger(CategoryGame, gameLevel)
 	Network = newCategoryLogger(CategoryNetwork, networkLevel)
 	Rooms = newCategoryLogger(CategoryRooms, roomsLevel)
 	Server = newCategoryLogger(CategoryServer, serverLevel)
 }
 
-func buildHandler(level *slog.LevelVar) slog.Handler {
-	textHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: level,
-	})
-	handlers := []slog.Handler{textHandler}
-	if logFile != nil {
-		handlers = append(handlers, slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level}))
+func runtimeLogger() *slog.Logger {
+	if logRuntime == nil {
+		logRuntime = mustOpenRuntime(consoleRuntimeConfig())
 	}
-	if len(handlers) == 1 {
-		return textHandler
-	}
-	return fanoutHandler{handlers: handlers}
+
+	return logRuntime.Logger()
 }
 
-func closeLogFile() error {
-	if logFile == nil {
-		return nil
+func mustOpenRuntime(config servicelog.Config) *servicelog.Runtime {
+	runtime, err := servicelog.Open(config)
+	if err != nil {
+		panic(err)
 	}
 
-	file := logFile
-	logFile = nil
-	return file.Close()
+	return runtime
+}
+
+func consoleRuntimeConfig() servicelog.Config {
+	return servicelog.Config{
+		Identity:       servicelog.ServiceIdentity{Name: serviceName},
+		Flush:          servicelog.FlushPolicy{},
+		ConsoleEnabled: true,
+	}
+}
+
+func fileRuntimeConfig(baseDir string, prefix string) servicelog.Config {
+	return servicelog.Config{
+		Identity: servicelog.ServiceIdentity{Name: serviceName},
+		File: servicelog.FilePolicy{
+			Directory:          baseDir,
+			Prefix:             prefix,
+			SegmentMaxBytes:    fileSegmentMaxBytes,
+			SegmentMaxAge:      time.Second * time.Duration(observability.FileLoggingMaxActiveSegmentAgeSeconds),
+			RetentionMaxAge:    time.Second * time.Duration(observability.RetentionDefaultAgeOperationalSeconds),
+			RetentionMaxBytes:  fileRetentionMaxBytes,
+			CompressionEnabled: observability.FileLoggingCompressionEnabled,
+		},
+		Flush:          servicelog.FlushPolicy{},
+		ConsoleEnabled: true,
+		FileEnabled:    true,
+	}
+}
+
+func activeFilePath(baseDir string, prefix string) string {
+	return filepath.Join(baseDir, prefix+".jsonl.open")
 }
