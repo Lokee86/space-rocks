@@ -8,6 +8,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/asteroids"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
@@ -38,10 +39,11 @@ type AsteroidSpawnPlan struct {
 type Spawner struct {
 	nextAsteroidID int
 	nextBulletID   int
+	rngSource      *rng.Source
 }
 
-func New() *Spawner {
-	return &Spawner{}
+func New(source *rng.Source) *Spawner {
+	return &Spawner{rngSource: source}
 }
 
 func (spawner *Spawner) NextBulletID() string {
