@@ -4,8 +4,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -39,24 +37,27 @@ func openWithDependencies(config Config, dependencies runtimeDependencies) (*Run
 		handlers = append(handlers, slog.NewTextHandler(dependencies.consoleWriter, nil))
 	}
 
-	var activeFile io.Closer
 	if config.FileEnabled {
 		if err := dependencies.mkdir(config.File.Directory, 0o755); err != nil {
 			return nil, err
 		}
 
-		filePath := filepath.Join(config.File.Directory, config.File.Prefix+".jsonl.open")
-		fileHandle, err := dependencies.openFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		writer, err := newRollingJSONLWriter(config, dependencies)
 		if err != nil {
 			return nil, err
 		}
-		activeFile = fileHandle
-		handlers = append(handlers, slog.NewJSONHandler(fileHandle, nil))
+		handlers = append(handlers, slog.NewJSONHandler(writer, nil))
+		return buildRuntime(config, handlers, writer), nil
 	}
 
 	if len(handlers) == 0 {
 		handlers = append(handlers, slog.NewTextHandler(io.Discard, nil))
 	}
+
+	return buildRuntime(config, handlers, nil), nil
+}
+
+func buildRuntime(config Config, handlers []slog.Handler, file io.Closer) *Runtime {
 
 	logger := slog.New(newFanoutHandler(handlers...)).With(
 		slog.String("service", config.Identity.Name),
@@ -71,7 +72,7 @@ func openWithDependencies(config Config, dependencies runtimeDependencies) (*Run
 		logger = logger.With(slog.String("build_version", config.Identity.Version))
 	}
 
-	return &Runtime{logger: logger, file: activeFile}, nil
+	return &Runtime{logger: logger, file: file}
 }
 
 // Logger returns the runtime's structured logger.
