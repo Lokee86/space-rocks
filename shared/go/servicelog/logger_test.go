@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -346,6 +347,147 @@ func TestRollingWriterRotatesOnAge(t *testing.T) {
 	}
 	if got := activeRecords[0]["msg"]; got != "second" {
 		t.Fatalf("active msg = %v, want second", got)
+	}
+}
+
+func TestRollingWriterAllowsOversizedFirstRecord(t *testing.T) {
+	directory := t.TempDir()
+	clock := &fakeClock{current: time.Date(2026, time.July, 14, 15, 16, 17, 0, time.UTC)}
+	identity := ServiceIdentity{Name: "game-server"}
+	firstMsg := strings.Repeat("x", 240)
+	secondMsg := "second"
+	firstLen := measureJSONLineLen(identity, firstMsg, "phase", "first")
+	if firstLen <= 0 {
+		t.Fatal("first record length must be positive")
+	}
+
+	config := validFileConfig(directory)
+	config.SegmentMaxBytes = int64(firstLen - 1)
+	runtime, _ := openTestRuntime(t, directory, clock, config, identity)
+
+	runtime.Logger().Info(firstMsg, "phase", "first")
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatalf("os.ReadDir(%q) error = %v", directory, err)
+	}
+	archives := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasSuffix(name, ".open") {
+			continue
+		}
+		archives = append(archives, name)
+	}
+	if len(archives) != 0 {
+		t.Fatalf("archive count after oversized first write = %d, want 0", len(archives))
+	}
+
+	runtime.Logger().Info(secondMsg, "phase", "second")
+	if err := runtime.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+
+	entries, err = os.ReadDir(directory)
+	if err != nil {
+		t.Fatalf("os.ReadDir(%q) error = %v", directory, err)
+	}
+	archives = archives[:0]
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasSuffix(name, ".open") {
+			continue
+		}
+		archives = append(archives, name)
+	}
+	if len(archives) != 1 {
+		t.Fatalf("archive count = %d, want 1", len(archives))
+	}
+
+	archiveRecords := readJSONLRecords(t, filepath.Join(directory, archives[0]))
+	if len(archiveRecords) != 1 {
+		t.Fatalf("archive record count = %d, want 1", len(archiveRecords))
+	}
+	if got := archiveRecords[0]["msg"]; got != firstMsg {
+		t.Fatalf("archive msg = %v, want oversized first record", got)
+	}
+
+	activeRecords := readJSONLRecords(t, filepath.Join(directory, "game-server.jsonl.open"))
+	if len(activeRecords) != 1 {
+		t.Fatalf("active record count = %d, want 1", len(activeRecords))
+	}
+	if got := activeRecords[0]["msg"]; got != secondMsg {
+		t.Fatalf("active msg = %v, want second", got)
+	}
+}
+
+func TestRollingWriterSuffixesArchivePathsOnSameTimestampRotation(t *testing.T) {
+	directory := t.TempDir()
+	clock := &fakeClock{current: time.Date(2026, time.July, 14, 15, 16, 17, 0, time.UTC)}
+	identity := ServiceIdentity{Name: "game-server"}
+	config := validFileConfig(directory)
+	config.SegmentMaxBytes = 128
+	runtime, _ := openTestRuntime(t, directory, clock, config, identity)
+
+	msg := strings.Repeat("y", 240)
+	runtime.Logger().Info(msg, "phase", "first")
+	runtime.Logger().Info(msg, "phase", "second")
+	runtime.Logger().Info(msg, "phase", "third")
+	if err := runtime.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatalf("os.ReadDir(%q) error = %v", directory, err)
+	}
+	archives := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasSuffix(name, ".open") {
+			continue
+		}
+		archives = append(archives, name)
+	}
+	if len(archives) != 2 {
+		t.Fatalf("archive count = %d, want 2", len(archives))
+	}
+
+	baseName := fmt.Sprintf("game-server.%s-%s.jsonl", formatArchiveTimestamp(clock.current), formatArchiveTimestamp(clock.current))
+	baseIndex := -1
+	suffixedIndex := -1
+	for i, name := range archives {
+		switch {
+		case name == baseName:
+			baseIndex = i
+		case strings.HasPrefix(name, baseName+"."):
+			suffixedIndex = i
+		}
+	}
+	if baseIndex < 0 || suffixedIndex < 0 {
+		t.Fatalf("archives = %v, want base and suffixed collision-safe names", archives)
+	}
+
+	baseRecords := readJSONLRecords(t, filepath.Join(directory, archives[baseIndex]))
+	if len(baseRecords) != 1 {
+		t.Fatalf("base archive record count = %d, want 1", len(baseRecords))
+	}
+	suffixedRecords := readJSONLRecords(t, filepath.Join(directory, archives[suffixedIndex]))
+	if len(suffixedRecords) != 1 {
+		t.Fatalf("suffixed archive record count = %d, want 1", len(suffixedRecords))
+	}
+	if got := baseRecords[0]["phase"]; got != "first" {
+		t.Fatalf("base archive phase = %v, want first", got)
+	}
+	if got := suffixedRecords[0]["phase"]; got != "second" {
+		t.Fatalf("suffixed archive phase = %v, want second", got)
+	}
+
+	activeRecords := readJSONLRecords(t, filepath.Join(directory, "game-server.jsonl.open"))
+	if len(activeRecords) != 1 {
+		t.Fatalf("active record count = %d, want 1", len(activeRecords))
+	}
+	if got := activeRecords[0]["phase"]; got != "third" {
+		t.Fatalf("active phase = %v, want third", got)
 	}
 }
 
