@@ -56,6 +56,12 @@ func (target *Control) RandomAsteroidSpeed() float64 {
 	return target.game.spawner.RandomAsteroidSpeed()
 }
 
+func (target *Control) PlanDebugAsteroidSpawn(position physics.Vector2, requestedDirection physics.Vector2, hasRequestedDirection bool) spawning.AsteroidSpawnPlan {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
+	return target.game.spawner.PlanDebugAsteroidSpawn(position, requestedDirection, hasRequestedDirection)
+}
+
 func (target *Control) ApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *runtimepkg.Asteroid {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
