@@ -21,6 +21,7 @@ services/api-server/    Ruby/Rails API server
 shared/                 Shared source-of-truth data
 tools/data_sync/        Constants, packet, and generated-output sync tooling
 bruno-api/              Bruno collection for local API smoke tests
+bruno-diagnostic-aggregator/ Bruno collection for hosted diagnostic aggregator smoke tests
 docs/                   Project documentation
 ```
 
@@ -112,6 +113,8 @@ cd /mnt/d/\!bin/space-rocks
 
 `bruno-api/` contains the Bruno collection used for local API smoke testing.
 
+`bruno-diagnostic-aggregator/` contains the Bruno collection used for hosted diagnostic aggregator smoke testing.
+
 `docs/` contains current, planning, limits, agent, and legacy documentation. Current documentation uses `!INDEX.md` files as folder indexes.
 
 `SourceAssets/` contains local source art material and is ignored by Git.
@@ -186,17 +189,18 @@ Doc-ledger expects normal documentation folders to use:
 
 ### Bruno
 
-Bruno is the local API smoke-test tool for the Rails API server.
+Bruno is the smoke-test tool for the Rails API server and the hosted diagnostic aggregator.
 
-The collection root is:
+The collection roots are:
 
 ```text
 bruno-api/
+bruno-diagnostic-aggregator/
 ```
 
-Use Bruno to exercise real local API-server routes during development. Bruno does not replace Rails tests, does not own HTTP contracts, does not bypass application behavior, and must not contain committed secrets.
+Use `bruno-api/` for real local API-server routes and `bruno-diagnostic-aggregator/` for hosted diagnostic aggregator checks. Keep their collections and environments separate. Bruno does not replace Rails tests, does not own HTTP contracts, does not bypass application behavior, and must not contain committed secrets.
 
-The local Bruno environment is:
+The API Bruno environment is:
 
 ```text
 bruno-api/environments/local.yml
@@ -212,10 +216,18 @@ Logout
 Me should fail with the same token after logout
 ```
 
+The diagnostic aggregator happy path is:
+
+```text
+create-valid
+get-created
+```
+
 For API auth and Bruno details, use:
 
 ```text
 docs/devtools/api-server/bruno-smoke-tests.md
+docs/devtools/diagnostic-aggregator/bruno-smoke-tests.md
 docs/devtools/api-server/local-auth-smoke-flow.md
 ```
 
@@ -493,10 +505,11 @@ For client constants-boundary checks:
 python3 -m pytest tools/tests/test_client_constants_boundary.py
 ```
 
-For manual API smoke checks, use Bruno from:
+For manual Bruno smoke checks, use the collection roots:
 
 ```text
 bruno-api/
+bruno-diagnostic-aggregator/
 ```
 
 Use the detailed testing rules in:
@@ -511,7 +524,7 @@ Use this section to find the owning documentation area. Do not duplicate detaile
 
 * [Agent](agent/!INDEX.md) - Agent workflow guidance, testing expectations, MCP usage, session memory, and implementation guardrails.
 * [Data](data/!INDEX.md) - Source-of-truth files, generated outputs, schemas, persistence contracts, and data-sync pipeline documentation.
-* [Devtools](devtools/!INDEX.md) - Debug and development tooling, including API-server smoke tooling, client/server devtools, telemetry, controls, and debug-only boundaries.
+* [Devtools](devtools/!INDEX.md) - Debug and development tooling, including API-server and diagnostic-aggregator smoke tooling, client/server devtools, telemetry, controls, and debug-only boundaries.
 * [Domains](domains/!INDEX.md) - Cross-system player, platform, and technical flows. Domain docs explain how multiple services participate in larger project behavior.
 * [Limits](limits/!INDEX.md) - Current constraints, known gaps, transitional limitations, and accepted stable system ceilings.
 * [Planning](planning/!INDEX.md) - Future, unresolved, proposed, or not-yet-current work. Planning docs should not be treated as current implementation authority.
@@ -608,6 +621,7 @@ Current handoff points:
 * [Data sync and source-of-truth pipeline](data/data-sync-and-ssot-pipeline.md)
 * [Devtools docs](devtools/!INDEX.md)
 * [API-server Bruno smoke tests](devtools/api-server/bruno-smoke-tests.md)
+* [Diagnostic Aggregator Bruno smoke tests](devtools/diagnostic-aggregator/bruno-smoke-tests.md)
 * [Services docs](services/!INDEX.md)
 * [Protocol docs](protocol/!INDEX.md)
 * [Systems-design docs](systems-design/!INDEX.md)

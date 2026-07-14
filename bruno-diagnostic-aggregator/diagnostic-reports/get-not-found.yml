@@ -1,0 +1,38 @@
+info:
+  name: get-not-found
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{base_url}}/v1/diagnostic-reports/550e8400-e29b-41d4-a716-446655440099"
+  headers:
+    - name: Authorization
+      value: Bearer {{bearer_token}}
+  auth: inherit
+
+docs: |-
+  # Get Not Found
+
+  Sends an authenticated lookup with a valid UUID that should not exist.
+  The expected rejection is HTTP 404 with `code=diagnostic_report_not_found`.
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 404) {
+          throw new Error(`Expected HTTP 404, got ${res.getStatus()}`);
+        }
+
+        const body = res.getBody();
+
+        if (!body || body.code !== "diagnostic_report_not_found") {
+          throw new Error(`Expected code diagnostic_report_not_found, got ${body && body.code}`);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

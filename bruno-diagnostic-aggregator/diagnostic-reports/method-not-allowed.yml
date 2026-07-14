@@ -1,0 +1,35 @@
+info:
+  name: method-not-allowed
+  type: http
+  seq: 10
+
+http:
+  method: GET
+  url: "{{base_url}}/v1/diagnostic-reports"
+  auth: inherit
+
+docs: |-
+  # Method Not Allowed
+
+  Sends GET to the collection endpoint, which only accepts POST.
+  The expected rejection is HTTP 405 with `code=method_not_allowed`.
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 405) {
+          throw new Error(`Expected HTTP 405, got ${res.getStatus()}`);
+        }
+
+        const body = res.getBody();
+
+        if (!body || body.code !== "method_not_allowed") {
+          throw new Error(`Expected code method_not_allowed, got ${body && body.code}`);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

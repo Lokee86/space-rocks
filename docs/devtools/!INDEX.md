@@ -24,6 +24,7 @@ This folder owns the devtools documentation indexes for current Space Rocks tool
 
 - [api-server](api-server/!INDEX.md) - Api Server documentation.
 - [client](client/!INDEX.md) - Client documentation.
+- [diagnostic-aggregator](diagnostic-aggregator/!INDEX.md) - Diagnostic Aggregator documentation.
 - [design](design/!INDEX.md) - Design documentation.
 - [server](server/!INDEX.md) - Server documentation.
 <!-- doc-ledger:folders:end -->

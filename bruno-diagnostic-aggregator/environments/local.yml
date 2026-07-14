@@ -1,0 +1,8 @@
+name: local
+variables:
+  - name: base_url
+    value: http://localhost:8080
+  - name: bearer_token
+    value: local-diagnostic-token
+  - name: diagnostic_report_id
+    value: ""

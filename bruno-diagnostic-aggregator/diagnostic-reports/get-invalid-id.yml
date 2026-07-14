@@ -1,0 +1,38 @@
+info:
+  name: get-invalid-id
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{base_url}}/v1/diagnostic-reports/not-a-uuid"
+  headers:
+    - name: Authorization
+      value: Bearer {{bearer_token}}
+  auth: inherit
+
+docs: |-
+  # Get Invalid ID
+
+  Sends an authenticated lookup with a syntactically invalid report ID.
+  The expected rejection is HTTP 400 with `code=invalid_diagnostic_report_id`.
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 400) {
+          throw new Error(`Expected HTTP 400, got ${res.getStatus()}`);
+        }
+
+        const body = res.getBody();
+
+        if (!body || body.code !== "invalid_diagnostic_report_id") {
+          throw new Error(`Expected code invalid_diagnostic_report_id, got ${body && body.code}`);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

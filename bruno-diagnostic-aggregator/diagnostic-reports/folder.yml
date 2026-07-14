@@ -1,0 +1,13 @@
+info:
+  name: diagnostic-reports
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit
+
+docs: |-
+  # Diagnostic Reports
+
+  Run `create-valid` before `get-created`.
+  `create-valid` stores the fresh `diagnostic_report_id` that `get-created` reads.
