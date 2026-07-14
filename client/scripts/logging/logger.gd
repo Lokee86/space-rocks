@@ -341,10 +341,6 @@ static func _should_log(category: String, level: int) -> bool:
 	return level >= active_level && active_level != LEVEL_OFF
 
 
-static func _build_numbered_log_filename(prefix: String, index: int) -> String:
-	return RollingJSONLWriter.build_numbered_filename(prefix, index)
-
-
 static func _format_field_value(value) -> String:
 	match typeof(value):
 		TYPE_DICTIONARY, TYPE_ARRAY:

@@ -157,21 +157,25 @@ Field output is deterministic because dictionary keys are sorted before formatti
 
 ### Local JSONL output
 
-The logger can optionally mirror emitted records to a sequential local JSONL file. This is local diagnostic output, not server logging, telemetry transport, or durable observability storage.
+The logger can optionally mirror emitted records to a rolling local JSONL file. This is local diagnostic output, not server logging, telemetry transport, compression, or durable observability upload.
 
-`configure_file_output(base_dir, prefix)` creates numbered files such as `client-000001.jsonl` and `client-000002.jsonl` in the chosen base directory. The current default base directory is `user://logs` and the current default prefix is `client`.
+`configure_file_output(base_dir, prefix)` now uses an active/archive layout under the chosen base directory. The active file is `active/<prefix>.jsonl.open`, and completed segments are archived as timestamped JSONL files under `archive/`.
 
-`configure_file_output(...)` closes any existing file output before opening a new file. It creates the base directory when possible, then picks the first available sequential filename from `prefix-000001.jsonl` upward.
+The default policy uses a 16 MiB active-segment size cap, a one-hour active-segment age rotation cap, a 14-day archive retention age, and a 250 MiB archive retention cap. Callers can override the policy when configuring file output; explicit caller values take precedence over the defaults.
+
+When the active segment grows past the byte cap or ages past the age cap, the writer rotates before the next write. Rotation closes the active handle, archives the completed `.jsonl.open` file with timestamp metadata in the filename, and opens a fresh active file.
+
+If `configure_file_output(...)` finds an interrupted `.jsonl.open` file at startup, the writer recovers it into the archive directory before opening the new active file.
 
 `current_file_output_path()` returns the active path when file output is enabled, and `close_file_output()` flushes and closes the handle, then clears the output state.
 
-`configure_file_output(...)` returns `false` when directory creation or file creation fails. When file output is active, emitted records are written as JSONL and flushed after each stored line.
+`configure_file_output(...)` returns `false` when directory creation, recovery, rotation, or file creation fails. When file output is active, emitted records are written as JSONL and flushed after each stored line. If file output fails, the client keeps console logging working and degrades to console-only output while emitting bounded direct failure warnings rather than spamming repeated warnings for the same configured run.
 
 `AppEntry._ready()` currently calls `ClientLogger.configure_file_output("user://logs", "client")`, so normal client startup attempts to enable structured JSONL file logging under Godot user data. On success, `AppEntry` logs the active path with `ClientLogger.shell_info(...)`; on failure, it logs that client structured log file output is unavailable with `ClientLogger.shell_warn(...)`. `current_file_output_path()` is the source for the active path while file output is enabled.
 
 ### Test coverage
 
-`client/tests/unit/test_client_logger.gd` covers:
+`client/tests/unit/test_client_logger.gd` and `client/tests/unit/test_rolling_jsonl_writer.gd` cover:
 
 * level-name mapping
 * record construction
@@ -180,11 +184,16 @@ The logger can optionally mirror emitted records to a sequential local JSONL fil
 * console formatting for text helpers and named events
 * deterministic field sorting
 * category override behavior
-* numbered filename generation
+* rolling active/archive layout
+* active `.jsonl.open` output
+* size and age rotation
+* startup recovery for interrupted active files
+* retention cleanup and archive deletion
+* caller policy overrides
+* bounded failure reporting
 * file-output configuration
 * JSONL emission
 * file-output close/reset behavior
-
 
 ## Boundary
 
@@ -202,6 +211,14 @@ Primary implementation files:
 
 ```text
 client/scripts/logging/logger.gd
+client/scripts/logging/rolling_jsonl_writer.gd
+```
+
+Focused tests:
+
+```text
+client/tests/unit/test_client_logger.gd
+client/tests/unit/test_rolling_jsonl_writer.gd
 ```
 
 ## Related docs
