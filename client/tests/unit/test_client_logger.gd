@@ -4,6 +4,27 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 const TEST_LOG_DIR := "user://logger_test_output"
 const TEST_LOG_PREFIX := "client-test"
 
+class FakeWriter extends RefCounted:
+	var configure_calls: Array = []
+	var written_lines: Array[String] = []
+	var close_calls := 0
+	var enabled := false
+	var current_path := ""
+
+	func configure(base_dir: String, prefix: String) -> bool:
+		configure_calls.append([base_dir, prefix])
+		enabled = true
+		current_path = base_dir.path_join("%s-fake.jsonl" % prefix)
+		return true
+
+	func write_line(line: String) -> void:
+		written_lines.append(line)
+
+	func close() -> void:
+		close_calls += 1
+		enabled = false
+		current_path = ""
+
 
 func before_each() -> void:
 	ClientLogger.reset_for_tests()
@@ -233,7 +254,7 @@ func test_configure_file_output_creates_a_file_in_test_directory() -> void:
 	var path := ClientLogger.current_file_output_path()
 
 	assert_true(configured)
-	assert_true(ClientLogger.file_output_enabled)
+	assert_true(ClientLogger._file_writer.enabled)
 	assert_ne(path, "")
 	assert_true(path.begins_with(TEST_LOG_DIR.path_join(TEST_LOG_PREFIX)))
 	assert_true(path.ends_with(".jsonl"))
@@ -269,14 +290,40 @@ func test_emitted_structured_log_writes_jsonl_line_to_file() -> void:
 
 func test_close_file_output_resets_file_state() -> void:
 	assert_true(ClientLogger.configure_file_output(TEST_LOG_DIR, TEST_LOG_PREFIX))
-	assert_true(ClientLogger.file_output_enabled)
+	assert_true(ClientLogger._file_writer.enabled)
 	assert_ne(ClientLogger.current_file_output_path(), "")
 
 	ClientLogger.close_file_output()
 
-	assert_false(ClientLogger.file_output_enabled)
+	assert_false(ClientLogger._file_writer.enabled)
 	assert_eq(ClientLogger.current_file_output_path(), "")
-	assert_eq(ClientLogger.file_output_handle, null)
+
+
+func test_file_output_delegates_to_replaceable_writer() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+
+	assert_true(ClientLogger.configure_file_output("user://fake-logs", "fake-client"))
+	assert_eq(writer.configure_calls, [["user://fake-logs", "fake-client"]])
+	assert_eq(ClientLogger.current_file_output_path(), "user://fake-logs/fake-client-fake.jsonl")
+
+	ClientLogger.event(
+		ClientLogger.CATEGORY_NETWORK,
+		ClientLogger.LEVEL_INFO,
+		"fake_writer_event",
+		"delegated",
+		{"attempt": 1}
+	)
+
+	assert_eq(writer.written_lines.size(), 1)
+	var parsed = JSON.parse_string(writer.written_lines[0])
+	assert_eq(parsed["event"], "fake_writer_event")
+	assert_eq(parsed["message"], "delegated")
+
+	ClientLogger.close_file_output()
+	assert_eq(writer.close_calls, 1)
+	assert_false(writer.enabled)
+	assert_eq(writer.current_path, "")
 
 
 func _cleanup_test_log_files() -> void:
