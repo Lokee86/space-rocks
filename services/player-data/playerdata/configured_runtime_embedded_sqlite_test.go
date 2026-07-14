@@ -21,6 +21,9 @@ func newTestEmbeddedSQLiteLocalStoreFactory(t *testing.T) playerdata.LocalStoreF
 		if err != nil {
 			return nil, err
 		}
+		t.Cleanup(func() {
+			_ = store.Close()
+		})
 		if err := store.InitSchema(); err != nil {
 			_ = store.Close()
 			return nil, err

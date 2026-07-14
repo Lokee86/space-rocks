@@ -1,137 +1,146 @@
 package servicelog
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 )
 
-func writeArchiveFile(t *testing.T, path string, size int, modTime time.Time) {
+func writeArchiveCandidate(t *testing.T, directory, relPath string, size int, modTime time.Time) string {
 	t.Helper()
+
+	path := filepath.Join(directory, "archive", relPath)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatalf("MkdirAll(%s) error = %v", filepath.Dir(path), err)
+		t.Fatalf("os.MkdirAll(%q) error = %v", filepath.Dir(path), err)
 	}
-	data := make([]byte, size)
-	for i := range data {
-		data[i] = byte('a' + i%26)
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatalf("WriteFile(%s) error = %v", path, err)
+	if err := os.WriteFile(path, bytes.Repeat([]byte("x"), size), 0o644); err != nil {
+		t.Fatalf("os.WriteFile(%q) error = %v", path, err)
 	}
 	if err := os.Chtimes(path, modTime, modTime); err != nil {
-		t.Fatalf("Chtimes(%s) error = %v", path, err)
+		t.Fatalf("os.Chtimes(%q) error = %v", path, err)
 	}
+	return path
 }
 
-func TestEnforceArchiveRetentionDeletesArchivesOlderThanAge(t *testing.T) {
-	dir := t.TempDir()
-	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	oldPath := archiveSegmentPath(dir, "game-server", now.Add(-4*time.Hour), now.Add(-4*time.Hour), 1)
-	newPath := archiveSegmentPath(dir, "game-server", now.Add(-time.Hour), now.Add(-time.Hour), 1)
-	ignoredPath := filepath.Join(dir, "archive", "2026", "07", "14", "notes.tmp")
-	writeArchiveFile(t, oldPath, 12, now.Add(-4*time.Hour))
-	writeArchiveFile(t, newPath, 12, now.Add(-time.Hour))
-	writeArchiveFile(t, ignoredPath, 12, now.Add(-6*time.Hour))
+func TestEnforceArchiveRetentionDeletesExpiredArchivesAndIgnoresUnrelatedFiles(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	oldPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "old.jsonl"), 32, now.Add(-3*time.Hour))
+	freshPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "fresh.jsonl.gz"), 32, now.Add(-30*time.Minute))
+	unrelatedPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "notes.txt"), 16, now.Add(-4*time.Hour))
 
-	deps := defaultRuntimeDependencies()
-	if err := enforceArchiveRetention(FilePolicy{Directory: dir, RetentionMaxAge: 2 * time.Hour, RetentionMaxBytes: 1024}, deps, now); err != nil {
+	if err := enforceArchiveRetention(FilePolicy{Directory: directory, RetentionMaxAge: time.Hour, RetentionMaxBytes: 256}, testRuntimeDependencies(&fakeClock{current: now}), now); err != nil {
 		t.Fatalf("enforceArchiveRetention() error = %v", err)
 	}
 
 	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
 		t.Fatalf("old archive still exists: %v", err)
 	}
-	if _, err := os.Stat(newPath); err != nil {
-		t.Fatalf("new archive missing: %v", err)
+	if _, err := os.Stat(freshPath); err != nil {
+		t.Fatalf("fresh archive missing: %v", err)
 	}
-	if _, err := os.Stat(ignoredPath); err != nil {
-		t.Fatalf("ignored file missing: %v", err)
+	if _, err := os.Stat(unrelatedPath); err != nil {
+		t.Fatalf("unrelated file missing: %v", err)
 	}
 }
 
-func TestEnforceArchiveRetentionDeletesOldestArchivesUntilWithinByteCap(t *testing.T) {
-	dir := t.TempDir()
-	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	base := now.Add(-time.Hour)
-	paths := []string{
-		archiveSegmentPath(dir, "game-server", base, base, 1),
-		archiveSegmentPath(dir, "game-server", base.Add(time.Minute), base.Add(time.Minute), 1),
-		archiveSegmentPath(dir, "game-server", base.Add(2*time.Minute), base.Add(2*time.Minute), 1),
-	}
-	for i, path := range paths {
-		stamp := base.Add(time.Duration(i) * time.Minute)
-		writeArchiveFile(t, path, 10, stamp)
-	}
+func TestEnforceArchiveRetentionDeletesOldestRemainingUntilByteCap(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	oldestPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "a.jsonl"), 60, now.Add(-3*time.Hour))
+	middlePath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "b.jsonl.gz"), 60, now.Add(-2*time.Hour))
+	newestPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "c.jsonl"), 60, now.Add(-time.Hour))
 
-	deps := defaultRuntimeDependencies()
-	if err := enforceArchiveRetention(FilePolicy{Directory: dir, RetentionMaxAge: time.Hour, RetentionMaxBytes: 20}, deps, now); err != nil {
+	if err := enforceArchiveRetention(FilePolicy{Directory: directory, RetentionMaxAge: 24 * time.Hour, RetentionMaxBytes: 120}, testRuntimeDependencies(&fakeClock{current: now}), now); err != nil {
 		t.Fatalf("enforceArchiveRetention() error = %v", err)
 	}
 
-	if _, err := os.Stat(paths[0]); !os.IsNotExist(err) {
+	if _, err := os.Stat(oldestPath); !os.IsNotExist(err) {
 		t.Fatalf("oldest archive still exists: %v", err)
 	}
-	if _, err := os.Stat(paths[1]); err != nil {
+	if _, err := os.Stat(middlePath); err != nil {
 		t.Fatalf("middle archive missing: %v", err)
 	}
-	if _, err := os.Stat(paths[2]); err != nil {
+	if _, err := os.Stat(newestPath); err != nil {
 		t.Fatalf("newest archive missing: %v", err)
 	}
 }
 
-func TestEnforceArchiveRetentionUsesDeterministicOldestFirstOrdering(t *testing.T) {
-	dir := t.TempDir()
-	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	stamp := now.Add(-time.Hour)
-	firstPath := archiveSegmentPath(dir, "game-server", stamp, stamp, 1)
-	secondPath := archiveSegmentPath(dir, "game-server", stamp, stamp, 2)
-	writeArchiveFile(t, firstPath, 8, stamp)
-	writeArchiveFile(t, secondPath, 8, stamp)
+func TestEnforceArchiveRetentionUsesPathTieBreakerForEqualAges(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	keepPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "b.jsonl.gz"), 80, now.Add(-time.Hour))
+	deletePath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "a.jsonl"), 80, now.Add(-time.Hour))
 
-	deps := defaultRuntimeDependencies()
-	if err := enforceArchiveRetention(FilePolicy{Directory: dir, RetentionMaxAge: time.Hour, RetentionMaxBytes: 8}, deps, now); err != nil {
+	if err := enforceArchiveRetention(FilePolicy{Directory: directory, RetentionMaxAge: 24 * time.Hour, RetentionMaxBytes: 80}, testRuntimeDependencies(&fakeClock{current: now}), now); err != nil {
 		t.Fatalf("enforceArchiveRetention() error = %v", err)
 	}
 
-	if _, err := os.Stat(firstPath); !os.IsNotExist(err) {
-		t.Fatalf("first archive still exists: %v", err)
+	if _, err := os.Stat(deletePath); !os.IsNotExist(err) {
+		t.Fatalf("tie-break archive still exists: %v", err)
 	}
-	if _, err := os.Stat(secondPath); err != nil {
-		t.Fatalf("second archive missing: %v", err)
+	if _, err := os.Stat(keepPath); err != nil {
+		t.Fatalf("tie-break survivor missing: %v", err)
 	}
 }
 
-func TestEnforceArchiveRetentionTreatsMissingArchiveDirectoryAsEmpty(t *testing.T) {
-	dir := t.TempDir()
-	deps := defaultRuntimeDependencies()
-	if err := enforceArchiveRetention(FilePolicy{Directory: dir, RetentionMaxAge: time.Hour, RetentionMaxBytes: 8}, deps, time.Now().UTC()); err != nil {
+func TestEnforceArchiveRetentionPreservesActiveFile(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	activePath := filepath.Join(directory, "game-server.jsonl.open")
+	if err := os.WriteFile(activePath, []byte("keep me"), 0o644); err != nil {
+		t.Fatalf("os.WriteFile(%q) error = %v", activePath, err)
+	}
+	if err := os.Chtimes(activePath, now, now); err != nil {
+		t.Fatalf("os.Chtimes(%q) error = %v", activePath, err)
+	}
+	archivePath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "old.jsonl"), 16, now.Add(-3*time.Hour))
+
+	if err := enforceArchiveRetention(FilePolicy{Directory: directory, RetentionMaxAge: time.Hour, RetentionMaxBytes: 256}, testRuntimeDependencies(&fakeClock{current: now}), now); err != nil {
 		t.Fatalf("enforceArchiveRetention() error = %v", err)
+	}
+
+	data, err := os.ReadFile(activePath)
+	if err != nil {
+		t.Fatalf("os.ReadFile(%q) error = %v", activePath, err)
+	}
+	if string(data) != "keep me" {
+		t.Fatalf("active file contents = %q, want keep me", string(data))
+	}
+	if _, err := os.Stat(archivePath); !os.IsNotExist(err) {
+		t.Fatalf("old archive still exists: %v", err)
 	}
 }
 
-func TestEnforceArchiveRetentionIgnoresNonArchiveFiles(t *testing.T) {
-	dir := t.TempDir()
-	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	archivePath := archiveSegmentPath(dir, "game-server", now.Add(-time.Hour), now.Add(-time.Hour), 1)
-	ignoredTemp := filepath.Join(dir, "archive", "2026", "07", "14", "orphan.tmp")
-	ignoredOpen := filepath.Join(dir, "active", "game-server.jsonl.open")
-	writeArchiveFile(t, archivePath, 5, now.Add(-time.Hour))
-	writeArchiveFile(t, ignoredTemp, 100, now.Add(-2*time.Hour))
-	writeArchiveFile(t, ignoredOpen, 100, now.Add(-2*time.Hour))
+func TestOpenRunsArchiveRetentionOnStartup(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	oldPath := writeArchiveCandidate(t, directory, filepath.Join("2026-07-14", "old.jsonl"), 32, now.Add(-3*time.Hour))
+	clock := &fakeClock{current: now}
 
-	deps := defaultRuntimeDependencies()
-	if err := enforceArchiveRetention(FilePolicy{Directory: dir, RetentionMaxAge: time.Hour, RetentionMaxBytes: 10}, deps, now); err != nil {
-		t.Fatalf("enforceArchiveRetention() error = %v", err)
+	runtime, err := openWithDependencies(Config{
+		Identity: ServiceIdentity{Name: "game-server"},
+		File: func() FilePolicy {
+			cfg := validFileConfig(directory)
+			cfg.RetentionMaxAge = time.Hour
+			cfg.RetentionMaxBytes = 256
+			return cfg
+		}(),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	}, testRuntimeDependencies(clock))
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v", err)
 	}
+	defer runtime.Close()
 
-	if _, err := os.Stat(archivePath); err != nil {
-		t.Fatalf("archive file missing: %v", err)
+	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
+		t.Fatalf("stale archive still exists after Open: %v", err)
 	}
-	if _, err := os.Stat(ignoredTemp); err != nil {
-		t.Fatalf("ignored temp file missing: %v", err)
-	}
-	if _, err := os.Stat(ignoredOpen); err != nil {
-		t.Fatalf("active file missing: %v", err)
+	activePath := filepath.Join(directory, "game-server.jsonl.open")
+	if _, err := os.Stat(activePath); err != nil {
+		t.Fatalf("active file missing after Open: %v", err)
 	}
 }

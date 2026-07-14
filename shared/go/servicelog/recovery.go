@@ -8,9 +8,8 @@ import (
 	"time"
 )
 
-func (w *rollingWriter) recoverInterruptedActiveSegmentLocked(now time.Time) error {
-	activePath := w.activeSegmentPath()
-	info, err := w.deps.stat(activePath)
+func recoverInterruptedSegment(policy FilePolicy, deps runtimeDependencies, activePath string, now time.Time) error {
+	data, err := readFileBytes(deps, activePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -18,77 +17,75 @@ func (w *rollingWriter) recoverInterruptedActiveSegmentLocked(now time.Time) err
 		return err
 	}
 
-	contents, err := w.deps.readFile(activePath)
-	if err != nil {
-		return err
-	}
-	complete := completeJSONLContent(contents)
+	complete := completeJSONLPrefix(data)
 	if len(complete) == 0 {
-		return w.deps.remove(activePath)
+		if err := removePath(deps, activePath); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
 	}
 
-	startedAt := info.ModTime().UTC()
-	endedAt := now.UTC()
-	archivePath, err := nextArchiveSegmentPath(w.policy.Directory, w.policy.Prefix, startedAt, endedAt, w.deps.stat)
+	info, err := statPath(deps, activePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	archivePath := archivePathForSegment(policy, info.ModTime().UTC(), now)
+	archivePath, err = selectArchivePath(deps, archivePath)
 	if err != nil {
 		return err
 	}
-	if err := w.deps.mkdir(filepath.Dir(archivePath), 0o755); err != nil {
+	if err := writeRecoveredArchive(policy, deps, archivePath, complete); err != nil {
 		return err
 	}
-	if err := writeRecoveredArchiveSegment(archivePath, complete, w.deps); err != nil {
+	if err := removePath(deps, activePath); err != nil {
 		return err
 	}
-
-	if w.policy.CompressionEnabled {
-		compressedPath, err := nextCompressedArchiveSegmentPath(w.policy.Directory, w.policy.Prefix, startedAt, endedAt, w.deps.stat)
-		if err != nil {
-			return err
-		}
-		if err := compressArchivedSegment(archivePath, compressedPath, w.deps); err != nil {
-			return err
-		}
-		if err := w.deps.remove(archivePath); err != nil {
-			return err
-		}
-	}
-
-	return w.deps.remove(activePath)
+	return nil
 }
 
-func completeJSONLContent(contents []byte) []byte {
-	lastNewline := bytes.LastIndexByte(contents, '\n')
+func writeRecoveredArchive(policy FilePolicy, deps runtimeDependencies, archivePath string, payload []byte) error {
+	if err := mkdirPath(deps, filepath.Dir(archivePath)); err != nil {
+		return err
+	}
+
+	archiveFile, err := openWriteCloser(deps, archivePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(archiveFile, bytes.NewReader(payload)); err != nil {
+		_ = archiveFile.Close()
+		_ = removePath(deps, archivePath)
+		return err
+	}
+	if err := archiveFile.Close(); err != nil {
+		_ = removePath(deps, archivePath)
+		return err
+	}
+
+	if policy.CompressionEnabled {
+		gzPath := archivePath + ".gz"
+		if err := compressRotatedSegment(archivePath, gzPath); err != nil {
+			_ = removePath(deps, archivePath)
+			_ = removePath(deps, gzPath)
+			return err
+		}
+		if err := removePath(deps, archivePath); err != nil {
+			_ = removePath(deps, gzPath)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func completeJSONLPrefix(data []byte) []byte {
+	lastNewline := bytes.LastIndexByte(data, '\n')
 	if lastNewline < 0 {
 		return nil
 	}
-	return contents[:lastNewline+1]
-}
-
-func writeRecoveredArchiveSegment(path string, contents []byte, deps runtimeDependencies) (err error) {
-	file, err := deps.openFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-	if err != nil {
-		return err
-	}
-	cleanup := true
-	defer func() {
-		if file != nil {
-			_ = file.Close()
-		}
-		if cleanup {
-			_ = deps.remove(path)
-		}
-	}()
-
-	if _, err = io.Copy(file, bytes.NewReader(contents)); err != nil {
-		return err
-	}
-	if err = file.Sync(); err != nil {
-		return err
-	}
-	if err = file.Close(); err != nil {
-		return err
-	}
-	file = nil
-	cleanup = false
-	return nil
+	return data[:lastNewline+1]
 }

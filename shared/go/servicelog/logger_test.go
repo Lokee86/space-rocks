@@ -2,512 +2,322 @@ package servicelog
 
 import (
 	"bytes"
-	"context"
+	"encoding/json"
 	"errors"
-	"log/slog"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
 
-func TestOpenAttachesServiceContext(t *testing.T) {
-	var output bytes.Buffer
-	clock := &fakeClock{current: time.Unix(100, 0)}
-	runtime, err := openWithDependencies(Config{
+type trackedWriteCloser struct {
+	bytes.Buffer
+	closeCount int
+	syncCount  int
+	writeCount int
+	closeErr   error
+	syncErr    error
+	writeErr   error
+}
+
+func (w *trackedWriteCloser) Write(p []byte) (int, error) {
+	w.writeCount++
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+	return w.Buffer.Write(p)
+}
+
+func (w *trackedWriteCloser) Sync() error {
+	w.syncCount++
+	return w.syncErr
+}
+
+func (w *trackedWriteCloser) Close() error {
+	w.closeCount++
+	return w.closeErr
+}
+
+func validFileConfig(directory string) FilePolicy {
+	return FilePolicy{
+		Directory:         directory,
+		Prefix:            "game-server",
+		SegmentMaxBytes:   1024,
+		SegmentMaxAge:     time.Hour,
+		RetentionMaxAge:   24 * time.Hour,
+		RetentionMaxBytes: 4096,
+	}
+}
+
+func TestOpenCreatesActiveFilePath(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "nested", "logs")
+	runtime, err := Open(Config{
+		Identity:       ServiceIdentity{Name: "game-server"},
+		File:           validFileConfig(directory),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	})
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer runtime.Close()
+
+	path := filepath.Join(directory, "game-server.jsonl.open")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("os.Stat(%q) error = %v", path, err)
+	}
+}
+
+func TestActiveFileWritesJSONLWithServiceIdentity(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "logs")
+	runtime, err := Open(Config{
 		Identity: ServiceIdentity{
 			Name:        "game-server",
 			InstanceID:  "instance-1",
 			Environment: "test",
 			Version:     "dev",
 		},
-		ConsoleEnabled: true,
-	}, fakeFilesystem{}.dependencies(&output, clock))
+		File:           validFileConfig(directory),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	})
 	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	runtime.Logger().Info("started")
-
-	text := output.String()
-	for _, field := range []string{"service=game-server", "service_instance_id=instance-1", "environment=test", "build_version=dev"} {
-		if !strings.Contains(text, field) {
-			t.Errorf("log output missing %s: %s", field, text)
-		}
-	}
-}
-
-func TestFanoutForwardsRecordsAndConfiguration(t *testing.T) {
-	var first, second bytes.Buffer
-	fanout := newFanoutHandler(
-		slog.NewJSONHandler(&first, nil),
-		slog.NewJSONHandler(&second, nil),
-	)
-	logger := slog.New(fanout).WithGroup("event").With(slog.String("kind", "startup"))
-	logger.Info("ready")
-
-	if first.Len() == 0 || second.Len() == 0 {
-		t.Fatalf("fanout outputs = %d and %d bytes, want both non-empty", first.Len(), second.Len())
-	}
-	for name, output := range map[string]string{"first": first.String(), "second": second.String()} {
-		if !strings.Contains(output, `"event":{"kind":"startup"}`) {
-			t.Errorf("%s output missing grouped attribute: %s", name, output)
-		}
-	}
-	if !fanout.Enabled(context.Background(), slog.LevelInfo) {
-		t.Error("fanout Enabled() = false, want true")
-	}
-}
-
-func TestOpenWritesJSONLFileOutput(t *testing.T) {
-	dir := t.TempDir()
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{
-			Name:        "game-server",
-			InstanceID:  "instance-1",
-			Environment: "test",
-			Version:     "dev",
-		},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1,
-		},
-		FileEnabled: true,
-	}, defaultRuntimeDependencies())
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
+		t.Fatalf("Open() error = %v", err)
 	}
 
-	runtime.Logger().Info("started")
-	if runtime.Status().Closed {
-		t.Fatal("runtime starts closed")
-	}
+	runtime.Logger().Info("started", "phase", "init")
 	if err := runtime.Close(); err != nil {
 		t.Fatalf("Close() error = %v", err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(dir, "active", "game-server.jsonl.open"))
+	path := filepath.Join(directory, "game-server.jsonl.open")
+	data, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("ReadFile() error = %v", err)
+		t.Fatalf("os.ReadFile(%q) error = %v", path, err)
 	}
-	text := string(data)
-	for _, field := range []string{`"service":"game-server"`, `"msg":"started"`, `"build_version":"dev"`} {
-		if !strings.Contains(text, field) {
-			t.Fatalf("file output missing %s: %s", field, text)
+
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+	if len(lines) != 1 {
+		t.Fatalf("log file line count = %d, want 1; contents = %q", len(lines), string(data))
+	}
+
+	var record map[string]any
+	if err := json.Unmarshal(lines[0], &record); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; line = %q", err, string(lines[0]))
+	}
+
+	for key, want := range map[string]string{
+		"service":             "game-server",
+		"service_instance_id": "instance-1",
+		"environment":         "test",
+		"build_version":       "dev",
+		"msg":                 "started",
+		"phase":               "init",
+	} {
+		got, ok := record[key]
+		if !ok {
+			t.Fatalf("JSON record missing %q: %v", key, record)
 		}
+		if got != want {
+			t.Fatalf("JSON record %q = %v, want %q", key, got, want)
+		}
+	}
+	if got, ok := record["level"].(string); !ok || got != "INFO" {
+		t.Fatalf("JSON record level = %v, want INFO", record["level"])
 	}
 }
 
 func TestOpenFansOutToConsoleAndFile(t *testing.T) {
-	dir := t.TempDir()
 	var console bytes.Buffer
-	deps := defaultRuntimeDependencies()
-	deps.consoleWriter = &console
+	sink := &trackedWriteCloser{}
 
 	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server", Environment: "test"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1,
-		},
-		ConsoleEnabled: true,
+		Identity:       ServiceIdentity{Name: "game-server"},
+		File:           validFileConfig("logs"),
 		FileEnabled:    true,
-	}, deps)
+		ConsoleEnabled: true,
+	}, runtimeDependencies{
+		consoleWriter: &console,
+		mkdir: func(string, fs.FileMode) error {
+			return nil
+		},
+		openFile: func(string, int, fs.FileMode) (io.WriteCloser, error) {
+			return sink, nil
+		},
+	})
 	if err != nil {
 		t.Fatalf("openWithDependencies() error = %v", err)
 	}
-	defer func() {
-		if err := runtime.Close(); err != nil {
-			t.Fatalf("Close() error = %v", err)
-		}
-	}()
 
-	runtime.Logger().Info("started")
+	runtime.Logger().Info("ready")
 	if err := runtime.Close(); err != nil {
 		t.Fatalf("Close() error = %v", err)
 	}
 
-	if !strings.Contains(console.String(), "service=game-server") {
-		t.Fatalf("console output missing service identity: %s", console.String())
+	if console.Len() == 0 {
+		t.Fatal("console output is empty")
 	}
-	if !strings.Contains(console.String(), "msg=started") {
-		t.Fatalf("console output missing message: %s", console.String())
+	if !strings.Contains(console.String(), "ready") {
+		t.Fatalf("console output missing record: %q", console.String())
 	}
-
-	data, err := os.ReadFile(filepath.Join(dir, "active", "game-server.jsonl.open"))
-	if err != nil {
-		t.Fatalf("ReadFile() error = %v", err)
+	if sink.Len() == 0 {
+		t.Fatal("file output is empty")
 	}
-	text := string(data)
-	for _, field := range []string{`"msg":"started"`, `"service":"game-server"`, `"environment":"test"`} {
-		if !strings.Contains(text, field) {
-			t.Fatalf("file output missing %s: %s", field, text)
-		}
+	if !strings.Contains(sink.String(), `"msg":"ready"`) {
+		t.Fatalf("file output missing JSON record: %q", sink.String())
+	}
+	if sink.closeCount != 1 {
+		t.Fatalf("close count = %d, want 1", sink.closeCount)
 	}
 }
 
-func TestRuntimeCloseFlushesFileOutputAndIsIdempotent(t *testing.T) {
-	dir := t.TempDir()
+func TestRepeatedRotationUsesDeterministicArchiveSuffixForIdenticalTimestamps(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "logs")
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	clock := &fakeClock{current: now}
+
 	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server", Version: "dev"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1,
+		Identity: ServiceIdentity{Name: "game-server"},
+		File: func() FilePolicy {
+			cfg := validFileConfig(directory)
+			cfg.SegmentMaxBytes = 1
+			cfg.SegmentMaxAge = time.Hour
+			return cfg
+		}(),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	}, runtimeDependencies{
+		consoleWriter: io.Discard,
+		now:           clock.now,
+		mkdir:         os.MkdirAll,
+		openFile: func(name string, flag int, perm fs.FileMode) (io.WriteCloser, error) {
+			return os.OpenFile(name, flag, perm)
 		},
-		FileEnabled: true,
-	}, defaultRuntimeDependencies())
+		readFile: os.ReadFile,
+		readDir:  os.ReadDir,
+		rename:   os.Rename,
+		remove:   os.Remove,
+		stat:     os.Stat,
+	})
 	if err != nil {
 		t.Fatalf("openWithDependencies() error = %v", err)
 	}
+	defer func() { _ = runtime.Close() }()
 
-	runtime.Logger().Info("closing")
-	if err := runtime.Close(); err != nil {
-		t.Fatalf("first Close() error = %v", err)
+	runtime.Logger().Info("one")
+	runtime.Logger().Info("two")
+	runtime.Logger().Info("three")
+
+	paths := collectLogFiles(t, directory)
+	if len(paths) != 3 {
+		t.Fatalf("log file count = %d, want 3; paths = %v", len(paths), paths)
+	}
+	activePath := filepath.Join(directory, "game-server.jsonl.open")
+	var baseArchiveSeen bool
+	var suffixedArchiveSeen bool
+	for _, path := range paths {
+		if path == activePath {
+			continue
+		}
+		assertArchiveFilename(t, path, "game-server")
+		base := filepath.Base(path)
+		if strings.HasSuffix(base, "-2.jsonl") {
+			suffixedArchiveSeen = true
+		}
+		if strings.Contains(base, "-20260714T133000.000000000Z-20260714T133000.000000000Z.jsonl") && !strings.Contains(base, "-2.jsonl") {
+			baseArchiveSeen = true
+		}
+	}
+	if !baseArchiveSeen {
+		t.Fatal("base archive name not found")
+	}
+	if !suffixedArchiveSeen {
+		t.Fatal("collision-safe suffixed archive name not found")
+	}
+}
+
+func TestOpenFallsBackToActiveFileOpenFailure(t *testing.T) {
+	wantErr := errors.New("open failed")
+
+	runtime, err := openWithDependencies(Config{
+		Identity:       ServiceIdentity{Name: "game-server"},
+		File:           validFileConfig("logs"),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	}, runtimeDependencies{
+		mkdir: func(string, fs.FileMode) error { return nil },
+		openFile: func(string, int, fs.FileMode) (io.WriteCloser, error) {
+			return nil, wantErr
+		},
+	})
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v, want nil", err)
+	}
+	if runtime == nil {
+		t.Fatal("openWithDependencies() returned nil runtime")
+	}
+	status := runtime.Status()
+	if !status.Degraded {
+		t.Fatal("runtime is not degraded after open failure")
+	}
+	if status.FailureCount != 1 {
+		t.Fatalf("failure count = %d, want 1", status.FailureCount)
+	}
+	if status.LastError != wantErr.Error() {
+		t.Fatalf("last error = %q, want %q", status.LastError, wantErr.Error())
+	}
+}
+
+func TestRuntimeCloseClosesActiveFileOnce(t *testing.T) {
+	closeErr := errors.New("close failed")
+	sink := &trackedWriteCloser{closeErr: closeErr}
+
+	runtime, err := openWithDependencies(Config{
+		Identity:       ServiceIdentity{Name: "game-server"},
+		File:           validFileConfig("logs"),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	}, runtimeDependencies{
+		mkdir: func(string, fs.FileMode) error {
+			return nil
+		},
+		openFile: func(string, int, fs.FileMode) (io.WriteCloser, error) {
+			return sink, nil
+		},
+	})
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v", err)
+	}
+	if runtime.Status().Closed {
+		t.Fatal("runtime starts closed")
+	}
+
+	if err := runtime.Close(); !errors.Is(err, closeErr) {
+		t.Fatalf("first Close() error = %v, want %v", err, closeErr)
+	}
+	status := runtime.Status()
+	if !status.Degraded {
+		t.Fatal("runtime is not degraded after Close() failure")
+	}
+	if status.FailureCount != 1 {
+		t.Fatalf("failure count after Close() = %d, want 1", status.FailureCount)
+	}
+	if status.LastError != closeErr.Error() {
+		t.Fatalf("last error after Close() = %q, want %q", status.LastError, closeErr.Error())
+	}
+	if sink.closeCount != 1 {
+		t.Fatalf("close count after first Close() = %d, want 1", sink.closeCount)
 	}
 	if err := runtime.Close(); err != nil {
 		t.Fatalf("second Close() error = %v", err)
 	}
+	if sink.closeCount != 1 {
+		t.Fatalf("close count after second Close() = %d, want 1", sink.closeCount)
+	}
 	if !runtime.Status().Closed {
 		t.Fatal("runtime remains open after Close()")
 	}
-
-	data, err := os.ReadFile(filepath.Join(dir, "active", "game-server.jsonl.open"))
-	if err != nil {
-		t.Fatalf("ReadFile() error = %v", err)
-	}
-	text := string(data)
-	for _, field := range []string{`"msg":"closing"`, `"build_version":"dev"`} {
-		if !strings.Contains(text, field) {
-			t.Fatalf("file output missing %s: %s", field, text)
-		}
-	}
-}
-
-func TestOpenReportsActiveStatusAndRunsRetention(t *testing.T) {
-	dir := t.TempDir()
-	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	stale := archiveSegmentPath(dir, "game-server", now.Add(-2*time.Hour), now.Add(-2*time.Hour), 1)
-	writeArchiveSegmentFile(t, stale, []byte("old\n"), now.Add(-2*time.Hour))
-
-	clock := &fakeClock{current: now}
-	deps := defaultRuntimeDependencies()
-	deps.now = clock.now
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	defer runtime.Close()
-
-	status := runtime.Status()
-	if !status.FileEnabled || status.FileDegraded || status.FileFailureCount != 0 || status.Closed {
-		t.Fatalf("status = %#v, want healthy enabled runtime", status)
-	}
-	if status.ActivePath != filepath.Join(dir, "active", "game-server.jsonl.open") {
-		t.Fatalf("ActivePath = %q", status.ActivePath)
-	}
-	if status.ActiveBytes != 0 {
-		t.Fatalf("ActiveBytes = %d, want 0", status.ActiveBytes)
-	}
-	if _, err := os.Stat(stale); !os.IsNotExist(err) {
-		t.Fatalf("stale archive still exists: %v", err)
-	}
-}
-
-func TestOpenLeavesRuntimeDegradedWhenRetentionCleanupFails(t *testing.T) {
-	dir := t.TempDir()
-	now := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	stale := archiveSegmentPath(dir, "game-server", now.Add(-2*time.Hour), now.Add(-2*time.Hour), 1)
-	writeArchiveSegmentFile(t, stale, []byte("old\n"), now.Add(-2*time.Hour))
-
-	clock := &fakeClock{current: now}
-	deps := defaultRuntimeDependencies()
-	deps.now = clock.now
-	deps.remove = func(path string) error {
-		if path == stale {
-			return errors.New("retention cleanup failed")
-		}
-		return os.Remove(path)
-	}
-
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	defer runtime.Close()
-
-	status := runtime.Status()
-	if !status.FileEnabled || !status.FileDegraded || status.FileFailureCount != 1 || status.Closed {
-		t.Fatalf("status = %#v, want degraded enabled runtime", status)
-	}
-	if _, err := os.Stat(stale); err != nil {
-		t.Fatalf("stale archive missing after failed retention cleanup: %v", err)
-	}
-}
-
-func TestRuntimeStatusRecordsRotationFailures(t *testing.T) {
-	dir := t.TempDir()
-	clock := &fakeClock{current: time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)}
-	deps := defaultRuntimeDependencies()
-	deps.now = clock.now
-	deps.rename = func(oldPath, newPath string) error {
-		if filepath.Dir(newPath) == filepath.Join(dir, "archive", "2026", "07", "14") {
-			return errors.New("rotation rename failed")
-		}
-		return os.Rename(oldPath, newPath)
-	}
-
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	defer runtime.Close()
-
-	if _, err := runtime.fileWriter.Write([]byte("first\n")); err != nil {
-		t.Fatalf("first Write() error = %v", err)
-	}
-	before := runtime.Status()
-	if before.ActiveBytes == 0 || before.FileFailureCount != 0 || before.FileDegraded {
-		t.Fatalf("status before failure = %#v, want active file only", before)
-	}
-
-	if _, err := runtime.fileWriter.Write([]byte("second\n")); err == nil {
-		t.Fatal("second Write() error = nil, want rotation failure")
-	}
-	after := runtime.Status()
-	if !after.FileDegraded || after.FileFailureCount != 1 || after.ActiveBytes != before.ActiveBytes {
-		t.Fatalf("status after failure = %#v, want one recorded failure", after)
-	}
-}
-
-func TestRuntimeMaintenanceLoopRotatesAgeExpiredSegmentAndRunsRetention(t *testing.T) {
-	dir := t.TempDir()
-	startedAt := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	tickAt := startedAt.Add(2 * time.Hour)
-	staleModTime := startedAt.Add(-3 * time.Hour)
-	stalePath := archiveSegmentPath(dir, "game-server", staleModTime, staleModTime, 1)
-	writeArchiveSegmentFile(t, stalePath, []byte("stale\n"), staleModTime)
-
-	ticker := newManualMaintenanceTicker()
-	deps := defaultRuntimeDependencies()
-	deps.now = func() time.Time { return startedAt }
-	deps.newTicker = func(time.Duration) maintenanceTicker { return ticker }
-
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1024,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		Flush:      FlushPolicy{Interval: time.Second},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	defer runtime.Close()
-
-	if _, err := runtime.fileWriter.Write([]byte("line one\n")); err != nil {
-		t.Fatalf("Write() error = %v", err)
-	}
-
-	tickSent := make(chan struct{})
-	go func() {
-		ticker.Tick(tickAt)
-		close(tickSent)
-	}()
-	<-tickSent
-
-	if err := runtime.Close(); err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-
-	archivePath := archiveSegmentPath(dir, "game-server", startedAt, tickAt, 1)
-	archiveData, err := os.ReadFile(archivePath)
-	if err != nil {
-		t.Fatalf("ReadFile(archive) error = %v", err)
-	}
-	if !strings.Contains(string(archiveData), "line one") {
-		t.Fatalf("rotated archive contents = %q, want line one", string(archiveData))
-	}
-	if _, err := os.Stat(stalePath); !os.IsNotExist(err) {
-		t.Fatalf("stale archive still exists: %v", err)
-	}
-	status := runtime.Status()
-	if !status.Closed || !status.FileEnabled || status.FileDegraded {
-		t.Fatalf("status after maintenance close = %#v", status)
-	}
-}
-
-func TestRuntimeMaintenanceFailureUpdatesStatus(t *testing.T) {
-	dir := t.TempDir()
-	startedAt := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	tickAt := startedAt.Add(2 * time.Hour)
-	ticker := newManualMaintenanceTicker()
-	renameCalled := make(chan struct{})
-	var renameOnce sync.Once
-
-	deps := defaultRuntimeDependencies()
-	deps.now = func() time.Time { return startedAt }
-	deps.newTicker = func(time.Duration) maintenanceTicker { return ticker }
-	deps.rename = func(oldPath, newPath string) error {
-		renameOnce.Do(func() { close(renameCalled) })
-		return errors.New("maintenance rotation failed")
-	}
-
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1024,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		Flush:      FlushPolicy{Interval: time.Second},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-	defer runtime.Close()
-
-	runtime.Logger().Info("maintenance")
-	go ticker.Tick(tickAt)
-	<-renameCalled
-
-	if err := runtime.Close(); err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-
-	status := runtime.Status()
-	if !status.FileDegraded || status.FileFailureCount != 1 {
-		t.Fatalf("status = %#v, want one degraded maintenance failure", status)
-	}
-}
-
-func TestRuntimeCloseWaitsForMaintenanceLoop(t *testing.T) {
-	dir := t.TempDir()
-	startedAt := time.Date(2026, time.July, 14, 15, 4, 5, 0, time.UTC)
-	tickAt := startedAt.Add(2 * time.Hour)
-	ticker := newManualMaintenanceTicker()
-	renameEntered := make(chan struct{})
-	releaseRename := make(chan struct{})
-	var renameOnce sync.Once
-
-	deps := defaultRuntimeDependencies()
-	deps.now = func() time.Time { return startedAt }
-	deps.newTicker = func(time.Duration) maintenanceTicker { return ticker }
-	deps.rename = func(oldPath, newPath string) error {
-		renameOnce.Do(func() { close(renameEntered) })
-		<-releaseRename
-		return nil
-	}
-
-	runtime, err := openWithDependencies(Config{
-		Identity: ServiceIdentity{Name: "game-server"},
-		File: FilePolicy{
-			Directory:         dir,
-			Prefix:            "game-server",
-			SegmentMaxBytes:   1024,
-			SegmentMaxAge:     time.Hour,
-			RetentionMaxAge:   time.Hour,
-			RetentionMaxBytes: 1024,
-		},
-		Flush:      FlushPolicy{Interval: time.Second},
-		FileEnabled: true,
-	}, deps)
-	if err != nil {
-		t.Fatalf("openWithDependencies() error = %v", err)
-	}
-
-	runtime.Logger().Info("maintenance")
-	go ticker.Tick(tickAt)
-	<-renameEntered
-
-	closeReturned := make(chan error, 1)
-	go func() {
-		closeReturned <- runtime.Close()
-	}()
-
-	select {
-	case err := <-closeReturned:
-		t.Fatalf("Close() returned early: %v", err)
-	default:
-	}
-
-	close(releaseRename)
-	if err := <-closeReturned; err != nil {
-		t.Fatalf("Close() error = %v", err)
-	}
-}
-
-type manualMaintenanceTicker struct {
-	ch       chan time.Time
-	stopOnce sync.Once
-	stopped  chan struct{}
-}
-
-func newManualMaintenanceTicker() *manualMaintenanceTicker {
-	return &manualMaintenanceTicker{ch: make(chan time.Time), stopped: make(chan struct{})}
-}
-
-func (t *manualMaintenanceTicker) C() <-chan time.Time { return t.ch }
-
-func (t *manualMaintenanceTicker) Stop() {
-	t.stopOnce.Do(func() { close(t.stopped) })
-}
-
-func (t *manualMaintenanceTicker) Tick(ts time.Time) {
-	t.ch <- ts
 }

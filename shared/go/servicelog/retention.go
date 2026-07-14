@@ -8,110 +8,110 @@ import (
 	"time"
 )
 
-type archiveRecord struct {
-	path string
-	info os.FileInfo
+type retentionCandidate struct {
+	path    string
+	size    int64
+	modTime time.Time
 }
 
-func enforceArchiveRetention(policy FilePolicy, dependencies runtimeDependencies, now time.Time) error {
-	if policy.RetentionMaxAge <= 0 && policy.RetentionMaxBytes <= 0 {
-		return nil
-	}
-
+func enforceArchiveRetention(policy FilePolicy, deps runtimeDependencies, now time.Time) error {
 	archiveRoot := filepath.Join(policy.Directory, "archive")
-	records, err := collectArchiveRecords(archiveRoot, dependencies)
+	candidates, err := collectRetentionCandidates(deps, archiveRoot)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
-	if len(records) == 0 {
+	if len(candidates) == 0 {
 		return nil
 	}
 
-	if policy.RetentionMaxAge > 0 {
-		for _, record := range records {
-			if now.Sub(record.info.ModTime()) > policy.RetentionMaxAge {
-				if err := dependencies.remove(record.path); err != nil {
-					return err
-				}
+	sortRetentionCandidates(candidates)
+	kept := candidates[:0]
+	for _, candidate := range candidates {
+		if now.Sub(candidate.modTime) > policy.RetentionMaxAge {
+			if err := removePath(deps, candidate.path); err != nil && !os.IsNotExist(err) {
+				return err
 			}
+			continue
 		}
-		records, err = collectArchiveRecords(archiveRoot, dependencies)
-		if err != nil {
-			return err
-		}
+		kept = append(kept, candidate)
 	}
 
-	if policy.RetentionMaxBytes <= 0 {
+	var remainingBytes int64
+	for _, candidate := range kept {
+		remainingBytes += candidate.size
+	}
+	if remainingBytes <= policy.RetentionMaxBytes {
 		return nil
 	}
 
-	sortArchiveRecords(records)
-	var total int64
-	for _, record := range records {
-		total += record.info.Size()
-	}
-	for _, record := range records {
-		if total <= policy.RetentionMaxBytes {
+	for _, candidate := range kept {
+		if remainingBytes <= policy.RetentionMaxBytes {
 			break
 		}
-		if err := dependencies.remove(record.path); err != nil {
+		if err := removePath(deps, candidate.path); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		total -= record.info.Size()
+		remainingBytes -= candidate.size
 	}
 	return nil
 }
 
-func collectArchiveRecords(root string, dependencies runtimeDependencies) ([]archiveRecord, error) {
-	entries, err := dependencies.readDir(root)
+func collectRetentionCandidates(deps runtimeDependencies, root string) ([]retentionCandidate, error) {
+	entries, err := readDirEntries(deps, root)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 
-	var records []archiveRecord
+	candidates := make([]retentionCandidate, 0, len(entries))
 	for _, entry := range entries {
 		path := filepath.Join(root, entry.Name())
 		if entry.IsDir() {
-			nested, err := collectArchiveRecords(path, dependencies)
+			subCandidates, err := collectRetentionCandidates(deps, path)
 			if err != nil {
 				return nil, err
 			}
-			records = append(records, nested...)
+			candidates = append(candidates, subCandidates...)
 			continue
 		}
-		if !isCompletedArchiveFile(entry.Name()) {
+		if !isRetentionCandidatePath(path) {
 			continue
 		}
-		info, err := dependencies.stat(path)
+		info, err := statPath(deps, path)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
 			}
 			return nil, err
 		}
-		if info.IsDir() {
-			continue
-		}
-		records = append(records, archiveRecord{path: path, info: info})
+		candidates = append(candidates, retentionCandidate{
+			path:    path,
+			size:    info.Size(),
+			modTime: info.ModTime().UTC(),
+		})
 	}
-	sortArchiveRecords(records)
-	return records, nil
+	return candidates, nil
 }
 
-func sortArchiveRecords(records []archiveRecord) {
-	sort.Slice(records, func(i, j int) bool {
-		left := records[i].info.ModTime().UTC()
-		right := records[j].info.ModTime().UTC()
-		if !left.Equal(right) {
-			return left.Before(right)
+func readDirEntries(deps runtimeDependencies, path string) ([]os.DirEntry, error) {
+	if deps.readDir != nil {
+		return deps.readDir(path)
+	}
+	return os.ReadDir(path)
+}
+
+func sortRetentionCandidates(candidates []retentionCandidate) {
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].modTime.Equal(candidates[j].modTime) {
+			return candidates[i].path < candidates[j].path
 		}
-		return records[i].path < records[j].path
+		return candidates[i].modTime.Before(candidates[j].modTime)
 	})
 }
 
-func isCompletedArchiveFile(name string) bool {
-	return strings.HasSuffix(name, ".jsonl") || strings.HasSuffix(name, ".jsonl.gz")
+func isRetentionCandidatePath(path string) bool {
+	base := filepath.Base(path)
+	return strings.HasSuffix(base, ".jsonl") || strings.HasSuffix(base, ".jsonl.gz")
 }
