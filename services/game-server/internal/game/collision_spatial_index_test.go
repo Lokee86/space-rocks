@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spatial"
@@ -14,13 +15,14 @@ import (
 
 func spatialTestGame() *Game {
 	return &Game{
+		rngSource: rng.New(1),
 		collisionShapes: physics.CollisionShapeCatalog{
 			Asteroids: []physics.ImportedCollisionShape{{Type: "circle", Radius: 4}},
 			Pickups: map[string]physics.ImportedCollisionShape{
 				constants.PickupOneUpClass: {Type: "circle", Radius: 2},
 			},
 		},
-		entities: runtime.NewEntityStore(),
+		entities:     runtime.NewEntityStore(),
 		spatialIndex: grid.New(space.DefaultBounds(), defaultSpatialCellSize),
 	}
 }

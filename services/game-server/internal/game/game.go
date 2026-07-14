@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
@@ -17,6 +18,7 @@ import (
 
 type Game struct {
 	mu                        sync.Mutex
+	rngSource                 *rng.Source
 	stopSimulation            chan struct{}
 	startSimulationOnce       sync.Once
 	stopSimulationOnce        sync.Once
@@ -44,18 +46,27 @@ type Game struct {
 }
 
 func New() *Game {
+	return newGame(rng.NewProduction())
+}
+
+func NewWithSeed(seed int64) *Game {
+	return newGame(rng.New(seed))
+}
+
+func newGame(source *rng.Source) *Game {
 	collisionShapes, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
 		logging.Game.Warn("collision shapes unavailable", logging.FieldError, err)
 	}
 
 	game := &Game{
+		rngSource:                 source,
 		collisionShapes:           collisionShapes,
 		stopSimulation:            make(chan struct{}),
 		cameraViews:               make(map[string]*runtime.CameraView),
 		playerSessions:            make(map[string]*playerSession),
 		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
-		spawner:                   spawning.New(),
+		spawner:                   spawning.New(source),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
 		dropTables:                drops.GeneratedTables,
 		radialEffects:             radial.NewStore(),
@@ -64,6 +75,10 @@ func New() *Game {
 	}
 	game.publishPresentationFrameLocked()
 	return game
+}
+
+func (game *Game) SimulationSeed() int64 {
+	return game.rngSource.Seed()
 }
 
 func (game *Game) Start() {

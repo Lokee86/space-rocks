@@ -1,11 +1,9 @@
 package game
 
 import (
-	"math/rand"
-
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
@@ -32,7 +30,7 @@ func (game *Game) maybeDropPickupFromAsteroidLocked(asteroid *runtime.Asteroid) 
 	}
 	rollValues := make([]float64, len(table.Entries))
 	for index := range rollValues {
-		rollValues[index] = rand.Float64()
+		rollValues[index] = game.rngSource.Float64()
 	}
 	results := game.dropTables.Roll("basicasteroids", source, drops.Roll{Values: rollValues})
 	if len(results) == 0 {

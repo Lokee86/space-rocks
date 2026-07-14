@@ -51,6 +51,7 @@ type SpawnTarget interface {
 	SpawnBullet(ownerID string, position physics.Vector2, direction physics.Vector2) (*runtimepkg.Bullet, bool)
 	SpawnPickup(pickupType pickups.PickupType, position physics.Vector2) (*pickups.Pickup, bool, error)
 	RandomAsteroidSpeed() float64
+	PlanDebugAsteroidSpawn(position physics.Vector2, requestedDirection physics.Vector2, hasRequestedDirection bool) spawning.AsteroidSpawnPlan
 	ApplyAsteroidSpawnPlan(plan spawning.AsteroidSpawnPlan) *runtimepkg.Asteroid
 }
 

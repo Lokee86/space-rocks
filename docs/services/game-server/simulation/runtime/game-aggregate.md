@@ -31,7 +31,7 @@ Game
 -> public game-facing APIs
 ```
 
-The aggregate uses a single mutex around public mutation/read surfaces and the simulation step. Package-local helpers split behavior into focused files, but the aggregate remains the owner of the in-memory state they mutate.
+The aggregate uses a single mutex around public mutation/read surfaces and the simulation step. Package-local helpers split behavior into focused files, but the aggregate remains the owner of the in-memory state they mutate. RNG access follows the same invariant: `rngSource` is only consumed while `Game.mu` is held, either directly in locked game helpers or indirectly through `Control` methods that lock first.
 
 The current runtime shape is intentionally direct. `Game` is still the coordination point for many gameplay subsystems, while focused packages own narrower policies such as motion, damage resolution, match rules, scoring policy, spawning construction, drops, radial stepping, collision primitives, and runtime data shapes.
 
@@ -61,6 +61,7 @@ services/game-server/internal/game/collision_candidates.go
 The game aggregate owns:
 
 * The `Game` struct as the aggregate root for one simulation instance.
+* The match-local gameplay RNG source in `rngSource`, shared with `spawning.Spawner`.
 * In-memory runtime state for active players, projectiles, asteroids, enemies, and pickups through `runtime.EntityStore`.
 * Per-player session records in `playerSessions`.
 * Per-player camera views in `cameraViews`.
@@ -69,7 +70,7 @@ The game aggregate owns:
 * Game-local ID counters for spawned runtime objects.
 * Simulation lifecycle shell through `New`, `Start`, `Stop`, `runSimulation`, and `Step`.
 * The synchronization boundary around simulation state through `Game.mu`.
-* Construction defaults for collision shapes, spawner, scoring policy, drop tables, radial effect store, entity store, and runtime maps.
+* Construction defaults for collision shapes, RNG source, spawner, scoring policy, drop tables, radial effect store, entity store, and runtime maps.
 * The interface-typed `spatialIndex`, reusable `spatialEntries` and `spatialRefs` buffers, and reusable deterministic collision player/projectile ID buffers.
 * Rebuilding target-family spatial indexes and coordinating deterministic candidate ordering for collision handlers.
 * The authoritative game-facing API used by rooms, networking, devtools adapters, tests, and lane-native outbound projection inputs.
@@ -130,6 +131,7 @@ The `Game` struct currently contains:
 ```go
 type Game struct {
     mu                        sync.Mutex
+    rngSource                 *rng.Source
     stopSimulation            chan struct{}
     startSimulationOnce       sync.Once
     stopSimulationOnce        sync.Once
@@ -199,12 +201,17 @@ The aggregate owns the store. The runtime package owns the data shapes.
 Current construction behavior:
 
 ```text
-load collision shape catalog
+New()
+-> newGame(rng.NewProduction())
+
+newGame(source)
+-> load collision shape catalog
 -> warn if collision shapes are unavailable
 -> create stop channel
 -> create camera view map
 -> create player session map
 -> create presentation event map
+-> retain rngSource = source
 -> create spawning.Spawner
 -> create default scoring policy
 -> attach generated drop tables
@@ -217,7 +224,13 @@ load collision shape catalog
 
 The constructor does not start the simulation loop. It only prepares the aggregate and its default dependencies.
 
+`NewWithSeed(seed)` follows the same path with `rng.New(seed)` instead of production seeding.
+
+`SimulationSeed()` returns the seed stored in `rngSource`.
+
 `New()` constructs `spatialIndex` as `grid.New(space.DefaultBounds(), defaultSpatialCellSize)` while retaining the field as the interchangeable `spatial.Index` interface. The zero-value slices are not explicitly allocated by `New()`; they reuse capacity as they are populated. `Game` controls rebuild timing and deterministic ordering. The generic `spatial` package owns the contract, `grid` owns lookup mechanics, and `physics` owns exact collision truth. See [Toroidal Spatial Query Index](../world/spatial-query-index.md).
+
+The aggregate uses one concrete game-local RNG source for match randomness and passes that same source to `spawning.New(source)`. That shared source is part of the aggregate state protected by `Game.mu`; it is not a separate concurrent service.
 
 The aggregate owns and reuses the capacity of the spatial entry, spatial reference, collision player ID, and collision projectile ID slices as they are populated.
 
@@ -522,6 +535,7 @@ Primary implementation files:
 
 ```text
 services/game-server/internal/game/game.go
+services/game-server/internal/game/rng/source.go
 services/game-server/internal/game/simulation.go
 services/game-server/internal/game/presentation_snapshot.go
 services/game-server/internal/game/presentation_snapshot_test.go
@@ -535,6 +549,17 @@ services/game-server/internal/game/match_facts.go
 services/game-server/internal/game/player_counters.go
 services/game-server/internal/game/events.go
 services/game-server/internal/game/world_simulation_options.go
+```
+
+Seeded gameplay RNG support files:
+
+```text
+services/game-server/internal/game/rng/source.go
+services/game-server/internal/game/spawning/spawner.go
+services/game-server/internal/game/spawning/debug_asteroid.go
+services/game-server/internal/game/pickup_drops.go
+services/game-server/internal/game/visibility.go
+services/game-server/internal/devtools/spawn_bullet.go
 ```
 
 Runtime state and generated packet files:
@@ -657,6 +682,11 @@ services/game-server/tests/game/devtools_test.go
 Relevant package tests:
 
 ```text
+services/game-server/internal/game/game_seed_test.go
+services/game-server/internal/game/visibility_test.go
+services/game-server/internal/game/pickup_drops_test.go
+services/game-server/internal/game/spawning/spawner_seed_test.go
+services/game-server/internal/game/asteroids/variants_test.go
 services/game-server/internal/game/presentation_snapshot_benchmark_test.go
 services/game-server/internal/game/...
 services/game-server/internal/rooms/...
@@ -694,6 +724,7 @@ Expected behavioral coverage includes:
 ## Related docs
 
 * [Game Server Simulation Runtime](./!INDEX.md)
+* [Deterministic Gameplay RNG Runtime](deterministic-gameplay-rng.md)
 * [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
 * [Game Server Rooms](../../rooms/!INDEX.md)
