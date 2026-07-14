@@ -124,7 +124,7 @@ func (w *rollingJSONLWriter) rotateIfNeeded(recordSize int64) error {
 	if w.activeSize > 0 && w.maxBytes > 0 && w.activeSize+recordSize > w.maxBytes {
 		return w.rotate(now)
 	}
-	if w.maxAge > 0 && now.Sub(w.segmentStart) >= w.maxAge {
+	if w.activeSize > 0 && w.maxAge > 0 && now.Sub(w.segmentStart) >= w.maxAge {
 		return w.rotate(now)
 	}
 	return nil
@@ -157,8 +157,8 @@ func (w *rollingJSONLWriter) rotate(now time.Time) error {
 }
 
 func (w *rollingJSONLWriter) nextArchivePath(now time.Time) (string, error) {
-	baseName := fmt.Sprintf("%s.%s-%s.jsonl", w.prefix, formatArchiveTimestamp(w.segmentStart), formatArchiveTimestamp(now))
-	basePath := filepath.Join(w.directory, baseName)
+	baseName := fmt.Sprintf("%s.%s-%s", w.prefix, formatArchiveTimestamp(w.segmentStart), formatArchiveTimestamp(now))
+	basePath := filepath.Join(w.directory, baseName+".jsonl")
 	if _, err := w.deps.stat(basePath); errors.Is(err, os.ErrNotExist) {
 		return basePath, nil
 	} else if err != nil {
@@ -166,7 +166,7 @@ func (w *rollingJSONLWriter) nextArchivePath(now time.Time) (string, error) {
 	}
 
 	for suffix := 1; ; suffix++ {
-		candidate := filepath.Join(w.directory, fmt.Sprintf("%s.%s-%s.jsonl.%d", w.prefix, formatArchiveTimestamp(w.segmentStart), formatArchiveTimestamp(now), suffix))
+		candidate := filepath.Join(w.directory, fmt.Sprintf("%s.%d.jsonl", baseName, suffix))
 		if _, err := w.deps.stat(candidate); errors.Is(err, os.ErrNotExist) {
 			return candidate, nil
 		} else if err != nil {

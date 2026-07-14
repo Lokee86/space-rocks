@@ -276,7 +276,7 @@ func TestRollingWriterRotatesOnSizeAndContinuesWrites(t *testing.T) {
 	if archiveName == "" {
 		t.Fatal("archive file was not created")
 	}
-	archivePattern := regexp.MustCompile(`^game-server\.\d{8}T\d{6}\.\d{9}Z-\d{8}T\d{6}\.\d{9}Z\.jsonl$`)
+	archivePattern := regexp.MustCompile(`^game-server\.\d{8}T\d{6}\.\d{9}Z-\d{8}T\d{6}\.\d{9}Z(?:\.\d+)?\.jsonl$`)
 	if !archivePattern.MatchString(archiveName) {
 		t.Fatalf("archive name %q does not match expected timestamp pattern", archiveName)
 	}
@@ -347,6 +347,46 @@ func TestRollingWriterRotatesOnAge(t *testing.T) {
 	}
 	if got := activeRecords[0]["msg"]; got != "second" {
 		t.Fatalf("active msg = %v, want second", got)
+	}
+}
+
+func TestRollingWriterDoesNotAgeRotateEmptyActiveSegment(t *testing.T) {
+	directory := t.TempDir()
+	clock := &fakeClock{current: time.Date(2026, time.July, 14, 15, 16, 17, 0, time.UTC)}
+	identity := ServiceIdentity{Name: "game-server"}
+	config := validFileConfig(directory)
+	config.SegmentMaxBytes = 4096
+	config.SegmentMaxAge = time.Minute
+	runtime, _ := openTestRuntime(t, directory, clock, config, identity)
+
+	clock.advance(time.Minute + time.Second)
+	runtime.Logger().Info("first", "phase", "one")
+	if err := runtime.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatalf("os.ReadDir(%q) error = %v", directory, err)
+	}
+	var archives []string
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasSuffix(name, ".open") {
+			continue
+		}
+		archives = append(archives, name)
+	}
+	if len(archives) != 0 {
+		t.Fatalf("archive count = %d, want 0", len(archives))
+	}
+
+	activeRecords := readJSONLRecords(t, filepath.Join(directory, "game-server.jsonl.open"))
+	if len(activeRecords) != 1 {
+		t.Fatalf("active record count = %d, want 1", len(activeRecords))
+	}
+	if got := activeRecords[0]["msg"]; got != "first" {
+		t.Fatalf("active msg = %v, want first", got)
 	}
 }
 
@@ -452,14 +492,15 @@ func TestRollingWriterSuffixesArchivePathsOnSameTimestampRotation(t *testing.T) 
 		t.Fatalf("archive count = %d, want 2", len(archives))
 	}
 
-	baseName := fmt.Sprintf("game-server.%s-%s.jsonl", formatArchiveTimestamp(clock.current), formatArchiveTimestamp(clock.current))
+	basePrefix := fmt.Sprintf("game-server.%s-%s", formatArchiveTimestamp(clock.current), formatArchiveTimestamp(clock.current))
+	baseName := basePrefix + ".jsonl"
 	baseIndex := -1
 	suffixedIndex := -1
 	for i, name := range archives {
 		switch {
 		case name == baseName:
 			baseIndex = i
-		case strings.HasPrefix(name, baseName+"."):
+		case strings.HasPrefix(name, basePrefix+".") && strings.HasSuffix(name, ".jsonl"):
 			suffixedIndex = i
 		}
 	}
