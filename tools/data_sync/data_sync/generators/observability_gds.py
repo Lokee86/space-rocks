@@ -102,6 +102,14 @@ def generate_observability_gds(contract: ObservabilityContract) -> str:
         ]
     )
     lines.extend(
+        f"const {_constant('RETENTION_DEFAULT_AGE_SECONDS', tier.name)} := {tier.default_age_seconds}"
+        for tier in tiers
+    )
+    lines.extend([
+        f"const FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS := {contract.file_logging.max_active_segment_age_seconds}",
+        f"const FILE_LOGGING_COMPRESSION_ENABLED := {_literal(contract.file_logging.compression_enabled)}",
+    ])
+    lines.extend(
         [
             "",
             f"const CANONICAL_LEVELS := {_literal(list(envelope.canonical_levels))}",

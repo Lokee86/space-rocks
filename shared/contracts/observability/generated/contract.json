@@ -2708,6 +2708,10 @@
     "schema_version": 1
   },
   "retention_tiers": {
+    "file_logging": {
+      "compression_enabled": true,
+      "max_active_segment_age_seconds": 3600
+    },
     "policy": {
       "age_unit": "seconds",
       "age_values_are_configuration_metadata": true,
@@ -2729,7 +2733,7 @@
       {
         "age_is_configurable": true,
         "compression": "recommended",
-        "default_age_seconds": 0,
+        "default_age_seconds": 1209600,
         "delete_policy": "delete_when_configured_age_expires_or_storage_pressure_requires_eviction",
         "durability": "durable",
         "legal_commitment": false,

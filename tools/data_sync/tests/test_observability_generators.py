@@ -45,6 +45,10 @@ def test_observability_generators_are_deterministic_and_complete() -> None:
     assert "func IsCanonicalLevel(value Level) bool" in go_output
     assert "func IsKnownField(value FieldName) bool" in go_output
     assert "func IsKnownEvent(value EventName) bool" in go_output
+    assert "RetentionDefaultAgeOperationalSeconds = 1209600" in go_output
+    assert "RetentionDefaultAgeDiagnosticReportSeconds = 1209600" in go_output
+    assert "FileLoggingMaxActiveSegmentAgeSeconds = 3600" in go_output
+    assert "FileLoggingCompressionEnabled = true" in go_output
 
     gds_output = outputs["gds"]
     assert "class_name ObservabilityContractGenerated" in gds_output
@@ -53,6 +57,10 @@ def test_observability_generators_are_deterministic_and_complete() -> None:
     assert "const EVENT_DEFINITIONS" in gds_output
     assert "static func is_known_field" in gds_output
     assert "static func is_known_event" in gds_output
+    assert "RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL := 1209600" in gds_output
+    assert "RETENTION_DEFAULT_AGE_SECONDS_DIAGNOSTIC_REPORT := 1209600" in gds_output
+    assert "FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS := 3600" in gds_output
+    assert "FILE_LOGGING_COMPRESSION_ENABLED := true" in gds_output
 
     ruby_output = outputs["ruby"]
     assert "module Observability" in ruby_output
@@ -64,6 +72,10 @@ def test_observability_generators_are_deterministic_and_complete() -> None:
     assert "def canonical_level?(value)" in ruby_output
     assert "def known_field?(value)" in ruby_output
     assert "def known_event?(value)" in ruby_output
+    assert "RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL = 1209600" in ruby_output
+    assert "RETENTION_DEFAULT_AGE_SECONDS_DIAGNOSTIC_REPORT = 1209600" in ruby_output
+    assert "FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS = 3600" in ruby_output
+    assert "FILE_LOGGING_COMPRESSION_ENABLED = true" in ruby_output
 
     json_output = outputs["json"]
     payload = json.loads(json_output)
@@ -80,6 +92,9 @@ def test_observability_generators_are_deterministic_and_complete() -> None:
     assert "| timestamp | string | true |" in docs_output
     assert "| service_starting | service_lifecycle | info |" in docs_output
     assert "| operational |" in docs_output
+    assert "### Shared file-logging defaults" in docs_output
+    assert "Maximum active segment age: `3600` seconds" in docs_output
+    assert "Compression enabled: `true`" in docs_output
 
 
 def test_go_targets_are_byte_identical_from_one_generator() -> None:

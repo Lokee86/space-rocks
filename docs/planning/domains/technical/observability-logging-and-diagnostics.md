@@ -869,6 +869,8 @@ Audit-grade events may include:
 
 Diagnostic reports should support different retention and durability tiers. Finalized diagnostic reports default to 14 days, with the value configurable through the shared/service configuration path. Ordinary service log retention remains owned and configured by each service.
 
+The shared Stage 3 defaults set both operational logs and diagnostic reports to 14 days, active file-logging segments to 1 hour, and compression enabled. Segment byte caps and total storage caps remain service-specific rather than shared-contract policy.
+
 | Tier              | Use                                                            |
 | ----------------- | -------------------------------------------------------------- |
 | Ephemeral/Dev     | Local debugging.                                               |

@@ -104,6 +104,12 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
             "default age must not exceed max age",
         ),
         (
+            "retention_tiers.toml",
+            "max_active_segment_age_seconds = 3600",
+            "max_active_segment_age_seconds = 0",
+            "file logging max active segment age must be positive",
+        ),
+        (
             "diagnostic_bundle.toml",
             'name = "timestamp"\ntype = "string"',
             'name = "timestamp"\ntype = "integer"',
@@ -132,6 +138,14 @@ def test_semantic_validation_failure_is_clear(
 
     assert exc_info.value.errors
     assert any(message in error for error in exc_info.value.errors)
+
+
+def test_shared_operational_default_must_match_diagnostic_report(tmp_path: Path) -> None:
+    paths = copied_observability_paths(tmp_path)
+    edit_source(paths, "retention_tiers.toml", 'name = "operational"\npurpose = "Routine operational diagnosis and cross-service event investigation."\ndurability = "durable"\ncompression = "recommended"\ndelete_policy = "delete_when_configured_age_expires_or_storage_pressure_requires_eviction"\ndefault_age_seconds = 1209600', 'name = "operational"\npurpose = "Routine operational diagnosis and cross-service event investigation."\ndurability = "durable"\ncompression = "recommended"\ndelete_policy = "delete_when_configured_age_expires_or_storage_pressure_requires_eviction"\ndefault_age_seconds = 0')
+
+    with pytest.raises(ObservabilityValidationError, match="operational default age must be 1209600"):
+        validate_observability(paths)
 
 
 def test_semantic_validation_accumulates_errors(tmp_path: Path) -> None:

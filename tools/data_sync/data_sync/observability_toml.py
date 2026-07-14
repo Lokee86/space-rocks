@@ -12,6 +12,7 @@ from data_sync.model.observability import (
     DiagnosticBundleSection,
     ObservabilityContract,
     ObservabilityEvent,
+    ObservabilityFileLoggingDefaults,
     ObservabilityField,
     ObservabilityFreeForm,
     ObservabilityIdentifiers,
@@ -75,6 +76,9 @@ def load_observability_contract(paths: Iterable[Path | str]) -> ObservabilityCon
         events=_events(documents["events"], by_kind["events"]),
         redaction=_redaction(documents["redaction"], by_kind["redaction"]),
         retention_policy=_retention_policy(
+            documents["retention_tiers"], by_kind["retention_tiers"]
+        ),
+        file_logging=_file_logging(
             documents["retention_tiers"], by_kind["retention_tiers"]
         ),
         retention_tiers=_retention_tiers(
@@ -233,6 +237,16 @@ def _retention_tiers(document: Mapping[str, Any], path: Path) -> tuple[Observabi
             legal_commitment=_bool(item, "legal_commitment", path, f"tiers[{index}]"),
         )
         for index, item in enumerate(_list(document, "tiers", path))
+    )
+
+
+def _file_logging(document: Mapping[str, Any], path: Path) -> ObservabilityFileLoggingDefaults:
+    defaults = _table(document, "file_logging", path)
+    return ObservabilityFileLoggingDefaults(
+        max_active_segment_age_seconds=_int(
+            defaults, "max_active_segment_age_seconds", path, "file_logging"
+        ),
+        compression_enabled=_bool(defaults, "compression_enabled", path, "file_logging"),
     )
 
 

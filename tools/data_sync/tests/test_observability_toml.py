@@ -81,6 +81,9 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
         "recovery_exhausted",
     )
     assert contract.retention_tier("diagnostic_report").default_age_seconds == 1209600
+    assert contract.retention_tier("operational").default_age_seconds == 1209600
+    assert contract.file_logging.max_active_segment_age_seconds == 3600
+    assert contract.file_logging.compression_enabled is True
 
 
 def test_rejects_missing_source_kind(tmp_path: Path) -> None:

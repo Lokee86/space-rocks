@@ -6,6 +6,10 @@ production_legal_retention_commitment = false
 unset_age_value = 0
 age_unit = "seconds"
 
+[file_logging]
+max_active_segment_age_seconds = 3600
+compression_enabled = true
+
 [[tiers]]
 name = "ephemeral_dev"
 purpose = "Local development and temporary subsystem debugging."
@@ -23,7 +27,7 @@ purpose = "Routine operational diagnosis and cross-service event investigation."
 durability = "durable"
 compression = "recommended"
 delete_policy = "delete_when_configured_age_expires_or_storage_pressure_requires_eviction"
-default_age_seconds = 0
+default_age_seconds = 1209600
 max_age_seconds = 0
 age_is_configurable = true
 legal_commitment = false

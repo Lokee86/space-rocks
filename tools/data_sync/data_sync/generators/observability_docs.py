@@ -168,6 +168,11 @@ def generate_observability_docs(contract: ObservabilityContract) -> str:
 
     lines += [
         "",
+        "### Shared file-logging defaults",
+        "",
+        f"- Maximum active segment age: `{_cell(contract.file_logging.max_active_segment_age_seconds)}` seconds",
+        f"- Compression enabled: `{_bool(contract.file_logging.compression_enabled)}`",
+        "",
         "## Diagnostic bundle",
         "",
         f"- Name: `{_cell(bundle.name)}`",

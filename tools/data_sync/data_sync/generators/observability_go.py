@@ -65,6 +65,14 @@ def generate_observability_go(contract: ObservabilityContract) -> str:
         lines,
         [f"RetentionTier{_identifier(tier.name)} RetentionTier = {_q(tier.name)}" for tier in tiers],
     )
+    _const_block(
+        lines,
+        [f"RetentionDefaultAge{_identifier(tier.name)}Seconds = {tier.default_age_seconds}" for tier in tiers]
+        + [
+            f"FileLoggingMaxActiveSegmentAgeSeconds = {contract.file_logging.max_active_segment_age_seconds}",
+            f"FileLoggingCompressionEnabled = {_b(contract.file_logging.compression_enabled)}",
+        ],
+    )
     lines.extend(["type FieldName string", ""])
     _const_block(
         lines,
