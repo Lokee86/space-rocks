@@ -16,7 +16,24 @@ import (
 type trackedWriteCloser struct {
 	bytes.Buffer
 	closeCount int
+	syncCount  int
+	writeCount int
 	closeErr   error
+	syncErr    error
+	writeErr   error
+}
+
+func (w *trackedWriteCloser) Write(p []byte) (int, error) {
+	w.writeCount++
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+	return w.Buffer.Write(p)
+}
+
+func (w *trackedWriteCloser) Sync() error {
+	w.syncCount++
+	return w.syncErr
 }
 
 func (w *trackedWriteCloser) Close() error {
@@ -93,12 +110,12 @@ func TestActiveFileWritesJSONLWithServiceIdentity(t *testing.T) {
 	}
 
 	for key, want := range map[string]string{
-		"service":            "game-server",
+		"service":             "game-server",
 		"service_instance_id": "instance-1",
-		"environment":        "test",
-		"build_version":      "dev",
-		"msg":                "started",
-		"phase":              "init",
+		"environment":         "test",
+		"build_version":       "dev",
+		"msg":                 "started",
+		"phase":               "init",
 	} {
 		got, ok := record[key]
 		if !ok {
@@ -157,7 +174,72 @@ func TestOpenFansOutToConsoleAndFile(t *testing.T) {
 	}
 }
 
-func TestOpenPropagatesActiveFileOpenFailure(t *testing.T) {
+func TestRepeatedRotationUsesDeterministicArchiveSuffixForIdenticalTimestamps(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "logs")
+	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)
+	clock := &fakeClock{current: now}
+
+	runtime, err := openWithDependencies(Config{
+		Identity: ServiceIdentity{Name: "game-server"},
+		File: func() FilePolicy {
+			cfg := validFileConfig(directory)
+			cfg.SegmentMaxBytes = 1
+			cfg.SegmentMaxAge = time.Hour
+			return cfg
+		}(),
+		FileEnabled:    true,
+		ConsoleEnabled: false,
+	}, runtimeDependencies{
+		consoleWriter: io.Discard,
+		now:           clock.now,
+		mkdir:         os.MkdirAll,
+		openFile: func(name string, flag int, perm fs.FileMode) (io.WriteCloser, error) {
+			return os.OpenFile(name, flag, perm)
+		},
+		readFile: os.ReadFile,
+		readDir:  os.ReadDir,
+		rename:   os.Rename,
+		remove:   os.Remove,
+		stat:     os.Stat,
+	})
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v", err)
+	}
+	defer func() { _ = runtime.Close() }()
+
+	runtime.Logger().Info("one")
+	runtime.Logger().Info("two")
+	runtime.Logger().Info("three")
+
+	paths := collectLogFiles(t, directory)
+	if len(paths) != 3 {
+		t.Fatalf("log file count = %d, want 3; paths = %v", len(paths), paths)
+	}
+	activePath := filepath.Join(directory, "game-server.jsonl.open")
+	var baseArchiveSeen bool
+	var suffixedArchiveSeen bool
+	for _, path := range paths {
+		if path == activePath {
+			continue
+		}
+		assertArchiveFilename(t, path, "game-server")
+		base := filepath.Base(path)
+		if strings.HasSuffix(base, "-2.jsonl") {
+			suffixedArchiveSeen = true
+		}
+		if strings.Contains(base, "-20260714T133000.000000000Z-20260714T133000.000000000Z.jsonl") && !strings.Contains(base, "-2.jsonl") {
+			baseArchiveSeen = true
+		}
+	}
+	if !baseArchiveSeen {
+		t.Fatal("base archive name not found")
+	}
+	if !suffixedArchiveSeen {
+		t.Fatal("collision-safe suffixed archive name not found")
+	}
+}
+
+func TestOpenFallsBackToActiveFileOpenFailure(t *testing.T) {
 	wantErr := errors.New("open failed")
 
 	runtime, err := openWithDependencies(Config{
@@ -166,18 +248,26 @@ func TestOpenPropagatesActiveFileOpenFailure(t *testing.T) {
 		FileEnabled:    true,
 		ConsoleEnabled: false,
 	}, runtimeDependencies{
-		mkdir: func(string, fs.FileMode) error {
-			return nil
-		},
+		mkdir: func(string, fs.FileMode) error { return nil },
 		openFile: func(string, int, fs.FileMode) (io.WriteCloser, error) {
 			return nil, wantErr
 		},
 	})
-	if !errors.Is(err, wantErr) {
-		t.Fatalf("openWithDependencies() error = %v, want %v", err, wantErr)
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v, want nil", err)
 	}
-	if runtime != nil {
-		t.Fatal("openWithDependencies() returned runtime for open failure")
+	if runtime == nil {
+		t.Fatal("openWithDependencies() returned nil runtime")
+	}
+	status := runtime.Status()
+	if !status.Degraded {
+		t.Fatal("runtime is not degraded after open failure")
+	}
+	if status.FailureCount != 1 {
+		t.Fatalf("failure count = %d, want 1", status.FailureCount)
+	}
+	if status.LastError != wantErr.Error() {
+		t.Fatalf("last error = %q, want %q", status.LastError, wantErr.Error())
 	}
 }
 
@@ -207,6 +297,16 @@ func TestRuntimeCloseClosesActiveFileOnce(t *testing.T) {
 
 	if err := runtime.Close(); !errors.Is(err, closeErr) {
 		t.Fatalf("first Close() error = %v, want %v", err, closeErr)
+	}
+	status := runtime.Status()
+	if !status.Degraded {
+		t.Fatal("runtime is not degraded after Close() failure")
+	}
+	if status.FailureCount != 1 {
+		t.Fatalf("failure count after Close() = %d, want 1", status.FailureCount)
+	}
+	if status.LastError != closeErr.Error() {
+		t.Fatalf("last error after Close() = %q, want %q", status.LastError, closeErr.Error())
 	}
 	if sink.closeCount != 1 {
 		t.Fatalf("close count after first Close() = %d, want 1", sink.closeCount)
