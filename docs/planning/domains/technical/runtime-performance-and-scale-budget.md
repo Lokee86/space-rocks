@@ -20,7 +20,7 @@ Active planning.
 
 ## Ownership Boundary
 
-This doc owns planning for server tick cost, client frame cost, entity-count pressure, room/player scale, memory/resource growth, runtime load scenarios, measurement methods, and launch-shaped performance gates.
+This doc owns planning for server tick cost, client frame cost, entity-count pressure, room/player scale, memory/resource growth, runtime load scenarios, scripted/synthetic runtime scenario harness work, measurement methods, and launch-shaped performance gates.
 
 Packet-size policy and packet-budget measurement stay in [Network Observability And Packet Budget](network-observability-and-packet-budget.md). This doc may treat packet pressure as a related runtime signal, but it does not own packet-format redesign or network optimization strategy.
 
@@ -41,7 +41,7 @@ General testing policy belongs in verification and quality-gates planning. This 
 
 Runtime-heavy features should not be considered safe to expand until Space Rocks can measure their server tick cost, client frame cost, entity-count pressure, and memory/resource impact.
 
-The first goal is not to measure everything. The first goal is to establish stable runtime signals that reveal when gameplay growth, multiplayer growth, or release-shaped builds are becoming unsafe.
+The first goal is not to measure everything. The first goal is to establish stable runtime signals that reveal when gameplay growth, multiplayer growth, or release-shaped builds are becoming unsafe. Runtime measurement stays centered on server tick, client frame, entity counts, room/player scale, memory/resource growth, lifecycle churn, and soak behavior; the scripted/synthetic scenario harness is the next slice that will exercise those signals repeatably.
 
 Initial runtime measurement should focus on:
 
@@ -265,7 +265,7 @@ Useful scenarios include:
 * later mines, drones, and radial effects,
 * later multiple active rooms.
 
-These are not correctness tests. They are controlled pressure scenarios used to show where runtime cost appears.
+These are not correctness tests. They are controlled pressure scenarios used to show where runtime cost appears. Scenario evidence should carry the scenario configuration and the seed so the same random-choice stream can be reproduced.
 
 ## Runtime-Heavy Feature Gates
 
@@ -314,7 +314,7 @@ Casual and local modes may tolerate looser thresholds during early development a
 
 Runtime pressure should eventually be visible through devtools or diagnostics.
 
-The World Telemetry Overlay may grow beyond packet metrics to show useful runtime pressure such as entity counts, frame pressure, and server/runtime timing where available.
+The World Telemetry Overlay may grow beyond packet metrics to show useful runtime pressure such as entity counts, frame pressure, and server/runtime timing where available. Seeded scenario evidence can preserve the configuration and seed locally, but emitting that seed through canonical observability events or diagnostic bundles stays deferred until P3B observability integration settles.
 
 This remains development and diagnostics tooling. It should not become player-facing HUD behavior by default.
 
@@ -324,12 +324,12 @@ This doc should not choose optimization tactics early.
 
 Optimization work should be selected after measurement identifies the limiting pressure.
 
-Possible future optimization areas may include simulation cost, collision cost, rendering cost, entity lifecycle churn, packet size, room/process scale, or memory growth, but those choices belong in later implementation or system-specific planning after evidence exists.
+Possible future optimization areas may include simulation cost, collision cost, rendering cost, entity lifecycle churn, packet size, room/process scale, or memory growth, but those choices belong in later implementation or system-specific planning after evidence exists. Seeded RNG is a runtime-scenario foundation, not replay support, and it does not by itself guarantee full cross-build simulation determinism.
 
 ## Implementation sequence
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
-2. Use manual measurement and devtools overlays first, then grow toward repeatable runtime scenarios.
+2. Use manual measurement and devtools overlays first, then grow toward repeatable runtime scenarios with seeded scenario configuration.
 3. Apply the launch-shape coverage matrix to local packaged beta, dev-hosted multiplayer, hosted staging, and hosted production.
 4. Add decision states and load scenarios as the evidence base grows.
 5. Treat optimization as a follow-on choice after the limiting pressure is measured.
@@ -344,6 +344,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 * [Build Release And Environment Matrix](build-release-and-environment-matrix.md)
 * [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 * [Game Server Simulation](../../services/game-server/simulation/!INDEX.md)
+* [Deterministic Gameplay RNG Runtime](../../../services/game-server/simulation/runtime/deterministic-gameplay-rng.md)
 * [Game Server Networking](../../services/game-server/networking/!INDEX.md)
 * [Gameplay Runtime](../../services/client/gameplay-runtime/!INDEX.md)
 * [World Sync](../../services/client/world-sync/!INDEX.md)

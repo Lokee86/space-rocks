@@ -19,6 +19,7 @@ This folder owns Game aggregate, simulation loop/phase order, entity store, lane
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
+- [deterministic-gameplay-rng.md](deterministic-gameplay-rng.md) - Deterministic Gameplay Rng documentation.
 - [game-aggregate.md](game-aggregate.md) - Game aggregate documentation.
 - [lane-packet-projection.md](lane-packet-projection.md) - Lane packet projection documentation.
 - [presentation-event-queue.md](presentation-event-queue.md) - Presentation event queue documentation.

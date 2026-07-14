@@ -263,7 +263,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Seeded game-owned RNG is already in place as a P3C enabling foundation, but P3C is not complete; the next slice is a scripted/synthetic runtime scenario harness for repeatable player/entity/room pressure. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
 ### Ordered Subphases
 
@@ -274,7 +274,7 @@ P3C. Runtime measurement and operational readiness.
 P3D. Build, release, environment, and compatibility gates.
 ```
 
-P3A is the implemented automated verification baseline. P3B is the next major block; P3C and P3D follow in order as evidence and release needs justify them.
+P3A is the implemented automated verification baseline. P3B is the next major block; P3C and P3D follow in order as evidence and release needs justify them. Seeded game-owned RNG is now an implemented P3C enabling foundation, but it does not complete P3C.
 
 ### Scope
 

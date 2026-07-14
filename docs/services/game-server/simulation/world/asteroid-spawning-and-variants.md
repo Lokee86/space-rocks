@@ -155,7 +155,7 @@ AsteroidSizeScale = 0.35
 
 Timed spawns are planned around active camera views.
 
-For each asteroid in a batch, the game chooses a random offscreen position around the target camera view:
+For each asteroid in a batch, the game chooses a random offscreen position around the target camera view through the Game-owned RNG source:
 
 ```text
 spawnAsteroidBatch
@@ -181,7 +181,7 @@ The selected spawn position is normalized through toroidal world space before th
 
 ## Timed spawn plan
 
-Timed spawn planning is owned by `spawning.Spawner`.
+Timed spawn planning is owned by `spawning.Spawner` and consumes the Game-owned RNG source.
 
 The root game code supplies:
 
@@ -190,7 +190,7 @@ spawn position
 target camera position
 ```
 
-`internal/devtools` builds the debug `AsteroidSpawnPlan` with:
+`spawning.Spawner.PlanTimedAsteroidSpawn()` builds the timed `AsteroidSpawnPlan` with:
 
 ```text
 EntityType = asteroid
@@ -206,7 +206,7 @@ Velocity is aimed from the spawn position toward the target camera position usin
 Variant selection uses:
 
 ```go
-asteroids.RandomTimedSpawnVariantIndex()
+asteroids.TimedSpawnVariantIndex(roll)
 ```
 
 The spawn plan does not mutate game state. Mutation happens only when root game code applies the plan.
@@ -242,7 +242,7 @@ The allocator checks the active asteroid map and skips ids that already exist.
 
 ## Fragment spawns
 
-Fragment spawning runs after projectile-caused asteroid destruction.
+Fragment spawning runs after projectile-caused asteroid destruction, and the fragment plan uses the Game-owned RNG source for direction, speed, and variant selection.
 
 The current destruction path is:
 
@@ -279,16 +279,16 @@ Fragment variants are selected independently. They do not inherit the source ast
 Variant selection uses:
 
 ```go
-asteroids.RandomFragmentSpawnVariantIndex()
+asteroids.FragmentSpawnVariantIndex(roll)
 ```
 
 Each fragment plan is applied through the same `applyAsteroidSpawn` helper used by timed asteroid spawns.
 
 ## Debug asteroid spawns
 
-Debug asteroid spawning is routed through devtools, but game-owned mutation still goes through the asteroid spawn apply seam.
+Debug asteroid spawning is routed through devtools, but game-owned mutation still goes through the asteroid spawn apply seam, and the debug plan uses the Game-owned RNG source for fallback direction, speed, size, and variant selection.
 
-The debug spawn path builds an `AsteroidSpawnPlan` in:
+The debug spawn path builds an `AsteroidSpawnPlan` through `Control.PlanDebugAsteroidSpawn`, while `spawning.Spawner` owns the random selection and devtools only adapts the request.
 
 ```text
 services/game-server/internal/game/control_spawn.go
@@ -309,7 +309,7 @@ Variant    = weighted debug-spawn variant index
 Variant selection uses:
 
 ```go
-asteroids.RandomDebugSpawnVariantIndex()
+asteroids.DebugSpawnVariantIndex(roll)
 ```
 
 Devtools applies the plan through:
@@ -386,9 +386,9 @@ Spawn-source helpers are:
 TimedSpawnVariants()
 FragmentSpawnVariants()
 DebugSpawnVariants()
-RandomTimedSpawnVariantIndex()
-RandomFragmentSpawnVariantIndex()
-RandomDebugSpawnVariantIndex()
+TimedSpawnVariantIndex(roll)
+FragmentSpawnVariantIndex(roll)
+DebugSpawnVariantIndex(roll)
 ```
 
 A variant is eligible for a spawn source when that source weight is greater than `0.0`.
@@ -675,6 +675,7 @@ Current coverage includes:
 * timed, fragment, and debug spawn variant lists include all current variants
 * current variant entries keep required fields and weights
 * weighted selection skips zero-weight variants
+* seeded spawning and variant selection remain stable for equal seeds
 * match-over simulation skips timed asteroid spawning
 * match-over simulation can clean up safe entities without panic
 * world simulation freeze flags gate spawning, asteroid movement, bullet movement, and collisions
@@ -704,6 +705,7 @@ data-sync -check -packets -go
 * [Game Server Simulation World](./!INDEX.md)
 * [Game Server Simulation](../!INDEX.md)
 * [Game Server](../../!INDEX.md)
+* [Deterministic Gameplay RNG Runtime](../runtime/deterministic-gameplay-rng.md)
 * [Visibility And Despawn](visibility-and-despawn.md)
 * [Toroidal Space And Motion](toroidal-space-and-motion.md)
 * [Collision Shapes](collision-shapes.md)
