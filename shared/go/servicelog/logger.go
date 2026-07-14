@@ -2,9 +2,11 @@ package servicelog
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"sync"
+	"time"
 )
 
 // ErrFileOutputUnsupported is retained for compatibility with earlier stages.
@@ -13,10 +15,20 @@ var ErrFileOutputUnsupported = errors.New("servicelog: file output is not suppor
 
 // Runtime owns the configured servicelog logger and its lifecycle.
 type Runtime struct {
-	logger   *slog.Logger
-	file     io.Closer
-	closeErr error
+	logger *slog.Logger
+	file   *rollingWriter
 
+	failureMu     sync.Mutex
+	degraded      bool
+	failureCount  int
+	lastError     string
+	warned        bool
+	warningWriter io.Writer
+
+	flushStop chan struct{}
+	flushDone chan struct{}
+
+	closeErr  error
 	closeOnce sync.Once
 	mu        sync.RWMutex
 	closed    bool
@@ -32,32 +44,33 @@ func openWithDependencies(config Config, dependencies runtimeDependencies) (*Run
 		return nil, err
 	}
 
+	runtime := &Runtime{warningWriter: io.Discard}
+	if dependencies.consoleWriter != nil {
+		runtime.warningWriter = dependencies.consoleWriter
+	}
+
+	deps := dependencies
+	deps.reportFailure = runtime.recordFailure
+
 	handlers := make([]slog.Handler, 0, 2)
 	if config.ConsoleEnabled {
 		handlers = append(handlers, slog.NewTextHandler(dependencies.consoleWriter, nil))
 	}
 
+	var activeWriter *rollingWriter
 	if config.FileEnabled {
-		if err := dependencies.mkdir(config.File.Directory, 0o755); err != nil {
-			return nil, err
-		}
-
-		writer, err := newRollingJSONLWriter(config, dependencies)
+		rollingFile, err := newRollingWriter(config.File, deps)
 		if err != nil {
-			return nil, err
+			runtime.recordFailure(err)
+		} else {
+			activeWriter = rollingFile
+			handlers = append(handlers, slog.NewJSONHandler(rollingFile, nil))
 		}
-		handlers = append(handlers, slog.NewJSONHandler(writer, nil))
-		return buildRuntime(config, handlers, writer), nil
 	}
 
 	if len(handlers) == 0 {
 		handlers = append(handlers, slog.NewTextHandler(io.Discard, nil))
 	}
-
-	return buildRuntime(config, handlers, nil), nil
-}
-
-func buildRuntime(config Config, handlers []slog.Handler, file io.Closer) *Runtime {
 
 	logger := slog.New(newFanoutHandler(handlers...)).With(
 		slog.String("service", config.Identity.Name),
@@ -72,7 +85,75 @@ func buildRuntime(config Config, handlers []slog.Handler, file io.Closer) *Runti
 		logger = logger.With(slog.String("build_version", config.Identity.Version))
 	}
 
-	return &Runtime{logger: logger, file: file}
+	runtime.logger = logger
+	runtime.file = activeWriter
+	if activeWriter != nil && config.Flush.Interval > 0 {
+		runtime.startFlushLoop(deps, config.Flush.Interval)
+	}
+	return runtime, nil
+}
+
+func (r *Runtime) startFlushLoop(dependencies runtimeDependencies, interval time.Duration) {
+	if r.file == nil || interval <= 0 || dependencies.newTicker == nil {
+		return
+	}
+
+	ticker := dependencies.newTicker(interval)
+	if ticker == nil {
+		return
+	}
+
+	writer := r.file
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	r.flushStop = stop
+	r.flushDone = done
+	go func() {
+		defer close(done)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C():
+				_ = writer.Flush()
+			case <-stop:
+				return
+			}
+		}
+	}()
+}
+
+func (r *Runtime) stopFlushLoop() {
+	stop := r.flushStop
+	done := r.flushDone
+	if stop == nil || done == nil {
+		return
+	}
+
+	close(stop)
+	<-done
+	r.flushStop = nil
+	r.flushDone = nil
+}
+
+func (r *Runtime) recordFailure(err error) {
+	if err == nil {
+		return
+	}
+
+	r.failureMu.Lock()
+	r.degraded = true
+	r.failureCount++
+	r.lastError = err.Error()
+	shouldWarn := !r.warned
+	if shouldWarn {
+		r.warned = true
+	}
+	warningWriter := r.warningWriter
+	r.failureMu.Unlock()
+
+	if shouldWarn && warningWriter != nil {
+		_, _ = fmt.Fprintf(warningWriter, "servicelog warning: %v\n", err)
+	}
 }
 
 // Logger returns the runtime's structured logger.
@@ -83,8 +164,21 @@ func (r *Runtime) Logger() *slog.Logger {
 // Status returns the runtime's current lifecycle state.
 func (r *Runtime) Status() Status {
 	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return Status{Closed: r.closed}
+	closed := r.closed
+	r.mu.RUnlock()
+
+	r.failureMu.Lock()
+	degraded := r.degraded
+	failureCount := r.failureCount
+	lastError := r.lastError
+	r.failureMu.Unlock()
+
+	return Status{
+		Closed:       closed,
+		Degraded:     degraded,
+		FailureCount: failureCount,
+		LastError:    lastError,
+	}
 }
 
 // Close marks the runtime closed. Repeated calls are safe and return nil.
@@ -98,8 +192,16 @@ func (r *Runtime) Close() error {
 		r.file = nil
 		r.mu.Unlock()
 
+		r.stopFlushLoop()
 		if file != nil {
-			r.closeErr = file.Close()
+			if err := file.Flush(); err != nil {
+				r.closeErr = err
+			}
+			if err := file.Close(); err != nil {
+				if r.closeErr == nil {
+					r.closeErr = err
+				}
+			}
 		}
 	})
 	if didClose {

@@ -1,8 +1,8 @@
 package servicelog
 
 import (
+	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,57 +10,61 @@ import (
 	"time"
 )
 
-var errRollingWriterClosed = errors.New("servicelog: rolling writer is closed")
+var errRollingWriterClosed = errors.New("servicelog: rolling writer closed")
 
-// rollingJSONLWriter owns the active JSONL sink and rotates the active segment
-// before each completed record when the size or age policy is hit.
-type rollingJSONLWriter struct {
-	deps         runtimeDependencies
-	directory    string
-	prefix       string
-	activePath   string
+// rollingWriter serializes JSONL record writes, rotates the active file when
+// the configured size or age limit is reached, and preserves the active path
+// expected by the runtime.
+type rollingWriter struct {
+	mu sync.Mutex
+
+	deps   runtimeDependencies
+	policy FilePolicy
+
 	file         io.WriteCloser
+	activePath   string
 	segmentStart time.Time
-	activeSize   int64
-	maxBytes     int64
-	maxAge       time.Duration
-
-	mu        sync.Mutex
-	closeOnce sync.Once
-	closeErr  error
-	closed    bool
+	segmentBytes int64
+	pending      []byte
+	closed       bool
 }
 
-func newRollingJSONLWriter(config Config, dependencies runtimeDependencies) (*rollingJSONLWriter, error) {
-	activePath := filepath.Join(config.File.Directory, config.File.Prefix+".jsonl.open")
-
-	file, err := dependencies.openFile(activePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
+func newRollingWriter(policy FilePolicy, dependencies runtimeDependencies) (*rollingWriter, error) {
+	if err := dependencies.mkdir(policy.Directory, 0o755); err != nil {
 		return nil, err
 	}
 
-	activeSize := int64(0)
-	if info, err := dependencies.stat(activePath); err == nil {
-		activeSize = info.Size()
-	} else if !errors.Is(err, os.ErrNotExist) {
+	activePath := filepath.Join(policy.Directory, policy.Prefix+".jsonl.open")
+	now := nowTime(dependencies)
+	if err := recoverInterruptedSegment(policy, dependencies, activePath, now.UTC()); err != nil {
+		return nil, err
+	}
+
+	file, err := openWriteCloser(dependencies, activePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if err != nil {
+		return nil, err
+	}
+	if err := enforceArchiveRetention(policy, dependencies, now.UTC()); err != nil {
 		_ = file.Close()
 		return nil, err
 	}
 
-	return &rollingJSONLWriter{
+	return &rollingWriter{
 		deps:         dependencies,
-		directory:    config.File.Directory,
-		prefix:       config.File.Prefix,
-		activePath:   activePath,
+		policy:       policy,
 		file:         file,
-		segmentStart: dependencies.now().UTC(),
-		activeSize:   activeSize,
-		maxBytes:     config.File.SegmentMaxBytes,
-		maxAge:       config.File.SegmentMaxAge,
+		activePath:   activePath,
+		segmentStart: now.UTC(),
 	}, nil
 }
 
-func (w *rollingJSONLWriter) Write(p []byte) (int, error) {
+func (w *rollingWriter) reportFailure(err error) {
+	if err != nil && w.deps.reportFailure != nil {
+		w.deps.reportFailure(err)
+	}
+}
+
+func (w *rollingWriter) Write(p []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -68,122 +72,138 @@ func (w *rollingJSONLWriter) Write(p []byte) (int, error) {
 		return 0, errRollingWriterClosed
 	}
 
-	remaining := p
-	for len(remaining) > 0 {
-		nextLine := len(remaining)
-		if newline := indexByte(remaining, '\n'); newline >= 0 {
-			nextLine = newline + 1
+	w.pending = append(w.pending, p...)
+	for {
+		idx := bytes.IndexByte(w.pending, '\n')
+		if idx < 0 {
+			return len(p), nil
 		}
 
-		record := remaining[:nextLine]
-		remaining = remaining[nextLine:]
-
-		if err := w.rotateIfNeeded(int64(len(record))); err != nil {
+		record := append([]byte(nil), w.pending[:idx+1]...)
+		w.pending = w.pending[idx+1:]
+		if err := w.writeRecordLocked(record); err != nil {
+			w.reportFailure(err)
 			return 0, err
 		}
-
-		if len(record) == 0 {
-			continue
-		}
-
-		n, err := w.file.Write(record)
-		if err != nil {
-			return 0, err
-		}
-		if n != len(record) {
-			return 0, io.ErrShortWrite
-		}
-		w.activeSize += int64(n)
 	}
-
-	return len(p), nil
 }
 
-func (w *rollingJSONLWriter) Close() error {
-	didClose := false
-	w.closeOnce.Do(func() {
-		didClose = true
-		w.mu.Lock()
-		w.closed = true
-		file := w.file
-		w.file = nil
-		w.mu.Unlock()
-
-		if file != nil {
-			w.closeErr = file.Close()
-		}
-	})
-	if didClose {
-		return w.closeErr
+func (w *rollingWriter) writeRecordLocked(record []byte) error {
+	if w.closed {
+		return errRollingWriterClosed
 	}
-	return nil
-}
 
-func (w *rollingJSONLWriter) rotateIfNeeded(recordSize int64) error {
-	now := w.deps.now().UTC()
-	if w.activeSize > 0 && w.maxBytes > 0 && w.activeSize+recordSize > w.maxBytes {
-		return w.rotate(now)
-	}
-	if w.activeSize > 0 && w.maxAge > 0 && now.Sub(w.segmentStart) >= w.maxAge {
-		return w.rotate(now)
-	}
-	return nil
-}
-
-func (w *rollingJSONLWriter) rotate(now time.Time) error {
-	if w.file != nil {
-		if err := w.file.Close(); err != nil {
+	now := nowTime(w.deps).UTC()
+	if w.shouldRotateLocked(int64(len(record)), now) {
+		if err := w.rotateLocked(now); err != nil {
 			return err
 		}
 	}
 
-	archivePath, err := w.nextArchivePath(now)
+	n, err := w.file.Write(record)
+	w.segmentBytes += int64(n)
 	if err != nil {
+		return err
+	}
+	if n != len(record) {
+		return io.ErrShortWrite
+	}
+	return nil
+}
+
+func (w *rollingWriter) shouldRotateLocked(recordBytes int64, now time.Time) bool {
+	if w.segmentBytes == 0 {
+		return false
+	}
+	if w.segmentBytes+recordBytes > w.policy.SegmentMaxBytes {
+		return true
+	}
+	if now.Sub(w.segmentStart) >= w.policy.SegmentMaxAge {
+		return true
+	}
+	return false
+}
+
+func (w *rollingWriter) rotateLocked(now time.Time) error {
+	if w.file == nil {
+		return errRollingWriterClosed
+	}
+
+	segmentStart := w.segmentStart
+	segmentEnd := now.UTC()
+	archivePath := archivePathForSegment(w.policy, segmentStart, segmentEnd)
+	if err := w.deps.mkdir(filepath.Dir(archivePath), 0o755); err != nil {
+		return err
+	}
+	selectedArchivePath, err := selectArchivePath(w.deps, archivePath)
+	if err != nil {
+		return err
+	}
+	archivePath = selectedArchivePath
+
+	if err := w.file.Close(); err != nil {
 		return err
 	}
 	if err := w.deps.rename(w.activePath, archivePath); err != nil {
 		return err
 	}
 
-	file, err := w.deps.openFile(w.activePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	if w.policy.CompressionEnabled {
+		if err := compressRotatedSegment(archivePath, archivePath+".gz"); err != nil {
+			return err
+		}
+		if err := w.deps.remove(archivePath); err != nil {
+			return err
+		}
+	}
+
+	file, err := openWriteCloser(w.deps, w.activePath, 0o100|0o200, 0o644)
 	if err != nil {
 		return err
 	}
 
 	w.file = file
-	w.segmentStart = now
-	w.activeSize = 0
+	w.segmentStart = now.UTC()
+	w.segmentBytes = 0
+	if err := enforceArchiveRetention(w.policy, w.deps, now.UTC()); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (w *rollingJSONLWriter) nextArchivePath(now time.Time) (string, error) {
-	baseName := fmt.Sprintf("%s.%s-%s", w.prefix, formatArchiveTimestamp(w.segmentStart), formatArchiveTimestamp(now))
-	basePath := filepath.Join(w.directory, baseName+".jsonl")
-	if _, err := w.deps.stat(basePath); errors.Is(err, os.ErrNotExist) {
-		return basePath, nil
-	} else if err != nil {
-		return "", err
-	}
+func (w *rollingWriter) Flush() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	for suffix := 1; ; suffix++ {
-		candidate := filepath.Join(w.directory, fmt.Sprintf("%s.%d.jsonl", baseName, suffix))
-		if _, err := w.deps.stat(candidate); errors.Is(err, os.ErrNotExist) {
-			return candidate, nil
-		} else if err != nil {
-			return "", err
-		}
+	if w.closed || w.file == nil {
+		return nil
 	}
+	syncer, ok := w.file.(interface{ Sync() error })
+	if !ok {
+		return nil
+	}
+	if err := syncer.Sync(); err != nil {
+		w.reportFailure(err)
+		return err
+	}
+	return nil
 }
 
-func formatArchiveTimestamp(t time.Time) string {
-	return t.UTC().Format("20060102T150405.000000000Z")
-}
+func (w *rollingWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-func indexByte(b []byte, c byte) int {
-	for i := range b {
-		if b[i] == c {
-			return i
-		}
+	if w.closed {
+		return nil
 	}
-	return -1
+	w.closed = true
+
+	if w.file == nil {
+		return nil
+	}
+	if err := w.file.Close(); err != nil {
+		w.reportFailure(err)
+		return err
+	}
+	return nil
 }
