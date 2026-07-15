@@ -281,6 +281,7 @@ single-player does not require product-significant team representation
 
 - [Gameplay Planning](./!INDEX.md)
 - [Modes And Match Rules](modes-and-match-rules.md)
+- [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Player Experience Systems](player-experience-systems.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Multiplayer Session And Lifecycle](../platform/multiplayer-session-and-lifecycle.md)

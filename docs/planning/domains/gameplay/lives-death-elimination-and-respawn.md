@@ -315,6 +315,7 @@ result facts are emitted strictly according to mode requirements
 
 - [Gameplay Planning](./!INDEX.md)
 - [Modes And Match Rules](modes-and-match-rules.md)
+- [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Player Build And Loadouts](player-build-and-loadouts.md)
 - [Player Experience Systems](player-experience-systems.md)
