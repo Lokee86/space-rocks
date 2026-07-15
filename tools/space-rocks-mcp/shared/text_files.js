@@ -1,10 +1,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { repoRelative } from "./paths.js";
+import { workspaceRelative } from "./paths.js";
 
 const IGNORED_DIRS = new Set([
   ".git",
+  ".worktrees",
+  ".workingtrees",
   "node_modules",
   ".godot",
   ".import",
@@ -97,7 +99,7 @@ export async function walkDirectory(root, maxFiles) {
       }
 
       const fullPath = path.join(current, entry.name);
-      const relPath = repoRelative(fullPath);
+      const relPath = workspaceRelative(fullPath);
 
       if (entry.isDirectory()) {
         if (IGNORED_DIRS.has(entry.name)) continue;
@@ -155,7 +157,7 @@ export async function searchText(root, query, maxFiles, maxMatches) {
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].toLowerCase().includes(lowerQuery)) {
           matches.push({
-            file: repoRelative(fullPath),
+            file: workspaceRelative(fullPath),
             line: i + 1,
             text: lines[i].slice(0, 300),
           });

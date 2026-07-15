@@ -33,8 +33,15 @@ Use this as the first stop when you need to decide which MCP server to connect t
 
 || Server | Port | Entry file | Consumer | Role |
 ||---|---:|---|---|---|
-|| Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Repo reads/search, read-only Godot diagnostics, optional Chrome/Plasmic tools, default Hermes session tools |
+|| Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Workspace reads/search, read-only Godot diagnostics, optional Chrome/Plasmic tools, default Hermes session tools |
 || Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
+
+## Workspace and project roots
+
+- `WORKSPACE_ROOT` controls the active Info MCP read/search boundary and the default/allowed workspace boundary for Hermes `cwd`. It defaults to the Space Rocks repository root when unset.
+- `SPACE_ROCKS_REPO` remains the Space Rocks-specific repository root for project-specific integrations and compatibility paths. Its package-location default remains the actual Space Rocks repository root.
+- The canonical `workspace_root` tool returns the configured workspace root. Existing repo-named read tools (`repo_root`, `list_repo_tree`, `read_repo_file`, and `search_repo_text`) remain compatibility names but operate workspace-relative after `WORKSPACE_ROOT` is configured; `repo_root` returns the same configured workspace root.
+- EngineForge remains independently configured or discovered through `SPACE_ROCKS_GODOT_PROJECT`, `ENGINEFORGE_BRIDGE_FILE`, and `ENGINEFORGE_BRIDGE_URL`. A broader workspace does not widen EngineForge access beyond its configured Godot project and local bridge.
 
 ## Hermes CLI Tools
 
@@ -62,7 +69,7 @@ hermes chat -Q --continue <session_name> --query <prompt>
 **Input parameters:**
 - `prompt` (required) - The prompt string to send to the Hermes session
 - `session_name` (optional, default: `space-rocks-mcp`) - The named session to continue
-- `cwd` (optional) - Repo-relative working directory
+- `cwd` (optional) - Allowed working directory; defaults to `WORKSPACE_ROOT`
 
 **Important notes:**
 - This is session continuation through Hermes, not one-shot workflow guidance.
@@ -85,7 +92,7 @@ hermes chat -Q --continue <session_name> --query <prompt>
 **Input parameters:**
 - `prompts` (required) - Array of non-empty prompt strings; minimum one prompt
 - `session_name` (optional, default: `space-rocks-mcp`) - Same naming restrictions as `hermes_session_send`
-- `cwd` (optional) - Repo-relative working directory
+- `cwd` (optional) - Allowed working directory; defaults to `WORKSPACE_ROOT`
 
 **Behavior:**
 - Starts all sends before awaiting results so prompts are queued without waiting for each prior response.
@@ -212,7 +219,7 @@ npm run start:write
 Info MCP:
 
 ```powershell
-$env:PORT=8789; node server-info-next.js
+$env:WORKSPACE_ROOT="D:\!bin"; $env:PORT=8789; node server-info-next.js
 ```
 
 Write MCP:
@@ -257,8 +264,8 @@ npm run start:write
 
 Use Info MCP when you need:
 
-- repo search
-- repo reads
+- workspace search
+- workspace reads
 - bridge status checks
 - scene tree inspection
 - editor log reads

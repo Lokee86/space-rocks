@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { test } from "node:test";
 
-import { REPO_ROOT } from "./paths.js";
+import { WORKSPACE_ROOT } from "./paths.js";
 import { HermesTerminalManager, registerHermesTools } from "./hermes_tools.js";
 
 function createMockServer() {
@@ -46,7 +46,7 @@ test("HermesTerminalManager starts, queues sends, reads, resizes, and closes ses
   const { sessionId, session } = manager.start({ cwd: ".", cols: 90, rows: 20 });
   assert.match(sessionId, /^ht_/);
   assert.match(created[0].command, /hermes(\.exe)?$/i);
-  assert.equal(created[0].options.cwd, REPO_ROOT);
+  assert.equal(created[0].options.cwd, WORKSPACE_ROOT);
   await session.settleStartup();
   assert.equal(session.read({ maxChars: 100 }), "");
   const first = await manager.send(sessionId, { input: "hello", appendEnter: true, idleMs: 5, timeoutMs: 200 });
@@ -98,10 +98,11 @@ test("Hermes tools accept the fixed Hermes root cwd", async () => {
   assert.deepEqual(runHermesCalls.map((call) => call.cwd), [hermesRoot, hermesRoot, hermesRoot, hermesRoot]);
 
   const toolDescription = server.tools.get("hermes_terminal_start").config.inputSchema.cwd.description;
+  assert.match(toolDescription, /WORKSPACE_ROOT/);
   assert.match(toolDescription, /C:\\Users\\archa\\AppData\\Local\\hermes/);
 
   await server.tools.get("hermes_terminal_start").handler({});
-  assert.equal(created[0].options.cwd, REPO_ROOT);
+  assert.equal(created[0].options.cwd, WORKSPACE_ROOT);
 });
 
 test("Hermes tools reject unrelated external cwd values", async () => {
@@ -109,8 +110,7 @@ test("Hermes tools reject unrelated external cwd values", async () => {
   const server = createMockServer();
   registerHermesTools(server, { manager, runHermesImpl: async () => ({ ok: true }) });
   const externalCwd = path.resolve("..", "hermes-external");
-  await assert.rejects(() => server.tools.get("hermes_run").handler({ args: ["--version"], cwd: externalCwd }), /cwd must be REPO_ROOT/);
-  await assert.rejects(() => server.tools.get("hermes_terminal_start").handler({ cwd: externalCwd }), /cwd must be REPO_ROOT/);
+  await assert.rejects(() => server.tools.get("hermes_terminal_start").handler({ cwd: externalCwd }), /cwd must be WORKSPACE_ROOT/);
 });
 
 test("HermesTerminalManager send returns the retained delta even when rollover happens during send", async () => {

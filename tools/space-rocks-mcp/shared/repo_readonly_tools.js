@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 
 import { z } from "zod";
 
-import { REPO_ROOT, repoPath } from "./paths.js";
+import { WORKSPACE_ROOT, workspacePath } from "./paths.js";
 import { textResponse } from "./responses.js";
 import { isProbablyTextFile, walkDirectory, searchText } from "./text_files.js";
 
@@ -22,29 +22,41 @@ export function registerRepoReadonlyTools(server) {
   );
 
   server.registerTool(
-    "repo_root",
+    "workspace_root",
     {
-      title: "Show repo root",
-      description: "Returns the configured Space Rocks repo root.",
+      title: "Show workspace root",
+      description: "Returns the configured workspace root.",
       inputSchema: {},
     },
     async () => {
-      return textResponse(REPO_ROOT);
+      return textResponse(WORKSPACE_ROOT);
+    }
+  );
+
+  server.registerTool(
+    "repo_root",
+    {
+      title: "Show workspace root (compatibility alias)",
+      description: "Compatibility alias for workspace_root; returns the configured workspace root.",
+      inputSchema: {},
+    },
+    async () => {
+      return textResponse(WORKSPACE_ROOT);
     }
   );
 
   server.registerTool(
     "list_repo_tree",
     {
-      title: "List repo tree",
-      description: "List files and directories under a repo-relative path.",
+      title: "List workspace tree",
+      description: "List files and directories under a workspace-relative path.",
       inputSchema: {
         path: z.string().optional(),
         max_files: z.number().int().min(1).max(2000).optional(),
       },
     },
     async ({ path: requestedPath = ".", max_files = 500 }) => {
-      const root = repoPath(requestedPath);
+      const root = workspacePath(requestedPath);
       const entries = await walkDirectory(root, max_files);
       return textResponse(entries.join("\n"));
     }
@@ -53,15 +65,15 @@ export function registerRepoReadonlyTools(server) {
   server.registerTool(
     "read_repo_file",
     {
-      title: "Read repo file",
-      description: "Read a text file from the Space Rocks repo by repo-relative path.",
+      title: "Read workspace file",
+      description: "Read a text file from the workspace by workspace-relative path.",
       inputSchema: {
         path: z.string(),
         max_chars: z.number().int().min(1).max(50000).optional(),
       },
     },
     async ({ path: requestedPath, max_chars = 20000 }) => {
-      const filePath = repoPath(requestedPath);
+      const filePath = workspacePath(requestedPath);
 
       if (!isProbablyTextFile(filePath)) {
         throw new Error("Refusing to read non-text or unsupported file type");
@@ -80,8 +92,8 @@ export function registerRepoReadonlyTools(server) {
   server.registerTool(
     "search_repo_text",
     {
-      title: "Search repo text",
-      description: "Search text files in the Space Rocks repo for a string.",
+      title: "Search workspace text",
+      description: "Search text files in the workspace for a string.",
       inputSchema: {
         query: z.string(),
         path: z.string().optional(),
@@ -95,7 +107,7 @@ export function registerRepoReadonlyTools(server) {
       max_files = 300,
       max_matches = 50,
     }) => {
-      const root = repoPath(requestedPath);
+      const root = workspacePath(requestedPath);
       const result = await searchText(root, query, max_files, max_matches);
       return textResponse(JSON.stringify(result, null, 2));
     }

@@ -5,11 +5,11 @@ import { spawn, execFileSync } from "node:child_process";
 import { z } from "zod";
 import pty from "node-pty";
 
-import { REPO_ROOT, repoPath } from "./paths.js";
+import { WORKSPACE_ROOT } from "./paths.js";
 import { textResponse } from "./responses.js";
 
 const HERMES_ROOT = path.resolve("C:/Users/archa/AppData/Local/hermes");
-const HERMES_ROOT_DESCRIPTION = `Allowed cwd values: REPO_ROOT (${REPO_ROOT}), descendants of REPO_ROOT, ${HERMES_ROOT}, or descendants of ${HERMES_ROOT}. Defaults to REPO_ROOT.`;
+const HERMES_ROOT_DESCRIPTION = `Allowed cwd values: WORKSPACE_ROOT (${WORKSPACE_ROOT}), descendants of WORKSPACE_ROOT, ${HERMES_ROOT}, or descendants of ${HERMES_ROOT}. Defaults to WORKSPACE_ROOT.`;
 
 const MAX_OUTPUT_CHARS = 50000;
 const DEFAULT_COLS = 120;
@@ -32,12 +32,12 @@ function normalizeOutput(text) { return stripControlNoise(text); }
 function newSessionId() { return `ht_${crypto.randomBytes(SESSION_ID_BYTES).toString("base64url")}`; }
 function isWithinRoot(candidate, root) { return candidate === root || candidate.startsWith(root + path.sep); }
 function validateHermesCwd(cwd) {
-  if (cwd === undefined) return REPO_ROOT;
+  if (cwd === undefined) return WORKSPACE_ROOT;
   const resolved = path.resolve(cwd);
-  if (isWithinRoot(resolved, REPO_ROOT) || isWithinRoot(resolved, HERMES_ROOT)) return resolved;
-  throw new Error(`cwd must be REPO_ROOT, a descendant of REPO_ROOT, ${HERMES_ROOT}, or a descendant of ${HERMES_ROOT}`);
+  if (isWithinRoot(resolved, WORKSPACE_ROOT) || isWithinRoot(resolved, HERMES_ROOT)) return resolved;
+  throw new Error(`cwd must be WORKSPACE_ROOT, a descendant of WORKSPACE_ROOT, ${HERMES_ROOT}, or a descendant of ${HERMES_ROOT}`);
 }
-function safeRepoCwd(cwd) { return validateHermesCwd(cwd); }
+function safeWorkspaceCwd(cwd) { return validateHermesCwd(cwd); }
 function boundedTailAppend(current, addition) { const next = current + addition; if (next.length <= MAX_OUTPUT_CHARS) return { text: next, dropped: 0 }; const dropped = next.length - MAX_OUTPUT_CHARS; return { text: next.slice(dropped), dropped }; }
 
 class HermesTerminalSession extends EventEmitter {
@@ -56,7 +56,7 @@ class HermesTerminalSession extends EventEmitter {
   expired(now = Date.now()) { return !this.closed && now - this.lastActivityAt > SESSION_IDLE_TTL_MS; }
 }
 
-export class HermesTerminalManager { constructor({ spawnPty = pty.spawn } = {}) { this.spawnPty = spawnPty; this.sessions = new Map(); this._sweepTimer = setInterval(() => this.expireIdleSessions(), SESSION_IDLE_SWEEP_MS); this._sweepTimer.unref?.(); process.on("exit", () => this.closeAll()); } start({ cwd, cols = DEFAULT_COLS, rows = DEFAULT_ROWS } = {}) { const session = new HermesTerminalSession({ cwd: safeRepoCwd(cwd), cols, rows, spawnPty: this.spawnPty }); const sessionId = newSessionId(); this.sessions.set(sessionId, session); return { sessionId, session }; } get(sessionId) { const session = this.sessions.get(sessionId); if (!session) throw new Error(`Unknown Hermes PTY session: ${sessionId}`); return session; } send(sessionId, options) { const session = this.get(sessionId); if (session.closed) throw new Error(`Hermes PTY session is closed: ${sessionId}`); return session.send(options.input, options); } read(sessionId, options) { const session = this.get(sessionId); if (session.closed) throw new Error(`Hermes PTY session is closed: ${sessionId}`); return session.read(options); } resize(sessionId, cols, rows) { const session = this.get(sessionId); if (session.closed) throw new Error(`Hermes PTY session is closed: ${sessionId}`); return session.resize(cols, rows); } close(sessionId) { const session = this.sessions.get(sessionId); if (!session) throw new Error(`Unknown Hermes PTY session: ${sessionId}`); const result = session.close(); this.sessions.delete(sessionId); return result; } expireIdleSessions(now = Date.now()) { for (const [sessionId, session] of this.sessions.entries()) if (session.closed || session.expired(now)) this.sessions.delete(sessionId); } closeAll() { for (const sessionId of [...this.sessions.keys()]) this.close(sessionId); } }
+export class HermesTerminalManager { constructor({ spawnPty = pty.spawn } = {}) { this.spawnPty = spawnPty; this.sessions = new Map(); this._sweepTimer = setInterval(() => this.expireIdleSessions(), SESSION_IDLE_SWEEP_MS); this._sweepTimer.unref?.(); process.on("exit", () => this.closeAll()); } start({ cwd, cols = DEFAULT_COLS, rows = DEFAULT_ROWS } = {}) { const session = new HermesTerminalSession({ cwd: safeWorkspaceCwd(cwd), cols, rows, spawnPty: this.spawnPty }); const sessionId = newSessionId(); this.sessions.set(sessionId, session); return { sessionId, session }; } get(sessionId) { const session = this.sessions.get(sessionId); if (!session) throw new Error(`Unknown Hermes PTY session: ${sessionId}`); return session; } send(sessionId, options) { const session = this.get(sessionId); if (session.closed) throw new Error(`Hermes PTY session is closed: ${sessionId}`); return session.send(options.input, options); } read(sessionId, options) { const session = this.get(sessionId); if (session.closed) throw new Error(`Hermes PTY session is closed: ${sessionId}`); return session.read(options); } resize(sessionId, cols, rows) { const session = this.get(sessionId); if (session.closed) throw new Error(`Hermes PTY session is closed: ${sessionId}`); return session.resize(cols, rows); } close(sessionId) { const session = this.sessions.get(sessionId); if (!session) throw new Error(`Unknown Hermes PTY session: ${sessionId}`); const result = session.close(); this.sessions.delete(sessionId); return result; } expireIdleSessions(now = Date.now()) { for (const [sessionId, session] of this.sessions.entries()) if (session.closed || session.expired(now)) this.sessions.delete(sessionId); } closeAll() { for (const sessionId of [...this.sessions.keys()]) this.close(sessionId); } }
 
 const sessionNameSchema = z.string().regex(/^[a-zA-Z0-9_\-\. ]+$/, "session_name must contain only letters, numbers, dash, underscore, dot, and space");
 const sessionIdSchema = z.string().regex(/^ht_[A-Za-z0-9_-]+$/, "session_id must be a Hermes PTY session id");
