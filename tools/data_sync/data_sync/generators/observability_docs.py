@@ -79,6 +79,21 @@ def generate_observability_docs(contract: ObservabilityContract) -> str:
         "",
         _list(envelope.required_fields),
         "",
+        "## Services",
+        "",
+        "| Stable key | Emitted name |",
+        "| --- | --- |",
+    ]
+    lines.extend(
+        f"| {_cell(service.key)} | {_cell(service.emitted_name)} |"
+        for service in sorted(contract.services, key=lambda item: item.key)
+    )
+    lines += [
+        "",
+        "## Emission rejection codes",
+        "",
+        _list(schema.rejection_codes),
+        "",
         "## Field catalog",
         "",
         "| Name | Type | Required | Description | Sensitivity |",
@@ -93,11 +108,11 @@ def generate_observability_docs(contract: ObservabilityContract) -> str:
         "",
         "## Event catalog",
         "",
-        "| Name | Category | Default level | Description | Services | Trace required | Audit eligible | Retention tier |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Name | Category | Default level | Description | Services | Trace required | Audit eligible | Retention tier | Bridge only |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     lines.extend(
-        f"| {_cell(event.name)} | {_cell(event.category)} | {_cell(event.default_level)} | {_cell(event.description)} | {_list(tuple(sorted(event.services)))} | {_bool(event.trace_required)} | {_bool(event.audit_eligible)} | {_cell(event.retention_tier)} |"
+        f"| {_cell(event.name)} | {_cell(event.category)} | {_cell(event.default_level)} | {_cell(event.description)} | {_list(tuple(sorted(event.services)))} | {_bool(event.trace_required)} | {_bool(event.audit_eligible)} | {_cell(event.retention_tier)} | {_bool(event.bridge_only)} |"
         for event in sorted(contract.events, key=lambda item: item.name)
     )
 

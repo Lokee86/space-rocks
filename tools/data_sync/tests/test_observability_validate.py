@@ -11,6 +11,7 @@ from data_sync.observability_validate import ObservabilityValidationError, valid
 
 OBSERVABILITY_PATHS = (
     "shared/contracts/observability/schema.toml",
+    "shared/contracts/observability/services.toml",
     "shared/contracts/observability/events.toml",
     "shared/contracts/observability/fields.toml",
     "shared/contracts/observability/redaction.toml",
@@ -42,7 +43,9 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
 
     assert contract.schema.schema_version == 1
     assert len(contract.fields) == 47
-    assert len(contract.events) == 148
+    assert len(contract.services) == 5
+    assert len(contract.events) == 150
+    assert contract.event("diagnostic_report_stored").services == ("diagnostic_aggregator",)
     assert tuple(action.name for action in contract.redaction.actions) == ("reject", "redact")
     assert tuple(tier.name for tier in contract.retention_tiers) == (
         "ephemeral_dev",
@@ -84,6 +87,42 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
             'retention_tier = "operational"',
             'retention_tier = "missing_tier"',
             "retention tier is not declared",
+        ),
+        (
+            "events.toml",
+            'services = ["api_server", "game_server", "player_data", "diagnostic_aggregator"]',
+            'services = ["unknown_service", "game_server", "player_data", "diagnostic_aggregator"]',
+            "references unknown service keys",
+        ),
+        (
+            "services.toml",
+            'emitted_name = "player-data"',
+            'emitted_name = "game-server"',
+            "duplicate emitted service name",
+        ),
+        (
+            "services.toml",
+            'emitted_name = "game-server"',
+            'emitted_name = "Game Server"',
+            "emitted service name must be non-empty lowercase kebab-case",
+        ),
+        (
+            "events.toml",
+            "bridge_only = true",
+            "bridge_only = false",
+            "log_message must be explicitly declared bridge_only = true",
+        ),
+        (
+            "events.toml",
+            'services = ["client", "game_server", "player_data", "api_server", "diagnostic_aggregator"]',
+            'services = ["client", "game_server", "player_data", "api_server"]',
+            "log_message must be eligible for all five components",
+        ),
+        (
+            "schema.toml",
+            '  "write_failed",\n',
+            '  "unknown_event",\n',
+            "duplicate rejection code",
         ),
         (
             "redaction.toml",

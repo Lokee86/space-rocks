@@ -8,14 +8,14 @@ This document describes the game-server logging and diagnostics boundary. It exp
 
 ## Overview
 
-Game-server logging is a small internal wrapper around Go `log/slog`. The logging package gives game-server code a shared way to report runtime behavior without scattering raw `slog`, `log`, or `fmt.Println` calls through service code.
+Game-server logging is a small internal adapter over the shared canonical observability emitter. The logging package gives game-server code a shared way to report runtime behavior without scattering raw `slog`, `log`, or `fmt.Println` calls through service code.
 
 The current implementation uses the shared `shared/go/servicelog` runtime for generic console/file fanout and active-file lifecycle. The game-server adapter still owns categories, levels, environment variables, and service-specific byte limits.
 
 Current runtime flow:
 
 ```text
-game-server runtime event -> category logger -> shared servicelog runtime -> stderr + active JSONL file
+game-server runtime event -> category logger -> canonical emitter -> shared servicelog sink -> stderr + active JSONL file
 ```
 
 Logging is observational. It should explain what happened in the process, connection, room, or simulation, but it must not change gameplay state, packet routing, persistence, or auth behavior.
@@ -41,7 +41,7 @@ Logging and diagnostics own the game-server side of:
 
 The game-server adapter owns the category map, level filtering, environment variables, and service-specific byte limits used for file-output policy.
 
-The shared `shared/go/servicelog` package owns generic console/file fanout and active-file lifecycle.
+The shared `shared/go/observabilityevent` package owns contract validation, redaction, canonical serialization, and stable rejection outcomes. The shared `shared/go/servicelog` package owns direct canonical-record console/file fanout and active-file lifecycle without reshaping records through `slog`.
 
 ## Does not own
 
@@ -130,10 +130,12 @@ ConfigureFileOutput("logs/game-server", "game-server")
 
 When the server runs from `services/game-server`, the active file path is `logs/game-server/game-server.jsonl.open`.
 
-At runtime, the shared runtime fans logs to:
+At runtime, the canonical emitter and shared sink fan logs to:
 
-- the `slog` text handler on stderr
-- the `slog` JSON handler for the active JSONL file
+- a safe compatibility rendering on stderr
+- the canonical JSON envelope in the active JSONL file
+
+Existing category logger methods enter the dedicated bridge-only `log_message` path. Ordinary canonical event emission cannot emit `log_message`; it is reserved for adapters while existing call sites remain unchanged. Service names, event metadata, limits, rejection codes, and redaction policy come from generated contract data.
 
 Current logging package file-output helpers are:
 
@@ -600,7 +602,7 @@ cd services/game-server
 LOG_LEVEL=warn LOG_NETWORK=debug go run ./cmd/game-server
 ```
 
-Expected stderr output is `slog` text records with `category` fields, and when file output is available the same log stream also writes structured JSON records to the active JSONL file.
+Expected stderr output is the safe compatibility rendering with category and level context. When file output is available, the same call writes exactly one canonical JSON envelope to the active JSONL file.
 
 ## Related docs
 

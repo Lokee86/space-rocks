@@ -174,6 +174,36 @@ func TestOpenFansOutToConsoleAndFile(t *testing.T) {
 	}
 }
 
+func TestWriteRecordPreservesCanonicalJSONWithoutSlogReshaping(t *testing.T) {
+	var console bytes.Buffer
+	sink := &trackedWriteCloser{}
+	runtime, err := openWithDependencies(Config{
+		Identity:       ServiceIdentity{Name: "game-server"},
+		File:           validFileConfig("logs"),
+		FileEnabled:    true,
+		ConsoleEnabled: true,
+	}, runtimeDependencies{
+		consoleWriter: &console,
+		mkdir:         func(string, fs.FileMode) error { return nil },
+		openFile:      func(string, int, fs.FileMode) (io.WriteCloser, error) { return sink, nil },
+	})
+	if err != nil {
+		t.Fatalf("openWithDependencies() error = %v", err)
+	}
+	defer runtime.Close()
+
+	payload := []byte(`{"event":"log_message","service":"game-server","message":"ready"}`)
+	if err := runtime.WriteRecord(payload, "[game-server][info] ready"); err != nil {
+		t.Fatalf("WriteRecord() error = %v", err)
+	}
+	if got, want := sink.String(), string(payload)+"\n"; got != want {
+		t.Fatalf("file output = %q, want exact canonical payload %q", got, want)
+	}
+	if got, want := console.String(), "[game-server][info] ready\n"; got != want {
+		t.Fatalf("console output = %q, want %q", got, want)
+	}
+}
+
 func TestRepeatedRotationUsesDeterministicArchiveSuffixForIdenticalTimestamps(t *testing.T) {
 	directory := filepath.Join(t.TempDir(), "logs")
 	now := time.Date(2026, 7, 14, 13, 30, 0, 0, time.UTC)

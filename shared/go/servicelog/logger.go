@@ -18,6 +18,10 @@ type Runtime struct {
 	logger *slog.Logger
 	file   *rollingWriter
 
+	directMu       sync.Mutex
+	consoleWriter  io.Writer
+	consoleEnabled bool
+
 	failureMu     sync.Mutex
 	degraded      bool
 	failureCount  int
@@ -44,9 +48,14 @@ func openWithDependencies(config Config, dependencies runtimeDependencies) (*Run
 		return nil, err
 	}
 
-	runtime := &Runtime{warningWriter: io.Discard}
+	runtime := &Runtime{
+		warningWriter:  io.Discard,
+		consoleWriter:  io.Discard,
+		consoleEnabled: config.ConsoleEnabled,
+	}
 	if dependencies.consoleWriter != nil {
 		runtime.warningWriter = dependencies.consoleWriter
+		runtime.consoleWriter = dependencies.consoleWriter
 	}
 
 	deps := dependencies
@@ -159,6 +168,41 @@ func (r *Runtime) recordFailure(err error) {
 // Logger returns the runtime's structured logger.
 func (r *Runtime) Logger() *slog.Logger {
 	return r.logger
+}
+
+// WriteRecord writes already-serialized canonical JSON bytes through the
+// existing rolling runtime without reparsing or changing the record.
+func (r *Runtime) WriteRecord(jsonLine []byte, consoleLine string) error {
+	if r == nil {
+		return errors.New("servicelog: nil runtime")
+	}
+	r.directMu.Lock()
+	defer r.directMu.Unlock()
+
+	r.mu.RLock()
+	closed := r.closed
+	file := r.file
+	r.mu.RUnlock()
+	if closed {
+		return errRollingWriterClosed
+	}
+
+	if r.consoleEnabled && consoleLine != "" {
+		if _, err := fmt.Fprintln(r.consoleWriter, consoleLine); err != nil {
+			r.recordFailure(err)
+			return err
+		}
+	}
+	if file == nil {
+		return nil
+	}
+
+	record := append([]byte(nil), jsonLine...)
+	if len(record) == 0 || record[len(record)-1] != '\n' {
+		record = append(record, '\n')
+	}
+	_, err := file.Write(record)
+	return err
 }
 
 // Status returns the runtime's current lifecycle state.

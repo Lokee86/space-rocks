@@ -1,15 +1,15 @@
 package logging
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/observability"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 )
 
@@ -40,7 +40,7 @@ const (
 const (
 	levelOff slog.Level = slog.LevelError + 1
 
-	ServiceName                 = "game-server"
+	ServiceName                 = observability.ServiceNameGameServer
 	fileSegmentMaxBytes   int64 = 64 * 1024 * 1024
 	fileRetentionMaxBytes int64 = 1 * 1024 * 1024 * 1024
 )
@@ -52,6 +52,7 @@ var (
 	roomsLevel   = new(slog.LevelVar)
 	serverLevel  = new(slog.LevelVar)
 	logRuntime   *servicelog.Runtime
+	eventEmitter *observability.Emitter
 	identity     servicelog.ServiceIdentity
 	lastStatus   servicelog.Status
 )
@@ -92,12 +93,13 @@ func (logger CategoryLogger) log(messageLevel slog.Level, message string, args .
 	if logger.level == nil || messageLevel < logger.level.Level() {
 		return
 	}
-	runtimeLogger().With(slog.String(FieldCategory, logger.name)).Log(context.Background(), messageLevel, message, args...)
+	emitLegacy(logger.name, messageLevel, message, args...)
 }
 
 func init() {
 	rootLevel.Set(slog.LevelWarn)
 	configureCategoryLevels(slog.LevelWarn)
+	eventEmitter = fallbackEmitter()
 	rebuildLoggers()
 }
 
@@ -136,6 +138,7 @@ func ConfigureFileOutput(baseDir string, prefix string) (string, error) {
 func CloseFileOutput() error {
 	oldRuntime := logRuntime
 	logRuntime = nil
+	eventEmitter = fallbackEmitter()
 	rebuildLoggers()
 	if oldRuntime == nil {
 		return nil
@@ -152,9 +155,22 @@ func Status() servicelog.Status {
 	return logRuntime.Status()
 }
 
+func EventStatus() observability.Status {
+	if eventEmitter == nil {
+		return observability.Status{}
+	}
+	return eventEmitter.Status()
+}
+
 func replaceRuntime(runtime *servicelog.Runtime, configuredIdentity servicelog.ServiceIdentity) error {
+	emitter, err := newEmitter(runtime, configuredIdentity)
+	if err != nil {
+		_ = runtime.Close()
+		return err
+	}
 	oldRuntime := logRuntime
 	logRuntime = runtime
+	eventEmitter = emitter
 	identity = configuredIdentity
 	lastStatus = runtime.Status()
 	rebuildLoggers()
@@ -174,7 +190,7 @@ func Error(message string, err error, args ...any) {
 
 func emit(messageLevel slog.Level, message string, args ...any) {
 	if messageLevel >= rootLevel.Level() {
-		runtimeLogger().Log(context.Background(), messageLevel, message, args...)
+		emitLegacy(CategoryServer, messageLevel, message, args...)
 	}
 }
 
@@ -216,11 +232,49 @@ func rebuildLoggers() {
 	Server = newCategoryLogger(CategoryServer, serverLevel)
 }
 
-func runtimeLogger() *slog.Logger {
-	if logRuntime != nil {
-		return logRuntime.Logger()
+func emitLegacy(category string, messageLevel slog.Level, message string, args ...any) {
+	if eventEmitter == nil {
+		eventEmitter = fallbackEmitter()
 	}
-	return slog.New(slog.NewTextHandler(os.Stderr, nil))
+	eventEmitter.EmitLegacyArgs(observability.LegacyRequest{
+		Level: observability.Level(levelName(messageLevel)), Category: category, Message: message,
+	}, args...)
+}
+
+func levelName(level slog.Level) string {
+	switch {
+	case level >= slog.LevelError:
+		return "error"
+	case level >= slog.LevelWarn:
+		return "warn"
+	case level >= slog.LevelInfo:
+		return "info"
+	default:
+		return "debug"
+	}
+}
+
+func newEmitter(sink observability.Sink, configuredIdentity servicelog.ServiceIdentity) (*observability.Emitter, error) {
+	return observability.New(observability.Config{
+		Service: observability.ServiceKeyGameServer, Environment: configuredIdentity.Environment,
+		BuildVersion: configuredIdentity.Version, ServiceInstanceID: configuredIdentity.InstanceID,
+		PID: os.Getpid(), Sink: sink, WarningWriter: os.Stderr,
+	})
+}
+
+type stderrSink struct{}
+
+func (stderrSink) WriteRecord(_ []byte, consoleLine string) error {
+	_, err := fmt.Fprintln(os.Stderr, consoleLine)
+	return err
+}
+
+func fallbackEmitter() *observability.Emitter {
+	emitter, _ := observability.New(observability.Config{
+		Service: observability.ServiceKeyGameServer, Environment: "unconfigured", BuildVersion: "unknown",
+		ServiceInstanceID: "00000000-0000-4000-8000-000000000000", PID: os.Getpid(), Sink: stderrSink{}, WarningWriter: os.Stderr,
+	})
+	return emitter
 }
 
 func validateIdentity(value servicelog.ServiceIdentity) error {

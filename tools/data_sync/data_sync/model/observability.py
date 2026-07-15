@@ -56,6 +56,13 @@ class ObservabilitySchema:
     limits: ObservabilityLimits
     free_form_fields: ObservabilityFreeForm
     validation: ObservabilityValidation
+    rejection_codes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ObservabilityService:
+    key: str
+    emitted_name: str
 
 
 @dataclass(frozen=True)
@@ -77,6 +84,7 @@ class ObservabilityEvent:
     trace_required: bool
     audit_eligible: bool
     retention_tier: str
+    bridge_only: bool
 
 
 @dataclass(frozen=True)
@@ -199,6 +207,7 @@ class DiagnosticBundle:
 @dataclass(frozen=True)
 class ObservabilityContract:
     schema: ObservabilitySchema
+    services: tuple[ObservabilityService, ...]
     fields: tuple[ObservabilityField, ...]
     events: tuple[ObservabilityEvent, ...]
     redaction: ObservabilityRedactionPolicy
@@ -212,6 +221,12 @@ class ObservabilityContract:
             if field.name == name:
                 return field
         raise KeyError(name)
+
+    def service(self, key: str) -> ObservabilityService:
+        for service in self.services:
+            if service.key == key:
+                return service
+        raise KeyError(key)
 
     def event(self, name: str) -> ObservabilityEvent:
         for event in self.events:
@@ -229,6 +244,7 @@ class ObservabilityContract:
         return _json_value(
             {
                 "schema": self.schema,
+                "services": self.services,
                 "fields": self.fields,
                 "events": self.events,
                 "redaction": self.redaction,

@@ -1,6 +1,7 @@
 extends RefCounted
 
 const RollingJSONLWriter := preload("res://scripts/logging/rolling_jsonl_writer.gd")
+const ObservabilityEmitter := preload("res://scripts/logging/observability_emitter.gd")
 
 const LEVEL_DEBUG := 10
 const LEVEL_INFO := 20
@@ -21,6 +22,7 @@ const CATEGORY_PACKETS := "packets"
 static var default_level := LEVEL_INFO
 static var category_levels := {}
 static var _file_writer = RollingJSONLWriter.new()
+static var _emitter = ObservabilityEmitter.new(_file_writer)
 
 
 static func set_default_level(level: int) -> void:
@@ -54,11 +56,13 @@ static func reset_for_tests() -> void:
 static func _set_file_writer_for_tests(writer: RefCounted) -> void:
 	close_file_output()
 	_file_writer = writer
+	_emitter = ObservabilityEmitter.new(_file_writer)
 
 
 static func _reset_file_writer_for_tests() -> void:
 	close_file_output()
 	_file_writer = RollingJSONLWriter.new()
+	_emitter = ObservabilityEmitter.new(_file_writer)
 
 
 static func debug(category: String, message: String) -> void:
@@ -87,8 +91,10 @@ static func event(
 	if !_should_log(category, level):
 		return
 
-	var record := build_record(category, level, event_name, message, fields)
-	_output_record(record)
+	var result := _emitter.emit_legacy(
+		level_name(level), category, message, _normalize_legacy_fields(fields), event_name
+	)
+	_output_result(result)
 
 
 static func network_event(
@@ -130,14 +136,25 @@ static func build_record(
 	message: String = "",
 	fields: Dictionary = {}
 ) -> Dictionary:
-	return {
-		"timestamp_unix_ms": int(Time.get_unix_time_from_system() * 1000.0),
-		"level": level_name(level),
-		"category": category,
-		"event": event_name,
-		"message": message,
-		"fields": fields.duplicate(true),
-	}
+	var result := _emitter.build_legacy(
+		level_name(level), category, message, _normalize_legacy_fields(fields), event_name
+	)
+	return result.get("record", {})
+
+
+static func _normalize_legacy_fields(fields: Dictionary) -> Dictionary:
+	var normalized := {}
+	for raw_key in fields:
+		var value = fields[raw_key]
+		if value is Dictionary or value is Array:
+			normalized[raw_key] = JSON.stringify(value)
+		elif value == null:
+			normalized[raw_key] = "null"
+		elif value is String or value is bool or value is int or value is float:
+			normalized[raw_key] = value
+		else:
+			normalized[raw_key] = str(value)
+	return normalized
 
 
 static func format_console_line(record: Dictionary) -> String:
@@ -188,6 +205,7 @@ static func file_output_status() -> Dictionary:
 		"current_path": _file_writer.current_path,
 		"failure_count": _file_writer.failure_count,
 		"last_failure_message": _file_writer.last_failure_message,
+		"emitter": _emitter.status(),
 	}
 
 
@@ -323,11 +341,14 @@ static func _log(category: String, level: int, message: String) -> void:
 	if !_should_log(category, level):
 		return
 
-	var record := build_record(category, level, "log_message", message)
-	_output_record(record)
+	var result := _emitter.emit_legacy(level_name(level), category, message)
+	_output_result(result)
 
 
-static func _output_record(record: Dictionary) -> void:
+static func _output_result(result: Dictionary) -> void:
+	if !bool(result.get("accepted", false)):
+		return
+	var record: Dictionary = result.get("record", {})
 	var line := format_console_line(record)
 	var level := str(record.get("level", "unknown"))
 
@@ -339,7 +360,7 @@ static func _output_record(record: Dictionary) -> void:
 		_:
 			print(line)
 
-	_file_writer.write_line(format_json_line(record))
+
 
 
 static func _should_log(category: String, level: int) -> bool:

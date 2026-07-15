@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Lokee86/space-rocks/player-data/observability"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 )
 

@@ -50,7 +50,7 @@ sensitivity = "internal"
 [[fields]]
 name = "category"
 type = "string"
-required = false
+required = true
 description = "Stable subsystem category used for filtering and category-level log controls."
 sensitivity = "internal"
 
@@ -316,7 +316,7 @@ sensitivity = "internal"
 [[fields]]
 name = "retention_tier"
 type = "string"
-required = false
+required = true
 description = "Retention classification: ephemeral_dev, operational, diagnostic_report, or audit_grade."
 sensitivity = "internal"
 

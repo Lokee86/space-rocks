@@ -12,6 +12,8 @@ required_fields = [
   "build_version",
   "schema_version",
   "service_instance_id",
+  "category",
+  "retention_tier",
 ]
 timestamp_format = "RFC3339-nanosecond-UTC"
 event_name_pattern = "^[a-z0-9]+(?:_[a-z0-9]+)*$"
@@ -89,3 +91,23 @@ values_must_be_redacted = true
 unknown_top_level_field_action = "reject"
 unsafe_field_action = "redact_or_reject"
 null_values_allowed = false
+
+[rejections]
+codes = [
+  "unknown_event",
+  "bridge_event_forbidden",
+  "service_not_allowed",
+  "trace_required",
+  "unknown_context_field",
+  "invalid_field_key",
+  "invalid_field_type",
+  "invalid_uuid",
+  "null_not_allowed",
+  "field_limit_exceeded",
+  "string_limit_exceeded",
+  "unsafe_field",
+  "redaction_failed",
+  "event_too_large",
+  "serialization_failed",
+  "write_failed",
+]

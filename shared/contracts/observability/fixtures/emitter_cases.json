@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "service_instance_id": "550e8400-e29b-41d4-a716-446655440010",
+    "event_id": "550e8400-e29b-41d4-a716-446655440011",
+    "trace_id": "550e8400-e29b-41d4-a716-446655440012"
+  },
+  "cases": [
+    {
+      "id": "accepted_semantic",
+      "mode": "emit",
+      "event": "build_version_loaded",
+      "message": "loaded",
+      "fields": {"mode": "test"},
+      "accepted": true,
+      "redacted": false
+    },
+    {
+      "id": "accepted_redacted",
+      "mode": "emit",
+      "event": "build_version_loaded",
+      "fields": {"private_profile": "sensitive"},
+      "accepted": true,
+      "redacted": true
+    },
+    {
+      "id": "rejected_unsafe",
+      "mode": "emit",
+      "event": "build_version_loaded",
+      "fields": {"password": "do-not-leak"},
+      "accepted": false,
+      "rejection_code": "unsafe_field"
+    },
+    {
+      "id": "rejected_bridge_direct",
+      "mode": "emit",
+      "event": "log_message",
+      "accepted": false,
+      "rejection_code": "bridge_event_forbidden"
+    },
+    {
+      "id": "accepted_bridge",
+      "mode": "legacy",
+      "level": "info",
+      "category": "fixture",
+      "message": "legacy",
+      "accepted": true,
+      "redacted": false
+    },
+    {
+      "id": "rejected_trace_required",
+      "mode": "emit",
+      "event": "client_connected",
+      "accepted": false,
+      "rejection_code": "trace_required"
+    },
+    {
+      "id": "accepted_trace",
+      "mode": "emit",
+      "event": "client_connected",
+      "context": {"trace_id": "550e8400-e29b-41d4-a716-446655440012"},
+      "accepted": true,
+      "redacted": false
+    },
+    {
+      "id": "rejected_invalid_uuid",
+      "mode": "emit",
+      "event": "client_connected",
+      "context": {"trace_id": "not-a-uuid"},
+      "accepted": false,
+      "rejection_code": "invalid_uuid"
+    },
+    {
+      "id": "rejected_service",
+      "mode": "emit",
+      "event": "storage_backend_selected",
+      "accepted": false,
+      "rejection_code": "service_not_allowed"
+    },
+    {
+      "id": "rejected_invalid_key",
+      "mode": "emit",
+      "event": "build_version_loaded",
+      "fields": {"Bad-Key": 1},
+      "accepted": false,
+      "rejection_code": "invalid_field_key"
+    },
+    {
+      "id": "rejected_invalid_type",
+      "mode": "emit",
+      "event": "build_version_loaded",
+      "fields": {"items": []},
+      "accepted": false,
+      "rejection_code": "invalid_field_type"
+    },
+    {
+      "id": "rejected_null",
+      "mode": "emit",
+      "event": "build_version_loaded",
+      "fields": {"item": null},
+      "accepted": false,
+      "rejection_code": "null_not_allowed"
+    }
+  ]
+}

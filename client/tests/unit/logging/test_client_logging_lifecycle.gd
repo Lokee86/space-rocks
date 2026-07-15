@@ -36,14 +36,22 @@ func after_each() -> void:
 func test_status_exposes_writer_runtime_state() -> void:
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
-	assert_eq(ClientLogger.file_output_status(), {
-		"enabled": true,
-		"current_path": "user://fake-logs/active/client.jsonl.open",
-		"failure_count": 0,
-		"last_failure_message": "",
+	var status := ClientLogger.file_output_status()
+	assert_eq(status.size(), 5)
+	assert_true(status["enabled"])
+	assert_eq(status["current_path"], "user://fake-logs/active/client.jsonl.open")
+	assert_eq(status["failure_count"], 0)
+	assert_eq(status["last_failure_message"], "")
+	assert_eq(status["emitter"], {
+		"accepted_count": 0,
+		"rejected_count": 0,
+		"redacted_count": 0,
+		"write_failure_count": 0,
+		"last_rejection_code": "",
+		"last_write_error": "",
 	})
 	ClientLogger.shell_info("first line disables file output")
-	var status := ClientLogger.file_output_status()
+	status = ClientLogger.file_output_status()
 	assert_false(status["enabled"])
 	assert_eq(status["current_path"], "")
 	assert_eq(status["failure_count"], 1)

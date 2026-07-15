@@ -14,6 +14,10 @@ FIELD_TYPES = frozenset({"string", "integer", "number", "boolean", "uuid", "obje
 SENSITIVITIES = frozenset({"internal", "personal", "confidential", "restricted"})
 RETENTION_TIERS = frozenset({"ephemeral_dev", "operational", "diagnostic_report", "audit_grade"})
 SNAKE_CASE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+EMITTED_SERVICE_NAME = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+REQUIRED_BRIDGE_SERVICES = frozenset(
+    {"client", "game_server", "player_data", "api_server", "diagnostic_aggregator"}
+)
 
 
 class ObservabilityValidationError(Exception):
@@ -30,6 +34,7 @@ def validate_observability(paths: Iterable[Path | str]) -> ObservabilityContract
     contract = observability_toml.load_observability_contract(resolved_paths)
     errors: list[str] = []
     _validate_schema(contract, resolved_paths, errors)
+    _validate_services(contract, errors)
     _validate_fields(contract, errors)
     _validate_events(contract, errors)
     _validate_redaction(contract, errors)
@@ -50,6 +55,7 @@ def _validate_schema(
     }
     versions = (
         ("schema.toml.schema_version", documents["schema.toml"].get("schema_version")),
+        ("services.toml.schema_version", documents["services.toml"].get("schema_version")),
         ("events.toml.schema_version", documents["events.toml"].get("schema_version")),
         ("redaction.toml.schema_version", documents["redaction.toml"].get("schema_version")),
         (
@@ -100,6 +106,27 @@ def _validate_schema(
     _unique_nonempty(schema.envelope.canonical_levels, "canonical level", errors)
     _unique_nonempty(schema.envelope.required_fields, "required field", errors)
     _unique_nonempty(schema.envelope.allowed_top_level_fields, "allowed top-level field", errors)
+    _unique_nonempty(schema.rejection_codes, "rejection code", errors)
+    for code in schema.rejection_codes:
+        if not SNAKE_CASE.fullmatch(code):
+            errors.append(f"rejection code must be non-empty snake_case: {code!r}")
+
+
+def _validate_services(contract: ObservabilityContract, errors: list[str]) -> None:
+    _unique_nonempty((service.key for service in contract.services), "service key", errors)
+    _unique_nonempty(
+        (service.emitted_name for service in contract.services),
+        "emitted service name",
+        errors,
+    )
+    for service in contract.services:
+        if not SNAKE_CASE.fullmatch(service.key):
+            errors.append(f"service key must be snake_case: {service.key!r}")
+        if not EMITTED_SERVICE_NAME.fullmatch(service.emitted_name):
+            errors.append(
+                "emitted service name must be non-empty lowercase kebab-case: "
+                f"{service.emitted_name!r}"
+            )
 
 
 def _validate_fields(contract: ObservabilityContract, errors: list[str]) -> None:
@@ -139,6 +166,7 @@ def _validate_events(contract: ObservabilityContract, errors: list[str]) -> None
 
     _unique_nonempty((event.name for event in contract.events), "event", errors)
     canonical_levels = set(contract.schema.envelope.canonical_levels)
+    service_keys = {service.key for service in contract.services}
     for index, event in enumerate(contract.events):
         label = f"event {event.name or index}"
         if event_pattern is not None and event_pattern.fullmatch(event.name) is None:
@@ -147,10 +175,28 @@ def _validate_events(contract: ObservabilityContract, errors: list[str]) -> None
             errors.append(f"{label} category must be non-empty snake_case: {event.category!r}")
         if not event.services or any(not service or not SNAKE_CASE.fullmatch(service) for service in event.services):
             errors.append(f"{label} services must be non-empty snake_case names: {event.services!r}")
+        unknown_services = sorted(set(event.services) - service_keys)
+        if unknown_services:
+            errors.append(f"{label} references unknown service keys: {unknown_services!r}")
         if event.default_level not in canonical_levels:
             errors.append(f"{label} default level is not canonical: {event.default_level!r}")
         if event.retention_tier not in {tier.name for tier in contract.retention_tiers}:
             errors.append(f"{label} retention tier is not declared: {event.retention_tier!r}")
+
+    bridge_events = [event for event in contract.events if event.bridge_only]
+    if not bridge_events:
+        errors.append("at least one bridge-only event must be explicitly declared")
+    log_message = next((event for event in contract.events if event.name == "log_message"), None)
+    if log_message is None:
+        errors.append("log_message bridge event is required")
+    else:
+        if not log_message.bridge_only:
+            errors.append("log_message must be explicitly declared bridge_only = true")
+        if set(log_message.services) != REQUIRED_BRIDGE_SERVICES:
+            errors.append(
+                "log_message must be eligible for all five components: "
+                f"{sorted(log_message.services)!r}"
+            )
 
 
 def _validate_redaction(contract: ObservabilityContract, errors: list[str]) -> None:

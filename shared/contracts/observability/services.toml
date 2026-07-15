@@ -1,0 +1,16 @@
+schema_version = 1
+
+[service.game_server]
+emitted_name = "game-server"
+
+[service.player_data]
+emitted_name = "player-data"
+
+[service.api_server]
+emitted_name = "api-server"
+
+[service.diagnostic_aggregator]
+emitted_name = "diagnostic-aggregator"
+
+[service.client]
+emitted_name = "client"

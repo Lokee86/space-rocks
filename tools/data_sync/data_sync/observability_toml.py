@@ -24,6 +24,7 @@ from data_sync.model.observability import (
     ObservabilityRetentionPolicy,
     ObservabilityRetentionTier,
     ObservabilitySchema,
+    ObservabilityService,
     ObservabilityValidation,
     ObservabilityEnvelope,
 )
@@ -31,6 +32,7 @@ from data_sync.model.observability import (
 
 SOURCE_KINDS = {
     "schema.toml": "schema",
+    "services.toml": "services",
     "events.toml": "events",
     "fields.toml": "fields",
     "redaction.toml": "redaction",
@@ -44,7 +46,7 @@ class ObservabilityTomlError(Exception):
 
 
 def load_observability_contract(paths: Iterable[Path | str]) -> ObservabilityContract:
-    """Load the six configured observability TOML sources in source order."""
+    """Load the configured observability TOML sources in source order."""
     resolved_paths = tuple(Path(path) for path in paths)
     if not resolved_paths:
         raise ObservabilityTomlError("observability TOML paths must not be empty")
@@ -72,6 +74,7 @@ def load_observability_contract(paths: Iterable[Path | str]) -> ObservabilityCon
     documents = {kind: _load_document(path) for kind, path in by_kind.items()}
     return ObservabilityContract(
         schema=_schema(documents["schema"], by_kind["schema"]),
+        services=_services(documents["services"], by_kind["services"]),
         fields=_fields(documents["fields"], by_kind["fields"]),
         events=_events(documents["events"], by_kind["events"]),
         redaction=_redaction(documents["redaction"], by_kind["redaction"]),
@@ -101,6 +104,7 @@ def _schema(document: Mapping[str, Any], path: Path) -> ObservabilitySchema:
     limits = _table(document, "limits", path)
     free_form = _table(document, "free_form_fields", path)
     validation = _table(document, "validation", path)
+    rejections = _table(document, "rejections", path)
     return ObservabilitySchema(
         schema_version=_int(document, "schema_version", path),
         envelope=ObservabilityEnvelope(
@@ -135,6 +139,19 @@ def _schema(document: Mapping[str, Any], path: Path) -> ObservabilitySchema:
             unsafe_field_action=_string(validation, "unsafe_field_action", path, "validation"),
             null_values_allowed=_bool(validation, "null_values_allowed", path, "validation"),
         ),
+        rejection_codes=_strings(rejections, "codes", path, "rejections"),
+    )
+
+
+def _services(
+    document: Mapping[str, Any], path: Path
+) -> tuple[ObservabilityService, ...]:
+    return tuple(
+        ObservabilityService(
+            key=name,
+            emitted_name=_string(item, "emitted_name", path, f"service.{name}"),
+        )
+        for name, item in _named_tables(document, "service", path)
     )
 
 
@@ -162,6 +179,7 @@ def _events(document: Mapping[str, Any], path: Path) -> tuple[ObservabilityEvent
             trace_required=_bool(item, "trace_required", path, f"events[{index}]"),
             audit_eligible=_bool(item, "audit_eligible", path, f"events[{index}]"),
             retention_tier=_string(item, "retention_tier", path, f"events[{index}]"),
+            bridge_only=_optional_bool(item, "bridge_only", path, f"events[{index}]") or False,
         )
         for index, item in enumerate(_list(document, "events", path))
     )
@@ -372,6 +390,14 @@ def _optional_string(document: Mapping[str, Any], key: str, path: Path, parent: 
     if key not in document:
         return None
     return _string(document, key, path, parent)
+
+
+def _optional_bool(
+    document: Mapping[str, Any], key: str, path: Path, parent: str
+) -> bool | None:
+    if key not in document:
+        return None
+    return _bool(document, key, path, parent)
 
 
 def _int(document: Mapping[str, Any], key: str, path: Path, parent: str | None = None) -> int:

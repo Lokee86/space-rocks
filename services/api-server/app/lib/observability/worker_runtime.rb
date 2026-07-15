@@ -2,6 +2,7 @@ require "logger"
 require "thread"
 require_relative "archive_store"
 require_relative "configuration_factory"
+require_relative "emitter"
 require_relative "process_identity"
 require_relative "structured_formatter"
 require_relative "writer_factory"
@@ -48,6 +49,7 @@ module Observability
     def status
       writer_status = @writer&.status || {}
       archive_status = @archive_store&.status || {}
+      emitter_status = @emitter&.status
       {
         enabled: @enabled,
         booted: @booted,
@@ -55,7 +57,8 @@ module Observability
         current_path: writer_status[:current_path],
         degraded: @degraded || writer_status[:degraded] || archive_status[:degraded],
         failure_count: writer_status.fetch(:failure_count) { archive_status.fetch(:failure_count, 0) },
-        last_error: @last_error || writer_status[:last_error] || archive_status[:last_error]
+        last_error: @last_error || emitter_status&.fetch(:last_write_error, nil) || writer_status[:last_error] || archive_status[:last_error],
+        emitter: emitter_status
       }
     end
 
@@ -71,12 +74,13 @@ module Observability
       @archive_store = @archive_builder.call(@configuration, @identity)
       @archive_store.recover!
       @writer = @writer_builder.call(@configuration, @identity, @archive_store)
-      @file_logger = Logger.new(@writer)
-      @file_logger.formatter = StructuredFormatter.new(
-        @identity,
+      @emitter = Emitter.new(
+        identity: @identity,
+        writer: @writer,
         build_version: @configuration.build_version,
         environment: @configuration.environment
       )
+      @file_logger = CanonicalLogger.new(StructuredFormatter.new(@emitter))
       @logger = @logger_provider.call
       raise ArgumentError, "Rails logger does not support broadcast sinks" unless @logger.respond_to?(:broadcast_to)
 
@@ -88,9 +92,8 @@ module Observability
       @logger&.stop_broadcasting_to(@file_logger) if @file_logger && @logger&.respond_to?(:stop_broadcasting_to)
       if @file_logger
         @file_logger.close
-      else
-        @writer&.close
       end
+      @writer&.close
     rescue StandardError => error
       degrade(error)
       @writer&.close

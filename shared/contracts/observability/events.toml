@@ -1,5 +1,16 @@
 schema_version = 1
 
+[[events]]
+name = "log_message"
+category = "legacy_log"
+default_level = "info"
+description = "Temporary bridge event for legacy logging call sites; normal canonical emission is forbidden."
+services = ["client", "game_server", "player_data", "api_server", "diagnostic_aggregator"]
+trace_required = false
+audit_eligible = false
+retention_tier = "operational"
+bridge_only = true
+
 # Permanent stable event catalog for current technical-release observability.
 # Event names are intentionally lifecycle-, failure-, degradation-, audit-, or
 # threshold-oriented; high-frequency success samples remain metrics/devtools data.
@@ -1309,6 +1320,16 @@ name = "diagnostic_report_rejected"
 category = "diagnostics"
 default_level = "warn"
 description = "A diagnostic report was rejected for unsafe or invalid fields."
+services = ["diagnostic_aggregator"]
+trace_required = true
+audit_eligible = false
+retention_tier = "diagnostic_report"
+
+[[events]]
+name = "diagnostic_report_stored"
+category = "diagnostics"
+default_level = "info"
+description = "A finalized diagnostic report reached durable report storage."
 services = ["diagnostic_aggregator"]
 trace_required = true
 audit_eligible = false

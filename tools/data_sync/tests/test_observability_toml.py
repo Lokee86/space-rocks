@@ -10,6 +10,7 @@ from data_sync.observability_toml import ObservabilityTomlError, load_observabil
 
 OBSERVABILITY_PATHS = (
     "shared/contracts/observability/schema.toml",
+    "shared/contracts/observability/services.toml",
     "shared/contracts/observability/events.toml",
     "shared/contracts/observability/fields.toml",
     "shared/contracts/observability/redaction.toml",
@@ -43,11 +44,13 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert len(contract.fields) == 47
     assert tuple(field.name for field in contract.fields[:3]) == ("timestamp", "level", "event")
     assert contract.fields[-1].name == "fields"
-    assert len(contract.events) == 148
+    assert len(contract.services) == 5
+    assert contract.service("game_server").emitted_name == "game-server"
+    assert len(contract.events) == 150
     assert tuple(event.name for event in contract.events[:3]) == (
+        "log_message",
         "service_starting",
         "service_started",
-        "service_stopping",
     )
     assert contract.events[-1].name == "soak_degradation_detected"
     assert len(contract.redaction.actions) == 2
@@ -66,6 +69,15 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert contract.field("player_id").required is False
     assert contract.event("service_startup_failed").default_level == "critical"
     assert contract.event("service_startup_failed").trace_required is True
+    assert contract.event("log_message").bridge_only is True
+    stored = contract.event("diagnostic_report_stored")
+    assert stored.category == "diagnostics"
+    assert stored.default_level == "info"
+    assert stored.services == ("diagnostic_aggregator",)
+    assert stored.trace_required is True
+    assert stored.audit_eligible is False
+    assert stored.retention_tier == "diagnostic_report"
+    assert "bridge_event_forbidden" in contract.schema.rejection_codes
     assert contract.retention_tier("audit_grade").durability == "durable"
     assert contract.diagnostic_bundle.events_ordered_by == "timestamp_ascending"
     assert contract.diagnostic_bundle.max_request_bytes == 5242880

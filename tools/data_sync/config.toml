@@ -37,6 +37,7 @@ paths = [
 [sot.observability]
 paths = [
   "shared/contracts/observability/schema.toml",
+  "shared/contracts/observability/services.toml",
   "shared/contracts/observability/events.toml",
   "shared/contracts/observability/fields.toml",
   "shared/contracts/observability/redaction.toml",
@@ -105,9 +106,7 @@ outputs = ["server_drop_tables"]
 [observability.go]
 enabled = true
 files = [
-  "services/diagnostic-aggregator/internal/observability/generated.go",
-  "services/game-server/internal/observability/generated.go",
-  "services/player-data/observability/generated.go",
+  "shared/go/observabilityevent/contract_generated.go",
 ]
 sections = []
 owns = []

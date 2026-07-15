@@ -72,7 +72,7 @@ func TestConfigureFileOutputReturnsActivePathAndWritesRecords(t *testing.T) {
 		t.Fatalf("os.ReadFile(%q) error = %v", wantPath, err)
 	}
 	content := string(data)
-	for _, value := range []string{`"msg":"active file output"`, `"category":"game"`, `"mode":"file"`} {
+	for _, value := range []string{`"event":"log_message"`, `"message":"active file output"`, `"category":"game"`, `"retention_tier":"operational"`, `"mode":"file"`} {
 		if !strings.Contains(content, value) {
 			t.Fatalf("expected file output to include %s, got %q", value, content)
 		}

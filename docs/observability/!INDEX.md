@@ -6,14 +6,16 @@ Parent index: [Documentation](../!INDEX.md)
 
 ## Ownership
 
-Describe who maintains these docs.
+The shared observability contract and canonical event-emission boundary own these docs.
 
 ## Does Not Belong
 
-List content that belongs somewhere else.
+Service-specific runtime behavior belongs in the relevant service documentation. Metrics, tracing infrastructure, diagnostic submission, and durable telemetry storage are outside this boundary.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [Canonical Event Emission](canonical-event-emission.md) - Cross-language canonical JSONL emission, compatibility bridges, validation, and verification.
 <!-- doc-ledger:files:end -->
 
 ## Stub Files
@@ -28,8 +30,9 @@ List content that belongs somewhere else.
 
 ## Related Docs
 
-Add hand-picked links that help readers continue.
+- [Generated Contract Reference](generated/contract-reference.md)
+- [Game Server Logging And Diagnostics](../services/game-server/observability/logging-and-diagnostics.md)
 
 ## Notes
 
-Add brief context that does not fit above.
+Generated references describe the contract data. Handwritten docs describe runtime ownership and integration boundaries.

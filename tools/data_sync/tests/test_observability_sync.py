@@ -13,6 +13,7 @@ from data_sync.observability_sync import ObservabilitySyncError, plan_observabil
 REPO = Path(__file__).resolve().parents[3]
 OBSERVABILITY_SOURCE_NAMES = (
     "schema.toml",
+    "services.toml",
     "events.toml",
     "fields.toml",
     "redaction.toml",
@@ -34,9 +35,7 @@ def _temporary_config(tmp_path: Path) -> DataSyncConfig:
 
     target_files = {
         "go": (
-            tmp_path / "generated" / "go" / "aggregator.go",
-            tmp_path / "generated" / "go" / "game_server.go",
-            tmp_path / "generated" / "go" / "player_data.go",
+            tmp_path / "generated" / "go" / "contract.go",
         ),
         "gds": (tmp_path / "generated" / "gds" / "contract.gd",),
         "ruby": (tmp_path / "generated" / "ruby" / "contract.rb",),
@@ -71,25 +70,28 @@ def test_observability_sync_plans_applies_and_detects_drift(tmp_path: Path) -> N
     first_plan = plan_observability_updates(config, OUTPUTS)
     second_plan = plan_observability_updates(config, OUTPUTS)
 
-    assert len(first_plan) == 7
+    assert len(first_plan) == 5
     assert all(isinstance(update, FileUpdate) for update in first_plan)
     assert first_plan == second_plan
     assert all(update.before == "" for update in first_plan)
-    go_updates = first_plan[:3]
+    go_updates = first_plan[:1]
     assert len({update.after for update in go_updates}) == 1
 
     apply_updates(first_plan)
     synced_plan = plan_observability_updates(config, OUTPUTS)
-    assert len(synced_plan) == 7
+
+    for update in synced_plan:
+        assert "diagnostic_report_stored" in update.after
+    assert len(synced_plan) == 5
     assert all(not update.changed for update in synced_plan)
     assert all(update.path.is_file() for update in synced_plan)
 
-    events_path = config.sot_paths("observability")[1]
+    events_path = config.sot_paths("observability")[2]
     events = events_path.read_text(encoding="utf-8")
     events_path.write_text(events.replace("service_starting", "service_starting_changed", 1), encoding="utf-8")
 
     drift_plan = plan_observability_updates(config, OUTPUTS)
-    assert len(drift_plan) == 7
+    assert len(drift_plan) == 5
     assert all(update.changed for update in drift_plan)
 
 

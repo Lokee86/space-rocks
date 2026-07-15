@@ -9,6 +9,7 @@ require github.com/Lokee86/space-rocks/services/diagnostic-aggregator v0.0.0
 require github.com/Lokee86/space-rocks/player-data v0.0.0
 
 require github.com/Lokee86/space-rocks/shared/go/servicelog v0.0.0
+require github.com/Lokee86/space-rocks/shared/go/observabilityevent v0.0.0
 
 require (
 	github.com/pion/datachannel v1.5.10 // indirect
@@ -50,3 +51,5 @@ replace github.com/Lokee86/space-rocks/player-data => ../player-data
 replace github.com/Lokee86/space-rocks/services/diagnostic-aggregator => ../diagnostic-aggregator
 
 replace github.com/Lokee86/space-rocks/shared/go/servicelog => ../../shared/go/servicelog
+
+replace github.com/Lokee86/space-rocks/shared/go/observabilityevent => ../../shared/go/observabilityevent
