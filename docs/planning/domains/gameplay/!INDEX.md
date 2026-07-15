@@ -21,6 +21,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 - [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md) - Enemies Bosses And Encounters documentation.
 - [inventory-and-hangar.md](inventory-and-hangar.md) - Inventory And Hangar documentation.
 - [levels-missions-and-content-structure.md](levels-missions-and-content-structure.md) - Levels Missions And Content Structure documentation.
+- [lives-death-elimination-and-respawn.md](lives-death-elimination-and-respawn.md) - Lives Death Elimination And Respawn documentation.
 - [match-outcomes-and-results.md](match-outcomes-and-results.md) - Match Outcomes And Results documentation.
 - [modes-and-match-rules.md](modes-and-match-rules.md) - Modes And Match Rules documentation.
 - [player-build-and-loadouts.md](player-build-and-loadouts.md) - Player Build And Loadouts documentation.
