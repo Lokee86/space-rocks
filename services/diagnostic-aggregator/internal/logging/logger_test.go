@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/observability"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 )
 
@@ -30,7 +30,13 @@ func TestOperationalLoggerIdentityPathAndPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	logger.Info("aggregator started")
+	result := logger.Emit(observability.Request{
+		Event:   observability.EventNameServiceStarted,
+		Context: observability.Context{TraceID: "550e8400-e29b-41d4-a716-446655440003"},
+	})
+	if !result.Accepted {
+		t.Fatalf("result=%#v", result)
+	}
 	if err := logger.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +45,7 @@ func TestOperationalLoggerIdentityPathAndPolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	content := string(data)
-	for _, value := range []string{`"service":"diagnostic-aggregator"`, `"build_version":"test-build"`, `"environment":"test"`, `"service_instance_id":"550e8400-e29b-41d4-a716-446655440002"`} {
+	for _, value := range []string{`"service":"diagnostic-aggregator"`, `"event":"service_started"`, `"build_version":"test-build"`, `"environment":"test"`, `"service_instance_id":"550e8400-e29b-41d4-a716-446655440002"`} {
 		if !strings.Contains(content, value) {
 			t.Fatalf("missing %s in %s", value, content)
 		}
@@ -77,7 +83,10 @@ func TestOperationalLoggerFileFailureIsDegraded(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer logger.Close()
-	logger.Info("console-only operation")
+	result := logger.Emit(observability.Request{Event: observability.EventNameServiceStarted})
+	if !result.Accepted {
+		t.Fatalf("result=%#v", result)
+	}
 	if !logger.Status().Degraded || logger.Status().FailureCount == 0 {
 		t.Fatalf("status=%#v", logger.Status())
 	}

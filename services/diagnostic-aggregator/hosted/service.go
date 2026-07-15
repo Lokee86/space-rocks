@@ -11,62 +11,117 @@ import (
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnosticreports"
 	operational "github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/logging"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/redaction"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/storage"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/storage/jsonlstore"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 	"github.com/google/uuid"
 )
 
+type reportStore interface {
+	storage.ReportStore
+	EnforceRetention(context.Context) (int, error)
+}
+
+type serviceDependencies struct {
+	newStore         func(jsonlstore.Config) (reportStore, error)
+	newAuthorizer    func(string) (diagnosticapi.RequestAuthorizer, error)
+	newReportService func(reportStore, Config, diagnosticreports.UUIDGenerator, diagnosticreports.EventEmitter) (diagnosticapi.ReportService, error)
+	newHandler       func(diagnosticapi.ReportService, diagnosticapi.HandlerConfig) (http.Handler, error)
+	newUUID          func() string
+}
+
+var defaultServiceDependencies = serviceDependencies{
+	newStore: func(config jsonlstore.Config) (reportStore, error) {
+		return jsonlstore.NewReportStore(config)
+	},
+	newAuthorizer: diagnosticapi.NewBearerTokenAuthorizer,
+	newReportService: func(store reportStore, config Config, newUUID diagnosticreports.UUIDGenerator, emitter diagnosticreports.EventEmitter) (diagnosticapi.ReportService, error) {
+		return diagnosticreports.NewService(store, config.SubmissionLimits, redaction.DefaultPolicy(), time.Now, newUUID, emitter)
+	},
+	newHandler: diagnosticapi.NewHandler,
+	newUUID:    uuid.NewString,
+}
+
 type Service struct {
 	handler        http.Handler
-	store          *jsonlstore.ReportStore
+	store          reportStore
 	operationalLog *operational.Logger
 	closeOnce      sync.Once
 	closeErr       error
+	newUUID        func() string
 }
 
 func New(config Config) (*Service, error) {
+	return newWithDependencies(config, defaultServiceDependencies)
+}
+
+func newWithDependencies(config Config, deps serviceDependencies) (*Service, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 	if !config.Enabled {
 		return &Service{}, nil
 	}
+	if deps.newStore == nil || deps.newAuthorizer == nil || deps.newReportService == nil || deps.newHandler == nil || deps.newUUID == nil {
+		return nil, errors.New("hosted: service dependencies are required")
+	}
 
 	logger, err := operational.Open(operationalLogConfig(config))
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("diagnostic aggregator hosted service starting")
+	startupTrace := deps.newUUID()
+	logger.Emit(observability.Request{Event: observability.EventNameServiceStarting, Context: observability.Context{TraceID: startupTrace}})
 
-	store, err := jsonlstore.NewReportStore(reportStoreConfig(config))
+	store, err := deps.newStore(reportStoreConfig(config))
 	if err != nil {
-		logger.Error("diagnostic report store initialization failed", err)
+		logger.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTrace},
+			Fields:  observability.Fields{"dependency": "diagnostic_report_store", "failure_stage": "store_initialization", "failure_mode": lifecycleFailureMode(err)},
+		})
 		_ = logger.Close()
 		return nil, err
 	}
-	fail := func(err error) (*Service, error) {
-		logger.Error("diagnostic aggregator hosted service initialization failed", err)
+	fail := func(stage string, err error) (*Service, error) {
+		logger.Emit(observability.Request{
+			Event:   observability.EventNameServiceStartupFailed,
+			Context: observability.Context{TraceID: startupTrace},
+			Fields:  observability.Fields{"failure_stage": stage, "failure_mode": lifecycleFailureMode(err)},
+		})
 		_ = store.Close()
 		_ = logger.Close()
 		return nil, err
 	}
 	if _, err := store.EnforceRetention(context.Background()); err != nil {
-		return fail(err)
+		return fail("retention_enforcement", err)
 	}
-	authorize, err := diagnosticapi.NewBearerTokenAuthorizer(config.BearerToken)
+	authorize, err := deps.newAuthorizer(config.BearerToken)
 	if err != nil {
-		return fail(err)
+		return fail("authorizer_initialization", err)
 	}
-	reports, err := diagnosticreports.NewService(store, config.SubmissionLimits, redaction.DefaultPolicy(), time.Now, func() (string, error) { return uuid.NewString(), nil })
+	reports, err := deps.newReportService(store, config, func() (string, error) { return deps.newUUID(), nil }, logger)
 	if err != nil {
-		return fail(err)
+		return fail("report_service_initialization", err)
 	}
-	handler, err := diagnosticapi.NewHandler(reports, diagnosticapi.HandlerConfig{MaxRequestBytes: config.MaxRequestBytes, Authorize: authorize})
+	handler, err := deps.newHandler(reports, diagnosticapi.HandlerConfig{MaxRequestBytes: config.MaxRequestBytes, Authorize: authorize, Emitter: logger, NewUUID: deps.newUUID})
 	if err != nil {
-		return fail(err)
+		return fail("handler_initialization", err)
 	}
-	logger.Info("diagnostic aggregator hosted service started")
-	return &Service{handler: handler, store: store, operationalLog: logger}, nil
+	logger.Emit(observability.Request{Event: observability.EventNameServiceStarted, Context: observability.Context{TraceID: startupTrace}})
+	return &Service{handler: handler, store: store, operationalLog: logger, newUUID: deps.newUUID}, nil
+}
+
+func lifecycleFailureMode(err error) string {
+	switch {
+	case errors.Is(err, context.Canceled):
+		return "canceled"
+	case errors.Is(err, context.DeadlineExceeded):
+		return "deadline_exceeded"
+	default:
+		return "unavailable"
+	}
 }
 
 func (s *Service) Register(mux *http.ServeMux) error {
@@ -83,18 +138,25 @@ func (s *Service) Register(mux *http.ServeMux) error {
 
 func (s *Service) Close() error {
 	s.closeOnce.Do(func() {
+		if s.operationalLog == nil {
+			if s.store != nil {
+				s.closeErr = s.store.Close()
+			}
+			return
+		}
+		shutdownTrace := s.newUUID()
+		s.operationalLog.Emit(observability.Request{Event: observability.EventNameServiceStopping, Context: observability.Context{TraceID: shutdownTrace}})
 		var storeErr error
 		if s.store != nil {
 			storeErr = s.store.Close()
 		}
-		if s.operationalLog == nil {
-			s.closeErr = storeErr
-			return
-		}
 		if storeErr != nil {
-			s.operationalLog.Error("diagnostic report store close failed", storeErr)
+			s.operationalLog.Emit(observability.Request{
+				Event: observability.EventNameAggregatorStorageFailed, Context: observability.Context{TraceID: shutdownTrace},
+				Fields: observability.Fields{"operation": "close", "failure_mode": lifecycleFailureMode(storeErr)},
+			})
 		}
-		s.operationalLog.Info("diagnostic aggregator hosted service stopped")
+		s.operationalLog.Emit(observability.Request{Event: observability.EventNameServiceStopped, Context: observability.Context{TraceID: shutdownTrace}})
 		s.closeErr = errors.Join(storeErr, s.operationalLog.Close())
 	})
 	return s.closeErr

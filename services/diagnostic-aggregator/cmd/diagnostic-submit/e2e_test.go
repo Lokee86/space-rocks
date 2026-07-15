@@ -12,12 +12,19 @@ import (
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnosticapi"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/events"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type e2eReportService struct {
 	report      diagnostics.DiagnosticReport
 	createCalls int
 	getCalls    int
+}
+
+type e2eEmitter struct{}
+
+func (e2eEmitter) Emit(observability.Request) observability.Result {
+	return observability.Result{Accepted: true}
 }
 
 func (s *e2eReportService) Create(_ context.Context, submission diagnosticapi.DiagnosticReportCreateRequest) (diagnosticapi.DiagnosticReport, error) {
@@ -60,6 +67,7 @@ func TestDiagnosticSubmitEndToEnd(t *testing.T) {
 	handler, err := diagnosticapi.NewHandler(service, diagnosticapi.HandlerConfig{
 		MaxRequestBytes: 1 << 20,
 		Authorize:       func(r *http.Request) bool { return r.Header.Get("Authorization") == "Bearer expected-token" },
+		Emitter:         e2eEmitter{},
 	})
 	if err != nil {
 		t.Fatal(err)

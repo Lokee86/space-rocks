@@ -6,11 +6,13 @@ import (
 	"net/http"
 
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 const (
 	DiagnosticReportsPath          = "/v1/diagnostic-reports"
 	DiagnosticReportItemPathPrefix = DiagnosticReportsPath + "/"
+	DiagnosticReportItemRoute      = DiagnosticReportItemPathPrefix + "{diagnostic_report_id}"
 )
 
 const (
@@ -51,9 +53,17 @@ type ReportService interface {
 
 type RequestAuthorizer func(*http.Request) bool
 
+type EventEmitter interface {
+	Emit(observability.Request) observability.Result
+}
+
+type UUIDGenerator func() string
+
 type HandlerConfig struct {
 	MaxRequestBytes int64
 	Authorize       RequestAuthorizer
+	Emitter         EventEmitter
+	NewUUID         UUIDGenerator
 }
 
 type ErrorResponse struct {

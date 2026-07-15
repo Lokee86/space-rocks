@@ -20,9 +20,7 @@ func registerDiagnosticAggregator(mux *http.ServeMux) (*hosted.Service, error) {
 		_ = service.Close()
 		return nil, err
 	}
-	if config.Enabled {
-		logging.Server.Info("diagnostic aggregator hosted service registered")
-	} else {
+	if !config.Enabled {
 		logging.Server.Info("diagnostic aggregator hosted service disabled")
 	}
 	return service, nil

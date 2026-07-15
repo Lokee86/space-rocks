@@ -9,13 +9,25 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/operationcontext"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/redaction"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/storage"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type memoryStore struct {
 	report          storage.Report
 	getErr, saveErr error
+}
+
+type recordingEmitter struct {
+	requests []observability.Request
+	result   observability.Result
+}
+
+func (e *recordingEmitter) Emit(request observability.Request) observability.Result {
+	e.requests = append(e.requests, request)
+	return e.result
 }
 
 func (m *memoryStore) Save(_ context.Context, report storage.Report) error {
@@ -38,9 +50,13 @@ func (*memoryStore) DeleteExpired(context.Context, time.Time) (int, error) { ret
 func (*memoryStore) Close() error                                          { return nil }
 
 func testService(t *testing.T, store storage.ReportStore) *Service {
+	return testServiceWithEmitter(t, store, &recordingEmitter{result: observability.Result{Accepted: true}})
+}
+
+func testServiceWithEmitter(t *testing.T, store storage.ReportStore, emitter EventEmitter) *Service {
 	t.Helper()
 	limits := diagnostics.SubmissionLimits{MaxEmbeddedEvents: 4, MaxUserDescriptionBytes: 100, MaxFailureMessageBytes: 100, MaxContextStringBytes: 100}
-	service, err := NewService(store, limits, redaction.DefaultPolicy(), func() time.Time { return time.Unix(100, 0).UTC() }, func() (string, error) { return "550e8400-e29b-41d4-a716-446655440000", nil })
+	service, err := NewService(store, limits, redaction.DefaultPolicy(), func() time.Time { return time.Unix(100, 0).UTC() }, func() (string, error) { return "550e8400-e29b-41d4-a716-446655440000", nil }, emitter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +129,7 @@ func TestGetRejectsTrailingPersistedJSON(t *testing.T) {
 
 func TestNewServiceRequiresDependencies(t *testing.T) {
 	limits := diagnostics.SubmissionLimits{MaxEmbeddedEvents: 1, MaxUserDescriptionBytes: 1, MaxFailureMessageBytes: 1, MaxContextStringBytes: 1}
-	if _, err := NewService(nil, limits, redaction.Policy{}, time.Now, func() (string, error) { return "", nil }); err == nil {
+	if _, err := NewService(nil, limits, redaction.Policy{}, time.Now, func() (string, error) { return "", nil }, &recordingEmitter{}); err == nil {
 		t.Fatal("expected dependency validation error")
 	}
 }
@@ -127,4 +143,50 @@ func equalStrings(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func testOperationContext() context.Context {
+	return operationcontext.With(context.Background(), operationcontext.Values{TraceID: "550e8400-e29b-41d4-a716-446655440010", RequestID: "550e8400-e29b-41d4-a716-446655440011", Route: "/v1/diagnostic-reports"})
+}
+
+func TestCreateEmitsAcceptedThenStoredWithOwnedContext(t *testing.T) {
+	emitter := &recordingEmitter{result: observability.Result{Accepted: true}}
+	service := testServiceWithEmitter(t, &memoryStore{}, emitter)
+	created, err := service.Create(testOperationContext(), validSubmission())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(emitter.requests) != 2 {
+		t.Fatalf("requests=%#v", emitter.requests)
+	}
+	accepted, stored := emitter.requests[0], emitter.requests[1]
+	if accepted.Event != observability.EventNameAggregatorEventAccepted || stored.Event != observability.EventNameDiagnosticReportStored {
+		t.Fatalf("events=%s,%s", accepted.Event, stored.Event)
+	}
+	for _, request := range emitter.requests {
+		if request.Context.TraceID != "550e8400-e29b-41d4-a716-446655440010" || request.Context.RequestID != "550e8400-e29b-41d4-a716-446655440011" || request.Context.Route != "/v1/diagnostic-reports" || request.Context.DiagnosticReportID != created.DiagnosticReportID {
+			t.Fatalf("context=%#v", request.Context)
+		}
+	}
+	if accepted.Fields["submitted_event_count"] != 2 || stored.Fields["accepted_event_count"] != uint64(2) || stored.Fields["source_service"] != "client" {
+		t.Fatalf("accepted=%#v stored=%#v", accepted.Fields, stored.Fields)
+	}
+}
+
+func TestCreateSaveFailureEmitsOnceAndEmissionFailureDoesNotChangeError(t *testing.T) {
+	emitter := &recordingEmitter{result: observability.Result{WriteFailed: true}}
+	service := testServiceWithEmitter(t, &memoryStore{saveErr: errors.New("backend secret")}, emitter)
+	_, err := service.Create(testOperationContext(), validSubmission())
+	if !errors.Is(err, ErrUnavailable) {
+		t.Fatalf("error=%v", err)
+	}
+	if len(emitter.requests) != 2 {
+		t.Fatalf("requests=%#v", emitter.requests)
+	}
+	if emitter.requests[0].Event != observability.EventNameAggregatorEventAccepted || emitter.requests[1].Event != observability.EventNameAggregatorStorageFailed {
+		t.Fatalf("events=%s,%s", emitter.requests[0].Event, emitter.requests[1].Event)
+	}
+	if emitter.requests[1].Context.DiagnosticReportID == "" || emitter.requests[1].Fields["failure_stage"] != "report_save" {
+		t.Fatalf("failure=%#v", emitter.requests[1])
+	}
 }

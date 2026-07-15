@@ -82,7 +82,7 @@ func TestReportSummaryUsesAgreedKeys(t *testing.T) {
 }
 
 func TestRoutesAndHandlerContract(t *testing.T) {
-	if DiagnosticReportsPath != "/v1/diagnostic-reports" || DiagnosticReportItemPathPrefix != DiagnosticReportsPath+"/" {
+	if DiagnosticReportsPath != "/v1/diagnostic-reports" || DiagnosticReportItemPathPrefix != DiagnosticReportsPath+"/" || DiagnosticReportItemRoute != DiagnosticReportItemPathPrefix+"{diagnostic_report_id}" {
 		t.Fatal("route constants mismatch")
 	}
 	if !RequestAuthorizer(func(r *http.Request) bool { return r.Method == http.MethodPost })(&http.Request{Method: http.MethodPost}) {

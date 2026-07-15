@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/operationcontext"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,9 +18,22 @@ type fakeReportService struct {
 	got                   DiagnosticReport
 	createErr, getErr     error
 	createCalls, getCalls int
+	createContext         context.Context
+	getContext            context.Context
 }
 
-func (f *fakeReportService) Create(_ context.Context, request DiagnosticReportCreateRequest) (DiagnosticReport, error) {
+type recordingEmitter struct {
+	requests []observability.Request
+	result   observability.Result
+}
+
+func (e *recordingEmitter) Emit(request observability.Request) observability.Result {
+	e.requests = append(e.requests, request)
+	return e.result
+}
+
+func (f *fakeReportService) Create(ctx context.Context, request DiagnosticReportCreateRequest) (DiagnosticReport, error) {
+	f.createContext = ctx
 	f.createCalls++
 	if f.createErr != nil {
 		return DiagnosticReport{}, f.createErr
@@ -26,13 +41,17 @@ func (f *fakeReportService) Create(_ context.Context, request DiagnosticReportCr
 	f.created.Trigger = request.Trigger
 	return f.created, nil
 }
-func (f *fakeReportService) Get(_ context.Context, _ string) (DiagnosticReport, error) {
+func (f *fakeReportService) Get(ctx context.Context, _ string) (DiagnosticReport, error) {
+	f.getContext = ctx
 	f.getCalls++
 	return f.got, f.getErr
 }
 
 func newTestHandler(t *testing.T, service ReportService, config HandlerConfig) http.Handler {
 	t.Helper()
+	if config.Emitter == nil {
+		config.Emitter = &recordingEmitter{result: observability.Result{Accepted: true}}
+	}
 	h, err := NewHandler(service, config)
 	if err != nil {
 		t.Fatal(err)
@@ -45,6 +64,7 @@ func TestNewHandlerConstructionGuards(t *testing.T) {
 	for name, config := range map[string]HandlerConfig{
 		"zero limit":         {Authorize: func(*http.Request) bool { return true }},
 		"missing authorizer": {MaxRequestBytes: 10},
+		"missing emitter":    {MaxRequestBytes: 10, Authorize: func(*http.Request) bool { return true }},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := NewHandler(service, config); err == nil {
@@ -207,6 +227,45 @@ func TestPathValidationAndServiceErrors(t *testing.T) {
 	}
 }
 
+func TestRejectedReportContinuesValidTraceWithoutPayloadLeakOrBehaviorChange(t *testing.T) {
+	const submittedTrace = "550e8400-e29b-41d4-a716-446655440020"
+	const requestID = "550e8400-e29b-41d4-a716-446655440021"
+	ids := []string{"550e8400-e29b-41d4-a716-446655440022", requestID}
+	index := 0
+	emitter := &recordingEmitter{result: observability.Result{WriteFailed: true}}
+	service := &fakeReportService{createErr: ErrRejectedReport}
+	h := newTestHandler(t, service, HandlerConfig{
+		MaxRequestBytes: 1024,
+		Authorize:       func(*http.Request) bool { return true },
+		Emitter:         emitter,
+		NewUUID: func() string {
+			value := ids[index]
+			index++
+			return value
+		},
+	})
+	body := `{"correlation":{"trace_id":"` + submittedTrace + `"},"user_description":"unsafe-submitted-value"}`
+	request := httptest.NewRequest(http.MethodPost, DiagnosticReportsPath, strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, request)
+	assertError(t, response, http.StatusUnprocessableEntity, ErrorCodeDiagnosticReportRejected)
+	if len(emitter.requests) != 1 || emitter.requests[0].Event != observability.EventNameDiagnosticReportRejected {
+		t.Fatalf("requests=%#v", emitter.requests)
+	}
+	emitted := emitter.requests[0]
+	if emitted.Context.TraceID != submittedTrace || emitted.Context.RequestID != requestID || emitted.Context.Route != DiagnosticReportsPath {
+		t.Fatalf("context=%#v", emitted.Context)
+	}
+	operation, ok := operationcontext.From(service.createContext)
+	if !ok || operation.TraceID != submittedTrace || operation.RequestID != requestID || operation.Route != DiagnosticReportsPath {
+		t.Fatalf("operation=%#v ok=%v", operation, ok)
+	}
+	encoded, err := json.Marshal(emitted)
+	if err != nil || strings.Contains(string(encoded), "unsafe-submitted-value") {
+		t.Fatalf("emitted=%s err=%v", encoded, err)
+	}
+}
 func assertError(t *testing.T, response *httptest.ResponseRecorder, status int, code string) {
 	t.Helper()
 	if response.Code != status || response.Header().Get("Content-Type") != "application/json" {

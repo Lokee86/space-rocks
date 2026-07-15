@@ -14,7 +14,7 @@ This doc keeps product logging, diagnostic-report intake, and redaction policy a
 
 ## Current status
 
-Active implementation. P3 Step 1 is complete: service-owned rolling-log runtimes and generated age, compression, and retention policy alignment are complete across game-server, player-data, diagnostic-aggregator, API-server, and client. The final Rails gate, `bundle exec rails db:test:prepare && bundle exec rails test`, passed with 162 runs, 628 assertions, 0 failures, 0 errors, and 0 skips after the local PostgreSQL `space_rocks_api` role password and ownership were corrected without changing repository configuration. Cross-language canonical event emission and the domain call-site rollout are the next stage and are not part of Step 1. P3C runtime scenario work remains independently active.
+Active implementation. P3 Step 1 is complete: service-owned rolling-log runtimes and generated age, compression, and retention policy alignment are complete across game-server, player-data, diagnostic-aggregator, API-server, and client. The final Rails gate, `bundle exec rails db:test:prepare && bundle exec rails test`, passed with 162 runs, 628 assertions, 0 failures, 0 errors, and 0 skips after the local PostgreSQL `space_rocks_api` role password and ownership were corrected without changing repository configuration. Cross-language canonical event infrastructure is complete, and the diagnostic aggregator has completed its current lifecycle, HTTP rejection, report-intake, and persistence call-site rollout. Other service workflow migrations and repository-wide bridge retirement remain active follow-up work. P3C runtime scenario work remains independently active.
 
 ## Ownership boundary
 

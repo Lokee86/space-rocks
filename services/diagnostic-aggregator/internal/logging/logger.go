@@ -1,20 +1,19 @@
 package logging
 
 import (
-	"context"
 	"errors"
-	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/observability"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 )
 
 const (
-	ServiceName   = "diagnostic-aggregator"
-	DefaultPrefix = "diagnostic-aggregator"
+	ServiceName   = observability.ServiceNameDiagnosticAggregator
+	DefaultPrefix = observability.ServiceNameDiagnosticAggregator
 
 	fileSegmentMaxBytes   int64 = 32 * 1024 * 1024
 	fileRetentionMaxBytes int64 = 512 * 1024 * 1024
@@ -57,6 +56,7 @@ func (c Config) runtimeConfig() servicelog.Config {
 
 type Logger struct {
 	runtime *servicelog.Runtime
+	emitter *observability.Emitter
 }
 
 func Open(config Config) (*Logger, error) {
@@ -67,19 +67,23 @@ func Open(config Config) (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Logger{runtime: runtime}, nil
+	emitter, err := observability.New(observability.Config{
+		Service: observability.ServiceKeyDiagnosticAggregator, Environment: config.Identity.Environment,
+		BuildVersion: config.Identity.Version, ServiceInstanceID: config.Identity.InstanceID,
+		PID: os.Getpid(), Sink: runtime, WarningWriter: os.Stderr,
+	})
+	if err != nil {
+		_ = runtime.Close()
+		return nil, err
+	}
+	return &Logger{runtime: runtime, emitter: emitter}, nil
 }
 
-func (l *Logger) Info(message string, args ...any) {
-	if l != nil && l.runtime != nil {
-		l.runtime.Logger().Log(context.Background(), slog.LevelInfo, message, args...)
+func (l *Logger) Emit(request observability.Request) observability.Result {
+	if l == nil || l.emitter == nil {
+		return observability.Result{}
 	}
-}
-
-func (l *Logger) Error(message string, err error, args ...any) {
-	if l != nil && l.runtime != nil {
-		l.runtime.Logger().Log(context.Background(), slog.LevelError, message, append(args, "error", err)...)
-	}
+	return l.emitter.Emit(request)
 }
 
 func (l *Logger) Status() servicelog.Status {
@@ -87,6 +91,13 @@ func (l *Logger) Status() servicelog.Status {
 		return servicelog.Status{}
 	}
 	return l.runtime.Status()
+}
+
+func (l *Logger) EventStatus() observability.Status {
+	if l == nil || l.emitter == nil {
+		return observability.Status{}
+	}
+	return l.emitter.Status()
 }
 
 func (l *Logger) Close() error {

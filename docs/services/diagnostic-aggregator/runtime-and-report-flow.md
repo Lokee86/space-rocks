@@ -106,6 +106,23 @@ Data crossing the boundary includes the authenticated submission envelope, bound
 
 Game-server and player-data must submit or retrieve reports only through a bounded transport/client implementation of this HTTP API, never through direct imports or calls to diagnostic handlers, application services, stores, or internal types. Those diagnostic objects must not be passed into their constructors.
 
+## Canonical Operational Events
+
+The hosted service owns diagnostic-aggregator lifecycle emission. Startup creates one trace for `service_starting`, initialization failures, and `service_started`. Shutdown creates a different trace for `service_stopping`, report-store close failure, and `service_stopped`. The game-server host does not duplicate the aggregator's successful-start event; it emits only the disabled configuration decision and any additional host-level close dependency failure.
+
+Each aggregator HTTP request receives a new aggregator-owned request ID and provisional trace ID. Once a request body has been strictly decoded, a valid submitted `correlation.trace_id` replaces the provisional trace for the remaining intake operation. Submitted request, session, room, match, player, and account correlation stays inside the diagnostic report and does not become the aggregator HTTP request identity.
+
+Emission ownership is intentionally singular:
+
+- the HTTP handler emits `diagnostic_report_rejected` for transport, decoding, envelope, safety, and useful identifier rejection paths;
+- the report service emits one `aggregator_event_accepted` after successful validation, `diagnostic_report_stored` after durable save, and `aggregator_storage_failed` for save, non-not-found load, or corrupt stored-report failures;
+- the hosted service emits lifecycle events and report-store shutdown failure;
+- the storage package returns errors and does not duplicate owning-boundary events.
+
+Operational fields are bounded classifications. Bearer tokens, authorization headers, request bodies, rejected values, unrestricted errors, user descriptions, and embedded event collections are never copied into operational events. Event rejection or write failure does not change startup, shutdown, HTTP, or report-storage behavior.
+
+Current production diagnostic-aggregator code has zero `log_message` bridge sites. Repository-wide bridge retirement remains deferred until the other services complete their workflow migrations.
+
 ## Data ownership
 
 Diagnostic-aggregator owns validated report contents, safety decisions, finalized report shape, report identifiers, bounded JSONL storage, and retention metadata. Producers own the source diagnostic material and correlation context they submit. The game-server owns process and gameplay data; player-data owns player-data aggregates and persistence. Neither service gains diagnostic-storage ownership by co-hosting or producing a request.

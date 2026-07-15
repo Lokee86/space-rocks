@@ -100,4 +100,11 @@ func TestGameServerAndHostedAggregatorUseSeparateOperationalFiles(t *testing.T) 
 			t.Fatalf("active path %q: %v", path, err)
 		}
 	}
+	gameLog, err := os.ReadFile(gamePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(gameLog), "diagnostic aggregator hosted service registered") {
+		t.Fatalf("duplicate registration log=%s", gameLog)
+	}
 }
