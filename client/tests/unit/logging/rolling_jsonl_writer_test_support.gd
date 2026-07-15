@@ -31,10 +31,12 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 	var existing_paths: Array[String] = []
 	var opened_paths: Array[String] = []
 	var renamed_paths: Array[String] = []
+	var compressed_paths: Array[String] = []
 	var deleted_paths: Array[String] = []
 	var failure_warnings: Array[String] = []
 	var fail_next_make_dir := false
 	var fail_rename := false
+	var fail_compression := false
 	var fail_open_after_first_call := false
 	var fail_delete_paths: Array[String] = []
 	var file_sizes: Dictionary = {}
@@ -100,6 +102,19 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 		handle.writer = self
 		handles.append(handle)
 		return handle
+
+	func _compress_archive(archive_path: String) -> bool:
+		compressed_paths.append(archive_path)
+		if fail_compression:
+			_record_failure("failed to compress archived log file: %s" % archive_path)
+			return false
+		var compressed_path := "%s.gz" % archive_path
+		file_sizes[compressed_path] = int(file_sizes.get(archive_path, 0))
+		file_sizes.erase(archive_path)
+		if file_modified_times.has(archive_path):
+			file_modified_times[compressed_path] = int(file_modified_times[archive_path])
+			file_modified_times.erase(archive_path)
+		return true
 
 	func _emit_failure_warning(message: String) -> void:
 		failure_warnings.append(message)

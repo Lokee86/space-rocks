@@ -39,6 +39,7 @@ func test_policy_is_defensively_copied_and_layout_paths_are_prepared() -> void:
 		"segment_max_age": 60,
 		"retention_max_age": 3600,
 		"retention_max_bytes": 8192,
+		"compression_enabled": false,
 		"active_directory_name": "current",
 		"archive_directory_name": "history",
 	}
@@ -59,6 +60,7 @@ func test_configuration_uses_generated_client_defaults_when_policy_is_empty() ->
 	assert_eq(writer.configuration["segment_max_age"], ObservabilityContract.FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS)
 	assert_eq(writer.configuration["retention_max_age"], ObservabilityContract.RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL)
 	assert_eq(writer.configuration["retention_max_bytes"], 250 * 1024 * 1024)
+	assert_eq(writer.configuration["compression_enabled"], ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED)
 	assert_eq(writer.current_path, "user://writer-test/active/client.jsonl.open")
 	writer.close()
 
@@ -91,7 +93,7 @@ func test_configuration_recovers_existing_active_file_into_archive_and_opens_fre
 	writer.file_sizes[active_path] = 17
 	writer.file_modified_times[active_path] = 7000
 
-	assert_true(writer.configure("user://fake-writer", "client"))
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
 
 	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client.jsonl.open -> user://fake-writer/archive/client-7000-9000.jsonl"])
 	assert_eq(writer.opened_paths, ["user://fake-writer/active/client.jsonl.open"])
@@ -109,7 +111,7 @@ func test_configuration_recovers_existing_active_file_uses_current_clock_when_mo
 	var active_path := "user://fake-writer/active/client.jsonl.open"
 	writer.file_sizes[active_path] = 9
 
-	assert_true(writer.configure("user://fake-writer", "client"))
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
 
 	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client.jsonl.open -> user://fake-writer/archive/client-5555-5555.jsonl"])
 	assert_eq(writer.file_sizes["user://fake-writer/archive/client-5555-5555.jsonl"], 9)
@@ -122,6 +124,7 @@ func test_configuration_applies_retention_age_cleanup_after_open() -> void:
 	var policy := {
 		"retention_max_age": 2,
 		"retention_max_bytes": 0,
+		"compression_enabled": false,
 	}
 	writer.file_sizes["user://fake-writer/archive/client-1000-1000.jsonl"] = 4
 	writer.file_sizes["user://fake-writer/archive/client-5000-5000.jsonl"] = 5
@@ -146,6 +149,7 @@ func test_configuration_applies_retention_byte_cleanup_oldest_first() -> void:
 	var policy := {
 		"retention_max_age": 0,
 		"retention_max_bytes": 15,
+		"compression_enabled": false,
 	}
 	writer.file_sizes["user://fake-writer/archive/client-a-1000-1000.jsonl"] = 10
 	writer.file_sizes["user://fake-writer/archive/client-b-1000-1000.jsonl"] = 10
@@ -170,6 +174,7 @@ func test_write_line_rotates_when_segment_size_would_be_exceeded() -> void:
 	var policy := {
 		"segment_max_bytes": 12,
 		"segment_max_age": 0,
+		"compression_enabled": false,
 	}
 
 	assert_true(writer.configure("user://fake-writer", "client", policy))
@@ -198,6 +203,7 @@ func test_write_line_rotates_when_segment_age_expires() -> void:
 	var policy := {
 		"segment_max_bytes": 0,
 		"segment_max_age": 2,
+		"compression_enabled": false,
 	}
 
 	assert_true(writer.configure("user://fake-writer", "client", policy))
@@ -215,3 +221,111 @@ func test_write_line_rotates_when_segment_age_expires() -> void:
 	assert_eq(writer.handles[1].lines, ["age"])
 	assert_eq(writer.file_sizes["user://fake-writer/archive/client-1000-3500.jsonl"], 0)
 	assert_eq(writer.file_sizes[writer.current_path], 4)
+func test_rotation_compresses_completed_segment_when_enabled() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 1000
+	assert_true(writer.configure("user://fake-writer", "client", {
+		"segment_max_bytes": 1,
+		"segment_max_age": 0,
+		"compression_enabled": true,
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+	}))
+	writer.fake_now = 2000
+	writer.write_line("ab")
+	var archive_path := "user://fake-writer/archive/client-1000-2000.jsonl"
+	assert_eq(writer.compressed_paths, [archive_path])
+	assert_false(writer.file_sizes.has(archive_path))
+	assert_true(writer.file_sizes.has("%s.gz" % archive_path))
+	assert_true(writer.enabled)
+
+
+func test_rotation_keeps_completed_segment_uncompressed_when_disabled() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 1000
+	assert_true(writer.configure("user://fake-writer", "client", {
+		"segment_max_bytes": 1,
+		"segment_max_age": 0,
+		"compression_enabled": false,
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+	}))
+	writer.fake_now = 2000
+	writer.write_line("ab")
+	var archive_path := "user://fake-writer/archive/client-1000-2000.jsonl"
+	assert_true(writer.compressed_paths.is_empty())
+	assert_true(writer.file_sizes.has(archive_path))
+	assert_false(writer.file_sizes.has("%s.gz" % archive_path))
+
+
+func test_interrupted_active_recovery_compresses_completed_segment() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 9000
+	var active_path := "user://fake-writer/active/client.jsonl.open"
+	writer.file_sizes[active_path] = 17
+	writer.file_modified_times[active_path] = 7000
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": true}))
+	var archive_path := "user://fake-writer/archive/client-7000-9000.jsonl"
+	assert_eq(writer.compressed_paths, [archive_path])
+	assert_false(writer.file_sizes.has(archive_path))
+	assert_true(writer.file_sizes.has("%s.gz" % archive_path))
+	assert_true(writer.enabled)
+
+
+func test_retention_counts_compressed_archive_sizes() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 10000
+	var oldest := "user://fake-writer/archive/client-1000-1000.jsonl.gz"
+	var newest := "user://fake-writer/archive/client-2000-2000.jsonl.gz"
+	writer.file_sizes[oldest] = 8
+	writer.file_sizes[newest] = 7
+	writer.file_modified_times[oldest] = 1000
+	writer.file_modified_times[newest] = 2000
+	assert_true(writer.configure("user://fake-writer", "client", {
+		"compression_enabled": false,
+		"retention_max_age": 0,
+		"retention_max_bytes": 10,
+	}))
+	assert_eq(writer.deleted_paths, [oldest])
+	assert_false(writer.file_sizes.has(oldest))
+	assert_true(writer.file_sizes.has(newest))
+
+
+func test_rotation_creates_valid_gzip_archive() -> void:
+	var writer := RollingJSONLWriter.new()
+	assert_true(writer.configure("user://writer-test", "client", {
+		"segment_max_bytes": 8,
+		"segment_max_age": 0,
+		"compression_enabled": true,
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+	}))
+	writer.write_line("first")
+	writer.write_line("second")
+	var archive_files := _archive_files("user://writer-test/archive")
+	assert_eq(archive_files.size(), 1)
+	assert_true(archive_files[0].ends_with(".jsonl.gz"))
+	assert_false(FileAccess.file_exists(archive_files[0].trim_suffix(".gz")))
+	var archive = FileAccess.open_compressed(archive_files[0], FileAccess.READ, FileAccess.COMPRESSION_GZIP)
+	assert_ne(archive, null)
+	if archive != null:
+		assert_eq(archive.get_as_text(), "first\n")
+		archive.close()
+	writer.close()
+
+
+func _archive_files(path: String) -> Array[String]:
+	var files: Array[String] = []
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return files
+	dir.list_dir_begin()
+	while true:
+		var entry := dir.get_next()
+		if entry == "":
+			break
+		if !dir.current_is_dir():
+			files.append(path.path_join(entry))
+	dir.list_dir_end()
+	files.sort()
+	return files

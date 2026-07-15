@@ -119,7 +119,7 @@ deployment infrastructure
 
 Multiplayer Session And Lifecycle owns room membership, ready state, room lifecycle, disconnect/reconnect, return-to-lobby, and cleanup.
 
-Modes And Match Rules owns mode presets, room mode config validation, resolved match rules, scoring policy, objective policy, match-end policy, and result policy.
+Modes And Match Rules owns mode presets, room mode config validation, resolved match rules, and the separate gameplay award, objective, ranking, match-end, result, team, damage, lives/respawn, spawn-profile, join, and progression-eligibility policy seams.
 
 Social And Community Systems owns relationships, Discord integration, friends, blocks, mutes, parties, presence, invite creation, and invite notification.
 

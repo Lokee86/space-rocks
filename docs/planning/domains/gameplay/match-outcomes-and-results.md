@@ -3,9 +3,9 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 ## Purpose
 
-This doc plans `EndOfMatchFlow`, the authoritative match-end orchestration seam for Space Rocks.
+This doc plans `EndOfMatchFlow`, the result-orchestration seam that begins after the authoritative game/match layer locks a `MatchDecision`.
 
-The goal is to make match end a single explicit flow that freezes final gameplay state, finalizes scoring and result facts, emits one `MatchSummary`, and hands the dissected summary data to the systems that need it.
+The goal is to make match end a single explicit flow that consumes the locked decision, preserves final gameplay facts, emits one `MatchSummary`, and hands the dissected summary data to the systems that need it.
 
 This doc is about match-end orchestration and result handoff. It is not only a result-data shape.
 
@@ -15,9 +15,9 @@ This doc owns:
 
 ```text
 EndOfMatchFlow orchestration
-one-time match-end execution
-runtime freeze coordination
-final score/result locking
+one-time result orchestration after MatchDecision lock
+runtime freeze handoff coordination
+final MatchSummary/result-emission locking
 MatchSummary emission
 MatchSummaryDispatcher boundary
 player participation finalization
@@ -43,7 +43,7 @@ client UI layout
 packet or API schema details
 ```
 
-Modes and match rules own match-end policy, scoring policy, objective policy, and result policy.
+Modes and match rules own gameplay award, objective, ranking, match-end, result, team, and related resolved policies. The authoritative game/match layer evaluates final `MatchFacts` and locks `MatchDecision` once.
 
 Progression and rewards owns reward evaluation, XP, currency, unlocks, and `GrantAward` construction.
 
@@ -55,13 +55,22 @@ Player-data owns persistence routing and storage.
 
 ## Core Architecture
 
-The planned end-of-match flow is:
+The authoritative boundary is:
 
 ```text
-match-end condition reached
+game simulation
+-> final gameplay mutations for tick complete
+-> MatchFacts evaluated
+-> MatchDecision locks once
+-> gameplay mutation stops
+-> EndOfMatchFlow consumes locked decision
+```
+
+Result orchestration then continues:
+
+```text
+locked MatchDecision
 -> EndOfMatchFlow duplicate guard runs
--> runtime freeze/end seams are applied
--> scoring/result policy is finalized
 -> player participation is finalized
 -> objective, mission, and challenge resolutions are aggregated
 -> one MatchSummary is emitted
@@ -70,6 +79,8 @@ match-end condition reached
 ```
 
 `EndOfMatchFlow` is the orchestration seam.
+
+It does not discover match end, evaluate an independent winner, or reconstruct the decision from room state. It consumes the authoritative locked `MatchDecision` and the final facts referenced by that decision.
 
 `MatchSummary` is the one emitted end-of-match summary object.
 
@@ -86,22 +97,23 @@ It should guard against duplicate execution so repeated game-over ticks, repeate
 Recommended execution order:
 
 ```text
-1. Match-end condition is detected from resolved match rules.
-2. EndOfMatchFlow duplicate guard runs.
-3. Runtime freeze/end seams are applied.
-4. Scoring/result policy is finalized.
-5. Player participation is finalized.
-6. Objective, mission, and challenge resolutions are aggregated.
-7. MatchSummary is emitted.
-8. MatchSummaryDispatcher dissects and dispatches summary slices.
-9. Presentation-safe result data reaches client flow.
+1. Game simulation completes all gameplay mutations for the tick.
+2. Resolved match rules evaluate normalized `MatchFacts`.
+3. The authoritative game/match layer locks one `MatchDecision`.
+4. Gameplay mutation stops.
+5. EndOfMatchFlow consumes the locked decision and its final facts.
+6. EndOfMatchFlow duplicate guard prevents repeated orchestration.
+7. Historical participant, objective, mission, and challenge facts are aggregated.
+8. MatchSummary is emitted.
+9. MatchSummaryDispatcher dissects and dispatches summary slices.
+10. Presentation-safe result data reaches client flow.
 ```
 
 The first implementation should preserve current behavior while moving match-end work behind this explicit seam.
 
 ## Runtime Freeze
 
-At match end, gameplay/world state should effectively freeze.
+When `MatchDecision` locks, gameplay/world state should effectively freeze before result orchestration begins.
 
 Frozen behavior includes:
 
@@ -130,7 +142,7 @@ post-match cleanup
 
 `EndOfMatchFlow` should coordinate existing freeze and lifecycle seams where possible. It should not introduce a large new freeze mechanism unless implementation proves one is missing.
 
-The important rule is that final match facts must not drift after `MatchSummary` emission.
+The important rule is that no gameplay or result mutation may change the locked decision or its final facts. `MatchSummary` is a projection of that stable boundary.
 
 ## MatchSummary
 
@@ -150,6 +162,24 @@ challenge resolution aggregates
 participation summary
 presentation-source facts
 ```
+
+Planned result facts include:
+
+```text
+mode_id
+session_context
+end_reason
+winning_player_refs
+winning_team_refs
+participant outcomes
+team outcomes
+completion time
+ranking inputs
+final score
+target values
+```
+
+`mode_id` is gameplay identity. `session_context` records hosting/session context such as single-player or multiplayer and must not be overloaded into mode identity.
 
 `MatchSummary` should not contain downstream-specific derived sections such as:
 
@@ -198,6 +228,8 @@ presentation slice
 Presentation-safe output must not expose durable identity internals.
 
 Current implementation may keep compatibility fields internally while the planned model moves toward normalized participant references.
+
+Participants who took part before disconnecting remain represented in `MatchSummary`. Their accumulated historical facts and participant outcome remain available even though disconnect removes them from active match-rule evaluation. They do not need a special player-facing disconnected label in result presentation.
 
 ## MatchSummaryDispatcher
 
@@ -252,33 +284,39 @@ The dispatcher should remain small. Its job is extraction and routing, not gamep
 Modes and match rules own:
 
 ```text
-match-end policy
+gameplay award policy
 objective policy
-scoring policy
+ranking policy
+match-end policy
 result policy
+team policy
 progression eligibility policy inputs
 ```
 
-`EndOfMatchFlow` consumes resolved match rules and finalizes results according to those rules.
+The authoritative game/match layer evaluates final `MatchFacts` under those resolved policies and locks `MatchDecision`. `EndOfMatchFlow` consumes that locked decision; it does not discover or independently decide the winner.
 
 Baseline mode expectations:
 
 ```text
-survival_arcade
-- ends on all players eliminated
-- records score and deaths
-- completed, not necessarily won
+arcade_survival
+- baseline rules with no mode-specific objective
+- ends when no active participants remain
+- records final match facts, including score and deaths where applicable
+- no required competitive ranking
 ```
 
 ```text
 score_attack
-- ends on target score reached or all players eliminated
-- records target_score
-- records success/failure
-- records score and deaths
+- objective is to reach target score
+- ends immediately when the first valid participant reaches target
+- also ends when no active participants remain before anyone succeeds
+- ranks successful participants by completion time, lower is better
+- records winner/success/failure, completion time, final score, deaths, and target score
 ```
 
-`EndOfMatchFlow` should not define mode behavior. It finalizes and summarizes the facts produced by resolved mode policy.
+Team and FFA modes may produce player-scoped, team-scoped, or both result facts according to the locked decision. Result orchestration preserves the resolved scope instead of inferring teams from score rows.
+
+`EndOfMatchFlow` should not define mode behavior. It summarizes the locked decision and final facts produced by resolved mode policy.
 
 ## Objectives And Missions
 
@@ -453,6 +491,9 @@ Planned presentation may later include:
 mode result
 success/failure
 target score
+completion time
+ranking inputs / rank
+player or team result scope
 objective results
 mission results
 challenge resolutions
@@ -478,7 +519,8 @@ room reaches game over
 The planned direction is to preserve that behavior while moving it behind the broader end-of-match flow:
 
 ```text
-EndOfMatchFlow
+authoritative locked MatchDecision
+-> EndOfMatchFlow
 -> MatchSummary
 -> MatchSummaryDispatcher
 -> existing MatchResultSummary-compatible persistence slice
@@ -491,18 +533,16 @@ Early implementation should not break current single-player or multiplayer resul
 Recommended implementation sequence:
 
 ```text
-1. Add EndOfMatchFlow as the one-time match-end orchestration seam.
-2. Keep current match-result behavior working through EndOfMatchFlow.
-3. Introduce the planned MatchSummary concept.
-4. Move current MatchResultSummary construction behind the MatchSummary path.
-5. Add MatchSummaryDispatcher.
-6. Route persistence data through the dispatcher.
-7. Add presentation-safe result projection through the dispatcher.
-8. Add achievement fact-pipeline extraction through the dispatcher.
-9. Add progression extraction through the dispatcher.
-10. Add objective and mission resolution aggregation.
-11. Add challenge resolution aggregation with aggregation-scope support.
-12. Preserve current result UI behavior while allowing richer result data later.
+1. Consume the one-time locked MatchDecision from the authoritative game/match layer.
+2. Add EndOfMatchFlow as the one-time result-orchestration seam.
+3. Keep current match-result behavior working through EndOfMatchFlow.
+4. Introduce the planned MatchSummary concept with participant and team outcome scopes.
+5. Move current MatchResultSummary construction behind the MatchSummary path.
+6. Add MatchSummaryDispatcher.
+7. Route persistence and presentation-safe data through the dispatcher.
+8. Add achievement and progression extraction through the dispatcher.
+9. Add objective, mission, and challenge resolution aggregation with aggregation-scope support.
+10. Preserve current result UI behavior while allowing richer result data later.
 ```
 
 Early slices should prove orchestration and handoff before full challenge, mission, achievement, or progression mechanics exist.
@@ -516,9 +556,10 @@ Important future tests:
 ```text
 EndOfMatchFlow runs once.
 Repeated game-over snapshots do not rebuild final results.
-Runtime mutation freezes after match end.
-Respawning freezes after match end.
-Late join freezes after match end.
+MatchDecision locks once after final gameplay mutations for the tick.
+No gameplay or result mutation occurs after MatchDecision locks.
+Respawning freezes after MatchDecision locks.
+Late join freezes after MatchDecision locks.
 Disconnect handling still works after match end.
 Rejoin handling still works after match end.
 Current persistence reporting still works.
@@ -527,13 +568,20 @@ MatchSummaryDispatcher sends presentation-safe slice.
 MatchSummaryDispatcher sends achievement fact-pipeline slice.
 MatchSummaryDispatcher sends progression slice.
 Presentation output excludes durable identity internals.
-Score Attack result records target score and success/failure.
-Survival Arcade preserves current result behavior.
+Score Attack terminates immediately when the first valid participant reaches target score.
+Score Attack ranks successful participants by completion time, lower first.
+Score Attack result records winner/success/failure, completion time, final score, deaths, and target score.
+Arcade Survival records baseline final facts without a special objective or required ranking.
+FFA results preserve player result scope.
+Cooperative and fixed-team results preserve resolved team and participant outcome scopes.
+Disconnected participants retain accumulated facts and outcomes in MatchSummary.
+Disconnected participants require no special player-facing result label.
+session_context remains separate from gameplay mode_id.
 Objective resolutions aggregate into MatchSummary.
 Mission resolutions aggregate into MatchSummary.
 Challenge resolutions aggregate by challenge_id.
 Challenge resolutions can aggregate by player_ref.
-Challenge resolutions can aggregate by team_ref later.
+Challenge resolutions can aggregate by team_ref.
 Challenge resolutions can aggregate by mode or content refs where needed.
 Immediate and end-of-match challenge resolutions can both appear in MatchSummary.
 ```
@@ -563,11 +611,17 @@ Immediate and end-of-match challenge resolutions can both appear in MatchSummary
 ## Core Invariants
 
 ```text
-EndOfMatchFlow is the authoritative match-end orchestration seam.
+The authoritative game/match layer evaluates MatchFacts and locks MatchDecision once.
+
+EndOfMatchFlow is the one-time result-orchestration seam that consumes the locked MatchDecision.
 
 EndOfMatchFlow runs once per match.
 
-Gameplay/world state freezes at match end.
+EndOfMatchFlow does not discover match end or independently decide winners.
+
+Gameplay/world state freezes when MatchDecision locks.
+
+No result mutation occurs after MatchDecision locks.
 
 Disconnect, rejoin, room/session lifecycle, result delivery, and cleanup can continue after match end.
 
@@ -593,5 +647,9 @@ Challenge status meaning belongs to the challenge/content system.
 
 Mode rules define match-end and result policy.
 
-EndOfMatchFlow finalizes and emits results; it does not define reward, achievement, persistence, or UI policy.
+MatchSummary retains historical facts for participants who disconnected after participating.
+
+session_context remains separate from gameplay mode_id.
+
+EndOfMatchFlow summarizes and emits locked results; it does not define gameplay, reward, achievement, persistence, or UI policy.
 ```

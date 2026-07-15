@@ -14,19 +14,26 @@ This doc owns planning for `ModePreset`, `RoomModeConfig`, `ResolvedMatchRules`,
 It covers:
 
 ```text
+gameplay award policy
 objective policy
-scoring policy
+ranking policy
 match-end policy
-progression eligibility
 result policy
+team policy
+damage policy
+lives/respawn policy
+player spawn profile
+encounter spawn profile
+join policy
+progression eligibility
 room-mode option validation
 room-mode storage
 match-start rule resolution
-spawn profile ID selection
-encounter profile ID selection
+runtime match-fact evaluation
+authoritative MatchDecision and match lock
 ```
 
-This doc may select spawn profile IDs or encounter profile IDs, but it does not own detailed enemy, wave, or level content behind those IDs.
+This doc selects `player_spawn_profile_id` and `encounter_spawn_profile_id` as resolved rule seams, but it does not own detailed enemy, wave, or level content behind encounter-related IDs.
 
 ## Core Architecture
 
@@ -46,11 +53,14 @@ ModePreset
 -> stored RoomModeConfig
 -> match-start resolution
 -> ResolvedMatchRules
--> game simulation
--> match result
+-> MatchRuntimeState / MatchFacts
+-> authoritative MatchDecision
+-> match lock
+-> EndOfMatchFlow
+-> MatchSummary
 ```
 
-Rooms store the validated config, then lock that config when the match starts.
+Rooms store the validated config, then lock that configuration when the match starts. This pre-start configuration lock is distinct from the one-time `MatchDecision` lock produced later by the authoritative game/match layer.
 
 Gameplay consumes only `ResolvedMatchRules`, not raw room config.
 
@@ -66,68 +76,125 @@ Gameplay consumes resolved rules.
 
 The baseline implementation must prove the seam with two real modes, not one naming example.
 
-### Step 1 - Preset-Driven Room Mode Foundation
+### P4 Preset-Driven Room Mode Foundation
 
-Step 1 is an implementation plan, not pure foundation. The seam must be proven through two baseline modes.
-
-Players configure room options through presets, not arbitrary free-form toggles. Presets define policy-heavy groups.
-
-Preset-owned policy groups:
+The P4 seam must be proven through two real modes. Players configure room options through presets rather than arbitrary free-form toggles, and presets compose explicitly separate policies:
 
 ```text
-scoring policy
-match-end policy
+gameplay award policy
 objective policy
-spawn policy
-damage policy
-team policy
-progression eligibility
+ranking policy
+match-end policy
 result policy
-difficulty / scaling profile
+team policy
+damage policy
+lives/respawn policy
+player spawn profile
+encounter spawn profile
+join policy
+progression eligibility
 ```
 
-Likely player-configurable option groups:
+Gameplay award, objective progress, and final ranking are separate concepts. A gameplay score may contribute to an objective without becoming the result-ranking metric.
+
+Likely player-configurable option groups include preset-approved starting lives, target score, time limit, maximum players, team setup, difficulty, hazards, and pickups. Starting lives count total ships, including the initial ship. Both finite and infinite lives are valid resolved policies, and starting lives may be exposed as a preset-approved room option.
+
+Mode is not the same thing as single-player or multiplayer. Single-player and multiplayer are `session_context`; mode governs gameplay rules through `mode_id`. In-game joining remains future functionality controlled by resolved join policy and executed by lifecycle.
+
+### Arcade Survival Baseline
+
+Arcade Survival is the baseline configuration that other modes modify. It adds no special objective or ranking rule.
 
 ```text
-lives, within preset limits
-target_score, when the preset supports it
-time limit, when the preset supports it
-max players, when the preset supports it
-difficulty tier, when the preset supports it
-hazards and pickups toggles only when the preset exposes them
+mode_id: arcade_survival
+baseline rules with no mode-specific objective
+FFA by default
+no player damage
+configurable finite or infinite lives
+encounter_spawn_profile_id: playercentric_asteroids_v1
+ends when no active participants remain
+records final match facts
+no required competitive ranking
 ```
 
-Mode is not the same thing as single-player or multiplayer. Single-player and multiplayer are session or hosting context, while mode governs the match rules.
+The baseline also resolves a player spawn profile separately from the encounter spawn profile. The exact initial `player_spawn_profile_id` remains an owner-system planning decision.
 
-One mode only proves naming, while two modes prove the ruleset seam can vary behavior.
+### Score Attack Overrides
 
-Baseline mode 1: `survival_arcade`
+Score Attack uses the Arcade Survival baseline and applies explicit objective, ranking, match-end, and result overrides.
 
 ```text
-scoring_policy: current asteroid scoring
-match_end_policy: all players eliminated
-objective_policy: survive / score freely
-spawn_policy: current asteroid spawning
-lives_policy: configured lives
-result_policy: score + deaths
-configurable option: lives 1-5
+mode_id: score_attack
+
+objective:
+reach target score
+
+ranking:
+completion time, lower is better
+
+match end:
+immediate when the first valid participant reaches target
+or no active participants remain before anyone succeeds
+
+result:
+winner / success / failure
+completion time
+final score
+deaths
+target score
 ```
 
-Baseline mode 2: `score_attack`
+Score is gameplay award state and objective progress for Score Attack. Completion time is its final ranking metric. The authoritative decision locks on the same evaluation that first observes a valid participant reaching the target; later gameplay mutations cannot alter the winner or ranking inputs.
+
+`score_attack` uses existing score, asteroid destruction, lives and death, match-over evaluation, match results, and room lifecycle. It does not require enemies, waves, bosses, new pickups, campaign state, progression grants, or new objective entities.
+
+### Team Foundation
+
+Team structure is required in the first P4 foundation even though exact team semantics still require focused system planning.
 
 ```text
-scoring_policy: current asteroid scoring
-match_end_policy: score target reached OR all players eliminated
-objective_policy: reach score target
-spawn_policy: current asteroid spawning
-lives_policy: configured lives
-result_policy: won/lost + score + deaths + target_score
-configurable options: lives 1-5 and target_score from preset-approved values
+team models:
+- FFA
+- cooperative
+- fixed teams
+
+game-creation options:
+- team model
+- team count
+- player assignment or player-selectable teams
+- team size constraints where applicable
+
+resolved behavior:
+- team membership
+- result scope
+- objective aggregation scope
+- elimination scope
+- spawn relationship
+- friendly-fire policy
 ```
 
-`score_attack` is preferred because it uses existing score, asteroid destruction, lives and death, match-over evaluation, match results, and room lifecycle.
+Team policy and damage policy remain separate. Team configuration resolves into authoritative membership and policy before gameplay consumes it; the structure is not restricted to predefined assignments.
 
-`score_attack` does not require enemies, waves, bosses, new pickups, campaign state, progression grants, or new objective entities.
+### Participation, Spawning, And Match Lock
+
+Player spawning and encounter spawning are independent rule-selectable seams:
+
+```text
+player_spawn_profile_id
+encounter_spawn_profile_id: playercentric_asteroids_v1
+```
+
+Runtime evaluation uses normalized active participation facts:
+
+```text
+disconnected players stop participating in live rule evaluation
+their accumulated match facts remain available for final results
+match rules evaluate normalized active participation facts
+MatchDecision locks once inside the authoritative game/match layer
+rooms consume the locked decision rather than reconstructing it
+```
+
+Removed or disconnected players therefore cannot block team elimination or match completion, while their historical participation remains available to `MatchSummary`.
 
 Mission support is preparatory and can be implemented before campaign, while campaign itself remains a late future wrapper over missions.
 
@@ -137,7 +204,7 @@ Shared contracts / SSoT:
 
 ```text
 Mode preset IDs and option vocabularies become shared client/server language.
-Likely fields include `preset_id`, `lives`, `target_score`, mode summary, and mode identity in match results.
+Likely fields include `preset_id`, `mode_id`, `session_context`, starting-lives policy, `target_score`, team configuration, both spawn-profile IDs, mode summary, and result facts.
 ```
 
 Client room creation / pregame:
@@ -157,6 +224,7 @@ Lock mode config when match starts.
 Expose selected mode summary in room snapshot if needed.
 Pass config into match start.
 Rooms do not define what the mode means.
+Rooms consume a locked `MatchDecision`; they do not reconstruct match end or winners.
 ```
 
 Game rules / modes:
@@ -165,60 +233,71 @@ Game rules / modes:
 Define preset registry.
 Validate config.
 Construct `ResolvedMatchRules`.
-Select match-end, scoring, objective, respawn and lives, damage, team, spawn, progression, and result policies.
+Compose the Arcade Survival baseline plus mode/config overrides.
+Select gameplay award, objective, ranking, match-end, result, team, damage, lives/respawn, player-spawn, encounter-spawn, join, and progression-eligibility policies.
+Evaluate normalized `MatchFacts` and lock one authoritative `MatchDecision`.
 Likely starts near `services/game-server/internal/game/rules`, with exact package split as a gametime decision.
 ```
 
 Game simulation / player lifecycle:
 
 ```text
-Consumes resolved lives count.
-Consumes match-over and objective rules.
+Consumes resolved finite or infinite lives policy; finite starting_lives counts total ships.
+Exposes normalized active participation and historical participant facts.
+Removes disconnected players from live rule and team evaluation without discarding accumulated facts.
+Consumes separate player and encounter spawn profiles.
 Should not parse raw room config throughout simulation.
 ```
 
 Scoring:
 
 ```text
-Reuses current asteroid scoring for both baseline modes.
-Score Attack reads current score as objective progress.
-Scoring package remains policy-focused.
+Reuses current asteroid gameplay awards for both baseline modes.
+Score Attack reads score as objective progress but ranks completion by elapsed time.
+Gameplay award, objective, and ranking policy remain separate.
 ```
 
 Spawning:
 
 ```text
-Both baseline modes use current asteroid spawning.
-Spawn profile support is reserved for later mode presets.
+Player spawn policy resolves through `player_spawn_profile_id`.
+Encounter spawn policy resolves separately through `encounter_spawn_profile_id`.
+Both baseline modes use `playercentric_asteroids_v1` for encounter spawning.
 ```
 
 Damage / targeting / collision:
 
 ```text
-Current baseline keeps existing damage rules.
-PvP and team damage policy are future affected behavior.
+Arcade Survival defaults to no player damage.
+Team relationship and damage/friendly-fire policy resolve separately.
+Exact PvP, cooperative, and fixed-team damage semantics remain owner-system planning decisions.
 ```
 
 Teams:
 
 ```text
-Not implemented in Step 1.
-Must be treated as an affected future system.
-Mode policy must leave room for none, free-for-all, co-op, fixed teams, friendly fire, team spawn rules, team result summaries, and team scoring later.
+Required in the P4 foundation.
+FFA, cooperative, and fixed-team models must be representable.
+Game creation may configure team model, count, assignment/selectability, and size constraints.
+Resolved rules carry authoritative membership plus result, objective aggregation, elimination, spawn-relationship, and friendly-fire behavior.
+Exact semantics remain an individual team-system planning task.
 ```
 
 Match Results:
 
 ```text
-Result payload should include mode identity.
-Score Attack should carry `target_score` and success/failure.
+Result facts distinguish gameplay `mode_id` from `session_context`.
+Arcade Survival records final facts without requiring competitive ranking.
+Score Attack carries winner/success/failure, completion time, final score, deaths, and target score.
+Team and FFA result scopes derive from resolved policy and locked MatchDecision.
+Disconnected participants remain available for final summary aggregation.
 Visible UI can remain small at first.
 ```
 
 Player-data / progression:
 
 ```text
-Not implemented in Step 1.
+Not implemented in the initial P4 rules slice.
 Future progression needs trusted mode-aware results.
 ```
 
@@ -231,32 +310,46 @@ Room snapshots may expose selected preset, option summary, mode locked state, an
 Devtools:
 
 ```text
-Future diagnostics should inspect `preset_id`, resolved rules summary, objective state, match-end condition, spawn profile, and scoring policy.
+Future diagnostics should inspect `preset_id`, `mode_id`, resolved rules summary, active MatchFacts, objective/ranking state, locked MatchDecision, both spawn profiles, and separate award/team/damage policies.
 ```
 
 ## Implementation Planning
 
-Step 1 is the baseline proof for the mode seam.
+The first implementation stage should proceed from low-level owner contracts toward integration:
 
-The plan is to keep the current play flow intact under `survival_arcade`, then add `score_attack` as the second explicit proof mode.
+```text
+1. Define the low-level policy contracts and runtime fact boundary.
+2. Define team configuration and resolved membership structure.
+3. Define lives and both spawn-profile seams.
+4. Define authoritative MatchDecision and lock.
+5. Construct ResolvedMatchRules from baseline plus mode/config overrides.
+6. Express Arcade Survival through the baseline.
+7. Express Score Attack through explicit overrides.
+8. Wire room creation and presentation.
+```
 
-### Step 1 Completion Criteria
+This order prevents room storage and UI representation from becoming the authority for policies whose owner systems have not yet been defined.
 
-- `survival_arcade` exists as an explicit preset.
-- `score_attack` exists as a second explicit preset.
-- `CreateRoomRequest` or an equivalent room creation path can carry selected mode config.
-- Server validates requested preset and options.
-- Room stores validated `RoomModeConfig`.
-- Room snapshot exposes selected mode summary if needed by client or lobby.
-- Match start resolves `ResolvedMatchRules`.
-- Configured lives affect both modes.
-- `target_score` affects only Score Attack.
-- Survival Arcade ends on elimination.
-- Score Attack ends on target score or elimination.
-- Match result includes mode identity.
-- Score Attack result includes `target_score` and success or failure.
-- Existing current play flow still works through Survival Arcade.
-- Current multiplayer create and start flow is not broken by mode config.
+### P4 Foundation Completion Criteria
+
+- `arcade_survival` exists as the explicit baseline preset with no mode-specific objective or required competitive ranking.
+- `score_attack` exists as a second explicit preset built from baseline overrides.
+- Gameplay award, objective progress, and ranking metric are separate policy contracts.
+- Score Attack reaches a target score, ends immediately on the first valid success, and ranks by completion time.
+- FFA, cooperative, and fixed-team structures are representable.
+- Game-creation team configuration resolves into authoritative membership and behavior.
+- Team policy and damage policy remain separate.
+- Finite and infinite lives are valid; finite `starting_lives` counts total ships.
+- Player and encounter spawning resolve through separate profile IDs.
+- `playercentric_asteroids_v1` names the existing encounter-spawning behavior.
+- Match rules evaluate normalized active participant facts while retaining historical participant facts.
+- Every normal mode produces one authoritative locked `MatchDecision` in the game/match layer.
+- Rooms consume the locked decision rather than reconstructing it.
+- `CreateRoomRequest` or an equivalent room creation path can carry selected mode and team config.
+- Server validates requested preset and options, and the room stores validated `RoomModeConfig`.
+- Match start resolves `ResolvedMatchRules`; gameplay does not read raw room config.
+- Result facts keep `session_context` separate from gameplay `mode_id`.
+- Existing single-player and multiplayer create/start flows still work through Arcade Survival.
 
 ## Testing Direction
 
@@ -266,11 +359,23 @@ The main checks for this seam are:
 room creation rejects invalid preset or option combinations
 room storage preserves validated RoomModeConfig
 match start resolves ResolvedMatchRules once and uses those rules in gameplay
-survival_arcade preserves the current play behavior
-score_attack ends on target score or elimination
-configured lives affect both baseline modes
+arcade_survival preserves current play through baseline rules without a special objective
+score_attack ends in the same evaluation that first observes a valid target-score success
+score_attack ranks successful participants by completion time, lower first
+score remains distinct from ranking inputs
+FFA, cooperative, and fixed-team configurations resolve
+player-selected and preassigned team configurations validate where allowed
+team and damage policies vary independently
+finite starting_lives count total ships
+infinite lives do not consume a finite lives counter
+player_spawn_profile_id and encounter_spawn_profile_id resolve independently
+arcade_survival and score_attack use playercentric_asteroids_v1 encounter spawning
+disconnected players leave active evaluation without losing accumulated facts
+removed players do not block elimination or match completion
+MatchDecision locks once in the game/match layer
+rooms consume the locked MatchDecision without recomputing winners
 target_score affects only score_attack
-match results carry mode identity and score_attack success or failure
+match results carry mode_id separately from session_context
 room snapshots expose the mode summary only if the client needs it
 ```
 
@@ -287,10 +392,18 @@ room snapshots expose the mode summary only if the client needs it
 - Exact shared data format for presets.
 - Whether first client UI is a full selector or a minimal preset path.
 - Exact room snapshot mode-summary shape.
-- Exact team policy fields.
+- Exact team semantics, team-policy fields, assignment validation, aggregation, elimination, and spawn relationships.
+- Exact gameplay award/scoring mechanics.
+- Exact objective policy contracts.
+- Exact ranking policy contracts and tie handling.
+- Exact match-end policy contracts beyond the two baseline modes.
+- Exact result-policy shape and participant/team outcome vocabulary.
+- Exact finite/infinite lives and respawn policy contracts.
+- Exact initial `player_spawn_profile_id` and player-spawn behavior.
+- Exact encounter-spawn profile contract beyond `playercentric_asteroids_v1`.
+- Exact damage and friendly-fire policy values.
+- Exact join-policy and re-entry eligibility contracts.
 - Exact future mission option shape.
-- Exact spawn profile ID vocabulary.
-- Exact encounter profile ID vocabulary.
 
 ## Core Invariants
 
@@ -300,9 +413,20 @@ RoomModeConfig carries the validated room options.
 ResolvedMatchRules is the only rule object consumed by gameplay.
 Rooms store validated config, not raw free-form mode flags.
 Match-start rule resolution is the seam where config becomes authoritative rules.
-survival_arcade remains the explicit current-play baseline.
-score_attack uses the same baseline scoring and spawning behavior, but adds a target-score end condition.
-lives apply to both baseline modes.
+Arcade Survival is the baseline configuration and adds no special objective or ranking rule.
+score_attack uses baseline gameplay awards and encounter spawning, but adds explicit objective, completion-time ranking, match-end, and result overrides.
+Gameplay award, objective progress, and ranking metric remain separate.
+Score Attack ends immediately when the first valid participant reaches target score.
+Teams are part of the first P4 foundation; FFA, cooperative, and fixed-team structures are representable.
+Team policy and damage policy remain separate.
+Finite and infinite lives apply to both baseline modes.
+Finite starting_lives counts total ships, including the initial ship.
 target_score applies only to score_attack.
+Player and encounter spawning are separate profile seams.
+The existing encounter-spawning profile is playercentric_asteroids_v1.
+Disconnected players do not participate in live rule evaluation, but their historical facts remain available for results.
+MatchDecision locks once in the authoritative game/match layer.
+Rooms consume the locked decision and never reconstruct match end or winners.
+session_context remains separate from gameplay mode_id.
 No gameplay system should read raw room config directly.
 ```

@@ -69,7 +69,7 @@ It is a configured object built by the UI and passed to room creation.
 
 The room stores validated refs and selected options. Match start resolves those refs through the owning systems.
 
-Gameplay should consume resolved mode rules, objective rules, encounter runtime, spawn runtime, match-level state, and other resolved runtime objects. Gameplay should not read raw room-content config directly.
+Gameplay should consume resolved mode rules, objective rules, encounter runtime, separate player-spawn and encounter-spawn runtime policy, match-level state, and other resolved runtime objects. Gameplay should not read raw room-content config directly.
 
 ## RoomContentConfig
 
@@ -88,7 +88,8 @@ RoomContentConfig
 - challenge_refs[]
 - match_level_track_ref optional
 - encounter_profile_ref
-- spawn_profile_ref
+- player_spawn_profile_ref
+- encounter_spawn_profile_ref
 - arena_policy_ref optional
 - content_modifier_refs[]
 ```
@@ -123,8 +124,11 @@ challenge_refs
 match_level_track_ref
 -> Levels, Missions, And Content Structure
 
-encounter_profile_ref / spawn_profile_ref
+encounter_profile_ref / encounter_spawn_profile_ref
 -> Enemies, Bosses, And Encounters
+
+player_spawn_profile_ref
+-> Modes And Match Rules / future player-spawn owner plan
 
 arena_policy_ref
 -> unresolved arena policy planning
@@ -152,7 +156,8 @@ RoomContentPreset
 - default_challenge_refs[]
 - default_match_level_track_ref optional
 - default_encounter_profile_ref
-- default_spawn_profile_ref
+- default_player_spawn_profile_ref
+- default_encounter_spawn_profile_ref
 - default_arena_policy_ref optional
 ```
 
@@ -160,9 +165,9 @@ Example:
 
 ```text
 room_content_preset.arcade_default
--> preselects survival_arcade
+-> preselects arcade_survival
 -> preselects default mode options
--> preselects default encounter/spawn refs
+-> preselects default encounter, player-spawn, and encounter-spawn refs
 -> preselects default MatchLevel track if active
 ```
 
@@ -180,10 +185,11 @@ Example:
 
 ```text
 arcade default preset
--> mode_ref: survival_arcade
+-> mode_ref: arcade_survival
 -> selected default mode options
 -> default encounter_profile_ref
--> default spawn_profile_ref
+-> default player_spawn_profile_ref
+-> default encounter_spawn_profile_ref
 -> default match_level_track_ref if active
 ```
 

@@ -239,8 +239,8 @@ Single-result boards rank one stored eligible result.
 Examples:
 
 ```text
-Survival Arcade - High Score
-Survival Arcade - Longest Survival
+Arcade Survival - High Score
+Arcade Survival - Longest Survival
 Score Attack - Fastest Clear
 Score Attack - Fewest Deaths Clear
 Mission - Fastest Clear
@@ -646,11 +646,11 @@ version or ruleset compatibility
 Example:
 
 ```text
-board_id: survival_arcade.high_score
-display_name: Survival Arcade High Score
+board_id: arcade_survival.high_score
+display_name: Arcade Survival High Score
 board_family: single_result_performance
 source_type: match_result
-mode_scope: survival_arcade
+mode_scope: arcade_survival
 primary_sort_value: score
 sort_direction: descending
 tie_breakers:

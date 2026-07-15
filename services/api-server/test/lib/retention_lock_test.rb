@@ -15,7 +15,9 @@ class RetentionLockTest < ActiveSupport::TestCase
       assert_equal :completed, result
       assert inside
       assert File.exist?(lock.lock_path)
-      assert File.open(lock.lock_path, "a+").flock(File::LOCK_EX | File::LOCK_NB)
+      File.open(lock.lock_path, "a+") do |file|
+        assert file.flock(File::LOCK_EX | File::LOCK_NB)
+      end
     end
   end
 

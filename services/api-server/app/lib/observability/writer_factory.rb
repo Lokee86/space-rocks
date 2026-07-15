@@ -1,16 +1,23 @@
 require "fileutils"
+require_relative "rolling_jsonl_writer"
 
 module Observability
   class WriterFactory
-    def initialize(configuration, identity, writer:)
+    def initialize(configuration, identity, archive_store: nil, writer: nil)
       @configuration = configuration
       @identity = identity
-      @writer = writer
+      @writer = writer || lambda do |path|
+        raise ArgumentError, "archive_store is required" unless archive_store
+
+        RollingJsonlWriter.new(path, configuration, archive_store)
+      end
     end
 
     def call
       path = active_path
       FileUtils.mkdir_p(File.dirname(path))
+      raise IOError, "active observability path already exists: #{path}" if File.exist?(path)
+
       @writer.call(path)
     end
 

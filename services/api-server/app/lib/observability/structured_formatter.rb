@@ -3,8 +3,10 @@ require "time"
 
 module Observability
   class StructuredFormatter
-    def initialize(identity)
+    def initialize(identity, build_version: "development", environment: "development")
       @identity = identity
+      @build_version = build_version
+      @environment = environment
     end
 
     def call(severity, time, _progname, message)
@@ -12,9 +14,11 @@ module Observability
         timestamp: time.utc.iso8601(3),
         level: severity,
         service: "api-server",
+        environment: @environment,
+        build_version: @build_version,
         service_instance_id: @identity.service_instance_id,
         worker_id: @identity.worker_id,
-        process_id: @identity.pid,
+        pid: @identity.pid,
         message: message_value(message)
       }
       payload[:exception] = exception_value(message) if message.is_a?(Exception)

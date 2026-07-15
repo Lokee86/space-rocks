@@ -14,7 +14,7 @@ This doc keeps product logging, diagnostic-report intake, and redaction policy a
 
 ## Current status
 
-Active planning.
+Active implementation. P3 Step 1 is complete: service-owned rolling-log runtimes and generated age, compression, and retention policy alignment are complete across game-server, player-data, diagnostic-aggregator, API-server, and client. The final Rails gate, `bundle exec rails db:test:prepare && bundle exec rails test`, passed with 162 runs, 628 assertions, 0 failures, 0 errors, and 0 skips after the local PostgreSQL `space_rocks_api` role password and ownership were corrected without changing repository configuration. Cross-language canonical event emission and the domain call-site rollout are the next stage and are not part of Step 1. P3C runtime scenario work remains independently active.
 
 ## Ownership boundary
 
@@ -959,11 +959,13 @@ Release-shaped builds should verify that:
 
 1. Define the product observability SSoT and generated consumers.
 2. Operate the logically independent `services/diagnostic-aggregator/` report service co-hosted by game-server for bounded intake, validation, safety rejection, report construction/storage/retrieval, and retention.
-3. Add non-blocking triggered submissions and preserve correlation across the client/game-server/API/player-data chain.
-4. Make local packaged single-player retain diagnostics locally and support copy diagnostics plus bounded report creation.
-5. Verify release contracts, redaction, accounting, upload failure degradation, and service-owned log behavior in hosted staging.
-6. Keep authoritative audit persistence in domain transactions or durable outboxes; expand optional centralized observability only when continuous multi-instance operations justify it.
-7. Leave service-specific logging implementation in the owning service docs.
+3. Complete service-owned rolling-log runtimes and generated policy alignment for game-server, player-data, diagnostic-aggregator, API-server, and client.
+4. Implement cross-language canonical event emission, then roll it out through domain call sites by workflow.
+5. Add non-blocking triggered submissions and preserve correlation across the client/game-server/API/player-data chain.
+6. Make local packaged single-player retain diagnostics locally and support copy diagnostics plus bounded report creation.
+7. Verify release contracts, redaction, accounting, upload failure degradation, and service-owned log behavior in hosted staging while P3C continues independently.
+8. Keep authoritative audit persistence in domain transactions or durable outboxes; expand optional centralized observability only when continuous multi-instance operations justify it.
+9. Leave service-specific logging implementation in the owning service docs.
 
 ## Related docs
 

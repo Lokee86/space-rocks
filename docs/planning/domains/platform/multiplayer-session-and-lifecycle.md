@@ -497,6 +497,8 @@ A queued join should expire or release its reservation if the requester disconne
 
 V2 must structurally support mid-session join.
 
+This is longer-term lifecycle work. The initial P4 match-rules implementation only defines the join-policy seam; it does not implement in-game joining.
+
 Rules:
 
 ```text
@@ -563,11 +565,30 @@ whether any spectator state affects results
 
 Spectators are not match participants unless the selected mode explicitly treats them as participants.
 
-## Disconnect and active reconnect
+## P4 Interim Disconnect Policy
 
-Active in-game reconnect is required in V2.
+The initial P4 match-rules implementation uses a safe removal policy before active in-game reconnect exists:
 
-Disconnect does not mean leave.
+```text
+disconnect
+-> remove active ship
+-> remove player from active match participation
+-> remove player from live team/rule evaluation
+-> preserve historical participant facts
+-> preserve room membership only where current room lifecycle requires it
+```
+
+This policy separates active match participation from both room membership and historical result participation. A removed player cannot block player/team elimination or match completion, while `MatchSummary` may still include facts accumulated before disconnect.
+
+Lifecycle executes the ship/participant removal and any room-membership transition. Match rules consume normalized active-participation facts and determine whether a participant is eligible to enter or re-enter active play. Mode rules eventually control in-game join and re-entry restrictions; in-game joining itself is not part of the initial P4 implementation.
+
+Disconnect still does not automatically mean an intentional room leave. The interim policy may preserve room membership where current lifecycle behavior requires it, but it does not preserve active match participation.
+
+## Later Active Reconnect Upgrade
+
+Active in-game reconnect remains required in the longer-term V2 lifecycle plan. It is a later lifecycle upgrade, not part of the initial P4 match-rules implementation.
+
+Once reconnect semantics are designed against resolved match rules, active participation facts, team elimination, join policy, and the match-lock boundary, this upgrade replaces the P4 interim removal behavior for modes that allow re-entry.
 
 The planned reconnect flow is:
 
@@ -765,6 +786,8 @@ members waiting for next game
 
 All match participants affect win/loss/results unless match/mode rules say otherwise.
 
+A participant removed from active play by the P4 interim disconnect policy no longer contributes to live team/rule evaluation and cannot block elimination or completion. Facts accumulated while that player participated remain historical match facts and may be included in the final summary.
+
 Ranked and competitive modes may define stricter result participation and late-join rules.
 
 Match result finalization belongs to match outcomes.
@@ -820,7 +843,7 @@ ranked or competitive restrictions
 return / next-game policy where mode-specific
 ```
 
-Lifecycle owns execution. Mode/match rules own policy.
+Lifecycle owns execution of join, activation, removal, and re-entry operations. Mode/match rules own policy and determine whether a participant is eligible to enter or re-enter active play.
 
 ## Matchmaking handoff
 
@@ -892,6 +915,17 @@ room_closed
 Not every event needs durable event infrastructure in the first implementation. Some can begin as room or network logs.
 
 ## Implementation sequence
+
+Immediate P4 lifecycle work:
+
+```text
+1. Remove a disconnected player's active ship and active match participation.
+2. Update normalized player/team facts so removal cannot block match completion.
+3. Preserve accumulated historical participant facts for MatchSummary.
+4. Preserve room membership only where current room lifecycle requires it.
+```
+
+Later V2 lifecycle upgrade sequence:
 
 1. Update related links to point at the canonical platform lifecycle plan.
 2. Clarify identifier roles around `SessionID`, `AccountID`, `MemberID`, `PlayerID`, and active match participants.
@@ -1009,13 +1043,17 @@ Joiners must load before becoming visible or active.
 
 Spectators have separate capacity and a separate packet lane.
 
-Disconnect is not leave.
+Disconnect is not necessarily an intentional room leave.
 
-Active in-game reconnect is required.
+For initial P4, disconnect removes the active ship and active match participation while preserving historical participant facts.
 
-Disconnected active players are paused through the pause seam.
+P4-removed players do not remain in live team/rule evaluation and cannot block match completion.
 
-Reconnect restores active ship control.
+Active in-game reconnect is a later V2 lifecycle upgrade that replaces interim removal where mode policy allows re-entry.
+
+Under the later reconnect architecture, disconnected active players are paused through the pause seam.
+
+Under the later reconnect architecture, reconnect restores active ship control only when match rules allow re-entry.
 
 Gameplay transport loss is distinct from leave.
 
@@ -1043,9 +1081,9 @@ GameOver can be joined for result viewing and next-game flow.
 
 Lifecycle must not mutate locked match results during disconnect, reconnect, return-to-lobby, or cleanup.
 
-Mode/match rules decide start, join, mid-session join, spectator, result participation, and mode-specific lifecycle policy.
+Mode/match rules decide start, join, re-entry eligibility, mid-session join, spectator, result participation, and mode-specific lifecycle policy.
 
-Lifecycle owns execution machinery, not mode policy.
+Lifecycle owns join/remove/re-entry execution machinery, not mode policy.
 ```
 
 ## Related docs

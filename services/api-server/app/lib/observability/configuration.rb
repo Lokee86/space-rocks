@@ -3,6 +3,8 @@ module Observability
     :enabled,
     :log_root,
     :service_instance_id,
+    :build_version,
+    :environment,
     :segment_bytes,
     :segment_age,
     :retention_age,

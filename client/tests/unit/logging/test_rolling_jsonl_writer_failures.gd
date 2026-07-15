@@ -85,3 +85,24 @@ func test_retention_deletion_failures_are_nonfatal_and_warn_once() -> void:
 	assert_true(writer.enabled)
 	assert_true(writer.file_sizes.has("user://fake-writer/archive/client-1000-1000.jsonl"))
 	assert_true(writer.file_sizes.has("user://fake-writer/archive/client-2000-2000.jsonl"))
+func test_compression_failure_preserves_archive_and_keeps_file_output_enabled() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 1000
+	assert_true(writer.configure("user://fake-writer", "client", {
+		"segment_max_bytes": 1,
+		"segment_max_age": 0,
+		"compression_enabled": true,
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+	}))
+	writer.fail_compression = true
+	writer.fake_now = 2000
+	writer.write_line("ab")
+	var archive_path := "user://fake-writer/archive/client-1000-2000.jsonl"
+	assert_true(writer.file_sizes.has(archive_path))
+	assert_false(writer.file_sizes.has("%s.gz" % archive_path))
+	assert_eq(writer.failure_count, 1)
+	assert_true(writer.last_failure_message.contains("failed to compress archived log file"))
+	assert_eq(writer.failure_warnings.size(), 1)
+	assert_true(writer.enabled)
+	assert_ne(writer.current_path, "")

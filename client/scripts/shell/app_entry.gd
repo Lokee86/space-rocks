@@ -176,6 +176,11 @@ func _notification(what: int) -> void:
 			app_shutdown_controller.request_shutdown()
 		else:
 			get_tree().quit()
+		ClientLogger.close_file_output()
+
+
+func _exit_tree() -> void:
+	ClientLogger.close_file_output()
 
 
 func _setup_boot_and_config() -> void:

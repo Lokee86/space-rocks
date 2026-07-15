@@ -1,7 +1,3 @@
-# Observability hooks are intentionally dormant; callbacks remain no-ops until
-# worker-owned logger construction is introduced.
-require_relative "../app/lib/observability/puma_hooks"
-Observability::PumaHooks.new.register(self)
 
 # This configuration file will be evaluated by Puma. The top-level methods that
 # are invoked here are part of Puma's configuration DSL. For more information
@@ -45,3 +41,6 @@ plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+require_relative "../app/lib/observability/puma_hooks"
+Observability::PumaHooks.new.register(self)

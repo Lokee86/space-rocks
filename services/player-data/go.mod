@@ -3,6 +3,7 @@ module github.com/Lokee86/space-rocks/player-data
 go 1.26.3
 
 require (
+	github.com/Lokee86/space-rocks/shared/go/servicelog v0.0.0
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -14,3 +15,5 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.52.0 // indirect
 )
+
+replace github.com/Lokee86/space-rocks/shared/go/servicelog => ../../shared/go/servicelog

@@ -1,6 +1,7 @@
 extends RefCounted
 
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+const GzipArchiveCompressor := preload("res://scripts/logging/gzip_archive_compressor.gd")
 
 var enabled := false
 var current_path := ""
@@ -14,6 +15,7 @@ var failure_count := 0
 var last_failure_message := ""
 var _failure_warning_emitted := false
 var _handle = null
+var _archive_compressor := GzipArchiveCompressor.new()
 
 class ArchiveFileInfo extends RefCounted:
 	var path := ""
@@ -63,7 +65,7 @@ func _recover_interrupted_active_segment(candidate_path: String) -> bool:
 		segment_start_unix_ms = rotation_time_unix_ms
 
 	var archive_path := archive_directory_path.path_join(_build_segment_archive_filename(configured_prefix, segment_start_unix_ms, rotation_time_unix_ms))
-	if _rename_file(candidate_path, archive_path) != OK:
+	if !_finalize_archive(candidate_path, archive_path):
 		_record_failure("failed to recover interrupted active log file: %s" % candidate_path)
 		return false
 	return true
@@ -74,6 +76,7 @@ func _normalize_policy(policy: Dictionary) -> Dictionary:
 		"segment_max_age": ObservabilityContract.FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS,
 		"retention_max_age": ObservabilityContract.RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL,
 		"retention_max_bytes": 250 * 1024 * 1024,
+		"compression_enabled": ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED,
 		"active_directory_name": "active",
 		"archive_directory_name": "archive",
 	}
@@ -134,6 +137,7 @@ func _rename_file(from_path: String, to_path: String) -> Error:
 func _open_file(path: String, mode: int):
 	return FileAccess.open(path, mode)
 
+
 func _get_handle_error(handle) -> Error:
 	if handle != null and handle.has_method("get_error"):
 		return handle.get_error()
@@ -174,6 +178,9 @@ func _build_archive_file_path(rotation_unix_ms: int) -> String:
 func _segment_max_bytes() -> int:
 	return int(configuration["segment_max_bytes"])
 
+func _compression_enabled() -> bool:
+	return bool(configuration["compression_enabled"])
+
 func _segment_max_age_ms() -> int:
 	return int(configuration["segment_max_age"]) * 1000
 
@@ -195,6 +202,11 @@ func _segment_size_would_exceed(line: String) -> bool:
 func _archive_file_infos() -> Array[ArchiveFileInfo]:
 	var files: Array[ArchiveFileInfo] = []
 	for path in _list_archive_files():
+		var filename := path.get_file()
+		if !filename.begins_with("%s-" % configured_prefix):
+			continue
+		if !filename.ends_with(".jsonl") and !filename.ends_with(".jsonl.gz"):
+			continue
 		var info := ArchiveFileInfo.new()
 		info.path = path
 		info.modified_time_unix_ms = _get_file_modified_time_unix_ms(path)
@@ -240,6 +252,19 @@ func _apply_retention() -> void:
 		else:
 			total_bytes -= info.size_bytes
 
+func _finalize_archive(source_path: String, archive_path: String) -> bool:
+	if _rename_file(source_path, archive_path) != OK:
+		return false
+	if _compression_enabled():
+		_compress_archive(archive_path)
+	return true
+
+func _compress_archive(archive_path: String) -> bool:
+	if _archive_compressor.compress(archive_path):
+		return true
+	_record_failure(_archive_compressor.last_failure_message)
+	return false
+
 func _rotate_active_segment() -> bool:
 	var rotation_time_unix_ms := _current_time_unix_ms()
 	var archive_path := _build_archive_file_path(rotation_time_unix_ms)
@@ -250,7 +275,7 @@ func _rotate_active_segment() -> bool:
 		_handle.close()
 		_handle = null
 
-	if _rename_file(previous_path, archive_path) != OK:
+	if !_finalize_archive(previous_path, archive_path):
 		_record_failure("failed to archive active log segment: %s" % previous_path)
 		enabled = false
 		current_path = ""

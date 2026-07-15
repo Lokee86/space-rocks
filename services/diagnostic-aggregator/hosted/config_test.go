@@ -7,7 +7,7 @@ import (
 
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
-	if cfg.Enabled || cfg.DiagnosticReportRetention != 14*24*time.Hour || cfg.MaxRequestBytes != 4*1024*1024 {
+	if cfg.Enabled || cfg.DiagnosticReportRetention != 14*24*time.Hour || cfg.MaxRequestBytes != 4*1024*1024 || cfg.OperationalLogRoot == "" || cfg.BuildVersion == "" || cfg.Environment == "" || cfg.ServiceInstanceID == "" {
 		t.Fatalf("defaults = %#v", cfg)
 	}
 	if err := cfg.Validate(); err != nil {

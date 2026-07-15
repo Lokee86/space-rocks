@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -39,7 +40,7 @@ const (
 const (
 	levelOff slog.Level = slog.LevelError + 1
 
-	serviceName                 = "game-server"
+	ServiceName                 = "game-server"
 	fileSegmentMaxBytes   int64 = 64 * 1024 * 1024
 	fileRetentionMaxBytes int64 = 1 * 1024 * 1024 * 1024
 )
@@ -51,6 +52,8 @@ var (
 	roomsLevel   = new(slog.LevelVar)
 	serverLevel  = new(slog.LevelVar)
 	logRuntime   *servicelog.Runtime
+	identity     servicelog.ServiceIdentity
+	lastStatus   servicelog.Status
 )
 
 var (
@@ -66,10 +69,7 @@ type CategoryLogger struct {
 }
 
 func newCategoryLogger(name string, level *slog.LevelVar) CategoryLogger {
-	return CategoryLogger{
-		name:  name,
-		level: level,
-	}
+	return CategoryLogger{name: name, level: level}
 }
 
 func (logger CategoryLogger) Debug(message string, args ...any) {
@@ -85,15 +85,13 @@ func (logger CategoryLogger) Warn(message string, args ...any) {
 }
 
 func (logger CategoryLogger) Error(message string, err error, args ...any) {
-	args = append(args, FieldError, err)
-	logger.log(slog.LevelError, message, args...)
+	logger.log(slog.LevelError, message, append(args, FieldError, err)...)
 }
 
 func (logger CategoryLogger) log(messageLevel slog.Level, message string, args ...any) {
 	if logger.level == nil || messageLevel < logger.level.Level() {
 		return
 	}
-
 	runtimeLogger().With(slog.String(FieldCategory, logger.name)).Log(context.Background(), messageLevel, message, args...)
 }
 
@@ -110,22 +108,28 @@ func Configure(configuredLevel string) {
 	rebuildLoggers()
 }
 
+func ConfigureRuntime(configuredIdentity servicelog.ServiceIdentity) error {
+	if err := validateIdentity(configuredIdentity); err != nil {
+		return err
+	}
+	runtime, err := servicelog.Open(servicelog.Config{Identity: configuredIdentity, ConsoleEnabled: true})
+	if err != nil {
+		return err
+	}
+	return replaceRuntime(runtime, configuredIdentity)
+}
+
 func ConfigureFileOutput(baseDir string, prefix string) (string, error) {
-	runtime, err := servicelog.Open(fileRuntimeConfig(baseDir, prefix))
+	if err := validateIdentity(identity); err != nil {
+		return "", err
+	}
+	runtime, err := servicelog.Open(fileRuntimeConfig(identity, baseDir, prefix))
 	if err != nil {
 		return "", err
 	}
-
-	oldRuntime := logRuntime
-	logRuntime = runtime
-	rebuildLoggers()
-
-	if oldRuntime != nil {
-		if err := oldRuntime.Close(); err != nil {
-			return activeFilePath(baseDir, prefix), err
-		}
+	if err := replaceRuntime(runtime, identity); err != nil {
+		return activeFilePath(baseDir, prefix), err
 	}
-
 	return activeFilePath(baseDir, prefix), nil
 }
 
@@ -133,37 +137,45 @@ func CloseFileOutput() error {
 	oldRuntime := logRuntime
 	logRuntime = nil
 	rebuildLoggers()
-
 	if oldRuntime == nil {
 		return nil
 	}
-
-	return oldRuntime.Close()
+	err := oldRuntime.Close()
+	lastStatus = oldRuntime.Status()
+	return err
 }
 
-func Debug(message string, args ...any) {
-	emit(slog.LevelDebug, message, args...)
+func Status() servicelog.Status {
+	if logRuntime == nil {
+		return lastStatus
+	}
+	return logRuntime.Status()
 }
 
-func Info(message string, args ...any) {
-	emit(slog.LevelInfo, message, args...)
+func replaceRuntime(runtime *servicelog.Runtime, configuredIdentity servicelog.ServiceIdentity) error {
+	oldRuntime := logRuntime
+	logRuntime = runtime
+	identity = configuredIdentity
+	lastStatus = runtime.Status()
+	rebuildLoggers()
+	if oldRuntime != nil {
+		return oldRuntime.Close()
+	}
+	return nil
 }
 
-func Warn(message string, args ...any) {
-	emit(slog.LevelWarn, message, args...)
-}
+func Debug(message string, args ...any) { emit(slog.LevelDebug, message, args...) }
+func Info(message string, args ...any)  { emit(slog.LevelInfo, message, args...) }
+func Warn(message string, args ...any)  { emit(slog.LevelWarn, message, args...) }
 
 func Error(message string, err error, args ...any) {
-	args = append(args, FieldError, err)
-	emit(slog.LevelError, message, args...)
+	emit(slog.LevelError, message, append(args, FieldError, err)...)
 }
 
 func emit(messageLevel slog.Level, message string, args ...any) {
-	if messageLevel < rootLevel.Level() {
-		return
+	if messageLevel >= rootLevel.Level() {
+		runtimeLogger().Log(context.Background(), messageLevel, message, args...)
 	}
-
-	runtimeLogger().Log(context.Background(), messageLevel, message, args...)
 }
 
 func parseLevel(configuredLevel string) slog.Level {
@@ -194,7 +206,6 @@ func parseLevelOrDefault(configuredLevel string, defaultLevel slog.Level) slog.L
 	if strings.TrimSpace(configuredLevel) == "" {
 		return defaultLevel
 	}
-
 	return parseLevel(configuredLevel)
 }
 
@@ -206,33 +217,22 @@ func rebuildLoggers() {
 }
 
 func runtimeLogger() *slog.Logger {
-	if logRuntime == nil {
-		logRuntime = mustOpenRuntime(consoleRuntimeConfig())
+	if logRuntime != nil {
+		return logRuntime.Logger()
 	}
-
-	return logRuntime.Logger()
+	return slog.New(slog.NewTextHandler(os.Stderr, nil))
 }
 
-func mustOpenRuntime(config servicelog.Config) *servicelog.Runtime {
-	runtime, err := servicelog.Open(config)
-	if err != nil {
-		panic(err)
+func validateIdentity(value servicelog.ServiceIdentity) error {
+	if strings.TrimSpace(value.Name) == "" || strings.TrimSpace(value.Version) == "" || strings.TrimSpace(value.Environment) == "" || strings.TrimSpace(value.InstanceID) == "" {
+		return errors.New("game-server logging: service name, build version, environment, and instance ID are required")
 	}
-
-	return runtime
+	return nil
 }
 
-func consoleRuntimeConfig() servicelog.Config {
+func fileRuntimeConfig(configuredIdentity servicelog.ServiceIdentity, baseDir string, prefix string) servicelog.Config {
 	return servicelog.Config{
-		Identity:       servicelog.ServiceIdentity{Name: serviceName},
-		Flush:          servicelog.FlushPolicy{},
-		ConsoleEnabled: true,
-	}
-}
-
-func fileRuntimeConfig(baseDir string, prefix string) servicelog.Config {
-	return servicelog.Config{
-		Identity: servicelog.ServiceIdentity{Name: serviceName},
+		Identity: configuredIdentity,
 		File: servicelog.FilePolicy{
 			Directory:          baseDir,
 			Prefix:             prefix,
@@ -242,7 +242,6 @@ func fileRuntimeConfig(baseDir string, prefix string) servicelog.Config {
 			RetentionMaxBytes:  fileRetentionMaxBytes,
 			CompressionEnabled: observability.FileLoggingCompressionEnabled,
 		},
-		Flush:          servicelog.FlushPolicy{},
 		ConsoleEnabled: true,
 		FileEnabled:    true,
 	}

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -13,6 +15,7 @@ func TestRegisteredMuxPostsAndGetsFinalizedReport(t *testing.T) {
 	cfg.Enabled = true
 	cfg.BearerToken = "test-token"
 	cfg.StorageRoot = t.TempDir()
+	cfg.OperationalLogRoot = t.TempDir()
 	service, err := New(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -48,5 +51,41 @@ func TestRegisteredMuxPostsAndGetsFinalizedReport(t *testing.T) {
 	mux.ServeHTTP(unauthorized, httptest.NewRequest(http.MethodGet, "/v1/diagnostic-reports/"+report.ID, nil))
 	if unauthorized.Code != http.StatusUnauthorized {
 		t.Fatalf("unauthorized status=%d", unauthorized.Code)
+	}
+}
+func TestOperationalLoggingLifecycleAndFailureDoNotDisableHTTP(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Enabled = true
+	cfg.BearerToken = "test-token"
+	cfg.StorageRoot = t.TempDir()
+	blocked := filepath.Join(t.TempDir(), "blocked")
+	if err := os.WriteFile(blocked, []byte("file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg.OperationalLogRoot = filepath.Join(blocked, "logs")
+	service, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !service.LoggingStatus().Degraded {
+		t.Fatalf("status=%#v", service.LoggingStatus())
+	}
+	mux := http.NewServeMux()
+	if err := service.Register(mux); err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/diagnostic-reports/missing", nil))
+	if response.Code == http.StatusInternalServerError {
+		t.Fatalf("status=%d", response.Code)
+	}
+	if err := service.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if !service.LoggingStatus().Closed {
+		t.Fatalf("status=%#v", service.LoggingStatus())
 	}
 }

@@ -343,14 +343,23 @@ Define what a match is, how rules are resolved, how results are finalized, and h
 ### Required Mode Slice
 
 ```text
-survival_arcade
+arcade_survival baseline
 score_attack
 ModePreset
 RoomModeConfig
 ResolvedMatchRules
-configured lives
+team policy foundation
+FFA / cooperative / fixed-team representation
+game-creation team configuration
+gameplay award / objective / ranking separation
+finite and infinite lives policy
+starting_lives retains total-ships meaning
+player_spawn_profile_id
+encounter_spawn_profile_id
+playercentric_asteroids_v1
 target_score for score_attack
 mode identity in match result
+authoritative MatchDecision lock
 ```
 
 ### Required Match-End Slice
@@ -382,9 +391,11 @@ shield support
 ### Completion Criteria
 
 ```text
-current play works through survival_arcade
-score_attack proves the rules seam
-match end locks once
+Arcade Survival is expressed through the baseline rules
+Score Attack ranks by completion time and ends immediately
+team configuration resolves into authoritative match rules
+disconnected players cannot block match completion
+all normal modes use one authoritative match-lock path
 result output is presentation-safe
 build eligibility has an authoritative seam
 runtime mutable state is not stored as loadout state

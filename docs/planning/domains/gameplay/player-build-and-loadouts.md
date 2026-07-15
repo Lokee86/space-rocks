@@ -204,7 +204,7 @@ Ammo and equipment restriction categories:
 
 Mode examples only:
 
-- `survival_arcade`: broad/default eligibility
+- `arcade_survival`: broad/default eligibility
 - `score_attack`: broad/default eligibility, maybe blocks debug or experimental modules
 - `ranked_pvp` later: blocks progression power modules, may normalize hardwired modules
 - `campaign mission` later: may require or block certain ship classes or utility modules

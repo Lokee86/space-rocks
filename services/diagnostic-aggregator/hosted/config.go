@@ -9,12 +9,16 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/diagnostics"
+	operational "github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/logging"
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/internal/storage/jsonlstore"
+	"github.com/Lokee86/space-rocks/shared/go/servicelog"
+	"github.com/google/uuid"
 )
 
 const (
-	defaultStorageRoot           = "data/diagnostic-reports"
-	defaultMaxRequestBytes int64 = 4 * 1024 * 1024
+	defaultStorageRoot              = "data/diagnostic-reports"
+	defaultOperationalLogRoot       = "logs/diagnostic-aggregator"
+	defaultMaxRequestBytes    int64 = 4 * 1024 * 1024
 )
 
 func conservativeLimits() diagnostics.SubmissionLimits {
@@ -28,10 +32,23 @@ type Config struct {
 	DiagnosticReportRetention time.Duration
 	MaxRequestBytes           int64
 	SubmissionLimits          diagnostics.SubmissionLimits
+	OperationalLogRoot        string
+	BuildVersion              string
+	Environment               string
+	ServiceInstanceID         string
 }
 
 func DefaultConfig() Config {
-	return Config{StorageRoot: defaultStorageRoot, DiagnosticReportRetention: jsonlstore.DefaultDiagnosticReportRetention, MaxRequestBytes: defaultMaxRequestBytes, SubmissionLimits: conservativeLimits()}
+	return Config{
+		StorageRoot:               defaultStorageRoot,
+		DiagnosticReportRetention: jsonlstore.DefaultDiagnosticReportRetention,
+		MaxRequestBytes:           defaultMaxRequestBytes,
+		SubmissionLimits:          conservativeLimits(),
+		OperationalLogRoot:        defaultOperationalLogRoot,
+		BuildVersion:              "development",
+		Environment:               "development",
+		ServiceInstanceID:         uuid.NewString(),
+	}
 }
 
 func LoadConfig() (Config, error) {
@@ -48,6 +65,15 @@ func LoadConfig() (Config, error) {
 	}
 	if value := os.Getenv("DIAGNOSTIC_AGGREGATOR_STORAGE_ROOT"); value != "" {
 		cfg.StorageRoot = value
+	}
+	if value := os.Getenv("DIAGNOSTIC_AGGREGATOR_LOG_ROOT"); value != "" {
+		cfg.OperationalLogRoot = value
+	}
+	if value := os.Getenv("BUILD_VERSION"); value != "" {
+		cfg.BuildVersion = value
+	}
+	if value := os.Getenv("ENVIRONMENT"); value != "" {
+		cfg.Environment = value
 	}
 	if value := os.Getenv("DIAGNOSTIC_AGGREGATOR_RETENTION"); value != "" {
 		cfg.DiagnosticReportRetention, err = time.ParseDuration(value)
@@ -80,6 +106,11 @@ func (c Config) Validate() error {
 	if c.Enabled && (strings.TrimSpace(c.BearerToken) == "" || strings.IndexAny(c.BearerToken, " \t\r\n") >= 0) {
 		return errors.New("hosted: bearer token must be nonblank and whitespace-free")
 	}
+	if c.Enabled {
+		if err := operationalLogConfig(c).Validate(); err != nil {
+			return fmt.Errorf("hosted: operational logging: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -87,4 +118,17 @@ func reportStoreConfig(c Config) jsonlstore.Config {
 	cfg := jsonlstore.DefaultConfig(c.StorageRoot)
 	cfg.DiagnosticReportRetention = c.DiagnosticReportRetention
 	return cfg
+}
+
+func operationalLogConfig(c Config) operational.Config {
+	return operational.Config{
+		Identity: servicelog.ServiceIdentity{
+			Name:        operational.ServiceName,
+			Version:     strings.TrimSpace(c.BuildVersion),
+			Environment: strings.TrimSpace(c.Environment),
+			InstanceID:  strings.TrimSpace(c.ServiceInstanceID),
+		},
+		Directory: c.OperationalLogRoot,
+		Prefix:    operational.DefaultPrefix,
+	}
 }

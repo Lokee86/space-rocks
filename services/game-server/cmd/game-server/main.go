@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	playerlogging "github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
@@ -25,18 +27,52 @@ func run() int {
 }
 
 func runWithContext(ctx context.Context) int {
-	logging.Configure(os.Getenv(logging.EnvGlobalLevel))
+	gameIdentity, err := loadLoggingIdentity(logging.ServiceName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "game-server logging configuration failed: %v\n", err)
+		return 1
+	}
+	playerDataIdentity, err := loadLoggingIdentity(playerlogging.ServiceName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "player-data logging configuration failed: %v\n", err)
+		return 1
+	}
 
+	logging.Configure(os.Getenv(logging.EnvGlobalLevel))
+	if err := logging.ConfigureRuntime(gameIdentity); err != nil {
+		fmt.Fprintf(os.Stderr, "game-server logging configuration failed: %v\n", err)
+		return 1
+	}
 	logPath, err := logging.ConfigureFileOutput("logs/game-server", "game-server")
 	if err != nil {
 		logging.Server.Warn("server structured log file unavailable", logging.FieldError, err)
+	} else if status := logging.Status(); status.Degraded {
+		logging.Server.Warn("server structured log file unavailable", logging.FieldError, status.LastError)
 	} else {
 		logging.Server.Info("server structured log file configured", "path", logPath)
 	}
-
 	defer func() {
 		if err := logging.CloseFileOutput(); err != nil {
 			logging.Server.Error("server structured log file close failed", err)
+		}
+	}()
+
+	playerlogging.Configure(os.Getenv(playerlogging.EnvGlobalLevel))
+	if err := playerlogging.ConfigureRuntime(playerDataIdentity); err != nil {
+		logging.Server.Error("player-data logging configuration failed", err)
+		return 1
+	}
+	playerLogPath, err := playerlogging.ConfigureFileOutput("logs/player-data", "player-data")
+	if err != nil {
+		playerlogging.Server.Warn("player-data structured log file unavailable", playerlogging.FieldError, err)
+	} else if status := playerlogging.Status(); status.Degraded {
+		playerlogging.Server.Warn("player-data structured log file unavailable", playerlogging.FieldError, status.LastError)
+	} else {
+		playerlogging.Server.Info("player-data structured log file configured", "path", playerLogPath)
+	}
+	defer func() {
+		if err := playerlogging.CloseFileOutput(); err != nil {
+			logging.Server.Error("player-data structured log file close failed", err)
 		}
 	}()
 

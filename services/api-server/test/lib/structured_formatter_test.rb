@@ -6,16 +6,18 @@ class StructuredFormatterTest < ActiveSupport::TestCase
   test "formats one JSON object per line with stable context" do
     identity = Observability::ProcessIdentity.new(service_instance_id: "api-a", worker_id: "worker-1", pid: 42)
     time = Time.utc(2026, 7, 13, 12, 30, 0)
-    output = Observability::StructuredFormatter.new(identity).call("INFO", time, nil, { "event" => "started" })
+    output = Observability::StructuredFormatter.new(identity, build_version: "build-1", environment: "test").call("INFO", time, nil, { "event" => "started" })
 
     assert_equal "\n", output[-1]
     assert_equal({
       "timestamp" => "2026-07-13T12:30:00.000Z",
       "level" => "INFO",
       "service" => "api-server",
+      "environment" => "test",
+      "build_version" => "build-1",
       "service_instance_id" => "api-a",
       "worker_id" => "worker-1",
-      "process_id" => 42,
+      "pid" => 42,
       "message" => { "event" => "started" }
     }, JSON.parse(output))
   end

@@ -148,7 +148,7 @@ Behavior notes:
 - `CloseFileOutput` closes the active file output during shutdown or cleanup.
 - File-output setup failure does not stop server startup.
 - File-policy values are passed through to shared servicelog.
-- This boundary does not claim rotation, compression, recovery, or retention enforcement mechanics are implemented yet; it only passes policy through.
+- The shared runtime enforces size and age rotation, completed-segment compression, interrupted-segment recovery, age and byte retention, degraded-state tracking, and clean closure.
 
 ### Environment configuration
 
@@ -420,7 +420,7 @@ It may include identifiers and runtime facts that help correlate behavior:
 
 It must not persist logs, mutate player data, or become the source of truth for gameplay or account state.
 
-If Space Rocks later adds durable telemetry, tracing, metrics, log shipping, or retention management, that should be documented as a separate integration or observability system.
+If Space Rocks later adds durable telemetry, tracing, metrics, log shipping, or centralized observability, that should be documented as a separate integration or observability system.
 
 ## Diagnostic policy
 
@@ -554,6 +554,8 @@ client/
 ## Tests
 
 The logging package has focused tests for the servicelog adapter and category filtering.
+
+P3 Step 1 service-owned rolling-log runtime work is complete across game-server, player-data, diagnostic-aggregator, API-server, and client. The final Rails gate, `bundle exec rails db:test:prepare && bundle exec rails test`, passed with 162 runs, 628 assertions, 0 failures, 0 errors, and 0 skips after the local PostgreSQL `space_rocks_api` role password and ownership were corrected without changing repository configuration. Canonical event emission and the domain call-site rollout remain the next stage and are not part of Step 1.
 
 Current dedicated logging tests include:
 

@@ -172,11 +172,71 @@ RoomContentConfig
 -> ResolvedMatchRules
 ```
 
-`RoomContentConfig` is the configured setup for a new room or single-player run. It may include mode refs, mode options, objective refs, mission refs, challenge refs, match-level refs, encounter refs, spawn refs, arena refs, and content modifiers as owned by the narrower docs.
+`RoomContentConfig` is the configured setup for a new room or single-player run. It may include mode refs, mode options, objective refs, mission refs, challenge refs, match-level refs, encounter refs, separate player-spawn and encounter-spawn refs, arena refs, and content modifiers as owned by the narrower docs.
 
 `RoomContentConfig` is not gameplay policy. It composes refs and selected options. The owning systems validate and resolve those refs.
 
 `ResolvedMatchRules` is the authoritative playable rule object used by match runtime, lobby presentation, build filtering, results, progression eligibility, and related systems.
+
+## P4 Match Foundation
+
+The settled P4 cross-system model is:
+
+```text
+RoomContentConfig
+-> validation and resolution
+-> ResolvedMatchRules
+-> MatchRuntimeState / MatchFacts
+-> authoritative MatchDecision
+-> match lock
+-> EndOfMatchFlow
+-> MatchSummary
+```
+
+`RoomContentConfig` remains configuration input, `ResolvedMatchRules` remains the authoritative playable resolution, and runtime owners expose normalized facts for rule evaluation. The authoritative game/match layer produces and locks one `MatchDecision`. `EndOfMatchFlow` consumes that locked decision and coordinates summary construction; it does not rediscover the match outcome.
+
+Settled baseline mode decisions:
+
+```text
+Arcade Survival is the baseline configuration that other modes modify.
+Arcade Survival adds no special objective or ranking rule.
+Gameplay score, objective progress, and final ranking metric are separate concepts.
+Score Attack reaches a target score but ranks by completion time.
+Score Attack ends immediately when the target is reached.
+Team mechanics are part of the P4 foundation.
+FFA, cooperative, and fixed-team structures must be representable.
+Team setup is configurable during game creation rather than restricted to predefined assignments.
+Team policy and damage policy remain separate.
+Starting lives retain the current total-ships meaning.
+Modes may allow finite or infinite lives.
+Player spawning and encounter spawning are separate rule-selectable seams.
+The existing encounter-spawning behavior is named playercentric_asteroids_v1.
+Disconnected players are removed from active match evaluation but retained in historical match facts.
+Every normal game mode uses the same authoritative one-time match-lock flow.
+In-game joining remains mode-controlled future functionality.
+```
+
+Planning status:
+
+```text
+Settled:
+- cross-system ownership and handoffs
+
+Still requires system planning:
+- team semantics
+- award/scoring mechanics
+- objectives
+- ranking
+- match-end policies
+- results
+- lives/respawn
+- player spawning
+- encounter spawning
+- damage rules
+- join restrictions
+```
+
+The narrower owner documents define those policy contracts and exact semantics. This umbrella records the settled foundation and integration handoffs without becoming a second detailed rules plan.
 
 ## Single-Player Create Flow
 
@@ -352,7 +412,7 @@ Match runtime consumes resolved setup.
 ```text
 ResolvedMatchRules
 + ResolvedPlayerBuild per player
-+ resolved content / encounter / spawn runtime refs
++ resolved content / player-spawn / encounter-spawn runtime refs
 -> runtime match
 ```
 
@@ -380,8 +440,9 @@ Mid-match loadout changes are not supported for now.
 Match end is coordinated by the match outcome system.
 
 ```text
-match-end condition reached
--> EndOfMatchFlow
+MatchFacts evaluated
+-> authoritative MatchDecision locks once
+-> EndOfMatchFlow consumes locked decision
 -> MatchSummary
 -> MatchSummaryDispatcher
 -> persistence / progression / achievement / presentation slices
@@ -489,6 +550,9 @@ Profile / Login
 -> LoadoutSelection
 -> ResolvedPlayerBuild
 -> Runtime Match
+-> MatchFacts
+-> authoritative MatchDecision
+-> match lock
 -> EndOfMatchFlow
 -> MatchSummary
 -> MatchSummaryDispatcher
@@ -542,21 +606,19 @@ Recommended implementation direction:
 ```text
 1. Promote this doc out of stubs after completion.
 2. Keep current menu, local pilot, lobby, match result, replay, and return-to-lobby behavior intact.
-3. Map current single-player play through the RoomContentConfig path.
-4. Map multiplayer create through the RoomContentConfig path.
-5. Make join flow consume resolved room summary / ResolvedMatchRules-derived data.
-6. Add resolved match/mode/objective summary presentation to lobby.
-7. Add display names, owner/local markers, ready state, and player/team slot presentation to lobby.
-8. Add lobby loadout display.
-9. Add existing-loadout selection in lobby.
-10. Add blocked/invalid loadout display where resolved rules disqualify a selected loadout.
-11. Add player color selection only when player_color_policy allows it.
-12. Add team selection for modes that use teams.
-13. Add start countdown with unready-cancel behavior until the final 1 second.
-14. Add post-match XP/progression dialog.
-15. Add item reward highlight behavior in inventory/hangar surfaces.
-16. Add optional currency-display animation for currency increases.
-17. Add achievement CanvasLayer notification presentation.
+3. Plan the lower-level owner systems: team semantics, award/scoring, objectives, ranking, match end, results, lives/respawn, player spawning, encounter spawning, damage, and join restrictions.
+4. Define their policy contracts, runtime facts, MatchDecision, and one-time match lock.
+5. Resolve the baseline plus mode/config overrides into ResolvedMatchRules.
+6. Map current single-player play through the RoomContentConfig path.
+7. Map multiplayer create through the RoomContentConfig path.
+8. Make join flow consume resolved room summary / ResolvedMatchRules-derived data.
+9. Add resolved match/mode/objective summary presentation to lobby.
+10. Add display names, owner/local markers, ready state, and player/team slot presentation to lobby.
+11. Add lobby loadout display and existing-loadout selection.
+12. Add blocked/invalid loadout display where resolved rules disqualify a selected loadout.
+13. Add player color and team selection only when resolved policies allow them.
+14. Add start countdown with unready-cancel behavior until the final 1 second.
+15. Add post-match progression, reward, currency, and achievement presentation through their owner seams.
 ```
 
 Early slices should preserve current behavior while routing new presentation through the planned seams.

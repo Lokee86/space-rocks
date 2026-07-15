@@ -182,6 +182,15 @@ static func current_file_output_path() -> String:
 	return _file_writer.current_path
 
 
+static func file_output_status() -> Dictionary:
+	return {
+		"enabled": _file_writer.enabled,
+		"current_path": _file_writer.current_path,
+		"failure_count": _file_writer.failure_count,
+		"last_failure_message": _file_writer.last_failure_message,
+	}
+
+
 static func shell_debug(message: String) -> void:
 	debug(CATEGORY_SHELL, message)
 
