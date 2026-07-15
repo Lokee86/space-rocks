@@ -44,12 +44,6 @@ class ObservabilityEmitterTest < ActiveSupport::TestCase
     assert_equal "bridge_event_forbidden", result[:rejection_code]
   end
 
-  test "legacy bridge emits log_message" do
-    writer = StringIO.new
-    result = emitter(writer: writer).emit_legacy(level: "warn", category: "rails", message: "legacy")
-    assert result[:accepted]
-    assert_equal "log_message", JSON.parse(writer.string)["event"]
-  end
 
   test "redacts generated redact fields and discards rejected unsafe content" do
     writer = StringIO.new
@@ -93,22 +87,15 @@ class ObservabilityEmitterTest < ActiveSupport::TestCase
     path = File.expand_path("../../../../shared/contracts/observability/fixtures/emitter_cases.json", __dir__)
     fixture = JSON.parse(File.read(path))
     fixture.fetch("cases").each do |test_case|
+      next if test_case.fetch("mode") == "legacy"
+
       runtime = emitter
-      result = if test_case.fetch("mode") == "legacy"
-        runtime.emit_legacy(
-          level: test_case.fetch("level", "info"),
-          category: test_case.fetch("category", "fixture"),
-          message: test_case.fetch("message", ""),
-          fields: test_case.fetch("fields", {})
-        )
-      else
-        runtime.emit(
-          event: test_case.fetch("event"),
-          message: test_case.fetch("message", ""),
-          context: test_case.fetch("context", {}),
-          fields: test_case.fetch("fields", {})
-        )
-      end
+      result = runtime.emit(
+        event: test_case.fetch("event"),
+        message: test_case.fetch("message", ""),
+        context: test_case.fetch("context", {}),
+        fields: test_case.fetch("fields", {})
+      )
       assert_equal test_case.fetch("accepted"), result[:accepted], test_case.fetch("id")
       assert_equal test_case["redacted"], result[:redacted], test_case.fetch("id") if test_case.key?("redacted")
       if test_case.key?("rejection_code")

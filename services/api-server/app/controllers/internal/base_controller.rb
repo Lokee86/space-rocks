@@ -6,23 +6,24 @@ module Internal
 
     def authenticate_internal_request!
       expected_token = ENV["GAME_SERVER_INTERNAL_TOKEN"].to_s
-      provided_token = bearer_token_from(request.headers["Authorization"])
+      authorization_header = request.headers["Authorization"].to_s
 
-      return render_unauthorized unless expected_token.present?
-      return render_unauthorized unless provided_token
-      return render_unauthorized unless expected_token.length == provided_token.length
-      return render_unauthorized unless ActiveSupport::SecurityUtils.secure_compare(expected_token, provided_token)
-    end
+      return render_unauthorized(reason_code: "internal_token_not_configured") unless expected_token.present?
+      return render_unauthorized(reason_code: "authorization_missing") if authorization_header.blank?
 
-    def bearer_token_from(authorization_header)
       scheme, token = authorization_header.to_s.split(" ", 2)
-
-      return unless scheme == "Bearer" && token.present?
-
-      token
+      return render_unauthorized(reason_code: "authorization_scheme_invalid") unless scheme == "Bearer" && token.present?
+      return render_unauthorized(reason_code: "internal_token_invalid") unless expected_token.length == token.length
+      return render_unauthorized(reason_code: "internal_token_invalid") unless ActiveSupport::SecurityUtils.secure_compare(expected_token, token)
     end
 
-    def render_unauthorized
+    def render_unauthorized(reason_code:)
+      emit_api_event(
+        "api_unauthorized",
+        context: { "reason_code" => reason_code },
+        specific_failure: true,
+        status: :unauthorized
+      )
       render json: { error: "unauthorized" }, status: :unauthorized
     end
   end

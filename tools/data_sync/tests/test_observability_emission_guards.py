@@ -23,7 +23,6 @@ def test_bridge_event_literal_is_confined_to_contract_generated_adapter_and_test
     allowed_files = {
         REPO_ROOT / "client/scripts/logging/logger.gd",
         REPO_ROOT / "services/api-server/app/lib/observability/emitter.rb",
-        REPO_ROOT / "services/api-server/app/lib/observability/structured_formatter.rb",
     }
     violations: list[str] = []
     for root in runtime_roots:
@@ -81,11 +80,24 @@ def test_runtime_adapters_do_not_bypass_canonical_emitters() -> None:
     assert "_file_writer.write_line(" not in client_adapter
 
     for relative_path in (
-        "services/api-server/app/lib/observability/structured_formatter.rb",
         "services/api-server/app/lib/observability/worker_runtime.rb",
     ):
         content = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
         assert "@writer.write(" not in content
+
+
+def test_api_server_has_no_production_bridge_calls() -> None:
+    root = REPO_ROOT / "services/api-server/app"
+    forbidden = ("emit_legacy", "StructuredFormatter", "CanonicalLogger", "log_message")
+    violations: list[str] = []
+    for path in root.rglob("*.rb"):
+        if "generated" in path.name:
+            continue
+        content = path.read_text(encoding="utf-8")
+        for marker in forbidden:
+            if marker in content:
+                violations.append(f"{path.relative_to(REPO_ROOT).as_posix()}: {marker}")
+    assert violations == []
 
 
 def test_diagnostic_aggregator_has_no_production_bridge_calls() -> None:

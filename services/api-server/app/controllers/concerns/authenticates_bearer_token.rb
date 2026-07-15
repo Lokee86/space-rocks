@@ -12,12 +12,19 @@ module AuthenticatesBearerToken
     result = ::Auth::VerifyAccessToken.call(raw_token: raw_token)
 
     unless result.success?
+      emit_api_event(
+        "auth_failed",
+        context: { "reason_code" => api_reason_code(result.error, "invalid_token") },
+        specific_failure: true,
+        status: :unauthorized
+      )
       render json: { error: "invalid_token" }, status: :unauthorized
       return
     end
 
     @current_access_token = result.token
     @current_user = result.user
+    set_api_account_id!(@current_user.account_id)
   end
 
   def bearer_raw_token

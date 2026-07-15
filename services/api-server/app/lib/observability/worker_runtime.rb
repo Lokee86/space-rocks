@@ -4,14 +4,13 @@ require_relative "archive_store"
 require_relative "configuration_factory"
 require_relative "emitter"
 require_relative "process_identity"
-require_relative "structured_formatter"
 require_relative "writer_factory"
 
 module Observability
   class WorkerRuntime
-    def initialize(env: ENV, logger_provider: -> { Rails.logger }, archive_builder: nil, writer_builder: nil)
+    def initialize(env: ENV, logger_provider: nil, archive_builder: nil, writer_builder: nil, warning_io: $stderr)
       @env = env
-      @logger_provider = logger_provider
+      @warning_io = warning_io
       @archive_builder = archive_builder || ->(configuration, identity) { ArchiveStore.new(configuration, identity) }
       @writer_builder = writer_builder || lambda do |configuration, identity, archive_store|
         WriterFactory.new(configuration, identity, archive_store: archive_store).call
@@ -78,21 +77,28 @@ module Observability
         identity: @identity,
         writer: @writer,
         build_version: @configuration.build_version,
-        environment: @configuration.environment
+        environment: @configuration.environment,
+        warning_io: @warning_io
       )
-      @file_logger = CanonicalLogger.new(StructuredFormatter.new(@emitter))
-      @logger = @logger_provider.call
-      raise ArgumentError, "Rails logger does not support broadcast sinks" unless @logger.respond_to?(:broadcast_to)
-
-      @file_logger.level = @logger.level if @logger.respond_to?(:level) && @logger.level
-      @logger.broadcast_to(@file_logger)
     end
 
+    def emit(event:, message: nil, context: {}, fields: {})
+      return disabled_emission unless @enabled && @emitter
+
+      @emitter.emit(event: event, message: message, context: context, fields: fields)
+    rescue StandardError
+      disabled_emission
+    end
+
+    def emitter_status
+      @emitter&.status || { enabled: @enabled, disabled: !@enabled }
+    end
+
+    public :emit, :emitter_status
+
+    private
+
     def cleanup
-      @logger&.stop_broadcasting_to(@file_logger) if @file_logger && @logger&.respond_to?(:stop_broadcasting_to)
-      if @file_logger
-        @file_logger.close
-      end
       @writer&.close
     rescue StandardError => error
       degrade(error)
@@ -109,10 +115,13 @@ module Observability
     end
 
     def report_to_console(message)
-      logger = @logger || @logger_provider.call
-      logger.error(message)
+      @warning_io.puts(message.to_s.byteslice(0, 512))
     rescue StandardError
-      warn(message)
+      nil
+    end
+
+    def disabled_emission
+      { accepted: false, disabled: true, redacted: false, rejection_code: nil, rejected_key: nil, write_failed: false }
     end
   end
 end

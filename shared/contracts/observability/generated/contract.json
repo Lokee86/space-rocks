@@ -218,7 +218,6 @@
         "client",
         "game_server",
         "player_data",
-        "api_server",
         "diagnostic_aggregator"
       ],
       "trace_required": false
@@ -947,6 +946,7 @@
         "player_data"
       ],
       "trace_required": true
+    },
     {
       "audit_eligible": false,
       "bridge_only": false,
@@ -959,7 +959,6 @@
         "player_data"
       ],
       "trace_required": true
-    },
     },
     {
       "audit_eligible": false,

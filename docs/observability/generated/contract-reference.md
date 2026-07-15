@@ -198,7 +198,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | local_server_exited_unexpectedly | client_startup | error | The bundled local server exited without an expected shutdown. | client, game_server | true | false | diagnostic_report | false |
 | local_server_launch_failed | client_startup | error | The bundled local server failed to launch. | client, game_server | true | false | diagnostic_report | false |
 | local_server_launch_requested | client_startup | info | The client requested launch of the bundled local server. | client | true | false | operational | false |
-| log_message | legacy_log | info | Temporary bridge event for legacy logging call sites; normal canonical emission is forbidden. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational | true |
+| log_message | legacy_log | info | Temporary bridge event for legacy logging call sites; normal canonical emission is forbidden. | client, diagnostic_aggregator, game_server, player_data | false | false | operational | true |
 | maintenance_mode_entered | health_readiness | warn | A service or environment entered maintenance mode. | api_server, diagnostic_aggregator, game_server, player_data | false | true | audit_grade | false |
 | maintenance_mode_exited | health_readiness | info | A service or environment exited maintenance mode. | api_server, diagnostic_aggregator, game_server, player_data | false | true | audit_grade | false |
 | match_ended | simulation | info | Authoritative match simulation ended. | game_server | true | false | operational | false |

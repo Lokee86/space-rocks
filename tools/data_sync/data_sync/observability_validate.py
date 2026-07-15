@@ -16,7 +16,7 @@ RETENTION_TIERS = frozenset({"ephemeral_dev", "operational", "diagnostic_report"
 SNAKE_CASE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 EMITTED_SERVICE_NAME = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 REQUIRED_BRIDGE_SERVICES = frozenset(
-    {"client", "game_server", "player_data", "api_server", "diagnostic_aggregator"}
+    {"client", "game_server", "player_data", "diagnostic_aggregator"}
 )
 
 
@@ -194,7 +194,7 @@ def _validate_events(contract: ObservabilityContract, errors: list[str]) -> None
             errors.append("log_message must be explicitly declared bridge_only = true")
         if set(log_message.services) != REQUIRED_BRIDGE_SERVICES:
             errors.append(
-                "log_message must be eligible for all five components: "
+                "log_message must be eligible for all legacy bridge components: "
                 f"{sorted(log_message.services)!r}"
             )
 

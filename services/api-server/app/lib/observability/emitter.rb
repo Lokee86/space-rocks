@@ -6,8 +6,8 @@ require_relative "contract_generated"
 module Observability
   class Emitter
     CONTEXT_FIELDS = %w[
-      trace_id session_id room_id player_id account_id match_id request_id
-      diagnostic_report_id audit_event_id route packet_type duration_ms
+      trace_id session_id room_id player_id account_id match_id result_id request_id
+      route packet_type duration_ms failure_mode reason_code diagnostic_report_id audit_event_id
     ].freeze
     UUID_CONTEXT_FIELDS = %w[trace_id diagnostic_report_id audit_event_id].freeze
 
@@ -42,19 +42,6 @@ module Observability
 
       emit_definition(definition, level: definition.fetch("default_level"),
         category: definition.fetch("category"), message: message, context: context, fields: fields)
-    end
-
-    def emit_legacy(level:, category:, message: nil, context: {}, fields: {}, legacy_event: nil, at: nil)
-      unless ContractGenerated::CANONICAL_LEVELS.include?(level)
-        return reject(ContractGenerated::REJECTION_INVALID_FIELD_TYPE, "level")
-      end
-      return reject(ContractGenerated::REJECTION_INVALID_FIELD_TYPE, "category") if category.to_s.empty?
-
-      safe_fields = fields.dup
-      safe_fields["legacy_event"] = legacy_event if legacy_event && legacy_event != ContractGenerated::EVENT_LOG_MESSAGE
-      definition = ContractGenerated::EVENT_DEFINITIONS.fetch(ContractGenerated::EVENT_LOG_MESSAGE)
-      emit_definition(definition, level: level, category: category, message: message,
-        context: context, fields: safe_fields, at: at)
     end
 
     private

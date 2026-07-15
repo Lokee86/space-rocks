@@ -35,6 +35,25 @@ module Observability
         end
       end
 
+      def emit(event:, message: nil, context: {}, fields: {})
+        runtime = @runtime_mutex.synchronize do
+          reset_inherited_runtime
+          @runtime
+        end
+        return { accepted: false, disabled: true, redacted: false, rejection_code: nil, rejected_key: nil, write_failed: false } unless runtime
+
+        runtime.emit(event: event, message: message, context: context, fields: fields)
+      rescue StandardError
+        { accepted: false, disabled: true, redacted: false, rejection_code: nil, rejected_key: nil, write_failed: false }
+      end
+
+      def emitter_status
+        @runtime_mutex.synchronize do
+          reset_inherited_runtime
+          @runtime&.emitter_status || { enabled: false, disabled: true }
+        end
+      end
+
       private
 
       def reset_inherited_runtime

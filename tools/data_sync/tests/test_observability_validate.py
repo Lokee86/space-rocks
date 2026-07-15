@@ -114,9 +114,9 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
         ),
         (
             "events.toml",
-            'services = ["client", "game_server", "player_data", "api_server", "diagnostic_aggregator"]',
-            'services = ["client", "game_server", "player_data", "api_server"]',
-            "log_message must be eligible for all five components",
+            'services = ["client", "game_server", "player_data", "diagnostic_aggregator"]',
+            'services = ["client", "game_server", "player_data"]',
+            "log_message must be eligible for all legacy bridge components",
         ),
         (
             "schema.toml",

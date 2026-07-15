@@ -6,11 +6,37 @@ module Api
       before_action :authenticate_bearer_token!
 
       def show
+        unless current_user
+          emit_api_event(
+            "api_validation_failed",
+            context: { "failure_mode" => "missing_account_identity" },
+            specific_failure: true,
+            status: :unprocessable_entity
+          )
+          return render json: { error: "invalid_account" }, status: :unprocessable_entity
+        end
+
         player_stat = current_user.player_stat || current_user.create_player_stat!(zero_stats_attributes)
 
         render json: {
           stats: PlayerStats::SerializeStats.call(player_stat: player_stat)
         }
+      rescue ActiveRecord::ActiveRecordError
+        emit_api_event(
+          "api_request_failed",
+          context: { "failure_mode" => "database_or_stat_creation_failure" },
+          specific_failure: true,
+          status: 500
+        )
+        raise
+      rescue StandardError
+        emit_api_event(
+          "api_request_failed",
+          context: { "failure_mode" => "stats_serialization_failure" },
+          specific_failure: true,
+          status: 500
+        )
+        raise
       end
 
       private

@@ -22,14 +22,16 @@ class WorkerRuntimeTest < ActiveSupport::TestCase
     }
   end
 
-  test "boot attaches structured file output and shutdown detaches it" do
+  test "boot opens a worker-owned emitter and shutdown archives emitted records" do
     Dir.mktmpdir do |root|
       console = StringIO.new
       logger = broadcast_logger(console)
       runtime = Observability::WorkerRuntime.new(env: enabled_env(root), logger_provider: -> { logger })
       runtime.boot(worker_index: 3)
       active_path = runtime.status[:current_path]
-      logger.info("hello")
+      result = runtime.emit(event: "build_version_loaded", message: "hello")
+
+      assert result[:accepted]
       assert File.exist?(active_path)
       payload = JSON.parse(File.read(active_path))
       assert_equal "api-server", payload["service"]
@@ -37,7 +39,7 @@ class WorkerRuntimeTest < ActiveSupport::TestCase
       assert_equal "worker-3", payload["worker_id"]
       assert_equal "test-build", payload["build_version"]
       assert_equal "test", payload["environment"]
-      assert_includes console.string, "hello"
+      assert_empty console.string
 
       2.times { runtime.shutdown }
       archived = Dir.glob(File.join(root, "archive", "*.jsonl.gz")).sole
@@ -65,18 +67,22 @@ class WorkerRuntimeTest < ActiveSupport::TestCase
     end
   end
 
-  test "partial startup failure is degraded and console logging remains operational" do
+  test "partial startup failure degrades to bounded stderr without using the Rails logger" do
     Dir.mktmpdir do |root|
       console = StringIO.new
       logger = broadcast_logger(console)
+      warning = StringIO.new
       runtime = Observability::WorkerRuntime.new(
         env: enabled_env(root),
         logger_provider: -> { logger },
-        writer_builder: ->(*) { raise IOError, "read-only volume" }
+        writer_builder: ->(*) { raise IOError, "read-only volume" },
+        warning_io: warning
       )
       assert_nothing_raised { runtime.boot(worker_index: 2) }
       assert runtime.status[:degraded]
       assert_match(/read-only volume/, runtime.status[:last_error])
+      assert_match(/read-only volume/, warning.string)
+      assert_empty console.string
       assert_nothing_raised { logger.info("request still served") }
       assert_includes console.string, "request still served"
       assert_nothing_raised { runtime.shutdown }
@@ -86,18 +92,22 @@ class WorkerRuntimeTest < ActiveSupport::TestCase
   test "invalid file identity degrades without disabling the Rails logger" do
     console = StringIO.new
     logger = broadcast_logger(console)
+    warning = StringIO.new
     runtime = Observability::WorkerRuntime.new(
       env: { "API_OBSERVABILITY_ENABLED" => "true", "API_SERVICE_INSTANCE_ID" => "invalid" },
-      logger_provider: -> { logger }
+      logger_provider: -> { logger },
+      warning_io: warning
     )
     assert_nothing_raised { runtime.boot }
     assert runtime.status[:degraded]
+    assert_match(/must be a UUID/, warning.string)
+    assert_empty console.string
     logger.info("request still served")
     assert_includes console.string, "request still served"
     runtime.shutdown
   end
 
-  test "disabled configuration opens no file sink" do
+  test "disabled configuration opens no file sink and emission is a no-op" do
     console = StringIO.new
     logger = broadcast_logger(console)
     runtime = Observability::WorkerRuntime.new(env: {}, logger_provider: -> { logger })
@@ -105,6 +115,7 @@ class WorkerRuntimeTest < ActiveSupport::TestCase
     assert_not runtime.status[:enabled]
     assert_not runtime.status[:degraded]
     assert_nil runtime.status[:current_path]
+    assert runtime.emit(event: "build_version_loaded")[:disabled]
     runtime.shutdown
   end
 end
