@@ -19,7 +19,7 @@ objective policy
 ranking policy
 match-end policy
 result policy
-team policy
+team-system selection and mode overrides
 damage policy
 lives/respawn policy
 player spawn profile
@@ -86,7 +86,7 @@ objective policy
 ranking policy
 match-end policy
 result policy
-team policy
+team-system selection and mode overrides
 damage policy
 lives/respawn policy
 player spawn profile
@@ -148,32 +148,13 @@ Score is gameplay award state and objective progress for Score Attack. Completio
 
 `score_attack` uses existing score, asteroid destruction, lives and death, match-over evaluation, match results, and room lifecycle. It does not require enemies, waves, bosses, new pickups, campaign state, progression grants, or new objective entities.
 
-### Team Foundation
+### Team-System Selection
 
-Team structure is required in the first P4 foundation even though exact team semantics still require focused system planning.
+Teams are required in the first P4 foundation. Modes select the team structure and permitted room-creation configuration, then consume authoritative membership and relationship facts from [Teams And Team Rules](teams-and-team-rules.md).
 
-```text
-team models:
-- FFA
-- cooperative
-- fixed teams
+The initial selectable structures are FFA, Co-op, Custom Teams, and Auto-balanced Teams. The team-system plan owns assignment, balancing, participation, colour, friendly-fire relationships, aggregation defaults, forfeiture, and team-result requirements.
 
-game-creation options:
-- team model
-- team count
-- player assignment or player-selectable teams
-- team size constraints where applicable
-
-resolved behavior:
-- team membership
-- result scope
-- objective aggregation scope
-- elimination scope
-- spawn relationship
-- friendly-fire policy
-```
-
-Team policy and damage policy remain separate. Team configuration resolves into authoritative membership and policy before gameplay consumes it; the structure is not restricted to predefined assignments.
+Modes retain ownership of mode-specific objective aggregation overrides, team-elimination meaning, whether PvP is enabled, and in-game join policy. Team structure and damage policy remain separate.
 
 ### Participation, Spawning, And Match Lock
 
@@ -234,7 +215,7 @@ Define preset registry.
 Validate config.
 Construct `ResolvedMatchRules`.
 Compose the Arcade Survival baseline plus mode/config overrides.
-Select gameplay award, objective, ranking, match-end, result, team, damage, lives/respawn, player-spawn, encounter-spawn, join, and progression-eligibility policies.
+Select gameplay award, objective, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, encounter-spawn, join, and progression-eligibility policies.
 Evaluate normalized `MatchFacts` and lock one authoritative `MatchDecision`.
 Likely starts near `services/game-server/internal/game/rules`, with exact package split as a gametime decision.
 ```
@@ -269,18 +250,17 @@ Damage / targeting / collision:
 
 ```text
 Arcade Survival defaults to no player damage.
-Team relationship and damage/friendly-fire policy resolve separately.
-Exact PvP, cooperative, and fixed-team damage semantics remain owner-system planning decisions.
+Team relationship and PvP enablement resolve separately.
+Damage consumes authoritative same-team/opposing-team relationships; friendly fire is never allowed.
 ```
 
 Teams:
 
 ```text
 Required in the P4 foundation.
-FFA, cooperative, and fixed-team models must be representable.
-Game creation may configure team model, count, assignment/selectability, and size constraints.
-Resolved rules carry authoritative membership plus result, objective aggregation, elimination, spawn-relationship, and friendly-fire behavior.
-Exact semantics remain an individual team-system planning task.
+Selects FFA, Co-op, Custom Teams, or Auto-balanced Teams through the team-system owner.
+Resolved rules carry the selected team configuration plus mode-owned aggregation overrides, elimination meaning, PvP enablement, and in-game join policy.
+Authoritative assignment, balancing, relationships, forfeiture, colours, and result requirements come from Teams And Team Rules.
 ```
 
 Match Results:
@@ -319,7 +299,7 @@ The first implementation stage should proceed from low-level owner contracts tow
 
 ```text
 1. Define the low-level policy contracts and runtime fact boundary.
-2. Define team configuration and resolved membership structure.
+2. Integrate the team-system configuration and authoritative membership contracts.
 3. Define lives and both spawn-profile seams.
 4. Define authoritative MatchDecision and lock.
 5. Construct ResolvedMatchRules from baseline plus mode/config overrides.
@@ -336,9 +316,9 @@ This order prevents room storage and UI representation from becoming the authori
 - `score_attack` exists as a second explicit preset built from baseline overrides.
 - Gameplay award, objective progress, and ranking metric are separate policy contracts.
 - Score Attack reaches a target score, ends immediately on the first valid success, and ranks by completion time.
-- FFA, cooperative, and fixed-team structures are representable.
-- Game-creation team configuration resolves into authoritative membership and behavior.
-- Team policy and damage policy remain separate.
+- FFA, Co-op, Custom Teams, and Auto-balanced Teams are selectable through the team-system owner.
+- Game-creation team configuration resolves through the authoritative team-system plan.
+- Team-system membership and damage policy remain separate.
 - Finite and infinite lives are valid; finite `starting_lives` counts total ships.
 - Player and encounter spawning resolve through separate profile IDs.
 - `playercentric_asteroids_v1` names the existing encounter-spawning behavior.
@@ -363,8 +343,8 @@ arcade_survival preserves current play through baseline rules without a special 
 score_attack ends in the same evaluation that first observes a valid target-score success
 score_attack ranks successful participants by completion time, lower first
 score remains distinct from ranking inputs
-FFA, cooperative, and fixed-team configurations resolve
-player-selected and preassigned team configurations validate where allowed
+all four initial team structures resolve through the team-system owner
+mode-selected team configuration and overrides validate where allowed
 team and damage policies vary independently
 finite starting_lives count total ships
 infinite lives do not consume a finite lives counter
@@ -383,6 +363,7 @@ room snapshots expose the mode summary only if the client needs it
 
 - [Planning](../../!INDEX.md)
 - [Player Experience Systems](player-experience-systems.md)
+- [Teams And Team Rules](teams-and-team-rules.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Progression And Rewards](progression-and-rewards.md)
 
@@ -392,7 +373,6 @@ room snapshots expose the mode summary only if the client needs it
 - Exact shared data format for presets.
 - Whether first client UI is a full selector or a minimal preset path.
 - Exact room snapshot mode-summary shape.
-- Exact team semantics, team-policy fields, assignment validation, aggregation, elimination, and spawn relationships.
 - Exact gameplay award/scoring mechanics.
 - Exact objective policy contracts.
 - Exact ranking policy contracts and tie handling.
@@ -401,7 +381,7 @@ room snapshots expose the mode summary only if the client needs it
 - Exact finite/infinite lives and respawn policy contracts.
 - Exact initial `player_spawn_profile_id` and player-spawn behavior.
 - Exact encounter-spawn profile contract beyond `playercentric_asteroids_v1`.
-- Exact damage and friendly-fire policy values.
+- Exact damage-policy contract and PvP enablement values.
 - Exact join-policy and re-entry eligibility contracts.
 - Exact future mission option shape.
 
@@ -417,8 +397,8 @@ Arcade Survival is the baseline configuration and adds no special objective or r
 score_attack uses baseline gameplay awards and encounter spawning, but adds explicit objective, completion-time ranking, match-end, and result overrides.
 Gameplay award, objective progress, and ranking metric remain separate.
 Score Attack ends immediately when the first valid participant reaches target score.
-Teams are part of the first P4 foundation; FFA, cooperative, and fixed-team structures are representable.
-Team policy and damage policy remain separate.
+Teams are part of the first P4 foundation; modes select the authoritative team system rather than redefining its semantics.
+Team-system membership and damage policy remain separate.
 Finite and infinite lives apply to both baseline modes.
 Finite starting_lives counts total ships, including the initial ship.
 target_score applies only to score_attack.

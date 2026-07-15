@@ -27,6 +27,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 - [player-experience-systems.md](player-experience-systems.md) - Player Experience Systems documentation.
 - [progression-and-rewards.md](progression-and-rewards.md) - Progression And Rewards documentation.
 - [shop-commerce-and-economy.md](shop-commerce-and-economy.md) - Shop Commerce And Economy documentation.
+- [teams-and-team-rules.md](teams-and-team-rules.md) - Teams And Team Rules documentation.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

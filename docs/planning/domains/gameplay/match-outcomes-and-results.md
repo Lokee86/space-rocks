@@ -43,7 +43,7 @@ client UI layout
 packet or API schema details
 ```
 
-Modes and match rules own gameplay award, objective, ranking, match-end, result, team, and related resolved policies. The authoritative game/match layer evaluates final `MatchFacts` and locks `MatchDecision` once.
+Modes and match rules own gameplay award, objective, ranking, match-end, result, and related resolved policies. Teams and team rules owns team aggregation defaults and team-result requirements. The authoritative game/match layer evaluates final `MatchFacts` and locks `MatchDecision` once.
 
 Progression and rewards owns reward evaluation, XP, currency, unlocks, and `GrantAward` construction.
 
@@ -289,7 +289,7 @@ objective policy
 ranking policy
 match-end policy
 result policy
-team policy
+team-system selection and mode-specific team overrides
 progression eligibility policy inputs
 ```
 
@@ -314,7 +314,7 @@ score_attack
 - records winner/success/failure, completion time, final score, deaths, and target score
 ```
 
-Team and FFA modes may produce player-scoped, team-scoped, or both result facts according to the locked decision. Result orchestration preserves the resolved scope instead of inferring teams from score rows.
+FFA preserves standard individual player results. Team modes produce standard team results plus individual player results as required by [Teams And Team Rules](teams-and-team-rules.md). Result orchestration preserves the locked scopes instead of inferring teams from score rows.
 
 `EndOfMatchFlow` should not define mode behavior. It summarizes the locked decision and final facts produced by resolved mode policy.
 
@@ -573,7 +573,7 @@ Score Attack ranks successful participants by completion time, lower first.
 Score Attack result records winner/success/failure, completion time, final score, deaths, and target score.
 Arcade Survival records baseline final facts without a special objective or required ranking.
 FFA results preserve player result scope.
-Cooperative and fixed-team results preserve resolved team and participant outcome scopes.
+Co-op, Custom Teams, and Auto-balanced Teams preserve resolved team and participant outcome scopes.
 Disconnected participants retain accumulated facts and outcomes in MatchSummary.
 Disconnected participants require no special player-facing result label.
 session_context remains separate from gameplay mode_id.
@@ -589,6 +589,7 @@ Immediate and end-of-match challenge resolutions can both appear in MatchSummary
 ## Related Docs
 
 * [Modes And Match Rules](modes-and-match-rules.md)
+* [Teams And Team Rules](teams-and-team-rules.md)
 * [Progression And Rewards](progression-and-rewards.md)
 * [Progression And Rewards](progression-and-rewards.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)

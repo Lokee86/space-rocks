@@ -203,10 +203,7 @@ Arcade Survival adds no special objective or ranking rule.
 Gameplay score, objective progress, and final ranking metric are separate concepts.
 Score Attack reaches a target score but ranks by completion time.
 Score Attack ends immediately when the target is reached.
-Team mechanics are part of the P4 foundation.
-FFA, cooperative, and fixed-team structures must be representable.
-Team setup is configurable during game creation rather than restricted to predefined assignments.
-Team policy and damage policy remain separate.
+Team mechanics are part of the P4 foundation and resolve through Teams And Team Rules.
 Starting lives retain the current total-ships meaning.
 Modes may allow finite or infinite lives.
 Player spawning and encounter spawning are separate rule-selectable seams.
@@ -223,7 +220,6 @@ Settled:
 - cross-system ownership and handoffs
 
 Still requires system planning:
-- team semantics
 - award/scoring mechanics
 - objectives
 - ranking
@@ -332,8 +328,8 @@ Planned lobby interactions:
 
 ```text
 select from existing valid loadouts
-select team when the resolved mode/team policy uses teams
-select player color when player_color_policy allows it
+use team assignment controls allowed by the resolved team structure and assignment mode
+select player color only in non-team modes when player_color_policy allows it
 ready / unready
 owner start
 leave room
@@ -341,7 +337,7 @@ leave room
 
 Loadout creation and editing remain pregame/hangar actions. The lobby may select among existing valid loadouts, but does not become the full hangar editor.
 
-Teams are real mode/match functionality. Team selection belongs to the resolved mode/team policy and lobby presentation.
+Teams are real mode/match functionality. The lobby presents only the configuration and assignment controls allowed by [Teams And Team Rules](teams-and-team-rules.md). Team modes force team colours; custom player display colours are available only in non-team modes when their resolved `player_color_policy` allows selection.
 
 Player color selection uses existing color vocabulary:
 
@@ -606,7 +602,7 @@ Recommended implementation direction:
 ```text
 1. Promote this doc out of stubs after completion.
 2. Keep current menu, local pilot, lobby, match result, replay, and return-to-lobby behavior intact.
-3. Plan the lower-level owner systems: team semantics, award/scoring, objectives, ranking, match end, results, lives/respawn, player spawning, encounter spawning, damage, and join restrictions.
+3. Plan the remaining lower-level owner systems: award/scoring, objectives, ranking, match end, results, lives/respawn, player spawning, encounter spawning, damage, and join restrictions; consume team semantics from Teams And Team Rules.
 4. Define their policy contracts, runtime facts, MatchDecision, and one-time match lock.
 5. Resolve the baseline plus mode/config overrides into ResolvedMatchRules.
 6. Map current single-player play through the RoomContentConfig path.
@@ -616,7 +612,7 @@ Recommended implementation direction:
 10. Add display names, owner/local markers, ready state, and player/team slot presentation to lobby.
 11. Add lobby loadout display and existing-loadout selection.
 12. Add blocked/invalid loadout display where resolved rules disqualify a selected loadout.
-13. Add player color and team selection only when resolved policies allow them.
+13. Add team assignment controls and player colour selection only when their owning resolved policies allow them.
 14. Add start countdown with unready-cancel behavior until the final 1 second.
 15. Add post-match progression, reward, currency, and achievement presentation through their owner seams.
 ```
@@ -639,8 +635,8 @@ lobby displays ready state
 lobby displays selected loadout
 lobby can select existing valid loadouts
 lobby shows blocked loadout reasons when relevant
-team selection appears only for modes that use teams
-player color selection appears only when player_color_policy allows it
+team assignment controls match the resolved team structure and assignment mode
+team modes force team colours; non-team player color selection appears only when player_color_policy allows it
 owner start begins countdown
 unready cancels countdown until the final 1 second
 final 1 second locks start
@@ -659,6 +655,7 @@ achievement notification can appear whenever achievement completion is received
 
 * [Planning](../../!INDEX.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
+* [Teams And Team Rules](teams-and-team-rules.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Inventory And Hangar](inventory-and-hangar.md)
@@ -679,7 +676,6 @@ Exact resolved room summary shape.
 Exact lobby layout.
 Exact loadout selector presentation.
 Exact blocked loadout reason vocabulary.
-Exact team policy fields.
 Exact player_color_policy behavior for selectable room colors.
 Exact countdown duration.
 Exact final-second lock presentation.
@@ -715,9 +711,9 @@ Lobby may select from existing valid loadouts but does not become the full hanga
 
 Loadouts are not changeable mid-match for now.
 
-Teams are real mode/match functionality.
+Teams are real mode/match functionality whose detailed semantics belong to Teams And Team Rules.
 
-Player color selection depends on player_color_policy.
+Team modes force team colours; non-team player color selection depends on player_color_policy.
 
 Countdown starts when owner clicks Start.
 

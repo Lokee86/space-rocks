@@ -578,7 +578,7 @@ disconnect
 -> preserve room membership only where current room lifecycle requires it
 ```
 
-This policy separates active match participation from both room membership and historical result participation. A removed player cannot block player/team elimination or match completion, while `MatchSummary` may still include facts accumulated before disconnect.
+This policy separates active match participation from both room membership and historical result participation. A removed player cannot block player/team elimination or match completion, while `MatchSummary` may still include facts accumulated before disconnect. Teams and team rules consumes normalized connected-player facts and applies the P4 requirement that a team with no remaining connected players forfeits.
 
 Lifecycle executes the ship/participant removal and any room-membership transition. Match rules consume normalized active-participation facts and determine whether a participant is eligible to enter or re-enter active play. Mode rules eventually control in-game join and re-entry restrictions; in-game joining itself is not part of the initial P4 implementation.
 
@@ -588,7 +588,7 @@ Disconnect still does not automatically mean an intentional room leave. The inte
 
 Active in-game reconnect remains required in the longer-term V2 lifecycle plan. It is a later lifecycle upgrade, not part of the initial P4 match-rules implementation.
 
-Once reconnect semantics are designed against resolved match rules, active participation facts, team elimination, join policy, and the match-lock boundary, this upgrade replaces the P4 interim removal behavior for modes that allow re-entry.
+Once reconnect semantics are designed against resolved match rules, active participation facts, team elimination, join policy, and the match-lock boundary, this upgrade replaces the P4 interim removal behavior for modes that allow re-entry. It may also supply the grace-period timing that team rules can use instead of immediate forfeiture.
 
 The planned reconnect flow is:
 
@@ -1095,6 +1095,7 @@ Lifecycle owns join/remove/re-entry execution machinery, not mode policy.
 * [Leaderboards And Rankings](leaderboards-and-rankings.md)
 * [Game Integrity Policy](security-and-admin/game-integrity-policy.md)
 * [Modes And Match Rules](../gameplay/modes-and-match-rules.md)
+* [Teams And Team Rules](../gameplay/teams-and-team-rules.md)
 * [Match Outcomes And Results](../gameplay/match-outcomes-and-results.md)
 * [Player Experience Systems](../gameplay/player-experience-systems.md)
 * [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
