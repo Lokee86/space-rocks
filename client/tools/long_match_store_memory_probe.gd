@@ -47,21 +47,19 @@ func _initialize() -> void:
 
 
 func _add_entry(entry_index: int) -> void:
-	var bucket := entry_index % 7
+	var bucket := entry_index % 6
 	match bucket:
 		0:
 			event_batch_applier._record_applied_batch_id("batch-%08d" % entry_index)
 		1:
 			event_batch_applier._record_applied_event_id("event-%08d" % entry_index)
 		2:
-			event_batch_applier._record_logged_applied_batch_id("logged-batch-%08d" % entry_index)
-		3:
 			world_lane_state.delete_bullet("world-bullet-%08d" % entry_index)
-		4:
+		3:
 			world_lane_state.merge_or_buffer_bullet_update({"id": "world-pending-bullet-%08d" % entry_index, "x": entry_index})
-		5:
+		4:
 			projectile_sync.remove_projectile("projectile-%08d" % entry_index)
-		6:
+		5:
 			asteroid_sync.remove_asteroid("asteroid-%08d" % entry_index)
 
 
@@ -69,7 +67,6 @@ func _store_sizes() -> Dictionary:
 	var sizes := {
 		"applied_batch_ids": event_batch_applier._applied_batch_ids.size(),
 		"applied_event_ids": event_batch_applier._applied_event_ids.size(),
-		"logged_applied_batch_ids": event_batch_applier._logged_applied_batch_ids.size(),
 		"world_lane_deleted_bullet_ids": world_lane_state.deleted_bullet_ids.size(),
 		"world_lane_pending_bullet_updates": world_lane_state.pending_bullet_updates.size(),
 		"projectile_sync_deleted_projectile_ids": projectile_sync.deleted_projectile_ids.size(),

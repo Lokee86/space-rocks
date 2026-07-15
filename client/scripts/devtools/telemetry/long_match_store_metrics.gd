@@ -5,7 +5,6 @@ static func snapshot(realtime_packet_pipeline, world_sync) -> Dictionary:
 	var counts := {
 		"applied_event_batch_ids": 0,
 		"applied_event_ids": 0,
-		"logged_applied_batch_ids": 0,
 		"world_lane_deleted_bullet_ids": 0,
 		"world_lane_pending_bullet_updates": 0,
 		"projectile_sync_deleted_projectile_ids": 0,
@@ -17,7 +16,6 @@ static func snapshot(realtime_packet_pipeline, world_sync) -> Dictionary:
 	var event_batch_applier = _owner_value(presentation_state, "event_batch_applier")
 	counts["applied_event_batch_ids"] = _dictionary_size(_owner_value(event_batch_applier, "_applied_batch_ids"))
 	counts["applied_event_ids"] = _dictionary_size(_owner_value(event_batch_applier, "_applied_event_ids"))
-	counts["logged_applied_batch_ids"] = _dictionary_size(_owner_value(event_batch_applier, "_logged_applied_batch_ids"))
 
 	var world_lane_state = _owner_value(presentation_state, "world_lane_state")
 	counts["world_lane_deleted_bullet_ids"] = _dictionary_size(_owner_value(world_lane_state, "deleted_bullet_ids"))
@@ -32,7 +30,6 @@ static func snapshot(realtime_packet_pipeline, world_sync) -> Dictionary:
 	counts["total_entries"] = (
 		counts["applied_event_batch_ids"]
 		+ counts["applied_event_ids"]
-		+ counts["logged_applied_batch_ids"]
 		+ counts["world_lane_deleted_bullet_ids"]
 		+ counts["world_lane_pending_bullet_updates"]
 		+ counts["projectile_sync_deleted_projectile_ids"]

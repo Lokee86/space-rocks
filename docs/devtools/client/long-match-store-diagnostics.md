@@ -8,24 +8,19 @@ This document describes the client diagnostic surface for observing bounded long
 
 ## Overview
 
-`GameplaySessionController` logs a `long_match_store_summary` network event during reset after gameplay packet acceptance has begun. The record reports the current transient client store sizes for the active match.
+The diagnostic surface consists of the transient bounded-store snapshot helper and the standalone headless memory probe. Neither changes gameplay behavior, provides server authority, or creates durable analytics.
 
-The summary includes:
+The bounded-store snapshot includes:
 
 ```text
-match_id
-duration_ms
 applied_event_batch_ids
 applied_event_ids
-logged_applied_batch_ids
 world_lane_deleted_bullet_ids
 world_lane_pending_bullet_updates
 projectile_sync_deleted_projectile_ids
 asteroid_sync_deleted_asteroid_ids
 total_entries
 ```
-
-The diagnostic reads transient client state only. It does not mutate gameplay, provide server authority, or create durable analytics.
 
 ## Debug-only scope
 
@@ -43,7 +38,6 @@ The stores belong to transient client gameplay application and world-sync presen
 | --- | ---: |
 | Applied event batch IDs | 4096 |
 | Applied event IDs | 8192 |
-| Logged applied batch IDs | 4096 |
 | `WorldLaneState` deleted bullet IDs | 4096 |
 | `WorldLaneState` pending unknown bullet updates | 2048 |
 | `ProjectileSync` deleted projectile IDs | 4096 |
@@ -53,7 +47,7 @@ Each bounded history evicts its oldest retained entry after reaching its cap. Du
 
 ## Commands or controls
 
-No in-game command or control is required. The normal client reset path emits the `long_match_store_summary` network event after gameplay packet acceptance has begun.
+No in-game command or control is required; use the standalone probe command below.
 
 The standalone probe runs headlessly with:
 
@@ -63,9 +57,9 @@ C:\Godot_v4.6.3-stable_win64.exe --headless --path client --script res://tools/l
 
 ## Telemetry
 
-The reset summary contains `match_id`, `duration_ms`, all seven store counts, and `total_entries`. It is a diagnostic network event containing transient client measurements only; it is not durable analytics and does not claim server-side metrics.
+`client/scripts/devtools/telemetry/long_match_store_metrics.gd` builds a transient snapshot of the six bounded stores and their aggregate `total_entries` count. It is a diagnostic helper only; it is not durable analytics and does not claim server-side metrics.
 
-`client/tools/long_match_store_memory_probe.gd` is a headless production-store probe. It cycles insertions across all seven real stores, emits threshold memory and store-size records, and demonstrates aggregate bounded-store plateauing at 28672 retained entries after all caps are reached. This demonstrates the bounded stores only; it does not validate total process memory stability.
+`client/tools/long_match_store_memory_probe.gd` is a headless production-store probe. It cycles insertions across all six real stores, emits threshold memory and store-size records, and demonstrates aggregate bounded-store plateauing at 24,576 retained entries after all caps are reached. This demonstrates the bounded stores only; it does not validate total process memory stability.
 
 ## Build/runtime gates
 
@@ -73,13 +67,12 @@ The probe requires the Godot client project and its configured scripts. It does 
 
 ## Code map
 
-* `client/scripts/session/gameplay_session_controller.gd` - Emits the `long_match_store_summary` diagnostic during reset after gameplay packet acceptance begins.
 * `client/scripts/devtools/telemetry/long_match_store_metrics.gd` - Builds the bounded-store snapshot and aggregate count.
-* `client/scripts/protocol/realtime/event_batch_applier.gd` - Owns applied-batch, applied-event, and logged-batch histories.
+* `client/scripts/protocol/realtime/event_batch_applier.gd` - Owns applied-batch and applied-event histories.
 * `client/scripts/protocol/realtime/world_lane_state.gd` - Owns deleted-bullet tombstones and pending unknown-bullet updates.
 * `client/scripts/world/projectile_sync.gd` - Owns projectile deletion tombstones.
 * `client/scripts/world/asteroid_sync.gd` - Owns asteroid deletion tombstones.
-* `client/tools/long_match_store_memory_probe.gd` - Exercises the seven production stores headlessly.
+* `client/tools/long_match_store_memory_probe.gd` - Exercises the six production stores headlessly.
 
 ## Tests
 
@@ -98,4 +91,4 @@ The probe requires the Godot client project and its configured scripts. It does 
 
 ## Notes
 
-The diagnostic is intentionally scoped to bounded client retention stores. A plateau in `total_entries` describes these seven stores after their configured caps are reached; it is not a general memory or performance guarantee for the client.
+The diagnostic is intentionally scoped to bounded client retention stores. A plateau of 24,576 in `total_entries` describes these six stores after their configured caps are reached; it is not a general memory or performance guarantee for the client.
