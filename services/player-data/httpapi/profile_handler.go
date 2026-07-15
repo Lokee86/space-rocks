@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 const (
@@ -68,6 +70,7 @@ func NewProfileHandler(runtime *playerdata.Runtime, authVerifier AuthVerifier) h
 }
 
 func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = withRequestContext(w, r)
 	if r.Method != http.MethodPost {
 		writePlayerDataProfileError(w, http.StatusMethodNotAllowed, "method_not_allowed")
 		return
@@ -100,7 +103,9 @@ func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stats, found, err := h.runtime.LoadStats(identity)
+
 	if err != nil {
+		logging.Emit(observability.Request{Event: observability.EventNamePlayerDataReadFailed, Context: observability.Context{TraceID: TraceIDFromContext(r.Context()), RequestID: RequestIDFromContext(r.Context())}, Fields: observability.Fields{"operation": "load_profile_stats", "error_code": "operation_failed"}})
 		writePlayerDataProfileError(w, http.StatusInternalServerError, "profile_unavailable")
 		return
 	}

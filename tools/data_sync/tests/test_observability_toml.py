@@ -46,7 +46,7 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert contract.fields[-1].name == "fields"
     assert len(contract.services) == 5
     assert contract.service("game_server").emitted_name == "game-server"
-    assert len(contract.events) == 150
+    assert len(contract.events) == 151
     assert tuple(event.name for event in contract.events[:3]) == (
         "log_message",
         "service_starting",

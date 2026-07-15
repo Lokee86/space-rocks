@@ -24,6 +24,7 @@ type PlayerDataStats struct {
 
 type PlayerDataRequestContext struct {
 	PlayMode string `json:"play_mode"`
+	TraceID  string `json:"trace_id"`
 }
 
 type PlayerDataRecordMatchResult struct {

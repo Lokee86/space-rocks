@@ -52,6 +52,11 @@ name = "play_mode"
 json = "play_mode"
 type = "string"
 
+[[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
+
 [[structs]]
 id = "PlayerDataRecordMatchResult"
 

@@ -44,7 +44,7 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
     assert contract.schema.schema_version == 1
     assert len(contract.fields) == 47
     assert len(contract.services) == 5
-    assert len(contract.events) == 150
+    assert len(contract.events) == 151
     assert contract.event("diagnostic_report_stored").services == ("diagnostic_aggregator",)
     assert tuple(action.name for action in contract.redaction.actions) == ("reject", "redact")
     assert tuple(tier.name for tier in contract.retention_tiers) == (

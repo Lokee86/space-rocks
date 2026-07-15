@@ -25,7 +25,7 @@ type RailsStore struct {
 
 func NewRailsStore(config RailsStoreConfig) (*RailsStore, error) {
 	if strings.TrimSpace(config.BaseURL) == "" {
-		return nil, errors.New("base_url is required")
+		return nil, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("base_url is required"))
 	}
 
 	return &RailsStore{
@@ -45,21 +45,21 @@ func (s *RailsStore) client() *http.Client {
 func (s *RailsStore) newJSONRequest(method, path string, body any) (*http.Request, error) {
 	requestURL, err := url.JoinPath(s.BaseURL, path)
 	if err != nil {
-		return nil, err
+		return nil, NewClassifiedFailure(FailureClassInvalidResponse, err)
 	}
 
 	var requestBody io.Reader
 	if body != nil {
 		payload, err := json.Marshal(body)
 		if err != nil {
-			return nil, err
+			return nil, NewClassifiedFailure(FailureClassInvalidResponse, err)
 		}
 		requestBody = bytes.NewReader(payload)
 	}
 
 	request, err := http.NewRequest(method, requestURL, requestBody)
 	if err != nil {
-		return nil, err
+		return nil, NewClassifiedFailure(FailureClassInvalidResponse, err)
 	}
 
 	if body != nil {
@@ -78,13 +78,13 @@ func (s *RailsStore) newJSONRequest(method, path string, body any) (*http.Reques
 
 func (s *RailsStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.PlayerDataStats, bool, error) {
 	if identity.IdentityKind != IdentityKindAuthenticatedAccount {
-		return protocol.PlayerDataStats{}, false, errors.New("identity_kind must be authenticated_account")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("identity_kind must be authenticated_account"))
 	}
 	if identity.AccountID == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("account_id is required")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("account_id is required"))
 	}
 	if s.internalToken == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("internal token is required")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassAuthentication, errors.New("internal token is required"))
 	}
 
 	request, err := s.newJSONRequest(http.MethodPost, "/api/internal/player-data/stats", struct {
@@ -98,25 +98,25 @@ func (s *RailsStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.P
 
 	response, err := s.client().Do(request)
 	if err != nil {
-		return protocol.PlayerDataStats{}, false, err
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassUpstreamUnavailable, err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		if response.StatusCode == http.StatusNotFound {
-			return protocol.PlayerDataStats{}, false, errors.New("unknown_user")
+			return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("unknown_user"))
 		}
 		if response.StatusCode == http.StatusUnprocessableEntity {
-			return protocol.PlayerDataStats{}, false, errors.New("invalid_input")
+			return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("invalid_input"))
 		}
-		return protocol.PlayerDataStats{}, false, errors.New("unexpected status")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassUnexpectedStatus, errors.New("unexpected status"))
 	}
 
 	var decoded struct {
 		Stats protocol.PlayerDataStats `json:"stats"`
 	}
 	if err := json.NewDecoder(response.Body).Decode(&decoded); err != nil {
-		return protocol.PlayerDataStats{}, false, err
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassDecodeFailed, err)
 	}
 
 	return decoded.Stats, true, nil
@@ -124,19 +124,19 @@ func (s *RailsStore) LoadStats(identity protocol.PlayerDataIdentity) (protocol.P
 
 func (s *RailsStore) RecordMatchResult(command protocol.PlayerDataRecordMatchResult) (protocol.PlayerDataStats, bool, error) {
 	if command.Identity.IdentityKind != IdentityKindAuthenticatedAccount {
-		return protocol.PlayerDataStats{}, false, errors.New("identity_kind must be authenticated_account")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("identity_kind must be authenticated_account"))
 	}
 	if command.Identity.AccountID == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("account_id is required")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("account_id is required"))
 	}
 	if command.ResultID == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("result_id is required")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("result_id is required"))
 	}
 	if command.MatchID == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("match_id is required")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassInvalidResponse, errors.New("match_id is required"))
 	}
 	if s.internalToken == "" {
-		return protocol.PlayerDataStats{}, false, errors.New("internal token is required")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassAuthentication, errors.New("internal token is required"))
 	}
 
 	request, err := s.newJSONRequest(http.MethodPost, "/internal/player-data/match-results", struct {
@@ -160,12 +160,12 @@ func (s *RailsStore) RecordMatchResult(command protocol.PlayerDataRecordMatchRes
 
 	response, err := s.client().Do(request)
 	if err != nil {
-		return protocol.PlayerDataStats{}, false, err
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassUpstreamUnavailable, err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode < 200 || response.StatusCode > 299 {
-		return protocol.PlayerDataStats{}, false, errors.New("unexpected status")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassUnexpectedStatus, errors.New("unexpected status"))
 	}
 
 	var decoded struct {
@@ -175,13 +175,13 @@ func (s *RailsStore) RecordMatchResult(command protocol.PlayerDataRecordMatchRes
 		Error     string                   `json:"error"`
 	}
 	if err := json.NewDecoder(response.Body).Decode(&decoded); err != nil {
-		return protocol.PlayerDataStats{}, false, err
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassDecodeFailed, err)
 	}
 	if !decoded.Accepted {
 		if decoded.Error != "" {
-			return protocol.PlayerDataStats{}, false, errors.New(decoded.Error)
+			return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassTransaction, errors.New("transaction rejected"))
 		}
-		return protocol.PlayerDataStats{}, false, errors.New("record match result rejected")
+		return protocol.PlayerDataStats{}, false, NewClassifiedFailure(FailureClassTransaction, errors.New("transaction rejected"))
 	}
 
 	return decoded.Stats, decoded.Duplicate, nil

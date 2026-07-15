@@ -186,6 +186,7 @@ const (
 	EventNameLoadScenarioCompleted EventName = "load_scenario_completed"
 	EventNameLoadScenarioFailed EventName = "load_scenario_failed"
 	EventNameLoadScenarioStarted EventName = "load_scenario_started"
+	EventNameLocalProfileCreateFailed EventName = "local_profile_create_failed"
 	EventNameLocalServerConnected EventName = "local_server_connected"
 	EventNameLocalServerExitedUnexpectedly EventName = "local_server_exited_unexpectedly"
 	EventNameLocalServerLaunchFailed EventName = "local_server_launch_failed"
@@ -389,7 +390,7 @@ var FieldDefinitions = map[FieldName]FieldDefinition{
 	FieldNameReasonCode: {Name: FieldNameReasonCode, Type: "string", Required: false, Description: "Stable non-sensitive reason code for an action or decision.", Sensitivity: "confidential"},
 	FieldNameRedactionApplied: {Name: FieldNameRedactionApplied, Type: "boolean", Required: false, Description: "Indicates that one or more unsafe or sensitive values were removed or transformed before storage or export.", Sensitivity: "internal"},
 	FieldNameRequestId: {Name: FieldNameRequestId, Type: "string", Required: false, Description: "Existing domain-owned identifier for an API or HTTP request.", Sensitivity: "internal"},
-	FieldNameResultId: {Name: FieldNameResultId, Type: "uuid", Required: false, Description: "UUID identifying a competitive or persisted match result.", Sensitivity: "confidential"},
+	FieldNameResultId: {Name: FieldNameResultId, Type: "string", Required: false, Description: "Existing domain-owned identifier for a competitive or persisted match result.", Sensitivity: "confidential"},
 	FieldNameRetentionTier: {Name: FieldNameRetentionTier, Type: "string", Required: true, Description: "Retention classification: ephemeral_dev, operational, diagnostic_report, or audit_grade.", Sensitivity: "internal"},
 	FieldNameRoomId: {Name: FieldNameRoomId, Type: "string", Required: false, Description: "Existing domain-owned identifier for a room flow.", Sensitivity: "internal"},
 	FieldNameRoute: {Name: FieldNameRoute, Type: "string", Required: false, Description: "API, HTTP, or logical route associated with the event; exclude credentials and raw secrets.", Sensitivity: "internal"},
@@ -495,6 +496,7 @@ var EventDefinitions = map[EventName]EventDefinition{
 	EventNameLoadScenarioCompleted: {Name: EventNameLoadScenarioCompleted, Category: "runtime_threshold", DefaultLevel: LevelInfo, Description: "A bounded load or soak scenario completed.", Services: []ServiceKey{ServiceKeyApiServer, ServiceKeyDiagnosticAggregator, ServiceKeyGameServer}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierEphemeralDev, BridgeOnly: false},
 	EventNameLoadScenarioFailed: {Name: EventNameLoadScenarioFailed, Category: "runtime_threshold", DefaultLevel: LevelError, Description: "A bounded load or soak scenario failed.", Services: []ServiceKey{ServiceKeyApiServer, ServiceKeyDiagnosticAggregator, ServiceKeyGameServer}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierDiagnosticReport, BridgeOnly: false},
 	EventNameLoadScenarioStarted: {Name: EventNameLoadScenarioStarted, Category: "runtime_threshold", DefaultLevel: LevelInfo, Description: "A bounded load or soak scenario began.", Services: []ServiceKey{ServiceKeyApiServer, ServiceKeyDiagnosticAggregator, ServiceKeyGameServer}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierEphemeralDev, BridgeOnly: false},
+	EventNameLocalProfileCreateFailed: {Name: EventNameLocalProfileCreateFailed, Category: "profile", DefaultLevel: LevelError, Description: "A local profile could not be created.", Services: []ServiceKey{ServiceKeyPlayerData}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierOperational, BridgeOnly: false},
 	EventNameLocalServerConnected: {Name: EventNameLocalServerConnected, Category: "client_startup", DefaultLevel: LevelInfo, Description: "The client connected to its bundled local server.", Services: []ServiceKey{ServiceKeyClient, ServiceKeyGameServer}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierOperational, BridgeOnly: false},
 	EventNameLocalServerExitedUnexpectedly: {Name: EventNameLocalServerExitedUnexpectedly, Category: "client_startup", DefaultLevel: LevelError, Description: "The bundled local server exited without an expected shutdown.", Services: []ServiceKey{ServiceKeyClient, ServiceKeyGameServer}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierDiagnosticReport, BridgeOnly: false},
 	EventNameLocalServerLaunchFailed: {Name: EventNameLocalServerLaunchFailed, Category: "client_startup", DefaultLevel: LevelError, Description: "The bundled local server failed to launch.", Services: []ServiceKey{ServiceKeyClient, ServiceKeyGameServer}, TraceRequired: true, AuditEligible: false, RetentionTier: RetentionTierDiagnosticReport, BridgeOnly: false},

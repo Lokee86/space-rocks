@@ -68,6 +68,16 @@ type CategoryLogger struct {
 	level *slog.LevelVar
 }
 
+// Emit is the narrow semantic entry point for player-data-owned events.
+// Legacy category methods remain available only for service migrations that
+// have not yet moved to canonical events.
+func Emit(request observability.Request) observability.Result {
+	if eventEmitter == nil {
+		eventEmitter = fallbackEmitter()
+	}
+	return eventEmitter.Emit(request)
+}
+
 func newCategoryLogger(name string, level *slog.LevelVar) CategoryLogger {
 	return CategoryLogger{name: name, level: level}
 }

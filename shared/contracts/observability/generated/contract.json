@@ -947,6 +947,19 @@
         "player_data"
       ],
       "trace_required": true
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "profile",
+      "default_level": "error",
+      "description": "A local profile could not be created.",
+      "name": "local_profile_create_failed",
+      "retention_tier": "operational",
+      "services": [
+        "player_data"
+      ],
+      "trace_required": true
+    },
     },
     {
       "audit_eligible": false,
@@ -2565,11 +2578,11 @@
       "type": "uuid"
     },
     {
-      "description": "UUID identifying a competitive or persisted match result.",
+      "description": "Existing domain-owned identifier for a competitive or persisted match result.",
       "name": "result_id",
       "required": false,
       "sensitivity": "confidential",
-      "type": "uuid"
+      "type": "string"
     },
     {
       "description": "When true, the aggregator validates, preserves, and promotes the event into an audit-grade record.",

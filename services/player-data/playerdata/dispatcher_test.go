@@ -9,7 +9,7 @@ import (
 )
 
 func testRequestContext(playMode string) protocol.PlayerDataRequestContext {
-	return protocol.PlayerDataRequestContext{PlayMode: playMode}
+	return protocol.PlayerDataRequestContext{PlayMode: playMode, TraceID: "550e8400-e29b-41d4-a716-446655440012"}
 }
 
 type countingStore struct {

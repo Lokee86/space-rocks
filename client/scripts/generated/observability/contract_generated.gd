@@ -174,6 +174,7 @@ const EVENT_LIVENESS_CHECK_FAILED := "liveness_check_failed"
 const EVENT_LOAD_SCENARIO_COMPLETED := "load_scenario_completed"
 const EVENT_LOAD_SCENARIO_FAILED := "load_scenario_failed"
 const EVENT_LOAD_SCENARIO_STARTED := "load_scenario_started"
+const EVENT_LOCAL_PROFILE_CREATE_FAILED := "local_profile_create_failed"
 const EVENT_LOCAL_SERVER_CONNECTED := "local_server_connected"
 const EVENT_LOCAL_SERVER_EXITED_UNEXPECTEDLY := "local_server_exited_unexpectedly"
 const EVENT_LOCAL_SERVER_LAUNCH_FAILED := "local_server_launch_failed"
@@ -313,7 +314,7 @@ const FIELD_DEFINITIONS := {
 	FIELD_REASON_CODE: {"name":"reason_code","type":"string","required":false,"description":"Stable non-sensitive reason code for an action or decision.","sensitivity":"confidential"},
 	FIELD_REDACTION_APPLIED: {"name":"redaction_applied","type":"boolean","required":false,"description":"Indicates that one or more unsafe or sensitive values were removed or transformed before storage or export.","sensitivity":"internal"},
 	FIELD_REQUEST_ID: {"name":"request_id","type":"string","required":false,"description":"Existing domain-owned identifier for an API or HTTP request.","sensitivity":"internal"},
-	FIELD_RESULT_ID: {"name":"result_id","type":"uuid","required":false,"description":"UUID identifying a competitive or persisted match result.","sensitivity":"confidential"},
+	FIELD_RESULT_ID: {"name":"result_id","type":"string","required":false,"description":"Existing domain-owned identifier for a competitive or persisted match result.","sensitivity":"confidential"},
 	FIELD_RETENTION_TIER: {"name":"retention_tier","type":"string","required":true,"description":"Retention classification: ephemeral_dev, operational, diagnostic_report, or audit_grade.","sensitivity":"internal"},
 	FIELD_ROOM_ID: {"name":"room_id","type":"string","required":false,"description":"Existing domain-owned identifier for a room flow.","sensitivity":"internal"},
 	FIELD_ROUTE: {"name":"route","type":"string","required":false,"description":"API, HTTP, or logical route associated with the event; exclude credentials and raw secrets.","sensitivity":"internal"},
@@ -419,6 +420,7 @@ const EVENT_DEFINITIONS := {
 	EVENT_LOAD_SCENARIO_COMPLETED: {"name":"load_scenario_completed","category":"runtime_threshold","default_level":"info","description":"A bounded load or soak scenario completed.","services":["api_server","diagnostic_aggregator","game_server"],"trace_required":true,"audit_eligible":false,"retention_tier":"ephemeral_dev","bridge_only":false},
 	EVENT_LOAD_SCENARIO_FAILED: {"name":"load_scenario_failed","category":"runtime_threshold","default_level":"error","description":"A bounded load or soak scenario failed.","services":["api_server","diagnostic_aggregator","game_server"],"trace_required":true,"audit_eligible":false,"retention_tier":"diagnostic_report","bridge_only":false},
 	EVENT_LOAD_SCENARIO_STARTED: {"name":"load_scenario_started","category":"runtime_threshold","default_level":"info","description":"A bounded load or soak scenario began.","services":["api_server","diagnostic_aggregator","game_server"],"trace_required":true,"audit_eligible":false,"retention_tier":"ephemeral_dev","bridge_only":false},
+	EVENT_LOCAL_PROFILE_CREATE_FAILED: {"name":"local_profile_create_failed","category":"profile","default_level":"error","description":"A local profile could not be created.","services":["player_data"],"trace_required":true,"audit_eligible":false,"retention_tier":"operational","bridge_only":false},
 	EVENT_LOCAL_SERVER_CONNECTED: {"name":"local_server_connected","category":"client_startup","default_level":"info","description":"The client connected to its bundled local server.","services":["client","game_server"],"trace_required":true,"audit_eligible":false,"retention_tier":"operational","bridge_only":false},
 	EVENT_LOCAL_SERVER_EXITED_UNEXPECTEDLY: {"name":"local_server_exited_unexpectedly","category":"client_startup","default_level":"error","description":"The bundled local server exited without an expected shutdown.","services":["client","game_server"],"trace_required":true,"audit_eligible":false,"retention_tier":"diagnostic_report","bridge_only":false},
 	EVENT_LOCAL_SERVER_LAUNCH_FAILED: {"name":"local_server_launch_failed","category":"client_startup","default_level":"error","description":"The bundled local server failed to launch.","services":["client","game_server"],"trace_required":true,"audit_eligible":false,"retention_tier":"diagnostic_report","bridge_only":false},

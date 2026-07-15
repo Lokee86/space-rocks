@@ -93,7 +93,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | reason_code | string | false | Stable non-sensitive reason code for an action or decision. | confidential |
 | redaction_applied | boolean | false | Indicates that one or more unsafe or sensitive values were removed or transformed before storage or export. | internal |
 | request_id | string | false | Existing domain-owned identifier for an API or HTTP request. | internal |
-| result_id | uuid | false | UUID identifying a competitive or persisted match result. | confidential |
+| result_id | string | false | Existing domain-owned identifier for a competitive or persisted match result. | confidential |
 | retention_tier | string | true | Retention classification: ephemeral_dev, operational, diagnostic_report, or audit_grade. | internal |
 | room_id | string | false | Existing domain-owned identifier for a room flow. | internal |
 | route | string | false | API, HTTP, or logical route associated with the event; exclude credentials and raw secrets. | internal |
@@ -193,6 +193,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | load_scenario_completed | runtime_threshold | info | A bounded load or soak scenario completed. | api_server, diagnostic_aggregator, game_server | true | false | ephemeral_dev | false |
 | load_scenario_failed | runtime_threshold | error | A bounded load or soak scenario failed. | api_server, diagnostic_aggregator, game_server | true | false | diagnostic_report | false |
 | load_scenario_started | runtime_threshold | info | A bounded load or soak scenario began. | api_server, diagnostic_aggregator, game_server | true | false | ephemeral_dev | false |
+| local_profile_create_failed | profile | error | A local profile could not be created. | player_data | true | false | operational | false |
 | local_server_connected | client_startup | info | The client connected to its bundled local server. | client, game_server | true | false | operational | false |
 | local_server_exited_unexpectedly | client_startup | error | The bundled local server exited without an expected shutdown. | client, game_server | true | false | diagnostic_report | false |
 | local_server_launch_failed | client_startup | error | The bundled local server failed to launch. | client, game_server | true | false | diagnostic_report | false |

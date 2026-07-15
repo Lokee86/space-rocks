@@ -93,7 +93,7 @@ def test_observability_generators_are_deterministic_and_complete() -> None:
     assert payload["schema"]["schema_version"] == contract.schema.schema_version
     assert len(payload["services"]) == 5
     assert len(payload["fields"]) == len(contract.fields) == 47
-    assert len(payload["events"]) == len(contract.events) == 150
+    assert len(payload["events"]) == len(contract.events) == 151
     assert 'EventNameDiagnosticReportStored EventName = "diagnostic_report_stored"' in go_output
     assert 'EVENT_DIAGNOSTIC_REPORT_STORED := "diagnostic_report_stored"' in gds_output
     assert 'EVENT_DIAGNOSTIC_REPORT_STORED = "diagnostic_report_stored"' in ruby_output

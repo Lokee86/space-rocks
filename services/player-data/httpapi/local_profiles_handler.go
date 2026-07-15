@@ -11,6 +11,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type LocalProfilesHandler struct {
@@ -57,13 +58,14 @@ func NewLocalProfilesHandler(runtime *playerdata.Runtime) http.Handler {
 }
 
 func (h *LocalProfilesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = withRequestContext(w, r)
 	switch r.Method {
 	case http.MethodGet:
 		if r.URL.Path == "/api/player-data/local-profiles/default" {
-			h.serveGetDefault(w)
+			h.serveGetDefault(w, r)
 			return
 		}
-		h.serveList(w)
+		h.serveList(w, r)
 	case http.MethodPost:
 		h.serveCreate(w, r)
 	case http.MethodPut:
@@ -89,8 +91,9 @@ func writePlayerDataLocalProfilesJSON(w http.ResponseWriter, statusCode int, pay
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
-func (h *LocalProfilesHandler) serveList(w http.ResponseWriter) {
+func (h *LocalProfilesHandler) serveList(w http.ResponseWriter, r *http.Request) {
 	if h == nil || h.runtime == nil {
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataReadFailed, "list_local_profiles", playerdata.ErrLocalProfileUnavailable, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -98,9 +101,11 @@ func (h *LocalProfilesHandler) serveList(w http.ResponseWriter) {
 	profiles, err := h.runtime.ListLocalProfiles()
 	if err != nil {
 		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataReadFailed, "list_local_profiles", err, "")
 			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 			return
 		}
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataReadFailed, "list_local_profiles", err, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -138,32 +143,21 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 
 	stats, err := h.runtime.LocalProfileSeedStats(request.SeedFromGuestStats)
 	if err != nil {
-		logging.HTTP.Error("local profile create guest stat seeding failed", err,
-			logging.FieldOperation, "create_local_profile",
-		)
+		emitLocalProfileCreateFailure(r, "guest_seed_read", "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
 	localProfileID, err := generateLocalProfileID()
 	if err != nil {
-		logging.HTTP.Error("local profile create id generation failed", err,
-			logging.FieldOperation, "create_local_profile",
-		)
+		emitLocalProfileCreateFailure(r, "id_generation", "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
 
 	profile, err := h.runtime.CreateLocalProfile(localProfileID, displayName, stats)
 	if err != nil {
-		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
-			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
-			return
-		}
-		logging.HTTP.Error("local profile create failed", err,
-			logging.FieldOperation, "create_local_profile",
-			logging.FieldLocalProfileID, localProfileID,
-		)
+		emitLocalProfileCreateFailure(r, "store_write", localProfileID)
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -176,8 +170,9 @@ func (h *LocalProfilesHandler) serveCreate(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter) {
+func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter, r *http.Request) {
 	if h == nil || h.runtime == nil {
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataReadFailed, "get_default_local_profile", playerdata.ErrLocalProfileUnavailable, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -185,9 +180,11 @@ func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter) {
 	defaultProfile, err := h.runtime.GetDefaultLocalProfile()
 	if err != nil {
 		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataReadFailed, "get_default_local_profile", err, "")
 			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 			return
 		}
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataReadFailed, "get_default_local_profile", err, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -203,6 +200,7 @@ func (h *LocalProfilesHandler) serveGetDefault(w http.ResponseWriter) {
 
 func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Request) {
 	if h == nil || h.runtime == nil {
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "set_default_local_profile", playerdata.ErrLocalProfileUnavailable, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -234,6 +232,7 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 	defaultProfile, err := h.runtime.SetDefaultLocalProfile(identityKind, localProfileID)
 	if err != nil {
 		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "set_default_local_profile", err, localProfileID)
 			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 			return
 		}
@@ -241,6 +240,7 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "set_default_local_profile", err, localProfileID)
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -256,6 +256,7 @@ func (h *LocalProfilesHandler) serveSetDefault(w http.ResponseWriter, r *http.Re
 
 func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Request) {
 	if h == nil || h.runtime == nil {
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "update_local_profile", playerdata.ErrLocalProfileUnavailable, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -281,6 +282,7 @@ func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Reques
 	profile, err := h.runtime.UpdateLocalProfileDisplayName(localProfileID, displayName)
 	if err != nil {
 		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "update_local_profile", err, localProfileID)
 			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 			return
 		}
@@ -288,6 +290,7 @@ func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Reques
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "update_local_profile", err, localProfileID)
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -302,6 +305,7 @@ func (h *LocalProfilesHandler) serveUpdate(w http.ResponseWriter, r *http.Reques
 
 func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Request) {
 	if h == nil || h.runtime == nil {
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "delete_local_profile", playerdata.ErrLocalProfileUnavailable, "")
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -315,6 +319,7 @@ func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Reques
 	err := h.runtime.DeleteLocalProfile(localProfileID)
 	if err != nil {
 		if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+			emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "delete_local_profile", err, localProfileID)
 			writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 			return
 		}
@@ -322,6 +327,7 @@ func (h *LocalProfilesHandler) serveDelete(w http.ResponseWriter, r *http.Reques
 			writePlayerDataLocalProfilesError(w, http.StatusNotFound, "local_profile_not_found")
 			return
 		}
+		emitLocalProfileOperationFailure(r, observability.EventNamePlayerDataWriteFailed, "delete_local_profile", err, localProfileID)
 		writePlayerDataLocalProfilesError(w, http.StatusServiceUnavailable, "local_profiles_unavailable")
 		return
 	}
@@ -343,4 +349,37 @@ func generateLocalProfileID() (string, error) {
 	}
 
 	return fmt.Sprintf("local-profile-%x", bytes[:]), nil
+}
+
+func emitLocalProfileCreateFailure(r *http.Request, failureMode, localProfileID string) {
+	fields := observability.Fields{
+		"failure_mode": failureMode,
+		"error_code":   "operation_failed",
+	}
+	if localProfileID != "" {
+		fields["local_profile_id"] = localProfileID
+	}
+	logging.Emit(observability.Request{
+		Event:   observability.EventNameLocalProfileCreateFailed,
+		Context: observability.Context{TraceID: TraceIDFromContext(r.Context()), RequestID: RequestIDFromContext(r.Context())},
+		Fields:  fields,
+	})
+}
+
+func emitLocalProfileOperationFailure(r *http.Request, event observability.EventName, operation string, err error, localProfileID string) {
+	fields := observability.Fields{"operation": operation, "error_code": "operation_failed"}
+	if class := playerdata.FailureClassOf(err); class != "" {
+		fields["error_code"] = string(class)
+	}
+	if errors.Is(err, playerdata.ErrLocalProfileUnavailable) {
+		fields["failure_mode"] = "store_unavailable"
+	}
+	if localProfileID != "" {
+		fields["local_profile_id"] = localProfileID
+	}
+	logging.Emit(observability.Request{
+		Event:   event,
+		Context: observability.Context{TraceID: TraceIDFromContext(r.Context()), RequestID: RequestIDFromContext(r.Context())},
+		Fields:  fields,
+	})
 }

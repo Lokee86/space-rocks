@@ -238,9 +238,9 @@ sensitivity = "confidential"
 
 [[fields]]
 name = "result_id"
-type = "uuid"
+type = "string"
 required = false
-description = "UUID identifying a competitive or persisted match result."
+description = "Existing domain-owned identifier for a competitive or persisted match result."
 sensitivity = "confidential"
 
 [[fields]]

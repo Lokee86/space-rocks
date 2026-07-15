@@ -516,6 +516,16 @@ audit_eligible = true
 retention_tier = "audit_grade"
 
 [[events]]
+name = "local_profile_create_failed"
+category = "profile"
+default_level = "error"
+description = "A local profile could not be created."
+services = ["player_data"]
+trace_required = true
+audit_eligible = false
+retention_tier = "operational"
+
+[[events]]
 name = "player_data_store_initialized"
 category = "player_data"
 default_level = "info"
