@@ -99,7 +99,7 @@ Destruction awards apply when an authoritative destruction outcome is resolved. 
 
 Impacts, hits, and collisions may award damage, hit, or mode-specific credit even when they do not destroy a target. Combat and collision owners supply authoritative outcomes and candidate sources; the award owner decides the configured award consequences.
 
-Objective-sourced awards consume objective-owned outcome facts. The objective system remains responsible for objective rules, progress meaning, completion, and failure. An objective award can mutate a gameplay counter or emit a handoff without making gameplay counters the objective authority.
+Objective-sourced awards consume objective outcome facts. Awards/counters emit authoritative facts; separate progress and aggregation owners produce progress facts, and the Objective Foundation consumes those facts while owning definition condition evaluation and objective-local lifecycle/state. An objective award can mutate a gameplay counter or emit a handoff without making gameplay counters the objective authority.
 
 Survival/time milestones, pickups/resources, and mode-specific events enter through the same authoritative award pipeline. They must identify their source, event identity, owner scope, and resolved policy so that they cannot bypass attribution or idempotency.
 
@@ -274,7 +274,7 @@ match-wide counters
 
 The runtime ship owns live avatar state, not durable player counters, combo, streak, or match history. A destroyed or recreated ship cannot lose player score, kills, assists, deaths, or other retained match facts.
 
-The award owner coordinates policy and mutation through these existing owners. It must not create a parallel counter store in networking, presentation, transport, or a generic shared utility. Team membership comes from Teams And Team Rules. Objective runtime owns objective-specific state. Match runtime owns match-wide values and final resolution context.
+The award owner coordinates policy and mutation through these existing owners. It must not create a parallel counter store in networking, presentation, transport, or a generic shared utility. Team membership comes from Teams And Team Rules. The Objective Foundation owns objective-local state, while separate progress and aggregation owners produce the facts objectives consume. Match runtime owns match-wide values and final resolution context.
 
 ## System Handoffs
 
@@ -302,7 +302,7 @@ Modes select enabled counters, award values, scaling overrides, attribution elig
 
 ### Objectives And Objective Runtime
 
-[Objectives And Objective Runtime](objectives-and-objective-runtime.md) owns objective definitions, progress meaning, completion, failure, and objective runtime state. It may emit award sources and consume completed counter mutations. `OBJECTIVE_PROGRESS` is a handoff value, not permission for the award system to decide objective completion.
+[Objectives And Objective Runtime](objectives-and-objective-runtime.md) owns the Objective Foundation: objective definitions/schema, definition condition evaluation, and objective-local lifecycle/state. Separate progress and aggregation owners produce progress facts for it to consume. It may emit award sources and consume completed counter mutations. `OBJECTIVE_PROGRESS` remains a handoff counter, not objective authority or permission for the award system to decide objective completion.
 
 ### Teams And Team Rules
 

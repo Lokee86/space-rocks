@@ -25,7 +25,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 - [lives-death-elimination-and-respawn.md](lives-death-elimination-and-respawn.md) - Lives Death Elimination And Respawn documentation.
 - [match-outcomes-and-results.md](match-outcomes-and-results.md) - Match Outcomes And Results documentation.
 - [modes-and-match-rules.md](modes-and-match-rules.md) - Modes And Match Rules documentation.
-- [objectives-and-objective-runtime.md](objectives-and-objective-runtime.md) - Objectives And Objective Runtime documentation.
+- [objectives-and-objective-runtime.md](objectives-and-objective-runtime.md) - Shared schema-driven Objective Foundation for definition-owned condition evaluation, local lifecycle/state, discovery, visibility, timers, and normalized objective events/snapshots.
 - [player-build-and-loadouts.md](player-build-and-loadouts.md) - Player Build And Loadouts documentation.
 - [player-experience-systems.md](player-experience-systems.md) - Player Experience Systems documentation.
 - [progression-and-rewards.md](progression-and-rewards.md) - Progression And Rewards documentation.

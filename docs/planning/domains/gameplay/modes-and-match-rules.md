@@ -37,7 +37,7 @@ This doc selects `player_spawn_profile_id` and `encounter_spawn_profile_id` as r
 
 Detailed gameplay award and counter semantics belong to [Gameplay Awards And Counters](gameplay-awards-and-counters.md). This doc selects and composes the resolved award-policy references consumed by modes; it does not redefine award catalogue, attribution, assists, combos, streaks, distribution, mutation, visibility, or idempotency semantics. Detailed lives, death, elimination, and respawn semantics likewise belong to [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md).
 
-Detailed objective definitions, lifecycle, progress semantics, visibility, typed requests, and objective facts belong to [Objectives And Objective Runtime](objectives-and-objective-runtime.md). Modes select and compose objective policy, continuation and match-end implications, any mode-specific tie sub-policy, and result requirements; they do not become an alternate owner of objective runtime behavior.
+The shared Objective Foundation owns objective definitions/schema, objective-local lifecycle and state-machine evaluation, discovery/visibility, timers, failure reasons, and normalized objective events/snapshots. Modes consume and select/compose objectives, then own match implications and results policy; they do not become an alternate owner of objective runtime behavior.
 
 ## Core Architecture
 
