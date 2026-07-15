@@ -19,6 +19,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 
 - [achievements-and-milestones.md](achievements-and-milestones.md) - Achievements And Milestones documentation.
 - [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md) - Enemies Bosses And Encounters documentation.
+- [gameplay-awards-and-counters.md](gameplay-awards-and-counters.md) - Gameplay Awards And Counters documentation.
 - [inventory-and-hangar.md](inventory-and-hangar.md) - Inventory And Hangar documentation.
 - [levels-missions-and-content-structure.md](levels-missions-and-content-structure.md) - Levels Missions And Content Structure documentation.
 - [lives-death-elimination-and-respawn.md](lives-death-elimination-and-respawn.md) - Lives Death Elimination And Respawn documentation.
