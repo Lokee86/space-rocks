@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
+	"github.com/google/uuid"
 )
 
 func TestStartGameForMemberMovesLobbyRoomToInGame(t *testing.T) {
@@ -238,6 +239,11 @@ func TestMarkGameOverStoresResolvedMatchSummary(t *testing.T) {
 		t.Fatalf("expected start to succeed, got %v", err)
 	}
 
+	traceID := room.match.CurrentTraceID()
+	if uuid.Validate(traceID) != nil {
+		t.Fatalf("match trace ID is not a UUID: %q", traceID)
+	}
+
 	gameInstance := room.GameInstance()
 	playerID := gameInstance.AddPlayer()
 	if playerID == "" {
@@ -252,6 +258,9 @@ func TestMarkGameOverStoresResolvedMatchSummary(t *testing.T) {
 	summary, ok := room.ResolvedMatchSummary()
 	if !ok {
 		t.Fatal("expected resolved match summary to be stored")
+	}
+	if summary.TraceID != traceID {
+		t.Fatalf("expected summary TraceID %q, got %q", traceID, summary.TraceID)
 	}
 	if summary.MatchID != room.CurrentMatchID() {
 		t.Fatalf("expected MatchID %q, got %q", room.CurrentMatchID(), summary.MatchID)
@@ -354,6 +363,11 @@ func TestResetToLobbyForSessionRejectsMissingSessionAfterPlayerIDReuse(t *testin
 	if err := room.StartGameForSession("session-replacement", game.New); err != nil {
 		t.Fatalf("expected replacement start to succeed, got %v", err)
 	}
+	traceID := room.match.CurrentTraceID()
+	if uuid.Validate(traceID) != nil {
+		t.Fatalf("match trace ID is not a UUID: %q", traceID)
+	}
+
 	gameInstance := room.GameInstance()
 	t.Cleanup(func() { gameInstance.Stop() })
 	matchID := room.CurrentMatchID()

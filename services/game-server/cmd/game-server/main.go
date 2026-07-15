@@ -10,10 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Lokee86/space-rocks/player-data/httpapi"
 	playerlogging "github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func main() {
@@ -62,13 +64,11 @@ func runWithContext(ctx context.Context) int {
 		logging.Server.Error("player-data logging configuration failed", err)
 		return 1
 	}
-	playerLogPath, err := playerlogging.ConfigureFileOutput("logs/player-data", "player-data")
+	_, err = playerlogging.ConfigureFileOutput("logs/player-data", "player-data")
 	if err != nil {
-		playerlogging.Server.Warn("player-data structured log file unavailable", playerlogging.FieldError, err)
+		emitPlayerDataObservabilityUnavailable("open_failed")
 	} else if status := playerlogging.Status(); status.Degraded {
-		playerlogging.Server.Warn("player-data structured log file unavailable", playerlogging.FieldError, status.LastError)
-	} else {
-		playerlogging.Server.Info("player-data structured log file configured", "path", playerLogPath)
+		emitPlayerDataObservabilityUnavailable("runtime_degraded")
 	}
 	defer func() {
 		if err := playerlogging.CloseFileOutput(); err != nil {
@@ -122,7 +122,7 @@ func runWithContext(ctx context.Context) int {
 	mux.Handle("PUT /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 
 	logging.Server.Info("server starting", "addr", ":8080")
-	server := newHTTPServer(mux)
+	server := newHTTPServer(httpapi.WithRequestContext(mux))
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		logging.Server.Error("server stopped", err, "addr", ":8080")
@@ -133,6 +133,14 @@ func runWithContext(ctx context.Context) int {
 		return 1
 	}
 	return 0
+}
+
+func emitPlayerDataObservabilityUnavailable(failureMode string) observability.Result {
+	return playerlogging.Emit(observability.Request{
+		Event:   observability.EventNameObservabilityUnavailable,
+		Message: "player-data structured logging unavailable",
+		Fields:  observability.Fields{"failure_mode": failureMode},
+	})
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

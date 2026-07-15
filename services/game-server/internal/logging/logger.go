@@ -69,6 +69,14 @@ type CategoryLogger struct {
 	level *slog.LevelVar
 }
 
+// Emit is the semantic entry point for game-server-owned canonical events.
+func Emit(request observability.Request) observability.Result {
+	if eventEmitter == nil {
+		eventEmitter = fallbackEmitter()
+	}
+	return eventEmitter.Emit(request)
+}
+
 func newCategoryLogger(name string, level *slog.LevelVar) CategoryLogger {
 	return CategoryLogger{name: name, level: level}
 }

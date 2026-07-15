@@ -52,6 +52,7 @@ func decodeRecordMatchResultCommand(t *testing.T, payload []byte) protocol.Playe
 
 func testReporterSummary() serverplayerdata.MatchResultSummary {
 	return serverplayerdata.MatchResultSummary{
+		TraceID: "550e8400-e29b-41d4-a716-446655440015",
 		MatchID: "room-1-match-1",
 		Mode:    serverplayerdata.MatchModeMultiplayer,
 		Players: []serverplayerdata.PlayerMatchSummary{

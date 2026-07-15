@@ -5,7 +5,7 @@ type MatchMode string
 
 const (
 	MatchModeSinglePlayer MatchMode = "single_player"
-	MatchModeMultiplayer   MatchMode = "multiplayer"
+	MatchModeMultiplayer  MatchMode = "multiplayer"
 )
 
 // Stats is the logical V1.1 player stats contract.
@@ -30,6 +30,7 @@ type PlayerMatchSummary struct {
 
 // MatchResultSummary is the logical V1.1 match summary contract.
 type MatchResultSummary struct {
+	TraceID string
 	MatchID string
 	Mode    MatchMode
 	Players []PlayerMatchSummary

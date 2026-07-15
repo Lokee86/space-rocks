@@ -173,6 +173,7 @@ type gameOverCapture struct {
 	State    RoomState
 	Game     *game.Game
 	MatchID  string
+	TraceID  string
 	Joinable bool
 	Members  map[string]RoomMember
 }
@@ -185,7 +186,7 @@ func (room *Room) captureGameOverLocked() (gameOverCapture, *RoomDomainError) {
 	for playerID, member := range room.membership.members {
 		members[playerID] = *member
 	}
-	return gameOverCapture{State: room.State, Game: room.match.Game(), MatchID: room.match.CurrentMatchID(), Joinable: room.Joinable, Members: members}, nil
+	return gameOverCapture{State: room.State, Game: room.match.Game(), MatchID: room.match.CurrentMatchID(), TraceID: room.match.CurrentTraceID(), Joinable: room.Joinable, Members: members}, nil
 }
 
 func (room *Room) gameOverCaptureMatchesLocked(capture gameOverCapture) bool {

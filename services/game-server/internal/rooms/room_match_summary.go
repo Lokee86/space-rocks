@@ -19,5 +19,7 @@ func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFa
 		}
 		players = append(players, summary)
 	}
-	return playerdata.BuildMatchResultSummary(capture.MatchID, mode, players)
+	summary := playerdata.BuildMatchResultSummary(capture.MatchID, mode, players)
+	summary.TraceID = capture.TraceID
+	return summary
 }

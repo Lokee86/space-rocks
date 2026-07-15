@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
+	"github.com/google/uuid"
 )
 
 type roomMatch struct {
@@ -13,6 +14,7 @@ type roomMatch struct {
 	activeSessionIDs     map[string]struct{}
 	matchNumber          int
 	currentMatchID       string
+	currentTraceID       string
 	resolvedSummary      *playerdata.MatchResultSummary
 	matchResultReported  bool
 	matchResultReporting bool
@@ -74,6 +76,7 @@ func (rm *roomMatch) ResetActiveSessions() {
 func (rm *roomMatch) BeginNextMatch(roomID string) string {
 	rm.matchNumber++
 	rm.currentMatchID = roomID + "-match-" + strconv.Itoa(rm.matchNumber)
+	rm.currentTraceID = uuid.NewString()
 	rm.ResetActiveSessions()
 	rm.matchResultReported = false
 	rm.matchResultReporting = false
@@ -82,6 +85,8 @@ func (rm *roomMatch) BeginNextMatch(roomID string) string {
 }
 
 func (rm *roomMatch) CurrentMatchID() string { return rm.currentMatchID }
+
+func (rm *roomMatch) CurrentTraceID() string { return rm.currentTraceID }
 
 func (rm *roomMatch) SetResolvedSummary(summary playerdata.MatchResultSummary) {
 	rm.resolvedSummary = &summary
