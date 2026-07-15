@@ -43,7 +43,11 @@ client UI layout
 packet or API schema details
 ```
 
-Modes and match rules own gameplay award, objective, ranking, match-end, result, and related resolved policies. Teams and team rules owns team aggregation defaults and team-result requirements. The authoritative game/match layer evaluates final `MatchFacts` and locks `MatchDecision` once.
+Modes and match rules own gameplay award selection, objective policy selection/composition, ranking, match-end, result, and related resolved policies. Detailed objective behavior and authoritative objective snapshots belong to [Objectives And Objective Runtime](objectives-and-objective-runtime.md). Teams and team rules owns team aggregation defaults and team-result requirements. The authoritative game/match layer evaluates final `MatchFacts` and locks `MatchDecision` once.
+
+Detailed award and counter semantics, including attribution, distribution, mutation, visibility, and idempotency, belong to [Gameplay Awards And Counters](gameplay-awards-and-counters.md). Its clean final award/counter snapshot is the authoritative input to result orchestration. `EndOfMatchFlow` consumes that snapshot and does not reconstruct awards, counters, attribution, or distribution from runtime entities.
+
+`EndOfMatchFlow` aggregates the selected authoritative objective facts and final objective snapshot supplied by Objectives And Objective Runtime. It never reconstructs objective resolution, progress, contributors, or completion from runtime entities or client events.
 
 Progression and rewards owns reward evaluation, XP, currency, unlocks, and `GrantAward` construction.
 
@@ -285,7 +289,7 @@ Modes and match rules own:
 
 ```text
 gameplay award policy
-objective policy
+objective policy selection/composition
 ranking policy
 match-end policy
 result policy
@@ -322,7 +326,7 @@ FFA preserves standard individual player results. Team modes produce standard te
 
 Objectives and missions may cause or contribute to match end.
 
-Objective and mission behavior belongs to modes, match rules, and content planning. `EndOfMatchFlow` owns final aggregation into `MatchSummary`.
+Detailed objective behavior belongs to [Objectives And Objective Runtime](objectives-and-objective-runtime.md). Modes and match rules select and compose objective policy, while content planning supplies mission/content references. `EndOfMatchFlow` owns final aggregation of the selected authoritative objective facts into `MatchSummary`.
 
 Planned aggregation:
 
@@ -589,8 +593,10 @@ Immediate and end-of-match challenge resolutions can both appear in MatchSummary
 ## Related Docs
 
 * [Modes And Match Rules](modes-and-match-rules.md)
+* [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
+* [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 * [Teams And Team Rules](teams-and-team-rules.md)
-* [Progression And Rewards](progression-and-rewards.md)
+* [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 * [Progression And Rewards](progression-and-rewards.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Data And Persistence](../../services/player-data/!INDEX.md)

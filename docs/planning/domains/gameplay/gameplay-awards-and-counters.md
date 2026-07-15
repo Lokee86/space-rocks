@@ -300,9 +300,9 @@ Combat and collision systems own simulation outcomes, projectile ownership, hit/
 
 Modes select enabled counters, award values, scaling overrides, attribution eligibility, assist policy, combo/streak policy, penalties, team distribution, visibility, mutation operations, lifecycle resets, and match-end participation. They provide explicit resolved rules rather than making downstream consumers infer policy from mode identity.
 
-### Objectives And Content
+### Objectives And Objective Runtime
 
-Objectives own objective definitions, progress meaning, completion, failure, and objective runtime state. They may emit award sources and consume completed counter mutations. `OBJECTIVE_PROGRESS` is a handoff value, not permission for the award system to decide objective completion.
+[Objectives And Objective Runtime](objectives-and-objective-runtime.md) owns objective definitions, progress meaning, completion, failure, and objective runtime state. It may emit award sources and consume completed counter mutations. `OBJECTIVE_PROGRESS` is a handoff value, not permission for the award system to decide objective completion.
 
 ### Teams And Team Rules
 
@@ -387,6 +387,7 @@ objective, ranking, match-end, results, progression, and presentation owners ret
 
 - [Gameplay Planning](./!INDEX.md)
 - [Modes And Match Rules](modes-and-match-rules.md)
+- [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)

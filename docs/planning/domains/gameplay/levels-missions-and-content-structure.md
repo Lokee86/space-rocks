@@ -35,7 +35,7 @@ This doc does not own:
 * campaign mechanics
 * progression unlock rules
 
-Modes, objectives, scoring policy, match rules, and build restrictions belong to [Modes And Match Rules](modes-and-match-rules.md).
+Modes select and compose objective policy; detailed objective behavior and runtime belong to [Objectives And Objective Runtime](objectives-and-objective-runtime.md). Scoring policy, match rules, and build restrictions belong to [Modes And Match Rules](modes-and-match-rules.md).
 
 Enemy, boss, asteroid pressure, encounter, spawn, and repeating event internals belong to [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md).
 
@@ -113,7 +113,10 @@ mode_ref
 -> Modes And Match Rules
 
 objective_refs
--> Modes And Match Rules / objective policy
+-> Objectives And Objective Runtime / objective definitions and runtime
+
+mode_ref
+-> Modes And Match Rules / objective policy selection and composition
 
 mission_ref
 -> Levels, Missions, And Content Structure
@@ -195,7 +198,7 @@ arcade default preset
 
 Arcade/freeplay/endless does not require a mission victory objective.
 
-Mode rules continue to own normal victory, loss, scoring, lives, and match-end behavior.
+Mode rules continue to select normal victory, loss, scoring, lives, and match-end policy. Objectives And Objective Runtime owns objective behavior and emits authoritative objective facts.
 
 Challenges may still be active in arcade/freeplay/endless if selected or automatically activated by later policy.
 
@@ -211,7 +214,7 @@ Rules:
 
 ```text
 mission_ref is optional on RoomContentConfig.
-Mission objectives become victory conditions.
+Mission objectives become victory conditions through the selected objective runtime.
 Missions are differentiated from normal mode victory by mission-owned objective victory content.
 Missions may later become unrepeatable once completed.
 Mission completion facts belong to Match Outcomes And Results.
@@ -234,7 +237,7 @@ A mission does not grant rewards directly.
 
 A mission does not define objective behavior directly.
 
-A mission selects or references objectives that the match-rule system evaluates.
+A mission selects or references objectives that Objectives And Objective Runtime evaluates under the policy composed by Modes And Match Rules.
 
 ## Challenges
 
@@ -430,9 +433,9 @@ shared/content/room_content_presets.toml
 shared/content/arena_policies.toml
 ```
 
-Modes and objectives live with the modes/match-rules system because they own rule behavior.
+Mode policy selection and composition belongs to [Modes And Match Rules](modes-and-match-rules.md). Detailed objective definitions and runtime belong to [Objectives And Objective Runtime](objectives-and-objective-runtime.md).
 
-Content catalogs reference mode and objective refs, but do not define their behavior.
+Content catalogs only reference those owners through mode and objective refs; they do not define mode or objective behavior.
 
 The shared-data pipeline should be generic enough that adding new catalogs does not require redesigning the pipeline.
 
@@ -517,6 +520,7 @@ Arena policy defaults safely to current toroidal behavior.
 * [Planning](../../!INDEX.md)
 * [Player Experience Systems](player-experience-systems.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
+* [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 * [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md)
 * [Match Outcomes And Results](match-outcomes-and-results.md)
 * [Progression And Rewards](progression-and-rewards.md)
@@ -574,7 +578,7 @@ Repeating event internals are owned by the target system.
 
 Scoring policy belongs to Modes And Match Rules.
 
-Objectives are match rules.
+Objectives are defined by content and selected/composed by match rules, while detailed behavior and runtime belong to Objectives And Objective Runtime.
 
 Mission and challenge completion facts belong to Match Outcomes And Results.
 

@@ -15,7 +15,7 @@ It covers:
 
 ```text
 gameplay award policy
-objective policy
+objective policy selection and composition
 ranking policy
 match-end policy
 result policy
@@ -34,6 +34,10 @@ authoritative MatchDecision and match lock
 ```
 
 This doc selects `player_spawn_profile_id` and `encounter_spawn_profile_id` as resolved rule seams, but it does not own detailed enemy, wave, or level content behind encounter-related IDs.
+
+Detailed gameplay award and counter semantics belong to [Gameplay Awards And Counters](gameplay-awards-and-counters.md). This doc selects and composes the resolved award-policy references consumed by modes; it does not redefine award catalogue, attribution, assists, combos, streaks, distribution, mutation, visibility, or idempotency semantics. Detailed lives, death, elimination, and respawn semantics likewise belong to [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md).
+
+Detailed objective definitions, lifecycle, progress semantics, visibility, typed requests, and objective facts belong to [Objectives And Objective Runtime](objectives-and-objective-runtime.md). Modes select and compose objective policy, continuation and match-end implications, any mode-specific tie sub-policy, and result requirements; they do not become an alternate owner of objective runtime behavior.
 
 ## Core Architecture
 
@@ -82,7 +86,7 @@ The P4 seam must be proven through two real modes. Players configure room option
 
 ```text
 gameplay award policy
-objective policy
+objective policy selection and composition
 ranking policy
 match-end policy
 result policy
@@ -215,7 +219,7 @@ Define preset registry.
 Validate config.
 Construct `ResolvedMatchRules`.
 Compose the Arcade Survival baseline plus mode/config overrides.
-Select gameplay award, objective, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, encounter-spawn, join, and progression-eligibility policies.
+Select gameplay award and objective policy, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, encounter-spawn, join, and progression-eligibility policies. Objective runtime evaluates the selected objective definitions and emits authoritative objective facts.
 Evaluate normalized `MatchFacts` and lock one authoritative `MatchDecision`.
 Likely starts near `services/game-server/internal/game/rules`, with exact package split as a gametime decision.
 ```
@@ -363,7 +367,10 @@ room snapshots expose the mode summary only if the client needs it
 
 - [Planning](../../!INDEX.md)
 - [Player Experience Systems](player-experience-systems.md)
+- [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
+- [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
+- [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Progression And Rewards](progression-and-rewards.md)
 
@@ -373,8 +380,8 @@ room snapshots expose the mode summary only if the client needs it
 - Exact shared data format for presets.
 - Whether first client UI is a full selector or a minimal preset path.
 - Exact room snapshot mode-summary shape.
-- Exact gameplay award/scoring mechanics.
-- Exact objective policy contracts.
+- Exact resolved award-policy reference and contract shape between modes and Gameplay Awards And Counters.
+- Exact objective policy selection and composition contracts.
 - Exact ranking policy contracts and tie handling.
 - Exact match-end policy contracts beyond the two baseline modes.
 - Exact result-policy shape and participant/team outcome vocabulary.
