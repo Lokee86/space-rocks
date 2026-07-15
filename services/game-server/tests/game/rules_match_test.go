@@ -20,6 +20,14 @@ func TestEvaluateMatchCurrentGameOverSemantics(t *testing.T) {
 			wantPlayers: []rules.PlayerDecision{},
 		},
 		{
+			name: "no active players after participation",
+			snapshot: rules.MatchSnapshot{
+				HadParticipants: true,
+			},
+			wantOver:    true,
+			wantPlayers: []rules.PlayerDecision{},
+		},
+		{
 			name: "active player",
 			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
 				{ID: "player-1", HasActiveShip: true},

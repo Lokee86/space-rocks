@@ -62,6 +62,9 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	if session, ok := game.playerSessions[playerID]; ok {
 		session.Score = after
 	}
+	if record, ok := game.participantRecords[playerID]; ok && record != nil {
+		record.Score = after
+	}
 
 	return PlayerCounterChange{
 		PlayerID: playerID,

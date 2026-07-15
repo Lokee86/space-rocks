@@ -33,12 +33,12 @@ func activateRoomPlayers(room *rooms.Room) {
 
 		playerID := gameplayContext.Game.AddPlayer()
 		if !session.setGamePlayerIDForRoom(room, playerID) {
-			gameplayContext.Game.RemovePlayer(playerID)
+			gameplayContext.Game.RollbackPlayerAdd(playerID)
 			continue
 		}
 		if !activateMemberPlayerCall(room, gameplayContext, session.sessionID, playerID) {
 			session.clearGamePlayerIDForRoom(room)
-			gameplayContext.Game.RemovePlayer(playerID)
+			gameplayContext.Game.RollbackPlayerAdd(playerID)
 		}
 	}
 

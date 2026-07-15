@@ -110,6 +110,9 @@ func TestActivateRoomPlayersRollsBackWhenRoomActivationFails(t *testing.T) {
 	if facts := room.GameInstance().PlayerMatchFacts(); len(facts) != 0 {
 		t.Fatalf("expected rolled-back game player facts to be empty, got %d", len(facts))
 	}
+	if decision := room.GameInstance().MatchDecision(); decision.IsOver {
+		t.Fatalf("expected rolled-back provisional activation not to complete match, got %+v", decision)
+	}
 }
 
 func TestActivateRoomPlayersCountsSameIdentityAcrossConsecutiveMatches(t *testing.T) {

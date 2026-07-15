@@ -24,12 +24,15 @@ func (game *Game) PlayerMatchFacts() []PlayerMatchFact {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	facts := make([]PlayerMatchFact, 0, len(game.playerSessions))
-	for _, session := range game.playerSessions {
+	facts := make([]PlayerMatchFact, 0, len(game.participantRecords))
+	for _, record := range game.participantRecords {
+		if record == nil {
+			continue
+		}
 		facts = append(facts, PlayerMatchFact{
-			GamePlayerID: session.ID,
-			Score:        session.Score,
-			ShipDeaths:   session.ShipDeaths,
+			GamePlayerID: record.ID,
+			Score:        record.Score,
+			ShipDeaths:   record.ShipDeaths,
 		})
 	}
 	return facts
@@ -50,5 +53,8 @@ func (game *Game) matchSnapshot() rules.MatchSnapshot {
 			HasRemainingLives: session.Lives > 0,
 		})
 	}
-	return rules.MatchSnapshot{Players: players}
+	return rules.MatchSnapshot{
+		Players:         players,
+		HadParticipants: len(game.participantRecords) > 0,
+	}
 }

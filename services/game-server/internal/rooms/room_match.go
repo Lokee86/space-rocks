@@ -9,19 +9,30 @@ import (
 )
 
 type roomMatch struct {
-	game                 *game.Game
-	activePlayers        int
-	activeSessionIDs     map[string]struct{}
-	matchNumber          int
-	currentMatchID       string
-	currentTraceID       string
-	resolvedSummary      *playerdata.MatchResultSummary
-	matchResultReported  bool
-	matchResultReporting bool
+	game                  *game.Game
+	activePlayers         int
+	activeSessionIDs      map[string]struct{}
+	participantIdentities map[string]matchParticipantIdentity
+	matchNumber           int
+	currentMatchID        string
+	currentTraceID        string
+	resolvedSummary       *playerdata.MatchResultSummary
+	matchResultReported   bool
+	matchResultReporting  bool
+}
+
+type matchParticipantIdentity struct {
+	AccountID      string
+	LocalProfileID string
+	IsBot          bool
 }
 
 func newRoomMatch(gameInstance *game.Game) *roomMatch {
-	return &roomMatch{game: gameInstance, activeSessionIDs: make(map[string]struct{})}
+	return &roomMatch{
+		game:                  gameInstance,
+		activeSessionIDs:      make(map[string]struct{}),
+		participantIdentities: make(map[string]matchParticipantIdentity),
+	}
 }
 
 func (rm *roomMatch) Game() *game.Game { return rm.game }
@@ -78,6 +89,7 @@ func (rm *roomMatch) BeginNextMatch(roomID string) string {
 	rm.currentMatchID = roomID + "-match-" + strconv.Itoa(rm.matchNumber)
 	rm.currentTraceID = uuid.NewString()
 	rm.ResetActiveSessions()
+	rm.participantIdentities = make(map[string]matchParticipantIdentity)
 	rm.matchResultReported = false
 	rm.matchResultReporting = false
 	rm.ClearResolvedSummary()
@@ -85,6 +97,17 @@ func (rm *roomMatch) BeginNextMatch(roomID string) string {
 		rm.game.SetMatchContext(rm.currentMatchID, rm.currentTraceID)
 	}
 	return rm.currentMatchID
+}
+
+func (rm *roomMatch) RememberParticipantIdentity(member RoomMember) {
+	if member.PlayerID == "" {
+		return
+	}
+	rm.participantIdentities[member.PlayerID] = matchParticipantIdentity{
+		AccountID:      member.AccountID,
+		LocalProfileID: member.LocalProfileID,
+		IsBot:          member.IsBot,
+	}
 }
 
 func (rm *roomMatch) CurrentMatchID() string { return rm.currentMatchID }

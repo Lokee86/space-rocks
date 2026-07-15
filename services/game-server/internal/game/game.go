@@ -19,6 +19,8 @@ import (
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
+// Game keeps active runtime participation in playerSessions and durable match
+// facts for everyone who participated in participantRecords.
 type Game struct {
 	mu                        sync.Mutex
 	inputMu                   sync.Mutex
@@ -49,6 +51,7 @@ type Game struct {
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
 	botControllers            map[string]*bots.Controller
+	participantRecords        map[string]*participantRecord
 	pendingPresentationEvents map[string][]PendingPresentationEvent
 	presentationFrame         *gameplayPresentationFrame
 	runtimeMeasurementMu      sync.RWMutex
@@ -81,6 +84,7 @@ func newGame(source *rng.Source) *Game {
 		cameraViews:               make(map[string]*runtime.CameraView),
 		playerSessions:            make(map[string]*playerSession),
 		botControllers:            make(map[string]*bots.Controller),
+		participantRecords:        make(map[string]*participantRecord),
 		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
 		runtimeMeasurements:       make(map[uint64]measurement.SimulationObserver),
 		spawner:                   spawning.New(source),

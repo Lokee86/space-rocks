@@ -170,12 +170,13 @@ func (room *Room) MarkGameOverIfComplete() bool {
 }
 
 type gameOverCapture struct {
-	State    RoomState
-	Game     *game.Game
-	MatchID  string
-	TraceID  string
-	Joinable bool
-	Members  map[string]RoomMember
+	State                 RoomState
+	Game                  *game.Game
+	MatchID               string
+	TraceID               string
+	Joinable              bool
+	Members               map[string]RoomMember
+	ParticipantIdentities map[string]matchParticipantIdentity
 }
 
 func (room *Room) captureGameOverLocked() (gameOverCapture, *RoomDomainError) {
@@ -183,10 +184,27 @@ func (room *Room) captureGameOverLocked() (gameOverCapture, *RoomDomainError) {
 		return gameOverCapture{}, &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Room can only move to game over from in-game."}
 	}
 	members := make(map[string]RoomMember, len(room.membership.members))
+	identities := make(map[string]matchParticipantIdentity, len(room.membership.members)+len(room.match.participantIdentities))
+	for playerID, identity := range room.match.participantIdentities {
+		identities[playerID] = identity
+	}
 	for playerID, member := range room.membership.members {
 		members[playerID] = *member
+		identities[playerID] = matchParticipantIdentity{
+			AccountID:      member.AccountID,
+			LocalProfileID: member.LocalProfileID,
+			IsBot:          member.IsBot,
+		}
 	}
-	return gameOverCapture{State: room.State, Game: room.match.Game(), MatchID: room.match.CurrentMatchID(), TraceID: room.match.CurrentTraceID(), Joinable: room.Joinable, Members: members}, nil
+	return gameOverCapture{
+		State:                 room.State,
+		Game:                  room.match.Game(),
+		MatchID:               room.match.CurrentMatchID(),
+		TraceID:              room.match.CurrentTraceID(),
+		Joinable:             room.Joinable,
+		Members:              members,
+		ParticipantIdentities: identities,
+	}, nil
 }
 
 func (room *Room) gameOverCaptureMatchesLocked(capture gameOverCapture) bool {

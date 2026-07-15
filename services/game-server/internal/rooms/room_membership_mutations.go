@@ -82,6 +82,7 @@ func (room *Room) RemoveMemberForSession(sessionID string) (removed RoomMember, 
 		return RoomMember{}, room.membership.memberCount(), false
 	}
 	removed = *member
+	room.match.RememberParticipantIdentity(removed)
 	room.membership.removeMember(member.PlayerID)
 	return removed, room.membership.memberCount(), true
 }

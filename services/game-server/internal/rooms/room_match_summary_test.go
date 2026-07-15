@@ -3,6 +3,7 @@ package rooms
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
@@ -283,6 +284,178 @@ func TestMultiplayerResolvedMatchSummaryCopiesAccountIDFromRoomMember(t *testing
 	room.GameInstance().Stop()
 }
 
+func TestMultiplayerResolvedMatchSummaryIncludesRemovedPlayer(t *testing.T) {
+	manager := NewRoomManager()
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create room: %v", err)
+	}
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	owner.SetReady(true)
+	peer := room.AddMember(NewRoomMember("session-peer"))
+	peer.SetReady(true)
+
+	peerAccountID := "11111111-2222-3333-4444-555555555555"
+	if !room.SetMemberAccountIDForSession(peer.SessionID, peerAccountID) {
+		t.Fatal("expected peer account identity to be stored")
+	}
+	if err := room.StartGameForMember(owner.PlayerID, game.New); err != nil {
+		t.Fatalf("start game: %v", err)
+	}
+
+	gameInstance := room.GameInstance()
+	ownerPlayerID := gameInstance.AddPlayer()
+	peerPlayerID := gameInstance.AddPlayer()
+	context := room.GameplayContext()
+	if !room.ActivateMemberPlayer(context, owner.SessionID, ownerPlayerID) ||
+		!room.ActivateMemberPlayer(context, peer.SessionID, peerPlayerID) {
+		t.Fatal("activate players")
+	}
+
+	gameInstance.SetPlayerScore(ownerPlayerID, 125)
+	gameInstance.SetPlayerScore(peerPlayerID, 275)
+	setLifecycleTickTestShipDeaths(t, gameInstance, peerPlayerID, 2)
+
+	leaveResult, leaveErr := manager.LeaveMember(room.ID, peer.SessionID, "")
+	if leaveErr != nil {
+		t.Fatalf("leave peer: %v", leaveErr)
+	}
+	if !leaveResult.PlayerRemoved || leaveResult.PlayerID != peerPlayerID {
+		t.Fatalf("leave result = %+v, want peer removed from active play", leaveResult)
+	}
+
+	markLifecycleTickTestGameOverForAllPlayers(t, gameInstance)
+	if !room.MarkGameOverIfComplete() {
+		t.Fatal("removed player blocked room game-over transition")
+	}
+
+	summary, ok := room.ResolvedMatchSummary()
+	if !ok {
+		t.Fatal("expected resolved match summary")
+	}
+	if len(summary.Players) != 2 {
+		t.Fatalf("summary players = %+v, want both participants", summary.Players)
+	}
+
+	playersByID := make(map[string]playerdata.PlayerMatchSummary, len(summary.Players))
+	for _, player := range summary.Players {
+		playersByID[player.GamePlayerID] = player
+	}
+	removedPlayer, ok := playersByID[peerPlayerID]
+	if !ok {
+		t.Fatalf("missing removed player %q from summary", peerPlayerID)
+	}
+	if removedPlayer.Score != 275 || removedPlayer.ShipDeaths != 2 {
+		t.Fatalf("removed player summary = %+v, want score 275 and two deaths", removedPlayer)
+	}
+	if removedPlayer.AccountID != peerAccountID {
+		t.Fatalf("removed player AccountID = %q, want %q", removedPlayer.AccountID, peerAccountID)
+	}
+	if activePlayer, ok := playersByID[ownerPlayerID]; !ok || activePlayer.Score != 125 {
+		t.Fatalf("active player summary = %+v, want score 125", activePlayer)
+	}
+}
+
+func TestRoomGameOverLifecycleCompletesAfterAllPlayersLeave(t *testing.T) {
+	manager := NewRoomManagerWithCleanupDelay(time.Hour)
+	defer manager.StopAll()
+
+	room, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create room: %v", err)
+	}
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	owner.SetReady(true)
+	peer := room.AddMember(NewRoomMember("session-peer"))
+	peer.SetReady(true)
+
+	ownerAccountID := "11111111-2222-3333-4444-555555555555"
+	peerLocalProfileID := "local-profile-peer"
+	if !room.SetMemberAccountIDForSession(owner.SessionID, ownerAccountID) {
+		t.Fatal("store owner account identity")
+	}
+	if !room.SetMemberLocalProfileIDForSession(peer.SessionID, peerLocalProfileID) {
+		t.Fatal("store peer local-profile identity")
+	}
+	if err := room.StartGameForMember(owner.PlayerID, game.New); err != nil {
+		t.Fatalf("start game: %v", err)
+	}
+
+	gameInstance := room.GameInstance()
+	ownerPlayerID := gameInstance.AddPlayer()
+	peerPlayerID := gameInstance.AddPlayer()
+	context := room.GameplayContext()
+	if !room.ActivateMemberPlayer(context, owner.SessionID, ownerPlayerID) ||
+		!room.ActivateMemberPlayer(context, peer.SessionID, peerPlayerID) {
+		t.Fatal("activate players")
+	}
+	gameInstance.SetPlayerScore(ownerPlayerID, 140)
+	gameInstance.SetPlayerScore(peerPlayerID, 260)
+	setLifecycleTickTestShipDeaths(t, gameInstance, ownerPlayerID, 1)
+	setLifecycleTickTestShipDeaths(t, gameInstance, peerPlayerID, 2)
+
+	for _, sessionID := range []string{owner.SessionID, peer.SessionID} {
+		leaveResult, leaveErr := manager.LeaveMember(room.ID, sessionID, "")
+		if leaveErr != nil {
+			t.Fatalf("leave %q: %v", sessionID, leaveErr)
+		}
+		if !leaveResult.PlayerRemoved {
+			t.Fatalf("leave result for %q = %+v, want active player removed", sessionID, leaveResult)
+		}
+	}
+	if population := room.Population(); population.Members != 0 || population.ActivePlayers != 0 {
+		t.Fatalf("population after leaves = %+v, want empty room", population)
+	}
+
+	broadcasts := 0
+	if !TickRoomGameOverLifecycle(room, func(broadcastRoom *Room) {
+		broadcasts++
+		if broadcastRoom != room {
+			t.Fatal("broadcasted unexpected room")
+		}
+	}) {
+		t.Fatal("normal lifecycle did not complete match after all players left")
+	}
+	if room.State != RoomStateGameOver || broadcasts != 1 {
+		t.Fatalf("room state/broadcasts = %q/%d, want game over/1", room.State, broadcasts)
+	}
+
+	summary, ok := room.ResolvedMatchSummary()
+	if !ok {
+		t.Fatal("expected resolved match summary")
+	}
+	if len(summary.Players) != 2 {
+		t.Fatalf("summary players = %+v, want both historical participants", summary.Players)
+	}
+	playersByID := make(map[string]playerdata.PlayerMatchSummary, len(summary.Players))
+	for _, player := range summary.Players {
+		playersByID[player.GamePlayerID] = player
+	}
+	if player := playersByID[ownerPlayerID]; player.AccountID != ownerAccountID || player.Score != 140 || player.ShipDeaths != 1 {
+		t.Fatalf("owner summary = %+v, want retained account, score, and deaths", player)
+	}
+	if player := playersByID[peerPlayerID]; player.LocalProfileID != peerLocalProfileID || player.Score != 260 || player.ShipDeaths != 2 {
+		t.Fatalf("peer summary = %+v, want retained profile, score, and deaths", player)
+	}
+
+	summaryType := reflect.TypeOf(playerdata.PlayerMatchSummary{})
+	for _, fieldName := range []string{"Disconnected", "Departed", "Forfeited"} {
+		if _, exists := summaryType.FieldByName(fieldName); exists {
+			t.Fatalf("unexpected participant result label %q", fieldName)
+		}
+	}
+
+	reporter := &fakeMatchResultReporter{}
+	if !ReportResolvedMatchResultOnce(room, reporter) || reporter.calls != 1 {
+		t.Fatalf("result reporting before cleanup failed: calls=%d", reporter.calls)
+	}
+	if _, stillManaged := manager.Find(room.ID); !stillManaged {
+		t.Fatal("room cleaned up before resolved result could be reported")
+	}
+}
+
 func TestMultiplayerResolvedMatchSummaryCopiesAccountIDAfterPlayerIDRekey(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
 	room.AddMember(NewRoomMember("session-owner"))
@@ -409,6 +582,15 @@ func remapLifecycleTickTestPlayerID(t *testing.T, gameInstance *game.Game, oldPl
 	sessions.SetMapIndex(reflect.ValueOf(newPlayerID), session)
 	exportLifecycleTickTestValue(session.Elem().FieldByName("ID")).SetString(newPlayerID)
 
+	records := exportLifecycleTickTestValue(value.FieldByName("participantRecords"))
+	record := records.MapIndex(reflect.ValueOf(oldPlayerID))
+	if !record.IsValid() {
+		t.Fatalf("expected participant record %q to exist", oldPlayerID)
+	}
+	records.SetMapIndex(reflect.ValueOf(oldPlayerID), reflect.Value{})
+	records.SetMapIndex(reflect.ValueOf(newPlayerID), record)
+	exportLifecycleTickTestValue(record.Elem().FieldByName("ID")).SetString(newPlayerID)
+
 	players := exportLifecycleTickTestValue(value.FieldByName("entities").FieldByName("Players"))
 	player := players.MapIndex(reflect.ValueOf(oldPlayerID))
 	if player.IsValid() {
@@ -416,6 +598,25 @@ func remapLifecycleTickTestPlayerID(t *testing.T, gameInstance *game.Game, oldPl
 		players.SetMapIndex(reflect.ValueOf(newPlayerID), player)
 		exportLifecycleTickTestValue(player.Elem().FieldByName("ID")).SetString(newPlayerID)
 	}
+}
+
+func setLifecycleTickTestShipDeaths(t *testing.T, gameInstance *game.Game, playerID string, shipDeaths int) {
+	t.Helper()
+
+	value := reflect.ValueOf(gameInstance).Elem()
+	sessions := exportLifecycleTickTestValue(value.FieldByName("playerSessions"))
+	session := sessions.MapIndex(reflect.ValueOf(playerID))
+	if !session.IsValid() {
+		t.Fatalf("expected session %q to exist", playerID)
+	}
+	exportLifecycleTickTestValue(session.Elem().FieldByName("ShipDeaths")).SetInt(int64(shipDeaths))
+
+	records := exportLifecycleTickTestValue(value.FieldByName("participantRecords"))
+	record := records.MapIndex(reflect.ValueOf(playerID))
+	if !record.IsValid() {
+		t.Fatalf("expected participant record %q to exist", playerID)
+	}
+	exportLifecycleTickTestValue(record.Elem().FieldByName("ShipDeaths")).SetInt(int64(shipDeaths))
 }
 
 func pruneLifecycleTickTestPlayers(t *testing.T, gameInstance *game.Game, keepPlayerID string) {

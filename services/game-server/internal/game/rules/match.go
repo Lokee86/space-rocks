@@ -7,7 +7,8 @@ type PlayerSnapshot struct {
 }
 
 type MatchSnapshot struct {
-	Players []PlayerSnapshot
+	Players         []PlayerSnapshot
+	HadParticipants bool
 }
 
 type PlayerParticipationStatus string
@@ -31,7 +32,7 @@ type MatchDecision struct {
 func EvaluateMatch(snapshot MatchSnapshot) MatchDecision {
 	players := make([]PlayerDecision, 0, len(snapshot.Players))
 	if len(snapshot.Players) == 0 {
-		return MatchDecision{IsOver: false, Players: players}
+		return MatchDecision{IsOver: snapshot.HadParticipants, Players: players}
 	}
 	isOver := true
 	for _, player := range snapshot.Players {

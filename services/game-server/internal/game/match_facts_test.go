@@ -5,13 +5,25 @@ import (
 	"testing"
 )
 
+func TestPlayerMatchFactsIncludesNewPlayer(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+
+	facts := game.PlayerMatchFacts()
+
+	if len(facts) != 1 || facts[0] != (PlayerMatchFact{GamePlayerID: playerID}) {
+		t.Fatalf("facts = %+v, want new player with zero score and deaths", facts)
+	}
+}
+
 func TestPlayerMatchFactsReturnsOneFactWithScoreAndShipDeaths(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
 
 	game.AddPlayerScore(playerID, 150)
-	session := game.playerSessions[playerID]
-	session.ShipDeaths = 3
+	for range 3 {
+		game.applyFatalPlayerDamage(playerID, game.entities.Players[playerID])
+	}
 
 	facts := game.PlayerMatchFacts()
 
@@ -37,8 +49,10 @@ func TestPlayerMatchFactsReturnsTwoFacts(t *testing.T) {
 
 	game.AddPlayerScore(playerID1, 100)
 	game.AddPlayerScore(playerID2, 250)
-	game.playerSessions[playerID1].ShipDeaths = 1
-	game.playerSessions[playerID2].ShipDeaths = 2
+	game.applyFatalPlayerDamage(playerID1, game.entities.Players[playerID1])
+	for range 2 {
+		game.applyFatalPlayerDamage(playerID2, game.entities.Players[playerID2])
+	}
 
 	facts := game.PlayerMatchFacts()
 
@@ -68,6 +82,87 @@ func TestPlayerMatchFactsReturnsTwoFacts(t *testing.T) {
 	}
 }
 
+func TestRemovePlayerPreservesFactsAndStopsActiveParticipation(t *testing.T) {
+	game := New()
+	removedPlayerID := game.AddPlayer()
+	remainingPlayerID := game.AddPlayer()
+
+	game.AddPlayerScore(removedPlayerID, 150)
+	game.applyFatalPlayerDamage(removedPlayerID, game.entities.Players[removedPlayerID])
+	game.AddPlayerScore(remainingPlayerID, 75)
+
+	game.SetPlayerLives(remainingPlayerID, 0)
+	delete(game.entities.Players, remainingPlayerID)
+
+	game.RemovePlayer(removedPlayerID)
+	game.RemovePlayer(removedPlayerID)
+
+	if _, ok := game.playerSessions[removedPlayerID]; ok {
+		t.Fatalf("player session %q still exists after removal", removedPlayerID)
+	}
+	if _, ok := game.entities.Players[removedPlayerID]; ok {
+		t.Fatalf("active ship %q still exists after removal", removedPlayerID)
+	}
+
+	snapshot := game.matchSnapshot()
+	if len(snapshot.Players) != 1 || snapshot.Players[0].ID != remainingPlayerID {
+		t.Fatalf("match snapshot = %+v, want only %q", snapshot.Players, remainingPlayerID)
+	}
+	if decision := game.MatchDecision(); !decision.IsOver {
+		t.Fatalf("match decision = %+v, want removed player not to block completion", decision)
+	}
+
+	factsByID := playerMatchFactsByID(game.PlayerMatchFacts())
+	if len(factsByID) != 2 {
+		t.Fatalf("facts = %+v, want exactly two historical participants", factsByID)
+	}
+	if fact := factsByID[removedPlayerID]; fact.Score != 150 || fact.ShipDeaths != 1 {
+		t.Fatalf("removed player fact = %+v, want score 150 and one death", fact)
+	}
+	if fact := factsByID[remainingPlayerID]; fact.Score != 75 || fact.ShipDeaths != 0 {
+		t.Fatalf("remaining player fact = %+v, want unchanged score 75 and zero deaths", fact)
+	}
+}
+
+func TestRemoveLastPlayerCompletesMatchAndRepeatedRemovalIsStable(t *testing.T) {
+	game := New()
+	if decision := game.MatchDecision(); decision.IsOver {
+		t.Fatalf("new empty game decision = %+v, want not over", decision)
+	}
+
+	playerID := game.AddPlayer()
+	game.AddPlayerScore(playerID, 90)
+	game.RemovePlayer(playerID)
+
+	if _, ok := game.playerSessions[playerID]; ok {
+		t.Fatalf("player session %q still exists after removal", playerID)
+	}
+	if _, ok := game.entities.Players[playerID]; ok {
+		t.Fatalf("active ship %q still exists after removal", playerID)
+	}
+	if snapshot := game.matchSnapshot(); len(snapshot.Players) != 0 || !snapshot.HadParticipants {
+		t.Fatalf("match snapshot = %+v, want no active players with historical participation", snapshot)
+	}
+	if decision := game.MatchDecision(); !decision.IsOver || len(decision.Players) != 0 {
+		t.Fatalf("match decision = %+v, want completed match with no active players", decision)
+	}
+
+	facts := game.PlayerMatchFacts()
+	if len(facts) != 1 || facts[0] != (PlayerMatchFact{GamePlayerID: playerID, Score: 90}) {
+		t.Fatalf("facts = %+v, want removed player's accumulated facts", facts)
+	}
+
+	game.RemovePlayer(playerID)
+
+	if decision := game.MatchDecision(); !decision.IsOver || len(decision.Players) != 0 {
+		t.Fatalf("decision after repeated removal = %+v, want stable completed match", decision)
+	}
+	repeatedFacts := game.PlayerMatchFacts()
+	if len(repeatedFacts) != 1 || repeatedFacts[0] != facts[0] {
+		t.Fatalf("facts after repeated removal = %+v, want unchanged %+v", repeatedFacts, facts)
+	}
+}
+
 func TestPlayerMatchFactsHasNoAccountOrLocalIdentityFields(t *testing.T) {
 	factType := reflect.TypeOf(PlayerMatchFact{})
 
@@ -77,4 +172,12 @@ func TestPlayerMatchFactsHasNoAccountOrLocalIdentityFields(t *testing.T) {
 			t.Fatalf("unexpected identity field %q on PlayerMatchFact", fieldName)
 		}
 	}
+}
+
+func playerMatchFactsByID(facts []PlayerMatchFact) map[string]PlayerMatchFact {
+	factsByID := make(map[string]PlayerMatchFact, len(facts))
+	for _, fact := range facts {
+		factsByID[fact.GamePlayerID] = fact
+	}
+	return factsByID
 }

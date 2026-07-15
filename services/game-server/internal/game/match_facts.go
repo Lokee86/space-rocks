@@ -6,3 +6,9 @@ type PlayerMatchFact struct {
 	Score        int
 	ShipDeaths   int
 }
+
+type participantRecord struct {
+	ID         string
+	Score      int
+	ShipDeaths int
+}

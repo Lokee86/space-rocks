@@ -23,6 +23,7 @@ func (game *Game) addPlayerLocked() string {
 	session := newPlayerSession(playerID, spawnPosition)
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session
+	game.participantRecords[playerID] = &participantRecord{ID: playerID}
 	game.entities.Players[playerID] = player
 	game.setPlayerCameraViewLocked(playerID, player)
 	game.pendingPresentationEvents[playerID] = nil
@@ -69,6 +70,21 @@ func (game *Game) RemovePlayer(playerID string) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	game.removeActivePlayerLocked(playerID)
+	logging.Game.Debug("player removed", logging.FieldPlayerID, playerID)
+}
+
+// RollbackPlayerAdd removes a provisional player that never completed room activation.
+func (game *Game) RollbackPlayerAdd(playerID string) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+
+	game.removeActivePlayerLocked(playerID)
+	delete(game.participantRecords, playerID)
+	logging.Game.Debug("provisional player rolled back", logging.FieldPlayerID, playerID)
+}
+
+func (game *Game) removeActivePlayerLocked(playerID string) {
 	delete(game.entities.Players, playerID)
 	game.inputMu.Lock()
 	delete(game.pendingPlayerInputs, playerID)

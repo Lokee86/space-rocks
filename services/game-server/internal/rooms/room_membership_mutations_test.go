@@ -165,8 +165,12 @@ func TestLeaveMemberUsesAtomicallyRemovedPlayerIdentity(t *testing.T) {
 		t.Fatalf("result=%+v", result)
 	}
 	facts := gameInstance.PlayerMatchFacts()
-	if len(facts) != 1 || facts[0].GamePlayerID != playerTwo {
-		t.Fatalf("facts=%+v", facts)
+	factIDs := make(map[string]bool, len(facts))
+	for _, fact := range facts {
+		factIDs[fact.GamePlayerID] = true
+	}
+	if len(facts) != 2 || !factIDs[playerOne] || !factIDs[playerTwo] {
+		t.Fatalf("facts=%+v, want removed and active players", facts)
 	}
 	if mapped, ok := room.PlayerIDForSession("session-2"); !ok || mapped != playerTwo {
 		t.Fatalf("mapping=%q ok=%v", mapped, ok)
