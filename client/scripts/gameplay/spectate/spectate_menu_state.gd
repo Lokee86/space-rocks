@@ -1,8 +1,6 @@
 extends RefCounted
 class_name SpectateMenuState
 
-const ClientLogger := preload("res://scripts/logging/logger.gd")
-
 # Owns spectate availability/menu state. This is the future home for outside
 # spectating rules; it does not render UI or send packets.
 
@@ -70,14 +68,4 @@ func cycle_next_target() -> String:
 
 
 func has_spectate_targets() -> bool:
-	var result := !self_id.is_empty() && !spectate_target_ids().is_empty()
-	_log_has_spectate_targets(result)
-	return result
-
-
-func _log_has_spectate_targets(result: bool) -> void:
-	ClientLogger.shell_debug(
-		"Spectate menu state trace: self_id=%s lifecycle_keys=%s has_spectate_targets=%s"
-		% [self_id, player_lifecycle.keys(), result]
-	)
-
+	return !self_id.is_empty() && !spectate_target_ids().is_empty()

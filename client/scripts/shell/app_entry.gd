@@ -47,9 +47,7 @@ var menu_flow_controller
 var multiplayer_entry_flow
 
 func _ready() -> void:
-	if ClientLogger.configure_file_output("user://logs", "client"):
-		ClientLogger.shell_info("Client structured log file: %s" % ClientLogger.current_file_output_path())
-	else:
+	if !ClientLogger.configure_file_output("user://logs", "client"):
 		ClientLogger.shell_warn("Client structured log file output unavailable")
 
 	_log_shell_status("App entry booted")
@@ -239,18 +237,15 @@ func _log_shell_status(message: String) -> void:
 
 
 func _on_single_player_requested() -> void:
-	_log_shell_status("App entry single-player pregame requested")
 	if menu_flow_controller != null:
 		menu_flow_controller.show_single_player_pregame()
 
 
 func _on_logout_requested() -> void:
-	_log_shell_status("App entry logout requested")
 	auth_session_controller.logout()
 
 
 func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
-	_log_shell_status("App entry gameplay return to pregame requested: %s" % session_mode)
 	if menu_flow_controller == null:
 		return
 	if session_mode == Constants.SESSION_MODE_MULTIPLAYER:
@@ -261,7 +256,6 @@ func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 
 
 func _on_gameplay_replay_requested() -> void:
-	_log_shell_status("App entry gameplay replay requested")
 	_start_single_player_from_pregame()
 
 

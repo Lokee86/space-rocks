@@ -2,7 +2,6 @@ extends RefCounted
 class_name GameplayDeathFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var hud_flow: GameplayHudFlow = null
 var match_end_flow: MatchEndFlow = null
@@ -27,13 +26,6 @@ func apply_self_death_event(event: Dictionary) -> void:
 	var respawn_delay := 0.0
 	if event.has(Packets.FIELD_RESPAWN_DELAY):
 		respawn_delay = float(event.get(Packets.FIELD_RESPAWN_DELAY, 0.0))
-	ClientLogger.event(
-		ClientLogger.CATEGORY_GAME,
-		ClientLogger.LEVEL_INFO,
-		"self_death_applied",
-		"Applied local player death event",
-		{"lives": lives, "respawn_delay": respawn_delay}
-	)
 	if hud_flow != null:
 		hud_flow.apply_lives(lives)
 	if lives > 0:

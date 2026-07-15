@@ -131,7 +131,6 @@ func show_menu() -> bool:
 	var is_game_over_menu := uses_match_over_overlay_menu
 	var room_state := _current_room_state() if is_game_over_menu else ""
 	var has_spectate_targets := _has_spectate_targets() if is_game_over_menu else false
-	_log_configure_for_state("show_menu", session_mode, is_game_over_menu, room_state, has_spectate_targets)
 	active_game_menu.configure_for_state(session_mode, is_game_over_menu, room_state, has_spectate_targets)
 	if uses_match_over_overlay_menu:
 		active_game_menu.show()
@@ -203,13 +202,6 @@ func show_spectating_menu() -> void:
 	var is_game_over_menu := true
 	var room_state := _current_room_state()
 	var has_spectate_targets := _has_spectate_targets()
-	_log_configure_for_state(
-		"show_spectating_menu",
-		session_mode,
-		is_game_over_menu,
-		room_state,
-		has_spectate_targets
-	)
 	game_menu.configure_for_state(
 		session_mode,
 		is_game_over_menu,
@@ -302,19 +294,6 @@ func _current_room_state() -> String:
 	return ""
 
 
-func _log_configure_for_state(
-	path: String,
-	session_mode: String,
-	is_game_over_menu: bool,
-	room_state: String,
-	has_spectate_targets: bool
-) -> void:
-	ClientLogger.shell_debug(
-		"Gameplay menu configure trace: path=%s session_mode=%s game_over=%s room_state=%s has_spectate_targets=%s"
-		% [path, session_mode, is_game_over_menu, room_state, has_spectate_targets]
-	)
-
-
 func _has_live_pause_paths() -> bool:
 	return (
 		game_over_container != null
@@ -378,11 +357,4 @@ func _configure_game_menu_for_game_over() -> void:
 	var session_mode := _current_session_mode()
 	var room_state := _current_room_state()
 	var has_spectate_targets := _has_spectate_targets()
-	_log_configure_for_state(
-		"configure_game_menu_for_game_over",
-		session_mode,
-		true,
-		room_state,
-		has_spectate_targets
-	)
 	game_menu.configure_for_state(session_mode, true, room_state, has_spectate_targets)

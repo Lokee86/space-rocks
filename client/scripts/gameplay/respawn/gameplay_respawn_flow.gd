@@ -2,13 +2,10 @@ extends RefCounted
 class_name GameplayRespawnFlow
 
 const PlayerLifecycle = preload("res://scripts/gameplay/lifecycle/player_lifecycle.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var connection_service
 var hud_flow: GameplayHudFlow = null
 var awaiting_respawn_confirmation := false
-var _logged_respawn_send := false
-var _logged_respawn_blocked := {}
 
 
 func configure(connection_service_ref, hud_flow_ref: GameplayHudFlow) -> void:
@@ -18,48 +15,24 @@ func configure(connection_service_ref, hud_flow_ref: GameplayHudFlow) -> void:
 
 func reset() -> void:
 	awaiting_respawn_confirmation = false
-	_logged_respawn_send = false
-	_logged_respawn_blocked.clear()
 
 
 func request_respawn(required_lane_baselines_synced: bool) -> void:
 	if !required_lane_baselines_synced:
-		_log_respawn_blocked_once("readiness false")
 		return
 	if connection_service == null:
-		_log_respawn_blocked_once("connection_service null")
 		return
 	if hud_flow == null:
-		_log_respawn_blocked_once("hud_flow null")
 		return
 	if !hud_flow.can_request_respawn():
-		_log_respawn_blocked_once("can_request_respawn false")
 		return
 
-	if !_logged_respawn_send:
-		_logged_respawn_send = true
-		ClientLogger.network_event(
-			ClientLogger.LEVEL_INFO,
-			"respawn_request_send_started",
-			"Respawn request send started",
-			{
-				"source": "gameplay_respawn_flow",
-			}
-		)
 	connection_service.send_respawn_request()
 	mark_awaiting_confirmation()
 
 
 func mark_awaiting_confirmation() -> void:
 	awaiting_respawn_confirmation = true
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"respawn_awaiting_confirmation_marked",
-		"Respawn awaiting confirmation marked",
-		{
-			"source": "gameplay_respawn_flow",
-		}
-	)
 
 
 func clear_awaiting_confirmation() -> void:
@@ -95,18 +68,3 @@ func should_restore_alive_hud(
 	var player_visible := player != null and player.visible
 
 	return player_visible or has_valid_server_state
-
-
-func _log_respawn_blocked_once(reason: String) -> void:
-	if _logged_respawn_blocked.has(reason):
-		return
-	_logged_respawn_blocked[reason] = true
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"respawn_request_blocked",
-		"Respawn request blocked",
-		{
-			"reason": reason,
-			"source": "gameplay_respawn_flow",
-		}
-	)

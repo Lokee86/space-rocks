@@ -88,7 +88,6 @@ func handle_room_state_changed(packet: Dictionary) -> void:
 	var room_state := str(packet.get(Packets.FIELD_ROOM_STATE, ""))
 	if !room_state.is_empty():
 		latest_room_state = room_state
-	_log("Room state changed: %s" % latest_room_state)
 
 
 func current_room_state() -> String:

@@ -369,8 +369,6 @@ func test_event_dedupe_histories_are_bounded_without_duplicate_order_entries() -
 		applier._record_applied_batch_id("batch-%d" % index)
 	for index in range(EventBatchApplier.APPLIED_EVENT_ID_CAP + 1):
 		applier._record_applied_event_id("event-%d" % index)
-	for index in range(EventBatchApplier.LOGGED_APPLIED_BATCH_ID_CAP + 1):
-		applier._record_logged_applied_batch_id("logged-batch-%d" % index)
 
 	assert_eq(applier._applied_batch_ids.size(), EventBatchApplier.APPLIED_BATCH_ID_CAP)
 	assert_false(applier._applied_batch_ids.has("batch-0"))
@@ -378,16 +376,11 @@ func test_event_dedupe_histories_are_bounded_without_duplicate_order_entries() -
 	assert_eq(applier._applied_event_ids.size(), EventBatchApplier.APPLIED_EVENT_ID_CAP)
 	assert_false(applier._applied_event_ids.has("event-0"))
 	assert_true(applier._applied_event_ids.has("event-%d" % EventBatchApplier.APPLIED_EVENT_ID_CAP))
-	assert_eq(applier._logged_applied_batch_ids.size(), EventBatchApplier.LOGGED_APPLIED_BATCH_ID_CAP)
-	assert_false(applier._logged_applied_batch_ids.has("logged-batch-0"))
-	assert_true(applier._logged_applied_batch_ids.has("logged-batch-%d" % EventBatchApplier.LOGGED_APPLIED_BATCH_ID_CAP))
 
 	applier._record_applied_batch_id("batch-%d" % EventBatchApplier.APPLIED_BATCH_ID_CAP)
 	applier._record_applied_batch_id("batch-after-duplicate")
 	applier._record_applied_event_id("event-%d" % EventBatchApplier.APPLIED_EVENT_ID_CAP)
 	applier._record_applied_event_id("event-after-duplicate")
-	applier._record_logged_applied_batch_id("logged-batch-%d" % EventBatchApplier.LOGGED_APPLIED_BATCH_ID_CAP)
-	applier._record_logged_applied_batch_id("logged-batch-after-duplicate")
 
 	assert_false(applier._applied_batch_ids.has("batch-1"))
 	assert_true(applier._applied_batch_ids.has("batch-%d" % EventBatchApplier.APPLIED_BATCH_ID_CAP))
@@ -395,9 +388,6 @@ func test_event_dedupe_histories_are_bounded_without_duplicate_order_entries() -
 	assert_false(applier._applied_event_ids.has("event-1"))
 	assert_true(applier._applied_event_ids.has("event-%d" % EventBatchApplier.APPLIED_EVENT_ID_CAP))
 	assert_eq(applier._applied_event_ids.size(), EventBatchApplier.APPLIED_EVENT_ID_CAP)
-	assert_false(applier._logged_applied_batch_ids.has("logged-batch-1"))
-	assert_true(applier._logged_applied_batch_ids.has("logged-batch-%d" % EventBatchApplier.LOGGED_APPLIED_BATCH_ID_CAP))
-	assert_eq(applier._logged_applied_batch_ids.size(), EventBatchApplier.LOGGED_APPLIED_BATCH_ID_CAP)
 
 
 func test_wrong_baseline_marks_lane_resync_needed() -> void:

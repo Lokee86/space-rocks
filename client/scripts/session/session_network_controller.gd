@@ -38,8 +38,6 @@ func configure_gameplay_session_controller(gameplay_session_controller_ref: Game
 func connect_connection_signals() -> void:
 	_connect_connection_signal("connected", Callable(self, "_on_connection_connected"))
 	_connect_connection_signal("closed", Callable(self, "_on_connection_closed"))
-	_connect_connection_signal("packet_parse_failed", Callable(self, "_on_packet_parse_failed"))
-	_connect_connection_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
 	_connect_connection_signal("websocket_auth_result_received", Callable(self, "_on_websocket_auth_result_received"))
 	_connect_connection_signal("realtime_transport_ready", Callable(self, "_on_realtime_transport_ready"))
 
@@ -82,17 +80,10 @@ func _on_connection_closed() -> void:
 	_log("Connection closed")
 
 
-func _on_packet_parse_failed(text: String) -> void:
-	_log("Packet parse failed: %s" % text)
-
-
-func _on_unknown_packet_received(_packet: Dictionary) -> void:
-	_log("Unknown packet received")
 
 
 func _on_realtime_transport_ready() -> void:
 	_webrtc_gameplay_ready = true
-	_log("WebRTC gameplay transport is ready")
 	_try_send_pending_boot_request()
 
 
@@ -109,8 +100,6 @@ func _try_send_pending_boot_request() -> void:
 	if shell_boot_flow.pending_request_is_multiplayer():
 		if connection_service != null && connection_service.is_websocket_auth_authenticated():
 			shell_boot_flow.send_pending_boot_request()
-		else:
-			_log("Waiting for websocket auth before sending multiplayer boot request")
 
 
 func _on_websocket_auth_result_received(packet: Dictionary) -> void:

@@ -1,7 +1,6 @@
 class_name ClientInboundCoordinator
 extends RefCounted
 
-const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 signal realtime_transport_ready
 signal authenticate_result_received(packet: Dictionary)
@@ -111,23 +110,12 @@ func handle_webrtc_ice_candidate(packet: Dictionary) -> void:
 	)
 
 
-func handle_webrtc_ready(packet: Dictionary) -> void:
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"webrtc_ready_received",
-		"WebRTC ready packet received",
-		packet
-	)
+func handle_webrtc_ready(_packet: Dictionary) -> void:
 	realtime_transport_ready.emit()
 
 
-func handle_webrtc_smoke(packet: Dictionary) -> void:
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"webrtc_smoke_received",
-		"WebRTC smoke packet received",
-		packet
-	)
+func handle_webrtc_smoke(_packet: Dictionary) -> void:
+	pass
 
 
 func handle_webrtc_failed(_packet: Dictionary) -> void:

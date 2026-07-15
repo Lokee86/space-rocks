@@ -2,7 +2,6 @@ extends RefCounted
 class_name GameplayHudFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var hud: Control
 var hidden_for_match_over := false
@@ -13,8 +12,6 @@ var current_score := 0
 var respawn_countdown_remaining := 0.0
 var respawn_timer_template := ""
 var loadout_display_flow := LoadoutDisplayFlow.new()
-var _logged_set_dead_diagnostics := false
-var _logged_respawn_available := false
 
 
 func configure(hud_ref: Control) -> void:
@@ -78,8 +75,6 @@ func apply_session_lane_state(session_lane_state, self_id := "") -> void:
 			show_gameplay()
 func reset() -> void:
 	hidden_for_match_over = false
-	_logged_set_dead_diagnostics = false
-	_logged_respawn_available = false
 	if hud != null:
 		set_alive()
 		loadout_display_flow.clear()
@@ -138,15 +133,6 @@ func set_dead(respawn_delay: float) -> void:
 	is_game_over = false
 	can_respawn = false
 	respawn_countdown_remaining = maxf(respawn_delay, 0.0)
-	if !_logged_set_dead_diagnostics:
-		ClientLogger.event(
-			ClientLogger.CATEGORY_HUD,
-			ClientLogger.LEVEL_DEBUG,
-			"player_death_presented",
-			"Showing dead-player HUD",
-			{"respawn_delay": respawn_countdown_remaining, "can_respawn": can_respawn}
-		)
-		_logged_set_dead_diagnostics = true
 	_show_hud_child("CenterContainer/VBoxContainer2")
 	_hide_hud_child("CenterContainer/GameOverContainer")
 
@@ -223,15 +209,6 @@ func has_dead_presentation() -> bool:
 
 func _make_respawn_available() -> void:
 	can_respawn = true
-	if !_logged_respawn_available:
-		ClientLogger.event(
-			ClientLogger.CATEGORY_HUD,
-			ClientLogger.LEVEL_DEBUG,
-			"respawn_available",
-			"Respawn became available",
-			{"can_respawn": can_respawn}
-		)
-		_logged_respawn_available = true
 	var respawn_timer_label := _respawn_timer_label()
 	if respawn_timer_label != null:
 		respawn_timer_label.text = ""

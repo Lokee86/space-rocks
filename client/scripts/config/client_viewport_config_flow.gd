@@ -2,7 +2,6 @@ class_name ClientViewportConfigFlow
 extends RefCounted
 
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var connection_service
 var viewport: Viewport
@@ -22,5 +21,4 @@ func send_client_config() -> void:
 	var viewport_size := viewport.get_visible_rect().size
 	var packet := Packets.client_config_packet(viewport_size.x, viewport_size.y)
 	connection_service.send_packet(packet)
-	ClientLogger.shell_debug("Sent client viewport config: size=%s" % viewport_size)
 

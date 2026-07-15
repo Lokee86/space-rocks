@@ -2,7 +2,6 @@ extends RefCounted
 class_name PresentationBridge
 
 const DevtoolsLaneStateAdapter = preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
-const ClientLogger = preload("res://scripts/logging/logger.gd")
 const RealtimePacketPipelineScript = preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const PresentationAdapterScript = preload("res://scripts/protocol/realtime/presentation_adapter.gd")
 const GameplayCompositionScript = preload("res://scripts/gameplay/gameplay_composition.gd")
@@ -74,17 +73,6 @@ func handle_gameplay_packet(packet: Dictionary) -> void:
 		if !_logged_event_lifecycle_flow_ready and _pending_event_lifecycle_flow != null:
 			_log("Gameplay event fanout target ready: event_lifecycle_flow_null=%s" % str(_pending_event_lifecycle_flow == null))
 			_logged_event_lifecycle_flow_ready = true
-		var event_lifecycle_flow = _pending_event_lifecycle_flow
-		var events = packet.get("events", [])
-		var event_types = []
-		for event in events:
-			event_types.append(str(event.get("type", "")))
-		ClientLogger.event(ClientLogger.CATEGORY_GAME, ClientLogger.LEVEL_DEBUG, "gameplay_event_batch_diagnostics", "Gameplay event batch diagnostics", {
-			"batch_id": str(packet.get("batch_id", "")),
-			"events_size": events.size(),
-			"event_types": event_types,
-			"event_lifecycle_flow_null": event_lifecycle_flow == null,
-		})
 	mark_pending()
 
 

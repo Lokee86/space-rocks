@@ -1,11 +1,9 @@
 extends RefCounted
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var effects
 var visual_position_for_server_position: Callable
-var _logged_ship_death_diagnostics := false
 
 
 func configure(effects_object, visual_position_converter: Callable) -> void:
@@ -21,21 +19,6 @@ func apply_server_events(server_events: Array, self_id: String, apply_self_death
 			var event_player_id := str(event.get(Packets.FIELD_PLAYER_ID, ""))
 			var self_id_string := str(self_id)
 			var is_self_death := event_player_id == self_id_string
-			if !_logged_ship_death_diagnostics:
-				ClientLogger.event(
-					ClientLogger.CATEGORY_GAME,
-					ClientLogger.LEVEL_DEBUG,
-					"ship_death_received",
-					"Received ship death event",
-					{
-						"event_player_id": event_player_id,
-						"self_id": self_id_string,
-						"is_self_death": is_self_death,
-						"lives": event.get(Packets.FIELD_LIVES, ""),
-						"respawn_delay": event.get(Packets.FIELD_RESPAWN_DELAY, ""),
-					}
-				)
-				_logged_ship_death_diagnostics = true
 			if is_self_death:
 				apply_self_death_event.call(event)
 			apply_ship_death(event)

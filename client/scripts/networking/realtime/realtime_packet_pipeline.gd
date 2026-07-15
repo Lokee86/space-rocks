@@ -13,7 +13,6 @@ signal resync_request_required(lane, baseline_id, sequence, reason)
 
 var _router: RealtimeRouter
 var _presentation_state: RealtimePresentationState
-var _lane_route_log_emitted := {}
 var _active_match_id := ""
 var _pending_match_packets := {}
 var _recovery_match_ids := {}
@@ -119,7 +118,6 @@ func _reset_protocol_state() -> void:
 	_router = RealtimeRouter.new()
 	_bind_router(_router)
 	_presentation_state.update_from_router(_router)
-	_lane_route_log_emitted.clear()
 
 func _request_recovery_resync() -> void:
 	for lane in ["world", "overlay", "session"]:
@@ -182,10 +180,6 @@ func get_presentation_state() -> RealtimePresentationState:
 func _apply_lane_packet(packet: Dictionary) -> void:
 	_router.route_lane_packet(packet)
 	_presentation_state.update_from_router(_router)
-	var packet_type := str(packet.get("type", packet.get("Type", "")))
-	if !_lane_route_log_emitted.has(packet_type):
-		_lane_route_log_emitted[packet_type] = true
-		ClientLogger.network_event(ClientLogger.LEVEL_INFO, "lane_packet_routed", "Lane packet routed", {"packet_type": packet_type, "readiness": is_gameplay_ready()})
 	gameplay_packet_applied.emit(packet)
 
 func apply_world_full(packet: Dictionary) -> void:

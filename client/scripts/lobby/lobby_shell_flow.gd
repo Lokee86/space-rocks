@@ -31,8 +31,7 @@ func _init(
 
 
 func apply_room_snapshot(packet: Dictionary) -> void:
-	var summary: String = lobby_flow.apply_room_snapshot(packet)
-	_log("Lobby updated: %s" % summary)
+	lobby_flow.apply_room_snapshot(packet)
 	var state = lobby_flow.current_state()
 	session_context.activate_requested_mode()
 	if session_context.should_show_multiplayer_lobby(state.room_state):
@@ -40,7 +39,6 @@ func apply_room_snapshot(packet: Dictionary) -> void:
 	else:
 		if multiplayer_lobby_presenter != null:
 			multiplayer_lobby_presenter.clear_lobby()
-		_log("Room snapshot received; multiplayer lobby mount skipped for session mode")
 
 
 func _show_multiplayer_lobby(state) -> void:
@@ -65,8 +63,3 @@ func _on_lobby_start_game_requested() -> void:
 func _on_lobby_leave_requested() -> void:
 	lobby_network_actions.send_leave_requested()
 	lobby_return_flow.return_after_leave()
-
-
-func _log(message: String) -> void:
-	if !logger.is_null():
-		logger.call(message)

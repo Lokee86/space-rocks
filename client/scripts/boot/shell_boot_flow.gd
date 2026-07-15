@@ -52,7 +52,6 @@ func pending_request_is_multiplayer() -> bool:
 
 func connect_to_game_server(reason: String) -> String:
 	if connection_service.is_server_connected():
-		_log("Already connected for %s" % reason)
 		send_pending_boot_request()
 		return Constants.CONNECT_RESULT_ALREADY_CONNECTED
 
@@ -75,13 +74,10 @@ func send_pending_boot_request() -> void:
 
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
 		connection_service.send_start_single_player_request(local_profile_id)
-		_log("Sent single player request")
 	elif request_type == Constants.BOOT_REQUEST_CREATE_ROOM:
 		connection_service.send_create_room_request()
-		_log("Sent create room request")
 	elif request_type == Constants.BOOT_REQUEST_JOIN_ROOM:
 		connection_service.send_join_room_request(room_code)
-		_log("Sent join room request: %s" % room_code)
 	else:
 		request_sent = false
 

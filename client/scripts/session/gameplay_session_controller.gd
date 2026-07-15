@@ -3,8 +3,6 @@ class_name GameplaySessionController
 
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
 const PresentationBridge := preload("res://scripts/protocol/realtime/presentation_bridge.gd")
-const ClientLogger := preload("res://scripts/logging/logger.gd")
-const LongMatchStoreMetrics := preload("res://scripts/devtools/telemetry/long_match_store_metrics.gd")
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 
 var connection_service: ClientConnectionService
@@ -22,8 +20,6 @@ var presentation_bridge: PresentationBridge
 var realtime_packet_pipeline: RealtimePacketPipeline
 
 var accepts_gameplay_packets := false
-var _logged_debug_shape_catalog_received := false
-var _gameplay_packet_acceptance_started_msec := -1
 
 signal return_to_pregame_requested(session_mode: String)
 signal replay_requested
@@ -93,20 +89,11 @@ func handle_debug_status_packet(packet: Dictionary) -> void:
 		gameplay_composition.apply_devtools_debug_status_packet(packet)
 
 func handle_debug_shape_catalog_packet(packet: Dictionary) -> void:
-	if !_logged_debug_shape_catalog_received:
-		var shape_count := 0
-		var shapes = packet.get("shapes", {})
-		if shapes is Dictionary:
-			shape_count = shapes.size()
-		_log("debug shape catalog received: shape_count=%d" % shape_count)
-		_logged_debug_shape_catalog_received = true
 	if gameplay_composition != null:
 		gameplay_composition.apply_debug_shape_catalog_packet(packet)
 
 func begin_accepting_gameplay_packets() -> void:
-	_log("accepting gameplay packets: realtime_packet_pipeline_null=%s presentation_state_null=%s" % [str(realtime_packet_pipeline == null), str(realtime_packet_pipeline == null or realtime_packet_pipeline.get_presentation_state() == null)])
 	accepts_gameplay_packets = true
-	_gameplay_packet_acceptance_started_msec = Time.get_ticks_msec()
 	if presentation_bridge != null:
 		presentation_bridge.activate()
 
@@ -148,9 +135,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func reset() -> void:
-	_log_long_match_store_summary()
 	accepts_gameplay_packets = false
-	_gameplay_packet_acceptance_started_msec = -1
 	if presentation_bridge != null:
 		presentation_bridge.reset()
 	if gameplay_composition != null:
@@ -180,7 +165,6 @@ func _on_gameplay_started() -> void:
 		main_menu.hide()
 
 func _on_gameplay_quit_to_main_menu_requested() -> void:
-	_log("Gameplay quit to main menu requested")
 	if connection_service != null:
 		connection_service.begin_graceful_close()
 	reset()
@@ -192,13 +176,11 @@ func _on_gameplay_quit_to_main_menu_requested() -> void:
 		main_menu.show()
 
 func _on_gameplay_return_to_lobby_requested() -> void:
-	_log("Gameplay return to lobby requested")
 	if connection_service != null:
 		connection_service.send_return_to_lobby_request()
 	reset()
 
 func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
-	_log("Gameplay return to pregame requested: %s" % session_mode)
 	if connection_service != null:
 		connection_service.begin_graceful_close()
 	reset()
@@ -209,7 +191,6 @@ func _on_gameplay_return_to_pregame_requested(session_mode: String) -> void:
 	return_to_pregame_requested.emit(session_mode)
 
 func _on_gameplay_replay_requested() -> void:
-	_log("Gameplay replay requested")
 	if connection_service != null:
 		await connection_service.close_gracefully()
 	reset()
@@ -218,24 +199,3 @@ func _on_gameplay_replay_requested() -> void:
 	if shell_boot_flow != null:
 		shell_boot_flow.clear()
 	replay_requested.emit()
-
-func _log(message: String) -> void:
-	if !logger.is_null():
-		logger.call(message)
-
-
-func _log_long_match_store_summary() -> void:
-	if _gameplay_packet_acceptance_started_msec < 0:
-		return
-
-	var counts := LongMatchStoreMetrics.snapshot(
-		realtime_packet_pipeline,
-		gameplay_composition.world_sync if gameplay_composition != null else null
-	)
-	var fields := {
-		"match_id": realtime_packet_pipeline.active_match_id() if realtime_packet_pipeline != null else "",
-		"duration_ms": max(Time.get_ticks_msec() - _gameplay_packet_acceptance_started_msec, 0),
-	}
-	for key in counts:
-		fields[key] = counts[key]
-	ClientLogger.network_event(ClientLogger.LEVEL_INFO, "long_match_store_summary", "Long-match store summary", fields)
