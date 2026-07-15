@@ -44,7 +44,7 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
     assert contract.schema.schema_version == 1
     assert len(contract.fields) == 47
     assert len(contract.services) == 5
-    assert len(contract.events) == 151
+    assert len(contract.events) == 161
     assert contract.event("diagnostic_report_stored").services == ("diagnostic_aggregator",)
     assert tuple(action.name for action in contract.redaction.actions) == ("reject", "redact")
     assert tuple(tier.name for tier in contract.retention_tiers) == (
@@ -55,6 +55,101 @@ def test_canonical_observability_validation_succeeds(tmp_path: Path) -> None:
     )
 
 
+def test_stream_b_catalog_semantics_are_explicit(tmp_path: Path) -> None:
+    contract = validate_observability(copied_observability_paths(tmp_path))
+
+    service_runtime_failed = contract.event("service_runtime_failed")
+    assert service_runtime_failed.category == "service_lifecycle"
+    assert service_runtime_failed.default_level == "error"
+    assert service_runtime_failed.services == (
+        "api_server",
+        "game_server",
+        "player_data",
+        "diagnostic_aggregator",
+    )
+    assert service_runtime_failed.trace_required is True
+    assert service_runtime_failed.audit_eligible is False
+    assert service_runtime_failed.retention_tier == "operational"
+
+    room_leave_failed = contract.event("room_leave_failed")
+    assert room_leave_failed.category == "rooms"
+    assert room_leave_failed.default_level == "error"
+    assert room_leave_failed.services == ("game_server",)
+    assert room_leave_failed.trace_required is True
+    assert room_leave_failed.audit_eligible is False
+    assert room_leave_failed.retention_tier == "operational"
+
+    runtime_asset_load_failed = contract.event("runtime_asset_load_failed")
+    assert runtime_asset_load_failed.category == "configuration"
+    assert runtime_asset_load_failed.default_level == "error"
+    assert runtime_asset_load_failed.services == ("client", "game_server")
+    assert runtime_asset_load_failed.trace_required is False
+    assert runtime_asset_load_failed.audit_eligible is False
+    assert runtime_asset_load_failed.retention_tier == "diagnostic_report"
+
+    auth_succeeded = contract.event("auth_succeeded")
+    auth_failed = contract.event("auth_failed")
+    assert "game_server" in auth_succeeded.services
+    assert "game_server" in auth_failed.services
+    assert contract.field("failure_mode").type == "string"
+    assert contract.field("fields").type == "object"
+    disconnect = contract.event("game_server_client_disconnected")
+    assert "cleanup_failed" in disconnect.description
+    assert "fields.cleanup_stage" in disconnect.description
+    assert contract.event("game_server_client_disconnected").services == ("game_server",)
+
+def test_stream_a_client_observability_semantics_are_explicit(tmp_path: Path) -> None:
+    contract = validate_observability(copied_observability_paths(tmp_path))
+
+    startup = contract.event("client_started")
+    assert startup.category == contract.event("client_starting").category
+    assert startup.default_level == "info"
+    assert startup.services == ("client",)
+    assert startup.trace_required is False
+    assert startup.audit_eligible is False
+    assert startup.retention_tier == contract.event("client_starting").retention_tier
+
+    no_trace_events = (
+        "client_dependency_unavailable",
+        "client_presentation_contract_violation",
+        "client_presentation_state_invalid",
+        "realtime_pending_state_discarded",
+    )
+    for name in no_trace_events:
+        event = contract.event(name)
+        assert event.services == ("client",)
+        assert event.trace_required is False
+        assert event.audit_eligible is False
+
+    assert contract.event("client_dependency_unavailable").category == "client_startup"
+    assert contract.event("client_presentation_contract_violation").category == "client_presentation"
+    assert contract.event("client_presentation_state_invalid").category == "client_presentation"
+    assert contract.event("realtime_pending_state_discarded").category == "client_network"
+    assert contract.event("realtime_pending_state_discarded").retention_tier == "operational"
+
+    requested = contract.event("devtools_command_requested")
+    applied = contract.event("devtools_command_applied")
+    rejected = contract.event("devtools_command_rejected")
+    assert requested.services == ("client",)
+    assert requested.default_level == "info"
+    assert requested.trace_required is True
+    assert requested.audit_eligible is True
+    assert applied.services == ("game_server",)
+    assert requested.retention_tier == applied.retention_tier == rejected.retention_tier == "audit_grade"
+    assert requested.audit_eligible == applied.audit_eligible == rejected.audit_eligible
+
+    room_failure = contract.event("room_operation_failed")
+    assert room_failure.category == contract.event("room_creation_failed").category
+    assert room_failure.retention_tier == contract.event("room_creation_failed").retention_tier
+    assert room_failure.services == ("client",)
+    assert room_failure.default_level == "warn"
+    assert room_failure.trace_required is True
+    assert room_failure.audit_eligible is False
+
+    assert "client" in contract.event("outbound_packet_encode_failed").services
+    assert "client" in rejected.services
+    assert contract.field("failure_mode").required is False
+    assert contract.field("fields").type == "object"
 @pytest.mark.parametrize(
     ("filename", "old", "new", "message"),
     [

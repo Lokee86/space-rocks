@@ -46,7 +46,7 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert contract.fields[-1].name == "fields"
     assert len(contract.services) == 5
     assert contract.service("game_server").emitted_name == "game-server"
-    assert len(contract.events) == 151
+    assert len(contract.events) == 161
     assert tuple(event.name for event in contract.events[:3]) == (
         "log_message",
         "service_starting",
@@ -70,6 +70,28 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert contract.event("service_startup_failed").default_level == "critical"
     assert contract.event("service_startup_failed").trace_required is True
     assert contract.event("log_message").bridge_only is True
+
+    stream_a_names = (
+        "client_started",
+        "client_dependency_unavailable",
+        "client_presentation_contract_violation",
+        "client_presentation_state_invalid",
+        "realtime_pending_state_discarded",
+        "devtools_command_requested",
+        "room_operation_failed",
+    )
+    assert all(contract.event(name).name == name for name in stream_a_names)
+    local_profile = contract.event("local_profile_create_failed")
+    assert local_profile.category == "profile"
+    assert local_profile.default_level == "error"
+    assert local_profile.services == ("player_data",)
+    assert local_profile.trace_required is True
+    assert local_profile.audit_eligible is False
+    assert local_profile.retention_tier == "operational"
+    assert local_profile.description == (
+        "A local profile could not be created during guest stat seeding, "
+        "identifier generation, or storage."
+    )
     stored = contract.event("diagnostic_report_stored")
     assert stored.category == "diagnostics"
     assert stored.default_level == "info"
@@ -77,6 +99,7 @@ def test_loads_canonical_observability_contract(tmp_path: Path) -> None:
     assert stored.trace_required is True
     assert stored.audit_eligible is False
     assert stored.retention_tier == "diagnostic_report"
+    assert stored.description == "A finalized diagnostic report reached durable report storage."
     assert "bridge_event_forbidden" in contract.schema.rejection_codes
     assert contract.retention_tier("audit_grade").durability == "durable"
     assert contract.diagnostic_bundle.events_ordered_by == "timestamp_ascending"
