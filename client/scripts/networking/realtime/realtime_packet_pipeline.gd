@@ -7,6 +7,7 @@ const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router
 const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
 const RealtimeReceiveLimits := preload("res://scripts/protocol/realtime/realtime_receive_limits.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 signal gameplay_packet_applied(packet)
 signal resync_request_required(lane, baseline_id, sequence, reason)
@@ -151,12 +152,17 @@ func _discard_bucket(match_id: String, reason: String) -> void:
 	var bucket: Dictionary = _pending_match_packets.get(match_id, {})
 	_pending_match_packets.erase(match_id)
 	_mark_recovery(match_id)
-	ClientLogger.network_event(ClientLogger.LEVEL_WARN, "realtime_pending_bucket_discarded", "Realtime pending bucket discarded", {
-		"match_id": match_id,
-		"reason": reason,
-		"packet_count": bucket.get("packets", []).size(),
-		"estimated_bytes": bucket.get("estimated_bytes", 0),
-	})
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_REALTIME_PENDING_STATE_DISCARDED,
+		"Realtime pending state discarded",
+		{"match_id": match_id},
+		{
+			"reason": reason,
+			"packet_count": bucket.get("packets", []).size(),
+			"estimated_bytes": bucket.get("estimated_bytes", 0),
+			"recovery_required": true,
+		}
+	)
 
 func _mark_recovery(match_id: String) -> void:
 	if _recovery_match_ids.has(match_id):
