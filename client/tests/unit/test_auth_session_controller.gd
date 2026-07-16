@@ -5,6 +5,8 @@ const AuthSession := preload("res://scripts/auth/auth_session.gd")
 const AuthTokenStore := preload("res://scripts/auth/auth_token_store.gd")
 const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const TEST_TOKEN_PATH := "user://test_auth_session_controller_token.json"
 
 var _auth_state_change_count := 0
@@ -35,13 +37,15 @@ class FakeAuthApiClient:
 	var wait_for_current_user := false
 	var wait_for_discord_sign_in := false
 	var logout_tokens: Array[String] = []
+	var current_user_trace_ids: Array[String] = []
 
-	func get_current_user(_token: String):
+	func get_current_user(_token: String, trace_id: String = ""):
+		current_user_trace_ids.append(trace_id)
 		if wait_for_current_user:
 			await current_user_released
 		return current_user_result
 
-	func begin_discord_login_session():
+	func begin_discord_login_session(_trace_id: String = ""):
 		if wait_for_discord_sign_in:
 			await discord_sign_in_released
 		return discord_sign_in_result
@@ -52,10 +56,18 @@ class FakeAuthApiClient:
 	func release_discord_sign_in() -> void:
 		discord_sign_in_released.emit()
 
-	func logout(token: String):
+	func logout(token: String, _trace_id: String = ""):
 		logout_tokens.append(token)
 		return logout_result
 
+class FakeWriter extends RefCounted:
+	var written_lines: Array[String] = []
+
+	func write_line(line: String) -> void:
+		written_lines.append(line)
+
+	func close() -> void:
+		pass
 
 func before_each() -> void:
 	_auth_state_change_count = 0
@@ -257,3 +269,120 @@ func test_replacing_discord_sign_in_replaces_active_trace() -> void:
 
 	assert_eq(first_trace_id, ids[0])
 	assert_eq(controller.active_auth_trace_id(), ids[1])
+
+func _auth_records(writer: FakeWriter) -> Array:
+	var records: Array = []
+	for line in writer.written_lines:
+		records.append(JSON.parse_string(line))
+	return records
+
+
+func _fixed_auth_trace(operation_name: String) -> ClientOperationTrace:
+	return ClientOperationTrace.new(
+		operation_name,
+		func() -> String: return "00000000-0000-4000-8000-000000000061"
+	)
+
+
+func test_saved_token_auth_start_and_success_share_one_trace() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.current_user_result = ApiRequestResult.success(200, {
+		"user": {"id": 42, "display_name": "Ada Lovelace"},
+	})
+	var controller := _create_controller(fake_client, func(operation_name: String): return _fixed_auth_trace(operation_name))
+	var token_store := InMemoryAuthTokenStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_token_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var records := _auth_records(writer)
+	assert_eq(records[0]["event"], ObservabilityContract.EVENT_AUTH_FLOW_STARTED)
+	assert_eq(records[1]["event"], ObservabilityContract.EVENT_AUTH_SUCCEEDED)
+	assert_eq(records[0]["trace_id"], records[1]["trace_id"])
+	assert_eq(records[0]["fields"]["auth_operation"], "saved_token_validation")
+	assert_eq(fake_client.current_user_trace_ids, ["00000000-0000-4000-8000-000000000061"])
+
+
+func test_saved_token_provider_failure_is_distinct_from_invalid_token_failure() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.current_user_result = ApiRequestResult.failure(503, "unavailable")
+	var controller := _create_controller(fake_client, func(operation_name: String): return _fixed_auth_trace(operation_name))
+	var token_store := InMemoryAuthTokenStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_token_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_push_error_count(1)
+
+	var records := _auth_records(writer)
+	assert_eq(records[1]["event"], ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE)
+	assert_eq(records[1]["fields"]["failure_mode"], "http_5xx")
+
+	ClientLogger.reset_for_tests()
+	writer = FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var invalid_client := FakeAuthApiClient.new()
+	invalid_client.current_user_result = ApiRequestResult.failure(401, "invalid")
+	var invalid_controller := _create_controller(invalid_client, func(operation_name: String): return _fixed_auth_trace(operation_name))
+	var invalid_store := InMemoryAuthTokenStore.new()
+	invalid_store.stored_token = "bearer-token"
+	invalid_controller.auth_token_store = invalid_store
+
+	invalid_controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	records = _auth_records(writer)
+	assert_eq(records[1]["event"], ObservabilityContract.EVENT_AUTH_FAILED)
+	assert_eq(records[1]["fields"]["failure_mode"], "invalid_or_expired_token")
+
+
+func test_cancelled_saved_token_validation_emits_no_stale_terminal_event() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.wait_for_current_user = true
+	fake_client.current_user_result = ApiRequestResult.success(200, {
+		"user": {"id": 42, "display_name": "Ada Lovelace"},
+	})
+	var controller := _create_controller(fake_client, func(operation_name: String): return _fixed_auth_trace(operation_name))
+	var token_store := InMemoryAuthTokenStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_token_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	controller.logout()
+	fake_client.release_current_user()
+	await get_tree().process_frame
+
+	var records := _auth_records(writer)
+	assert_eq(records.size(), 1)
+	assert_eq(records[0]["event"], ObservabilityContract.EVENT_AUTH_FLOW_STARTED)
+
+func test_saved_token_scene_tree_failure_is_auth_failed() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.current_user_result = ApiRequestResult.failure(0, "scene_tree_unavailable")
+	var controller := _create_controller(fake_client, func(operation_name: String): return _fixed_auth_trace(operation_name))
+	var token_store := InMemoryAuthTokenStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_token_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var records := _auth_records(writer)
+	assert_eq(records[1]["event"], ObservabilityContract.EVENT_AUTH_FAILED)
+	assert_eq(records[1]["fields"]["failure_mode"], "scene_tree_unavailable")

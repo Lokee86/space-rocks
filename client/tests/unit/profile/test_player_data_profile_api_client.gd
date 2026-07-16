@@ -27,7 +27,7 @@ class FakeApiHttpClient:
 		}
 	})
 
-	func post_json(url: String, body: Dictionary = {}, bearer_token: String = "") -> ApiRequestResult:
+	func post_json(url: String, body: Dictionary = {}, bearer_token: String = "", _trace_id: String = "") -> ApiRequestResult:
 		last_url = url
 		last_body = body
 		last_token = bearer_token

@@ -50,6 +50,7 @@ type ClientPacket struct {
 	TargetKind         string               `json:"target_kind"`
 	TargetID           string               `json:"target_id"`
 	Token              string               `json:"token"`
+	TraceID            string               `json:"trace_id"`
 	Sequence           int                  `json:"sequence"`
 	Lane               string               `json:"lane"`
 	BaselineID         string               `json:"baseline_id"`
@@ -92,13 +93,15 @@ type ReturnToLobbyRequest struct {
 }
 
 type AuthenticateRequest struct {
-	Type  string `json:"type"`
-	Token string `json:"token"`
+	Type    string `json:"type"`
+	Token   string `json:"token"`
+	TraceID string `json:"trace_id"`
 }
 
 type AuthenticateResult struct {
 	Type          string `json:"type"`
 	Authenticated bool   `json:"authenticated"`
+	TraceID       string `json:"trace_id"`
 	UserID        int    `json:"user_id"`
 	DisplayName   string `json:"display_name"`
 	ErrorCode     string `json:"error_code"`

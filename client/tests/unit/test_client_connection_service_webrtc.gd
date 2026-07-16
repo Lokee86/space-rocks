@@ -1,6 +1,8 @@
 extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
+const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const WebRTCTransportScript := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 
 
@@ -38,7 +40,7 @@ class FakeNetworkClient:
 
 	var sent_packets: Array = []
 
-	func send_raw_packet(packet: Dictionary) -> void:
+	func send_raw_packet(packet: Dictionary, trace_id: String = "") -> void:
 		sent_packets.append(packet)
 
 	func is_connected_to_server() -> bool:
@@ -58,7 +60,7 @@ func test_connection_service_starts_and_wires_webrtc_transport() -> void:
 	var service := ClientConnectionService.new()
 	var fake_network := FakeNetworkClient.new()
 	var fake_peer := FakeTransportPeer.new()
-	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var fake_sender := ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = null
@@ -94,7 +96,7 @@ func test_connection_service_does_not_poll_closed_webrtc_transport_after_reset()
 	var service := ClientConnectionService.new()
 	var fake_network := FakeNetworkClient.new()
 	var fake_peer := FakeTransportPeer.new()
-	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var fake_sender := ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
 	service.server_packet_dispatcher = null
@@ -116,13 +118,13 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	var fake_network := FakeNetworkClient.new()
 	var first_peer := FakeTransportPeer.new()
 	var second_peer := FakeTransportPeer.new()
-	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var fake_sender := ClientPacketSender.new(fake_network)
 	var dispatcher_packets: Array = []
 
 	var transport_peers := [first_peer, second_peer]
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer_from_queue").bind(transport_peers)
 	add_child_autofree(service)
 
@@ -155,8 +157,8 @@ func test_dispatcher_routes_webrtc_control_packets_through_coordinator() -> void
 	var fake_network := FakeNetworkClient.new()
 	var fake_peer := FakeTransportPeer.new()
 	service.network_client = fake_network
-	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.client_packet_sender = ClientPacketSender.new(fake_network)
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 	watch_signals(service)
@@ -181,8 +183,8 @@ func test_coordinator_replaces_transport_session_across_disconnect_and_reconnect
 	var second_peer := FakeTransportPeer.new()
 	var transport_peers := [first_peer, second_peer]
 	service.network_client = fake_network
-	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.client_packet_sender = ClientPacketSender.new(fake_network)
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer_from_queue").bind(transport_peers)
 	add_child_autofree(service)
 
@@ -201,10 +203,10 @@ func test_webrtc_transport_asteroid_delta_routes_into_realtime_router() -> void:
 	var service := ClientConnectionService.new()
 	var fake_network := FakeNetworkClient.new()
 	var fake_peer := FakeTransportPeer.new()
-	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var fake_sender := ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
@@ -229,10 +231,10 @@ func test_webrtc_transport_bullet_delta_routes_into_realtime_router() -> void:
 	var service := ClientConnectionService.new()
 	var fake_network := FakeNetworkClient.new()
 	var fake_peer := FakeTransportPeer.new()
-	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var fake_sender := ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(fake_peer)
 	add_child_autofree(service)
 
@@ -258,10 +260,10 @@ func test_webrtc_transport_reconnect_ownership_closes_previous_transport_and_sta
 	var fake_network := FakeNetworkClient.new()
 	var first_peer := FakeTransportPeer.new()
 	var second_peer := FakeTransportPeer.new()
-	var fake_sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var fake_sender := ClientPacketSender.new(fake_network)
 	service.network_client = fake_network
 	service.client_packet_sender = fake_sender
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(first_peer)
 	add_child_autofree(service)
 

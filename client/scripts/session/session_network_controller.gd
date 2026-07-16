@@ -9,7 +9,6 @@ var connection_service: ClientConnectionService
 var shell_boot_flow
 var room_session_controller
 var gameplay_session_controller: GameplaySessionController
-var logger: Callable
 var handlers := {}
 var _webrtc_gameplay_ready := false
 var _coordinated_active_match_id := ""
@@ -18,12 +17,10 @@ var _coordinated_active_match_id := ""
 func configure(
 	connection_service_ref: ClientConnectionService,
 	shell_boot_flow_ref,
-	logger_callable: Callable,
 	handlers_ref: Dictionary
 ) -> void:
 	connection_service = connection_service_ref
 	shell_boot_flow = shell_boot_flow_ref
-	logger = logger_callable
 	handlers = handlers_ref
 
 
@@ -67,7 +64,6 @@ func _connect_connection_signal(signal_name: StringName, handler: Callable) -> v
 
 func _on_connection_connected() -> void:
 	_webrtc_gameplay_ready = false
-	_log("Connection connected")
 	_try_send_pending_boot_request()
 
 
@@ -77,7 +73,7 @@ func _on_connection_closed() -> void:
 		gameplay_session_controller.reset()
 	if connection_service != null:
 		connection_service.end_realtime_match()
-	_log("Connection closed")
+
 
 
 
@@ -111,10 +107,9 @@ func _on_websocket_auth_result_received(packet: Dictionary) -> void:
 	else:
 		var error_code := str(packet.get("error_code", ""))
 		if error_code == "token_verification_unavailable":
-			_log("Websocket auth unavailable; sending pending multiplayer request for server-side admission")
 			shell_boot_flow.send_pending_boot_request()
 		else:
-			_log("Websocket auth failed before multiplayer boot request")
+			pass
 
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:
@@ -189,10 +184,3 @@ func _end_coordinated_match() -> void:
 func _refresh_match_end_state() -> void:
 	if gameplay_session_controller != null:
 		gameplay_session_controller.refresh_match_end_state()
-
-
-func _log(message: String) -> void:
-	if !logger.is_null():
-		logger.call(message)
-
-

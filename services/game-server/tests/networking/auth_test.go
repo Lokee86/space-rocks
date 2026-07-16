@@ -45,12 +45,13 @@ func TestWebSocketAuthenticateRequestReturnsAuthenticatedResult(t *testing.T) {
 	}
 	defer conn.Close()
 
-	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeAuthenticateRequest, Token: "submitted-token"}); err != nil {
+	if err := conn.WriteJSON(servergame.ClientPacket{Type: servergame.PacketTypeAuthenticateRequest, Token: "submitted-token", TraceID: "trace-authenticated"}); err != nil {
 		t.Fatalf("write authenticate request: %v", err)
 	}
 
 	var result struct {
 		Type          string `json:"type"`
+		TraceID       string `json:"trace_id"`
 		Authenticated bool   `json:"authenticated"`
 		UserID        int64  `json:"user_id"`
 		DisplayName   string `json:"display_name"`
@@ -70,6 +71,9 @@ func TestWebSocketAuthenticateRequestReturnsAuthenticatedResult(t *testing.T) {
 	}
 	if result.DisplayName != "Ada" {
 		t.Fatalf("expected display name Ada, got %q", result.DisplayName)
+	}
+	if result.TraceID != "trace-authenticated" {
+		t.Fatalf("expected trace-authenticated, got %q", result.TraceID)
 	}
 	if verifier.receivedToken != "submitted-token" {
 		t.Fatalf("expected verifier to receive submitted token, got %q", verifier.receivedToken)
