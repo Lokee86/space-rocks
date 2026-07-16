@@ -3,6 +3,8 @@ extends GutTest
 const RoomSessionController := preload("res://scripts/session/room_session_controller.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 
 class FakeSessionContext:
@@ -32,6 +34,21 @@ class FakeConnectionService:
 	func send_leave_room_request() -> void:
 		pass
 
+	var active_operation_type := ""
+	var active_operation_trace_id := ""
+	var clear_room_operation_calls := 0
+
+	func active_room_operation_type() -> String:
+		return active_operation_type
+
+	func active_room_operation_trace_id() -> String:
+		return active_operation_trace_id
+
+	func clear_room_operation_context() -> void:
+		clear_room_operation_calls += 1
+		active_operation_type = ""
+		active_operation_trace_id = ""
+
 
 class FakeShellBootFlow:
 	extends RefCounted
@@ -49,6 +66,27 @@ class Probe:
 
 	func mark_called() -> void:
 		calls += 1
+
+class FakeWriter:
+	extends RefCounted
+
+	var written_lines: Array[String] = []
+
+	func write_line(line: String) -> void:
+		written_lines.append(line)
+
+	func close() -> void:
+		pass
+
+
+func before_each() -> void:
+	ClientLogger.reset_for_tests()
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
+
+
 
 
 func test_handle_room_snapshot_caches_current_match_id() -> void:
@@ -188,7 +226,66 @@ func test_handle_room_snapshot_clears_match_result_when_field_missing() -> void:
 	assert_eq(setup.controller.current_match_result(), {})
 
 
+func test_initial_room_snapshot_clears_active_room_operation() -> void:
+	var setup := _create_controller()
+	setup.connection_service.active_operation_type = Constants.BOOT_REQUEST_JOIN_ROOM
+	setup.connection_service.active_operation_trace_id = "trace-join"
+
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_LOBBY,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+	})
+
+	assert_eq(setup.connection_service.clear_room_operation_calls, 1)
+	assert_eq(setup.connection_service.active_operation_trace_id, "")
+
+
+func test_room_error_emits_bounded_failure_and_clears_matching_operation() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var setup := _create_controller()
+	setup.connection_service.active_operation_type = Constants.BOOT_REQUEST_CREATE_ROOM
+	var trace_id := "00000000-0000-4000-8000-000000000022"
+	setup.connection_service.active_operation_trace_id = trace_id
+	var server_message := "unrestricted server message"
+
+	setup.controller.handle_room_error({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_ERROR,
+		Packets.FIELD_TRACE_ID: trace_id,
+		Packets.FIELD_ERROR_CODE: "room_full",
+		Packets.FIELD_MESSAGE: server_message,
+	})
+
+	assert_eq(setup.connection_service.clear_room_operation_calls, 1)
+	assert_eq(writer.written_lines.size(), 1)
+	var record = JSON.parse_string(writer.written_lines[0])
+	assert_eq(record["event"], ObservabilityContract.EVENT_ROOM_OPERATION_FAILED)
+	assert_eq(record["trace_id"], trace_id)
+	assert_eq(record["error_code"], "room_full")
+	assert_eq(record["fields"]["operation"], "create_room")
+	assert_false(record["fields"].has("message"))
+	assert_false(writer.written_lines[0].contains(server_message))
+
+
+func test_stale_room_error_does_not_clear_newer_operation() -> void:
+	var setup := _create_controller()
+	setup.connection_service.active_operation_type = Constants.BOOT_REQUEST_JOIN_ROOM
+	setup.connection_service.active_operation_trace_id = "00000000-0000-4000-8000-000000000023"
+
+	setup.controller.handle_room_error({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_ERROR,
+		Packets.FIELD_TRACE_ID: "00000000-0000-4000-8000-000000000024",
+		Packets.FIELD_ERROR_CODE: "room_not_found",
+		Packets.FIELD_MESSAGE: "stale server message",
+	})
+
+	assert_eq(setup.connection_service.clear_room_operation_calls, 0)
+	assert_eq(setup.connection_service.active_operation_trace_id, "00000000-0000-4000-8000-000000000023")
+
 func _create_controller() -> Dictionary:
+
 	var main_menu := Control.new()
 	var canvas_layer := CanvasLayer.new()
 	var session_context := FakeSessionContext.new()
@@ -205,8 +302,7 @@ func _create_controller() -> Dictionary:
 		canvas_layer,
 		session_context,
 		connection_service,
-		shell_boot_flow,
-		Callable()
+		shell_boot_flow
 	)
 
 	return {
@@ -214,4 +310,5 @@ func _create_controller() -> Dictionary:
 		"main_menu": main_menu,
 		"session_context": session_context,
 		"shell_boot_flow": shell_boot_flow,
+		"connection_service": connection_service,
 	}

@@ -7,6 +7,11 @@ json = "type"
 type = "string"
 
 [[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
+
+[[structs.fields]]
 name = "local_profile_id"
 go_name = "LocalProfileID"
 json = "local_profile_id"
@@ -18,6 +23,11 @@ id = "JoinRoomRequest"
 [[structs.fields]]
 name = "type"
 json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "trace_id"
+json = "trace_id"
 type = "string"
 
 [[structs.fields]]
@@ -61,6 +71,11 @@ id = "StartSinglePlayerRequest"
 [[structs.fields]]
 name = "type"
 json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "trace_id"
+json = "trace_id"
 type = "string"
 
 [[structs.fields]]
@@ -291,6 +306,11 @@ json = "type"
 type = "string"
 
 [[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
+
+[[structs.fields]]
 name = "error_code"
 json = "error_code"
 type = "string"
@@ -350,17 +370,20 @@ value = "room_error"
 
 [[builders]]
 id = "create_room_request_packet"
+args = ["trace_id"]
 
 [builders.body]
 type = "create_room_request"
+trace_id = "$trace_id"
 
 [[builders]]
 id = "join_room_request_packet"
-args = ["room_code"]
+args = ["room_code", "trace_id"]
 
 [builders.body]
 type = "join_room_request"
 room_code = "$room_code"
+trace_id = "$trace_id"
 
 [[builders]]
 id = "leave_room_request_packet"
@@ -384,11 +407,12 @@ type = "start_game_request"
 
 [[builders]]
 id = "start_single_player_request_packet"
-args = ["local_profile_id"]
+args = ["local_profile_id", "trace_id"]
 
 [builders.body]
 type = "start_single_player_request"
 local_profile_id = "$local_profile_id"
+trace_id = "$trace_id"
 
 [[builders]]
 id = "return_to_lobby_request_packet"

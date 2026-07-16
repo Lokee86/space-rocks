@@ -188,12 +188,12 @@ func send_debug_clear_asteroids_request() -> void:
 
 
 # Lobby
-func send_create_room_request() -> void:
-	send_packet(LobbyClientPackets.create_room_request_packet())
+func send_create_room_request(trace_id := "") -> void:
+	send_packet(LobbyClientPackets.create_room_request_packet(trace_id))
 
 
-func send_join_room_request(room_code: String) -> void:
-	send_packet(LobbyClientPackets.join_room_request_packet(room_code))
+func send_join_room_request(room_code: String, trace_id := "") -> void:
+	send_packet(LobbyClientPackets.join_room_request_packet(room_code, trace_id))
 
 
 func send_leave_room_request() -> void:
@@ -208,8 +208,8 @@ func send_start_game_request() -> void:
 	send_packet(LobbyClientPackets.start_game_request_packet())
 
 
-func send_start_single_player_request(local_profile_id := "") -> void:
-	send_packet(LobbyClientPackets.start_single_player_request_packet(local_profile_id))
+func send_start_single_player_request(local_profile_id := "", trace_id := "") -> void:
+	send_packet(LobbyClientPackets.start_single_player_request_packet(local_profile_id, trace_id))
 
 
 func send_return_to_lobby_request() -> void:

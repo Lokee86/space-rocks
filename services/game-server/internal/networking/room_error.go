@@ -6,9 +6,10 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 )
 
-func (session *webSocketSession) EnqueueRoomError(errorCode string, message string) {
+func (session *webSocketSession) EnqueueRoomError(traceID string, errorCode string, message string) {
 	packet := game.RoomError{
 		Type:      game.PacketTypeRoomError,
+		TraceID:   traceID,
 		ErrorCode: errorCode,
 		Message:   message,
 	}

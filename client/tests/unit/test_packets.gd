@@ -8,7 +8,7 @@ func test_packet_builders_set_expected_type() -> void:
 		[Packets.toggle_debug_invincible_packet(), Packets.TYPE_TOGGLE_DEBUG_INVINCIBLE],
 		[Packets.toggle_debug_infinite_lives_packet(), Packets.TYPE_TOGGLE_DEBUG_INFINITE_LIVES],
 		[Packets.toggle_debug_freeze_world_packet(), Packets.TYPE_TOGGLE_DEBUG_FREEZE_WORLD],
-		[Packets.create_room_request_packet(), Packets.TYPE_CREATE_ROOM_REQUEST],
+		[Packets.create_room_request_packet(""), Packets.TYPE_CREATE_ROOM_REQUEST],
 		[Packets.leave_room_request_packet(), Packets.TYPE_LEAVE_ROOM_REQUEST],
 		[Packets.start_game_request_packet(), Packets.TYPE_START_GAME_REQUEST],
 		[Packets.return_to_lobby_request_packet(), Packets.TYPE_RETURN_TO_LOBBY_REQUEST],
@@ -38,6 +38,7 @@ func test_required_packet_field_constants_exist() -> void:
 		Packets.FIELD_MAX_PLAYERS,
 		Packets.FIELD_ERROR_CODE,
 		Packets.FIELD_MESSAGE,
+		Packets.FIELD_TRACE_ID,
 	]
 
 	for field in required_fields:
@@ -46,7 +47,7 @@ func test_required_packet_field_constants_exist() -> void:
 
 
 func test_lobby_packet_builders_include_request_fields() -> void:
-	var join_packet := Packets.join_room_request_packet("TEST")
+	var join_packet := Packets.join_room_request_packet("TEST", "")
 	assert_eq(join_packet[Packets.FIELD_TYPE], Packets.TYPE_JOIN_ROOM_REQUEST)
 	assert_eq(join_packet[Packets.FIELD_ROOM_CODE], "TEST")
 
@@ -98,3 +99,18 @@ func test_lobby_packet_type_constants_exist() -> void:
 		assert_eq(typeof(packet_type), TYPE_STRING)
 		assert_false(packet_type.is_empty())
 
+func test_initial_room_packet_builders_carry_trace_id() -> void:
+	var trace_id := "00000000-0000-4000-8000-000000000021"
+
+	var create_packet := Packets.create_room_request_packet(trace_id)
+	assert_eq(create_packet[Packets.FIELD_TRACE_ID], trace_id)
+
+	var join_packet := Packets.join_room_request_packet("TEST", trace_id)
+	assert_eq(join_packet[Packets.FIELD_TRACE_ID], trace_id)
+
+	var single_player_packet := Packets.start_single_player_request_packet("profile-1", trace_id)
+	assert_eq(single_player_packet[Packets.FIELD_TRACE_ID], trace_id)
+
+	var empty_trace_packet := Packets.create_room_request_packet("")
+	assert_true(empty_trace_packet.has(Packets.FIELD_TRACE_ID))
+	assert_eq(empty_trace_packet[Packets.FIELD_TRACE_ID], "")

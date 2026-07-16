@@ -123,8 +123,7 @@ func _ready() -> void:
 		user_interface,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_connection_service(),
-		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_shell_status")
+		session_boot_controller.get_shell_boot_flow()
 	)
 	room_session_controller.configure_client_config_sender(
 		Callable(client_config_controller, "send_client_config")

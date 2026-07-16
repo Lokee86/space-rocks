@@ -73,3 +73,16 @@ func test_missing_network_client_is_reported_once_then_resets_on_assignment() ->
 	assert_push_error_count(2)
 	assert_true(sender._missing_network_client_reported)
 	assert_eq(writer.written_lines.size(), 2)
+
+func test_initial_room_senders_include_operation_trace() -> void:
+	var trace_id := "00000000-0000-4000-8000-000000000025"
+	var fake_network := FakeNetworkClient.new()
+	var sender := ClientPacketSender.new(fake_network)
+
+	sender.send_create_room_request(trace_id)
+	sender.send_join_room_request("ROOM1", trace_id)
+	sender.send_start_single_player_request("profile-1", trace_id)
+
+	assert_eq(fake_network.sent_packets[0]["trace_id"], trace_id)
+	assert_eq(fake_network.sent_packets[1]["trace_id"], trace_id)
+	assert_eq(fake_network.sent_packets[2]["trace_id"], trace_id)

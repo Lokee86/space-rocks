@@ -11,7 +11,7 @@ func (session *webSocketSession) leaveRequestedRoom() {
 	}
 	context := session.sessionContext()
 	if context.Room == nil || context.RoomID == "" {
-		session.EnqueueRoomError(rooms.RoomErrorNotInRoom, "Session is not in a room.")
+		session.EnqueueRoomError("", rooms.RoomErrorNotInRoom, "Session is not in a room.")
 		return
 	}
 
@@ -56,7 +56,7 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 			return
 		}
 		if enqueueRoomError {
-			session.EnqueueRoomError(roomErr.Code, roomErr.Message)
+			session.EnqueueRoomError("", roomErr.Code, roomErr.Message)
 		} else {
 			logging.Rooms.Warn("websocket room leave failed",
 				logging.FieldError, roomErr,

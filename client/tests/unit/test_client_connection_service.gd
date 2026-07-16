@@ -368,3 +368,15 @@ func test_room_operation_trace_is_retained_until_explicitly_cleared() -> void:
 
 	assert_eq(service.active_room_operation_type(), "")
 	assert_eq(service.active_room_operation_trace_id(), "")
+
+func test_active_room_operation_trace_reaches_room_packet() -> void:
+	var trace_id := "00000000-0000-4000-8000-000000000026"
+	var fake_network := FakeNetworkClient.new()
+	var service := ClientConnectionService.new()
+	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.begin_room_operation("join_room", trace_id)
+
+	service.send_join_room_request("ROOM1")
+
+	assert_eq(fake_network.sent_packets.size(), 1)
+	assert_eq(fake_network.sent_packets[0]["trace_id"], trace_id)
