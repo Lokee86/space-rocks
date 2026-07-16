@@ -167,13 +167,13 @@ Life transfer is not implemented in the first slice. Team rules still own team m
 
 ## Participation, Disconnect, And Reconnect
 
-Mid-match join life state is mode-defined. A permitted joiner may receive the mode's starting life state, a constrained entry state, a shared team pool allocation, or another explicit state. Lifecycle owns admission and activation; lives rules resolve the life state before the joiner becomes an active participant.
+Mid-match join life state is mode-defined. A permitted joiner may receive the mode's starting life state, a constrained entry state, a shared team pool allocation, or another explicit state. Participation And Joining owns normalized participation-state and eligibility semantics; Multiplayer Lifecycle owns admission and activation execution. Lives rules resolve the life state before the joiner becomes an active participant.
 
 Reconnect restores the player's previous match state. Reconnect must not silently reset lives, active/eliminated state, attribution history, loadout policy state, or pending-respawn state unless the resolved mode explicitly defines that behavior.
 
 Disconnected or removed players leave active evaluation. Their historical participant facts remain available to results, including prior lives/death facts, attribution, team membership at the relevant time, and the reason for removal where the result policy includes it.
 
-Lifecycle owns connection, removal, reconnect execution, and any reconnect grace timing. The lives/death/respawn owner consumes normalized lifecycle facts and applies the mode-defined consequence. It does not own transport membership or invent connection state.
+Multiplayer Lifecycle owns connection, removal, reconnect execution, and any reconnect grace timing. Participation And Joining owns normalized participation-state and eligibility semantics; the lives/death/respawn owner consumes those facts, applies the mode-defined consequence, and does not own transport membership or invent connection state.
 
 ## Match-End Timing Handoff
 
@@ -315,6 +315,7 @@ result facts are emitted strictly according to mode requirements
 
 - [Gameplay Planning](./!INDEX.md)
 - [Modes And Match Rules](modes-and-match-rules.md)
+- [Participation And Joining](participation-and-joining.md)
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Damage And Healing Rules](damage-and-healing-rules.md)

@@ -41,6 +41,8 @@ Detailed player-spawn placement, safety, profile, and spawn-presentation semanti
 
 The shared Objective Foundation owns objective definitions/schema, objective-local lifecycle and state-machine evaluation, discovery/visibility, timers, failure reasons, and normalized objective events/snapshots. Modes consume and select/compose objectives, then own match implications and results policy; they do not become an alternate owner of objective runtime behavior.
 
+Detailed participation and joining semantics belong to [Participation And Joining](participation-and-joining.md). Modes select resolved participation, join, re-entry, and result-eligibility policy; they do not redefine the shared participation-state model or Multiplayer Lifecycle execution.
+
 ## Core Architecture
 
 `ModePreset` is the named preset or template for a room or match ruleset.
@@ -381,6 +383,7 @@ room snapshots expose the mode summary only if the client needs it
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
+- [Participation And Joining](participation-and-joining.md)
 - [Damage And Healing Rules](damage-and-healing-rules.md)
 - [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 - [Player Spawn Profiles](player-spawn-profiles.md)

@@ -67,7 +67,7 @@ bounded gameplay transport renegotiation
 all-active-player transport-loss simulation pause
 mid-session join
 queued join during Starting
-spectator capacity
+spectator admission within player-capacity accounting
 spectator packet lane
 member-local return-to-lobby
 kick / ban split
@@ -134,6 +134,8 @@ deployment infrastructure
 Matchmaking and room discovery owns browser, queue, assignment, confirmation, fallback-room coordination, and room discovery metadata.
 
 Modes and match rules owns start policy, join policy, mid-session join policy, spectator allowance, result participation policy, and mode-specific lifecycle behavior.
+
+[Participation And Joining](../gameplay/participation-and-joining.md) owns detailed participation-state, joining, leaving, forfeiture, AFK, spectator, reconnect-state, capacity, and result-eligibility planning. Modes select resolved policy; lifecycle executes the resulting admission, reservation, reconnect, transport, and state transitions.
 
 Realtime protocol architecture owns packet lanes, packet payloads, snapshots, deltas, and encoding.
 
@@ -228,9 +230,7 @@ A separate `RoomSlotID` is not required while room slot identity and `PlayerID` 
 
 `MemberID` remains the internal reconnect spine. Normal clients should not receive `MemberID` in room snapshots.
 
-Only active players count as match participants.
-
-Queued joiners, pending joiners, loading joiners, disconnected-but-not-active observers, result viewers, and spectators do not count as match participants unless the selected mode explicitly says otherwise.
+Only `active` players contribute to live active-play evaluation by default. Queued, pending, loading, disconnected-but-not-active, result-viewing, and spectator room members do not become live participants merely through room presence. Admitted or historical participants may remain result-eligible under mode policy after spectating, disconnect, leave, or removal.
 
 ## Connection and authentication lifecycle
 
@@ -486,7 +486,7 @@ This includes:
 matchmaking assignment joins
 direct code joins that are queued
 Starting joins queued until InGame
-spectator joins where spectator capacity exists
+spectator joins within player capacity
 ```
 
 Queued joins during `Starting` reserve capacity and wait for `InGame` admission resolution.
@@ -497,7 +497,7 @@ A queued join should expire or release its reservation if the requester disconne
 
 V2 must structurally support mid-session join.
 
-This is longer-term lifecycle work. The initial P4 match-rules implementation only defines the join-policy seam; it does not implement in-game joining.
+This is longer-term lifecycle work. Initial P4 joining remains lobby-only; V2 owns in-game joining execution, while the P4 policy seam defines the allowed participation transitions.
 
 Rules:
 
@@ -506,23 +506,17 @@ InGame is the only normal lifecycle state for mid-session join.
 Join requests during Starting are queued for when the game enters InGame.
 Joiners must load before becoming visible or active.
 Mid-session join consumes room capacity the same way lobby join does.
-Only active players count as match participants.
+Only `active` players contribute to live active-play evaluation by default; room presence alone does not create participation.
 ```
 
-Joiners enter according to the selected mode.
-
-If a mode supports spectator entry, the joiner may enter as a spectator.
-
-Otherwise, the joiner enters according to match/mode rules.
-
-By default, a late joiner enters in the normal match-start state unless match/mode rules override that.
+Every permitted in-game joiner enters as a spectator first. The joiner becomes active only when the selected mode permits activation and the mode-appropriate spawn/entry condition is satisfied. Lifecycle owns execution; mode/match rules own the admission decision and activation policy.
 
 Mode/match rules decide:
 
 ```text
 whether mid-session join is allowed
-whether the joiner enters active play or spectator state
-spawn/default state
+whether and when the spectator may become active
+mode-appropriate spawn/entry condition
 late-join cutoff rules
 result eligibility
 ranked or competitive restrictions
@@ -532,7 +526,7 @@ ranked or competitive restrictions
 
 Spectators are structurally supported by V2.
 
-Spectators have separate capacity from active players.
+Spectators consume `player_capacity` like other applicable room members; no separate spectator-capacity pool is current policy. A future mode-specific spectator limit may be enforced within `player_capacity`.
 
 Spectators should use a separate packet lane from active players.
 
@@ -542,7 +536,7 @@ Lifecycle owns:
 
 ```text
 spectator admission state
-spectator capacity counting
+spectator admission within player-capacity accounting
 spectator join and leave lifecycle
 ```
 
@@ -563,7 +557,7 @@ what spectators can see
 whether any spectator state affects results
 ```
 
-Spectators are not match participants unless the selected mode explicitly treats them as participants.
+Spectators do not contribute to live active-play evaluation by default. Their admitted or historical participation may remain result-eligible under mode policy.
 
 ## P4 Interim Disconnect Policy
 
@@ -676,7 +670,7 @@ Starting / loading state where activation resources are held
 pending mid-session join activation
 disconnected active-player reconnect state
 GameOver result-viewing / next-action state
-optional spectator idle state if spectator capacity becomes scarce
+optional spectator idle state if a future mode-specific spectator limit requires it
 ```
 
 Recommended timeout categories:
@@ -686,7 +680,7 @@ starting_loading_timeout
 mid_session_join_activation_timeout
 in_game_disconnected_reconnect_timeout
 game_over_no_action_timeout
-optional spectator_idle_timeout
+optional spectator_idle_timeout for a future mode-specific spectator limit
 ```
 
 Loading confirmation timeout is separate from no-action timeout.
@@ -752,28 +746,23 @@ Mode-specific or admin-specific removal behavior belongs to the relevant mode, i
 
 ## Capacity model
 
-V2 uses separate capacity concepts.
+V2 uses one room `player_capacity` model with applicable reservations:
 
 ```text
 player_capacity
-spectator_capacity
 queued_player_reservations
-queued_spectator_reservations
+reconnect_reservations
 ```
 
-Lobby members, active players, pending active-player joins, queued active-player joins, and GameOver members waiting for next game count against player capacity.
+Lobby players, active players, spectators, relevant pending/queued player joins, reconnect reservations, and GameOver members consume or reserve the room's `player_capacity` model as applicable. A future mode-specific spectator limit, if needed, is enforced within that model rather than through a separate spectator pool.
 
-Spectators count against spectator capacity.
-
-Queued requests reserve the relevant capacity while queued.
+Queued and reconnect reservations reserve capacity while held.
 
 Capacity reservations must be released on cancellation, disconnect before activation, failed admission, timeout, kick, ban, or room cleanup.
 
 ## Match participants and results
 
-Only active players count as match participants.
-
-Not match participants by default:
+Only `active` players contribute to live active-play evaluation by default. Room presence alone does not make the following members participants:
 
 ```text
 queued joiners
@@ -784,11 +773,9 @@ GameOver result viewers
 members waiting for next game
 ```
 
-All match participants affect win/loss/results unless match/mode rules say otherwise.
+Admitted or historical participants may remain result-eligible under mode policy after spectating, disconnect, leave, or removal. Modes may define stricter result participation and late-join rules.
 
 A participant removed from active play by the P4 interim disconnect policy no longer contributes to live team/rule evaluation and cannot block elimination or completion. Facts accumulated while that player participated remain historical match facts and may be included in the final summary.
-
-Ranked and competitive modes may define stricter result participation and late-join rules.
 
 Match result finalization belongs to match outcomes.
 
@@ -816,8 +803,8 @@ room_state
 member_count
 connected_member_count
 player_capacity
-spectator_capacity
 queued_reservations
+reconnect_reservations
 ready_state
 countdown_state
 starting_state
@@ -942,7 +929,7 @@ Later V2 lifecycle upgrade sequence:
 13. Add casual failed-loading removal-and-continue behavior.
 14. Add queued join reservations, including queued joins during `Starting`.
 15. Add mid-session join structure for `InGame`.
-16. Add spectator capacity and spectator lifecycle state.
+16. Add spectator admission and player-capacity accounting.
 17. Add member-local return-to-lobby behavior.
 18. Add GameOver join/result-viewing behavior.
 19. Add multiplayer no-action timeout for non-queue, non-lobby lifecycle states.
@@ -965,7 +952,7 @@ exact kick/ban allowed states
 exact ban identity fallback for dev/no-auth multiplayer
 exact GameOver member/result-viewer capacity treatment
 exact queued join expiry duration
-exact spectator capacity limits
+exact future mode-specific spectator limit within player_capacity, if needed
 exact spectator packet payload
 exact lifecycle failure codes
 exact room snapshot fields for Starting/loading/queued/reconnect states
@@ -991,8 +978,8 @@ whether return-to-lobby is member-local
 whether kick and ban are separate
 whether bans are room-lifetime permanent
 whether join order should be tracked
-whether spectators have separate capacity
-whether only active players count as match participants
+whether a future mode needs a spectator limit within player_capacity
+whether active players alone contribute to live active-play evaluation while admitted/historical participants may remain result-eligible under mode policy
 whether start and join policy are mode/match-rule decisions
 ```
 
@@ -1015,7 +1002,9 @@ MemberID is not exposed in normal room snapshots.
 
 PlayerID is the readable room/player label and active simulation routing label.
 
-Only active players count as match participants by default.
+Only `active` players contribute to live active-play evaluation by default.
+
+Room presence alone does not make queued, pending, loading, or GameOver result viewers participants. Admitted or historical participants may remain result-eligible under mode policy after spectating, disconnect, leave, or removal.
 
 The game server owns authoritative room lifecycle and final join validation.
 
@@ -1041,7 +1030,7 @@ Join requests during Starting queue for InGame.
 
 Joiners must load before becoming visible or active.
 
-Spectators have separate capacity and a separate packet lane.
+Spectators consume player_capacity and use a separate packet lane.
 
 Disconnect is not necessarily an intentional room leave.
 
@@ -1083,7 +1072,7 @@ Lifecycle must not mutate locked match results during disconnect, reconnect, ret
 
 Mode/match rules decide start, join, re-entry eligibility, mid-session join, spectator, result participation, and mode-specific lifecycle policy.
 
-Lifecycle owns join/remove/re-entry execution machinery, not mode policy.
+Participation And Joining owns detailed participation and joining semantics; modes select that policy. Lifecycle owns join/remove/re-entry execution machinery, reservations, reconnect, and transport state, not mode policy.
 ```
 
 ## Related docs
@@ -1095,6 +1084,7 @@ Lifecycle owns join/remove/re-entry execution machinery, not mode policy.
 * [Leaderboards And Rankings](leaderboards-and-rankings.md)
 * [Game Integrity Policy](security-and-admin/game-integrity-policy.md)
 * [Modes And Match Rules](../gameplay/modes-and-match-rules.md)
+* [Participation And Joining](../gameplay/participation-and-joining.md)
 * [Teams And Team Rules](../gameplay/teams-and-team-rules.md)
 * [Match Outcomes And Results](../gameplay/match-outcomes-and-results.md)
 * [Player Experience Systems](../gameplay/player-experience-systems.md)

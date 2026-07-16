@@ -131,9 +131,9 @@ Match start locks assignments for the first slice. Mid-match team switching and 
 
 Authoritative team membership is distinct from room membership and active match participation.
 
-The team system consumes normalized connected and active-participation facts from multiplayer lifecycle and gameplay. Removed or disconnected players stop contributing to live team evaluation while their historical player and team facts remain available for results.
+Participation And Joining owns normalized participation-state and eligibility semantics. Multiplayer Lifecycle owns room membership, admission/connection execution, and reconnect machinery. The team system consumes normalized connected and active-participation facts; removed or disconnected players stop contributing to live team evaluation while their historical player and team facts remain available for results.
 
-In-game joiners use Auto-balanced assignment or mode-controlled assignment. Lifecycle owns admission and activation; the selected mode decides whether in-game joining is allowed; the team system resolves the required assignment before the joiner becomes an active participant.
+In-game joiners use Auto-balanced assignment or mode-controlled assignment. The selected mode decides whether in-game joining is allowed; the team system resolves the required assignment before the joiner becomes an active participant, while Lifecycle executes admission and activation.
 
 ## Team Colours
 
@@ -180,7 +180,7 @@ Team elimination is mode-defined. The team system exposes normalized membership 
 
 A team with no remaining connected players forfeits.
 
-The first slice can apply that forfeiture immediately from normalized connected-player facts. After Multiplayer Lifecycle V2 exists, a grace period may replace immediate forfeiture so reconnectable players can retain team viability until the grace period expires. Lifecycle owns disconnect/reconnect timing and connected-state facts; team rules own the resulting team-forfeiture requirement.
+The first slice can apply that forfeiture immediately from normalized connected-player facts. After Multiplayer Lifecycle V2 exists, a grace period may replace immediate forfeiture so reconnectable players can retain team viability until the grace period expires. Participation And Joining supplies normalized participation/eligibility semantics; Lifecycle owns disconnect/reconnect timing and connected-state facts; team rules own the resulting team-forfeiture requirement.
 
 ## Result Requirements
 
@@ -281,6 +281,7 @@ single-player does not require product-significant team representation
 
 - [Gameplay Planning](./!INDEX.md)
 - [Modes And Match Rules](modes-and-match-rules.md)
+- [Participation And Joining](participation-and-joining.md)
 - [Damage And Healing Rules](damage-and-healing-rules.md)
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Player Experience Systems](player-experience-systems.md)
