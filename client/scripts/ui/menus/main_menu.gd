@@ -1,5 +1,8 @@
 extends Control
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+
 signal single_player_requested
 signal multiplayer_requested
 signal logout_requested
@@ -23,17 +26,89 @@ func _ready() -> void:
 	var quit_button := get_node_or_null("%QuitButton") as BaseButton
 
 	if login_status_label == null:
-		push_error("Missing label: LoginStatusLabel")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "LoginStatusLabel",
+			"resource_kind": "label",
+			"expected_type": "Label",
+			"actual_type": "null",
+		}
+	)
 	if single_player_button == null:
-		push_error("Missing button: SinglePlayerButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "SinglePlayerButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	if logout_button == null:
-		push_error("Missing button: LogoutButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "LogoutButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	if multiplayer_button == null:
-		push_error("Missing button: MultiplayerButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "MultiplayerButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	if multiplayer_label == null:
-		push_error("Missing label: Multi-player")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "Multi-player",
+			"resource_kind": "label",
+			"expected_type": "Label",
+			"actual_type": "null",
+		}
+	)
 	if sign_in_label == null:
-		push_error("Missing label: Sign-in")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "Sign-in",
+			"resource_kind": "label",
+			"expected_type": "Label",
+			"actual_type": "null",
+		}
+	)
 	if single_player_button != null:
 		single_player_button.pressed.connect(_on_single_player_pressed)
 
@@ -44,7 +119,19 @@ func _ready() -> void:
 		logout_button.pressed.connect(_on_logout_pressed)
 
 	if quit_button == null:
-		push_error("Missing button: QuitButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required main menu presentation node",
+		{},
+		{
+			"subsystem": "main_menu",
+			"failure_mode": "missing_node",
+			"node_name": "QuitButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	else:
 		quit_button.pressed.connect(_on_quit_pressed)
 

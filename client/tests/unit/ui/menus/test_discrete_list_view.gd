@@ -32,7 +32,7 @@ func test_render_rejects_invalid_row_scene() -> void:
 	view.row_scene = invalid_scene
 
 	view.set_items([{"display_name": "Invalid"}])
-	assert_push_error("Discrete list row scene must instantiate DiscreteListRow")
+	assert_push_error_count(1)
 
 	assert_eq(view.rows.get_child_count(), 0)
 	await get_tree().process_frame

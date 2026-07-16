@@ -1,5 +1,8 @@
 extends Control
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+
 signal back_requested
 signal discord_login_requested
 
@@ -15,32 +18,104 @@ func _ready() -> void:
 	if email_input != null:
 		email_input.editable = false
 	else:
-		push_error("Missing input: EmailInput")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required sign-in presentation node",
+		{},
+		{
+			"subsystem": "sign_in",
+			"failure_mode": "missing_node",
+			"node_name": "EmailInput",
+			"resource_kind": "input",
+			"expected_type": "LineEdit",
+			"actual_type": "null",
+		}
+	)
 
 	if password_input != null:
 		password_input.editable = false
 	else:
-		push_error("Missing input: PasswordInput")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required sign-in presentation node",
+		{},
+		{
+			"subsystem": "sign_in",
+			"failure_mode": "missing_node",
+			"node_name": "PasswordInput",
+			"resource_kind": "input",
+			"expected_type": "LineEdit",
+			"actual_type": "null",
+		}
+	)
 
 	if sign_in_button != null:
 		sign_in_button.disabled = true
 	else:
-		push_error("Missing button: SignInButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required sign-in presentation node",
+		{},
+		{
+			"subsystem": "sign_in",
+			"failure_mode": "missing_node",
+			"node_name": "SignInButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 
 	if google_login_button != null:
 		google_login_button.disabled = true
 	else:
-		push_error("Missing button: GoogleLoginButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required sign-in presentation node",
+		{},
+		{
+			"subsystem": "sign_in",
+			"failure_mode": "missing_node",
+			"node_name": "GoogleLoginButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 
 	if back_button != null:
 		back_button.pressed.connect(_on_back_pressed)
 	else:
-		push_error("Missing button: BackButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required sign-in presentation node",
+		{},
+		{
+			"subsystem": "sign_in",
+			"failure_mode": "missing_node",
+			"node_name": "BackButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 
 	if discord_login_button != null:
 		discord_login_button.pressed.connect(_on_discord_login_pressed)
 	else:
-		push_error("Missing button: DiscordLoginButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required sign-in presentation node",
+		{},
+		{
+			"subsystem": "sign_in",
+			"failure_mode": "missing_node",
+			"node_name": "DiscordLoginButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 
 
 func _on_back_pressed() -> void:

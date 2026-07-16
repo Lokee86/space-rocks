@@ -3,6 +3,7 @@ extends GutTest
 const DevtoolsCommandContext := preload("res://scripts/devtools/context/devtools_command_context.gd")
 const DevtoolsStateContext := preload("res://scripts/devtools/context/devtools_state_context.gd")
 const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 
 class FakeConnectionService:
@@ -111,3 +112,22 @@ func test_request_respawn_player_marks_local_respawn_confirmation_for_local_and_
 	assert_eq(dev_connection_service.respawn_calls[2]["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(dev_connection_service.respawn_calls[2]["target_player_id"], "")
 	assert_eq(marker.call_count, 2)
+func test_create_operation_trace_returns_independent_deterministic_traces() -> void:
+	var state := {"index": 0}
+	var ids := [
+		"00000000-0000-4000-8000-000000000041",
+		"00000000-0000-4000-8000-000000000042",
+	]
+	var context := DevtoolsCommandContext.new()
+	context.configure(null, null, func(action_name: String):
+		var trace_id: String = ids[state["index"]]
+		state["index"] += 1
+		return ClientOperationTrace.new(action_name, func() -> String: return trace_id)
+	)
+
+	var first := context.create_operation_trace("toggle_invincible")
+	var second := context.create_operation_trace("clear_bullets")
+
+	assert_eq(first.trace_id(), ids[0])
+	assert_eq(second.trace_id(), ids[1])
+	assert_ne(first.trace_id(), second.trace_id())

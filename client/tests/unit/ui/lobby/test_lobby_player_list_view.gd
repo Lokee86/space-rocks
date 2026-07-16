@@ -24,7 +24,7 @@ func test_render_rejects_invalid_player_row_scene() -> void:
 	var invalid_scene := _create_scene(Control.new())
 
 	LobbyPlayerListView.render(container, invalid_scene, "Player-1", "", [{"player_id": "Player-1"}])
-	assert_push_error("Lobby player row scene must instantiate PlayerRow")
+	assert_push_error_count(1)
 
 	assert_eq(container.get_child_count(), 0)
 	await get_tree().process_frame

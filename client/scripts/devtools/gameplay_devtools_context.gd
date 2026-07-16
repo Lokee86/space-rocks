@@ -17,17 +17,17 @@ var window_action_context
 var state_context
 
 
-func configure(connection_service_ref) -> void:
+func configure(connection_service_ref, operation_trace_factory: Callable = Callable()) -> void:
 	dev_connection_service = DevConnectionService.new()
 	dev_connection_service.configure(connection_service_ref)
 	debug_flow = GameplayDebugFlow.new()
-	debug_flow.configure(connection_service_ref)
+	debug_flow.configure(connection_service_ref, operation_trace_factory)
 	devtools_window_controller = DevtoolsWindowController.new()
 	display_refresh_flow = DevtoolsDisplayRefreshFlow.new()
 	display_refresh_flow.configure(devtools_window_controller)
 	state_context = DevtoolsStateContext.new()
 	command_context = DevtoolsCommandContext.new()
-	command_context.configure(debug_flow, state_context)
+	command_context.configure(debug_flow, state_context, operation_trace_factory)
 	command_context.configure_connection(connection_service_ref)
 	command_context.configure_dev_connection(dev_connection_service)
 	overlay_context = DevtoolsOverlayContext.new()
@@ -35,7 +35,7 @@ func configure(connection_service_ref) -> void:
 	gameplay_state_context = DevtoolsGameplayStateContext.new()
 	gameplay_state_context.configure(connection_service_ref, devtools_window_controller, display_refresh_flow, state_context, overlay_context)
 	placement_context = DevtoolsPlacementContext.new()
-	placement_context.configure(state_context, dev_connection_service)
+	placement_context.configure(state_context, dev_connection_service, operation_trace_factory)
 	var hotkey_flow := DevtoolsHotkeyFlow.new()
 	hotkey_flow.configure(
 		Callable(command_context, "request_respawn_local_player"),

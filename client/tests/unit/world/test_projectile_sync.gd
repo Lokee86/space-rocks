@@ -6,6 +6,26 @@ const BulletPresentation := preload("res://scripts/entities/bullet.gd")
 const TorpedoPresentation := preload("res://scripts/entities/torpedo.gd")
 const BulletScene := preload("res://scenes/bullet.tscn")
 const TorpedoScene := preload("res://scenes/projectiles/torpedo.tscn")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const Contract := preload("res://scripts/generated/observability/contract_generated.gd")
+const EventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
+
+func test_invalid_projectile_root_emits_canonical_contract_violation() -> void:
+	var capture := _begin_capture()
+	var projectile_sync := ProjectileSync.new()
+	var invalid_root := Control.new()
+
+	projectile_sync._contract_violation("bullet", invalid_root)
+	assert_push_error_count(1)
+
+	var record := capture.last_record()
+	assert_eq(record["event"], Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION)
+	assert_eq(record["fields"]["entity_kind"], "projectile")
+	assert_eq(record["fields"]["failure_mode"], "wrong_scene_root")
+	assert_eq(record["fields"]["expected_type"], "BulletPresentation")
+	assert_eq(record["fields"]["actual_type"], "Control")
+	invalid_root.free()
+
 
 func test_bullet_scene_root_satisfies_bullet_presentation_contract() -> void:
 	var node := BulletScene.instantiate()
@@ -377,6 +397,16 @@ func test_reset_allows_reusing_a_projectile_id_in_a_new_match() -> void:
 
 	assert_true(projectile_sync.has_projectile("bullet-1"))
 	assert_false(projectile_sync.is_deleted("bullet-1"))
+
+func _begin_capture() -> EventCapture:
+	var capture := EventCapture.new()
+	ClientLogger._set_file_writer_for_tests(capture)
+	return capture
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
+
 
 func _new_projectile_sync() -> ProjectileSync:
 	var projectile_sync := ProjectileSync.new()

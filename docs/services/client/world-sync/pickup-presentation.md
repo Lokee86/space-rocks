@@ -92,7 +92,7 @@ powerup -> res://scenes/pickups/powerup_pickup.tscn
 weapon  -> res://scenes/pickups/weapon_pickup.tscn
 ```
 
-The catalog also exposes available pickup types by inspecting `Badge` children in pickup scenes. Before inspecting `Badge`, it validates each catalog scene root as `PickupPresentation`. Invalid roots are freed and reported as structured `world_sync` error events named `pickup_presentation_contract_violation`, with the known `pickup_class` and available actual class/script information. Devtools uses that list for pickup selection, but devtools spawn authority remains separate.
+The catalog also exposes available pickup types by inspecting `Badge` children in pickup scenes. Before inspecting `Badge`, it validates each catalog scene root as `PickupPresentation`. Invalid roots are freed and reported as structured `world_sync` error events named `client_presentation_contract_violation`, with entity_kind=pickup, resource_kind=scene, failure_mode=wrong_scene_root, and bounded scalar type/path fields. Devtools uses that list for pickup selection, but devtools spawn authority remains separate.
 
 ### Pickup scene node
 

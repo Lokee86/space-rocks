@@ -43,6 +43,7 @@ func test_level_name_maps_known_levels_and_unknown_values() -> void:
 	assert_eq(ClientLogger.level_name(ClientLogger.LEVEL_INFO), "info")
 	assert_eq(ClientLogger.level_name(ClientLogger.LEVEL_WARN), "warn")
 	assert_eq(ClientLogger.level_name(ClientLogger.LEVEL_ERROR), "error")
+	assert_eq(ClientLogger.level_name(ClientLogger.LEVEL_CRITICAL), "critical")
 	assert_eq(ClientLogger.level_name(ClientLogger.LEVEL_OFF), "unknown")
 
 
@@ -140,6 +141,57 @@ func test_should_log_respects_default_and_category_override() -> void:
 	assert_false(ClientLogger._should_log(ClientLogger.CATEGORY_NETWORK, ClientLogger.LEVEL_ERROR))
 
 
+func test_emit_canonical_uses_generated_metadata_and_scalar_fields() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	assert_true(ClientLogger.configure_file_output("user://fake-logs", "fake-client"))
+
+	var result := ClientLogger.emit_canonical(
+		Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Presentation contract failed",
+		{},
+		{
+			"subsystem": "world_sync",
+			"entity_kind": "pickup",
+			"failure_mode": "wrong_scene_root",
+			"expected_type": "PickupPresentation",
+			"actual_type": "Control",
+		}
+	)
+
+	assert_push_error_count(1)
+	assert_true(result["accepted"])
+	assert_eq(result["record"]["event"], Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION)
+	assert_eq(result["record"]["level"], "error")
+	assert_eq(result["record"]["category"], "client_presentation")
+	assert_eq(result["record"]["retention_tier"], "diagnostic_report")
+	assert_false(result["record"].has("trace_id"))
+	assert_eq(result["record"]["fields"]["actual_type"], "Control")
+	assert_eq(JSON.parse_string(writer.written_lines[0])["event"], Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION)
+
+	var state_result := ClientLogger.emit_canonical(
+		Contract.EVENT_CLIENT_PRESENTATION_STATE_INVALID,
+		"Presentation state is invalid",
+		{},
+		{"subsystem": "world_sync", "failure_mode": "missing_state_field", "field_name": "scale"}
+	)
+	assert_true(state_result["accepted"])
+	assert_eq(state_result["record"]["level"], "warn")
+	assert_eq(state_result["record"]["category"], "client_presentation")
+	assert_eq(state_result["record"]["retention_tier"], "operational")
+
+	var unsafe_node := Node2D.new()
+	var rejected := ClientLogger.emit_canonical(
+		Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"unsafe",
+		{},
+		{"node": unsafe_node}
+	)
+	assert_false(rejected["accepted"])
+	assert_eq(rejected["rejection_code"], Contract.REJECTION_INVALID_FIELD_TYPE)
+	unsafe_node.free()
+
+
 func test_emitted_log_writes_one_canonical_jsonl_line_to_replaceable_writer() -> void:
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
@@ -209,6 +261,73 @@ func test_close_file_output_resets_real_writer_state() -> void:
 	ClientLogger.close_file_output()
 	assert_false(ClientLogger._file_writer.enabled)
 	assert_eq(ClientLogger.current_file_output_path(), "")
+
+
+func test_emit_canonical_uses_generated_event_definition() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var result := ClientLogger.emit_canonical(
+		Contract.EVENT_CLIENT_STARTED,
+		"",
+		{},
+		{"subsystem": "shell"}
+	)
+
+	assert_true(result["accepted"])
+	var record: Dictionary = result["record"]
+	assert_eq(record["event"], Contract.EVENT_CLIENT_STARTED)
+	assert_eq(record["level"], "info")
+	assert_eq(record["category"], "client_startup")
+	assert_eq(record["retention_tier"], "operational")
+	assert_eq(record["service"], "client")
+	assert_eq(record["fields"]["subsystem"], "shell")
+	assert_eq(writer.written_lines.size(), 1)
+
+
+func test_emit_canonical_rejection_is_nonfatal() -> void:
+	var result := ClientLogger.emit_canonical("event_that_does_not_exist")
+	assert_false(result["accepted"])
+	assert_eq(result["rejection_code"], Contract.REJECTION_UNKNOWN_EVENT)
+
+
+func test_emit_canonical_applies_generated_level_thresholds() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var context := {"trace_id": "00000000-0000-4000-8000-000000000001"}
+	var result := ClientLogger.emit_canonical(
+		Contract.EVENT_CONNECTION_ATTEMPT_STARTED,
+		"",
+		context
+	)
+
+	assert_false(result["accepted"])
+	assert_true(result.get("suppressed", false))
+	assert_eq(writer.written_lines.size(), 0)
+
+	ClientLogger.enable_debug()
+	result = ClientLogger.emit_canonical(
+		Contract.EVENT_CONNECTION_ATTEMPT_STARTED,
+		"",
+		context
+	)
+	assert_true(result["accepted"])
+	assert_eq(result["record"]["event"], Contract.EVENT_CONNECTION_ATTEMPT_STARTED)
+	assert_eq(writer.written_lines.size(), 1)
+
+
+func test_emit_canonical_respects_level_off_and_category_overrides() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	ClientLogger.disable()
+	var result := ClientLogger.emit_canonical(Contract.EVENT_CLIENT_STARTED)
+	assert_true(result.get("suppressed", false))
+
+	ClientLogger.set_default_level(ClientLogger.LEVEL_INFO)
+	var category := str(Contract.EVENT_DEFINITIONS[Contract.EVENT_CLIENT_STARTED]["category"])
+	ClientLogger.set_category_level(category, ClientLogger.LEVEL_OFF)
+	result = ClientLogger.emit_canonical(Contract.EVENT_CLIENT_STARTED)
+	assert_true(result.get("suppressed", false))
+	assert_eq(writer.written_lines.size(), 0)
 
 
 func _valid_uuid(value: String) -> bool:

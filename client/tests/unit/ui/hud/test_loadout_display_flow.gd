@@ -3,6 +3,9 @@ extends GutTest
 const HudScene = preload("res://scenes/ui/hud.tscn")
 const LoadoutDisplayFlow = preload("res://scripts/ui/hud/loadout_display_flow.gd")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const Contract := preload("res://scripts/generated/observability/contract_generated.gd")
+const EventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
 
 var _hud: Control
 var _flow := LoadoutDisplayFlow.new()
@@ -298,14 +301,31 @@ func test_switching_from_torpedo_to_unknown_weapon_clears_the_display() -> void:
 
 
 func test_ensure_display_rejects_scene_with_non_weapon_display_root() -> void:
+	var capture := _begin_capture()
 	var invalid_scene := _create_scene(Control.new())
 
 	var display := _flow._ensure_display_for_slot("secondary", "invalid", invalid_scene)
-	assert_push_error("Weapon display scene for 'invalid' did not instantiate a WeaponDisplay.")
+	assert_push_error_count(1)
 
+	var record := capture.last_record()
+	assert_eq(record["event"], Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION)
+	assert_eq(record["fields"]["subsystem"], "hud")
+	assert_eq(record["fields"]["failure_mode"], "wrong_scene_root")
+	assert_eq(record["fields"]["expected_type"], "WeaponDisplay")
+	assert_eq(record["fields"]["actual_type"], "Control")
 	assert_null(display)
 	assert_eq(_loadout_container().get_child_count(), 0)
 	await get_tree().process_frame
+
+
+func _begin_capture() -> EventCapture:
+	var capture := EventCapture.new()
+	ClientLogger._set_file_writer_for_tests(capture)
+	return capture
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
 
 
 func _loadout_container() -> HBoxContainer:

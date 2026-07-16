@@ -14,12 +14,13 @@ var logger: Callable
 func _init(
 	connection_service_ref,
 	websocket_url_value: String,
-	logger_callable: Callable
+	logger_callable: Callable,
+	operation_trace_factory: Callable = Callable()
 ) -> void:
 	connection_service = connection_service_ref
 	websocket_url = websocket_url_value
 	logger = logger_callable
-	pending_boot_request = PendingBootRequest.new()
+	pending_boot_request = PendingBootRequest.new(operation_trace_factory)
 
 
 func set_websocket_url(url: String) -> void:
@@ -70,7 +71,15 @@ func send_pending_boot_request() -> void:
 	var request_type := str(request.get("type", Constants.BOOT_REQUEST_NONE))
 	var room_code := str(request.get("room_code", ""))
 	var local_profile_id := str(request.get("local_profile_id", ""))
+	var trace_id := str(request.get("trace_id", ""))
 	var request_sent := true
+
+	if request_type != Constants.BOOT_REQUEST_SINGLE_PLAYER \
+			and request_type != Constants.BOOT_REQUEST_CREATE_ROOM \
+			and request_type != Constants.BOOT_REQUEST_JOIN_ROOM:
+		request_sent = false
+	elif connection_service.has_method("begin_room_operation"):
+		connection_service.begin_room_operation(request_type, trace_id)
 
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
 		connection_service.send_start_single_player_request(local_profile_id)
@@ -78,8 +87,6 @@ func send_pending_boot_request() -> void:
 		connection_service.send_create_room_request()
 	elif request_type == Constants.BOOT_REQUEST_JOIN_ROOM:
 		connection_service.send_join_room_request(room_code)
-	else:
-		request_sent = false
 
 	if request_sent:
 		boot_request_sent.emit()
@@ -92,4 +99,3 @@ func clear() -> void:
 func _log(message: String) -> void:
 	if !logger.is_null():
 		logger.call(message)
-

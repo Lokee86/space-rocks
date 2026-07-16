@@ -2,6 +2,8 @@ extends RefCounted
 class_name MatchResultsFlow
 
 const MatchResultWindowScene := preload("res://scenes/ui/dialogs/match_result_window.tscn")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 signal replay_requested
 signal return_to_lobby_requested
@@ -24,7 +26,19 @@ func show_results(session_mode: String, rows: Array = []) -> Control:
 
 	window = MatchResultWindowScene.instantiate() as MatchResultWindow
 	if window == null:
-		push_error("Match result window scene must instantiate MatchResultWindow")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Match result window scene must instantiate its presentation root",
+		{},
+		{
+			"subsystem": "match_results",
+			"failure_mode": "wrong_scene_root",
+			"resource_kind": "scene",
+			"expected_type": "MatchResultWindow",
+			"actual_type": "null",
+			"resource_path": MatchResultWindowScene.resource_path,
+		}
+	)
 		return null
 	mount_parent.add_child(window)
 	window.move_to_front()

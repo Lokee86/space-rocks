@@ -356,6 +356,22 @@
       "audit_eligible": false,
       "bridge_only": false,
       "category": "service_lifecycle",
+      "default_level": "error",
+      "description": "A service completed startup, but its primary runtime operation terminated unexpectedly.",
+      "name": "service_runtime_failed",
+      "retention_tier": "operational",
+      "services": [
+        "api_server",
+        "game_server",
+        "player_data",
+        "diagnostic_aggregator"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "service_lifecycle",
       "default_level": "warn",
       "description": "A service entered a named degraded operating state.",
       "name": "service_entered_degraded_state",
@@ -498,6 +514,19 @@
       "audit_eligible": false,
       "bridge_only": false,
       "category": "client_startup",
+      "default_level": "info",
+      "description": "The client completed startup and is ready for normal operation.",
+      "name": "client_started",
+      "retention_tier": "operational",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "client_startup",
       "default_level": "error",
       "description": "The client failed to boot its main scene or session shell.",
       "name": "client_startup_failed",
@@ -528,6 +557,59 @@
       "description": "The packaged client runtime does not match its expected release contract.",
       "name": "client_runtime_mismatch",
       "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "configuration",
+      "default_level": "error",
+      "description": "A packaged runtime asset or definition could not be loaded or validated.",
+      "name": "runtime_asset_load_failed",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client",
+        "game_server"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "client_startup",
+      "default_level": "error",
+      "description": "A required client dependency was absent or unusable.",
+      "name": "client_dependency_unavailable",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "client_presentation",
+      "default_level": "error",
+      "description": "A static or structural client presentation expectation was violated.",
+      "name": "client_presentation_contract_violation",
+      "retention_tier": "diagnostic_report",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "client_presentation",
+      "default_level": "warn",
+      "description": "Client presentation data was malformed or unusable at runtime.",
+      "name": "client_presentation_state_invalid",
+      "retention_tier": "operational",
       "services": [
         "client"
       ],
@@ -690,6 +772,19 @@
     {
       "audit_eligible": false,
       "bridge_only": false,
+      "category": "client_network",
+      "default_level": "warn",
+      "description": "Buffered realtime state was discarded and recovery or resynchronization may be required.",
+      "name": "realtime_pending_state_discarded",
+      "retention_tier": "operational",
+      "services": [
+        "client"
+      ],
+      "trace_required": false
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
       "category": "networking",
       "default_level": "warn",
       "description": "A received packet could not be decoded.",
@@ -768,7 +863,8 @@
       "retention_tier": "operational",
       "services": [
         "client",
-        "api_server"
+        "api_server",
+        "game_server"
       ],
       "trace_required": true
     },
@@ -782,7 +878,8 @@
       "retention_tier": "operational",
       "services": [
         "client",
-        "api_server"
+        "api_server",
+        "game_server"
       ],
       "trace_required": true
     },
@@ -952,7 +1049,7 @@
       "bridge_only": false,
       "category": "profile",
       "default_level": "error",
-      "description": "A local profile could not be created.",
+      "description": "A local profile could not be created during guest stat seeding, identifier generation, or storage.",
       "name": "local_profile_create_failed",
       "retention_tier": "operational",
       "services": [
@@ -1311,7 +1408,7 @@
       "bridge_only": false,
       "category": "game_networking",
       "default_level": "warn",
-      "description": "A client disconnected unexpectedly from the game server.",
+      "description": "A client disconnected from the game server; failure_mode=cleanup_failed may include bounded fields.cleanup_stage metadata.",
       "name": "game_server_client_disconnected",
       "retention_tier": "operational",
       "services": [
@@ -1380,6 +1477,7 @@
       "name": "outbound_packet_encode_failed",
       "retention_tier": "operational",
       "services": [
+        "client",
         "game_server"
       ],
       "trace_required": true
@@ -1447,6 +1545,32 @@
       "retention_tier": "operational",
       "services": [
         "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "rooms",
+      "default_level": "error",
+      "description": "An authoritative room-leave operation failed.",
+      "name": "room_leave_failed",
+      "retention_tier": "operational",
+      "services": [
+        "game_server"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": false,
+      "bridge_only": false,
+      "category": "rooms",
+      "default_level": "warn",
+      "description": "The client observed a bounded room operation failure.",
+      "name": "room_operation_failed",
+      "retention_tier": "operational",
+      "services": [
+        "client"
       ],
       "trace_required": true
     },
@@ -1664,11 +1788,23 @@
       "bridge_only": false,
       "category": "devtools_admin",
       "default_level": "info",
+      "description": "The client locally validated a devtools command and is about to send it.",
+      "name": "devtools_command_requested",
+      "retention_tier": "audit_grade",
+      "services": [
+        "client"
+      ],
+      "trace_required": true
+    },
+    {
+      "audit_eligible": true,
+      "bridge_only": false,
+      "category": "devtools_admin",
+      "default_level": "info",
       "description": "A state-changing devtools command was applied.",
       "name": "devtools_command_applied",
       "retention_tier": "audit_grade",
       "services": [
-        "client",
         "game_server"
       ],
       "trace_required": true

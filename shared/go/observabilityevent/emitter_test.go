@@ -182,7 +182,7 @@ func TestSharedCrossLanguageFixturesHaveMatchingOutcomes(t *testing.T) {
 	}
 	for _, testCase := range fixture.Cases {
 		t.Run(testCase.ID, func(t *testing.T) {
-			emitter := testEmitter(t, &captureSink{}, ServiceKeyApiServer)
+			emitter := testEmitter(t, &captureSink{}, ServiceKeyClient)
 			var result Result
 			if testCase.Mode == "legacy" {
 				result = emitter.EmitLegacy(LegacyRequest{

@@ -2,6 +2,8 @@ extends RefCounted
 
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")
 const PlayerRowType := preload("res://scripts/ui/lobby/player_row.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 
 static func render(
@@ -25,7 +27,19 @@ static func render(
 		var row_instance: Node = row_scene.instantiate()
 		var row := row_instance as PlayerRowType
 		if row == null:
-			push_error("Lobby player row scene must instantiate PlayerRow; got %s" % row_instance.get_class())
+			ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Lobby player row scene must instantiate its presentation root",
+		{},
+		{
+			"subsystem": "lobby",
+			"failure_mode": "wrong_row_type",
+			"resource_kind": "scene",
+			"expected_type": "PlayerRow",
+			"actual_type": row_instance.get_class(),
+			"resource_path": row_scene.resource_path,
+		}
+	)
 			row_instance.queue_free()
 			continue
 		container.add_child(row)

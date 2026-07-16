@@ -3,6 +3,8 @@ extends GutTest
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 
 class FakeNetworkClient:
@@ -45,6 +47,26 @@ func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
 	return fake_peer
 
 
+class FakeWriter extends RefCounted:
+	var written_lines: Array[String] = []
+	var failure_count := 0
+	var last_failure_message := ""
+
+	func write_line(line: String) -> void:
+		written_lines.append(line)
+
+	func close() -> void:
+		pass
+
+
+func before_each() -> void:
+	ClientLogger.reset_for_tests()
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
+
+
 func test_authenticated_integer_websocket_user_id_is_an_identity() -> void:
 	var service := ClientConnectionService.new()
 	service._on_authenticate_result_received({"authenticated": true, "user_id": 42})
@@ -70,12 +92,20 @@ func test_unauthenticated_or_malformed_websocket_user_id_uses_sentinel() -> void
 		assert_false(service.has_websocket_auth_identity())
 
 func test_missing_packet_sender_is_reported_once_then_resets_on_assignment() -> void:
-	ClientLogger.disable()
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
 	var service := ClientConnectionService.new()
 	service._missing_client_packet_sender_reported = false
 	service.send_input_packet({"type": "input"})
 	service.send_input_packet({"type": "input"})
+	assert_push_error_count(1)
 	assert_true(service._missing_client_packet_sender_reported)
+	assert_eq(writer.written_lines.size(), 1)
+	var record = JSON.parse_string(writer.written_lines[0])
+	assert_eq(record["event"], ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE)
+	assert_eq(record["fields"]["subsystem"], "networking_outbound")
+	assert_eq(record["fields"]["dependency"], "client_packet_sender")
+	assert_eq(record["fields"]["failure_mode"], "not_configured")
 
 	var fake_network := FakeNetworkClient.new()
 	var sender := ClientConnectionService.ClientPacketSender.new(fake_network)
@@ -83,7 +113,6 @@ func test_missing_packet_sender_is_reported_once_then_resets_on_assignment() -> 
 	service.send_input_packet({"type": "input"})
 	assert_false(service._missing_client_packet_sender_reported)
 	assert_eq(fake_network.sent_packets.size(), 1)
-	ClientLogger.reset_for_tests()
 
 
 func test_close_resets_websocket_auth_identity() -> void:
@@ -298,3 +327,44 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	assert_true(presentation_state.event_batch_applier != null)
 	assert_eq(applied_packets.size(), 2)
 	assert_eq(applied_packets[1]["baseline_id"], "world-baseline-2")
+
+func test_connection_trace_survives_connect_and_is_visible_during_close() -> void:
+	var state := {"index": 0}
+	var ids := [
+		"00000000-0000-4000-8000-000000000011",
+		"00000000-0000-4000-8000-000000000012",
+	]
+	var factory := func(operation_name: String):
+		var trace_id: String = ids[state["index"]]
+		state["index"] += 1
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+
+	var service := ClientConnectionService.new(factory)
+	service.network_client = FakeNetworkClient.new()
+	var closed_trace_ids: Array[String] = []
+	service.closed.connect(func() -> void: closed_trace_ids.append(service.current_connection_trace_id()))
+
+	assert_eq(service.connect_to_server("ws://example"), OK)
+	assert_eq(service.current_connection_trace_id(), ids[0])
+
+	service._on_connected()
+	assert_eq(service.current_connection_trace_id(), ids[0])
+	service._on_closed()
+
+	assert_eq(closed_trace_ids, [ids[0]])
+	assert_eq(service.current_connection_trace_id(), "")
+	assert_eq(service.connect_to_server("ws://example"), OK)
+	assert_eq(service.current_connection_trace_id(), ids[1])
+
+
+func test_room_operation_trace_is_retained_until_explicitly_cleared() -> void:
+	var service := ClientConnectionService.new()
+	service.begin_room_operation("join_room", "00000000-0000-4000-8000-000000000013")
+
+	assert_eq(service.active_room_operation_type(), "join_room")
+	assert_eq(service.active_room_operation_trace_id(), "00000000-0000-4000-8000-000000000013")
+
+	service.clear_room_operation_context()
+
+	assert_eq(service.active_room_operation_type(), "")
+	assert_eq(service.active_room_operation_trace_id(), "")

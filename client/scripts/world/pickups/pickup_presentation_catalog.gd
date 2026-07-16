@@ -8,6 +8,7 @@ const POWERUP_PICKUP_SCENE := preload("res://scenes/pickups/powerup_pickup.tscn"
 const WEAPON_PICKUP_SCENE := preload("res://scenes/pickups/weapon_pickup.tscn")
 const PickupPresentation = preload("res://scripts/entities/pickup.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 
 static func scene_for_class(pickup_class: String) -> PackedScene:
@@ -47,15 +48,18 @@ static func _collect_pickup_types_from_scene(
 		var actual_script_path := ""
 		if actual_script is Script:
 			actual_script_path = actual_script.resource_path
-		ClientLogger.event(
-			ClientLogger.CATEGORY_WORLD_SYNC,
-			ClientLogger.LEVEL_ERROR,
-			"pickup_presentation_contract_violation",
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
 			"Pickup catalog scene root does not satisfy its presentation contract",
+			{},
 			{
-				"pickup_class": pickup_class,
-				"actual_class": scene_root.get_class(),
-				"actual_script": actual_script_path,
+				"subsystem": "world_sync",
+				"entity_kind": "pickup",
+				"resource_kind": "scene",
+				"failure_mode": "wrong_scene_root",
+				"expected_type": "PickupPresentation",
+				"actual_type": scene_root.get_class(),
+				"resource_path": actual_script_path,
 			}
 		)
 		scene_root.queue_free()
@@ -63,6 +67,20 @@ static func _collect_pickup_types_from_scene(
 
 	var badge := pickup_root.get_node_or_null("Badge")
 	if badge == null:
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Pickup presentation is missing its required layer",
+			{},
+			{
+				"subsystem": "world_sync",
+				"entity_kind": "pickup",
+				"resource_kind": "presentation_layer",
+				"failure_mode": "missing_layer",
+				"node_name": "Badge",
+				"expected_type": "Node",
+				"actual_type": "null",
+			}
+		)
 		scene_root.queue_free()
 		return
 

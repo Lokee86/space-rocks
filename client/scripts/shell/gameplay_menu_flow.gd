@@ -8,6 +8,7 @@ signal spectate_requested
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
 const GameMenuScene := preload("res://scenes/ui/dialogs/game_menu.tscn")
 
 const GAME_OVER_CONTAINER_PATH := "CenterContainer/GameOverContainer"
@@ -312,7 +313,19 @@ func _log_missing_live_pause_paths() -> void:
 
 func _log_missing_path(path: String, node) -> void:
 	if node == null:
-		ClientLogger.shell_error("GameplayMenuFlow missing expected HUD path: %s" % path)
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Gameplay menu is missing a required HUD presentation path",
+			{},
+			{
+				"subsystem": "gameplay_menu",
+				"failure_mode": "missing_node",
+				"node_name": path,
+				"resource_kind": "hud_node",
+				"expected_type": "Control",
+				"actual_type": "null",
+			}
+		)
 
 
 func _active_game_menu() -> GameMenu:
@@ -329,7 +342,19 @@ func _ensure_overlay_game_menu() -> void:
 
 	overlay_game_menu = GameMenuScene.instantiate() as GameMenu
 	if overlay_game_menu == null:
-		push_error("Game menu scene must instantiate GameMenu")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Game menu scene must instantiate its presentation root",
+		{},
+		{
+			"subsystem": "gameplay_menu",
+			"failure_mode": "wrong_scene_root",
+			"resource_kind": "scene",
+			"expected_type": "GameMenu",
+			"actual_type": "null",
+			"resource_path": GameMenuScene.resource_path,
+		}
+	)
 		return
 	overlay_parent.add_child(overlay_game_menu)
 	overlay_game_menu.hide()

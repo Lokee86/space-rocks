@@ -135,10 +135,10 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | audit_record_created | aggregator_storage | info | An audit-required event was validated and promoted to an audit-grade record. | diagnostic_aggregator | true | true | audit_grade | false |
 | audit_record_creation_failed | aggregator_storage | critical | The aggregator could not persist an audit-grade record. | diagnostic_aggregator | true | true | audit_grade | false |
 | auth_callback_received | auth | info | An authentication provider callback was received without recording credentials. | api_server, client | true | false | operational | false |
-| auth_failed | auth | warn | Authentication failed. | api_server, client | true | false | operational | false |
+| auth_failed | auth | warn | Authentication failed. | api_server, client, game_server | true | false | operational | false |
 | auth_flow_started | auth | info | An authentication flow began. | api_server, client | true | false | operational | false |
 | auth_provider_unavailable | auth | error | An authentication provider was unavailable. | api_server, client | true | false | operational | false |
-| auth_succeeded | auth | info | Authentication completed successfully. | api_server, client | true | false | operational | false |
+| auth_succeeded | auth | info | Authentication completed successfully. | api_server, client, game_server | true | false | operational | false |
 | bot_tas_flag_applied | integrity | warn | A bot or tool-assisted-run flag was attached to a run or result. | api_server, game_server, player_data | true | true | audit_grade | false |
 | bug_report_created | diagnostics | info | A bug report was created with diagnostic context. | client, diagnostic_aggregator | true | false | diagnostic_report | false |
 | bug_report_upload_failed | diagnostics | warn | A diagnostic report upload failed while local diagnostics remain available. | client, diagnostic_aggregator | true | false | diagnostic_report | false |
@@ -148,8 +148,12 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | client_config_load_failed | client_startup | error | Client configuration could not be loaded. | client | false | false | diagnostic_report | false |
 | client_connected | client_network | info | The client established a network connection. | api_server, client, game_server | true | false | operational | false |
 | client_connection_failed | client_network | warn | A client network connection attempt failed. | api_server, client, game_server | true | false | diagnostic_report | false |
+| client_dependency_unavailable | client_startup | error | A required client dependency was absent or unusable. | client | false | false | diagnostic_report | false |
 | client_disconnected | client_network | warn | The client lost a connection unexpectedly or completed an expected disconnect. | api_server, client, game_server | true | false | operational | false |
+| client_presentation_contract_violation | client_presentation | error | A static or structural client presentation expectation was violated. | client | false | false | diagnostic_report | false |
+| client_presentation_state_invalid | client_presentation | warn | Client presentation data was malformed or unusable at runtime. | client | false | false | operational | false |
 | client_runtime_mismatch | client_startup | error | The packaged client runtime does not match its expected release contract. | client | false | false | diagnostic_report | false |
+| client_started | client_startup | info | The client completed startup and is ready for normal operation. | client | false | false | operational | false |
 | client_starting | client_startup | info | The client has begun startup. | client | false | false | operational | false |
 | client_startup_failed | client_startup | error | The client failed to boot its main scene or session shell. | client | true | false | diagnostic_report | false |
 | collision_shape_missing | simulation | warn | An authoritative simulation entity lacked a required collision shape. | game_server | false | false | operational | false |
@@ -163,8 +167,9 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | database_unavailable | player_data | error | The player-data database or storage dependency is unavailable. | player_data | true | false | operational | false |
 | dependency_health_failed | health_readiness | error | A required dependency failed health checks. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational | false |
 | dependency_initialization_failed | service_lifecycle | error | A required dependency failed during initialization. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational | false |
-| devtools_command_applied | devtools_admin | info | A state-changing devtools command was applied. | client, game_server | true | true | audit_grade | false |
+| devtools_command_applied | devtools_admin | info | A state-changing devtools command was applied. | game_server | true | true | audit_grade | false |
 | devtools_command_rejected | devtools_admin | warn | A devtools command was rejected by capability or validation policy. | client, game_server | true | true | audit_grade | false |
+| devtools_command_requested | devtools_admin | info | The client locally validated a devtools command and is about to send it. | client | true | true | audit_grade | false |
 | devtools_enabled | devtools_admin | info | Devtools capability was enabled in an allowed environment. | client, game_server | false | true | audit_grade | false |
 | diagnostic_bundle_created | diagnostics | info | A bounded diagnostic bundle was created. | client, diagnostic_aggregator, game_server | true | false | diagnostic_report | false |
 | diagnostic_chain_grouped | aggregator_query | info | Events were grouped into a correlation-preserving diagnostic chain. | diagnostic_aggregator | true | false | diagnostic_report | false |
@@ -179,7 +184,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | frame_pressure_threshold_crossed | runtime_threshold | warn | Client frame pressure crossed its configured warning threshold. | client | false | false | operational | false |
 | game_over_detected | simulation | info | The authoritative simulation detected game over. | game_server | true | false | operational | false |
 | game_server_client_connected | game_networking | info | A client connected to the game server. | game_server | true | false | operational | false |
-| game_server_client_disconnected | game_networking | warn | A client disconnected unexpectedly from the game server. | game_server | true | false | operational | false |
+| game_server_client_disconnected | game_networking | warn | A client disconnected from the game server; failure_mode=cleanup_failed may include bounded fields.cleanup_stage metadata. | game_server | true | false | operational | false |
 | game_server_connection_upgrade_failed | game_networking | warn | A game-server WebSocket upgrade failed. | game_server | true | false | operational | false |
 | game_server_read_failed | game_networking | warn | A game-server socket read failed unexpectedly. | game_server | true | false | operational | false |
 | game_server_write_failed | game_networking | error | A game-server socket write failed. | game_server | true | false | operational | false |
@@ -193,7 +198,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | load_scenario_completed | runtime_threshold | info | A bounded load or soak scenario completed. | api_server, diagnostic_aggregator, game_server | true | false | ephemeral_dev | false |
 | load_scenario_failed | runtime_threshold | error | A bounded load or soak scenario failed. | api_server, diagnostic_aggregator, game_server | true | false | diagnostic_report | false |
 | load_scenario_started | runtime_threshold | info | A bounded load or soak scenario began. | api_server, diagnostic_aggregator, game_server | true | false | ephemeral_dev | false |
-| local_profile_create_failed | profile | error | A local profile could not be created. | player_data | true | false | operational | false |
+| local_profile_create_failed | profile | error | A local profile could not be created during guest stat seeding, identifier generation, or storage. | player_data | true | false | operational | false |
 | local_server_connected | client_startup | info | The client connected to its bundled local server. | client, game_server | true | false | operational | false |
 | local_server_exited_unexpectedly | client_startup | error | The bundled local server exited without an expected shutdown. | client, game_server | true | false | diagnostic_report | false |
 | local_server_launch_failed | client_startup | error | The bundled local server failed to launch. | client, game_server | true | false | diagnostic_report | false |
@@ -214,7 +219,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | memory_growth_threshold_crossed | runtime_threshold | warn | Observed memory growth crossed its configured warning threshold. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
 | moderation_action_applied | integrity | warn | A moderation or enforcement action was applied. | api_server, game_server | true | true | audit_grade | false |
 | observability_unavailable | health_readiness | error | Telemetry or logging was unavailable before or after launch. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
-| outbound_packet_encode_failed | game_networking | error | A game-server outbound packet could not be encoded. | game_server | true | false | operational | false |
+| outbound_packet_encode_failed | game_networking | error | A game-server outbound packet could not be encoded. | client, game_server | true | false | operational | false |
 | packet_decode_failed | networking | warn | A received packet could not be decoded. | client, game_server | true | false | operational | false |
 | packet_envelope_decode_failed | game_networking | warn | A game-server packet envelope could not be decoded. | game_server | true | false | operational | false |
 | packet_route_failed | game_networking | warn | A game-server packet could not be routed. | game_server | true | false | operational | false |
@@ -231,6 +236,7 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | profile_migration_started | profile_migration | info | A local profile migration began. | client, player_data | true | false | diagnostic_report | false |
 | profile_migration_succeeded | profile_migration | info | A local profile migration completed successfully. | client, player_data | true | false | diagnostic_report | false |
 | readiness_check_failed | health_readiness | warn | A service failed readiness checks. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
+| realtime_pending_state_discarded | client_network | warn | Buffered realtime state was discarded and recovery or resynchronization may be required. | client | false | false | operational | false |
 | reconnect_attempt_scheduled | client_network | warn | A client reconnect attempt was scheduled after connection loss. | client | true | false | diagnostic_report | false |
 | reconnect_failed | client_network | warn | A client reconnect attempt failed. | client, game_server | true | false | diagnostic_report | false |
 | reconnect_succeeded | client_network | info | A client reconnect attempt succeeded. | client, game_server | true | false | operational | false |
@@ -245,13 +251,17 @@ unknown_event, bridge_event_forbidden, service_not_allowed, trace_required, unkn
 | room_created | rooms | info | A game-server room was created. | game_server | true | false | operational | false |
 | room_creation_failed | rooms | error | A game-server room could not be created. | game_server | true | false | operational | false |
 | room_join_failed | rooms | warn | A player could not join a room. | game_server | true | false | operational | false |
+| room_leave_failed | rooms | error | An authoritative room-leave operation failed. | game_server | true | false | operational | false |
 | room_match_ended | rooms | info | A room ended a match. | game_server | true | false | operational | false |
 | room_match_started | rooms | info | A room started a match. | game_server | true | false | operational | false |
+| room_operation_failed | rooms | warn | The client observed a bounded room operation failure. | client | true | false | operational | false |
 | room_player_removed | rooms | info | A player was removed from a room by timeout or an administrative action. | game_server | true | true | audit_grade | false |
 | room_ready_state_changed | rooms | debug | A room changed its readiness state. | game_server | true | false | ephemeral_dev | false |
+| runtime_asset_load_failed | configuration | error | A packaged runtime asset or definition could not be loaded or validated. | client, game_server | false | false | diagnostic_report | false |
 | service_entered_admission_blocked_state | service_lifecycle | warn | A service is running but blocks new admissions. | api_server, game_server, player_data | false | false | operational | false |
 | service_entered_degraded_state | service_lifecycle | warn | A service entered a named degraded operating state. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
 | service_recovered | service_lifecycle | info | A service recovered from a degraded, offline, or blocked state. | api_server, client, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
+| service_runtime_failed | service_lifecycle | error | A service completed startup, but its primary runtime operation terminated unexpectedly. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational | false |
 | service_started | service_lifecycle | info | A service completed startup and is available for normal operation. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
 | service_starting | service_lifecycle | info | A service has begun startup. | api_server, diagnostic_aggregator, game_server, player_data | false | false | operational | false |
 | service_startup_failed | service_lifecycle | critical | A service could not complete startup. | api_server, diagnostic_aggregator, game_server, player_data | true | false | operational | false |

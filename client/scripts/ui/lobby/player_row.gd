@@ -1,5 +1,8 @@
-class_name PlayerRow
 extends HBoxContainer
+class_name PlayerRow
+
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 @onready var player_name_label: Label = find_child("PlayerNameLabel", true, false) as Label
 @onready var player_ready_label: Label = find_child("PlayerReadyLabel", true, false) as Label
@@ -9,11 +12,11 @@ extends HBoxContainer
 
 
 func _ready() -> void:
-	_report_missing_node(player_name_label, "PlayerNameLabel")
-	_report_missing_node(player_ready_label, "PlayerReadyLabel")
-	_report_missing_node(owner_indicator, "OwnerIndicator")
-	_report_missing_node(ready_green, "ReadyGreen")
-	_report_missing_node(ready_red, "ReadyRed")
+	_report_missing_node(player_name_label, "PlayerNameLabel", "Label")
+	_report_missing_node(player_ready_label, "PlayerReadyLabel", "Label")
+	_report_missing_node(owner_indicator, "OwnerIndicator", "CanvasItem")
+	_report_missing_node(ready_green, "ReadyGreen", "CanvasItem")
+	_report_missing_node(ready_red, "ReadyRed", "CanvasItem")
 
 
 func set_member(member_name, is_ready, member_connected := true, is_owner := false) -> void:
@@ -32,6 +35,18 @@ func set_member(member_name, is_ready, member_connected := true, is_owner := fal
 		ready_red.visible = !member_ready || !connected
 
 
-func _report_missing_node(node: Node, node_name: String) -> void:
+func _report_missing_node(node: Node, node_name: String, expected_type: String) -> void:
 	if node == null:
-		push_warning("PlayerRow missing node: %s" % node_name)
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Player row is missing a required presentation node",
+			{},
+			{
+				"subsystem": "lobby",
+				"failure_mode": "missing_node",
+				"node_name": node_name,
+				"resource_kind": "ui_node",
+				"expected_type": expected_type,
+				"actual_type": "null",
+			}
+		)

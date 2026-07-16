@@ -4,6 +4,26 @@ const Packets := preload("res://scripts/generated/networking/packets/packets.gd"
 const AsteroidSync := preload("res://scripts/world/asteroid_sync.gd")
 const AsteroidPresentation := preload("res://scripts/entities/asteroid.gd")
 const AsteroidScene := preload("res://scenes/asteroid.tscn")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const Contract := preload("res://scripts/generated/observability/contract_generated.gd")
+const EventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
+
+func test_invalid_asteroid_root_emits_canonical_contract_violation() -> void:
+	var capture := _begin_capture()
+	var asteroid_sync := AsteroidSync.new()
+	var invalid_root := Control.new()
+
+	asteroid_sync._contract_violation(invalid_root)
+	assert_push_error_count(1)
+
+	var record := capture.last_record()
+	assert_eq(record["event"], Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION)
+	assert_eq(record["fields"]["entity_kind"], "asteroid")
+	assert_eq(record["fields"]["failure_mode"], "wrong_scene_root")
+	assert_eq(record["fields"]["expected_type"], "AsteroidPresentation")
+	assert_eq(record["fields"]["actual_type"], "Control")
+	invalid_root.free()
+
 
 func test_asteroid_scene_root_satisfies_asteroid_presentation_contract() -> void:
 	var node := AsteroidScene.instantiate()
@@ -100,6 +120,16 @@ func test_deleted_asteroid_tombstones_are_bounded_and_recreated() -> void:
 	asteroid_sync.reset()
 	assert_true(asteroid_sync.deleted_asteroid_ids.is_empty())
 	assert_true(asteroid_sync._deleted_asteroid_id_order.is_empty())
+
+
+func _begin_capture() -> EventCapture:
+	var capture := EventCapture.new()
+	ClientLogger._set_file_writer_for_tests(capture)
+	return capture
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
 
 
 func _new_asteroid_sync() -> AsteroidSync:

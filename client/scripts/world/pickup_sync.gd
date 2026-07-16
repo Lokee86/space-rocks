@@ -6,6 +6,7 @@ const PICKUP_CLASS_WEAPON := "weapon"
 
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const PickupPresentation = preload("res://scripts/entities/pickup.gd")
 
 var pickups_layer: Node2D
@@ -44,12 +45,18 @@ func _scene_for_class(pickup_class: String) -> PackedScene:
 	if pickup_scene != null:
 		return pickup_scene
 
-	ClientLogger.event(
-		ClientLogger.CATEGORY_WORLD_SYNC,
-		ClientLogger.LEVEL_WARN,
-		"pickup_class_unknown",
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
 		"Cannot resolve pickup presentation scene",
-		{"pickup_class": pickup_class}
+		{},
+		{
+			"subsystem": "world_sync",
+			"entity_kind": "pickup",
+			"resource_kind": "scene",
+			"failure_mode": "unknown_pickup_class",
+			"expected_type": "known_pickup_class",
+			"actual_type": pickup_class,
+		}
 	)
 	return null
 
@@ -59,15 +66,18 @@ func _contract_violation(pickup_class: String, pickup_node: Node) -> void:
 	var actual_script_path := ""
 	if actual_script is Script:
 		actual_script_path = actual_script.resource_path
-	ClientLogger.event(
-		ClientLogger.CATEGORY_WORLD_SYNC,
-		ClientLogger.LEVEL_ERROR,
-		"pickup_presentation_contract_violation",
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
 		"Pickup scene root does not satisfy its presentation contract",
+		{},
 		{
-			"pickup_class": pickup_class,
-			"actual_class": pickup_node.get_class(),
-			"actual_script": actual_script_path,
+			"subsystem": "world_sync",
+			"entity_kind": "pickup",
+			"resource_kind": "scene",
+			"failure_mode": "wrong_scene_root",
+			"expected_type": "PickupPresentation",
+			"actual_type": pickup_node.get_class(),
+			"resource_path": actual_script_path,
 		}
 	)
 
@@ -77,15 +87,17 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 		var stored_value: Variant = pickup_nodes[pickup_id]
 		var stored_node := stored_value as Node
 		if stored_node == null:
-			ClientLogger.event(
-				ClientLogger.CATEGORY_WORLD_SYNC,
-				ClientLogger.LEVEL_ERROR,
-				"pickup_presentation_contract_violation",
+			ClientLogger.emit_canonical(
+				ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
 				"Stored pickup value is not a presentation node",
+				{},
 				{
-					"pickup_class": pickup_class,
-					"actual_class": typeof(stored_value),
-					"actual_script": "",
+					"subsystem": "world_sync",
+					"entity_kind": "pickup",
+					"resource_kind": "stored_presentation",
+					"failure_mode": "wrong_node_type",
+					"expected_type": "PickupPresentation",
+					"actual_type": str(typeof(stored_value)),
 				}
 			)
 			return null
@@ -96,11 +108,18 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 		return pickup_node
 
 	if pickups_layer == null:
-		ClientLogger.event(
-			ClientLogger.CATEGORY_WORLD_SYNC,
-			ClientLogger.LEVEL_WARN,
-			"pickup_layer_unavailable",
-			"Cannot create pickup without a configured pickups layer"
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Cannot create pickup without a configured pickups layer",
+			{},
+			{
+				"subsystem": "world_sync",
+				"entity_kind": "pickup",
+				"resource_kind": "presentation_layer",
+				"failure_mode": "missing_layer",
+				"expected_type": "Node2D",
+				"actual_type": "null",
+			}
 		)
 		return null
 

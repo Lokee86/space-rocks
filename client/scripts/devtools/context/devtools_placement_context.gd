@@ -1,14 +1,26 @@
 extends RefCounted
 class_name DevtoolsPlacementContext
 
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 var state_context
 var dev_connection_service
 var placement_request_route: Callable
+var operation_trace_factory: Callable
 
 
-func configure(state_context_ref, dev_connection_service_ref) -> void:
+func configure(
+	state_context_ref,
+	dev_connection_service_ref,
+	operation_trace_factory_ref: Callable = Callable()
+) -> void:
 	state_context = state_context_ref
 	dev_connection_service = dev_connection_service_ref
+	operation_trace_factory = operation_trace_factory_ref
+
+
+func create_operation_trace(action_name: String) -> ClientOperationTrace:
+	return ClientOperationTrace.create(action_name, operation_trace_factory)
 
 
 func configure_placement_request_route(route: Callable) -> void:

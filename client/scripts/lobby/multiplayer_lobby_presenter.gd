@@ -2,6 +2,8 @@ class_name MultiplayerLobbyPresenter
 extends RefCounted
 
 const MultiplayerLobbyScene := preload("res://scenes/ui/dialogs/multiplayer_lobby.tscn")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 var multiplayer_lobby: MultiplayerLobby
 
@@ -11,7 +13,19 @@ func show_lobby(canvas_layer: CanvasLayer, state: LobbySessionState, callbacks: 
 		var lobby_instance: Node = MultiplayerLobbyScene.instantiate()
 		multiplayer_lobby = lobby_instance as MultiplayerLobby
 		if multiplayer_lobby == null:
-			push_error("Multiplayer lobby scene must instantiate MultiplayerLobby; got %s" % lobby_instance.get_class())
+			ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Multiplayer lobby scene must instantiate its presentation root",
+			{},
+			{
+				"subsystem": "lobby",
+				"failure_mode": "wrong_scene_root",
+				"resource_kind": "scene",
+				"expected_type": "MultiplayerLobby",
+				"actual_type": lobby_instance.get_class(),
+				"resource_path": MultiplayerLobbyScene.resource_path,
+			}
+		)
 			lobby_instance.queue_free()
 			return null
 		canvas_layer.add_child(multiplayer_lobby)

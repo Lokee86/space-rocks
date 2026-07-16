@@ -5,6 +5,7 @@ const GameplayClientPackets = preload("res://scripts/networking/outbound/gamepla
 const DevtoolsClientPackets = preload("res://scripts/networking/outbound/devtools_client_packets.gd")
 const TelemetryClientPackets = preload("res://scripts/networking/outbound/telemetry_client_packets.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var network_client: NetworkClient:
@@ -28,7 +29,16 @@ func _can_send() -> bool:
 		return true
 	if !_missing_network_client_reported:
 		_missing_network_client_reported = true
-		ClientLogger.error(ClientLogger.CATEGORY_NETWORK, "Network client is not configured")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+			"",
+			{},
+			{
+				"subsystem": "networking_outbound",
+				"dependency": "network_client",
+				"failure_mode": "not_configured",
+			}
+		)
 	return false
 
 

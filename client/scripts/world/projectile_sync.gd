@@ -6,6 +6,7 @@ const ProjectileSyncState = preload("res://scripts/world/projectile_sync_state.g
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const WorldSyncLogger = preload("res://scripts/logging/logger.gd")
+const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
 const BulletPresentation = preload("res://scripts/entities/bullet.gd")
 const TorpedoPresentation = preload("res://scripts/entities/torpedo.gd")
 const DELETED_PROJECTILE_ID_CAP := 4096
@@ -61,15 +62,18 @@ func _contract_violation(projectile_type: String, projectile_node: Node) -> void
 	var actual_script_path := ""
 	if actual_script is Script:
 		actual_script_path = actual_script.resource_path
-	WorldSyncLogger.event(
-		WorldSyncLogger.CATEGORY_WORLD_SYNC,
-		WorldSyncLogger.LEVEL_ERROR,
-		"projectile_presentation_contract_violation",
+	WorldSyncLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
 		"Projectile scene root does not satisfy its presentation contract",
+		{},
 		{
-			"projectile_type": projectile_type,
-			"actual_class": projectile_node.get_class(),
-			"actual_script": actual_script_path,
+			"subsystem": "world_sync",
+			"entity_kind": "projectile",
+			"resource_kind": "scene",
+			"failure_mode": "wrong_scene_root",
+			"expected_type": "TorpedoPresentation" if projectile_type == "torpedo" else "BulletPresentation",
+			"actual_type": projectile_node.get_class(),
+			"resource_path": actual_script_path,
 		}
 	)
 
@@ -119,6 +123,22 @@ func _acquire_projectile_node(bullet_id: String, projectile_type: String) -> Nod
 		projectile_nodes[bullet_id] = pooled_presentation
 		projectile_node_types[bullet_id] = projectile_type
 		return pooled_presentation
+
+	if bullets_layer == null:
+		WorldSyncLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Cannot create projectile without a configured bullets layer",
+			{},
+			{
+				"subsystem": "world_sync",
+				"entity_kind": "projectile",
+				"resource_kind": "presentation_layer",
+				"failure_mode": "missing_layer",
+				"expected_type": "Node2D",
+				"actual_type": "null",
+			}
+		)
+		return null
 
 	var state_for_scene := {
 		Packets.FIELD_PROJECTILE_TYPE: projectile_type

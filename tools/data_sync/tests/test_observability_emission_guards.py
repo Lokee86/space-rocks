@@ -122,3 +122,46 @@ def test_diagnostic_aggregator_has_no_production_bridge_calls() -> None:
     hosted = (root / "hosted/service.go").read_text(encoding="utf-8")
     assert ".Info(" not in hosted and ".Error(" not in hosted
     assert violations == []
+
+
+CLIENT_PRESENTATION_RUNTIME_FILES = (
+    "client/scripts/world/pickups/pickup_presentation_catalog.gd",
+    "client/scripts/world/pickup_sync.gd",
+    "client/scripts/world/asteroid_sync.gd",
+    "client/scripts/world/projectile_sync.gd",
+    "client/scripts/gameplay/events/gameplay_event_controller.gd",
+    "client/scripts/lobby/multiplayer_lobby_presenter.gd",
+    "client/scripts/shell/gameplay_menu_flow.gd",
+    "client/scripts/ui/lobby/multiplayer_dialog.gd",
+    "client/scripts/ui/lobby/lobby_player_list_view.gd",
+    "client/scripts/ui/lobby/player_row.gd",
+    "client/scripts/ui/menus/main_menu.gd",
+    "client/scripts/ui/menus/elements/discrete_list_view.gd",
+    "client/scripts/ui/menus/game_menu.gd",
+    "client/scripts/ui/hud/loadout_display_flow.gd",
+    "client/scripts/ui/sign_in/login_window.gd",
+    "client/scripts/ui/match_results/match_result_window.gd",
+    "client/scripts/ui/match_results/match_results_flow.gd",
+)
+
+
+def test_client_presentation_paths_use_canonical_event_families() -> None:
+    legacy_names = (
+        "pickup_presentation_contract_violation",
+        "asteroid_presentation_contract_violation",
+        "pickup_layer_unavailable",
+        "projectile_presentation_contract_violation",
+    )
+    for relative_path in CLIENT_PRESENTATION_RUNTIME_FILES:
+        content = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
+        assert "ClientLogger.event(" not in content
+        assert "WorldSyncLogger.event(" not in content
+        assert "ClientLogger.shell_error(" not in content
+        assert "log_message" not in content
+        assert "push_error(" not in content
+        assert "push_warning(" not in content
+        for legacy_name in legacy_names:
+            assert legacy_name not in content
+        if "emit_canonical(" in content:
+            assert "ObservabilityContract.EVENT_CLIENT_PRESENTATION_" in content
+        assert '"client_presentation_' not in content

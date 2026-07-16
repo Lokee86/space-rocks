@@ -6,6 +6,9 @@ signal selection_changed(item: Dictionary)
 @export var row_scene: PackedScene
 @export var row_step_px := 50.0
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+
 @onready var row_viewport: Control = %RowViewport
 @onready var rows: VBoxContainer = %Rows
 @onready var scroll_bar: VScrollBar = %VScrollBar
@@ -146,7 +149,19 @@ func _render_rows() -> void:
 		var row_instance: Node = row_scene.instantiate()
 		var row := row_instance as DiscreteListRow
 		if row == null:
-			push_error("Discrete list row scene must instantiate DiscreteListRow; got %s" % row_instance.get_class())
+			ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Discrete list row scene must instantiate its presentation root",
+		{},
+		{
+			"subsystem": "menus",
+			"failure_mode": "wrong_row_type",
+			"resource_kind": "scene",
+			"expected_type": "DiscreteListRow",
+			"actual_type": row_instance.get_class(),
+			"resource_path": row_scene.resource_path,
+		}
+	)
 			row_instance.queue_free()
 			continue
 		rows.add_child(row)

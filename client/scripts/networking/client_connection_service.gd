@@ -8,7 +8,9 @@ const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realt
 const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 signal connected
 signal closed
@@ -44,6 +46,15 @@ var websocket_auth_user_id: int = NO_WEBSOCKET_AUTH_USER_ID
 var websocket_auth_display_name := ""
 var _resync_signal_bound := false
 var _missing_client_packet_sender_reported := false
+var _operation_trace_factory: Callable
+var _connection_trace: ClientOperationTrace
+var _connection_attempt_epoch := 0
+var _active_room_operation_trace_id := ""
+var _active_room_operation_type := ""
+
+
+func _init(operation_trace_factory: Callable = Callable()) -> void:
+	_operation_trace_factory = operation_trace_factory
 
 
 func _ready() -> void:
@@ -87,9 +98,35 @@ func _process(_delta: float) -> void:
 
 
 func connect_to_server(url: String) -> Error:
+	_connection_attempt_epoch += 1
+	_connection_trace = ClientOperationTrace.create("connect_to_server", _operation_trace_factory)
 	reset_realtime_session()
 	has_started_connection = true
 	return network_client.connect_to_server(url)
+
+
+func current_connection_trace_id() -> String:
+	if _connection_trace == null:
+		return ""
+	return _connection_trace.trace_id()
+
+
+func begin_room_operation(operation_type: String, trace_id: String) -> void:
+	_active_room_operation_type = operation_type
+	_active_room_operation_trace_id = trace_id
+
+
+func active_room_operation_trace_id() -> String:
+	return _active_room_operation_trace_id
+
+
+func active_room_operation_type() -> String:
+	return _active_room_operation_type
+
+
+func clear_room_operation_context() -> void:
+	_active_room_operation_type = ""
+	_active_room_operation_trace_id = ""
 
 
 func begin_realtime_match(match_id: String) -> void:
@@ -276,11 +313,14 @@ func _on_connected() -> void:
 
 
 func _on_closed() -> void:
+	var closed_attempt_epoch := _connection_attempt_epoch
 	reset_realtime_session()
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 	websocket_auth_display_name = ""
 	closed.emit()
+	if closed_attempt_epoch == _connection_attempt_epoch:
+		_connection_trace = null
 
 
 func _on_packet_parse_failed(text: String) -> void:
@@ -390,7 +430,16 @@ func _can_send_outbound() -> bool:
 		return true
 	if !_missing_client_packet_sender_reported:
 		_missing_client_packet_sender_reported = true
-		ClientLogger.error(ClientLogger.CATEGORY_NETWORK, "Client packet sender is not configured")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+			"",
+			{},
+			{
+				"subsystem": "networking_outbound",
+				"dependency": "client_packet_sender",
+				"failure_mode": "not_configured",
+			}
+		)
 	return false
 
 

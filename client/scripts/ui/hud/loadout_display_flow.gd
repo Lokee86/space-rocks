@@ -2,6 +2,8 @@ extends RefCounted
 class_name LoadoutDisplayFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 const SLOT_PRIMARY := "primary"
 const SLOT_SECONDARY := "secondary"
@@ -90,7 +92,19 @@ func _ensure_display_for_slot(slot: String, weapon_id: String, scene: PackedScen
 
 	var new_node := scene.instantiate()
 	if not new_node is WeaponDisplay:
-		push_error("Weapon display scene for '%s' did not instantiate a WeaponDisplay." % weapon_id)
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Weapon display scene must instantiate its presentation root",
+		{},
+		{
+			"subsystem": "hud",
+			"failure_mode": "wrong_scene_root",
+			"resource_kind": "scene",
+			"expected_type": "WeaponDisplay",
+			"actual_type": new_node.get_class(),
+			"resource_path": scene.resource_path,
+		}
+	)
 		new_node.queue_free()
 		return null
 

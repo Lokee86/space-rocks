@@ -2,6 +2,7 @@ extends GutTest
 
 const AppEntry := preload("res://scripts/shell/app_entry.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 class FakeWriter extends RefCounted:
 	var enabled := true
@@ -77,3 +78,19 @@ func test_application_exit_closes_static_writer_and_repeated_close_is_safe() -> 
 	assert_false(writer.enabled)
 	assert_eq(writer.current_path, "")
 	app_entry.free()
+
+func test_app_entry_uses_canonical_startup_lifecycle_and_degradation_events() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/shell/app_entry.gd")
+	assert_true(source.contains("ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTING)"))
+	assert_true(source.contains("ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTED)"))
+	var starting_position := source.find("ObservabilityContract.EVENT_CLIENT_STARTING")
+	var started_position := source.find("ObservabilityContract.EVENT_CLIENT_STARTED")
+
+	assert_gte(starting_position, 0)
+	assert_gte(started_position, 0)
+	assert_lt(starting_position, started_position)
+	assert_true(source.contains("ObservabilityContract.EVENT_OBSERVABILITY_UNAVAILABLE"))
+	assert_true(source.contains('"subsystem": "file_logging"'))
+	assert_true(source.contains('"failure_mode": "configure_failed"'))
+	assert_false(source.contains("App entry booted"))
+	assert_false(source.contains("Client structured log file output unavailable"))

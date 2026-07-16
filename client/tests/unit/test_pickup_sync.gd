@@ -2,10 +2,37 @@ extends GutTest
 
 const PickupSync := preload("res://scripts/world/pickup_sync.gd")
 const PickupPresentation := preload("res://scripts/entities/pickup.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const Contract := preload("res://scripts/generated/observability/contract_generated.gd")
+const EventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
 
 
 class FakePickupNode:
 	extends Node2D
+
+
+func _begin_capture() -> EventCapture:
+	var capture := EventCapture.new()
+	ClientLogger._set_file_writer_for_tests(capture)
+	return capture
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
+
+
+func test_unknown_pickup_class_emits_canonical_contract_violation() -> void:
+	var capture := _begin_capture()
+	var pickup_sync := PickupSync.new()
+
+	assert_null(pickup_sync._scene_for_class("unknown"))
+	assert_push_error_count(1)
+
+	var record := capture.last_record()
+	assert_eq(record["event"], Contract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION)
+	assert_eq(record["fields"]["entity_kind"], "pickup")
+	assert_eq(record["fields"]["failure_mode"], "unknown_pickup_class")
+	assert_eq(record["fields"]["actual_type"], "unknown")
 
 
 func test_pickup_position_entries_exposes_positions_and_metadata() -> void:

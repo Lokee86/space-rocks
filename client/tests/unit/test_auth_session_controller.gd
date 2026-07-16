@@ -4,10 +4,23 @@ const AuthSessionController := preload("res://scripts/auth/auth_session_controll
 const AuthSession := preload("res://scripts/auth/auth_session.gd")
 const AuthTokenStore := preload("res://scripts/auth/auth_token_store.gd")
 const ApiRequestResult := preload("res://scripts/api/api_request_result.gd")
-
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 const TEST_TOKEN_PATH := "user://test_auth_session_controller_token.json"
 
 var _auth_state_change_count := 0
+class InMemoryAuthTokenStore:
+	extends AuthTokenStore
+
+	var stored_token := ""
+
+	func load_token() -> String:
+		return stored_token
+
+	func save_token(token: String) -> void:
+		stored_token = token
+
+	func clear_token() -> void:
+		stored_token = ""
 
 
 class FakeAuthApiClient:
@@ -171,12 +184,13 @@ func test_logout_supersedes_awaiting_discord_sign_in_start() -> void:
 	assert_signal_not_emitted(controller, "auth_error")
 
 
-func _create_controller(fake_client) -> AuthSessionController:
+func _create_controller(fake_client, operation_trace_factory: Callable = Callable()) -> AuthSessionController:
 	var controller := AuthSessionController.new()
 	controller.auth_session = AuthSession.new()
 	controller.auth_token_store = AuthTokenStore.new()
 	controller.auth_token_store.token_path = TEST_TOKEN_PATH
 	controller.auth_api_client = fake_client
+	controller.configure(fake_client, operation_trace_factory)
 	add_child_autofree(controller)
 	return controller
 
@@ -188,3 +202,58 @@ func _count_auth_state_change() -> void:
 func _cleanup_token_file() -> void:
 	if FileAccess.file_exists(TEST_TOKEN_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_TOKEN_PATH))
+
+func test_saved_token_validation_owns_trace_only_when_remote_validation_occurs() -> void:
+	var controller := _create_controller(FakeAuthApiClient.new())
+	controller.initialize_from_saved_token()
+	assert_eq(controller.active_auth_trace_id(), "")
+
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.wait_for_current_user = true
+	fake_client.current_user_result = ApiRequestResult.success(200, {
+		"user": {
+			"id": 42,
+			"display_name": "Ada Lovelace",
+		}
+	})
+	var controller_with_token := _create_controller(
+		fake_client,
+		func(operation_name: String):
+			return ClientOperationTrace.new(
+				operation_name,
+				func() -> String: return "00000000-0000-4000-8000-000000000021"
+			)
+	)
+	var token_store := InMemoryAuthTokenStore.new()
+	token_store.stored_token = "bearer-token"
+	controller_with_token.auth_token_store = token_store
+	controller_with_token.initialize_from_saved_token()
+
+	assert_eq(controller_with_token.active_auth_trace_id(), "00000000-0000-4000-8000-000000000021")
+	await get_tree().process_frame
+	fake_client.release_current_user()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_eq(controller_with_token.active_auth_trace_id(), "")
+
+
+func test_replacing_discord_sign_in_replaces_active_trace() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.wait_for_discord_sign_in = true
+	var state := {"index": 0}
+	var ids := [
+		"00000000-0000-4000-8000-000000000031",
+		"00000000-0000-4000-8000-000000000032",
+	]
+	var controller := _create_controller(fake_client, func(operation_name: String):
+		var trace_id: String = ids[state["index"]]
+		state["index"] += 1
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+	)
+
+	controller.request_discord_sign_in()
+	var first_trace_id := controller.active_auth_trace_id()
+	controller.request_discord_sign_in()
+
+	assert_eq(first_trace_id, ids[0])
+	assert_eq(controller.active_auth_trace_id(), ids[1])

@@ -7,6 +7,7 @@ const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const AsteroidPresentation = preload("res://scripts/entities/asteroid.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
 const DELETED_ASTEROID_ID_CAP := 2048
 
 var asteroids_layer: Node2D
@@ -48,14 +49,18 @@ func _contract_violation(asteroid_node: Node) -> void:
 	var actual_script_path := ""
 	if actual_script is Script:
 		actual_script_path = actual_script.resource_path
-	ClientLogger.event(
-		ClientLogger.CATEGORY_WORLD_SYNC,
-		ClientLogger.LEVEL_ERROR,
-		"asteroid_presentation_contract_violation",
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
 		"Asteroid scene root does not satisfy its presentation contract",
+		{},
 		{
-			"actual_class": asteroid_node.get_class(),
-			"actual_script": actual_script_path,
+			"subsystem": "world_sync",
+			"entity_kind": "asteroid",
+			"resource_kind": "scene",
+			"failure_mode": "wrong_scene_root",
+			"expected_type": "AsteroidPresentation",
+			"actual_type": asteroid_node.get_class(),
+			"resource_path": actual_script_path,
 		}
 	)
 
@@ -63,6 +68,22 @@ func _contract_violation(asteroid_node: Node) -> void:
 func get_asteroid_node(asteroid_id: String) -> AsteroidPresentation:
 	if asteroid_nodes.has(asteroid_id):
 		return asteroid_nodes[asteroid_id]
+
+	if asteroids_layer == null:
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Cannot create asteroid without a configured asteroids layer",
+			{},
+			{
+				"subsystem": "world_sync",
+				"entity_kind": "asteroid",
+				"resource_kind": "presentation_layer",
+				"failure_mode": "missing_layer",
+				"expected_type": "Node2D",
+				"actual_type": "null",
+			}
+		)
+		return null
 
 	var scene_root: Node = ASTEROID_SCENE.instantiate()
 	var asteroid_node := scene_root as AsteroidPresentation
@@ -85,7 +106,17 @@ func apply_asteroid_scale(asteroid_id: String, asteroid_node: AsteroidPresentati
 		return
 
 	warned_missing_asteroid_scale[asteroid_id] = true
-	push_warning("Asteroid state missing scale for %s" % asteroid_id)
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_STATE_INVALID,
+		"Asteroid presentation state is missing a required field",
+		{},
+		{
+			"subsystem": "world_sync",
+			"entity_kind": "asteroid",
+			"failure_mode": "missing_state_field",
+			"field_name": "scale",
+		}
+	)
 
 
 func apply_asteroid(
@@ -138,7 +169,17 @@ func apply_asteroid(
 			asteroid_node.set_asteroid_variant(state[Packets.FIELD_VARIANT])
 		elif !warned_missing_asteroid_variant.has(asteroid_id):
 			warned_missing_asteroid_variant[asteroid_id] = true
-			push_warning("Asteroid state missing variant for %s" % asteroid_id)
+			ClientLogger.emit_canonical(
+				ObservabilityContract.EVENT_CLIENT_PRESENTATION_STATE_INVALID,
+				"Asteroid presentation state is missing a required field",
+				{},
+				{
+					"subsystem": "world_sync",
+					"entity_kind": "asteroid",
+					"failure_mode": "missing_state_field",
+					"field_name": "variant",
+				}
+			)
 
 
 func apply(

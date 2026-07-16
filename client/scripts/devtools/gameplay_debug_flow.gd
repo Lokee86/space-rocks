@@ -4,14 +4,21 @@ class_name GameplayDebugFlow
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const DevtoolsTargetResolverScript = preload("res://scripts/devtools/devtools_target_resolver.gd")
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 var connection_service
 var debug_invincible_enabled := false
 var debug_invincible_toggle_was_pressed := false
+var operation_trace_factory: Callable
 
 
-func configure(connection_service_ref) -> void:
+func configure(connection_service_ref, operation_trace_factory_ref: Callable = Callable()) -> void:
 	connection_service = connection_service_ref
+	operation_trace_factory = operation_trace_factory_ref
+
+
+func create_operation_trace(action_name: String) -> ClientOperationTrace:
+	return ClientOperationTrace.create(action_name, operation_trace_factory)
 
 
 func reset() -> void:

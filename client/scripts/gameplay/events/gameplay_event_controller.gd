@@ -1,6 +1,8 @@
 extends RefCounted
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 var effects
 var visual_position_for_server_position: Callable
@@ -31,28 +33,28 @@ func apply_server_events(server_events: Array, self_id: String, apply_self_death
 
 
 func apply_bullet_blast(event: Dictionary) -> void:
-	var visual_position: Vector2 = _visual_position_for_event(event, "bullet blast")
+	var visual_position = _visual_position_for_event(event, "bullet blast")
 	if visual_position == null:
 		return
 	effects.spawn_bullet_blast(visual_position)
 
 
 func apply_ship_death(event: Dictionary) -> void:
-	var visual_position: Vector2 = _visual_position_for_event(event, "ship death")
+	var visual_position = _visual_position_for_event(event, "ship death")
 	if visual_position == null:
 		return
 	effects.spawn_ship_death(visual_position)
 
 
 func apply_pickup_collected(event: Dictionary) -> void:
-	var visual_position: Vector2 = _visual_position_for_event(event, "pickup collected")
+	var visual_position = _visual_position_for_event(event, "pickup collected")
 	if visual_position == null:
 		return
 	effects.spawn_pickup_collected(visual_position)
 
 
 func apply_radial_effect_started(event: Dictionary) -> void:
-	var visual_position: Vector2 = _visual_position_for_event(event, "radial effect started")
+	var visual_position = _visual_position_for_event(event, "radial effect started")
 	if visual_position == null:
 		return
 	effects.spawn_torpedo_explosion(visual_position)
@@ -60,13 +62,33 @@ func apply_radial_effect_started(event: Dictionary) -> void:
 
 func _visual_position_for_event(event: Dictionary, event_name: String):
 	if visual_position_for_server_position.is_null():
-		push_warning("Cannot convert %s event position without a visual position converter." % event_name)
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_STATE_INVALID,
+		"Cannot convert gameplay event position without its presentation converter",
+		{},
+		{
+			"subsystem": "gameplay_events",
+			"failure_mode": "missing_visual_position_converter",
+			"event_kind": event_name,
+			"field_name": "visual_position_converter",
+		}
+	)
 		return null
 
 	var event_x = event.get(Packets.FIELD_X)
 	var event_y = event.get(Packets.FIELD_Y)
 	if event_x is Callable || event_y is Callable:
-		push_warning("Cannot convert %s event position because event coordinates contain a Callable." % event_name)
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_STATE_INVALID,
+		"Cannot convert gameplay event position because its coordinates are invalid",
+		{},
+		{
+			"subsystem": "gameplay_events",
+			"failure_mode": "callable_coordinate",
+			"event_kind": event_name,
+			"field_name": "coordinates",
+		}
+	)
 		return null
 
 	var event_position := Vector2(event_x, event_y)

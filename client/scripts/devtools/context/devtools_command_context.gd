@@ -3,17 +3,28 @@ class_name DevtoolsCommandContext
 
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 var connection_service
 var dev_connection_service
 var debug_flow
 var state_context
 var local_respawn_confirmation_marker: Callable
+var operation_trace_factory: Callable
 
 
-func configure(debug_flow_ref, state_context_ref) -> void:
+func configure(
+	debug_flow_ref,
+	state_context_ref,
+	operation_trace_factory_ref: Callable = Callable()
+) -> void:
 	debug_flow = debug_flow_ref
 	state_context = state_context_ref
+	operation_trace_factory = operation_trace_factory_ref
+
+
+func create_operation_trace(action_name: String) -> ClientOperationTrace:
+	return ClientOperationTrace.create(action_name, operation_trace_factory)
 
 
 func configure_connection(connection_service_ref) -> void:

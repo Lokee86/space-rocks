@@ -15,6 +15,7 @@ const ProfileStatsProviderScript := preload("res://scripts/profile/profile_stats
 const MenuFlowControllerScript := preload("res://scripts/ui/menu_flow/menu_flow_controller.gd")
 const MultiplayerEntryFlowScript := preload("res://scripts/ui/menu_flow/multiplayer_entry_flow.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 @onready var main_menu: Control = %MainMenu
@@ -48,9 +49,14 @@ var multiplayer_entry_flow
 
 func _ready() -> void:
 	if !ClientLogger.configure_file_output("user://logs", "client"):
-		ClientLogger.shell_warn("Client structured log file output unavailable")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_OBSERVABILITY_UNAVAILABLE,
+			"",
+			{},
+			{"subsystem": "file_logging", "failure_mode": "configure_failed"}
+		)
+	ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTING)
 
-	_log_shell_status("App entry booted")
 	get_tree().set_auto_accept_quit(false)
 
 	_setup_boot_and_config()
@@ -167,6 +173,7 @@ func _ready() -> void:
 	_connect_auth_signals()
 	auth_session_controller.initialize_from_saved_token()
 	_make_view_anchor_camera_current()
+	ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTED)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:

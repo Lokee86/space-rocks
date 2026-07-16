@@ -2,6 +2,8 @@ extends Control
 class_name MatchResultWindow
 
 const PlayerScoreRowScene := preload("res://scenes/ui/elements/player_score_row.tscn")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 signal lobby_replay_requested
 signal menu_requested
@@ -35,7 +37,19 @@ func apply_rows(rows: Array) -> void:
 		var score_row_instance: Node = PlayerScoreRowScene.instantiate()
 		var score_row := score_row_instance as PlayerScoreRow
 		if score_row == null:
-			push_error("Player score row scene must instantiate PlayerScoreRow; got %s" % score_row_instance.get_class())
+			ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Player score row scene must instantiate its presentation root",
+		{},
+		{
+			"subsystem": "match_results",
+			"failure_mode": "wrong_row_type",
+			"resource_kind": "scene",
+			"expected_type": "PlayerScoreRow",
+			"actual_type": score_row_instance.get_class(),
+			"resource_path": PlayerScoreRowScene.resource_path,
+		}
+	)
 			score_row_instance.queue_free()
 			continue
 		score_row.apply_row(row)

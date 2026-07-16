@@ -1,6 +1,8 @@
 extends Control
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 signal create_room_requested
 signal join_room_requested(room_code: String)
@@ -18,22 +20,82 @@ func _ready() -> void:
 	var cancel_button := find_child("CancelButton", true, false) as BaseButton
 
 	if room_code_input == null:
-		push_error("Missing input: RoomCodeInput")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required lobby presentation node",
+		{},
+		{
+			"subsystem": "lobby",
+			"failure_mode": "missing_node",
+			"node_name": "RoomCodeInput",
+			"resource_kind": "input",
+			"expected_type": "LineEdit",
+			"actual_type": "null",
+		}
+	)
 	if status_label == null:
-		push_error("Missing label: StatusLabel")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required lobby presentation node",
+		{},
+		{
+			"subsystem": "lobby",
+			"failure_mode": "missing_node",
+			"node_name": "StatusLabel",
+			"resource_kind": "label",
+			"expected_type": "Label",
+			"actual_type": "null",
+		}
+	)
 
 	if create_room_button == null:
-		push_error("Missing button: CreateRoomButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required lobby presentation node",
+		{},
+		{
+			"subsystem": "lobby",
+			"failure_mode": "missing_node",
+			"node_name": "CreateButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	else:
 		create_room_button.pressed.connect(_on_create_room_pressed)
 
 	if join_room_button == null:
-		push_error("Missing button: JoinRoomButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required lobby presentation node",
+		{},
+		{
+			"subsystem": "lobby",
+			"failure_mode": "missing_node",
+			"node_name": "JoinButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	else:
 		join_room_button.pressed.connect(_on_join_room_pressed)
 
 	if cancel_button == null:
-		push_error("Missing button: CancelButton")
+		ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+		"Missing required lobby presentation node",
+		{},
+		{
+			"subsystem": "lobby",
+			"failure_mode": "missing_node",
+			"node_name": "CancelButton",
+			"resource_kind": "button",
+			"expected_type": "BaseButton",
+			"actual_type": "null",
+		}
+	)
 	else:
 		cancel_button.pressed.connect(_on_cancel_pressed)
 

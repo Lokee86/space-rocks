@@ -8,6 +8,8 @@ signal menu_requested
 signal resume_requested
 
 const Constants = preload("res://scripts/generated/constants/constants.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 @onready var primary_action_button: BaseButton = _find_button(["PrimaryActionButton", "ResumeButton", "LeftButton"])
 @onready var menu_button: BaseButton = _find_button(["MenuButton", "QuitButton"])
@@ -19,12 +21,36 @@ func _ready() -> void:
 	if primary_action_button != null:
 		primary_action_button.pressed.connect(_on_primary_action_pressed)
 	else:
-		push_error("Game menu is missing PrimaryActionButton.")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Game menu is missing a required presentation node",
+			{},
+			{
+				"subsystem": "gameplay_menu",
+				"failure_mode": "missing_node",
+				"node_name": "PrimaryActionButton",
+				"resource_kind": "ui_node",
+				"expected_type": "BaseButton",
+				"actual_type": "null",
+			}
+		)
 
 	if menu_button != null:
 		menu_button.pressed.connect(_on_menu_pressed)
 	else:
-		push_error("Game menu is missing MenuButton.")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_PRESENTATION_CONTRACT_VIOLATION,
+			"Game menu is missing a required presentation node",
+			{},
+			{
+				"subsystem": "gameplay_menu",
+				"failure_mode": "missing_node",
+				"node_name": "MenuButton",
+				"resource_kind": "ui_node",
+				"expected_type": "BaseButton",
+				"actual_type": "null",
+			}
+		)
 
 
 func set_primary_text(text) -> void:

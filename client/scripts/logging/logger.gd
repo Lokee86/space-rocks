@@ -2,11 +2,13 @@ extends RefCounted
 
 const RollingJSONLWriter := preload("res://scripts/logging/rolling_jsonl_writer.gd")
 const ObservabilityEmitter := preload("res://scripts/logging/observability_emitter.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 const LEVEL_DEBUG := 10
 const LEVEL_INFO := 20
 const LEVEL_WARN := 30
 const LEVEL_ERROR := 40
+const LEVEL_CRITICAL := 50
 const LEVEL_OFF := 999
 
 const CATEGORY_DEFAULT := "default"
@@ -97,6 +99,42 @@ static func event(
 	_output_result(result)
 
 
+static func emit_canonical(
+	event_name: String,
+	message: String = "",
+	context: Dictionary = {},
+	fields: Dictionary = {}
+) -> Dictionary:
+	var definition: Dictionary = ObservabilityContract.EVENT_DEFINITIONS.get(event_name, {})
+	if definition.is_empty():
+		var unknown_result := _emitter.emit(event_name, message, context, fields)
+		_output_result(unknown_result)
+		return unknown_result
+	var category := str(definition["category"])
+	var level := _canonical_level(str(definition["default_level"]))
+	if !_should_log(category, level):
+		return {"accepted": false, "suppressed": true, "rejection_code": "", "rejected_key": "", "write_failed": false}
+	var result := _emitter.emit(event_name, message, context, fields)
+	_output_result(result)
+	return result
+
+
+static func _canonical_level(level_name_value: String) -> int:
+	match level_name_value:
+		"debug":
+			return LEVEL_DEBUG
+		"info":
+			return LEVEL_INFO
+		"warn":
+			return LEVEL_WARN
+		"error":
+			return LEVEL_ERROR
+		"critical":
+			return LEVEL_CRITICAL
+		_:
+			return LEVEL_OFF
+
+
 static func network_event(
 	level: int,
 	event_name: String,
@@ -125,6 +163,8 @@ static func level_name(level: int) -> String:
 			return "warn"
 		LEVEL_ERROR:
 			return "error"
+		LEVEL_CRITICAL:
+			return "critical"
 		_:
 			return "unknown"
 
