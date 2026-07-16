@@ -145,7 +145,7 @@ Exact colour identifiers and palette mapping are implementation-level data decis
 
 ## Damage Relationships
 
-There is no friendly fire, ever.
+There is no player same-team friendly fire. This invariant applies to player-on-player damage; it does not globally prohibit enemy-on-enemy friendly fire or other source relationships. Enemy friendly fire and other non-player relationships are resolved by [Damage And Healing Rules](damage-and-healing-rules.md) under source and mode policy.
 
 When PvP is enabled, player damage is inter-team only. Same-team player damage is always rejected.
 
@@ -209,7 +209,7 @@ room creation
 
 ### Modes And Match Rules
 
-Modes select the team structure, allowed team configuration, PvP policy, aggregation overrides, team-elimination meaning, and in-game join assignment policy. They do not redefine assignment, balancing, colour, friendly-fire, or baseline result semantics.
+Modes select the team structure, allowed team configuration, PvP policy, aggregation overrides, team-elimination meaning, and in-game join assignment policy. They do not redefine assignment, balancing, colour, or baseline team-result semantics; damage policy, including friendly-fire permissions, is resolved by [Damage And Healing Rules](damage-and-healing-rules.md) from mode and source rules.
 
 ### Multiplayer Session And Lifecycle
 
@@ -281,6 +281,7 @@ single-player does not require product-significant team representation
 
 - [Gameplay Planning](./!INDEX.md)
 - [Modes And Match Rules](modes-and-match-rules.md)
+- [Damage And Healing Rules](damage-and-healing-rules.md)
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Player Experience Systems](player-experience-systems.md)
 - [Player Spawn Profiles](player-spawn-profiles.md)
@@ -320,7 +321,7 @@ Match start locks team assignment for the first slice.
 
 Team modes force team colours.
 
-Friendly fire is never allowed.
+Player same-team friendly fire is never allowed.
 
 Team relationship and PvP enablement remain separate policy concerns.
 

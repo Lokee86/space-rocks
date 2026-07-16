@@ -162,7 +162,7 @@ Score is gameplay award state and objective progress for Score Attack. Completio
 
 Teams are required in the first P4 foundation. Modes select the team structure and permitted room-creation configuration, then consume authoritative membership and relationship facts from [Teams And Team Rules](teams-and-team-rules.md).
 
-The initial selectable structures are FFA, Co-op, Custom Teams, and Auto-balanced Teams. The team-system plan owns assignment, balancing, participation, colour, friendly-fire relationships, aggregation defaults, forfeiture, and team-result requirements.
+The initial selectable structures are FFA, Co-op, Custom Teams, and Auto-balanced Teams. The team-system plan owns assignment, balancing, participation, colour, team relationship facts, aggregation defaults, forfeiture, and team-result requirements. Damage policy, including friendly-fire permissions, belongs to [Damage And Healing Rules](damage-and-healing-rules.md).
 
 Modes retain ownership of mode-specific objective aggregation overrides, team-elimination meaning, whether PvP is enabled, and in-game join policy. Team structure and damage policy remain separate.
 
@@ -261,7 +261,11 @@ Damage / targeting / collision:
 ```text
 Arcade Survival defaults to no player damage.
 Team relationship and PvP enablement resolve separately.
-Damage consumes authoritative same-team/opposing-team relationships; friendly fire is never allowed.
+Detailed damage and healing semantics belong to [Damage And Healing Rules](damage-and-healing-rules.md).
+Damage consumes authoritative same-team/opposing-team relationships.
+Player same-team damage is prohibited.
+Enemy friendly fire and other relationship permissions are source/mode policy.
+PvP player damage is inter-team only.
 ```
 
 Teams:
@@ -377,6 +381,7 @@ room snapshots expose the mode summary only if the client needs it
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
+- [Damage And Healing Rules](damage-and-healing-rules.md)
 - [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 - [Player Spawn Profiles](player-spawn-profiles.md)
 - [Encounter Spawn Profiles](encounter-spawn-profiles.md)

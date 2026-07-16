@@ -18,6 +18,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 <!-- doc-ledger:files:start -->
 
 - [achievements-and-milestones.md](achievements-and-milestones.md) - Achievements And Milestones documentation.
+- [damage-and-healing-rules.md](damage-and-healing-rules.md) - Damage And Healing Rules documentation.
 - [encounter-lifecycle-and-despawn.md](encounter-lifecycle-and-despawn.md) - Encounter Lifecycle And Despawn documentation.
 - [encounter-spawn-profiles.md](encounter-spawn-profiles.md) - Encounter Spawn Profiles documentation.
 - [enemies-bosses-and-encounters.md](enemies-bosses-and-encounters.md) - Enemies Bosses And Encounters documentation.

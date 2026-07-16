@@ -365,6 +365,7 @@ Future damage and effect presentation work is tracked in [Domain Backlog](../../
 * [Gameplay Events And Effects](../../services/client/gameplay-event-presentation/gameplay-events-and-effects.md)
 * [Realtime Client Server Flow](../../domains/technical/realtime-client-server-flow.md)
 * [Gameplay Session Flow](../../domains/player-experience/gameplay-session-flow.md)
+* [Damage And Healing Rules (P4 planning)](../../planning/domains/gameplay/damage-and-healing-rules.md)
 * [Current System Limits](../../limits/current-system-limits.md#combat-systems)
 * [Domain Backlog](../../planning/domain-backlog.md#damage)
 
@@ -375,3 +376,5 @@ Future damage and effect presentation work is tracked in [Domain Backlog](../../
 The current model already has seams for shields, modifiers, area damage, enemy targets, and damage over time. Future work should extend those seams rather than moving damage ownership into weapons, radial effects, client presentation, or devtools.
 
 Area falloff, richer status effects, PvP/team damage rules, and detailed damage telemetry are future behavior. They should preserve the same authority split: eligibility and target selection outside the resolver, math inside the resolver, consequences after the resolver.
+
+The P4 planning owner for future signed healing, relationship permissions, shield-gated overflow, and the other settled damage/healing policy changes is [Damage And Healing Rules](../../planning/domains/gameplay/damage-and-healing-rules.md). Those are planned behaviors, not current implementation claims; current statements above remain authoritative for the existing model, including current ignored negative damage.

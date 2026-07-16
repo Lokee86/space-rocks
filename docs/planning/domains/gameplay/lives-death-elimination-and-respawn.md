@@ -240,7 +240,7 @@ Lifecycle owns room membership, admission, activation, connection state, removal
 
 ### Combat And Runtime Ship
 
-Combat owns damage and collision outcomes and supplies authoritative death causes or source candidates. Runtime ship owns the live avatar state. Lives/death/respawn converts an authoritative death into the mode-defined life and lifecycle transition without moving durable counters onto the ship.
+Combat owns damage and collision outcomes and supplies authoritative death causes or source candidates. Detailed damage and healing policy belongs to [Damage And Healing Rules](damage-and-healing-rules.md); lives/death/respawn consumes its authoritative lethal results and source facts without duplicating that policy. Runtime ship owns the live avatar state. Lives/death/respawn converts an authoritative death into the mode-defined life and lifecycle transition without moving durable counters onto the ship.
 
 ### Player Loadout And Equipment
 
@@ -317,6 +317,7 @@ result facts are emitted strictly according to mode requirements
 - [Modes And Match Rules](modes-and-match-rules.md)
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
+- [Damage And Healing Rules](damage-and-healing-rules.md)
 - [Player Spawn Profiles](player-spawn-profiles.md)
 - [Player Build And Loadouts](player-build-and-loadouts.md)
 - [Player Experience Systems](player-experience-systems.md)
