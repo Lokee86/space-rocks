@@ -40,7 +40,7 @@ This doc does not own:
 * UI layout
 * mission/content progression ordering
 
-Mode rules may select `encounter_profile_id`, one or more `encounter_spawn_profile_id` values, and `arena_profile_id`. This doc owns the authored enemy, boss, asteroid-pressure, wave, and encounter-sequencing content behind `encounter_profile_id`. [Encounter Spawn Profiles](encounter-spawn-profiles.md) owns all non-player spawn scheduling and policy, including validated profile configuration, budgets, scaling, targeting, safety, retries, activation/deactivation, and lifecycle/despawn-policy selection. Player spawning is a separate rule seam and is not owned by this encounter system.
+Mode rules may select `encounter_profile_id`, one or more `encounter_spawn_profile_id` values, and `arena_profile_id`. This doc owns the authored enemy, boss, asteroid-pressure, wave, and encounter-sequencing content behind `encounter_profile_id`. [Encounter Spawn Profiles](encounter-spawn-profiles.md) owns all non-player spawn scheduling and policy, including validated profile configuration, budgets, scaling, targeting, safety, retries, activation/deactivation, and lifecycle/despawn-policy selection. [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md) evaluates retirement, despawn, and cleanup after an entity is spawned. Player spawning is a separate rule seam and is not owned by this encounter system.
 
 Mission and challenge planning may also select encounter profiles, but mission progression structure belongs to the levels, missions, and content structure plan.
 
@@ -204,7 +204,7 @@ How much asteroid pressure belongs to this encounter?
 
 ### Encounter Spawn Profile
 
-An Encounter Spawn Profile is the dedicated owner for all non-player spawn scheduling and policy. It validates profile-declared configuration, schedules accepted content, applies shared and local budgets, scales and targets encounters, enforces encounter safety, handles retries, and selects activation/deactivation and lifecycle/despawn policy. It does not own authored sequence/content, entity behavior, or player spawning. See [Encounter Spawn Profiles](encounter-spawn-profiles.md) for the authoritative planning contract.
+An Encounter Spawn Profile is the dedicated owner for all non-player spawn scheduling and policy. It validates profile-declared configuration, schedules accepted content, applies shared and local budgets, scales and targets encounters, enforces encounter safety, handles retries, and selects activation/deactivation and lifecycle/despawn policy. [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md) evaluates retirement and cleanup after spawn. The profile does not own authored sequence/content, entity behavior, or player spawning. See [Encounter Spawn Profiles](encounter-spawn-profiles.md) for the authoritative planning contract.
 
 Encounter Spawn Profiles answer how authored or requested content is admitted into the world; this document answers what that content is and how its authored sequence, waves, AI, and encounter conditions behave.
 
@@ -797,6 +797,7 @@ unknown encounter_profile_id fails safely or falls back explicitly
 * [Player Experience Systems](player-experience-systems.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
 * [Encounter Spawn Profiles](encounter-spawn-profiles.md)
+* [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Progression And Rewards](progression-and-rewards.md)

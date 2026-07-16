@@ -99,9 +99,9 @@ A profile may combine schedule types, and multiple Encounter Spawn Profiles may 
 
 Match end, cutscenes, and campaign transitions stop profile scheduling. These transitions do not invent countdown-specific or no-active-player spawn rules. Simulation pause pauses everything, including profile timers, pending schedule progression, retries, and spawn evaluation; it does not create a separate encounter pause policy.
 
-Deactivation stops new scheduling for that profile. Existing spawned entities remain in the world and follow the normal encounter-lifecycle/despawn policy selected by the profile. Reactivation resumes the profile's validated scheduling policy from its runtime state according to the implementation-defined lifecycle contract; deactivation must not silently delete already spawned entities.
+Deactivation stops new scheduling for that profile. Existing spawned entities remain in the world and follow the normal encounter-lifecycle/despawn policy selected by the profile and evaluated by [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md). Reactivation resumes the profile's validated scheduling policy from its runtime state according to the implementation-defined profile-to-lifecycle handoff contract; deactivation must not silently delete already spawned entities.
 
-Profile swapping applies the same boundary: the outgoing profile stops new scheduling, existing entities follow their selected normal lifecycle/despawn policy, and the incoming profile starts only after its configuration and activation state are validated.
+Profile swapping applies the same boundary: the outgoing profile stops new scheduling, existing entities follow their selected normal lifecycle/despawn policy through [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md), and the incoming profile starts only after its configuration and activation state are validated.
 
 ## Population Budgets And Contention
 
@@ -174,7 +174,7 @@ swapped or retired
 
 These states describe scheduling authority, not the existence of already spawned entities. Existing entities are governed by encounter lifecycle and the selected despawn policy after their profile stops scheduling.
 
-Encounter retirement/despawn is a focused sub-seam of encounter spawning/lifecycle. This document selects and hands off the policy boundary, but detailed retirement, despawn triggers, persistence, and cleanup behavior still require their own later subsystem plan.
+Encounter retirement/despawn is a focused post-spawn sub-seam owned by [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md). This document selects the lifecycle policy and hands the spawned entity and originating profile metadata to that owner for retirement, despawn, and cleanup evaluation.
 
 ## External Spawn Requests
 
@@ -232,7 +232,7 @@ resolved mode rules
 -> deterministic roster and target selection
 -> encounter safety validation
 -> authoritative spawn attempt
--> encounter runtime/lifecycle and selected despawn policy
+-> selected lifecycle policy and post-spawn retirement/despawn evaluation
 -> encounter-spawn telemetry and failure logging
 ```
 
@@ -258,7 +258,7 @@ Lifecycle supplies authoritative player join, leave, active-participation, and m
 
 ### Runtime Encounters And Entity Behavior
 
-The runtime owns the spawned entity's live behavior after an authoritative spawn outcome. Entity-specific movement, combat, collision, asteroid fragmentation, and other behavior remain with the entity/runtime owners. The profile owns only the scheduling and spawn-policy decisions leading to the entity's creation and selected lifecycle handoff.
+The runtime owns the spawned entity's live behavior after an authoritative spawn outcome. Entity-specific movement, combat, collision, asteroid fragmentation, and other behavior remain with the entity/runtime owners. The profile owns only the scheduling and spawn-policy decisions leading to the entity's creation and selected lifecycle handoff; [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md) evaluates post-spawn retirement and cleanup.
 
 ### Match End And Presentation
 
@@ -323,6 +323,7 @@ asteroid fragmentation remains asteroid behavior
 - [Player Spawn Profiles](player-spawn-profiles.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md)
+- [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md)
 - [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 - [Multiplayer Session And Lifecycle](../platform/multiplayer-session-and-lifecycle.md)
@@ -343,13 +344,12 @@ asteroid fragmentation remains asteroid behavior
 - Exact wrap-aware spatial APIs and encounter safety categories.
 - Exact reservation semantics for population and weighted budget.
 - Exact retry timing, failure categories, cap configuration, and drop telemetry fields.
-- Exact runtime handoff and profile-to-entity lifecycle contract.
-- Exact encounter retirement/despawn policy, triggers, persistence, and cleanup behavior; this is a separate later subsystem plan.
+- Exact runtime handoff, profile-to-entity lifecycle metadata, and lifecycle-policy selection contract.
 - Exact campaign, objective, admin/devtool, and scripted authorization and request shapes.
 - Exact telemetry event names, field types, sampling, and retention.
 - Exact packet, persistence, and package boundaries chosen at implementation time.
 
-There are no remaining product-level Encounter Spawn Profile decisions blocking P4 system planning. Encounter lifecycle/despawn detail is a separate remaining subsystem plan.
+There are no remaining product-level Encounter Spawn Profile or Encounter Lifecycle/Despawn decisions blocking P4 system planning. Lifecycle/retirement/despawn product planning is complete in [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md).
 
 ## Core Invariants
 
@@ -386,7 +386,7 @@ Budget contention is priority-based, and weighted cost roughly reflects packet s
 
 Asteroid fragmentation remains asteroid behavior rather than encounter scheduling.
 
-Encounter retirement/despawn is a focused later sub-seam of encounter spawning/lifecycle.
+Encounter Spawn Profiles select lifecycle/despawn policy; [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md) is the authoritative post-spawn retirement, despawn, and cleanup evaluation owner.
 
 There are no remaining product-level Encounter Spawn Profile decisions blocking P4 system planning.
 ```

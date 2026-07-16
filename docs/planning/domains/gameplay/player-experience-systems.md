@@ -224,6 +224,7 @@ Settled:
 - Lives, Death, Elimination, And Respawn owner-system planning
 - Player Spawn Profiles owner-system planning
 - Encounter Spawn Profiles owner-system planning
+- Encounter Lifecycle And Despawn owner-system planning
 
 Still requires system planning:
 - match-end policies
@@ -602,7 +603,7 @@ Recommended implementation direction:
 ```text
 1. Promote this doc out of stubs after completion.
 2. Keep current menu, local pilot, lobby, match result, replay, and return-to-lobby behavior intact.
-3. Use the completed Gameplay Awards And Counters, Objectives And Objective Runtime, Teams And Team Rules, Lives, Death, Elimination, And Respawn, Player Spawn Profiles, and Encounter Spawn Profiles owner-system plans while continuing the remaining lower-level planning for match end, results, damage, and join restrictions.
+3. Use the completed Gameplay Awards And Counters, Objectives And Objective Runtime, Teams And Team Rules, Lives, Death, Elimination, And Respawn, Player Spawn Profiles, Encounter Spawn Profiles, and Encounter Lifecycle And Despawn owner-system plans while continuing the remaining lower-level planning for match end, results, damage, and join restrictions.
 4. Define the remaining policy contracts, runtime facts, MatchDecision, and one-time match lock, integrating the completed owner-system contracts.
 5. Resolve the baseline plus mode/config overrides into ResolvedMatchRules.
 6. Map current single-player play through the RoomContentConfig path.
@@ -661,6 +662,7 @@ achievement notification can appear whenever achievement completion is received
 * [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 * [Player Spawn Profiles](player-spawn-profiles.md)
 * [Encounter Spawn Profiles](encounter-spawn-profiles.md)
+* [Encounter Lifecycle And Despawn](encounter-lifecycle-and-despawn.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Inventory And Hangar](inventory-and-hangar.md)
