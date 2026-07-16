@@ -5,23 +5,35 @@ const ApiRequestResultScript := preload("res://scripts/api/api_request_result.gd
 const REQUEST_TIMEOUT_SECONDS := 5.0
 
 
-func get_json(url: String, bearer_token: String = "") -> ApiRequestResult:
-	return await _request_json(HTTPClient.METHOD_GET, url, {}, bearer_token)
+func get_json(url: String, bearer_token: String = "", trace_id: String = "") -> ApiRequestResult:
+	return await _request_json(HTTPClient.METHOD_GET, url, {}, bearer_token, trace_id)
 
 
-func post_json(url: String, body: Dictionary = {}, bearer_token: String = "") -> ApiRequestResult:
-	return await _request_json(HTTPClient.METHOD_POST, url, body, bearer_token)
+func post_json(url: String, body: Dictionary = {}, bearer_token: String = "", trace_id: String = "") -> ApiRequestResult:
+	return await _request_json(HTTPClient.METHOD_POST, url, body, bearer_token, trace_id)
 
 
-func put_json(url: String, body: Dictionary = {}, bearer_token: String = "") -> ApiRequestResult:
-	return await _request_json(HTTPClient.METHOD_PUT, url, body, bearer_token)
+func put_json(url: String, body: Dictionary = {}, bearer_token: String = "", trace_id: String = "") -> ApiRequestResult:
+	return await _request_json(HTTPClient.METHOD_PUT, url, body, bearer_token, trace_id)
 
 
-func delete_json(url: String, body: Dictionary = {}, bearer_token: String = "") -> ApiRequestResult:
-	return await _request_json(HTTPClient.METHOD_DELETE, url, body, bearer_token)
+func delete_json(url: String, body: Dictionary = {}, bearer_token: String = "", trace_id: String = "") -> ApiRequestResult:
+	return await _request_json(HTTPClient.METHOD_DELETE, url, body, bearer_token, trace_id)
 
 
-func _request_json(method: int, url: String, body: Dictionary, bearer_token: String) -> ApiRequestResult:
+func _build_headers(bearer_token: String, trace_id: String) -> PackedStringArray:
+	var headers := PackedStringArray([
+		"Accept: application/json",
+		"Content-Type: application/json"
+	])
+	if bearer_token != "":
+		headers.append("Authorization: Bearer %s" % bearer_token)
+	if trace_id != "":
+		headers.append("X-Trace-ID: %s" % trace_id)
+	return headers
+
+
+func _request_json(method: int, url: String, body: Dictionary, bearer_token: String, trace_id: String) -> ApiRequestResult:
 	var request := HTTPRequest.new()
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null or tree.root == null:
@@ -32,13 +44,7 @@ func _request_json(method: int, url: String, body: Dictionary, bearer_token: Str
 	request.use_threads = true
 	request.timeout = REQUEST_TIMEOUT_SECONDS
 
-	var headers := PackedStringArray([
-		"Accept: application/json",
-		"Content-Type: application/json"
-	])
-	if bearer_token != "":
-		headers.append("Authorization: Bearer %s" % bearer_token)
-
+	var headers := _build_headers(bearer_token, trace_id)
 	var payload := ""
 	if method != HTTPClient.METHOD_GET:
 		payload = JSON.stringify(body)
@@ -74,7 +80,7 @@ func _request_json(method: int, url: String, body: Dictionary, bearer_token: Str
 
 	var parsed_body: Dictionary = parser.data
 	if status_code < 200 or status_code >= 300:
-		var error_message: String= parsed_body.get("error", parsed_body.get("message", "http_%d" % status_code))
+		var error_message: String = parsed_body.get("error", parsed_body.get("message", "http_%d" % status_code))
 		return ApiRequestResultScript.failure(status_code, str(error_message))
 
 	return ApiRequestResultScript.success(status_code, parsed_body)

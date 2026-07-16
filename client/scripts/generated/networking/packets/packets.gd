@@ -426,8 +426,9 @@ static func return_to_lobby_request_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "return_to_lobby_request"
 	return packet
 
-static func authenticate_request_packet(token) -> Dictionary:
+static func authenticate_request_packet(token, trace_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "authenticate_request"
 	packet[FIELD_TOKEN] = token
+	packet[FIELD_TRACE_ID] = trace_id
 	return packet

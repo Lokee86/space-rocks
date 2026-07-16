@@ -19,6 +19,7 @@ type authenticateResultPacket struct {
 	UserID        int64  `json:"user_id,omitempty"`
 	DisplayName   string `json:"display_name,omitempty"`
 	ErrorCode     string `json:"error_code,omitempty"`
+	TraceID       string `json:"trace_id,omitempty"`
 	Message       string `json:"message,omitempty"`
 }
 
@@ -38,10 +39,11 @@ func (session *webSocketSession) EnqueueAuthenticateResult(result authenticateRe
 	session.enqueue(payload)
 }
 
-func (session *webSocketSession) handleAuthenticateRequest(rawToken string) {
+func (session *webSocketSession) handleAuthenticateRequest(rawToken string, traceID string) {
 	if rawToken == "" {
 		session.EnqueueAuthenticateResult(authenticateResultPacket{
 			Type:          "authenticate_result",
+			TraceID:       traceID,
 			Authenticated: false,
 			ErrorCode:     "invalid_token",
 		})
@@ -51,6 +53,7 @@ func (session *webSocketSession) handleAuthenticateRequest(rawToken string) {
 	if session.authVerifier == nil {
 		session.EnqueueAuthenticateResult(authenticateResultPacket{
 			Type:          "authenticate_result",
+			TraceID:       traceID,
 			Authenticated: false,
 			ErrorCode:     "token_verification_unavailable",
 		})
@@ -64,6 +67,7 @@ func (session *webSocketSession) handleAuthenticateRequest(rawToken string) {
 	if err != nil {
 		session.EnqueueAuthenticateResult(authenticateResultPacket{
 			Type:          "authenticate_result",
+			TraceID:       traceID,
 			Authenticated: false,
 			ErrorCode:     "token_verification_unavailable",
 		})
@@ -73,6 +77,7 @@ func (session *webSocketSession) handleAuthenticateRequest(rawToken string) {
 	if !result.Valid {
 		session.EnqueueAuthenticateResult(authenticateResultPacket{
 			Type:          "authenticate_result",
+			TraceID:       traceID,
 			Authenticated: false,
 			ErrorCode:     "invalid_token",
 		})
@@ -82,6 +87,7 @@ func (session *webSocketSession) handleAuthenticateRequest(rawToken string) {
 	session.SetAuthenticatedAccountIdentity(result.Identity.UserID, result.Identity.AccountID, result.Identity.DisplayName)
 	session.EnqueueAuthenticateResult(authenticateResultPacket{
 		Type:          "authenticate_result",
+		TraceID:       traceID,
 		Authenticated: true,
 		UserID:        result.Identity.UserID,
 		DisplayName:   result.Identity.DisplayName,

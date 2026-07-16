@@ -8,7 +8,7 @@ const ObservabilityContract := preload("res://scripts/generated/observability/co
 class FakeNetworkClient:
 	extends NetworkClient
 	var sent_packets: Array[Dictionary] = []
-	func send_raw_packet(packet: Dictionary) -> void:
+	func send_raw_packet(packet: Dictionary, trace_id: String = "") -> void:
 		sent_packets.append(packet)
 
 

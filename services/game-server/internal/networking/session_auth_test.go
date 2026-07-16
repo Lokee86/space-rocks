@@ -33,7 +33,7 @@ func TestHandleAuthenticateRequestStoresRailsAccountID(t *testing.T) {
 		matchResultReporter: rooms.NoopMatchResultReporter{},
 	}
 
-	session.handleAuthenticateRequest("submitted-user-token")
+	session.handleAuthenticateRequest("submitted-user-token", "trace-auth")
 
 	if session.identity.AccountID != "439e2746-9a06-45f1-b36b-b741b5bcfb12" {
 		t.Fatalf("expected account id uuid, got %q", session.identity.AccountID)

@@ -57,7 +57,6 @@ func connect_to_game_server(reason: String) -> String:
 		return Constants.CONNECT_RESULT_ALREADY_CONNECTED
 
 	var result = connection_service.connect_to_server(websocket_url)
-	_log("Connecting to server for %s: %s" % [reason, error_string(result)])
 	if result == OK:
 		return Constants.CONNECT_RESULT_STARTED_CONNECTING
 	return Constants.CONNECT_RESULT_FAILED

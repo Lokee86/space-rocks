@@ -90,6 +90,11 @@ name = "token"
 json = "token"
 type = "string"
 
+[[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
+
 [[structs]]
 id = "AuthenticateResult"
 
@@ -102,6 +107,11 @@ type = "string"
 name = "authenticated"
 json = "authenticated"
 type = "bool"
+
+[[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
 
 [[structs.fields]]
 name = "user_id"
@@ -398,8 +408,9 @@ type = "return_to_lobby_request"
 
 [[builders]]
 id = "authenticate_request_packet"
-args = ["token"]
+args = ["token", "trace_id"]
 
 [builders.body]
 type = "authenticate_request"
 token = "$token"
+trace_id = "$trace_id"

@@ -3,6 +3,7 @@ class_name PacketEncodeResult
 
 var ok: bool = false
 var wire_message: String = ""
+var error_code: String = ""
 var error: String = ""
 
 
@@ -13,7 +14,8 @@ static func success(message: String):
 	return result
 
 
-static func failure(message: String):
+static func failure(code: String, message: String):
 	var result := PacketEncodeResult.new()
+	result.error_code = code
 	result.error = message
 	return result

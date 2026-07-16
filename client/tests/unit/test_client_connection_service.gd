@@ -1,6 +1,9 @@
 extends GutTest
 
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
+const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
+const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
@@ -11,15 +14,16 @@ class FakeNetworkClient:
 	extends NetworkClient
 
 	var sent_packets: Array = []
+	var connect_error: Error = OK
 
-	func send_raw_packet(packet: Dictionary) -> void:
+	func send_raw_packet(packet: Dictionary, _trace_id: String = "") -> void:
 		sent_packets.append(packet)
 
 	func is_connected_to_server() -> bool:
 		return true
 
 	func connect_to_server(_url: String) -> Error:
-		return OK
+		return connect_error
 
 	func begin_graceful_close() -> bool:
 		return true
@@ -88,7 +92,7 @@ func test_unauthenticated_or_malformed_websocket_user_id_uses_sentinel() -> void
 		var service := ClientConnectionService.new()
 		service._on_authenticate_result_received(packet)
 
-		assert_eq(service.websocket_auth_user_id, ClientConnectionService.NO_WEBSOCKET_AUTH_USER_ID)
+		assert_eq(service.websocket_auth_user_id, -1)
 		assert_false(service.has_websocket_auth_identity())
 
 func test_missing_packet_sender_is_reported_once_then_resets_on_assignment() -> void:
@@ -108,7 +112,7 @@ func test_missing_packet_sender_is_reported_once_then_resets_on_assignment() -> 
 	assert_eq(record["fields"]["failure_mode"], "not_configured")
 
 	var fake_network := FakeNetworkClient.new()
-	var sender := ClientConnectionService.ClientPacketSender.new(fake_network)
+	var sender := ClientPacketSender.new(fake_network)
 	service.client_packet_sender = sender
 	service.send_input_packet({"type": "input"})
 	assert_false(service._missing_client_packet_sender_reported)
@@ -123,7 +127,7 @@ func test_close_resets_websocket_auth_identity() -> void:
 	service._on_closed()
 
 	assert_false(service.is_websocket_auth_authenticated())
-	assert_eq(service.websocket_auth_user_id, ClientConnectionService.NO_WEBSOCKET_AUTH_USER_ID)
+	assert_eq(service.websocket_auth_user_id, -1)
 	assert_false(service.has_websocket_auth_identity())
 	assert_eq(service.websocket_auth_display_name, "")
 
@@ -132,7 +136,7 @@ func test_protocol_match_begin_end_preserves_transport_without_close() -> void:
 	var service := ClientConnectionService.new()
 	add_child_autofree(service)
 	var peer := FakeTransportPeer.new()
-	var retained := ClientConnectionService.RealtimeTransportSession.new()
+	var retained := RealtimeTransportSession.new()
 	retained.transport = peer
 	service.realtime_transport_session = retained
 	service.begin_realtime_match("match-1")
@@ -148,7 +152,7 @@ func test_resync_required_uses_active_match_and_suppresses_when_inactive() -> vo
 	var fake_network := FakeNetworkClient.new()
 	add_child_autofree(fake_network)
 	service.network_client = fake_network
-	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.client_packet_sender = ClientPacketSender.new(fake_network)
 	service.begin_realtime_match("match-1")
 	service._on_resync_request_required("world", "baseline-1", 1, "missing_baseline")
 	assert_eq(fake_network.sent_packets.size(), 1)
@@ -213,8 +217,8 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 	var callback_state := {"pipeline_packet_count": 0}
 	var fake_network := FakeNetworkClient.new()
 	service.network_client = fake_network
-	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
-	service.server_packet_dispatcher = ClientConnectionService.ServerPacketDispatcher.new()
+	service.client_packet_sender = ClientPacketSender.new(fake_network)
+	service.server_packet_dispatcher = ServerPacketDispatcher.new()
 	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(FakeTransportPeer.new())
 	add_child_autofree(service)
 	service._on_connected()
@@ -270,8 +274,8 @@ func test_reset_exposes_fresh_pipeline_and_readiness() -> void:
 	var service := ClientConnectionService.new()
 	add_child_autofree(service)
 
-	var pipeline := service.get_realtime_packet_pipeline()
-	var presentation_state := pipeline.get_presentation_state()
+	var pipeline = service.get_realtime_packet_pipeline()
+	var presentation_state = pipeline.get_presentation_state()
 	var world_lane_state: Variant = presentation_state.world_lane_state
 	var overlay_lane_state: Variant = presentation_state.overlay_lane_state
 	var session_lane_state: Variant = presentation_state.session_lane_state
@@ -339,7 +343,8 @@ func test_connection_trace_survives_connect_and_is_visible_during_close() -> voi
 		state["index"] += 1
 		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
 
-	var service := ClientConnectionService.new(factory)
+	var service := ClientConnectionService.new()
+	service._operation_trace_factory = factory
 	service.network_client = FakeNetworkClient.new()
 	var closed_trace_ids: Array[String] = []
 	service.closed.connect(func() -> void: closed_trace_ids.append(service.current_connection_trace_id()))
@@ -368,3 +373,101 @@ func test_room_operation_trace_is_retained_until_explicitly_cleared() -> void:
 
 	assert_eq(service.active_room_operation_type(), "")
 	assert_eq(service.active_room_operation_trace_id(), "")
+
+func test_graceful_close_does_not_emit_client_disconnected() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var service := ClientConnectionService.new()
+	service._operation_trace_factory = func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return "00000000-0000-4000-8000-000000000081")
+	service.network_client = FakeNetworkClient.new()
+	service.connect_to_server("ws://example")
+	service._on_connected()
+	service._on_connection_close_result(1000, true)
+
+	var events: Array[String] = []
+	for line in writer.written_lines:
+		events.append(str(JSON.parse_string(line)["event"]))
+	assert_eq(events.count(ObservabilityContract.EVENT_CLIENT_DISCONNECTED), 0)
+
+
+func test_close_before_connected_emits_connection_failed() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var service := ClientConnectionService.new()
+	service._operation_trace_factory = func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return "00000000-0000-4000-8000-000000000082")
+	service.network_client = FakeNetworkClient.new()
+	service.connect_to_server("ws://example")
+	service._on_connection_close_result(1006, false)
+	service._on_closed()
+
+	var records: Array = []
+	for line in writer.written_lines:
+		records.append(JSON.parse_string(line))
+	assert_eq(records[-1]["event"], ObservabilityContract.EVENT_CLIENT_CONNECTION_FAILED)
+	assert_eq(records[-1]["fields"]["failure_mode"], "socket_closed_before_connected")
+
+
+func test_attempt_and_connected_events_share_one_trace() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	ClientLogger.enable_debug()
+	var service := ClientConnectionService.new()
+	service._operation_trace_factory = func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return "00000000-0000-4000-8000-000000000083")
+	service.network_client = FakeNetworkClient.new()
+
+	service.connect_to_server("ws://example")
+	service._on_connected()
+
+	var records: Array = []
+	for line in writer.written_lines:
+		records.append(JSON.parse_string(line))
+	assert_eq(records.size(), 2)
+	assert_eq(records[0]["event"], ObservabilityContract.EVENT_CONNECTION_ATTEMPT_STARTED)
+	assert_eq(records[1]["event"], ObservabilityContract.EVENT_CLIENT_CONNECTED)
+	assert_eq(records[0]["trace_id"], records[1]["trace_id"])
+
+
+func test_immediate_connection_failure_emits_once_and_clears_trace() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var service := ClientConnectionService.new()
+	service._operation_trace_factory = func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return "00000000-0000-4000-8000-000000000084")
+	var network_client := FakeNetworkClient.new()
+	network_client.connect_error = ERR_CANT_CONNECT
+	service.network_client = network_client
+
+	assert_eq(service.connect_to_server("ws://example"), ERR_CANT_CONNECT)
+
+	var records: Array = []
+	for line in writer.written_lines:
+		records.append(JSON.parse_string(line))
+	var failure_count := 0
+	for record in records:
+		if record["event"] == ObservabilityContract.EVENT_CLIENT_CONNECTION_FAILED:
+			failure_count += 1
+	assert_eq(failure_count, 1)
+	assert_eq(service.current_connection_trace_id(), "")
+
+
+func test_unexpected_close_after_connected_emits_disconnected() -> void:
+	var writer := FakeWriter.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var service := ClientConnectionService.new()
+	service._operation_trace_factory = func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return "00000000-0000-4000-8000-000000000085")
+	service.network_client = FakeNetworkClient.new()
+
+	service.connect_to_server("ws://example")
+	service._on_connected()
+	service._on_connection_close_result(1006, false)
+	service._on_closed()
+
+	var records: Array = []
+	for line in writer.written_lines:
+		records.append(JSON.parse_string(line))
+	assert_eq(records[-1]["event"], ObservabilityContract.EVENT_CLIENT_DISCONNECTED)
+	assert_eq(records[-1]["fields"]["failure_mode"], "unexpected_close")

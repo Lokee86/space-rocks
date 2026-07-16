@@ -51,6 +51,11 @@ var _connection_trace: ClientOperationTrace
 var _connection_attempt_epoch := 0
 var _active_room_operation_trace_id := ""
 var _active_room_operation_type := ""
+var _closed_event_attempt_epoch := -1
+var _pending_close_code := 0
+var _pending_close_expected := false
+var _has_close_result := false
+var _connection_ever_connected := false
 
 
 func _init(operation_trace_factory: Callable = Callable()) -> void:
@@ -98,12 +103,22 @@ func _process(_delta: float) -> void:
 
 
 func connect_to_server(url: String) -> Error:
+
 	_connection_attempt_epoch += 1
 	_connection_trace = ClientOperationTrace.create("connect_to_server", _operation_trace_factory)
+	_closed_event_attempt_epoch = -1
+	_has_close_result = false
+	_connection_ever_connected = false
+	_configure_observability_providers()
 	reset_realtime_session()
 	has_started_connection = true
-	return network_client.connect_to_server(url)
-
+	var trace_id := current_connection_trace_id()
+	if !trace_id.is_empty():
+		ClientLogger.emit_canonical(ObservabilityContract.EVENT_CONNECTION_ATTEMPT_STARTED, "", {"trace_id": trace_id}, {"connection_stage": "socket_connect"})
+	var err: Error = network_client.connect_to_server(url)
+	if err != OK:
+		_emit_connection_failed(err)
+	return err
 
 func current_connection_trace_id() -> String:
 	if _connection_trace == null:
@@ -143,13 +158,6 @@ func reset_realtime_session() -> void:
 		realtime_packet_pipeline.reset()
 	_clear_realtime_transport_session()
 	server_clock_offset_ms = -1
-	ClientLogger.network_event(
-		ClientLogger.LEVEL_INFO,
-		"realtime_protocol_state_reset",
-		"Realtime protocol state reset"
-	)
-
-
 func is_server_connected() -> bool:
 	return network_client != null && network_client.is_connected_to_server()
 
@@ -289,6 +297,7 @@ func network_metrics_snapshot() -> Dictionary:
 
 func _connect_network_client_signals() -> void:
 	_connect_network_signal("connected_to_server", Callable(self, "_on_connected"))
+	_connect_network_signal("connection_closed_result", Callable(self, "_on_connection_close_result"))
 	_connect_network_signal("connection_closed", Callable(self, "_on_closed"))
 	_connect_network_signal("packet_parse_failed", Callable(self, "_on_packet_parse_failed"))
 	_connect_network_signal("packet_received", Callable(self, "_on_packet_received"))
@@ -305,6 +314,10 @@ func _connect_coordinator_signal(signal_name: StringName, handler: Callable) -> 
 
 
 func _on_connected() -> void:
+	_connection_ever_connected = true
+	var trace_id := current_connection_trace_id()
+	if !trace_id.is_empty():
+		ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_CONNECTED, "", {"trace_id": trace_id}, {"connection_stage": "socket_open"})
 	_ensure_realtime_transport_session()
 	if realtime_transport_session != null:
 		realtime_transport_session.start()
@@ -313,15 +326,39 @@ func _on_connected() -> void:
 
 
 func _on_closed() -> void:
-	var closed_attempt_epoch := _connection_attempt_epoch
+	_finalize_connection_close(true)
+
+
+func _on_connection_close_result(close_code: int, expected: bool) -> void:
+	_pending_close_code = close_code
+	_pending_close_expected = expected
+	_has_close_result = true
+	if expected:
+		_finalize_connection_close(false)
+
+
+func _finalize_connection_close(emit_closed_signal: bool) -> void:
+	if _closed_event_attempt_epoch == _connection_attempt_epoch:
+		return
+	_closed_event_attempt_epoch = _connection_attempt_epoch
+	var trace_id := current_connection_trace_id()
+	var was_expected := _pending_close_expected
+	var ever_connected := _connection_ever_connected
+	if !trace_id.is_empty() && !was_expected:
+		var event_name := ObservabilityContract.EVENT_CLIENT_DISCONNECTED if ever_connected else ObservabilityContract.EVENT_CLIENT_CONNECTION_FAILED
+		var fields := {"close_code": _pending_close_code, "expected": was_expected, "failure_mode": "unexpected_close" if ever_connected else "socket_closed_before_connected", "connection_stage": "socket_close"}
+		if !ever_connected:
+			fields["error_code"] = "socket_closed_before_connected"
+		ClientLogger.emit_canonical(event_name, "", {"trace_id": trace_id}, fields)
 	reset_realtime_session()
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 	websocket_auth_display_name = ""
-	closed.emit()
-	if closed_attempt_epoch == _connection_attempt_epoch:
-		_connection_trace = null
-
+	if emit_closed_signal:
+		closed.emit()
+	_connection_trace = null
+	_has_close_result = false
+	_connection_ever_connected = false
 
 func _on_packet_parse_failed(text: String) -> void:
 	packet_parse_failed.emit(text)
@@ -338,6 +375,17 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 
 func _on_authenticate_result_received(packet: Dictionary) -> void:
 	websocket_auth_authenticated = bool(packet.get(Packets.FIELD_AUTHENTICATED, false))
+	var trace_id := str(packet.get(Packets.FIELD_TRACE_ID, ""))
+	if trace_id.is_empty():
+		trace_id = current_connection_trace_id()
+	if !trace_id.is_empty():
+		var auth_fields := {"auth_source": "game_server_websocket"}
+		if websocket_auth_authenticated:
+			ClientLogger.emit_canonical(ObservabilityContract.EVENT_AUTH_SUCCEEDED, "", {"trace_id": trace_id}, auth_fields)
+		else:
+			auth_fields["error_code"] = _safe_websocket_auth_error_code(str(packet.get(Packets.FIELD_ERROR_CODE, "")))
+			auth_fields["failure_mode"] = "provider_unavailable" if auth_fields["error_code"] == "token_verification_unavailable" else "rejected"
+			ClientLogger.emit_canonical(ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE if auth_fields["error_code"] == "token_verification_unavailable" else ObservabilityContract.EVENT_AUTH_FAILED, "", {"trace_id": trace_id}, auth_fields)
 	var raw_user_id = packet.get(Packets.FIELD_USER_ID, NO_WEBSOCKET_AUTH_USER_ID)
 	if websocket_auth_authenticated and raw_user_id is int:
 		websocket_auth_user_id = int(raw_user_id)
@@ -345,7 +393,6 @@ func _on_authenticate_result_received(packet: Dictionary) -> void:
 		websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 	websocket_auth_display_name = str(packet.get(Packets.FIELD_DISPLAY_NAME, ""))
 	websocket_auth_result_received.emit(packet)
-
 
 func _on_room_state_changed(packet: Dictionary) -> void:
 	room_state_changed.emit(packet)
@@ -382,8 +429,17 @@ func _on_realtime_transport_ready() -> void:
 
 
 func _on_unknown_packet_received(packet: Dictionary) -> void:
+	var trace_id := current_connection_trace_id()
+	if !trace_id.is_empty():
+		ClientLogger.emit_canonical(ObservabilityContract.EVENT_PACKET_ROUTE_UNKNOWN, "", {"trace_id": trace_id}, {"packet_type": _packet_type(packet), "failure_mode": "unknown_route"})
 	unknown_packet_received.emit(packet)
 
+
+func _packet_type(packet: Dictionary) -> String:
+	var packet_type := str(packet.get("type", ""))
+	if !packet_type.is_empty():
+		return packet_type
+	return str(packet.get("t", ""))
 
 func _ensure_realtime_transport_session() -> void:
 	if realtime_transport_session != null:
@@ -412,18 +468,17 @@ func _clear_realtime_transport_session() -> void:
 func _send_authenticate_request_if_token_exists() -> void:
 	if auth_session_controller == null:
 		return
-
 	var auth_session: AuthSession = auth_session_controller.get_session()
 	if auth_session == null:
 		return
-
 	var token: String = auth_session.token
 	if token.is_empty():
 		return
-
 	if _can_send_outbound():
-		client_packet_sender.send_authenticate_request(token)
-
+		var trace_id := current_connection_trace_id()
+		if !trace_id.is_empty():
+			ClientLogger.emit_canonical(ObservabilityContract.EVENT_AUTH_FLOW_STARTED, "", {"trace_id": trace_id}, {"auth_operation": "game_server_websocket"})
+		client_packet_sender.send_authenticate_request(token, trace_id)
 
 func _can_send_outbound() -> bool:
 	if client_packet_sender != null:
@@ -445,3 +500,21 @@ func _can_send_outbound() -> bool:
 
 func get_realtime_packet_pipeline() -> RealtimePacketPipeline:
 	return realtime_packet_pipeline
+
+func _safe_websocket_auth_error_code(error_code: String) -> String:
+	match error_code:
+		"token_verification_unavailable", "invalid_token", "expired_token":
+			return error_code
+		_:
+			return "rejected"
+
+func _configure_observability_providers() -> void:
+	if network_client != null and network_client.has_method("set_connection_trace_provider"):
+		network_client.set_connection_trace_provider(Callable(self, "current_connection_trace_id"))
+
+func _emit_connection_failed(error: Error) -> void:
+	var trace_id := current_connection_trace_id()
+	if !trace_id.is_empty():
+		ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_CONNECTION_FAILED, "", {"trace_id": trace_id}, {"error_code": "connect_error_%d" % int(error), "failure_mode": "connect_immediate", "connection_stage": "socket_connect"})
+	_closed_event_attempt_epoch = _connection_attempt_epoch
+	_connection_trace = null

@@ -101,7 +101,6 @@ func _ready() -> void:
 		main_menu,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_shell_status")
 	)
 	gameplay_session_controller.replay_requested.connect(_on_gameplay_replay_requested)
 	gameplay_session_controller.return_to_pregame_requested.connect(_on_gameplay_return_to_pregame_requested)
@@ -110,7 +109,6 @@ func _ready() -> void:
 	session_network_controller.configure(
 		session_boot_controller.get_connection_service(),
 		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_shell_status"),
 		{}
 	)
 	session_network_controller.connect_connection_signals()
@@ -124,7 +122,6 @@ func _ready() -> void:
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_connection_service(),
 		session_boot_controller.get_shell_boot_flow(),
-		Callable(self, "_log_shell_status")
 	)
 	room_session_controller.configure_client_config_sender(
 		Callable(client_config_controller, "send_client_config")
@@ -147,7 +144,6 @@ func _ready() -> void:
 	main_menu_session_controller.configure(
 		main_menu,
 		session_boot_controller,
-		Callable(self, "_log_shell_status")
 	)
 
 	menu_flow_controller = MenuFlowControllerScript.new()
@@ -190,7 +186,6 @@ func _exit_tree() -> void:
 
 func _setup_boot_and_config() -> void:
 	session_boot_controller = SessionBootController.new()
-	session_boot_controller.configure(Callable(self, "_log_shell_status"))
 	add_child(session_boot_controller)
 
 	client_config_controller = ClientConfigController.new()
@@ -304,8 +299,8 @@ func _on_auth_state_changed() -> void:
 		main_menu.show_signed_out()
 
 
-func _on_auth_error(message: String) -> void:
-	ClientLogger.shell_info("Auth error: %s" % message)
+func _on_auth_error(_message: String) -> void:
+	pass
 
 
 func _make_view_anchor_camera_current() -> void:

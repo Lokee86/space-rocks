@@ -82,6 +82,11 @@ json = "token"
 type = "string"
 
 [[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
+
+[[structs.fields]]
 
 name = "sequence"
 json = "sequence"

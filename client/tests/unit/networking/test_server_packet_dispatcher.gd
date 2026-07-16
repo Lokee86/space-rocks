@@ -216,3 +216,15 @@ func _new_projectile_sync() -> ProjectileSync:
 	add_child_autofree(bullets_layer)
 	projectile_sync.configure(bullets_layer)
 	return projectile_sync
+
+
+
+func test_unknown_route_emits_once_without_recording_packet_dictionary() -> void:
+	var dispatcher := ServerPacketDispatcher.new()
+	var unknown_packets: Array = []
+	dispatcher.unknown_packet_received.connect(func(packet: Dictionary) -> void:
+		unknown_packets.append(packet)
+	)
+	dispatcher.dispatch({"type": "unknown_packet", "secret_payload": "must_not_be_logged"})
+
+	assert_eq(unknown_packets.size(), 1)

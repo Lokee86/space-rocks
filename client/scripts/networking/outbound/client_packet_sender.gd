@@ -13,7 +13,6 @@ var network_client: NetworkClient:
 		network_client = value
 		_missing_network_client_reported = false
 var _missing_network_client_reported := false
-var _logged_respawn_packet_send := false
 
 
 func _init(client: NetworkClient = null) -> void:
@@ -42,22 +41,22 @@ func _can_send() -> bool:
 	return false
 
 
-func send_packet(packet: Dictionary) -> void:
+func send_packet(packet: Dictionary, trace_id: String = "") -> void:
 	if _can_send():
-		network_client.send_raw_packet(packet)
+		network_client.send_raw_packet(packet, trace_id)
 
 
-func send_input_packet(packet: Dictionary) -> void:
-	send_packet(packet)
+func send_input_packet(packet: Dictionary, trace_id: String = "") -> void:
+	send_packet(packet, trace_id)
 
 func send_resync_request(match_id: String, lane: String, baseline_id: String, sequence, reason: String) -> void:
 	send_packet(Packets.resync_request_packet(match_id, lane, baseline_id, sequence, reason))
 
 
-func send_authenticate_request(token: String) -> void:
+func send_authenticate_request(token: String, trace_id: String = "") -> void:
 	if token.is_empty():
 		return
-	send_packet(Packets.authenticate_request_packet(token))
+	send_packet(Packets.authenticate_request_packet(token, trace_id), trace_id)
 
 
 func send_webrtc_offer(description_type: String, sdp: String) -> void:
@@ -97,17 +96,6 @@ func send_webrtc_failed(error_code: String, message: String) -> void:
 # Gameplay
 func send_respawn_request() -> void:
 	if _can_send():
-		if !_logged_respawn_packet_send:
-			_logged_respawn_packet_send = true
-			ClientLogger.network_event(
-				ClientLogger.LEVEL_INFO,
-				"outbound_packet_sent_marker",
-				"Outbound packet sent marker",
-				{
-					"packet_type": "respawn",
-					"source": "client_packet_sender",
-				}
-			)
 		send_packet(GameplayClientPackets.respawn_packet())
 
 

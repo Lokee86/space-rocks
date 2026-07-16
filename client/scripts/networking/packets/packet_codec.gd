@@ -5,13 +5,13 @@ const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_
 # PacketCodec owns wire parsing and envelope checks only; packet readers validate payload details.
 static func encode(packet: Dictionary) -> PacketEncodeResult:
 	if !packet.has("type"):
-		return PacketEncodeResult.failure("Packet envelope is missing required 'type' field")
+		return PacketEncodeResult.failure("missing_type", "Packet envelope is missing required 'type' field")
 	if typeof(packet["type"]) != TYPE_STRING:
-		return PacketEncodeResult.failure("Packet envelope field 'type' must be a String")
+		return PacketEncodeResult.failure("invalid_type", "Packet envelope field 'type' must be a String")
 	if str(packet["type"]).strip_edges().is_empty():
-		return PacketEncodeResult.failure("Packet envelope field 'type' must not be empty")
+		return PacketEncodeResult.failure("empty_type", "Packet envelope field 'type' must not be empty")
 	if packet.has("payload") && typeof(packet["payload"]) != TYPE_DICTIONARY:
-		return PacketEncodeResult.failure("Packet envelope field 'payload' must be a Dictionary when present")
+		return PacketEncodeResult.failure("invalid_payload", "Packet envelope field 'payload' must be a Dictionary when present")
 
 	return PacketEncodeResult.success(JSON.stringify(packet))
 
@@ -20,24 +20,24 @@ static func decode(text: String) -> PacketDecodeResult:
 	var parser := JSON.new()
 	var parse_error := parser.parse(text)
 	if parse_error != OK:
-		return PacketDecodeResult.failure("Invalid packet JSON: %s" % parser.get_error_message(), text)
+		return PacketDecodeResult.failure("invalid_json", "Invalid packet JSON: %s" % parser.get_error_message(), text)
 
 	var decoded = parser.data
 	if typeof(decoded) != TYPE_DICTIONARY:
-		return PacketDecodeResult.failure("Packet JSON must decode to a Dictionary", text)
+		return PacketDecodeResult.failure("invalid_root", "Packet JSON must decode to a Dictionary", text)
 
 	var packet: Dictionary = decoded
 	if packet.has("type") and typeof(packet["type"]) != TYPE_STRING:
-		return PacketDecodeResult.failure("Packet envelope field 'type' must be a String", text)
+		return PacketDecodeResult.failure("invalid_type", "Packet envelope field 'type' must be a String", text)
 	packet = CompactLanePacket.expand_packet(packet)
 	if !packet.has("type"):
-		return PacketDecodeResult.failure("Packet envelope is missing required 'type' field", text)
+		return PacketDecodeResult.failure("missing_type", "Packet envelope is missing required 'type' field", text)
 	if typeof(packet["type"]) != TYPE_STRING:
-		return PacketDecodeResult.failure("Packet envelope field 'type' must be a String", text)
+		return PacketDecodeResult.failure("invalid_type", "Packet envelope field 'type' must be a String", text)
 	if str(packet["type"]).strip_edges().is_empty():
-		return PacketDecodeResult.failure("Packet envelope field 'type' must not be empty", text)
+		return PacketDecodeResult.failure("empty_type", "Packet envelope field 'type' must not be empty", text)
 	if packet.has("payload") && typeof(packet["payload"]) != TYPE_DICTIONARY:
-		return PacketDecodeResult.failure("Packet envelope field 'payload' must be a Dictionary when present", text)
+		return PacketDecodeResult.failure("invalid_payload", "Packet envelope field 'payload' must be a Dictionary when present", text)
 
 	return PacketDecodeResult.success(packet)
 
