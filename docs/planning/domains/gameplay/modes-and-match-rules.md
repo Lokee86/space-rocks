@@ -43,6 +43,8 @@ The shared Objective Foundation owns objective definitions/schema, objective-loc
 
 Detailed participation and joining semantics belong to [Participation And Joining](participation-and-joining.md). Modes select resolved participation, join, re-entry, and result-eligibility policy; they do not redefine the shared participation-state model or Multiplayer Lifecycle execution.
 
+Modes own match-end policy. A mode may define multiple simultaneous end conditions, and each mode explicitly defines precedence between those conditions. The authoritative game/match layer evaluates the resolved policy and produces one `MatchDecision` through the shared match-lock path. A locked match may end as `completed`, `failed`, `cancelled`, `invalid`, or `administratively terminated`. Once `MatchDecision` locks, the match can never resume; pause is separate from match end.
+
 ## Core Architecture
 
 `ModePreset` is the named preset or template for a room or match ruleset.
@@ -71,6 +73,8 @@ ModePreset
 Rooms store the validated config, then lock that configuration when the match starts. This pre-start configuration lock is distinct from the one-time `MatchDecision` lock produced later by the authoritative game/match layer.
 
 Gameplay consumes only `ResolvedMatchRules`, not raw room config.
+
+Every normal mode uses the same one-time authoritative match-lock path. By default, locking stops gameplay mutation while result processing and presentation/lifecycle transitions continue. A mode may explicitly bypass or override this default post-end freeze/continuation behavior where its rules require it.
 
 ## Preset-Driven Room Modes
 
@@ -106,6 +110,8 @@ progression eligibility
 Gameplay award, objective progress, and final ranking are separate concepts. A gameplay score may contribute to an objective without becoming the result-ranking metric.
 
 Likely player-configurable option groups include preset-approved starting lives, target score, time limit, maximum players, team setup, difficulty, hazards, and pickups. Starting lives count total ships, including the initial ship. Both finite and infinite lives are valid resolved policies, and starting lives may be exposed as a preset-approved room option.
+
+Match-end policy is explicit per mode rather than limited to one universal condition. A mode may resolve multiple conditions that become true in the same evaluation, with a mode-declared precedence ordering determining the authoritative result.
 
 Mode is not the same thing as single-player or multiplayer. Single-player and multiplayer are `session_context`; mode governs gameplay rules through `mode_id`. In-game joining remains future functionality controlled by resolved join policy and executed by lifecycle.
 
@@ -227,8 +233,8 @@ Define preset registry.
 Validate config.
 Construct `ResolvedMatchRules`.
 Compose the Arcade Survival baseline plus mode/config overrides.
-Select gameplay award and objective policy, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, one or more Encounter Spawn Profiles, join, and progression-eligibility policies using only profile-declared validated options. Objective runtime evaluates the selected objective definitions and emits authoritative objective facts.
-Evaluate normalized `MatchFacts` and lock one authoritative `MatchDecision`.
+Select gameplay award and objective policy, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, one or more Encounter Spawn Profiles, join, and progression-eligibility policies using only profile-declared validated options. Match-end policy may define multiple simultaneous end conditions and must define their precedence. Objective runtime evaluates the selected objective definitions and emits authoritative objective facts.
+Evaluate normalized `MatchFacts`, resolve the mode-declared precedence, and lock one authoritative `MatchDecision` through the shared one-time match-lock path. A locked decision carries a terminal match status of `completed`, `failed`, `cancelled`, `invalid`, or `administratively terminated`.
 Likely starts near `services/game-server/internal/game/rules`, with exact package split as a gametime decision.
 ```
 
@@ -240,6 +246,7 @@ Exposes normalized active participation and historical participant facts.
 Removes disconnected players from live rule and team evaluation without discarding accumulated facts.
 Consumes separate player and Encounter Spawn Profiles.
 Should not parse raw room config throughout simulation.
+After `MatchDecision` locks, gameplay mutation stops by default while result processing and presentation/lifecycle transitions continue; a mode may explicitly bypass or override that post-end behavior.
 ```
 
 Scoring:
@@ -317,7 +324,7 @@ The first implementation stage should proceed from low-level owner contracts tow
 1. Define the low-level policy contracts and runtime fact boundary.
 2. Integrate the team-system configuration and authoritative membership contracts.
 3. Define lives and both spawn-profile seams.
-4. Define authoritative MatchDecision and lock.
+4. Define authoritative MatchDecision, terminal match statuses, simultaneous-condition precedence, post-end behavior, and the one-time match-lock path.
 5. Construct ResolvedMatchRules from baseline plus mode/config overrides.
 6. Express Arcade Survival through the baseline.
 7. Express Score Attack through explicit overrides.
@@ -340,6 +347,11 @@ This order prevents room storage and UI representation from becoming the authori
 - `playercentric_asteroids_v1` names the existing encounter-spawning behavior.
 - Match rules evaluate normalized active participant facts while retaining historical participant facts.
 - Every normal mode produces one authoritative locked `MatchDecision` in the game/match layer.
+- Each normal mode may define multiple simultaneous end conditions and explicitly defines their precedence.
+- A locked `MatchDecision` ends the match as `completed`, `failed`, `cancelled`, `invalid`, or `administratively terminated`.
+- A locked match never resumes; pause remains separate from match end.
+- The default post-end behavior stops gameplay mutation while result processing and presentation/lifecycle transitions continue.
+- A mode can explicitly bypass or override the default post-end freeze/continuation behavior.
 - Rooms consume the locked decision rather than reconstructing it.
 - `CreateRoomRequest` or an equivalent room creation path can carry selected mode and team config.
 - Server validates requested preset and options, and the room stores validated `RoomModeConfig`.
@@ -369,7 +381,13 @@ the baseline player spawn profile is basic_safe_spawn_v1
 arcade_survival and score_attack use playercentric_asteroids_v1 encounter spawning
 disconnected players leave active evaluation without losing accumulated facts
 removed players do not block elimination or match completion
-MatchDecision locks once in the game/match layer
+multiple end conditions observed in one evaluation resolve according to the mode's explicit precedence
+all normal modes use the same one-time authoritative match-lock path
+MatchDecision locks once in the game/match layer and cannot be resumed
+pause does not produce a match-end decision
+locked matches may produce completed, failed, cancelled, invalid, or administratively terminated outcomes
+default post-end behavior stops gameplay mutation while result processing and presentation/lifecycle transitions continue
+mode-specific post-end bypass or override behavior is explicit and testable
 rooms consume the locked MatchDecision without recomputing winners
 target_score affects only score_attack
 match results carry mode_id separately from session_context
@@ -400,8 +418,8 @@ room snapshots expose the mode summary only if the client needs it
 - Exact resolved award-policy reference and contract shape between modes and Gameplay Awards And Counters.
 - Exact objective policy selection and composition contracts.
 - Exact ranking policy contracts and tie handling.
-- Exact match-end policy contracts beyond the two baseline modes.
-- Exact result-policy shape and participant/team outcome vocabulary.
+- Exact implementation contract for expressing mode-declared match-end conditions, precedence, and post-end behavior.
+- Exact result-policy shape and participant/team result aggregation details; the locked terminal outcome vocabulary is settled.
 - Exact finite/infinite lives and respawn policy contracts.
 - Exact implementation contract for the selected Encounter Spawn Profiles is defined in [Encounter Spawn Profiles](encounter-spawn-profiles.md); remaining decisions there are implementation-level.
 - Exact damage-policy contract and PvP enablement values.
@@ -429,7 +447,11 @@ Player and encounter spawning are separate profile seams.
 The baseline player-spawn profile is basic_safe_spawn_v1, with detailed placement owned by Player Spawn Profiles.
 The existing encounter-spawning profile is playercentric_asteroids_v1.
 Disconnected players do not participate in live rule evaluation, but their historical facts remain available for results.
-MatchDecision locks once in the authoritative game/match layer.
+Modes may define multiple simultaneous end conditions, and each mode explicitly defines their precedence.
+Every normal mode uses the same one-time authoritative match-lock path.
+MatchDecision locks once in the authoritative game/match layer and may end the match as completed, failed, cancelled, invalid, or administratively terminated.
+A locked match never resumes; pause is separate from match end.
+By default, a locked match stops gameplay mutation while result processing and presentation/lifecycle transitions continue; a mode may explicitly bypass or override this behavior.
 Rooms consume the locked decision and never reconstruct match end or winners.
 session_context remains separate from gameplay mode_id.
 No gameplay system should read raw room config directly.

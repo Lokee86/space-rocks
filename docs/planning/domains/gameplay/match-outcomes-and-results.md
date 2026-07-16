@@ -45,6 +45,8 @@ packet or API schema details
 
 Modes and match rules own gameplay award selection, objective policy selection/composition, ranking, match-end, result, and related resolved policies. Detailed objective behavior and authoritative objective snapshots belong to [Objectives And Objective Runtime](objectives-and-objective-runtime.md). Teams and team rules owns team aggregation defaults and team-result requirements. The authoritative game/match layer evaluates final `MatchFacts` and locks `MatchDecision` once.
 
+Modes and match rules provide the resolved match terminal status and participant/team result policy that `EndOfMatchFlow` hands off. This doc preserves the universal outcome vocabulary and the separation between terminal status, participant/team outcome, placement, and participation disposition without becoming an alternate owner of those policies.
+
 Detailed award and counter semantics, including attribution, distribution, mutation, visibility, and idempotency, belong to [Gameplay Awards And Counters](gameplay-awards-and-counters.md). Its clean final award/counter snapshot is the authoritative input to result orchestration. `EndOfMatchFlow` consumes that snapshot and does not reconstruct awards, counters, attribution, or distribution from runtime entities.
 
 `EndOfMatchFlow` aggregates the selected authoritative objective facts and final objective snapshot supplied by Objectives And Objective Runtime. It never reconstructs objective resolution, progress, contributors, or completion from runtime entities or client events.
@@ -66,7 +68,7 @@ game simulation
 -> final gameplay mutations for tick complete
 -> MatchFacts evaluated
 -> MatchDecision locks once
--> gameplay mutation stops
+-> gameplay mutation stops by default
 -> EndOfMatchFlow consumes locked decision
 ```
 
@@ -84,7 +86,7 @@ locked MatchDecision
 
 `EndOfMatchFlow` is the orchestration seam.
 
-It does not discover match end, evaluate an independent winner, or reconstruct the decision from room state. It consumes the authoritative locked `MatchDecision` and the final facts referenced by that decision.
+It does not discover match end, independently apply winner/loser, tie, draw, or forfeiture policy, or reconstruct the decision from room state. It consumes the authoritative locked `MatchDecision` and the final facts referenced by that decision.
 
 `MatchSummary` is the one emitted end-of-match summary object.
 
@@ -104,7 +106,7 @@ Recommended execution order:
 1. Game simulation completes all gameplay mutations for the tick.
 2. Resolved match rules evaluate normalized `MatchFacts`.
 3. The authoritative game/match layer locks one `MatchDecision`.
-4. Gameplay mutation stops.
+4. Gameplay mutation stops by default.
 5. EndOfMatchFlow consumes the locked decision and its final facts.
 6. EndOfMatchFlow duplicate guard prevents repeated orchestration.
 7. Historical participant, objective, mission, and challenge facts are aggregated.
@@ -117,7 +119,7 @@ The first implementation should preserve current behavior while moving match-end
 
 ## Runtime Freeze
 
-When `MatchDecision` locks, gameplay/world state should effectively freeze before result orchestration begins.
+When `MatchDecision` locks, gameplay/world mutation should effectively freeze before result orchestration begins by default. Any explicit mode-specific bypass or override is already part of the resolved authoritative decision; `EndOfMatchFlow` does not choose it.
 
 Frozen behavior includes:
 
@@ -150,7 +152,7 @@ The important rule is that no gameplay or result mutation may change the locked 
 
 ## MatchSummary
 
-`MatchSummary` is the single emitted summary object for a completed match.
+`MatchSummary` is the single emitted summary object for an ended match.
 
 It contains authoritative final match facts.
 
@@ -172,11 +174,15 @@ Planned result facts include:
 ```text
 mode_id
 session_context
+match_terminal_status
 end_reason
+participation disposition
 winning_player_refs
 winning_team_refs
 participant outcomes
 team outcomes
+individual placements
+participant result records
 completion time
 ranking inputs
 final score
@@ -184,6 +190,21 @@ target values
 ```
 
 `mode_id` is gameplay identity. `session_context` records hosting/session context such as single-player or multiplayer and must not be overloaded into mode identity.
+
+Participant and team outcomes use the universal vocabulary:
+
+```text
+won
+lost
+draw
+completed
+failed
+aborted
+```
+
+Match terminal status is a separate concept from participant/team outcome. It may be `completed`, `failed`, `cancelled`, `invalid`, or `administratively terminated`, as defined by [Modes And Match Rules](modes-and-match-rules.md). A participant may carry both a team outcome and an individual placement. Ties and multiple winners are valid, including co-op victories, team victories, and tied outcomes.
+
+Forfeiture means leaving a match. It is participation disposition/end-reason context, not an automatic `won` or `lost` outcome. Normal metrics and the resolved mode result policy determine winners and losers after forfeiture. Competitive modes may abort when participation becomes invalid. When nobody satisfies the victory condition, the default result is `draw`; a mode may explicitly override that default.
 
 `MatchSummary` should not contain downstream-specific derived sections such as:
 
@@ -233,7 +254,7 @@ Presentation-safe output must not expose durable identity internals.
 
 Current implementation may keep compatibility fields internally while the planned model moves toward normalized participant references.
 
-Participants who took part before disconnecting remain represented in `MatchSummary`. Their accumulated historical facts and participant outcome remain available even though disconnect removes them from active match-rule evaluation. They do not need a special player-facing disconnected label in result presentation.
+Every participant receives a result record, including eliminated, departed/disconnected, forfeited, late-joining, and partial-match participants. Participants who took part before disconnecting remain represented in `MatchSummary`, with their accumulated historical facts and resolved outcome available even though disconnect removes them from active match-rule evaluation. Departed/disconnected players do not need a special player-facing result label.
 
 ## MatchSummaryDispatcher
 
@@ -297,7 +318,7 @@ team-system selection and mode-specific team overrides
 progression eligibility policy inputs
 ```
 
-The authoritative game/match layer evaluates final `MatchFacts` under those resolved policies and locks `MatchDecision`. `EndOfMatchFlow` consumes that locked decision; it does not discover or independently decide the winner.
+The authoritative game/match layer evaluates final `MatchFacts` under those resolved policies and locks `MatchDecision`. The resolved handoff includes the match terminal status, participant/team outcomes, placements, tie or multiple-winner results, and participation disposition context. `EndOfMatchFlow` consumes that locked decision; it does not discover match end or independently apply winner/loser, forfeiture, draw, or abort policy.
 
 Baseline mode expectations:
 
@@ -318,9 +339,11 @@ score_attack
 - records winner/success/failure, completion time, final score, deaths, and target score
 ```
 
-FFA preserves standard individual player results. Team modes produce standard team results plus individual player results as required by [Teams And Team Rules](teams-and-team-rules.md). Result orchestration preserves the locked scopes instead of inferring teams from score rows.
+FFA preserves standard individual player results. Team modes produce standard team results plus individual player results as required by [Teams And Team Rules](teams-and-team-rules.md). A participant may have both a team outcome and an individual placement. Result orchestration preserves the locked scopes, ties, and multiple winners instead of inferring teams or winners from score rows.
 
 `EndOfMatchFlow` should not define mode behavior. It summarizes the locked decision and final facts produced by resolved mode policy.
+
+The default no-victory result is a draw, and competitive participation invalidation may produce an abort, only when those policies are supplied by the resolved mode decision. `EndOfMatchFlow` records and presents those outcomes without independently applying either rule.
 
 ## Objectives And Missions
 
@@ -561,9 +584,10 @@ Important future tests:
 EndOfMatchFlow runs once.
 Repeated game-over snapshots do not rebuild final results.
 MatchDecision locks once after final gameplay mutations for the tick.
-No gameplay or result mutation occurs after MatchDecision locks.
-Respawning freezes after MatchDecision locks.
-Late join freezes after MatchDecision locks.
+Gameplay mutation stops by default after MatchDecision locks; any mode-resolved post-end bypass or override is explicit.
+The locked MatchDecision and final authoritative result facts remain immutable after MatchDecision locks.
+Respawning freezes by default after MatchDecision locks, subject to an explicit mode-resolved post-end override.
+Late join freezes by default after MatchDecision locks, subject to an explicit mode-resolved post-end override.
 Disconnect handling still works after match end.
 Rejoin handling still works after match end.
 Current persistence reporting still works.
@@ -580,6 +604,16 @@ FFA results preserve player result scope.
 Co-op, Custom Teams, and Auto-balanced Teams preserve resolved team and participant outcome scopes.
 Disconnected participants retain accumulated facts and outcomes in MatchSummary.
 Disconnected participants require no special player-facing result label.
+Every participant receives a result record, including eliminated, departed/disconnected, forfeited, late-joining, and partial-match participants.
+Participant and team outcomes use only won, lost, draw, completed, failed, or aborted.
+Match terminal status remains separate from participant/team outcome and supports completed, failed, cancelled, invalid, or administratively terminated.
+Participants can carry both a team outcome and an individual placement.
+Ties and multiple winners are preserved for co-op, team, and tied outcomes.
+Forfeiture is recorded as participation disposition/end-reason context and does not automatically assign won or lost.
+Normal metrics and resolved mode result policy determine winners and losers after forfeiture.
+Competitive modes can abort when participation becomes invalid.
+When nobody satisfies the victory condition, the default result is draw unless the mode explicitly overrides it.
+EndOfMatchFlow consumes locked MatchDecision without independently applying result or outcome policy.
 session_context remains separate from gameplay mode_id.
 Objective resolutions aggregate into MatchSummary.
 Mission resolutions aggregate into MatchSummary.
@@ -604,6 +638,8 @@ Immediate and end-of-match challenge resolutions can both appear in MatchSummary
 
 ## Open Gametime Decisions
 
+The universal outcome vocabulary, terminal-status separation, tie and multiple-winner support, forfeiture treatment, default draw, complete participant result coverage, and `EndOfMatchFlow` handoff authority are settled product decisions. Remaining decisions are implementation-level:
+
 * Exact package placement for `EndOfMatchFlow`.
 * Exact package placement for `MatchSummaryDispatcher`.
 * Exact `MatchSummary` field names.
@@ -626,9 +662,9 @@ EndOfMatchFlow runs once per match.
 
 EndOfMatchFlow does not discover match end or independently decide winners.
 
-Gameplay/world state freezes when MatchDecision locks.
+Gameplay/world state freezes by default when MatchDecision locks; an explicit mode-resolved bypass or override may alter post-end continuation.
 
-No result mutation occurs after MatchDecision locks.
+The locked MatchDecision and final authoritative result facts remain immutable after MatchDecision locks.
 
 Disconnect, rejoin, room/session lifecycle, result delivery, and cleanup can continue after match end.
 
@@ -653,10 +689,19 @@ Challenge aggregation must support more than flat match-level summaries.
 Challenge status meaning belongs to the challenge/content system.
 
 Mode rules define match-end and result policy.
-
+The universal participant/team outcome vocabulary is won, lost, draw, completed, failed, or aborted.
+Match terminal status is separate from participant/team outcome.
+Match terminal status may be completed, failed, cancelled, invalid, or administratively terminated.
+Participants may have both a team outcome and an individual placement.
+Ties and multiple winners are valid.
+Forfeiture is participation disposition/end-reason context, not an automatic winner/loser outcome.
+Normal metrics and resolved mode result policy determine winners and losers after forfeiture.
+Competitive modes may abort when participation becomes invalid.
+The default no-victory result is draw unless the mode explicitly overrides it.
+Every participant receives a result record, including eliminated, departed/disconnected, forfeited, late-joining, and partial-match participants.
 MatchSummary retains historical facts for participants who disconnected after participating.
 
 session_context remains separate from gameplay mode_id.
 
-EndOfMatchFlow summarizes and emits locked results; it does not define gameplay, reward, achievement, persistence, or UI policy.
+EndOfMatchFlow consumes and emits locked results; it does not independently apply match-end, winner/loser, tie, forfeiture, draw, or abort policy, and does not define gameplay, reward, achievement, persistence, or UI policy.
 ```
