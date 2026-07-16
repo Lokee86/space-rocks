@@ -37,6 +37,8 @@ This doc selects `player_spawn_profile_id` and `encounter_spawn_profile_id` as r
 
 Detailed gameplay award and counter semantics belong to [Gameplay Awards And Counters](gameplay-awards-and-counters.md). This doc selects and composes the resolved award-policy references consumed by modes; it does not redefine award catalogue, attribution, assists, combos, streaks, distribution, mutation, visibility, or idempotency semantics. Detailed lives, death, elimination, and respawn semantics likewise belong to [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md).
 
+Detailed player-spawn placement, safety, profile, and spawn-presentation semantics belong to [Player Spawn Profiles](player-spawn-profiles.md). This doc selects and composes the resolved player-spawn profile reference without duplicating that owner system's placement policy.
+
 The shared Objective Foundation owns objective definitions/schema, objective-local lifecycle and state-machine evaluation, discovery/visibility, timers, failure reasons, and normalized objective events/snapshots. Modes consume and select/compose objectives, then own match implications and results policy; they do not become an alternate owner of objective runtime behavior.
 
 ## Core Architecture
@@ -121,7 +123,11 @@ records final match facts
 no required competitive ranking
 ```
 
-The baseline also resolves a player spawn profile separately from the encounter spawn profile. The exact initial `player_spawn_profile_id` remains an owner-system planning decision.
+The baseline also resolves a player spawn profile separately from the encounter spawn profile.
+
+```text
+player_spawn_profile_id: basic_safe_spawn_v1
+```
 
 ### Score Attack Overrides
 
@@ -165,7 +171,7 @@ Modes retain ownership of mode-specific objective aggregation overrides, team-el
 Player spawning and encounter spawning are independent rule-selectable seams:
 
 ```text
-player_spawn_profile_id
+player_spawn_profile_id: basic_safe_spawn_v1
 encounter_spawn_profile_id: playercentric_asteroids_v1
 ```
 
@@ -353,6 +359,7 @@ team and damage policies vary independently
 finite starting_lives count total ships
 infinite lives do not consume a finite lives counter
 player_spawn_profile_id and encounter_spawn_profile_id resolve independently
+the baseline player spawn profile is basic_safe_spawn_v1
 arcade_survival and score_attack use playercentric_asteroids_v1 encounter spawning
 disconnected players leave active evaluation without losing accumulated facts
 removed players do not block elimination or match completion
@@ -371,6 +378,7 @@ room snapshots expose the mode summary only if the client needs it
 - [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
+- [Player Spawn Profiles](player-spawn-profiles.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Progression And Rewards](progression-and-rewards.md)
 
@@ -386,7 +394,6 @@ room snapshots expose the mode summary only if the client needs it
 - Exact match-end policy contracts beyond the two baseline modes.
 - Exact result-policy shape and participant/team outcome vocabulary.
 - Exact finite/infinite lives and respawn policy contracts.
-- Exact initial `player_spawn_profile_id` and player-spawn behavior.
 - Exact encounter-spawn profile contract beyond `playercentric_asteroids_v1`.
 - Exact damage-policy contract and PvP enablement values.
 - Exact join-policy and re-entry eligibility contracts.
@@ -410,6 +417,7 @@ Finite and infinite lives apply to both baseline modes.
 Finite starting_lives counts total ships, including the initial ship.
 target_score applies only to score_attack.
 Player and encounter spawning are separate profile seams.
+The baseline player-spawn profile is basic_safe_spawn_v1, with detailed placement owned by Player Spawn Profiles.
 The existing encounter-spawning profile is playercentric_asteroids_v1.
 Disconnected players do not participate in live rule evaluation, but their historical facts remain available for results.
 MatchDecision locks once in the authoritative game/match layer.

@@ -166,7 +166,7 @@ FFA participants count as opposing sides when PvP is enabled. Co-op participants
 
 Player-spawn profiles own team-aware spawn placement.
 
-The team system supplies resolved membership and same-team/opposing-team relationships. A player-spawn profile may group teammates and separate opposing teams by default, but exact placement, distance, ordering, safety, and fallback behavior remain spawn-profile planning.
+The team system supplies resolved membership and same-team/opposing-team relationships. A player-spawn profile may group teammates and separate opposing teams by default, but exact placement, distance, ordering, safety, and fallback behavior belong to [Player Spawn Profiles](player-spawn-profiles.md).
 
 Team rules do not embed spawn coordinates or placement algorithms.
 
@@ -283,6 +283,7 @@ single-player does not require product-significant team representation
 - [Modes And Match Rules](modes-and-match-rules.md)
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Player Experience Systems](player-experience-systems.md)
+- [Player Spawn Profiles](player-spawn-profiles.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Multiplayer Session And Lifecycle](../platform/multiplayer-session-and-lifecycle.md)
 

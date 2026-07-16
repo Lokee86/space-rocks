@@ -28,6 +28,7 @@ This folder owns planning docs for gameplay and player-experience work that is n
 - [objectives-and-objective-runtime.md](objectives-and-objective-runtime.md) - Shared schema-driven Objective Foundation for definition-owned condition evaluation, local lifecycle/state, discovery, visibility, timers, and normalized objective events/snapshots.
 - [player-build-and-loadouts.md](player-build-and-loadouts.md) - Player Build And Loadouts documentation.
 - [player-experience-systems.md](player-experience-systems.md) - Player Experience Systems documentation.
+- [player-spawn-profiles.md](player-spawn-profiles.md) - Player Spawn Profiles documentation.
 - [progression-and-rewards.md](progression-and-rewards.md) - Progression And Rewards documentation.
 - [shop-commerce-and-economy.md](shop-commerce-and-economy.md) - Shop Commerce And Economy documentation.
 - [teams-and-team-rules.md](teams-and-team-rules.md) - Teams And Team Rules documentation.

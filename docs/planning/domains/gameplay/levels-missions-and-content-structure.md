@@ -131,7 +131,7 @@ encounter_profile_ref / encounter_spawn_profile_ref
 -> Enemies, Bosses, And Encounters
 
 player_spawn_profile_ref
--> Modes And Match Rules / future player-spawn owner plan
+-> [Player Spawn Profiles](player-spawn-profiles.md)
 
 arena_policy_ref
 -> unresolved arena policy planning

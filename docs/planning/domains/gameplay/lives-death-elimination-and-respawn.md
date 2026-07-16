@@ -317,6 +317,7 @@ result facts are emitted strictly according to mode requirements
 - [Modes And Match Rules](modes-and-match-rules.md)
 - [Gameplay Awards And Counters](gameplay-awards-and-counters.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
+- [Player Spawn Profiles](player-spawn-profiles.md)
 - [Player Build And Loadouts](player-build-and-loadouts.md)
 - [Player Experience Systems](player-experience-systems.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
