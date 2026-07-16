@@ -471,3 +471,14 @@ func test_unexpected_close_after_connected_emits_disconnected() -> void:
 		records.append(JSON.parse_string(line))
 	assert_eq(records[-1]["event"], ObservabilityContract.EVENT_CLIENT_DISCONNECTED)
 	assert_eq(records[-1]["fields"]["failure_mode"], "unexpected_close")
+func test_active_room_operation_trace_reaches_room_packet() -> void:
+	var trace_id := "00000000-0000-4000-8000-000000000026"
+	var fake_network := FakeNetworkClient.new()
+	var service := ClientConnectionService.new()
+	service.client_packet_sender = ClientConnectionService.ClientPacketSender.new(fake_network)
+	service.begin_room_operation("join_room", trace_id)
+
+	service.send_join_room_request("ROOM1")
+
+	assert_eq(fake_network.sent_packets.size(), 1)
+	assert_eq(fake_network.sent_packets[0]["trace_id"], trace_id)

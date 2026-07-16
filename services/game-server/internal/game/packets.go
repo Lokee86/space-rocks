@@ -39,6 +39,7 @@ const (
 
 type ClientPacket struct {
 	Type               string               `json:"type"`
+	TraceID            string               `json:"trace_id"`
 	MatchID            string               `json:"match_id"`
 	Input              runtime.InputState   `json:"input"`
 	Config             runtime.ClientConfig `json:"config"`
@@ -50,7 +51,6 @@ type ClientPacket struct {
 	TargetKind         string               `json:"target_kind"`
 	TargetID           string               `json:"target_id"`
 	Token              string               `json:"token"`
-	TraceID            string               `json:"trace_id"`
 	Sequence           int                  `json:"sequence"`
 	Lane               string               `json:"lane"`
 	BaselineID         string               `json:"baseline_id"`
@@ -62,11 +62,13 @@ type ClientPacket struct {
 
 type CreateRoomRequest struct {
 	Type           string `json:"type"`
+	TraceID        string `json:"trace_id"`
 	LocalProfileID string `json:"local_profile_id"`
 }
 
 type JoinRoomRequest struct {
 	Type     string `json:"type"`
+	TraceID  string `json:"trace_id"`
 	RoomCode string `json:"room_code"`
 }
 
@@ -85,6 +87,7 @@ type StartGameRequest struct {
 
 type StartSinglePlayerRequest struct {
 	Type           string `json:"type"`
+	TraceID        string `json:"trace_id"`
 	LocalProfileID string `json:"local_profile_id"`
 }
 
@@ -147,6 +150,7 @@ type RoomStateChanged struct {
 
 type RoomError struct {
 	Type      string `json:"type"`
+	TraceID   string `json:"trace_id"`
 	ErrorCode string `json:"error_code"`
 	Message   string `json:"message"`
 }

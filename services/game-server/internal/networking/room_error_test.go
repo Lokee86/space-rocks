@@ -14,7 +14,7 @@ func TestEnqueueRoomErrorUsesOutboundQueue(t *testing.T) {
 		outbound:  make(chan []byte, 1),
 	}
 
-	session.EnqueueRoomError(rooms.RoomErrorRoomFull, "Room is full.")
+	session.EnqueueRoomError("", rooms.RoomErrorRoomFull, "Room is full.")
 
 	select {
 	case payload := <-session.outbound:
@@ -30,6 +30,27 @@ func TestEnqueueRoomErrorUsesOutboundQueue(t *testing.T) {
 		}
 		if packet.Message != "Room is full." {
 			t.Fatalf("expected room error message, got %q", packet.Message)
+		}
+	default:
+		t.Fatal("expected room error to be queued")
+	}
+}
+func TestEnqueueRoomErrorEchoesTraceID(t *testing.T) {
+	session := &webSocketSession{
+		sessionID: "session-trace",
+		outbound:  make(chan []byte, 1),
+	}
+
+	session.EnqueueRoomError("trace-room-error", rooms.RoomErrorRoomFull, "Room is full.")
+
+	select {
+	case payload := <-session.outbound:
+		var packet game.RoomError
+		if err := json.Unmarshal(payload, &packet); err != nil {
+			t.Fatalf("decode room error packet: %v", err)
+		}
+		if packet.TraceID != "trace-room-error" {
+			t.Fatalf("expected room error trace %q, got %q", "trace-room-error", packet.TraceID)
 		}
 	default:
 		t.Fatal("expected room error to be queued")

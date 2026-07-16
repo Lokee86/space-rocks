@@ -388,15 +388,17 @@ static func client_config_packet(visible_world_width, visible_world_height) -> D
 	packet[FIELD_CONFIG] = packet_config
 	return packet
 
-static func create_room_request_packet() -> Dictionary:
+static func create_room_request_packet(trace_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "create_room_request"
+	packet[FIELD_TRACE_ID] = trace_id
 	return packet
 
-static func join_room_request_packet(room_code) -> Dictionary:
+static func join_room_request_packet(room_code, trace_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "join_room_request"
 	packet[FIELD_ROOM_CODE] = room_code
+	packet[FIELD_TRACE_ID] = trace_id
 	return packet
 
 static func leave_room_request_packet() -> Dictionary:
@@ -415,10 +417,11 @@ static func start_game_request_packet() -> Dictionary:
 	packet[FIELD_TYPE] = "start_game_request"
 	return packet
 
-static func start_single_player_request_packet(local_profile_id) -> Dictionary:
+static func start_single_player_request_packet(local_profile_id, trace_id) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_single_player_request"
 	packet[FIELD_LOCAL_PROFILE_ID] = local_profile_id
+	packet[FIELD_TRACE_ID] = trace_id
 	return packet
 
 static func return_to_lobby_request_packet() -> Dictionary:

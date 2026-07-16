@@ -186,17 +186,17 @@ func set_auth_session_controller(auth_session_controller_ref: AuthSessionControl
 
 func send_start_single_player_request(local_profile_id := "") -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_start_single_player_request(local_profile_id)
+		client_packet_sender.send_start_single_player_request(local_profile_id, _active_room_operation_trace_id)
 
 
 func send_create_room_request() -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_create_room_request()
+		client_packet_sender.send_create_room_request(_active_room_operation_trace_id)
 
 
 func send_join_room_request(room_code: String) -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_join_room_request(room_code)
+		client_packet_sender.send_join_room_request(room_code, _active_room_operation_trace_id)
 
 
 func send_set_ready_request(is_ready: bool) -> void:

@@ -15,7 +15,7 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 		outbound:  make(chan []byte, 1),
 	}
 
-	session.handleStartSinglePlayerRequest("")
+	session.handleStartSinglePlayerRequest("", "")
 
 	if session.sessionContext().RoomID == "" {
 		t.Fatal("expected room to be created")

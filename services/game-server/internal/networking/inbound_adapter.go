@@ -50,12 +50,12 @@ func (a inboundSessionAdapter) HandleAuthenticateRequest(token string, traceID s
 	a.session.handleAuthenticateRequest(token, traceID)
 }
 
-func (a inboundSessionAdapter) HandleCreateRoomRequest() {
-	a.session.handleCreateRoomRequest()
+func (a inboundSessionAdapter) HandleCreateRoomRequest(traceID string) {
+	a.session.handleCreateRoomRequest(traceID)
 }
 
-func (a inboundSessionAdapter) HandleJoinRoomRequest(roomCode string) {
-	a.session.handleJoinRoomRequest(roomCode)
+func (a inboundSessionAdapter) HandleJoinRoomRequest(roomCode string, traceID string) {
+	a.session.handleJoinRoomRequest(roomCode, traceID)
 }
 
 func (a inboundSessionAdapter) HandleLeaveRoomRequest() {
@@ -70,8 +70,8 @@ func (a inboundSessionAdapter) HandleStartGameRequest() {
 	a.session.handleStartGameRequest()
 }
 
-func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string) {
-	a.session.handleStartSinglePlayerRequest(localProfileID)
+func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string, traceID string) {
+	a.session.handleStartSinglePlayerRequest(localProfileID, traceID)
 }
 
 func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {

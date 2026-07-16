@@ -78,6 +78,7 @@ func TestHandleLobbyPacketStartSinglePlayerStoresLocalProfileID(t *testing.T) {
 
 	packet := game.ClientPacket{
 		Type:           game.PacketTypeStartSinglePlayerRequest,
+		TraceID:        "trace-start-single-player",
 		LocalProfileID: "local-profile-1",
 	}
 

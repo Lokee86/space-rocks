@@ -4,12 +4,12 @@ import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 type lobbySession interface {
 	LogLobbyPacketReceived(message string, roomCode string)
-	HandleCreateRoomRequest()
-	HandleJoinRoomRequest(roomCode string)
+	HandleCreateRoomRequest(traceID string)
+	HandleJoinRoomRequest(roomCode string, traceID string)
 	HandleLeaveRoomRequest()
 	HandleSetReadyRequest(ready bool)
 	HandleStartGameRequest()
-	HandleStartSinglePlayerRequest(localProfileID string)
+	HandleStartSinglePlayerRequest(localProfileID string, traceID string)
 	HandleReturnToLobbyRequest()
 }
 
@@ -17,11 +17,11 @@ func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 	switch packet.Type {
 	case game.PacketTypeCreateRoomRequest:
 		session.LogLobbyPacketReceived("CreateRoomRequest received", "")
-		session.HandleCreateRoomRequest()
+		session.HandleCreateRoomRequest(packet.TraceID)
 		return true
 	case game.PacketTypeJoinRoomRequest:
 		session.LogLobbyPacketReceived("JoinRoomRequest received", packet.RoomCode)
-		session.HandleJoinRoomRequest(packet.RoomCode)
+		session.HandleJoinRoomRequest(packet.RoomCode, packet.TraceID)
 		return true
 	case game.PacketTypeLeaveRoomRequest:
 		session.HandleLeaveRoomRequest()
@@ -33,7 +33,7 @@ func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 		session.HandleStartGameRequest()
 		return true
 	case game.PacketTypeStartSinglePlayerRequest:
-		session.HandleStartSinglePlayerRequest(packet.LocalProfileID)
+		session.HandleStartSinglePlayerRequest(packet.LocalProfileID, packet.TraceID)
 		return true
 	case game.PacketTypeReturnToLobbyRequest:
 		session.HandleReturnToLobbyRequest()

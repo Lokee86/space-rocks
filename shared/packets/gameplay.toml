@@ -9,6 +9,11 @@ json = "type"
 type = "string"
 
 [[structs.fields]]
+name = "trace_id"
+json = "trace_id"
+type = "string"
+
+[[structs.fields]]
 
 name = "match_id"
 go_name = "MatchID"
@@ -81,10 +86,6 @@ name = "token"
 json = "token"
 type = "string"
 
-[[structs.fields]]
-name = "trace_id"
-json = "trace_id"
-type = "string"
 
 [[structs.fields]]
 

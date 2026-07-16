@@ -8,6 +8,8 @@ const MultiplayerLobbyPresenter := preload("res://scripts/lobby/multiplayer_lobb
 const MultiplayerDialogStatusPresenter := preload("res://scripts/lobby/multiplayer_dialog_status_presenter.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 var main_menu: Control
 var canvas_layer: CanvasLayer
@@ -15,7 +17,6 @@ var session_context
 var connection_service
 var shell_boot_flow
 var client_config_sender: Callable
-var logger: Callable
 var latest_room_state := ""
 var _current_match_id := ""
 var latest_match_result := {}
@@ -33,18 +34,16 @@ func configure(
 	canvas_layer_ref: CanvasLayer,
 	session_context_ref,
 	connection_service_ref,
-	shell_boot_flow_ref,
-	logger_callable: Callable
+	shell_boot_flow_ref
 ) -> void:
 	main_menu = main_menu_ref
 	canvas_layer = canvas_layer_ref
 	session_context = session_context_ref
 	connection_service = connection_service_ref
 	shell_boot_flow = shell_boot_flow_ref
-	logger = logger_callable
 
 	lobby_flow = LobbyFlow.new()
-	lobby_network_actions = LobbyNetworkActions.new(connection_service, logger)
+	lobby_network_actions = LobbyNetworkActions.new(connection_service, Callable())
 	multiplayer_lobby_presenter = MultiplayerLobbyPresenter.new()
 	multiplayer_dialog_status_presenter = MultiplayerDialogStatusPresenter.new()
 	lobby_return_flow = LobbyReturnFlow.new(
@@ -61,7 +60,7 @@ func configure(
 		multiplayer_lobby_presenter,
 		main_menu,
 		canvas_layer,
-		logger
+		Callable()
 	)
 
 
@@ -80,6 +79,7 @@ func handle_room_snapshot(packet: Dictionary) -> void:
 	latest_room_state = state.room_state
 	_current_match_id = str(packet.get(Packets.FIELD_CURRENT_MATCH_ID, ""))
 	_cache_match_result_from_snapshot(packet)
+	_clear_room_operation_after_snapshot()
 	if state.room_state == Constants.ROOM_STATE_IN_GAME && !client_config_sender.is_null():
 		client_config_sender.call()
 
@@ -125,9 +125,26 @@ func current_max_players() -> int:
 
 
 func handle_room_error(packet: Dictionary) -> void:
-	var error_code := str(packet.get("error_code", ""))
-	var message := str(packet.get("message", ""))
-	_log("Room error received: code=%s message=%s" % [error_code, message])
+	var error_code := str(packet.get(Packets.FIELD_ERROR_CODE, ""))
+	var packet_trace_id := str(packet.get(Packets.FIELD_TRACE_ID, ""))
+	var operation := ""
+	var active_trace_id := ""
+	if connection_service != null && connection_service.has_method("active_room_operation_type"):
+		operation = _canonical_room_operation(str(connection_service.active_room_operation_type()))
+		if connection_service.has_method("active_room_operation_trace_id"):
+			active_trace_id = str(connection_service.active_room_operation_trace_id())
+	var trace_id := packet_trace_id if !packet_trace_id.is_empty() else active_trace_id
+	if _is_initial_room_operation(operation):
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_ROOM_OPERATION_FAILED,
+			"",
+			{"trace_id": trace_id, "error_code": error_code},
+			{"operation": operation}
+		)
+		if connection_service != null \
+				&& connection_service.has_method("clear_room_operation_context") \
+				&& (packet_trace_id.is_empty() || packet_trace_id == active_trace_id):
+			connection_service.clear_room_operation_context()
 	multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
 
 
@@ -139,7 +156,32 @@ func _on_lobby_left_room() -> void:
 		shell_boot_flow.clear()
 
 
-func _log(message: String) -> void:
-	if !logger.is_null():
-		logger.call(message)
+func _clear_room_operation_after_snapshot() -> void:
+	if connection_service == null:
+		return
+	if !connection_service.has_method("active_room_operation_type"):
+		return
+	var operation := _canonical_room_operation(str(connection_service.active_room_operation_type()))
+	if !_is_initial_room_operation(operation):
+		return
+	if connection_service.has_method("clear_room_operation_context"):
+		connection_service.clear_room_operation_context()
+
+
+func _canonical_room_operation(operation: String) -> String:
+	match operation:
+		Constants.BOOT_REQUEST_CREATE_ROOM:
+			return "create_room"
+		Constants.BOOT_REQUEST_JOIN_ROOM:
+			return "join_room"
+		Constants.BOOT_REQUEST_SINGLE_PLAYER:
+			return "start_single_player"
+		"start_single_player":
+			return "start_single_player"
+		_:
+			return ""
+
+
+func _is_initial_room_operation(operation: String) -> bool:
+	return operation == "create_room" || operation == "join_room" || operation == "start_single_player"
 

@@ -4,7 +4,7 @@ const Contract := preload("res://scripts/generated/observability/contract_genera
 
 const CONTEXT_FIELDS := [
 	"trace_id", "session_id", "room_id", "player_id", "account_id", "match_id",
-	"request_id", "diagnostic_report_id", "audit_event_id", "route", "packet_type", "duration_ms",
+	"request_id", "error_code", "diagnostic_report_id", "audit_event_id", "route", "packet_type", "duration_ms",
 ]
 const UUID_CONTEXT_FIELDS := ["trace_id", "diagnostic_report_id", "audit_event_id"]
 
