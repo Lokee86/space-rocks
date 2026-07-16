@@ -3,7 +3,7 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 ## Purpose
 
-This doc plans the encounter and player-hazard content seam for asteroid pressure, enemy archetypes, enemy AI, enemy loadouts, boss phases, waves, encounter profiles, encounter-spawn profiles, and encounter pacing.
+This doc plans the authored encounter and player-hazard content seam for asteroid pressure, enemy archetypes, enemy AI, enemy loadouts, boss phases, waves, encounter profiles, and encounter sequencing.
 
 The goal is to make hostile and hazardous content authored and sequenced through explicit encounter structures while preserving the server-authoritative runtime model.
 
@@ -14,7 +14,7 @@ Asteroids are included in this plan. They may remain a separate runtime entity t
 This doc owns:
 
 * asteroid pressure planning
-* asteroid spawn pressure integration
+* authored asteroid-pressure content and sequencing
 * enemy archetypes
 * enemy AI and behavior profiles
 * enemy and boss loadouts
@@ -23,9 +23,8 @@ This doc owns:
 * boss phases
 * wave definitions
 * encounter profiles
-* encounter-spawn profiles
-* spawn director behavior
-* threat pacing
+* encounter sequencing and director composition
+* authored threat pacing
 * encounter events
 * open-space and fixed-background encounter constraints
 * mission and challenge interaction with encounters
@@ -41,7 +40,7 @@ This doc does not own:
 * UI layout
 * mission/content progression ordering
 
-Mode rules may select `encounter_profile_id`, `encounter_spawn_profile_id`, and `arena_profile_id`, but the detailed enemy, boss, asteroid-pressure, wave, and encounter-spawn content behind those IDs belongs here. Player spawning is a separate rule seam and is not owned by this encounter system.
+Mode rules may select `encounter_profile_id`, one or more `encounter_spawn_profile_id` values, and `arena_profile_id`. This doc owns the authored enemy, boss, asteroid-pressure, wave, and encounter-sequencing content behind `encounter_profile_id`. [Encounter Spawn Profiles](encounter-spawn-profiles.md) owns all non-player spawn scheduling and policy, including validated profile configuration, budgets, scaling, targeting, safety, retries, activation/deactivation, and lifecycle/despawn-policy selection. Player spawning is a separate rule seam and is not owned by this encounter system.
 
 Mission and challenge planning may also select encounter profiles, but mission progression structure belongs to the levels, missions, and content structure plan.
 
@@ -155,13 +154,13 @@ ResolvedMatchRules
 - difficulty_tier
 ```
 
-Mode rules own selecting or validating those IDs. This doc owns what the IDs mean.
+Mode rules select or validate the IDs. This doc owns what `encounter_profile_id` means; [Encounter Spawn Profiles](encounter-spawn-profiles.md) owns the meaning and policy of `encounter_spawn_profile_id`; `ArenaProfile` remains the spatial arena-data owner.
 
 Gameplay should consume resolved encounter runtime data, not raw room config.
 
 A missing or unknown profile must either fail safely or use an explicit fallback. Silent partial encounter startup should be avoided.
 
-## Encounter, Encounter-Spawn, And Arena Profiles
+## Encounter, Encounter Spawn, And Arena Profiles
 
 Use three separate profile concepts:
 
@@ -170,7 +169,7 @@ EncounterProfile
 -> authored sequence and pressure plan
 
 EncounterSpawnProfile
--> placement, cadence, caps, and pressure budget
+-> non-player spawn scheduling and policy owner
 
 ArenaProfile
 -> bounds, background, spawn zones, and encounter anchors
@@ -203,36 +202,11 @@ When does a boss appear?
 How much asteroid pressure belongs to this encounter?
 ```
 
-### EncounterSpawnProfile
+### Encounter Spawn Profile
 
-An encounter-spawn profile owns placement and pacing mechanics for encounter hazards and enemies. It does not own player spawning.
+An Encounter Spawn Profile is the dedicated owner for all non-player spawn scheduling and policy. It validates profile-declared configuration, schedules accepted content, applies shared and local budgets, scales and targets encounters, enforces encounter safety, handles retries, and selects activation/deactivation and lifecycle/despawn policy. It does not own authored sequence/content, entity behavior, or player spawning. See [Encounter Spawn Profiles](encounter-spawn-profiles.md) for the authoritative planning contract.
 
-Likely fields:
-
-```text
-EncounterSpawnProfile
-- asteroid spawn rules
-- enemy spawn rules
-- boss spawn rules
-- spawn zones
-- spawn cadence
-- max active asteroids
-- max active enemies
-- max active total threat
-- threat budget
-- player-distance constraints
-- spawn source weighting
-```
-
-Spawn profiles answer:
-
-```text
-Where can content appear?
-How often can it appear?
-How many entities can be active?
-How much total threat is allowed?
-How far from players should entities spawn?
-```
+Encounter Spawn Profiles answer how authored or requested content is admitted into the world; this document answers what that content is and how its authored sequence, waves, AI, and encounter conditions behave.
 
 ### ArenaProfile
 
@@ -253,21 +227,19 @@ The fixed planet/background can remain visual at first. Named zones and anchors 
 
 ## Asteroid Pressure And Spawning
 
-Current asteroid spawning should move behind encounter/encounter-spawn profile control or be wrapped by an encounter-owned adapter.
+Current asteroid spawning should move behind [Encounter Spawn Profiles](encounter-spawn-profiles.md), while asteroid pressure, variants, and authored sequencing remain owned by this encounter-content plan.
 
 The first implementation does not need to remove asteroid-specific runtime code. It does need to make asteroid pressure part of encounter pacing.
 
 Asteroid pressure should support:
 
 ```text
-active asteroid caps
-spawn cadence
+authored asteroid pressure and sequencing
 variant/drop-table compatibility
-spawn zone selection
-difficulty/threat scaling
-match-over spawn stop
-coordination with enemy and boss counts
+coordination with enemy and boss content
 ```
+
+Spawn cadence, active caps, placement, scaling, safety, and match-transition scheduling belong to the selected Encounter Spawn Profile.
 
 Asteroid variants remain owned by the asteroid variant contract. Drop-table evaluation remains owned by the drop-table seam. Encounter planning controls when and how much asteroid pressure appears, not the internal asteroid variant metadata or drop evaluation logic.
 
@@ -700,12 +672,12 @@ Fake boss phase 2 should reload both AI and loadout, even if the actual behavior
 
 ## Encounter Director
 
-The encounter director decides what should spawn and when.
+The encounter director sequences authored content and emits scheduling requests; the selected Encounter Spawn Profile decides whether and how a non-player spawn is admitted.
 
 ```text
 EncounterRuntime
 + EncounterDirector.Step(...)
--> SpawnIntent[]
+-> EncounterSpawnRequest[]
 -> EncounterEvent[]
 ```
 
@@ -717,21 +689,17 @@ enemy_spawn_intent
 boss_spawn_intent
 ```
 
-The director should respect:
+The director should provide or observe:
 
 ```text
 encounter profile
-encounter-spawn profile
 arena profile
-active asteroid count
-active enemy count
-active total threat
 wave state
 boss state
-match-over state
+encounter lifecycle state
 ```
 
-The director should not spawn during match over.
+The Encounter Spawn Profile applies active population, shared weighted budget, targeting, safety, retry, and match-transition policy. The director should not request new encounter scheduling after match end.
 
 Game applies returned spawn intents through existing authoritative runtime seams.
 
@@ -763,9 +731,9 @@ Implementation direction:
 
 ```text
 1. Keep asteroid runtime entity separate.
-2. Move or wrap timed asteroid spawning behind encounter/encounter-spawn profile control.
+2. Route timed asteroid scheduling through the Encounter Spawn Profile owner.
 3. Add encounter profile fields for asteroid pressure.
-4. Add encounter-spawn profile caps for asteroids, enemies, and total threat.
+4. Keep spawn caps, budgets, scaling, targeting, safety, retries, and profile lifecycle in the Encounter Spawn Profile owner.
 5. Add or formalize runtime.Enemy.
 6. Add enemy packet/client sync.
 7. Add EnemyArchetype catalog with drone_ram and gunner_standoff.
@@ -781,7 +749,7 @@ Implementation direction:
 17. Add projectile/enemy and enemy/player collision handling.
 18. Add enemy damage/destruction through the damage seam.
 19. Emit enemy_spawned and enemy_destroyed.
-20. Add EncounterDirector profile that can coordinate asteroid, enemy, and boss spawning.
+20. Add EncounterDirector sequencing that can request asteroid, enemy, and boss spawning through the Encounter Spawn Profile owner.
 21. Add fake/test boss with two phases.
 22. Make fake boss phase 2 reload AI and loadout.
 23. Emit boss_spawned, boss_phase_started, and boss_defeated.
@@ -808,9 +776,9 @@ ramming weapon triggers from collision
 ramming damage routes through the damage seam
 director coordinates asteroid pressure
 director spawns both V0 archetypes
-director respects max active asteroids
-director respects max active enemies
-director respects max active total threat
+director routes spawn requests through the selected Encounter Spawn Profile
+Encounter Spawn Profile applies active-population and weighted-budget limits
+Encounter Spawn Profile applies targeting, safety, retry, and lifecycle policy
 director does not spawn during match over
 wave starts and clears
 fake boss spawns
@@ -828,6 +796,7 @@ unknown encounter_profile_id fails safely or falls back explicitly
 * [Planning](../../!INDEX.md)
 * [Player Experience Systems](player-experience-systems.md)
 * [Modes And Match Rules](modes-and-match-rules.md)
+* [Encounter Spawn Profiles](encounter-spawn-profiles.md)
 * [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 * [Player Build And Loadouts](player-build-and-loadouts.md)
 * [Progression And Rewards](progression-and-rewards.md)
@@ -840,14 +809,14 @@ unknown encounter_profile_id fails safely or falls back explicitly
 ## Open Gametime Decisions
 
 * Exact package split for encounter runtime, enemy runtime, AI behavior, and spawn director.
-* Exact shared data format for enemy archetypes, behavior profiles, loadouts, boss definitions, encounter profiles, encounter-spawn profiles, and arena profiles.
+* Exact shared data format for enemy archetypes, behavior profiles, loadouts, boss definitions, encounter profiles, and arena profiles.
 * Exact enemy packet shape and client presentation mapping.
 * Exact collision shape catalog structure for enemy and boss bodies.
 * Exact faction/allegiance policy package placement.
-* Exact fallback behavior for missing encounter, encounter-spawn, arena, enemy, or boss profile IDs.
+* Exact fallback behavior for missing `EncounterProfile`, Encounter Spawn Profile, `ArenaProfile`, enemy, or boss profile IDs.
 * Exact boss phase state packet shape.
 * Exact fake boss presentation.
-* Exact asteroid pressure formula and threat-cost values.
+* Exact authored asteroid pressure formula and content values.
 * Exact AI capability tag vocabulary beyond the V0 tags.
 
 ## Core Invariants

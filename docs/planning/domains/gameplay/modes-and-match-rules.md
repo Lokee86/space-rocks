@@ -23,7 +23,7 @@ team-system selection and mode overrides
 damage policy
 lives/respawn policy
 player spawn profile
-encounter spawn profile
+Encounter Spawn Profile
 join policy
 progression eligibility
 room-mode option validation
@@ -33,11 +33,11 @@ runtime match-fact evaluation
 authoritative MatchDecision and match lock
 ```
 
-This doc selects `player_spawn_profile_id` and `encounter_spawn_profile_id` as resolved rule seams, but it does not own detailed enemy, wave, or level content behind encounter-related IDs.
+This doc selects `player_spawn_profile_id` and one or more Encounter Spawn Profiles through `encounter_spawn_profile_id`, using only profile-declared validated options. It does not own profile internals or detailed enemy, wave, or level content behind encounter-related IDs. The dedicated [Encounter Spawn Profiles](encounter-spawn-profiles.md) plan owns non-player scheduling and spawn policy.
 
 Detailed gameplay award and counter semantics belong to [Gameplay Awards And Counters](gameplay-awards-and-counters.md). This doc selects and composes the resolved award-policy references consumed by modes; it does not redefine award catalogue, attribution, assists, combos, streaks, distribution, mutation, visibility, or idempotency semantics. Detailed lives, death, elimination, and respawn semantics likewise belong to [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md).
 
-Detailed player-spawn placement, safety, profile, and spawn-presentation semantics belong to [Player Spawn Profiles](player-spawn-profiles.md). This doc selects and composes the resolved player-spawn profile reference without duplicating that owner system's placement policy.
+Detailed player-spawn placement, safety, profile, and spawn-presentation semantics belong to [Player Spawn Profiles](player-spawn-profiles.md). This doc selects and composes the resolved player-spawn profile reference without duplicating that owner system's placement policy. Encounter Spawn Profile internals likewise remain with [Encounter Spawn Profiles](encounter-spawn-profiles.md).
 
 The shared Objective Foundation owns objective definitions/schema, objective-local lifecycle and state-machine evaluation, discovery/visibility, timers, failure reasons, and normalized objective events/snapshots. Modes consume and select/compose objectives, then own match implications and results policy; they do not become an alternate owner of objective runtime behavior.
 
@@ -96,7 +96,7 @@ team-system selection and mode overrides
 damage policy
 lives/respawn policy
 player spawn profile
-encounter spawn profile
+Encounter Spawn Profile
 join policy
 progression eligibility
 ```
@@ -123,7 +123,7 @@ records final match facts
 no required competitive ranking
 ```
 
-The baseline also resolves a player spawn profile separately from the encounter spawn profile.
+The baseline also resolves a player spawn profile separately from the Encounter Spawn Profile.
 
 ```text
 player_spawn_profile_id: basic_safe_spawn_v1
@@ -225,7 +225,7 @@ Define preset registry.
 Validate config.
 Construct `ResolvedMatchRules`.
 Compose the Arcade Survival baseline plus mode/config overrides.
-Select gameplay award and objective policy, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, encounter-spawn, join, and progression-eligibility policies. Objective runtime evaluates the selected objective definitions and emits authoritative objective facts.
+Select gameplay award and objective policy, ranking, match-end, result, team-system configuration, damage, lives/respawn, player-spawn, one or more Encounter Spawn Profiles, join, and progression-eligibility policies using only profile-declared validated options. Objective runtime evaluates the selected objective definitions and emits authoritative objective facts.
 Evaluate normalized `MatchFacts` and lock one authoritative `MatchDecision`.
 Likely starts near `services/game-server/internal/game/rules`, with exact package split as a gametime decision.
 ```
@@ -236,7 +236,7 @@ Game simulation / player lifecycle:
 Consumes resolved finite or infinite lives policy; finite starting_lives counts total ships.
 Exposes normalized active participation and historical participant facts.
 Removes disconnected players from live rule and team evaluation without discarding accumulated facts.
-Consumes separate player and encounter spawn profiles.
+Consumes separate player and Encounter Spawn Profiles.
 Should not parse raw room config throughout simulation.
 ```
 
@@ -379,6 +379,7 @@ room snapshots expose the mode summary only if the client needs it
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 - [Player Spawn Profiles](player-spawn-profiles.md)
+- [Encounter Spawn Profiles](encounter-spawn-profiles.md)
 - [Match Outcomes And Results](match-outcomes-and-results.md)
 - [Progression And Rewards](progression-and-rewards.md)
 
@@ -394,7 +395,7 @@ room snapshots expose the mode summary only if the client needs it
 - Exact match-end policy contracts beyond the two baseline modes.
 - Exact result-policy shape and participant/team outcome vocabulary.
 - Exact finite/infinite lives and respawn policy contracts.
-- Exact encounter-spawn profile contract beyond `playercentric_asteroids_v1`.
+- Exact implementation contract for the selected Encounter Spawn Profiles is defined in [Encounter Spawn Profiles](encounter-spawn-profiles.md); remaining decisions there are implementation-level.
 - Exact damage-policy contract and PvP enablement values.
 - Exact join-policy and re-entry eligibility contracts.
 - Exact future mission option shape.

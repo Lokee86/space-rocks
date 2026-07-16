@@ -355,12 +355,14 @@ gameplay award / objective / ranking separation
 finite and infinite lives policy
 starting_lives retains total-ships meaning
 player_spawn_profile_id
-encounter_spawn_profile_id
+one or more Encounter Spawn Profiles via encounter_spawn_profile_id
 playercentric_asteroids_v1
 target_score for score_attack
 mode identity in match result
 authoritative MatchDecision lock
 ```
+
+Resolved rules may select and configure multiple Encounter Spawn Profiles using only their profile-declared validated options. `playercentric_asteroids_v1` remains the baseline existing profile.
 
 ### Required Match-End Slice
 
@@ -802,6 +804,7 @@ Some phases can overlap, but dependency rules should not be violated.
 * [Verification And Quality Gates](domains/technical/verification-and-quality-gates.md)
 * [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md)
 * [Modes And Match Rules](domains/gameplay/modes-and-match-rules.md)
+* [Encounter Spawn Profiles](domains/gameplay/encounter-spawn-profiles.md)
 * [Match Outcomes And Results](domains/gameplay/match-outcomes-and-results.md)
 * [Player Build And Loadouts](domains/gameplay/player-build-and-loadouts.md)
 * [Progression And Rewards](domains/gameplay/progression-and-rewards.md)

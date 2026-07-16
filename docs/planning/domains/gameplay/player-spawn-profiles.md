@@ -188,7 +188,7 @@ Objective or campaign systems may provide objective-adjacent or checkpoint/scrip
 
 ### Encounter Spawning
 
-Encounter spawning owns enemies, asteroids, hazards, waves, and other non-player spawn content. Player-spawn profiles are a separate seam and must not reuse encounter placement policy as an implicit player-placement authority.
+[Encounter Spawn Profiles](encounter-spawn-profiles.md) owns enemies, asteroids, hazards, waves, and all other non-player spawn scheduling and policy. Player-spawn profiles are a separate seam and must not reuse encounter safety or placement policy as an implicit player-placement authority.
 
 ### Runtime Ship And Player Experience
 
@@ -254,6 +254,7 @@ telemetry records profile, reason, preferred position, final position, safety mo
 - [Lives, Death, Elimination, And Respawn](lives-death-elimination-and-respawn.md)
 - [Teams And Team Rules](teams-and-team-rules.md)
 - [Enemies, Bosses, And Encounters](enemies-bosses-and-encounters.md)
+- [Encounter Spawn Profiles](encounter-spawn-profiles.md)
 - [Objectives And Objective Runtime](objectives-and-objective-runtime.md)
 - [Levels, Missions, And Content Structure](levels-missions-and-content-structure.md)
 - [Player Experience Systems](player-experience-systems.md)
