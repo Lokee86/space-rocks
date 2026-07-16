@@ -22,6 +22,12 @@ class FakeConnectionService:
 		last_target_scope = target_scope
 		last_target_player_id = target_player_id
 
+	func request_kill_player(target_scope: String, target_player_id: String) -> void:
+		if target_player_id == "":
+			send_debug_kill_player_request(target_scope, target_player_id)
+		else:
+			send_debug_kill_target_player_request(target_player_id, target_scope)
+
 	func send_respawn_player(target_scope: String, target_player_id: String) -> void:
 		respawn_calls += 1
 		last_target_scope = target_scope
@@ -102,6 +108,7 @@ func test_player_canonical_target_resolves_and_sends_player_only_command() -> vo
 		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
 		"player-2"
 	)
+	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
 	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
 
@@ -122,6 +129,7 @@ func test_asteroid_canonical_target_does_not_send_player_only_command() -> void:
 		DevtoolsTargetResolver.TARGET_KIND_ASTEROID,
 		"asteroid-1"
 	)
+	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
 	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
 
@@ -138,6 +146,7 @@ func test_bullet_canonical_target_does_not_send_player_only_command() -> void:
 		DevtoolsTargetResolver.TARGET_KIND_BULLET,
 		"bullet-1"
 	)
+	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
 	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
 
@@ -154,6 +163,7 @@ func test_explicit_game_target_with_empty_target_sends_no_kill_request() -> void
 		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
 		""
 	)
+	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
 	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
 
@@ -170,6 +180,7 @@ func test_all_players_target_sends_kill_request_with_all_players_scope_and_empty
 		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
 		"player-2"
 	)
+	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
 	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
 
@@ -206,6 +217,7 @@ func test_explicit_game_target_without_active_player_target_sends_no_kill_reques
 		"",
 		""
 	)
+	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
 	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
 

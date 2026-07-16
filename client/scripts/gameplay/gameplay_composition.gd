@@ -78,7 +78,10 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 	world_sync = gameplay_shell_flow.world_sync
 	spectate_session_flow.configure(gameplay_menu_flow, gameplay_shell_flow, spectate_menu_state)
 	dev_tools_session_flow = DevToolsSessionFlow.new()
-	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, world_sync, logger)
+	dev_tools_session_flow.configure(connection_service, scene_root, gameplay_shell_flow, world_sync)
+	dev_tools_session_flow.configure_kill_player_route(
+		Callable(gameplay_shell_flow, "request_devtools_kill_player")
+	)
 	dev_tools_session_flow.attach_to_gameplay_shell(gameplay_shell_flow)
 
 	_connect_gameplay_shell_signal(&"gameplay_started", Callable(self, "_on_gameplay_started"))

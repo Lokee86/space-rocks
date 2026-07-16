@@ -229,9 +229,9 @@ func _on_resync_request_required(lane, baseline_id, sequence, reason) -> void:
 		client_packet_sender.send_resync_request(match_id, lane, baseline_id, sequence, reason)
 
 
-func send_packet(packet: Dictionary) -> void:
+func send_packet(packet: Dictionary, trace_id: String = "") -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_packet(packet)
+		client_packet_sender.send_packet(packet, trace_id)
 
 
 func send_webrtc_offer(description_type: String, sdp: String) -> void:

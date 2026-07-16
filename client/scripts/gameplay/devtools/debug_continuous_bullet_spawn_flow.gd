@@ -68,6 +68,8 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 					}
 					if placement_context.has("target_player_id"):
 						result["target_player_id"] = placement_context["target_player_id"]
+					if placement_context.has("_operation_trace"):
+						result["_operation_trace"] = placement_context["_operation_trace"]
 					placement_completed.emit(result)
 		active = false
 		placement_context = {}
@@ -79,4 +81,3 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 
 func process(_delta: float) -> void:
 	return
-

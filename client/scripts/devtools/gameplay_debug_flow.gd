@@ -3,6 +3,7 @@ class_name GameplayDebugFlow
 
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const DevtoolsTargetResolverScript = preload("res://scripts/devtools/devtools_target_resolver.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
@@ -56,42 +57,48 @@ func toggle_invincible(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = ""
 ) -> void:
-	if connection_service == null:
+	var operation_trace := create_operation_trace("devtools.toggle_invincible")
+	if connection_service == null || !connection_service.has_method("send_packet"):
+		_emit_dependency_unavailable()
 		return
 	debug_invincible_enabled = !debug_invincible_enabled
-	connection_service.send_packet(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_INVINCIBLE, target_scope, target_player_id))
-	ClientLogger.game_info("Devtools invincibility toggle sent")
+	_send_command(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_INVINCIBLE, target_scope, target_player_id), operation_trace)
 
 
 func toggle_infinite_lives(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = ""
 ) -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_INFINITE_LIVES, target_scope, target_player_id))
-	ClientLogger.game_info("Devtools infinite lives toggle sent")
+	var operation_trace := create_operation_trace("devtools.toggle_infinite_lives")
+	_send_command(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_INFINITE_LIVES, target_scope, target_player_id), operation_trace)
+
+
+func kill_player(target_scope: String = "", target_player_id: String = "") -> void:
+	var operation_trace := create_operation_trace("devtools.kill_player")
+	var packet := Packets.debug_kill_player_packet()
+	if target_scope != "":
+		packet[Packets.FIELD_TARGET_SCOPE] = target_scope
+	if target_player_id != "":
+		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
+	_send_command(packet, operation_trace)
 
 
 func toggle_freeze_world(freeze_target := "") -> void:
-	if connection_service == null:
-		return
+	var operation_trace := create_operation_trace("devtools.toggle_freeze_world")
+	var packet: Dictionary
 	if freeze_target == "" || freeze_target == "all":
-		connection_service.send_packet(Packets.toggle_debug_freeze_world_packet())
-		ClientLogger.game_info("Devtools world freeze toggle sent")
+		packet = Packets.toggle_debug_freeze_world_packet()
 	else:
-		connection_service.send_packet(Packets.toggle_debug_freeze_world_target_packet(freeze_target))
-		ClientLogger.game_info("Devtools world freeze toggle sent (freeze_target='%s')" % freeze_target)
+		packet = Packets.toggle_debug_freeze_world_target_packet(freeze_target)
+	_send_command(packet, operation_trace)
 
 
 func toggle_freeze_player(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = ""
 ) -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_FREEZE_PLAYER, target_scope, target_player_id))
-	ClientLogger.game_info("Devtools player freeze toggle sent")
+	var operation_trace := create_operation_trace("devtools.toggle_freeze_player")
+	_send_command(_build_player_toggle_packet(Packets.TYPE_TOGGLE_DEBUG_FREEZE_PLAYER, target_scope, target_player_id), operation_trace)
 
 
 func set_score(
@@ -99,10 +106,8 @@ func set_score(
 	target_player_id: String = "",
 	score: int = 0
 ) -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_SET_SCORE, target_scope, target_player_id, Packets.FIELD_SCORE, score))
-	ClientLogger.game_info("Devtools set score sent")
+	var operation_trace := create_operation_trace("devtools.set_score")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_SET_SCORE, target_scope, target_player_id, Packets.FIELD_SCORE, score), operation_trace)
 
 
 func add_score(
@@ -110,10 +115,8 @@ func add_score(
 	target_player_id: String = "",
 	amount: int = 0
 ) -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_ADD_SCORE, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount))
-	ClientLogger.game_info("Devtools add score sent")
+	var operation_trace := create_operation_trace("devtools.add_score")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_ADD_SCORE, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount), operation_trace)
 
 
 func set_lives(
@@ -121,10 +124,8 @@ func set_lives(
 	target_player_id: String = "",
 	lives: int = 0
 ) -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_SET_LIVES, target_scope, target_player_id, Packets.FIELD_LIVES, lives))
-	ClientLogger.game_info("Devtools set lives sent")
+	var operation_trace := create_operation_trace("devtools.set_lives")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_SET_LIVES, target_scope, target_player_id, Packets.FIELD_LIVES, lives), operation_trace)
 
 
 func add_lives(
@@ -132,24 +133,47 @@ func add_lives(
 	target_player_id: String = "",
 	amount: int = 0
 ) -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(_build_counter_packet(Packets.TYPE_DEBUG_ADD_LIVES, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount))
-	ClientLogger.game_info("Devtools add lives sent")
+	var operation_trace := create_operation_trace("devtools.add_lives")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_ADD_LIVES, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount), operation_trace)
 
 
 func clear_bullets() -> void:
-	if connection_service == null:
-		return
-	connection_service.send_packet(Packets.debug_clear_bullets_packet())
-	ClientLogger.game_info("Devtools clear bullets sent")
+	var operation_trace := create_operation_trace("devtools.clear_bullets")
+	_send_command(Packets.debug_clear_bullets_packet(), operation_trace)
 
 
 func clear_asteroids() -> void:
-	if connection_service == null:
+	var operation_trace := create_operation_trace("devtools.clear_asteroids")
+	_send_command(Packets.debug_clear_asteroids_packet(), operation_trace)
+
+
+func _send_command(packet: Dictionary, operation_trace: ClientOperationTrace) -> void:
+	var trace_id := operation_trace.trace_id()
+	packet[Packets.FIELD_TRACE_ID] = trace_id
+	var command_type := str(packet.get(Packets.FIELD_TYPE, ""))
+	if connection_service == null || !connection_service.has_method("send_packet"):
+		_emit_dependency_unavailable()
 		return
-	connection_service.send_packet(Packets.debug_clear_asteroids_packet())
-	ClientLogger.game_info("Devtools clear asteroids sent")
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_DEVTOOLS_COMMAND_REQUESTED,
+		"",
+		{"trace_id": trace_id},
+		{"command_type": command_type}
+	)
+	connection_service.send_packet(packet, trace_id)
+
+
+func _emit_dependency_unavailable() -> void:
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+		"",
+		{},
+		{
+			"subsystem": "devtools",
+			"dependency": "connection_service",
+			"failure_mode": "not_configured",
+		}
+	)
 
 
 func _build_player_toggle_packet(packet_type: String, target_scope: String, target_player_id: String) -> Dictionary:
@@ -177,4 +201,3 @@ func _build_counter_packet(
 	if target_scope == DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER and target_player_id != "":
 		packet[Packets.FIELD_TARGET_PLAYER_ID] = target_player_id
 	return packet
-

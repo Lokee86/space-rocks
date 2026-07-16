@@ -1,8 +1,6 @@
 extends RefCounted
 class_name DevtoolsWindowSpawnControls
 
-const ClientLogger := preload("res://scripts/logging/logger.gd")
-
 var window
 
 func configure(window_ref) -> void:
@@ -22,8 +20,6 @@ func _on_spawn_player_button_pressed() -> void: window.spawn_player_placement_re
 func _on_spawn_bullet_button_pressed() -> void: window.spawn_bullet_placement_requested.emit()
 func _on_respawn_player_button_pressed() -> void:
 	var target_player_id := _selected_metadata_as_string(window.respawn_player_select)
-	ClientLogger.game_info("Devtools respawn button pressed")
-	ClientLogger.game_info("Devtools respawn selected target_player_id='%s'" % target_player_id)
 	window.respawn_player_placement_requested.emit(target_player_id)
 
 func _initialize_pickup_select() -> void:

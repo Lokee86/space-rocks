@@ -1,8 +1,10 @@
 extends RefCounted
 class_name GameplayDevtoolsContext
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 const DevConnectionService := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
 var debug_flow
 var command_context
@@ -15,11 +17,12 @@ var hotkey_context
 var placement_context
 var window_action_context
 var state_context
+var _devtools_enabled_event_emitted := false
 
 
 func configure(connection_service_ref, operation_trace_factory: Callable = Callable()) -> void:
 	dev_connection_service = DevConnectionService.new()
-	dev_connection_service.configure(connection_service_ref)
+	dev_connection_service.configure(connection_service_ref, operation_trace_factory)
 	debug_flow = GameplayDebugFlow.new()
 	debug_flow.configure(connection_service_ref, operation_trace_factory)
 	devtools_window_controller = DevtoolsWindowController.new()
@@ -30,6 +33,9 @@ func configure(connection_service_ref, operation_trace_factory: Callable = Calla
 	command_context.configure(debug_flow, state_context, operation_trace_factory)
 	command_context.configure_connection(connection_service_ref)
 	command_context.configure_dev_connection(dev_connection_service)
+	devtools_window_controller.configure_kill_player_request_route(
+		Callable(command_context, "request_kill_player")
+	)
 	overlay_context = DevtoolsOverlayContext.new()
 	overlay_context.configure(state_context, connection_service_ref)
 	gameplay_state_context = DevtoolsGameplayStateContext.new()
@@ -46,6 +52,17 @@ func configure(connection_service_ref, operation_trace_factory: Callable = Calla
 	window_action_context = DevtoolsWindowActionContext.new()
 	window_action_context.configure(devtools_window_controller, command_context, placement_context, overlay_context)
 	window_action_context.connect_signals()
+	if (
+		connection_service_ref != null
+		and dev_connection_service != null
+		and debug_flow != null
+		and command_context != null
+		and placement_context != null
+		and window_action_context != null
+		and !_devtools_enabled_event_emitted
+	):
+		_devtools_enabled_event_emitted = true
+		ClientLogger.emit_canonical(ObservabilityContract.EVENT_DEVTOOLS_ENABLED)
 
 
 func configure_remote_player_nodes_provider(provider: Callable) -> void:
@@ -118,6 +135,11 @@ func configure_placement_request_route(route: Callable) -> void:
 func configure_local_respawn_confirmation_marker(marker: Callable) -> void:
 	if command_context != null:
 		command_context.configure_local_respawn_confirmation_marker(marker)
+
+
+func request_kill_player(target_scope: String = "", target_player_id: String = "") -> void:
+	if command_context != null:
+		command_context.request_kill_player(target_scope, target_player_id)
 
 
 func handle_placement_result(result: Dictionary) -> void:

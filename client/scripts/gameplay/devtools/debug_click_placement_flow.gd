@@ -71,6 +71,8 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 				result["target_player_id"] = placement_context["target_player_id"]
 			if placement_context.has("pickup_type"):
 				result["pickup_type"] = placement_context["pickup_type"]
+			if placement_context.has("_operation_trace"):
+				result["_operation_trace"] = placement_context["_operation_trace"]
 			placement_completed.emit(result)
 			active_action_name = StringName()
 			placement_start_result = {}
@@ -78,4 +80,3 @@ func handle_unhandled_input(event: InputEvent) -> bool:
 			return true
 
 	return false
-

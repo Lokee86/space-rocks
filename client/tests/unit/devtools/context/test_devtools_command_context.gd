@@ -3,7 +3,9 @@ extends GutTest
 const DevtoolsCommandContext := preload("res://scripts/devtools/context/devtools_command_context.gd")
 const DevtoolsStateContext := preload("res://scripts/devtools/context/devtools_state_context.gd")
 const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+const PresentationEventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
 
 
 class FakeConnectionService:
@@ -18,6 +20,18 @@ class FakeDebugFlow:
 
 	func process(required_lane_baselines_synced: bool) -> void:
 		calls.append(required_lane_baselines_synced)
+
+	func set_score(target_scope: String, target_player_id: String, score: int) -> void:
+		calls.append({"command": "debug_set_score", "target_scope": target_scope, "target_player_id": target_player_id, "value": score})
+
+	func add_score(target_scope: String, target_player_id: String, amount: int) -> void:
+		calls.append({"command": "debug_add_score", "target_scope": target_scope, "target_player_id": target_player_id, "value": amount})
+
+	func set_lives(target_scope: String, target_player_id: String, lives: int) -> void:
+		calls.append({"command": "debug_set_lives", "target_scope": target_scope, "target_player_id": target_player_id, "value": lives})
+
+	func add_lives(target_scope: String, target_player_id: String, amount: int) -> void:
+		calls.append({"command": "debug_add_lives", "target_scope": target_scope, "target_player_id": target_player_id, "value": amount})
 
 
 class FakeStateContext:
@@ -38,10 +52,11 @@ class FakeDevConnectionService:
 	func is_configured() -> bool:
 		return configured
 
-	func send_respawn_player(target_scope: String, target_player_id: String) -> void:
+	func send_respawn_player(target_scope: String, target_player_id: String, operation_trace = null) -> void:
 		respawn_calls.append({
 			"target_scope": target_scope,
 			"target_player_id": target_player_id,
+			"operation_trace": operation_trace,
 		})
 
 
@@ -50,6 +65,14 @@ class FakeRespawnMarker:
 
 	func mark() -> void:
 		call_count += 1
+
+
+func before_each() -> void:
+	ClientLogger.reset_for_tests()
+
+
+func after_each() -> void:
+	ClientLogger.reset_for_tests()
 
 
 func test_process_delegates_to_debug_flow() -> void:
@@ -97,6 +120,7 @@ func test_request_respawn_player_marks_local_respawn_confirmation_for_local_and_
 	assert_eq(dev_connection_service.respawn_calls.size(), 1)
 	assert_eq(dev_connection_service.respawn_calls[0]["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(dev_connection_service.respawn_calls[0]["target_player_id"], "player-1")
+	assert_true(dev_connection_service.respawn_calls[0]["operation_trace"] is ClientOperationTrace)
 	assert_eq(marker.call_count, 1)
 
 	context.request_respawn_player(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2")
@@ -131,3 +155,72 @@ func test_create_operation_trace_returns_independent_deterministic_traces() -> v
 	assert_eq(first.trace_id(), ids[0])
 	assert_eq(second.trace_id(), ids[1])
 	assert_ne(first.trace_id(), second.trace_id())
+
+
+func test_set_score_missing_single_player_target_emits_rejection_without_dispatch() -> void:
+	_assert_counter_rejection("debug_set_score", "00000000-0000-4000-8000-000000000711", func(context): context.request_set_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 42))
+
+
+func test_add_score_missing_single_player_target_emits_rejection_without_dispatch() -> void:
+	_assert_counter_rejection("debug_add_score", "00000000-0000-4000-8000-000000000712", func(context): context.request_add_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 5))
+
+
+func test_set_lives_missing_single_player_target_emits_rejection_without_dispatch() -> void:
+	_assert_counter_rejection("debug_set_lives", "00000000-0000-4000-8000-000000000713", func(context): context.request_set_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 3))
+
+
+func test_add_lives_missing_single_player_target_emits_rejection_without_dispatch() -> void:
+	_assert_counter_rejection("debug_add_lives", "00000000-0000-4000-8000-000000000714", func(context): context.request_add_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 1))
+
+
+func test_suppressed_counter_does_not_emit_request_or_rejection_event() -> void:
+	var writer := PresentationEventCapture.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var debug_flow := FakeDebugFlow.new()
+	var state_context := FakeStateContext.new()
+	var context := DevtoolsCommandContext.new()
+	context.configure(debug_flow, state_context)
+
+	context.request_set_score(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 42)
+
+	assert_eq(debug_flow.calls.size(), 0)
+	assert_eq(writer.written_lines.size(), 0)
+
+
+func test_missing_debug_flow_emits_dependency_without_request_event() -> void:
+	var writer := PresentationEventCapture.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var state_context := FakeStateContext.new()
+	state_context.lane_baseline_sync = true
+	var context := DevtoolsCommandContext.new()
+	context.configure(null, state_context)
+
+	context.request_clear_bullets()
+
+	assert_push_error_count(1)
+	assert_eq(writer.written_lines.size(), 1)
+	var record: Dictionary = JSON.parse_string(writer.written_lines[0])
+	assert_eq(record["event"], "client_dependency_unavailable")
+	assert_ne(record["event"], "devtools_command_requested")
+
+
+func _assert_counter_rejection(command_type: String, trace_id: String, request: Callable) -> void:
+	var writer := PresentationEventCapture.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var debug_flow := FakeDebugFlow.new()
+	var state_context := FakeStateContext.new()
+	state_context.lane_baseline_sync = true
+	var context := DevtoolsCommandContext.new()
+	context.configure(debug_flow, state_context, func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+	)
+
+	request.call(context)
+
+	assert_eq(debug_flow.calls.size(), 0)
+	assert_eq(writer.written_lines.size(), 1)
+	var record: Dictionary = JSON.parse_string(writer.written_lines[0])
+	assert_eq(record["event"], "devtools_command_rejected")
+	assert_eq(record["trace_id"], trace_id)
+	assert_eq(record["fields"]["command_type"], command_type)
+	assert_eq(record["fields"]["reason"], "target_required")

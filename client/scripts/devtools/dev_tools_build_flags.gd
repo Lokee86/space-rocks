@@ -16,7 +16,6 @@ const DEVTOGGLE_ACTIONS := [
 	"DevToggle10",
 ]
 
-
 func _ready() -> void:
 	if !public_build:
 		return

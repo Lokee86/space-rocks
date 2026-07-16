@@ -165,6 +165,12 @@ func handle_placement_result(result: Dictionary) -> void:
 	devtools_context.handle_placement_result(result)
 
 
+func request_devtools_kill_player(target_scope: String = "", target_player_id: String = "") -> void:
+	if devtools_context == null:
+		return
+	devtools_context.request_kill_player(target_scope, target_player_id)
+
+
 func refresh_devtools_spawn_player_slots(max_players: int) -> void:
 	if devtools_context == null:
 		return
@@ -190,5 +196,4 @@ func reset() -> void:
 		spectate_context.reset()
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.reset()
-
 

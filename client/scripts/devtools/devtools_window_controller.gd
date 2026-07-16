@@ -19,8 +19,6 @@ signal show_server_hitboxes_changed(enabled: bool)
 signal telemetry_sources_changed(local_source: String, target_source: String)
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
-const ClientLogger = preload("res://scripts/logging/logger.gd")
-
 var window: Window
 var parent: Node
 var latest_debug_status := {}
@@ -37,7 +35,7 @@ var latest_target_id := ""
 var latest_target_state := {}
 var latest_local_telemetry_source := "players"
 var latest_target_telemetry_source := "players"
-var connection_service
+var kill_player_request_route: Callable
 var self_player_id := ""
 var game_target_kind := ""
 var game_target_id := ""
@@ -204,12 +202,11 @@ func refresh_spawn_player_slots(max_players: int) -> void:
 
 
 func configure_kill_player_routing(
-	connection_service_ref,
+	_connection_service_ref,
 	self_id: String,
 	target_kind: String,
 	target_id: String
 ) -> void:
-	connection_service = connection_service_ref
 	self_player_id = self_id
 	game_target_kind = target_kind
 	game_target_id = target_id
@@ -217,6 +214,10 @@ func configure_kill_player_routing(
 		latest_game_target_player_id = game_target_id
 	else:
 		latest_game_target_player_id = ""
+
+
+func configure_kill_player_request_route(route: Callable) -> void:
+	kill_player_request_route = route
 
 
 func request_placement_action(action_name: StringName, placement_context: Dictionary = {}) -> void:
@@ -374,23 +375,23 @@ func _on_show_server_hitboxes_changed(enabled: bool) -> void:
 
 
 func _on_kill_player_requested(selected_player_id: String) -> void:
-	if connection_service == null:
+	if kill_player_request_route.is_null():
 		return
 
 	var target_context := _effective_target_context(selected_player_id)
 	var target_scope := str(target_context.get("target_scope", ""))
 	var target_player_id := str(target_context.get("target_player_id", ""))
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS:
-		connection_service.send_debug_kill_player_request(target_scope, "")
+		kill_player_request_route.call(target_scope, "")
 		return
 
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		return
 
 	if target_player_id == self_player_id:
-		connection_service.send_debug_kill_player_request(target_scope, "")
+		kill_player_request_route.call(target_scope, "")
 	else:
-		connection_service.send_debug_kill_target_player_request(target_player_id, target_scope)
+		kill_player_request_route.call(target_scope, target_player_id)
 
 
 func _on_spawn_asteroid_placement_requested() -> void:
@@ -416,19 +417,15 @@ func _on_spawn_bullet_placement_requested() -> void:
 
 
 func _on_respawn_player_placement_requested(target_player_id: String) -> void:
-	ClientLogger.game_info("Devtools respawn placement received target_player_id='%s'" % target_player_id)
 	var target_context := _effective_target_context(target_player_id)
 	var target_scope := str(target_context.get("target_scope", ""))
 	var effective_target_player_id := str(target_context.get("target_player_id", ""))
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS:
-		ClientLogger.game_info("Devtools respawn all-players request starting")
 		respawn_player_requested.emit(target_scope, "")
 		return
 
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and effective_target_player_id == "":
-		ClientLogger.game_warn("Devtools respawn placement blocked: effective target_player_id is empty")
 		return
-	ClientLogger.game_info("Devtools respawn direct request starting")
 	respawn_player_requested.emit(target_scope, effective_target_player_id)
 
 

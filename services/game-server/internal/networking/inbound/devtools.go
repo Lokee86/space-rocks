@@ -5,6 +5,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type devtoolsSession interface {
@@ -69,6 +70,16 @@ func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg
 	}
 	control := game.NewControl(gameplayContext.Game)
 	controller := devtools.NewController(devtools.Dependencies{Target: control})
-	controller.HandleCommand(context.GamePlayerID, command)
+	if controller.HandleCommand(context.GamePlayerID, command) {
+		logging.Emit(observability.Request{
+			Event: observability.EventNameDevtoolsCommandApplied,
+			Context: observability.Context{
+				TraceID:    command.TraceID,
+				RoomID:     context.RoomID,
+				PlayerID:   context.GamePlayerID,
+				PacketType: command.Type,
+			},
+		})
+	}
 	return true
 }

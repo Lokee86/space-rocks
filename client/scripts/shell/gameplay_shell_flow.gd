@@ -136,6 +136,12 @@ func handle_devtools_placement_result(result: Dictionary) -> void:
 	flow_composer.handle_placement_result(result)
 
 
+func request_devtools_kill_player(target_scope: String = "", target_player_id: String = "") -> void:
+	if flow_composer == null:
+		return
+	flow_composer.request_devtools_kill_player(target_scope, target_player_id)
+
+
 func refresh_devtools_spawn_player_slots(max_players: int) -> void:
 	if flow_composer == null:
 		return

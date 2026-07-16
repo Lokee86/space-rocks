@@ -1,6 +1,9 @@
 extends RefCounted
 class_name DevtoolsPlacementContext
 
+const ClientLogger := preload("res://scripts/logging/logger.gd")
+const DevSpawnPacketBuilder := preload("res://scripts/devtools/dev_spawn_packet_builder.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 var state_context
@@ -32,7 +35,10 @@ func request_placement_action(action_name: StringName, placement_context: Dictio
 		return
 	if placement_request_route.is_null():
 		return
-	placement_request_route.call(action_name, placement_context)
+	var operation_trace := create_operation_trace("devtools.%s" % String(action_name))
+	var routed_context := placement_context.duplicate(true)
+	routed_context["_operation_trace"] = operation_trace
+	placement_request_route.call(action_name, routed_context)
 
 
 func handle_placement_result(result: Dictionary) -> void:
@@ -41,6 +47,46 @@ func handle_placement_result(result: Dictionary) -> void:
 	var action_name := StringName(result.get("action_name", StringName()))
 	if action_name.is_empty():
 		return
-	if dev_connection_service == null || !dev_connection_service.is_configured():
+	var operation_trace = result.get("_operation_trace", null)
+	if not operation_trace is ClientOperationTrace:
+		operation_trace = create_operation_trace("devtools.%s" % String(action_name))
+	var packet: Dictionary = DevSpawnPacketBuilder.build_from_placement_result(result)
+	if packet.is_empty():
+		_reject(operation_trace, _command_type_for_action(action_name), "placement_result_invalid")
 		return
-	dev_connection_service.send_spawn_from_placement_result(result)
+	if dev_connection_service == null || !dev_connection_service.is_configured():
+		_emit_dependency_unavailable("dev_connection_service")
+		return
+	dev_connection_service.send_spawn_from_placement_result(result, operation_trace)
+
+
+func _reject(operation_trace: ClientOperationTrace, command_type: String, reason: String) -> void:
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_DEVTOOLS_COMMAND_REJECTED,
+		"",
+		{"trace_id": operation_trace.trace_id()},
+		{"command_type": command_type, "reason": reason}
+	)
+
+
+func _command_type_for_action(action_name: StringName) -> String:
+	match String(action_name):
+		"spawn_pickup":
+			return "debug_spawn_pickup"
+		"continuous_spawn_bullet":
+			return "debug_begin_continuous_bullet_stream"
+		_:
+			return "debug_spawn_entity"
+
+
+func _emit_dependency_unavailable(dependency: String) -> void:
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+		"",
+		{},
+		{
+			"subsystem": "devtools",
+			"dependency": dependency,
+			"failure_mode": "not_configured",
+		}
+	)

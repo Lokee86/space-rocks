@@ -1,96 +1,103 @@
 extends RefCounted
 
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 
 var connection_service
+var operation_trace_factory: Callable
 
 
-func configure(connection_service_ref) -> void:
+func configure(connection_service_ref, operation_trace_factory_ref: Callable = Callable()) -> void:
 	connection_service = connection_service_ref
+	operation_trace_factory = operation_trace_factory_ref
 
 
 func is_configured() -> bool:
 	return connection_service != null
 
 
-func send_spawn_from_placement_result(result: Dictionary) -> void:
+func send_spawn_from_placement_result(result: Dictionary, operation_trace: ClientOperationTrace = null) -> void:
+	operation_trace = _trace_from_result(result, operation_trace, "devtools.spawn")
 	if connection_service == null:
-		ClientLogger.game_warn("DevConnectionService: send spawn ignored, connection_service is null")
+		_emit_dependency_unavailable("connection_service")
 		return
 	if result.is_empty():
-		ClientLogger.game_warn("DevConnectionService: send spawn ignored, placement result is empty")
 		return
 	var packet: Dictionary = DevSpawnPacketBuilder.build_from_placement_result(result)
 	if packet.is_empty():
-		ClientLogger.game_warn("DevConnectionService: send spawn ignored, packet build returned empty")
 		return
 	if !connection_service.has_method("send_packet"):
-		ClientLogger.game_warn("DevConnectionService: send spawn ignored, send_packet is unavailable")
+		_emit_dependency_unavailable("connection_service.send_packet")
 		return
-	connection_service.send_packet(packet)
-	var packet_type: String = str(packet.get("type", ""))
-	if packet_type == DevSpawnPacketBuilder.TYPE_DEBUG_SPAWN_PICKUP:
-		ClientLogger.game_info(
-			"DevConnectionService: dev spawn packet sent pickup_type=%s x=%s y=%s"
-			% [
-				str(packet.get(DevSpawnPacketBuilder.FIELD_PICKUP_TYPE, "")),
-				str(packet.get(DevSpawnPacketBuilder.FIELD_X, 0.0)),
-				str(packet.get(DevSpawnPacketBuilder.FIELD_Y, 0.0))
-			]
-		)
-	else:
-		ClientLogger.game_info(
-			"DevConnectionService: dev spawn packet sent entity_type=%s x=%s y=%s has_direction=%s"
-			% [
-				str(packet.get(DevSpawnPacketBuilder.FIELD_ENTITY_TYPE, "")),
-				str(packet.get(DevSpawnPacketBuilder.FIELD_X, 0.0)),
-				str(packet.get(DevSpawnPacketBuilder.FIELD_Y, 0.0)),
-				str(packet.get(DevSpawnPacketBuilder.FIELD_HAS_DIRECTION, false))
-			]
-		)
+	_send(packet, operation_trace)
 
 
-func send_begin_continuous_bullet_stream_from_placement_result(result: Dictionary) -> void:
+func send_begin_continuous_bullet_stream_from_placement_result(result: Dictionary, operation_trace: ClientOperationTrace = null) -> void:
+	operation_trace = _trace_from_result(result, operation_trace, "devtools.begin_continuous_bullet_stream")
 	if connection_service == null:
-		ClientLogger.game_warn("DevConnectionService: send begin continuous bullet stream ignored, connection_service is null")
+		_emit_dependency_unavailable("connection_service")
 		return
 	if result.is_empty():
-		ClientLogger.game_warn("DevConnectionService: send begin continuous bullet stream ignored, placement result is empty")
 		return
 	var packet: Dictionary = DevSpawnPacketBuilder.build_continuous_bullet_stream_from_placement_result(result)
 	if packet.is_empty():
-		ClientLogger.game_warn("DevConnectionService: send begin continuous bullet stream ignored, packet build returned empty")
 		return
 	if !connection_service.has_method("send_packet"):
-		ClientLogger.game_warn("DevConnectionService: send begin continuous bullet stream ignored, send_packet is unavailable")
+		_emit_dependency_unavailable("connection_service.send_packet")
 		return
-	connection_service.send_packet(packet)
-	ClientLogger.game_info(
-		"DevConnectionService: begin continuous bullet stream packet sent x=%s y=%s has_direction=%s"
-		% [
-			str(packet.get(DevSpawnPacketBuilder.FIELD_X, 0.0)),
-			str(packet.get(DevSpawnPacketBuilder.FIELD_Y, 0.0)),
-			str(packet.get(DevSpawnPacketBuilder.FIELD_HAS_DIRECTION, false))
-		]
-	)
+	_send(packet, operation_trace)
 
 
-func send_respawn_player(target_scope: String, target_player_id: String) -> void:
+func send_respawn_player(target_scope: String, target_player_id: String, operation_trace: ClientOperationTrace = null) -> void:
+	operation_trace = _ensure_trace(operation_trace, "devtools.respawn_player")
 	if connection_service == null:
-		ClientLogger.game_warn("DevConnectionService: send respawn ignored, connection_service is null")
+		_emit_dependency_unavailable("connection_service")
 		return
-	var packet: Dictionary = DevRespawnPacketBuilder.build(target_scope, target_player_id)
+	var packet: Dictionary = DevRespawnPacketBuilder.build(target_scope, target_player_id, operation_trace.trace_id())
 	if packet.is_empty():
-		ClientLogger.game_warn("DevConnectionService: send respawn ignored, packet build returned empty")
 		return
 	if !connection_service.has_method("send_packet"):
-		ClientLogger.game_warn("DevConnectionService: send respawn ignored, send_packet is unavailable")
+		_emit_dependency_unavailable("connection_service.send_packet")
 		return
-	connection_service.send_packet(packet)
-	ClientLogger.game_info(
-		"DevConnectionService: dev respawn packet sent target_scope=%s target_player_id=%s"
-		% [
-			str(packet.get(DevRespawnPacketBuilder.FIELD_TARGET_SCOPE, "")),
-			str(packet.get(DevRespawnPacketBuilder.FIELD_TARGET_PLAYER_ID, ""))
-		]
+	_send(packet, operation_trace)
+
+
+func _send(packet: Dictionary, operation_trace: ClientOperationTrace) -> void:
+	var trace_id := operation_trace.trace_id()
+	packet[DevSpawnPacketBuilder.FIELD_TRACE_ID] = trace_id
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_DEVTOOLS_COMMAND_REQUESTED,
+		"",
+		{"trace_id": trace_id},
+		{"command_type": str(packet.get("type", ""))}
+	)
+	connection_service.send_packet(packet, trace_id)
+
+
+func _trace_from_result(result: Dictionary, operation_trace: ClientOperationTrace, operation_name: String) -> ClientOperationTrace:
+	if operation_trace != null:
+		return operation_trace
+	var result_trace = result.get("_operation_trace", null)
+	if result_trace is ClientOperationTrace:
+		return result_trace
+	return _ensure_trace(null, operation_name)
+
+
+func _ensure_trace(operation_trace: ClientOperationTrace, operation_name: String) -> ClientOperationTrace:
+	if operation_trace != null:
+		return operation_trace
+	return ClientOperationTrace.create(operation_name, operation_trace_factory)
+
+
+func _emit_dependency_unavailable(dependency: String) -> void:
+	ClientLogger.emit_canonical(
+		ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+		"",
+		{},
+		{
+			"subsystem": "devtools",
+			"dependency": dependency,
+			"failure_mode": "not_configured",
+		}
 	)

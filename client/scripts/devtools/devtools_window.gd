@@ -1,6 +1,5 @@
 extends Window
 
-const ClientLogger = preload("res://scripts/logging/logger.gd")
 const DevtoolsWindowTelemetry := preload("res://scripts/devtools/devtools_window_telemetry.gd")
 const DevtoolsWindowTargetSelectors := preload("res://scripts/devtools/devtools_window_target_selectors.gd")
 const DevtoolsWindowSpawnControls := preload("res://scripts/devtools/devtools_window_spawn_controls.gd")
@@ -422,8 +421,6 @@ func _on_spawn_bullet_button_pressed() -> void:
 
 func _on_respawn_player_button_pressed() -> void:
 	var target_player_id := _selected_metadata_as_string(respawn_player_select)
-	ClientLogger.game_info("Devtools respawn button pressed")
-	ClientLogger.game_info("Devtools respawn selected target_player_id='%s'" % target_player_id)
 	respawn_player_placement_requested.emit(target_player_id)
 
 
@@ -485,6 +482,5 @@ func _line_edit_int(input: LineEdit) -> int:
 	if !text.is_valid_int():
 		return 0
 	return int(text)
-
 
 
