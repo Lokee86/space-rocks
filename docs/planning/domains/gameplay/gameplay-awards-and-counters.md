@@ -80,6 +80,12 @@ Counter lifecycle follows normal match or round ownership. Counters reset at the
 
 Removed players retain earned counters and historical attribution, but stop receiving normal new awards after removal. Delayed events are accepted or rejected using authoritative attribution and lifecycle rules rather than client timing.
 
+
+Fixed counter identifiers are stable semantic identifiers rather than UI labels. Modes may hide unused counters and may select different counters for objectives, ranking, results, or presentation. The fixed catalogue should transfer cleanly into future permanent statistics without making permanent statistics the runtime counter authority.
+
+Counter semantics are authoritative: `SCORE` is the general gameplay-points counter; `KILLS` records eligible final-destruction or elimination credit; `ASSISTS` is separate from kills and any SCORE award; `DEATHS` records authoritative death outcomes; `DAMAGE_DEALT` and `DAMAGE_TAKEN` record applied rather than requested or predicted damage; `OBJECTIVE_PROGRESS` is a general objective-facing counter; `RESOURCES_COLLECTED` records match-scoped collection facts while durable inventory grants remain elsewhere; and `COMPLETION_TIME` records an authoritative duration or timestamp-derived value rather than using a client clock.
+
+Custom counters remain numeric in the first planning model. Boolean state, structured objective state, inventories, lists, and arbitrary documents remain typed state owned by their appropriate systems rather than being forced into numeric counters.
 ## Award Catalogue And Sources
 
 Awards may update one or more counters according to resolved mode policy. The fixed catalogue provides the standard vocabulary; it does not require every mode to expose every counter.
@@ -105,6 +111,8 @@ Survival/time milestones, pickups/resources, and mode-specific events enter thro
 
 Award values and calculations are tunable. Modes may select different values, scaling functions, eligible recipients, target counters, penalties, or distribution policies. The award system owns the common pipeline and validation; mode rules own explicit policy selection.
 
+
+Source systems emit normalized authoritative facts; they do not directly mutate arbitrary scoreboard counters or reconstruct team totals. Award calculation produces an explicit recipient distribution before any counter mutation. Modes may disable an otherwise available source or replace the baseline calculation through resolved policy rather than inferred mode identity. Penalties and negative adjustments remain explicit authoritative award operations, with standard gameplay generally non-negative and monotonic unless mode policy says otherwise.
 ## Attribution And Contribution
 
 Projectile ownership is authoritative for hit, impact, and collision attribution. The owner of a projectile receives the eligible hit or impact attribution for that projectile under the resolved mode rules.
@@ -117,6 +125,8 @@ Contribution records must carry enough context to reject stale, invalid, removed
 
 Attribution must distinguish direct credit, assist credit, self-caused outcomes, environmental or unattributed outcomes, and any mode-specific category required by the selected rules. This system does not own combat cause detection; it normalizes the award consequences of authoritative cause facts.
 
+
+Applied contribution, normally authoritative damage, is the preferred assist measurement; attempted damage and client prediction are not sufficient. Source ownership identity must survive projectile, effect, target, or runtime-ship removal when the event remains authoritative. Contribution records are bounded runtime attribution state, retain only the fields needed by the selected assist policy, and are removed after the assist window plus its timing buffer. They are not permanent statistics, replay ledgers, damage logs, or result history.
 ## Assists
 
 Assists are mode-enabled. When enabled, the initial eligibility threshold is 5% contribution within an initial 5-second contribution window. Multiple assistants are allowed.
@@ -127,6 +137,8 @@ The mode resolves contribution measurement, threshold interpretation, source eli
 
 Assist distribution is part of the same authoritative award event as the credited destruction outcome. It is not a client-side follow-up and must not be separately inferred from a death or destruction notification.
 
+
+Environmental, self-caused, and unattributed destructions may produce no assists unless the selected mode explicitly defines otherwise. Whether a final credited killer may also receive assist credit remains mode policy; this document does not impose a universal exclusion. A removed player retains prior counters but does not receive normal new awards, and no delayed-event exception is introduced here.
 ## Combos And Multipliers
 
 Combos and multipliers are one generic system, separate from streaks. A combo modifies qualifying award values according to a combo state owned by a configured owner.
@@ -186,6 +198,9 @@ Award distribution completes before final match lock and `EndOfMatchFlow`. A fin
 
 Objective evaluation and match-end evaluation are handoffs. They may consume the final counter state and award facts, but they do not reorder or duplicate the award pipeline.
 
+
+Award calculation and recipient distribution complete before mutation. Ranking consumes final or result facts through its own owner; this document does not introduce live ranking authority.
+
 ## Team Award Distribution
 
 Team award behavior is mode-configurable. The default is full individual awards, with team totals derived by summing player counters.
@@ -203,6 +218,9 @@ Alternative distribution models are supported by the seam but are not default. A
 Team distribution must not duplicate individual mutation when a team total is derived by sum. If a mode selects a dedicated team-owned award, it must be represented as a distinct authoritative distribution target rather than inferred from a displayed aggregate.
 
 The team system supplies authoritative membership and team relationship facts. This system consumes those facts to resolve award recipients; it does not assign teams or redefine team membership.
+
+
+Award sharing and team aggregation remain separate concerns: sharing resolves who receives mutations from an event, while aggregation resolves how player counters contribute to a team value. Friendly-fire and same-team/opposing-team facts are consumed from the team/combat owners when required; they are not redefined here.
 
 ## Counter Mutation And Lifecycle
 
@@ -224,6 +242,9 @@ Normal gameplay defaults to monotonic counters. Modes may configure non-monotoni
 
 Counters reset with normal match/round ownership. A destroyed runtime ship, respawn, disconnect, reconnect, or presentation transition must not reset durable match-scoped player counters unless the resolved lifecycle or mode policy explicitly defines a match-state transition. Removed players retain earned counters and do not receive normal new awards.
 
+
+The runtime operation set includes increment, decrement, set, minimum/maximum clamps, and timed accumulation. Mutation permissions remain authoritative; supporting `set` or `decrement` does not authorize clients to request arbitrary changes. Mutations retain bounded source context for diagnostics and duplicate prevention rather than becoming an unbounded event ledger. Typical lifecycle boundaries include match start, round start, objective activation, participant activation, and team activation; counters reset when their owning lifecycle ends or restarts unless an owning system explicitly creates a new aggregate from a completed snapshot.
+
 ## Visibility And Snapshots
 
 Visibility is mode-defined. Supported visibility classes include:
@@ -244,6 +265,9 @@ The award system exposes a clean final snapshot for result and presentation hand
 
 Result and persistence handoff remains deferred to result planning. This system does not emit persistence-specific output or decide account progression. `MatchDecision`, `EndOfMatchFlow`, and `MatchSummary` consume the clean final snapshot through their own contracts.
 
+
+Visibility metadata describes authorized presentation scope and does not define exact UI layout. A counter may remain authoritative and hidden while being consumed by objectives, ranking, results, devtools, or statistics. The final snapshot exposes only the mode-authorized facts needed by result, statistics, progression, achievement, devtools, and presentation owners; this system does not write persistence payloads or grant account rewards.
+
 ## Event Idempotency
 
 Idempotency belongs at the authoritative award-event, distribution, and broadcast level, not independently per client.
@@ -253,6 +277,9 @@ Each legitimate recipient receives a distribution once for a given legitimate aw
 An event identity must cover the authoritative event and resolved distribution instance. Replays, duplicate transport delivery, stale client acknowledgements, and duplicate handler execution must not mutate counters twice or broadcast a second effective award. Client deduplication may improve presentation resilience, but it is not the authoritative guarantee.
 
 Idempotency must be applied after recipient resolution and before counter mutation/broadcast completion. A failed or partial distribution must have an explicit authoritative retry or rejection outcome; it must not rely on clients to decide whether a recipient already received credit.
+
+
+The authoritative event or resolved distribution identity is stable enough for bounded duplicate suppression. Client broadcast consumes already-applied mutations or snapshots; clients do not decide whether an award exists. Failed or partial distribution has an explicit authoritative retry or rejection outcome rather than relying on clients to infer prior credit.
 
 ## Runtime Ownership
 
@@ -324,6 +351,9 @@ Ranking consumes the result or final snapshot through its own policy and decides
 
 HUD, scoreboard, results, and spectator presentation consume mode-authorized visible facts. Presentation may animate awards, combo tiers, streaks, and counter changes, but cannot mutate counters, apply multipliers, select recipients, or deduplicate authoritative credit.
 
+
+The source systems that own combat, collision, pickups, objectives, and other gameplay events emit normalized source facts and cannot directly mutate arbitrary scoreboard counters. Permanent statistics, progression, rewards, and achievements consume completed facts through their own seams; they do not own live gameplay counters or cause an award to be applied twice.
+
 ## Implementation Direction
 
 The first implementation slice should proceed from resolved rules through one authoritative award pipeline:
@@ -343,6 +373,9 @@ The first implementation slice should proceed from resolved rules through one au
 ```
 
 Implementation should keep award policy in a focused gameplay owner. Networking, presentation, game-loop coordination, objective code, team code, result code, and progression code should route authoritative facts or execute their own policy rather than becoming alternate award authorities.
+
+
+The first implementation slice also preserves current asteroid size-based SCORE behavior behind an explicit award definition before extending the counter system. New source, assist, combo, streak, team-distribution, and custom-counter behavior remains behind explicit ownership seams.
 
 ## Testing Direction
 
@@ -381,7 +414,21 @@ visibility classes are mode-defined and do not change ownership
 player, team, objective, and match runtime owners retain their respective counter state
 final snapshot is clean and not persistence-specific
 objective, ranking, match-end, results, progression, and presentation owners retain their boundaries
+Stable counter identifiers are not UI labels, and custom numeric counters do not replace typed objective state, inventories, lists, or arbitrary documents.
+
+Source systems emit normalized authoritative facts and never directly mutate arbitrary scoreboard counters.
+
+Applied contribution and bounded cleanup govern assist history; it is not permanent statistics or replay history.
+
+Visibility metadata describes authorized scope without transferring value ownership to the client.
+
+Results, statistics, progression, achievements, devtools, and presentation consume completed facts through their own seams.
+
+Event/distribution identity, duplicate suppression, and explicit retry/rejection outcomes remain authoritative.
 ```
+
+
+Additional checks cover stable counter identifiers; custom counters not replacing typed non-counter state; authoritative applied-contribution measurement; source ownership surviving entity removal; environmental/self-caused/unattributed assist handling; explicit distribution before mutation; source systems never mutating arbitrary scoreboards; mutation clamps and server-side permissions; bounded contribution cleanup; normalized visibility metadata; stable event/distribution identity; retry/rejection behavior; permanent statistics/progression/achievement handoffs; and clients consuming rather than authoring awards.
 
 ## Related Docs
 
@@ -417,6 +464,15 @@ objective, ranking, match-end, results, progression, and presentation owners ret
 - Exact packet and storage shapes chosen by their owning systems.
 
 There are no remaining product-level awards or counters decisions blocking P4 system planning.
+
+
+- Exact normalized source-event shapes for hits, impacts, collisions, damage, destruction, pickups, and objective events.
+- Exact last-valid-hit tie and same-tick ordering behavior where simulation ordering is ambiguous.
+- Exact contribution-history storage layout, cleanup cadence, and 10-percent buffer implementation.
+- Exact default assist SCORE value and tuning data; no numeric tuning is selected here.
+- Exact counter visibility metadata representation and authorized client projection.
+- Exact devtool and administrative authorization for non-standard mutations.
+- Exact result, statistics, persistence, progression, and achievement projections, which remain owned by their later plans.
 
 ## Core Invariants
 
