@@ -16,6 +16,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -29,6 +30,9 @@ func run() int {
 }
 
 func runWithContext(ctx context.Context) int {
+	startupTraceID := uuid.NewString()
+	shutdownTraceID := uuid.NewString()
+	normalShutdown := false
 	gameIdentity, err := loadLoggingIdentity(logging.ServiceName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "game-server logging configuration failed: %v\n", err)
@@ -45,23 +49,50 @@ func runWithContext(ctx context.Context) int {
 		fmt.Fprintf(os.Stderr, "game-server logging configuration failed: %v\n", err)
 		return 1
 	}
-	logPath, err := logging.ConfigureFileOutput("logs/game-server", "game-server")
+	logging.Emit(observability.Request{
+		Event:   observability.EventNameServiceStarting,
+		Context: observability.Context{TraceID: startupTraceID},
+		Fields:  observability.Fields{"reason_code": "process_start"},
+	})
+	_, err = logging.ConfigureFileOutput("logs/game-server", "game-server")
 	if err != nil {
-		logging.Server.Warn("server structured log file unavailable", logging.FieldError, err)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameObservabilityUnavailable,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"failure_mode": "logging_file_open_failed"},
+		})
 	} else if status := logging.Status(); status.Degraded {
-		logging.Server.Warn("server structured log file unavailable", logging.FieldError, status.LastError)
-	} else {
-		logging.Server.Info("server structured log file configured", "path", logPath)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameObservabilityUnavailable,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"failure_mode": "logging_runtime_degraded"},
+		})
 	}
 	defer func() {
 		if err := logging.CloseFileOutput(); err != nil {
-			logging.Server.Error("server structured log file close failed", err)
+			logging.Emit(observability.Request{
+				Event:   observability.EventNameObservabilityUnavailable,
+				Context: observability.Context{TraceID: shutdownTraceID},
+				Fields:  observability.Fields{"failure_mode": "logging_file_close_failed"},
+			})
+		}
+	}()
+	defer func() {
+		if normalShutdown {
+			logging.Emit(observability.Request{
+				Event:   observability.EventNameServiceStopped,
+				Context: observability.Context{TraceID: shutdownTraceID},
+			})
 		}
 	}()
 
 	playerlogging.Configure(os.Getenv(playerlogging.EnvGlobalLevel))
 	if err := playerlogging.ConfigureRuntime(playerDataIdentity); err != nil {
-		logging.Server.Error("player-data logging configuration failed", err)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"dependency": "player_data_logging", "failure_mode": "configuration_failed"},
+		})
 		return 1
 	}
 	_, err = playerlogging.ConfigureFileOutput("logs/player-data", "player-data")
@@ -72,41 +103,52 @@ func runWithContext(ctx context.Context) int {
 	}
 	defer func() {
 		if err := playerlogging.CloseFileOutput(); err != nil {
-			logging.Server.Error("player-data structured log file close failed", err)
+			logging.Emit(observability.Request{
+				Event:   observability.EventNameObservabilityUnavailable,
+				Context: observability.Context{TraceID: shutdownTraceID},
+				Fields:  observability.Fields{"failure_mode": "player_data_logging_close_failed"},
+			})
 		}
 	}()
 
 	mux := http.NewServeMux()
 	diagnosticService, err := registerDiagnosticAggregator(mux)
 	if err != nil {
-		logging.Server.Error("diagnostic aggregator initialization failed", err)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"dependency": "diagnostic_aggregator", "failure_mode": "initialization_failed"},
+		})
 		return 1
 	}
-	defer closeDiagnosticAggregator(diagnosticService)
+	defer closeDiagnosticAggregator(diagnosticService, shutdownTraceID)
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
 
 	webRTCTransportConfig := buildWebRTCTransportConfigFromEnv()
 	networking.SetWebRTCTransportConfig(webRTCTransportConfig)
-	logging.Server.Info(
-		"web rtc transport config loaded",
-		"advertised_ip_count", len(webRTCTransportConfig.AdvertisedIPs),
-		"udp_port_range_configured", webRTCTransportConfig.UDPPortMin != 0 && webRTCTransportConfig.UDPPortMax != 0,
-	)
 
 	playerDataRuntime, err := buildPlayerDataRuntime()
 	if err != nil {
-		logging.Server.Error("player-data runtime initialization failed", err)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"dependency": "player_data_runtime", "failure_mode": "initialization_failed"},
+		})
 		return 1
 	}
 	playerDataSink := newPlayerDataSink(playerDataRuntime)
 
 	reporter, err := matchreporting.NewRuntimeReporter(playerDataSink)
 	if err != nil {
-		logging.Server.Error("player-data reporter initialization failed", err)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"dependency": "player_data_reporter", "failure_mode": "initialization_failed"},
+		})
 		return 1
 	}
-	authVerifier := buildAuthVerifierFromEnv()
+	authVerifier := buildAuthVerifierFromEnv(startupTraceID)
 
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporter(rooms, authVerifier, reporter))
@@ -121,17 +163,34 @@ func runWithContext(ctx context.Context) int {
 	mux.Handle("GET /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 	mux.Handle("PUT /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 
-	logging.Server.Info("server starting", "addr", ":8080")
 	server := newHTTPServer(httpapi.WithRequestContext(mux))
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
-		logging.Server.Error("server stopped", err, "addr", ":8080")
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameServiceRuntimeFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"failure_mode": "listen_failed"},
+		})
 		return 1
 	}
-	if err := serveHTTPServer(ctx, server, listener, 5*time.Second); err != nil {
-		logging.Server.Error("server stopped", err, "addr", ":8080")
+	logging.Emit(observability.Request{
+		Event:   observability.EventNameServiceStarted,
+		Context: observability.Context{TraceID: startupTraceID},
+	})
+	if err := serveHTTPServer(ctx, server, listener, 5*time.Second, func() {
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameServiceStopping,
+			Context: observability.Context{TraceID: shutdownTraceID},
+		})
+	}); err != nil {
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameServiceRuntimeFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"failure_mode": "serve_failed"},
+		})
 		return 1
 	}
+	normalShutdown = true
 	return 0
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/diagnostic-aggregator/hosted"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func registerDiagnosticAggregator(mux *http.ServeMux) (*hosted.Service, error) {
@@ -20,16 +21,17 @@ func registerDiagnosticAggregator(mux *http.ServeMux) (*hosted.Service, error) {
 		_ = service.Close()
 		return nil, err
 	}
-	if !config.Enabled {
-		logging.Server.Info("diagnostic aggregator hosted service disabled")
-	}
 	return service, nil
 }
 
-func closeDiagnosticAggregator(service *hosted.Service) {
+func closeDiagnosticAggregator(service *hosted.Service, lifecycleTraceID string) {
 	if service != nil {
 		if err := service.Close(); err != nil {
-			logging.Server.Error("diagnostic aggregator close failed", err)
+			logging.Emit(observability.Request{
+				Event:   observability.EventNameObservabilityUnavailable,
+				Context: observability.Context{TraceID: lifecycleTraceID},
+				Fields:  observability.Fields{"failure_mode": "diagnostic_aggregator_close_failed"},
+			})
 		}
 	}
 }

@@ -19,7 +19,7 @@ func TestRegisterDiagnosticAggregatorDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer closeDiagnosticAggregator(service)
+	defer closeDiagnosticAggregator(service, "550e8400-e29b-41d4-a716-446655440012")
 	response := httptest.NewRecorder()
 	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/diagnostic-reports", nil))
 	if response.Code != http.StatusNotFound {
@@ -45,7 +45,7 @@ func TestRegisterDiagnosticAggregatorAuthenticatedPostGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer closeDiagnosticAggregator(service)
+	defer closeDiagnosticAggregator(service, "550e8400-e29b-41d4-a716-446655440012")
 	body := `{"report_version":1,"trigger":"manual_bug_report","submitted_at":"2026-07-13T12:01:00Z","source":{"service":"client","service_instance_id":"550e8400-e29b-41d4-a716-446655440001","environment":"test","build_version":"1.0.0","platform":"windows"},"events":[{"event_id":"550e8400-e29b-41d4-a716-446655440000","timestamp":"2026-07-13T12:00:00Z","level":"info","event":"ingest_accepted","service":"client","schema_version":1,"service_instance_id":"550e8400-e29b-41d4-a716-446655440001"}]}`
 	request := httptest.NewRequest(http.MethodPost, "/v1/diagnostic-reports", strings.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
@@ -89,7 +89,7 @@ func TestGameServerAndHostedAggregatorUseSeparateOperationalFiles(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer closeDiagnosticAggregator(service)
+	defer closeDiagnosticAggregator(service, "550e8400-e29b-41d4-a716-446655440012")
 
 	aggregatorPath := filepath.Join(aggregatorDir, "diagnostic-aggregator.jsonl.open")
 	if gamePath == aggregatorPath {

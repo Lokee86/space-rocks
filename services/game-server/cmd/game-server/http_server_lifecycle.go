@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func serveHTTPServer(ctx context.Context, server *http.Server, listener net.Listener, shutdownTimeout time.Duration) error {
+func serveHTTPServer(ctx context.Context, server *http.Server, listener net.Listener, shutdownTimeout time.Duration, onStopping func()) error {
 	serveResult := make(chan error, 1)
 	go func() { serveResult <- server.Serve(listener) }()
 	select {
@@ -18,6 +18,9 @@ func serveHTTPServer(ctx context.Context, server *http.Server, listener net.List
 		}
 		return err
 	case <-ctx.Done():
+		if onStopping != nil {
+			onStopping()
+		}
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		shutdownErr := server.Shutdown(shutdownCtx)
 		cancel()
