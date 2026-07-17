@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/authclient"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type TokenVerifier interface {
@@ -28,11 +29,22 @@ const authenticateRequestTimeout = 2 * time.Second
 func (session *webSocketSession) EnqueueAuthenticateResult(result authenticateResultPacket) {
 	payload, err := packetcodec.Encode(result)
 	if err != nil {
-		logging.Network.Error("authenticate result marshal failed", err,
-			"session_id", session.sessionID,
-			"authenticated", result.Authenticated,
-			"user_id", result.UserID,
-		)
+		traceID := result.TraceID
+		if traceID == "" {
+			traceID = session.connectionTraceID
+		}
+		logging.Emit(observability.Request{
+			Event: observability.EventNameOutboundPacketEncodeFailed,
+			Context: observability.Context{
+				TraceID:    traceID,
+				SessionID:  session.sessionID,
+				PacketType: "authenticate_result",
+			},
+			Fields: observability.Fields{
+				"error_code":   "authenticate_result_encode_failed",
+				"failure_mode": "authenticate_result_encode_failed",
+			},
+		})
 		return
 	}
 

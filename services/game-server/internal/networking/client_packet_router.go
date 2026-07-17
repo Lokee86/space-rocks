@@ -5,6 +5,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) {
@@ -26,13 +27,20 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 			var packet game.ClientPacket
 			if err := packetcodec.Decode(msg, &packet); err != nil {
 				context := adapter.CurrentSessionContext()
-				logging.Network.Warn("websocket packet decode failed",
-					logging.FieldError, err,
-					logging.FieldRoomID, context.RoomID,
-					logging.FieldPlayerID, context.GamePlayerID,
-					"session_id", adapter.SessionID(),
-					logging.FieldRemoteAddr, remoteAddr,
-				)
+				logging.Emit(observability.Request{
+					Event: observability.EventNamePacketDecodeFailed,
+					Context: observability.Context{
+						TraceID:    adapter.ConnectionTraceID(),
+						SessionID:  adapter.SessionID(),
+						RoomID:     context.RoomID,
+						PlayerID:   context.GamePlayerID,
+						PacketType: envelope.Type,
+					},
+					Fields: observability.Fields{
+						"error_code":   "packet_decode_failed",
+						"failure_mode": "packet_decode_failed",
+					},
+				})
 				return game.ClientPacket{}, err
 			}
 			return packet, nil

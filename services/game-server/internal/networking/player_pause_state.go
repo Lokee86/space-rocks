@@ -1,8 +1,10 @@
 package networking
 
 import (
+	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func (session *webSocketSession) EnqueuePlayerPauseState() {
@@ -22,11 +24,20 @@ func (session *webSocketSession) EnqueuePlayerPauseState() {
 
 	payload, err := packetcodec.Encode(packet)
 	if err != nil {
-		logging.Network.Error("player pause state marshal failed", err,
-			logging.FieldRoomID, context.RoomID,
-			logging.FieldPlayerID, context.GamePlayerID,
-			"session_id", session.sessionID,
-		)
+		logging.Emit(observability.Request{
+			Event: observability.EventNameOutboundPacketEncodeFailed,
+			Context: observability.Context{
+				TraceID:    session.connectionTraceID,
+				SessionID:  session.sessionID,
+				RoomID:     context.RoomID,
+				PlayerID:   context.GamePlayerID,
+				PacketType: game.PacketTypePlayerPauseState,
+			},
+			Fields: observability.Fields{
+				"error_code":   "player_pause_state_encode_failed",
+				"failure_mode": "player_pause_state_encode_failed",
+			},
+		})
 		return
 	}
 

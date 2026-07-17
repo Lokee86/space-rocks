@@ -21,9 +21,12 @@ func (s *contextCountSession) EnqueuePlayerPauseState()              {}
 func (s *contextCountSession) EnqueueResyncRequest(SessionContext, realtime.ResyncRequest) bool {
 	return true
 }
-func (s *contextCountSession) ShouldLogFirstInputPacket(string) bool   { return false }
-func (s *contextCountSession) ShouldLogFirstRespawnPacket(string) bool { return false }
-func (s *contextCountSession) SessionID() string               { return "session" }
+func (s *contextCountSession) SessionID() string {
+	return "session"
+}
+func (s *contextCountSession) ConnectionTraceID() string {
+	return "00000000-0000-4000-8000-000000000001"
+}
 func (s *contextCountSession) EnqueueOutboundMessage(b []byte) { s.outbound = append(s.outbound, b) }
 
 func TestHandlersCaptureSessionContextOnce(t *testing.T) {

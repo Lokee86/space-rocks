@@ -4,9 +4,13 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type webRTCSession interface {
+	CurrentSessionContext() SessionContext
+	SessionID() string
+	ConnectionTraceID() string
 	HandleWebRTCOffer(descriptionType string, sdp string)
 	HandleWebRTCIceCandidate(media string, index int, name string)
 	HandleWebRTCSmoke(smokeID string, origin string, message string)
@@ -18,11 +22,7 @@ func HandleWebRTCSignalingPacket(session webRTCSession, remoteAddr string, msg [
 	case game.PacketTypeWebrtcOffer:
 		var packet game.WebRTCOffer
 		if err := packetcodec.Decode(msg, &packet); err != nil {
-			logging.Network.Warn("websocket webrtc offer decode failed",
-				logging.FieldError, err,
-				"packet_type", envelope.Type,
-				logging.FieldRemoteAddr, remoteAddr,
-			)
+			emitPacketDecodeFailure(session, envelope.Type, "webrtc_offer_decode_failed")
 			return true
 		}
 		session.HandleWebRTCOffer(packet.DescriptionType, packet.Sdp)
@@ -30,11 +30,7 @@ func HandleWebRTCSignalingPacket(session webRTCSession, remoteAddr string, msg [
 	case game.PacketTypeWebrtcIceCandidate:
 		var packet game.WebRTCIceCandidate
 		if err := packetcodec.Decode(msg, &packet); err != nil {
-			logging.Network.Warn("websocket webrtc ice candidate decode failed",
-				logging.FieldError, err,
-				"packet_type", envelope.Type,
-				logging.FieldRemoteAddr, remoteAddr,
-			)
+			emitPacketDecodeFailure(session, envelope.Type, "webrtc_ice_candidate_decode_failed")
 			return true
 		}
 		session.HandleWebRTCIceCandidate(packet.Media, packet.Index, packet.Name)
@@ -42,11 +38,7 @@ func HandleWebRTCSignalingPacket(session webRTCSession, remoteAddr string, msg [
 	case game.PacketTypeWebrtcSmoke:
 		var packet game.WebRTCSmoke
 		if err := packetcodec.Decode(msg, &packet); err != nil {
-			logging.Network.Warn("websocket webrtc smoke decode failed",
-				logging.FieldError, err,
-				"packet_type", envelope.Type,
-				logging.FieldRemoteAddr, remoteAddr,
-			)
+			emitPacketDecodeFailure(session, envelope.Type, "webrtc_smoke_decode_failed")
 			return true
 		}
 		session.HandleWebRTCSmoke(packet.SmokeID, packet.Origin, packet.Message)
@@ -54,11 +46,7 @@ func HandleWebRTCSignalingPacket(session webRTCSession, remoteAddr string, msg [
 	case game.PacketTypeWebrtcFailed:
 		var packet game.WebRTCFailed
 		if err := packetcodec.Decode(msg, &packet); err != nil {
-			logging.Network.Warn("websocket webrtc failed decode failed",
-				logging.FieldError, err,
-				"packet_type", envelope.Type,
-				logging.FieldRemoteAddr, remoteAddr,
-			)
+			emitPacketDecodeFailure(session, envelope.Type, "webrtc_failed_decode_failed")
 			return true
 		}
 		session.HandleWebRTCFailed(packet.ErrorCode, packet.Message)
@@ -66,4 +54,22 @@ func HandleWebRTCSignalingPacket(session webRTCSession, remoteAddr string, msg [
 	default:
 		return false
 	}
+}
+
+func emitPacketDecodeFailure(session webRTCSession, packetType string, failureCode string) {
+	context := session.CurrentSessionContext()
+	logging.Emit(observability.Request{
+		Event: observability.EventNamePacketDecodeFailed,
+		Context: observability.Context{
+			TraceID:    session.ConnectionTraceID(),
+			SessionID:  session.SessionID(),
+			RoomID:     context.RoomID,
+			PlayerID:   context.GamePlayerID,
+			PacketType: packetType,
+		},
+		Fields: observability.Fields{
+			"error_code":   failureCode,
+			"failure_mode": failureCode,
+		},
+	})
 }

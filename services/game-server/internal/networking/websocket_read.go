@@ -3,6 +3,7 @@ package networking
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/inbound"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func readClientInput(
@@ -20,30 +21,21 @@ func readClientInput(
 		envelope, err := inbound.DecodeClientPacketEnvelope(msg)
 		if err != nil {
 			context := session.sessionContext()
-			logging.Network.Warn("websocket packet envelope decode failed",
-				logging.FieldError, err,
-				logging.FieldRoomID, context.RoomID,
-				logging.FieldPlayerID, context.GamePlayerID,
-				"session_id", session.sessionID,
-				logging.FieldRemoteAddr, remoteAddr,
-			)
+			logging.Emit(observability.Request{
+				Event: observability.EventNamePacketEnvelopeDecodeFailed,
+				Context: observability.Context{
+					TraceID:   session.connectionTraceID,
+					SessionID: session.sessionID,
+					RoomID:    context.RoomID,
+					PlayerID:  context.GamePlayerID,
+				},
+				Fields: observability.Fields{
+					"error_code":   "packet_envelope_decode_failed",
+					"failure_mode": "packet_envelope_decode_failed",
+				},
+			})
 			continue
 		}
 		handleClientPacket(session, remoteAddr, msg, envelope)
 	}
-}
-
-func (session *webSocketSession) logLobbyPacketReceived(message string, roomCode string) {
-	context := session.sessionContext()
-	args := []any{
-		logging.FieldRoomID, context.RoomID,
-		logging.FieldPlayerID, context.GamePlayerID,
-		"session_id", session.sessionID,
-		"current_room_id", context.RoomID,
-	}
-	if roomCode != "" {
-		args = append(args, "room_code", roomCode)
-	}
-
-	logging.Network.Debug(message, args...)
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 )
 
 func CanSendDebugShapeCatalog(room *rooms.Room) bool {
@@ -19,13 +21,17 @@ func CanSendDebugShapeCatalog(room *rooms.Room) bool {
 		(context.State == rooms.RoomStateInGame || context.State == rooms.RoomStateGameOver)
 }
 
-func BuildDebugShapeCatalogResponse(room *rooms.Room, roomID string, remoteAddr string) ([]byte, bool) {
+func BuildDebugShapeCatalogResponse(room *rooms.Room, roomID string) ([]byte, bool) {
 	catalog, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
-		logging.Network.Error("debug shape catalog load failed", err,
-			logging.FieldRoomID, roomID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameRuntimeAssetLoadFailed,
+			Context: observability.Context{RoomID: roomID},
+			Fields: observability.Fields{
+				"error_code":   "collision_shape_catalog_load_failed",
+				"failure_mode": "collision_shape_catalog_load_failed",
+			},
+		})
 		return nil, false
 	}
 
@@ -36,10 +42,18 @@ func BuildDebugShapeCatalogResponse(room *rooms.Room, roomID string, remoteAddr 
 
 	response, err := packetcodec.Encode(responsePacket)
 	if err != nil {
-		logging.Network.Error("debug shape catalog packet encode failed", err,
-			logging.FieldRoomID, roomID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
+		logging.Emit(observability.Request{
+			Event: observability.EventNameOutboundPacketEncodeFailed,
+			Context: observability.Context{
+				TraceID:    uuid.NewString(),
+				RoomID:     roomID,
+				PacketType: "debug_shape_catalog",
+			},
+			Fields: observability.Fields{
+				"error_code":   "debug_shape_catalog_encode_failed",
+				"failure_mode": "debug_shape_catalog_encode_failed",
+			},
+		})
 		return nil, false
 	}
 
