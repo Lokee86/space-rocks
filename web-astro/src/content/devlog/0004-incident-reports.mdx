@@ -1,0 +1,108 @@
+---
+title: "Devlog 004: Deep Space Incident Reports"
+date: 2026-07-16
+summary: |
+  **Weekly Brief:** Gideon-IV has gone dark, and something hostile is transmitting from the ruins. Elsewhere in the system, the fleet has completed its observability rollout and only needs to clear a few bureaucratic hurdles before combat testing can begin.
+heroLine1: MYSTERIOUS TRANSMISSION
+heroLine2: COMPROMISED SYSTEM
+heroLine3: UNKNOWN HOSTILES
+heroMediaKind: images
+heroImages:
+  - /media/devlog/0004-incident-reports/narrow_escape.png
+heroYoutubeUrl: ""
+heroVideoSrc: ""
+heroMediaAlt: A military landing craft escapes the compromised Gideon-IV mining colony under hostile fire.
+articleLabel: Devlog Entry - 004
+articleTitle: Deep Space Incident Reports
+intro: |
+  The last transmission from Gideon-IV raised more questions than it answered. Unknown machines, a compromised colony, and a hostile force operating far beyond anything Xenobian command expected to encounter. This week’s report examines what happens when systems fail, signals disappear, and the only path forward is a complete record of what happened.
+
+  - [After-Action Report 77B-2A: Unknown Hostile Contact](#after-action-report-77b-2a-unknown-hostile-contact)
+  - [All Stations Reporting](#all-stations-reporting)
+  - [Eyes Across the System](#eyes-across-the-system)
+  - [What's Next](#whats-next)
+articleMediaKind: images
+articleImages:
+  - /media/devlog/0004-incident-reports/desk_reports.png
+  - /media/devlog/0004-incident-reports/incident_flow.png
+articleYoutubeUrl: ""
+articleMediaAlt: Official incident reports and a cross-service diagnostic trail.
+finishedTitle: All Systems Reporting
+finishedBody: System observability online.
+nowTitle: Final Launch Preparation
+nowBody: Clearing the last hurdles for recruits to launch.
+comingUpTitle: Test Launch
+comingUpBody: Training, arming, and deployment.
+utilityTitle: Weekly Brief
+utilityText: |
+  Gideon-IV has gone dark, and something hostile is transmitting from the ruins. Elsewhere in the system, the fleet has completed its observability rollout and only needs to clear a few bureaucratic hurdles before combat testing can begin.
+finePrint: Space Rocks! is an active development project. All media, features, names, and content are work in progress and subject to change before final release.
+---
+
+## After-Action Report 77B-2A: Unknown Hostile Contact
+
+**INCIDENT:** UNKNOWN HOSTILE CONTACT<br />
+**LOCATION:** GIDEON-IV MINING COLONY<br />
+**UNIT:** 3RD PLANETARY RESPONSE DETACHMENT<br />
+**REPORTING OFFICER:** CAPTAIN JOSE FRANCESCO<br />
+**CASUALTIES:** 2 KIA / 5 WOUNDED
+
+#### Incident Summary
+
+Response Detachment 3 arrived at the Gideon-IV mining colony at 0412, thirty-one hours after all communications, telemetry, and emergency signals from the colony ceased simultaneously.
+
+The facility remained powered. No personnel responded, and no evidence of an organized evacuation was found. Excavation machinery had been destroyed throughout the lower complex, while several access routes had been sealed using material not present in the original colony plans.
+
+At 0438, the detachment recovered a damaged site recorder near the primary excavation chamber. Six unidentified mechanical units emerged from the lower facility moments later.
+
+The units broadcast a repeating transmission across all local frequencies before opening fire. They demonstrated coordinated movement, heavy armour, and directed-energy weapons capable of disabling equipment with extreme prejudice.
+
+Lieutenant Soren ordered an immediate withdrawal after conventional fire produced no observable effect. Hostile units pursued the detachment through the upper facility and continued firing on the landing craft. They were eventually disabled using vessel-mounted heavy weapons.
+
+A second transmission was detected during retreat. No additional units were observed.
+
+#### Observations
+
+- No colony personnel were recovered.
+- Hostiles appear to have deliberately destroyed recovered samples and recording equipment.
+- Hostile units pursued withdrawing personnel from the excavation levels to the colony surface.
+- Three unidentified sensor contacts were detected above Gideon-IV following withdrawal. No visual confirmation was obtained. All three returns were substantially larger than the units encountered inside the colony.
+- Origin, numbers, and operational range remain unknown.
+
+#### Assessment
+
+Available evidence indicates that the hostile presence was established before Response Detachment 3 reached Gideon-IV and was likely connected to the colony-wide communications failure.
+
+The destruction of samples, records, and excavation equipment appears deliberate. Whether these actions were intended to conceal the colony’s findings, prevent material from leaving the site, or achieve another objective cannot yet be determined.
+
+The larger contacts detected above the colony indicate that the encountered ground units may represent only one component of a broader hostile force.
+
+Gideon-IV is presumed compromised. All civilian and military approach is suspended pending orbital reconnaissance and fleet-level response authorization.
+
+## All Stations Reporting
+
+Knowledge is power. In deep space, bad intelligence gets people killed. In software, it leaves failures drifting in the void.
+
+That is the purpose of observability: not to produce more console noise, but to leave a reliable record of what happened, where it happened, and which systems were involved.
+
+Over the last stretch, every major Space Rocks service has been connected to a shared observability system. Each now writes structured rolling logs using the same events and fields. Crashes, severe faults, and manual bug reports can also be assembled into bounded diagnostic reports without continuously uploading player logs.
+
+## Eyes Across the System
+
+A useful incident report needs more than a final error message. It needs the events leading up to the failure, the systems involved, and enough shared context to reconstruct the sequence afterward.
+
+Each Space Rocks service now keeps its own bounded rolling log. Old files rotate out automatically, so the game can preserve recent history without filling a player’s drive or requiring a permanent connection to an external logging service.
+
+Those records also follow one shared contract. The client, game-server, API server, player-data service, and diagnostic aggregator use the same event names and field vocabulary for things like builds, sessions, requests, rooms, matches, and failures. Shared observability definitions are generated for Go, GDScript, and Ruby from a single source of truth rather than being copied manually between codebases.
+
+That consistency is what turns several isolated logs into one trail. A problem that begins in the client, crosses the game-server, and fails during a player-data request can retain the identifiers needed to follow it across every boundary.
+
+The diagnostic system sits on top of that foundation. Manual bug reports, crashes, and selected severe failures can collect a limited set of relevant records into a single report. Submissions are validated and stripped of forbidden data before storage, while ordinary play remains local and is never continuously streamed back to a central server.
+
+The result is not a system that watches everything players do. It is a system designed to remember what the software did when something went wrong.
+
+## What’s Next
+
+With observability online across the project, the immediate priority is finishing the remaining technical-readiness work.
+
+Foundational match and player-experience systems are already moving forward in parallel, but the current phase remains the gate to the first round of controlled outside testing. Once that work is closed, Space Rocks will have reached its first practical alpha milestone: not a finished game, but a build ready to leave the hangar and survive contact with the enemy.
