@@ -38,7 +38,7 @@ func writeResyncRequiredAndApply(session *webSocketSession, queued queuedResyncR
 		return err == nil
 	}
 	if !writeResyncMessage(session.conn, message, func(err error) {
-		logWebSocketWriteClose(err, context.RoomID, context.GamePlayerID, remoteAddr)
+		logWebSocketWriteClose(err, session.connectionTraceID, session.sessionID, context.RoomID, context.GamePlayerID)
 	}) {
 		return false
 	}

@@ -6,6 +6,8 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 )
 
 func CanSendDebugStatus(room *rooms.Room) bool {
@@ -19,7 +21,7 @@ func CanSendDebugStatus(room *rooms.Room) bool {
 		(context.State == rooms.RoomStateInGame || context.State == rooms.RoomStateGameOver)
 }
 
-func BuildDebugStatusResponse(room *rooms.Room, playerID string, roomID string, remoteAddr string) ([]byte, bool) {
+func BuildDebugStatusResponse(room *rooms.Room, playerID string, roomID string) ([]byte, bool) {
 	if room == nil {
 		return nil, false
 	}
@@ -37,11 +39,19 @@ func BuildDebugStatusResponse(room *rooms.Room, playerID string, roomID string, 
 
 	response, err := packetcodec.Encode(responsePacket)
 	if err != nil {
-		logging.Network.Error("debug status packet encode failed", err,
-			logging.FieldRoomID, roomID,
-			logging.FieldPlayerID, playerID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
+		logging.Emit(observability.Request{
+			Event: observability.EventNameOutboundPacketEncodeFailed,
+			Context: observability.Context{
+				TraceID:    uuid.NewString(),
+				RoomID:     roomID,
+				PlayerID:   playerID,
+				PacketType: "debug_status",
+			},
+			Fields: observability.Fields{
+				"error_code":   "debug_status_encode_failed",
+				"failure_mode": "debug_status_encode_failed",
+			},
+		})
 		return nil, false
 	}
 

@@ -2,42 +2,48 @@ package networking
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/gorilla/websocket"
 )
 
-func logWebSocketReadClose(err error, roomID string, playerID string, remoteAddr string) {
+func logWebSocketReadClose(err error, connectionTraceID string, sessionID string, roomID string, playerID string) {
 	if isExpectedWebSocketClose(err) {
-		logging.Network.Debug("websocket read closed",
-			logging.FieldRoomID, roomID,
-			logging.FieldPlayerID, playerID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
 		return
 	}
 
-	logging.Network.Warn("websocket read failed",
-		logging.FieldError, err,
-		logging.FieldRoomID, roomID,
-		logging.FieldPlayerID, playerID,
-		logging.FieldRemoteAddr, remoteAddr,
-	)
+	logging.Emit(observability.Request{
+		Event: observability.EventNameGameServerReadFailed,
+		Context: observability.Context{
+			TraceID:   connectionTraceID,
+			SessionID: sessionID,
+			RoomID:    roomID,
+			PlayerID:  playerID,
+		},
+		Fields: observability.Fields{
+			"error_code":   "websocket_read_failed",
+			"failure_mode": "websocket_read_failed",
+		},
+	})
 }
 
-func logWebSocketWriteClose(err error, roomID string, playerID string, remoteAddr string) {
+func logWebSocketWriteClose(err error, connectionTraceID string, sessionID string, roomID string, playerID string) {
 	if isExpectedWebSocketClose(err) {
-		logging.Network.Debug("websocket write closed",
-			logging.FieldRoomID, roomID,
-			logging.FieldPlayerID, playerID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
 		return
 	}
 
-	logging.Network.Error("websocket write failed", err,
-		logging.FieldRoomID, roomID,
-		logging.FieldPlayerID, playerID,
-		logging.FieldRemoteAddr, remoteAddr,
-	)
+	logging.Emit(observability.Request{
+		Event: observability.EventNameGameServerWriteFailed,
+		Context: observability.Context{
+			TraceID:   connectionTraceID,
+			SessionID: sessionID,
+			RoomID:    roomID,
+			PlayerID:  playerID,
+		},
+		Fields: observability.Fields{
+			"error_code":   "websocket_write_failed",
+			"failure_mode": "websocket_write_failed",
+		},
+	})
 }
 
 func isExpectedWebSocketClose(err error) bool {

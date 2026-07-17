@@ -29,6 +29,10 @@ func (a inboundSessionAdapter) SessionID() string {
 	return a.session.sessionID
 }
 
+func (a inboundSessionAdapter) ConnectionTraceID() string {
+	return a.session.connectionTraceID
+}
+
 func (a inboundSessionAdapter) EnqueueOutboundMessage(message []byte) {
 	a.session.enqueue(message)
 }
@@ -40,10 +44,6 @@ func (a inboundSessionAdapter) EnqueueResyncRequest(context inbound.SessionConte
 	default:
 		return false
 	}
-}
-
-func (a inboundSessionAdapter) LogLobbyPacketReceived(message string, roomCode string) {
-	a.session.logLobbyPacketReceived(message, roomCode)
 }
 
 func (a inboundSessionAdapter) HandleAuthenticateRequest(token string, traceID string) {
@@ -76,14 +76,6 @@ func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID str
 
 func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {
 	a.session.handleReturnToLobbyRequest()
-}
-
-func (a inboundSessionAdapter) ShouldLogFirstInputPacket(matchID string) bool {
-	return a.session.shouldLogFirstInputPacket(matchID)
-}
-
-func (a inboundSessionAdapter) ShouldLogFirstRespawnPacket(matchID string) bool {
-	return a.session.shouldLogFirstRespawnPacket(matchID)
 }
 
 func (a inboundSessionAdapter) EnqueuePlayerPauseState() {

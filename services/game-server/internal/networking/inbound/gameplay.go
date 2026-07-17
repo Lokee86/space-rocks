@@ -3,7 +3,6 @@ package inbound
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	targeting "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 )
 
@@ -11,8 +10,6 @@ type gameplaySession interface {
 	CurrentSessionContext() SessionContext
 	EnqueuePlayerPauseState()
 	EnqueueResyncRequest(SessionContext, realtime.ResyncRequest) bool
-	ShouldLogFirstInputPacket(string) bool
-	ShouldLogFirstRespawnPacket(string) bool
 }
 
 func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) bool {
@@ -61,19 +58,9 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 	}
 	gamePlayerID := context.GamePlayerID
 	if packet.Type == game.PacketTypeRespawn {
-		if session.ShouldLogFirstRespawnPacket(gameplayContext.MatchID) {
-			logRespawnPacketReceived(gamePlayerID, packet)
-		}
 		gameplayContext.Game.HandlePacket(gamePlayerID, packet)
 		return true
 	}
-	if session.ShouldLogFirstInputPacket(gameplayContext.MatchID) {
-		logging.Network.Info("gameplay input packet received", logging.FieldPlayerID, gamePlayerID, "packet_type", packet.Type, "forward", packet.Input.Forward, "back", packet.Input.Back, "left", packet.Input.Left, "right", packet.Input.Right, "primary_fire", packet.Input.PrimaryFire, "secondary_fire", packet.Input.SecondaryFire)
-	}
 	gameplayContext.Game.HandlePacket(gamePlayerID, packet)
 	return true
-}
-
-func logRespawnPacketReceived(gamePlayerID string, packet game.ClientPacket) {
-	logging.Network.Info("gameplay respawn packet received", logging.FieldPlayerID, gamePlayerID, "packet_type", packet.Type)
 }

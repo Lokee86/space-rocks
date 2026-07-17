@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 )
@@ -35,7 +34,6 @@ type ActiveRealtimeResult struct {
 
 func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
 	snapshot := gameInstance.GameplayPresentationSnapshot(playerID)
-	logActivePendingPresentationEvents(playerID, snapshot)
 	return BuildActiveRealtimeResult(snapshot, state)
 }
 
@@ -200,38 +198,6 @@ func activeEventBatchEventIDs(pending []game.PendingPresentationEvent) []string 
 		ids = append(ids, event.EventID)
 	}
 	return ids
-}
-
-func logActivePendingPresentationEvents(playerID string, snapshot game.GameplayPresentationSnapshot) {
-	if len(snapshot.PendingEvents) == 0 {
-		return
-	}
-
-	eventTypes := make([]string, 0, len(snapshot.PendingEvents))
-	eventIDs := make([]string, 0, len(snapshot.PendingEvents))
-	for _, event := range snapshot.PendingEvents {
-		eventTypes = append(eventTypes, event.Event.Type)
-		eventIDs = append(eventIDs, event.EventID)
-		if event.Event.Type == game.PacketTypeShipDeath {
-			logging.Network.Debug("ship death pending in active snapshot",
-				logging.FieldPlayerID, playerID,
-				"event_id", event.EventID,
-				"event_type", event.Event.Type,
-				"event_player_id", event.Event.PlayerID,
-				"lives", event.Event.Lives,
-				"respawn_delay", event.Event.RespawnDelay,
-			)
-		}
-	}
-	if playerID == "" {
-		playerID = "unknown"
-	}
-	logging.Network.Debug("pending presentation events in active snapshot",
-		logging.FieldPlayerID, playerID,
-		"pending_event_count", len(snapshot.PendingEvents),
-		"event_types", strings.Join(eventTypes, ","),
-		"event_ids", strings.Join(eventIDs, ","),
-	)
 }
 
 func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int, error) {

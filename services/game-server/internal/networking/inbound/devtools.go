@@ -11,13 +11,14 @@ import (
 type devtoolsSession interface {
 	CurrentSessionContext() SessionContext
 	SessionID() string
+	ConnectionTraceID() string
 }
 
 func HandleSimpleDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
 	if !isSimpleDevtoolsPacketType(envelope.Type) {
 		return false
 	}
-	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
+	return handleDevtoolsCommandPacket(session, remoteAddr, msg, envelope.Type)
 }
 
 func HandlePlacementDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
@@ -26,14 +27,14 @@ func HandlePlacementDevtoolsPacket(session devtoolsSession, remoteAddr string, m
 	default:
 		return false
 	}
-	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
+	return handleDevtoolsCommandPacket(session, remoteAddr, msg, envelope.Type)
 }
 
 func HandleRemainingDevtoolsPacket(session devtoolsSession, remoteAddr string, msg []byte, envelope ClientPacketEnvelope) bool {
 	if !isRemainingDevtoolsPacketType(envelope.Type) {
 		return false
 	}
-	return handleDevtoolsCommandPacket(session, remoteAddr, msg)
+	return handleDevtoolsCommandPacket(session, remoteAddr, msg, envelope.Type)
 }
 
 func isSimpleDevtoolsPacketType(packetType string) bool {
@@ -54,7 +55,7 @@ func isRemainingDevtoolsPacketType(packetType string) bool {
 	}
 }
 
-func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg []byte) bool {
+func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg []byte, packetType string) bool {
 	context := session.CurrentSessionContext()
 	if context.Room == nil || context.GamePlayerID == "" {
 		return true
@@ -65,7 +66,20 @@ func handleDevtoolsCommandPacket(session devtoolsSession, remoteAddr string, msg
 	}
 	var command devtools.DebugCommand
 	if err := packetcodec.Decode(msg, &command); err != nil {
-		logging.Network.Warn("websocket devtools command decode failed", logging.FieldError, err, logging.FieldRoomID, context.RoomID, logging.FieldPlayerID, context.GamePlayerID, "session_id", session.SessionID(), logging.FieldRemoteAddr, remoteAddr)
+		logging.Emit(observability.Request{
+			Event: observability.EventNamePacketDecodeFailed,
+			Context: observability.Context{
+				TraceID:    session.ConnectionTraceID(),
+				SessionID:  session.SessionID(),
+				RoomID:     context.RoomID,
+				PlayerID:   context.GamePlayerID,
+				PacketType: packetType,
+			},
+			Fields: observability.Fields{
+				"error_code":   "devtools_command_decode_failed",
+				"failure_mode": "devtools_command_decode_failed",
+			},
+		})
 		return true
 	}
 	control := game.NewControl(gameplayContext.Game)

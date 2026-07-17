@@ -5,6 +5,8 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -27,9 +29,17 @@ func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifie
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		upgradeTraceID := uuid.NewString()
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			logging.Network.Error("websocket upgrade failed", err, logging.FieldRemoteAddr, r.RemoteAddr)
+			logging.Emit(observability.Request{
+				Event:   observability.EventNameGameServerConnectionUpgradeFailed,
+				Context: observability.Context{TraceID: upgradeTraceID},
+				Fields: observability.Fields{
+					"error_code":   "websocket_upgrade_failed",
+					"failure_mode": "websocket_upgrade_failed",
+				},
+			})
 			return
 		}
 		conn.SetReadLimit(webSocketReadLimit)
@@ -45,21 +55,28 @@ func handleConnection(session *webSocketSession, remoteAddr string) {
 	defer session.leaveDisconnectedRoom()
 
 	context := session.sessionContext()
-	logging.Network.Debug("websocket connected",
-		logging.FieldRoomID, context.RoomID,
-		logging.FieldPlayerID, context.GamePlayerID,
-		"session_id", session.sessionID,
-		"current_room_id", context.RoomID,
-		logging.FieldRemoteAddr, remoteAddr,
-	)
+	logging.Emit(observability.Request{
+		Event: observability.EventNameGameServerClientConnected,
+		Context: observability.Context{
+			TraceID:   session.connectionTraceID,
+			SessionID: session.sessionID,
+			RoomID:    context.RoomID,
+			PlayerID:  context.GamePlayerID,
+		},
+		Fields: observability.Fields{"reason_code": "connection_established"},
+	})
 	defer func() {
 		context := session.sessionContext()
-		logging.Network.Debug("websocket disconnected",
-			logging.FieldRoomID, context.RoomID,
-			logging.FieldPlayerID, context.GamePlayerID,
-			"session_id", session.sessionID,
-			logging.FieldRemoteAddr, remoteAddr,
-		)
+		logging.Emit(observability.Request{
+			Event: observability.EventNameGameServerClientDisconnected,
+			Context: observability.Context{
+				TraceID:   session.connectionTraceID,
+				SessionID: session.sessionID,
+				RoomID:    context.RoomID,
+				PlayerID:  context.GamePlayerID,
+			},
+			Fields: observability.Fields{"reason_code": "connection_closed"},
+		})
 	}()
 
 	readErr := make(chan error, 1)

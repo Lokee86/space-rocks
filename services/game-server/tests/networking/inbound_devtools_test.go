@@ -15,6 +15,10 @@ func (placementDevtoolsSession) CurrentSessionContext() inbound.SessionContext {
 
 func (placementDevtoolsSession) SessionID() string { return "" }
 
+func (placementDevtoolsSession) ConnectionTraceID() string {
+	return "550e8400-e29b-41d4-a716-446655440020"
+}
+
 func TestHandlePlacementDevtoolsPacketAcceptsPickupSpawn(t *testing.T) {
 	session := placementDevtoolsSession{}
 

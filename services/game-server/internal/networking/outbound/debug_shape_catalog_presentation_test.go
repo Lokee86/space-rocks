@@ -11,7 +11,7 @@ import (
 func TestBuildDebugShapeCatalogResponseIncludesShapeCatalogPayload(t *testing.T) {
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, game.New())
 
-	response, ok := BuildDebugShapeCatalogResponse(room, "room-1", "127.0.0.1:1234")
+	response, ok := BuildDebugShapeCatalogResponse(room, "room-1")
 	if !ok {
 		t.Fatal("expected debug shape catalog response to build")
 	}

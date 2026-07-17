@@ -30,9 +30,6 @@ func (f *resyncGameplaySessionFake) EnqueueResyncRequest(context SessionContext,
 	f.requests = append(f.requests, request)
 	return true
 }
-func (f *resyncGameplaySessionFake) ShouldLogFirstInputPacket(string) bool   { return false }
-func (f *resyncGameplaySessionFake) ShouldLogFirstRespawnPacket(string) bool { return false }
-
 func activeResyncRoom(t *testing.T) (*rooms.Room, string) {
 	t.Helper()
 	room := rooms.NewRoom("room-1", rooms.RoomStateLobby, nil)

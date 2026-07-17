@@ -4,6 +4,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func (session *webSocketSession) EnqueueRoomError(traceID string, errorCode string, message string) {
@@ -15,10 +16,23 @@ func (session *webSocketSession) EnqueueRoomError(traceID string, errorCode stri
 	}
 	payload, err := packetcodec.Encode(packet)
 	if err != nil {
-		logging.Network.Error("room error marshal failed", err,
-			"session_id", session.sessionID,
-			"error_code", errorCode,
-		)
+		if traceID == "" {
+			traceID = session.connectionTraceID
+		}
+		context := session.sessionContext()
+		logging.Emit(observability.Request{
+			Event: observability.EventNameOutboundPacketEncodeFailed,
+			Context: observability.Context{
+				TraceID:    traceID,
+				SessionID:  session.sessionID,
+				RoomID:     context.RoomID,
+				PacketType: game.PacketTypeRoomError,
+			},
+			Fields: observability.Fields{
+				"error_code":   "room_error_encode_failed",
+				"failure_mode": "room_error_encode_failed",
+			},
+		})
 		return
 	}
 

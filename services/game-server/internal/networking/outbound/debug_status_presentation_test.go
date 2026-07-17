@@ -23,7 +23,7 @@ func TestBuildDebugStatusResponseIncludesDebugStatusPayload(t *testing.T) {
 
 	room := rooms.NewRoom(roomID, rooms.RoomStateInGame, gameInstance)
 
-	response, ok := BuildDebugStatusResponse(room, playerID, roomID, "127.0.0.1:1234")
+	response, ok := BuildDebugStatusResponse(room, playerID, roomID)
 	if !ok {
 		t.Fatal("expected debug status response to build")
 	}

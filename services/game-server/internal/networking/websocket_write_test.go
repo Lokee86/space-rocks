@@ -66,7 +66,7 @@ func TestMaybeWriteDebugShapeCatalogSendsOnlyOnceForSameRoom(t *testing.T) {
 	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
 		return true
 	}
-	buildDebugShapeCatalogResponse = func(room *rooms.Room, roomID string, remoteAddr string) ([]byte, bool) {
+	buildDebugShapeCatalogResponse = func(room *rooms.Room, roomID string) ([]byte, bool) {
 		return []byte(`{"type":"debug_shape_catalog","shapes":{}}`), true
 	}
 	t.Cleanup(func() {
@@ -102,7 +102,7 @@ func TestMaybeWriteDebugShapeCatalogSendsAgainForNewRoomAfterReset(t *testing.T)
 	canSendDebugShapeCatalog = func(room *rooms.Room) bool {
 		return true
 	}
-	buildDebugShapeCatalogResponse = func(room *rooms.Room, roomID string, remoteAddr string) ([]byte, bool) {
+	buildDebugShapeCatalogResponse = func(room *rooms.Room, roomID string) ([]byte, bool) {
 		return []byte(`{"type":"debug_shape_catalog","shapes":{}}`), true
 	}
 	t.Cleanup(func() {
