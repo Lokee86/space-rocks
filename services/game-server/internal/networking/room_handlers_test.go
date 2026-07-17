@@ -10,9 +10,10 @@ import (
 
 func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 	session := &webSocketSession{
-		sessionID: "session-1",
-		rooms:     rooms.NewRoomManagerWithCleanupDelay(0),
-		outbound:  make(chan []byte, 1),
+		sessionID:         "session-1",
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440033",
+		rooms:              rooms.NewRoomManagerWithCleanupDelay(0),
+		outbound:           make(chan []byte, 1),
 	}
 
 	session.handleStartSinglePlayerRequest("", "")

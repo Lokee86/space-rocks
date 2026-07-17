@@ -8,7 +8,10 @@ import (
 )
 
 func TestEnqueueSaturatedSessionReturnsPromptly(t *testing.T) {
-	session := &webSocketSession{outbound: make(chan []byte, 1)}
+	session := &webSocketSession{
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440030",
+		outbound:           make(chan []byte, 1),
+	}
 	session.outbound <- []byte("already queued")
 
 	done := make(chan struct{})
@@ -27,12 +30,14 @@ func TestEnqueueSaturatedSessionReturnsPromptly(t *testing.T) {
 func TestBroadcastRoomSnapshotContinuesAfterFullSession(t *testing.T) {
 	room := rooms.NewRoom("room", rooms.RoomStateLobby, nil)
 	early := &webSocketSession{
-		sessionID: "session-1",
-		outbound:  make(chan []byte, 1),
+		sessionID:         "session-1",
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440031",
+		outbound:          make(chan []byte, 1),
 	}
 	healthy := &webSocketSession{
-		sessionID: "session-2",
-		outbound:  make(chan []byte, 1),
+		sessionID:         "session-2",
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440032",
+		outbound:          make(chan []byte, 1),
 	}
 	room.AddMemberSessionID(early.sessionID)
 	room.AddMemberSessionID(healthy.sessionID)

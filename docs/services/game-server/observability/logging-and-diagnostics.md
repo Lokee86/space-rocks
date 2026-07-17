@@ -4,18 +4,18 @@ Parent index: [Game Server Observability](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server logging and diagnostics boundary. It explains how the game server emits structured runtime logs, how log levels are configured, which categories exist, what diagnostic events belong in logs, and what this boundary does not own.
+This document describes the game-server logging and diagnostics boundary. It explains how game-server owners emit canonical structured runtime events, how compatibility log levels remain configured, which diagnostic events belong in logs, and what this boundary does not own.
 
 ## Overview
 
-Game-server logging is a small internal adapter over the shared canonical observability emitter. The logging package gives game-server code a shared way to report runtime behavior without scattering raw `slog`, `log`, or `fmt.Println` calls through service code.
+Game-server logging is a small internal access point for the shared canonical observability emitter. Production call sites submit `observability.Request` values directly through `logging.Emit`; they do not use category logger methods or scatter raw `slog`, `log`, or `fmt.Println` calls through service code.
 
-The current implementation uses the shared `shared/go/servicelog` runtime for generic console/file fanout and active-file lifecycle. The game-server adapter still owns categories, levels, environment variables, and service-specific byte limits.
+The current implementation uses the shared `shared/go/servicelog` runtime for generic console/file fanout and active-file lifecycle. Generated observability definitions own canonical event categories and default levels. The game-server adapter owns runtime configuration, compatibility-category filtering, environment variables, and service-specific byte limits.
 
 Current runtime flow:
 
 ```text
-game-server runtime event -> category logger -> canonical emitter -> shared servicelog sink -> stderr + active JSONL file
+game-server runtime owner -> logging.Emit(observability.Request{...}) -> shared observability validation/redaction -> shared servicelog sink -> stderr + active JSONL file
 ```
 
 Logging is observational. It should explain what happened in the process, connection, room, or simulation, but it must not change gameplay state, packet routing, persistence, or auth behavior.
@@ -30,8 +30,8 @@ services/game-server/
 
 Logging and diagnostics own the game-server side of:
 
-- Structured log emission through the internal logging package.
-- Category loggers for server, networking, rooms, and game behavior.
+- Structured canonical event emission through the internal logging package.
+- Compatibility category loggers for server, networking, rooms, and game behavior while repository-wide bridge retirement remains separate.
 - Environment-based log-level configuration.
 - Shared log field names for common diagnostic dimensions.
 - Runtime diagnostics for recoverable errors, lifecycle events, and unusual conditions.
@@ -39,7 +39,7 @@ Logging and diagnostics own the game-server side of:
 - Keeping logs useful without enabling per-tick or per-entity output by default.
 - Passing file-policy values through to shared servicelog for structured JSONL output.
 
-The game-server adapter owns the category map, level filtering, environment variables, and service-specific byte limits used for file-output policy.
+The game-server adapter owns compatibility category filtering, environment variables, and service-specific byte limits used for file-output policy. Canonical event names, categories, default levels, trace requirements, and retention tiers come from generated observability contract data.
 
 The shared `shared/go/observabilityevent` package owns contract validation, redaction, canonical serialization, and stable rejection outcomes. The shared `shared/go/servicelog` package owns direct canonical-record console/file fanout and active-file lifecycle without reshaping records through `slog`.
 
@@ -89,7 +89,17 @@ Server code consumes the package by importing:
 import "github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 ```
 
-Current category loggers are:
+The production call-site API is:
+
+```go
+logging.Emit(observability.Request{
+    Event: observability.EventNameGameServerWriteFailed,
+    Context: observability.Context{TraceID: traceID, SessionID: sessionID},
+    Fields: observability.Fields{"failure_mode": "websocket_write_failed"},
+})
+```
+
+The former category loggers remain compatibility surfaces only:
 
 ```go
 logging.Server
@@ -98,7 +108,9 @@ logging.Rooms
 logging.Game
 ```
 
-Each category logger supports:
+Their adapter methods are retained only for compatibility with code outside the completed game-server production call-site rollout. New or migrated game-server code must use generated canonical event names and `logging.Emit`. Category logger calls are not the preferred API and no production game-server call sites remain.
+
+Compatibility category methods support:
 
 ```go
 Debug(message string, args ...any)
@@ -107,7 +119,7 @@ Warn(message string, args ...any)
 Error(message string, err error, args ...any)
 ```
 
-Category loggers automatically attach a `category` field.
+Compatibility methods attach their legacy category and enter the bridge-only `log_message` path. They must not be used to introduce new semantic events.
 
 Package-level helpers also exist:
 
@@ -118,7 +130,7 @@ logging.Warn(...)
 logging.Error(...)
 ```
 
-New game-server code should prefer category loggers because category loggers can be filtered independently.
+Package-level compatibility helpers also exist, but they are not a production call-site API. Canonical event filtering uses the generated event definition; `LOG_*` compatibility overrides apply to the retained category adapter methods.
 
 ### File output behavior
 
@@ -130,12 +142,12 @@ ConfigureFileOutput("logs/game-server", "game-server")
 
 When the server runs from `services/game-server`, the active file path is `logs/game-server/game-server.jsonl.open`.
 
-At runtime, the canonical emitter and shared sink fan logs to:
+At runtime, the canonical emitter and shared sink fan records to:
 
-- a safe compatibility rendering on stderr
+- a safe human-readable rendering on stderr
 - the canonical JSON envelope in the active JSONL file
 
-Existing category logger methods enter the dedicated bridge-only `log_message` path. Ordinary canonical event emission cannot emit `log_message`; it is reserved for adapters while existing call sites remain unchanged. Service names, event metadata, limits, rejection codes, and redaction policy come from generated contract data.
+Ordinary canonical event emission cannot emit `log_message`; that bridge-only event is reserved for compatibility adapters. Service names, event metadata, trace requirements, limits, rejection codes, and redaction policy come from generated contract data.
 
 Current logging package file-output helpers are:
 
@@ -240,18 +252,20 @@ cd services/game-server
 LOG_LEVEL=off LOG_NETWORK=warn go run ./cmd/game-server
 ```
 
-Startup file-output status is logged through the existing logging flow:
+Startup file-output status is emitted through the canonical observability flow:
 
-- success log message: `server structured log file configured`
-- success field: `path`
-- failure log message: `server structured log file unavailable`
-- failure field: `error`
+- startup event: `service_starting` with `reason_code = "process_start"`
+- file-output success adds no duplicate event
+- failure event: `observability_unavailable` with a stable `failure_mode` such as `logging_file_open_failed`, `logging_runtime_degraded`, or `logging_file_close_failed`
+- file paths and raw errors are not emitted as canonical fields
 
-## Log categories
+## Compatibility category mapping
+
+The names below are retained only for compatibility filtering and adapter diagnostics. They are not production call-site APIs. Production records use the generated event definition's canonical category, such as `service_lifecycle`, `game_networking`, `networking`, `room_lifecycle`, `gameplay`, or `devtools_admin`.
 
 ### Server
 
-`logging.Server` is for process-level and runtime-wiring diagnostics.
+The compatibility `server` category covers process-level and runtime-wiring diagnostics.
 
 Current examples include:
 
@@ -265,7 +279,7 @@ This category should not become the home for room, packet, or simulation diagnos
 
 ### Network
 
-`logging.Network` is for WebSocket, packet routing, and transport diagnostics.
+The compatibility `network` category covers WebSocket, packet routing, and transport diagnostics.
 
 Current examples include:
 
@@ -286,7 +300,7 @@ This category should not own gameplay decisions. It should report network-facing
 
 ### Rooms
 
-`logging.Rooms` is for room manager, room lifecycle, membership, and match-result lifecycle diagnostics.
+The compatibility `rooms` category covers room manager, room lifecycle, membership, and match-result lifecycle diagnostics.
 
 Current examples include:
 
@@ -308,7 +322,7 @@ This category should not own simulation internals. It should describe room state
 
 ### Game
 
-`logging.Game` is for simulation and player lifecycle diagnostics.
+The compatibility `game` category covers simulation and player lifecycle diagnostics.
 
 Current examples include:
 
@@ -370,35 +384,35 @@ Never log:
 - raw auth headers
 - raw packet payloads containing sensitive data
 
-## Error logging rules
+## Canonical error and lifecycle rules
 
-Use the category logger for the subsystem where the event occurs.
-
-For failed operations, use `Error`. The helper automatically appends the structured `error` field:
+Emit the generated canonical event for the owning subsystem. The event definition supplies the level and category; the call site supplies the trace and approved context:
 
 ```go
-logging.Network.Error("websocket write failed", err,
-    logging.FieldRoomID, roomID,
-    logging.FieldPlayerID, playerID,
-    logging.FieldRemoteAddr, remoteAddr,
-)
+logging.Emit(observability.Request{
+    Event: observability.EventNameGameServerWriteFailed,
+    Context: observability.Context{
+        TraceID: traceID, SessionID: sessionID, RoomID: roomID, PlayerID: playerID,
+    },
+    Fields: observability.Fields{"failure_mode": "websocket_write_failed"},
+})
 ```
 
-Do not manually add `logging.FieldError` when using category `Error`.
+`reason_code`, `failure_mode`, and `error_code` are stable, bounded classifications such as `game_over`, `outbound_queue_full`, or `websocket_write_failed`. They are contract fields, not places for arbitrary error prose. Raw errors, payloads, tokens, and secrets must not be copied into canonical fields or messages. The emitter validates UUID-shaped trace IDs for events that require them, applies redaction and field limits, and reports stable rejection codes without exposing rejected values.
 
-For recoverable warnings where the code continues, use `Warn`. If an error value matters, include it explicitly:
+For normal lifecycle events, use the generated event name and preserve the owning flow's trace. Do not add a second log at an adjacent layer for the same state transition.
 
-```go
-logging.Network.Warn("websocket packet envelope decode failed",
-    logging.FieldError, err,
-    logging.FieldRoomID, roomID,
-    logging.FieldPlayerID, playerID,
-    "session_id", sessionID,
-    logging.FieldRemoteAddr, remoteAddr,
-)
-```
+### Trace ownership
 
-For normal lifecycle events, prefer `Debug` unless the event is important during normal development.
+Trace ownership follows the flow that creates the event:
+
+- The process composition root creates startup and shutdown trace IDs and passes them through dependency and host lifecycle events.
+- A WebSocket session owns its connection trace ID and preserves it across transport, packet, and room-boundary diagnostics unless an inbound request already carries the authoritative flow trace.
+- A room owns the match trace ID used for game-over and match-result reporting.
+- Gameplay owns the current match trace and player context for simulation lifecycle events.
+- Devtools command outcomes preserve the command trace when present; the session connection trace remains the fallback boundary trace.
+
+Events marked `trace_required` in generated contract data must receive a valid UUID trace. Events without that requirement still use the owning lifecycle trace when one exists.
 
 ## Data ownership
 
@@ -555,37 +569,42 @@ client/
 
 ## Tests
 
-The logging package has focused tests for the servicelog adapter and category filtering.
-
-P3 Step 1 service-owned rolling-log runtime work is complete across game-server, player-data, diagnostic-aggregator, API-server, and client. The final Rails gate, `bundle exec rails db:test:prepare && bundle exec rails test`, passed with 162 runs, 628 assertions, 0 failures, 0 errors, and 0 skips after the local PostgreSQL `space_rocks_api` role password and ownership were corrected without changing repository configuration. Canonical event emission and the domain call-site rollout remain the next stage and are not part of Step 1.
-
-Current dedicated logging tests include:
+The game-server observability rollout has dedicated JSONL-backed tests for the canonical emitter and each migrated ownership boundary:
 
 ```text
-services/game-server/internal/logging/logger_test.go
+services/game-server/cmd/game-server/observability_test.go
+services/game-server/internal/networking/observability_test.go
+services/game-server/internal/networking/outbound_observability_test.go
+services/game-server/internal/networking/room_observability_test.go
+services/game-server/internal/rooms/observability_test.go
+services/game-server/internal/rooms/cleanup_observability_test.go
+services/game-server/internal/game/observability_test.go
+services/game-server/internal/matchreporting/observability_test.go
 ```
 
-Broader verification still includes normal game-server tests and manual environment checks.
+These tests inspect representative JSONL records for startup/degraded logging, packet and WebSocket failures, room and match lifecycle, player lifecycle, devtools outcomes, match-result reporting, outbound encode/write failures, trace ownership, stable reason/failure codes, duplicate suppression, and raw-error/payload safety. The normal logging package tests remain in `services/game-server/internal/logging/logger_test.go`.
 
-Relevant test areas include:
+### Final integrated verification record
 
-```text
-services/game-server/internal/networking/
-services/game-server/internal/networking/outbound/
-services/game-server/internal/rooms/
-services/game-server/internal/game/
-services/game-server/internal/devtools/
-services/game-server/tests/
-```
+The completed game-server rollout gate was run from the repository root:
 
-Useful verification commands:
+- `bash tools/ci/run_go_tests.sh` passed shared servicelog, player-data, diagnostic-aggregator, game-server default, and game-server `nodevtools` stages.
+- `go vet -buildvcs=false ./...` and `go vet -tags nodevtools -buildvcs=false ./...` passed in `services/game-server`.
+- `gofmt -l` was clean for non-generated rollout source files; one generated packet file reports formatting drift and was left unchanged under the generated-file policy.
+- `PYTHONPATH=. python -m pytest tests tools/tests tools/data_sync/tests` passed, including architecture and observability emission guards.
+- `python tools/architecture_guard/main.py` passed.
+- `python tools/data_sync/main.py -validate` passed.
+- Constants, packets, realtime-wire, and drop-table generated-data `-check` gates passed.
+- `git diff --check` passed.
+- Production scans found zero references to `logging.Server.`, `logging.Network.`, `logging.Rooms.`, or `logging.Game.` under `services/game-server`.
 
-```bash
-cd services/game-server
-go test -buildvcs=false ./...
-```
+The repository wrapper `bash tools/ci/run_repo_checks.sh` requires `PYTHONPATH=.` for the local Windows Python module-import environment; the equivalent stages were rerun with that environment and passed. No rollout-related verification failure remained.
 
-Manual log-level checks should run the game server with targeted environment variables:
+Representative canonical envelopes confirm stable event names, valid owning-flow traces, required identifiers, stable reason/failure classifications, one emission per tested transition, and no raw error or unsafe payload fields. Compatibility cleanup is intentionally separate from this rollout record.
+
+### Manual compatibility-level checks
+
+These commands exercise the retained compatibility adapter filtering; canonical event emission remains governed by generated event definitions.
 
 ```bash
 cd services/game-server
@@ -602,7 +621,7 @@ cd services/game-server
 LOG_LEVEL=warn LOG_NETWORK=debug go run ./cmd/game-server
 ```
 
-Expected stderr output is the safe compatibility rendering with category and level context. When file output is available, the same call writes exactly one canonical JSON envelope to the active JSONL file.
+Expected stderr output is the safe compatibility rendering with category and level context. Direct canonical calls write exactly one canonical JSON envelope to the active JSONL file; compatibility calls remain isolated to the bridge-only path.
 
 ## Related docs
 
