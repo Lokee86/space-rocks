@@ -379,7 +379,7 @@ If the packet envelope is valid but no current router predicate matches the pack
 unknown_packet_received(packet)
 ```
 
-`SessionNetworkController` currently logs the unknown-packet event through its configured logger.
+The unknown-packet event is owned by `SessionNetworkController` and is emitted canonically with the active connection or room operation trace. It is not forwarded through a removed shell-status helper.
 
 Unknown packets are not applied to gameplay, room, auth, or telemetry state.
 
@@ -588,7 +588,7 @@ telemetry_pong
 
 unmatched packet type
 -> unknown_packet_received
--> SessionNetworkController logs unknown packet through its configured logger callable
+-> SessionNetworkController owns canonical unknown-route emission with the active connection/operation trace
 ```
 
 ### Auth gate interaction
@@ -597,7 +597,7 @@ Inbound routing participates in multiplayer boot gating only by delivering conne
 
 Current multiplayer boot behavior is owned by `SessionNetworkController` and `ShellBootFlow`:
 
-Logger mechanics belong to [Client Logging](../client-logging.md). `AppEntry` wires the session network controller logger to `_log_shell_status()`, which forwards to `ClientLogger.shell_info(...)`.
+Logger mechanics belong to [Client Logging](../client-logging.md). Routing failures and unknown routes are emitted by their owning connection/session flow through `ClientLogger.emit_canonical(...)` with the active operation trace.
 
 ```text
 connected + pending multiplayer request + websocket auth already authenticated

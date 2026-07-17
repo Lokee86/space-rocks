@@ -4,607 +4,131 @@ Parent index: [Game Server Process](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server process startup boundary.
+This document describes the current game-server executable startup composition and the logging/runtime identity gate. The process hosts game-server, player-data, and the diagnostic-aggregator HTTP surface in one process while keeping their ownership boundaries separate.
 
-It covers the executable composition root, startup ordering, environment-backed dependency construction, HTTP mux creation, route mounting summary, listen behavior, and the current in-process player-data dependency that piggy-backs on the game-server process.
+## Startup identity gate
 
-## Overview
-
-The game server starts from `services/game-server/cmd/game-server/main.go`.
-
-The process currently owns one HTTP server on `:8080`. That server exposes the health route, the WebSocket realtime/session/signaling route, and player-data HTTP routes on the same `net/http` mux.
-
-Startup is not only game-server-local setup. The game server also constructs a `services/player-data` runtime before it begins listening. That runtime is a sibling Go module dependency, not game-server internals. The game-server process hosts it in-process for now and passes it to:
-
-* player-data HTTP handlers mounted on the game-server mux
-* the match-result reporter sink used by room and WebSocket lifecycle paths
-
-The player-data runtime is therefore a startup dependency of the game-server process. If the runtime cannot be constructed, the game server logs the failure and exits before binding `:8080`.
-
-Current high-level startup flow:
+Before constructing runtimes, startup requires two inputs for each service identity:
 
 ```text
-main()
-  configure logging levels
-  configure shared servicelog file output
-  create HTTP mux
-  create room manager
-  defer room manager StopAll
-  build in-process player-data runtime
-  wrap player-data runtime as a sink
-  build match-result reporter
-  build optional auth verifier
-  mount health route
-  mount WebSocket route
-  build WebRTC transport config from env
-  set WebRTC transport config on networking
-  log WebRTC transport config loaded
+BUILD_VERSION
+ENVIRONMENT
+```
+
+`loadLoggingIdentity` also assigns a UUID service-instance identity. The game-server identity is `game-server`; the player-data identity is `player-data`. Missing `BUILD_VERSION` or `ENVIRONMENT` is a startup configuration failure and prevents serving. These identities are separate even though both runtimes are hosted by the same executable.
+
+`LOG_LEVEL` remains the actual game-server level configuration boundary. The removed category-specific game-server environment controls are not part of current startup. Canonical semantic events use generated event policy and `logging.Emit`.
+
+## Current sequence
+
+```text
+run()
+  signal.NotifyContext(SIGTERM, interrupt)
+  load game-server identity (BUILD_VERSION + ENVIRONMENT)
+  load player-data identity (BUILD_VERSION + ENVIRONMENT)
+  configure game-server canonical logging runtime
+  emit service_starting
+  configure game-server rolling output
+  emit observability degradation if output is unavailable/degraded
+  configure player-data logging runtime
+  configure player-data rolling output
+  emit player-data observability degradation when needed
+  create mux
+  construct/register hosted diagnostic aggregator
+  construct room manager
+  load and set WebRTC transport config
+  construct player-data runtime
+  construct player-data sink and match-result reporter
+  construct optional auth verifier
+  mount /health and /ws
   mount player-data HTTP routes
-  create the configured HTTP server with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`
-  call `newHTTPServer(mux).ListenAndServe()` on :8080
+  wrap the complete mux with httpapi.WithRequestContext
+  create http.Server
+  net.Listen("tcp", ":8080")
+  emit service_started
+  serveHTTPServer with context-driven shutdown
 ```
 
-## Code root
+A player-data logging runtime is constructed before the player-data runtime itself. Diagnostic-aggregator registration occurs before route serving and owns its own hosted lifecycle.
 
-`services/game-server/cmd/game-server/`
+## Canonical lifecycle events
 
-Supporting service roots:
+Game-server startup and runtime failures use canonical events through `services/game-server/internal/logging`:
 
-* `services/game-server/`
-* `services/player-data/`
-* `services/api-server/`
+- `service_starting` with the startup trace;
+- `dependency_initialization_failed` for logging, diagnostic-aggregator, player-data runtime, reporter, or other dependency failures;
+- `service_runtime_failed` for listener/serve failures;
+- `service_started` after the listener is ready;
+- `observability_unavailable` when file output or dependency closure degrades.
 
-## Responsibilities
+The process keeps a separate shutdown trace for `service_stopping`, shutdown failures, and `service_stopped`. Informational success chatter is not a startup contract; the process does not emit claims such as a configured structured log file or loaded WebRTC transport as substitute lifecycle events.
 
-The game-server startup boundary owns:
+## Dependencies and route preparation
 
-* configuring game-server logging levels from environment variables
-* configuring shared servicelog diagnostic file output
-* creating the process HTTP mux
-* creating the room manager
-* registering process shutdown cleanup through `defer rooms.StopAll()`
-* constructing the in-process player-data runtime
-* selecting player-data local-store startup behavior from build tags and store configuration
-* wrapping the player-data runtime as a match-result sink
-* constructing the match-result reporter used by room lifecycle reporting
-* constructing the optional API-server auth verifier from environment configuration
-* mounting the health route
-* mounting the WebSocket realtime/session/signaling route with room manager, auth verifier, and match reporter dependencies
-* mounting game-server-hosted player-data HTTP routes
-* logging the server start event
-* starting the explicit configured `http.Server` on `:8080` (`ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, `IdleTimeout=60s`)
-* exiting when fatal startup or listen errors occur
+`registerDiagnosticAggregator(mux)` loads hosted configuration, constructs the hosted service, and registers diagnostic report routes before the remainder of the process routes are served. The service is closed during process teardown.
 
-## Does not own
+The room manager is created after diagnostic registration. WebRTC configuration is read from its environment seam and installed in networking; transport behavior remains owned by networking after this setup.
 
-The startup boundary does not own:
+`buildPlayerDataRuntime()` constructs the shared in-process player-data runtime before the reporter and handlers. The runtime remains player-data-owned even though the game-server hosts it. The reporter receives a player-data sink, and the auth verifier is passed to WebSocket and authenticated player-data profile handling.
 
-* WebSocket session behavior after route entry
-* inbound packet routing
-* outbound packet routing
-* WebRTC transport runtime behavior after config loading
-* room lifecycle rules
-* room cleanup policy beyond registering `StopAll()` for process exit
-* simulation mechanics
-* match-result summary calculation
-* player-data request validation
-* player-data store routing rules
-* player-data persistence internals
-* Rails auth and account persistence
-* client connection behavior
-* graceful shutdown orchestration beyond the current deferred room cleanup
-* route documentation detail that belongs in route-composition documentation
-
-## Domain roles
-
-The game-server startup boundary currently acts as:
-
-* process composition root for the game-server executable
-* HTTP mux owner for the local game-server process
-* dependency constructor for rooms, auth, match reporting, and player-data hosting
-* in-process host for the player-data runtime
-* fail-fast gate for player-data runtime initialization
-* optional API-server auth-verifier consumer
-* process-level owner of the `:8080` listen address
-
-The game server remains the realtime gameplay authority. Player-data remains the identity and store-routing authority for player-shaped durable data. API-server remains the authenticated-account auth and Rails/Postgres persistence authority.
-
-## Startup sequence
-
-### Logging configuration
-
-Startup begins by configuring logging levels:
+The complete mux is wrapped with:
 
 ```go
-logging.Configure(os.Getenv(logging.EnvGlobalLevel))
+httpapi.WithRequestContext(mux)
 ```
 
-`LOG_LEVEL` supplies the global default. Category overrides are read inside the logging package:
+This gives player-data HTTP requests a trace/request identity boundary and preserves `X-Trace-ID` continuation/replacement behavior described in the player-data owner document.
 
-```text
-LOG_GAME
-LOG_NETWORK
-LOG_ROOMS
-LOG_SERVER
-```
+## HTTP server lifecycle boundary
 
-The default level is `warn`. The `server starting` event is logged through `logging.Server.Info`, so it is visible only when `LOG_SERVER=info` or `LOG_LEVEL=info` enables info-level output.
-
-After level configuration, startup enables shared servicelog structured file output:
+Startup creates the configured `http.Server`, then explicitly binds the listener:
 
 ```go
-logging.ConfigureFileOutput("logs/game-server", "game-server")
+server := newHTTPServer(httpapi.WithRequestContext(mux))
+listener, err := net.Listen("tcp", ":8080")
+serveHTTPServer(ctx, server, listener, 5*time.Second, onStopping)
 ```
 
-When the server runs from `services/game-server`, the active file path is `logs/game-server/game-server.jsonl.open`.
-
-Startup logs file-output status through the existing logging flow:
-
-* success log message: `server structured log file configured`
-* success field: `path`
-* failure log message: `server structured log file unavailable`
-* failure field: `error`
-
-The file-policy values are passed through to shared servicelog at this stage. This boundary does not claim rotation, compression, recovery, or retention enforcement mechanics beyond configuration. File-output failure is diagnostic degradation, not startup failure. Startup continues serving with stderr text logging even when JSONL file output is unavailable.
-
-Startup owns wiring this behavior. The game-server adapter owns category, level, environment, and byte-limit policy, while shared servicelog owns generic console/file fanout and active-file lifecycle.
-
-### HTTP mux creation
-
-Startup creates one `http.ServeMux`:
-
-```go
-mux := http.NewServeMux()
-```
-
-All process routes are mounted on this mux before the process starts listening.
-
-### Room manager creation
-
-Startup creates one room manager through the networking boundary:
-
-```go
-rooms := networking.NewRoomManager()
-defer rooms.StopAll()
-```
-
-The room manager is passed into the WebSocket handler. The deferred `StopAll()` call is the current process-exit cleanup hook for room cleanup timers and running game instances.
-
-Detailed shutdown behavior belongs in service-shutdown documentation.
-
-### WebRTC transport config loading
-
-After room manager creation, startup loads the WebRTC transport config from the environment and injects it into networking:
-
-```go
-webrtcConfig := buildWebRTCTransportConfigFromEnv()
-networking.SetWebRTCTransportConfig(webrtcConfig)
-logging.Server.Info("web rtc transport config loaded")
-```
-
-This is the WebRTC transport config seam for server-advertised ICE and deployment-time UDP port selection. It stays separate from the WebSocket route selection seam.
-
-Environment-backed config:
-
-```text
-SPACE_ROCKS_WEBRTC_ADVERTISED_IPS
-SPACE_ROCKS_WEBRTC_UDP_PORT_MIN
-SPACE_ROCKS_WEBRTC_UDP_PORT_MAX
-```
-
-Defaults:
-
-```text
-empty advertised IPs -> preserve local/default ICE behavior
-zero UDP port range -> preserve default ephemeral UDP behavior
-```
-
-Deployment meaning:
-
-```text
-advertised IPs -> server ICE host candidate advertisement
-UDP port range -> firewall and deployment control
-WebSocket URL selection -> separate from WebRTC ICE and data connectivity
-```
-
-Proxied HTTP routes should not be assumed to carry WebRTC UDP traffic.
-
-### Player-data runtime construction
-
-Startup builds the player-data runtime before constructing the match reporter or mounting player-data HTTP routes:
-
-```go
-playerDataRuntime, err := buildPlayerDataRuntime()
-```
-
-`buildPlayerDataRuntime()` calls `playerdata.NewConfiguredRuntime()` with:
-
-```text
-PLAYER_DATA_RAILS_BASE_URL
-PLAYER_DATA_RAILS_INTERNAL_TOKEN
-playerDataLocalStorePath()
-playerDataLocalStoreFactory()
-```
-
-This is the current player-data piggy-back point. The game-server process hosts the player-data runtime in-process, but the runtime implementation belongs to `services/player-data`.
-
-The player-data module is a sibling Go module dependency of the game-server module:
-
-```text
-services/game-server/go.mod
-  require github.com/Lokee86/space-rocks/player-data v0.0.0
-  replace github.com/Lokee86/space-rocks/player-data => ../player-data
-```
-
-The game-server startup code should not bypass this service boundary by directly writing SQLite, Rails, Postgres, or player-data tables.
-
-### Player-data local store selection
-
-Local-profile startup behavior depends on the game-server build tag path.
-
-Default development build:
-
-```text
-//go:build !noembeddedsqlite
-```
-
-The game server supplies:
-
-```text
-SQLitePath: services/player-data/data/player-data.sqlite3
-LocalStoreFactory: embedded SQLite store factory
-```
-
-The embedded SQLite factory creates the store and initializes schema during startup. If that fails, player-data runtime construction fails and the game-server process exits.
-
-Restricted or deployment-style build:
-
-```text
-//go:build noembeddedsqlite
-```
-
-The game server supplies:
-
-```text
-SQLitePath: ""
-LocalStoreFactory: nil
-```
-
-With no SQLite path, `services/player-data` uses a noop local store. The game-server process can still start, but local-profile operations are unavailable at request time through the player-data handler behavior.
-
-### Player-data account store selection
-
-Account-routed player-data behavior is selected by `services/player-data` runtime configuration:
-
-```text
-PLAYER_DATA_RAILS_BASE_URL set   -> Rails-backed account store
-PLAYER_DATA_RAILS_BASE_URL empty -> in-memory account store
-```
-
-`PLAYER_DATA_RAILS_INTERNAL_TOKEN` is passed to the Rails-backed store when Rails backing is configured.
-
-Missing Rails player-data configuration does not stop game-server startup. It changes the account-store backing selected by the player-data runtime.
-
-### Player-data sink and match reporter construction
-
-After runtime construction, startup wraps the runtime as a player-data sink:
-
-```go
-playerDataSink := newPlayerDataSink(playerDataRuntime)
-```
-
-The match reporter is then constructed from that sink:
-
-```go
-reporter, err := matchreporting.NewRuntimeReporter(playerDataSink)
-```
-
-The reporter is passed into the WebSocket route. Later, room and WebSocket lifecycle paths use it to report resolved match results into the player-data runtime.
-
-If reporter construction fails, startup logs `player-data reporter initialization failed` and exits.
-
-### Auth verifier construction
-
-Startup builds the auth verifier after the player-data runtime and reporter:
-
-```go
-authVerifier := buildAuthVerifierFromEnv()
-```
-
-The verifier is configured by:
-
-```text
-API_SERVER_BASE_URL
-GAME_SERVER_INTERNAL_TOKEN
-```
-
-If either value is missing, startup returns a nil verifier and continues. If verifier construction fails, startup logs `auth verifier initialization failed` and continues with no verifier.
-
-This makes API-server auth verification optional at process startup, but multiplayer create/join requests still fail closed later when verification is unavailable.
-
-The same verifier is passed into:
-
-* WebSocket auth/session handling
-* the player-data profile HTTP auth-verifier adapter
-
-## Player-data piggy-back dependency
-
-The current player-data arrangement is intentionally co-located but still separate by service boundary.
-
-Current dependency shape:
-
-```text
-game-server process
-  imports services/player-data module
-  constructs playerdata.Runtime during startup
-  mounts player-data HTTP handlers on game-server mux
-  sends match-result commands into player-data RuntimeSink
-```
-
-This means:
-
-* There is no separate player-data server process required for the current local game-server startup path.
-* The game server must successfully construct a player-data runtime before it starts listening.
-* The same runtime instance is shared by hosted player-data HTTP routes and match-result reporting.
-* The game server owns hosting and dependency injection, not player-data behavior.
-* Player-data owns runtime dispatch, identity-based store routing, local-profile behavior, guest behavior, Rails adapter behavior, and store persistence.
-* Future extraction to a separate player-data process should replace the in-process transport, not move player-data ownership into game-server internals.
-
-Failure implications:
-
-```text
-player-data runtime init fails -> game-server startup fails
-player-data reporter init fails -> game-server startup fails
-Rails player-data env missing -> game-server starts with non-Rails account backing
-embedded SQLite disabled -> game-server starts with noop local-profile store
-embedded SQLite init fails in default build -> game-server startup fails
-```
-
-## Protocols and APIs
-
-The startup boundary mounts process-level runtime surfaces. Detailed behavior belongs to the owning networking, integration, and player-data docs.
-
-### Health route
-
-```text
-GET /health
-```
-
-The health route is implemented directly in `main.go` and returns:
-
-```text
-OK
-```
-
-It is a process health check only. It does not verify room state, player-data persistence health, API-server reachability, or WebSocket behavior.
-
-### WebSocket route
-
-```text
-GET /ws
-```
-
-The WebSocket route is mounted with:
-
-```text
-room manager
-auth verifier
-match-result reporter
-```
-
-The route exists so clients can establish realtime sessions, signaling, and session control. The startup boundary only constructs and injects dependencies. WebSocket upgrade behavior, packet routing, session identity, lobby flow, gameplay input, and outbound lane packet delivery belong to game-server networking docs. WebSocket URL selection is separate from WebRTC ICE and data connectivity.
-
-### Player-data HTTP routes
-
-Startup mounts these player-data routes on the same game-server mux:
-
-```text
-POST   /api/player-data/profile
-GET    /api/player-data/local-profiles
-POST   /api/player-data/local-profiles
-PUT    /api/player-data/local-profiles/{local_profile_id}
-DELETE /api/player-data/local-profiles/{local_profile_id}
-GET    /api/player-data/local-profiles/default
-PUT    /api/player-data/local-profiles/default
-```
-
-The startup boundary owns only route mounting and dependency injection.
-
-The player-data HTTP handlers own request parsing, validation, response shape, local profile operations, profile lookup, guest stat seeding, and request-time errors.
-
-### Listen address
-
-The process listens with:
-
-```go
-newHTTPServer(mux).ListenAndServe()
-```
-
-`newHTTPServer(mux)` configures `:8080` with `ReadHeaderTimeout=5s`, `ReadTimeout=15s`, `WriteTimeout=15s`, and `IdleTimeout=60s`.
-
-If `ListenAndServe` returns an error, startup logs `server stopped` with the address and exits with status `1`.
-
-## Data ownership
-
-Startup constructs access to data-owning systems, but it does not own their stored data.
-
-### Game-server-owned runtime state
-
-The game-server process owns:
-
-* the HTTP mux
-* room manager runtime state
-* WebSocket runtime state after sessions connect
-* process-local logging level configuration
-* process-local JSONL diagnostic file-output wiring
-* the injected match-result reporter dependency
-
-### Player-data-owned runtime state
-
-The in-process player-data runtime owns:
-
-* account/local/guest store routing
-* guest memory store
-* local profile store behavior
-* authenticated-account Rails adapter behavior
-* player-data packet dispatch
-* profile/stat loading behavior
-* match-result store mutation behavior
-
-### API-server-owned durable state
-
-API-server owns authenticated-account auth and Rails/Postgres persistence.
-
-The game server can consume API-server through:
-
-* auth verifier calls for token verification
-* player-data Rails adapter calls made by `services/player-data`
-
-The game server startup boundary does not directly access Rails tables or Postgres records.
-
-### Local SQLite state
-
-In the default embedded SQLite build, local-profile data is stored through `services/player-data` at:
-
-```text
-services/player-data/data/player-data.sqlite3
-```
-
-The game-server startup boundary supplies the path and factory. The player-data SQLite store owns schema initialization, reads, writes, and deletes.
+`serveHTTPServer` runs `server.Serve(listener)` and waits for either a serve result or process context cancellation. The context cancellation path performs graceful shutdown and has a forced `server.Close()` fallback when the five-second shutdown deadline is exceeded.
 
 ## Failure behavior
 
-Startup is fail-fast for dependencies that are required before serving process routes:
+Fail-fast startup failures are identity configuration, logging-runtime configuration, diagnostic-aggregator registration, player-data runtime construction, reporter construction, and listener binding. Optional auth-verifier configuration can continue without a verifier; request paths fail closed where authentication is required.
 
-```text
-player-data runtime initialization failure -> log and exit
-player-data reporter initialization failure -> log and exit
-ListenAndServe failure -> log and exit
-```
-
-Startup is tolerant for optional auth verifier configuration:
-
-```text
-missing API_SERVER_BASE_URL -> nil verifier, process continues
-missing GAME_SERVER_INTERNAL_TOKEN -> nil verifier, process continues
-auth verifier construction error -> log, nil verifier, process continues
-```
-
-Startup is tolerant for missing Rails player-data backing:
-
-```text
-missing PLAYER_DATA_RAILS_BASE_URL -> player-data uses memory account store
-```
-
-Startup is also tolerant for structured log file setup failure:
-
-```text
-logging file-output setup failure -> log diagnostic degradation and continue startup
-```
-
-Startup behavior should not be confused with request-time behavior. A process can start successfully while later requests fail because auth verification, local profiles, or backing stores are unavailable for that request.
+Logging/output degradation emits a bounded canonical status event and leaves the process serving through available console/stderr behavior. A serve failure emits `service_runtime_failed` and returns nonzero.
 
 ## Code map
 
-Primary startup files:
+```text
+services/game-server/cmd/game-server/main.go
+services/game-server/cmd/game-server/logging_identity.go
+services/game-server/cmd/game-server/diagnostic_aggregator_host.go
+services/game-server/cmd/game-server/http_server.go
+services/game-server/cmd/game-server/http_server_lifecycle.go
+services/game-server/cmd/game-server/player_data_http.go
+services/game-server/cmd/game-server/auth_config.go
+services/game-server/cmd/game-server/webrtc_config.go
+services/game-server/internal/logging/logger.go
+services/player-data/logging/logger.go
+services/player-data/playerdata/configured_runtime.go
+services/player-data/httpapi/request_context.go
+services/game-server/internal/matchreporting/runtime_reporter.go
+```
 
-* `services/game-server/cmd/game-server/main.go`
-* `services/game-server/cmd/game-server/http_server.go` - explicit HTTP server construction and timeout configuration.
-* `services/game-server/cmd/game-server/http_server_test.go` - HTTP server timeout configuration test.
-* `services/game-server/cmd/game-server/auth_config.go`
-* `services/game-server/cmd/game-server/webrtc_config.go`
-* `services/game-server/cmd/game-server/player_data_http.go`
-* `services/game-server/cmd/game-server/player_data_local_store_dev.go`
-* `services/game-server/cmd/game-server/player_data_local_store_noembeddedsqlite.go`
+## Tests and verification
 
-Game-server dependencies constructed during startup:
-
-* `services/game-server/internal/logging/logger.go`
-* `shared/go/servicelog/config.go`
-* `shared/go/servicelog/logger.go`
-* `shared/go/servicelog/fanout.go`
-* `services/game-server/internal/networking/rooms.go`
-* `services/game-server/internal/networking/webrtc_transport.go`
-* `services/game-server/internal/networking/websocket.go`
-* `services/game-server/internal/authclient/client.go`
-* `services/game-server/internal/authclient/types.go`
-* `services/game-server/internal/matchreporting/runtime_reporter.go`
-
-Player-data runtime dependencies constructed or consumed during startup:
-
-* `services/player-data/playerdata/configured_runtime.go`
-* `services/player-data/playerdata/runtime.go`
-* `services/player-data/playerdata/store_router.go`
-* `services/player-data/playerdata/rails_store.go`
-* `services/player-data/playerdata/guest_memory_store.go`
-* `services/player-data/playerdata/noop_store.go`
-* `services/player-data/playerdata/embeddedsqlite/sqlite_store.go`
-* `services/player-data/httpapi/profile_handler.go`
-* `services/player-data/httpapi/local_profiles_handler.go`
-
-Module dependency files:
-
-* `services/game-server/go.mod`
-* `services/player-data/go.mod`
-
-Important non-ownership boundaries:
-
-* `services/game-server/cmd/game-server/` owns process composition.
-* `services/game-server/internal/networking/` owns WebSocket behavior after route entry.
-* `services/game-server/internal/rooms/` owns room state and room cleanup behavior.
-* `services/game-server/internal/matchreporting/` owns game-server-to-player-data match-result reporting.
-* `services/player-data/playerdata/` owns player-data runtime and store routing.
-* `services/player-data/httpapi/` owns player-data HTTP handler behavior.
-* `services/api-server/` owns Rails auth and authenticated-account persistence.
-
-## Tests
-
-There is no dedicated route-registration test under `services/game-server/cmd/game-server/`. `http_server_test.go` directly verifies the configured HTTP server timeout values.
-
-Relevant lower-level tests include:
-
-* `services/game-server/cmd/game-server/*_test.go`
-* `services/game-server/internal/authclient/client_test.go`
-* `services/game-server/internal/matchreporting/runtime_reporter_test.go`
-* `services/game-server/internal/networking/session_auth_test.go`
-* `services/game-server/tests/networking/auth_test.go`
-* `services/game-server/tests/networking/auth_admission_test.go`
-* `services/player-data/playerdata/configured_runtime_test.go`
-* `services/player-data/playerdata/configured_runtime_embedded_sqlite_test.go`
-* `services/player-data/playerdata/runtime_test.go`
-* `services/player-data/playerdata/store_router_test.go`
-* `services/player-data/playerdata/rails_store_test.go`
-* `services/player-data/playerdata/noop_store_test.go`
-* `services/player-data/playerdata/guest_memory_store_test.go`
-* `services/player-data/playerdata/embeddedsqlite/sqlite_store_test.go`
-* `services/player-data/httpapi/local_profiles_handler_test.go`
-
-Useful verification commands:
+Focused process tests cover identity requirements, diagnostic registration, server timeout/lifecycle behavior, and observability event ownership. Service verification is split by module:
 
 ```bash
 cd services/game-server && go test -buildvcs=false ./...
-cd services/game-server/cmd/game-server && go test -buildvcs=false ./...
 cd services/player-data && go test ./...
 cd services/player-data && go test -tags noembeddedsqlite ./...
 ```
 
 ## Related docs
 
-* [Game Server Process](./!INDEX.md)
-* [Game Server](../!INDEX.md)
-* [Game Server Integrations](../integrations/!INDEX.md)
-* [Player Data HTTP Hosting](../integrations/player-data-http-hosting.md)
-* [Auth Verifier Integration](../integrations/auth-verifier-integration.md)
-* [Match Result Reporting](../integrations/match-result-reporting.md)
-* [Game Server Networking](../networking/!INDEX.md)
-* [Game Server Rooms](../rooms/!INDEX.md)
-* [Player Data](../../player-data/!INDEX.md)
-* [API Server](../../api-server/!INDEX.md)
-
-## Notes
-
-This document is scoped to startup composition. Route-by-route ownership belongs in route-composition documentation. Process cleanup and shutdown behavior belong in service-shutdown documentation.
-
-The game server currently hosts player-data in-process while `services/player-data` remains a separate service boundary.
-
-The player-data piggy-back model should not be treated as permission to move player-data persistence into game-server internals. The current implementation co-locates runtime execution, not ownership.
+- [Service shutdown](service-shutdown.md)
+- [Route composition](route-composition.md)
+- [Game-server logging and diagnostics](../observability/logging-and-diagnostics.md)
+- [Player-data observability and logging](../../player-data/observability-and-logging.md)
+- [Diagnostic aggregator hosting](../integrations/diagnostic-aggregator-hosting.md)

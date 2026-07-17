@@ -84,14 +84,16 @@ A separate focused test guards canonical devtools documentation against removed 
 
 If the server test command prints read-only `envman` warnings but tests pass, those warnings have been harmless in this environment.
 
-For focused server logger verification, check `services/game-server/internal/logging` and run the server with info-level server logs enabled:
+For focused game-server logger verification, provide the required logging identity inputs and use the real level boundary:
 
 ```bash
 cd services/game-server
-LOG_SERVER=info go run ./cmd/game-server
+BUILD_VERSION=dev ENVIRONMENT=development LOG_LEVEL=info go run ./cmd/game-server
 ```
 
-Then inspect the sequential JSONL output under `services/game-server/logs/game-server/game-server-*.jsonl` to confirm file output is being written.
+Then inspect the active file `logs/game-server/game-server.jsonl.open` and completed compressed segments under `logs/game-server/archive/`. Do not look for removed category-specific game-server environment variables or sequential legacy files.
+
+Game-server startup requires `BUILD_VERSION` and `ENVIRONMENT` for both the game-server and hosted player-data identities. The active writer is an `.jsonl.open` file; completed segments are archived and gzip-compressed.
 
 
 ## Client checks
@@ -141,6 +143,20 @@ The remaining gameplay/network smoke boundary is manual: websocket connection, a
 
 ## Data-sync checks
 
+Observability contract generation/drift checks:
+
+```bash
+data-sync -validate -observability
+data-sync -diff -observability -go -gds -ruby -json -docs
+data-sync -check -observability -go -gds -ruby -json -docs
+```
+
+When the repository wrapper is used from a checkout where `tools/data_sync` is not installed as a package, run with the repository root on `PYTHONPATH`:
+
+```bash
+PYTHONPATH=. python tools/data_sync/main.py -check -observability -go -gds -ruby -json -docs
+```
+
 Validate active shared constants:
 
 ```bash
@@ -184,6 +200,15 @@ python3 tools/data_sync/main.py -check -packets -go -gds
 ```
 
 Packet validate/diff/push/check commands operate on the split packet SoT under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, and `lobby.toml`). Packet generation/checks include server devtools packet output in `services/game-server/internal/devtools/packets_generated.go`.
+
+Focused observability verification should cover:
+
+- API `Emitter`, `WorkerRuntime`, Puma hooks, request lifecycle, and specific-failure suppression;
+- player-data HTTP request context and dispatcher match-result events;
+- client emitter validation/status and `ClientOperationTrace` ownership;
+- game-server canonical lifecycle, identity gate, and owner boundaries.
+
+Canonical workflow tests assert event ownership and traces. Legacy compatibility tests may assert that remaining text/category helpers still route through `emit_legacy`; they must not be treated as proof of a new semantic workflow.
 
 Export pickup collision shapes with:
 

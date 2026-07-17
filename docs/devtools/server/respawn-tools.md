@@ -257,7 +257,7 @@ Each all-player target is handled independently. Active players are ignored, whi
 
 ## Telemetry
 
-Debug respawn emits structured game logs through `logging.Game`.
+Debug respawn emits canonical game-owner diagnostics through `logging.Emit`.
 
 Current log messages include:
 

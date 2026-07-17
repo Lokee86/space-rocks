@@ -180,14 +180,14 @@ Default warnings and errors only:
 
 ```bash
 cd services/game-server
-go run ./cmd/game-server
+BUILD_VERSION=dev ENVIRONMENT=development go run ./cmd/game-server
 ```
 
 Set the retained process-level configuration value:
 
 ```bash
 cd services/game-server
-LOG_LEVEL=info go run ./cmd/game-server
+BUILD_VERSION=dev ENVIRONMENT=development LOG_LEVEL=info go run ./cmd/game-server
 ```
 
 Startup file-output status is emitted through the canonical observability flow:
@@ -440,7 +440,7 @@ The completed game-server rollout gate was run from the repository root:
 - `python tools/data_sync/main.py -validate` passed.
 - Constants, packets, realtime-wire, and drop-table generated-data `-check` gates passed.
 - `git diff --check` passed.
-- Production scans found zero references to `logging.Server.`, `logging.Network.`, `logging.Rooms.`, or `logging.Game.` under `services/game-server`.
+- Production scans confirm game-server semantic production emission uses the canonical `logging.Emit` boundary.
 
 The repository wrapper `bash tools/ci/run_repo_checks.sh` requires `PYTHONPATH=.` for the local Windows Python module-import environment; the equivalent stages were rerun with that environment and passed. No rollout-related verification failure remained.
 
@@ -452,12 +452,12 @@ The retained `LOG_LEVEL` configuration entry point can be exercised without chan
 
 ```bash
 cd services/game-server
-LOG_LEVEL=info go run ./cmd/game-server
+BUILD_VERSION=dev ENVIRONMENT=development LOG_LEVEL=info go run ./cmd/game-server
 ```
 
 ```bash
 cd services/game-server
-LOG_LEVEL=warn go run ./cmd/game-server
+BUILD_VERSION=dev ENVIRONMENT=development LOG_LEVEL=warn go run ./cmd/game-server
 ```
 
 Expected stderr output is the safe canonical rendering with generated category and level context. Direct canonical calls write exactly one canonical JSON envelope to the active JSONL file.

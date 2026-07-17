@@ -56,6 +56,7 @@ Drift
 | Gameplay and shared constants   | `shared/constants/**/*.toml` listed by `tools/data_sync/config.toml`                   | `services/game-server/internal/constants/*.go`, `client/scripts/generated/constants/constants.gd`                                                                                                                                                                                       | Game server runtime, Godot client runtime                                                                             | `data-sync -validate -constants`, `data-sync -check -constants -go -gds`                     | Packet schemas, drop tables, database schemas, scene hierarchy                                     |
 | Logical packet schemas          | Configured `shared/packets/*.toml`, except `realtime_wire.toml`                       | `services/game-server/internal/game/packets.go`, `services/game-server/internal/game/runtime/packets_generated.go`, `services/game-server/internal/devtools/packets_generated.go`, `services/player-data/protocol/packets.go`, `client/scripts/generated/networking/packets/packets.gd` | Game server networking, game runtime packet projection, devtools, player-data runtime protocol, Godot networking      | `data-sync -validate -packets`, `data-sync -check -packets -go -gds`                         | Physical realtime wire contract, constants, HTTP contracts, Rails schema, local SQLite schema |
 | Physical realtime wire         | `shared/packets/realtime_wire.toml`                                                   | `services/game-server/internal/protocol/realtimewire/generated.go`, `client/scripts/generated/networking/realtime_wire_generated.gd`, `shared/packets/generated/realtime_wire.json`, `docs/protocol/generated/realtime-wire-reference.md` | Server compact descriptor encoder, client descriptor decoder, server/client quantization lookup | `data-sync -validate -realtime-wire`, `data-sync -check -realtime-wire -go -gds -json -docs`, shared fixture and codec tests | Simulation projection, transport scheduling, packet application, quantization math |
+| Observability contract          | `shared/contracts/observability/{schema,services,events,fields,redaction,retention_tiers,diagnostic_bundle}.toml` | `shared/go/observabilityevent/contract_generated.go`, `client/scripts/generated/observability/contract_generated.gd`, `services/api-server/app/lib/observability/contract_generated.rb`, `shared/contracts/observability/generated/contract.json`, `docs/observability/generated/contract-reference.md` | Go services, client emitter, API Ruby emitter/Puma runtime, diagnostic aggregator, observability docs | `data-sync -validate -observability`, `data-sync -check -observability -go -gds -ruby -json -docs`, observability generator/emitter tests | Service workflow ownership, rolling writer implementations, diagnostic transport, gameplay semantics |
 | Drop tables                     | `shared/drop_tables/*.toml` listed by `tools/data_sync/config.toml`                    | `services/game-server/internal/game/drops/drop_tables.go`                                                                                                                                                                                                                               | Game server drop evaluation and pickup spawning handoff                                                               | `data-sync -validate -drop-tables`, `data-sync -check -drop-tables -go`, drop table Go tests | Pickup collection, pickup effects, packet schema, constants                                        |
 | Player-data logical schema      | `shared/player_data/stats.toml`, `shared/player_data/match_result.toml`                | Current pipeline validates schema shape only; implemented Go structs and stores must satisfy the logical contract                                                                                                                                                                       | Player-data runtime, game-server match reporting, Rails-backed account persistence, embedded SQLite local persistence | `data-sync -validate -player_data`, player-data Go tests, Rails player-data tests            | HTTP request/response shapes, physical Rails schema, physical SQLite schema, live simulation state |
 | Player-data runtime packets     | `shared/packets/player_data.toml` plus `shared/packets/outputs.toml`                   | `services/player-data/protocol/packets.go`                                                                                                                                                                                                                                              | Player-data dispatcher, runtime sink, game-server match reporting                                                     | `data-sync -validate -packets`, `data-sync -check -packets -go`                              | Player-data physical storage, HTTP profile/local-profile contracts                                 |
@@ -108,6 +109,15 @@ shared/drop_tables/basicasteroids.toml
 [sot.player_data]
 shared/player_data/stats.toml
 shared/player_data/match_result.toml
+
+[sot.observability]
+shared/contracts/observability/schema.toml
+shared/contracts/observability/services.toml
+shared/contracts/observability/events.toml
+shared/contracts/observability/fields.toml
+shared/contracts/observability/redaction.toml
+shared/contracts/observability/retention_tiers.toml
+shared/contracts/observability/diagnostic_bundle.toml
 ```
 
 Active generated output targets:
@@ -118,6 +128,7 @@ packets -> Go and GDScript
 realtime_wire -> Go, GDScript, JSON, and docs
 drop_tables -> Go
 player_data -> validation only
+observability -> Go, GDScript, Ruby, JSON, and docs
 ```
 
 TypeScript output is disabled in the current default config.
@@ -607,6 +618,10 @@ tools/data_sync/data_sync/model/realtime_wire.py
 tools/data_sync/data_sync/realtime_wire_toml.py
 tools/data_sync/data_sync/realtime_wire_validate.py
 tools/data_sync/data_sync/realtime_wire_sync.py
+tools/data_sync/data_sync/observability_toml.py
+tools/data_sync/data_sync/observability_validate.py
+tools/data_sync/data_sync/observability_sync.py
+tools/data_sync/data_sync/model/observability.py
 ```
 
 Data-sync generators:
@@ -622,6 +637,11 @@ tools/data_sync/data_sync/generators/rich_go_packets.py
 tools/data_sync/data_sync/generators/rich_gds_packets.py
 tools/data_sync/data_sync/generators/go_drop_tables.py
 tools/data_sync/data_sync/generators/realtime_wire_*.py
+tools/data_sync/data_sync/generators/observability_go.py
+tools/data_sync/data_sync/generators/observability_gds.py
+tools/data_sync/data_sync/generators/observability_ruby.py
+tools/data_sync/data_sync/generators/observability_json.py
+tools/data_sync/data_sync/generators/observability_docs.py
 ```
 
 Data-sync parser and validation tests:
@@ -635,6 +655,11 @@ tools/data_sync/tests/test_drop_tables_sync.py
 tools/data_sync/tests/test_player_data_toml.py
 tools/data_sync/tests/test_realtime_wire.py
 tools/data_sync/tests/test_realtime_wire_enemy_extensibility.py
+tools/data_sync/tests/test_observability_toml.py
+tools/data_sync/tests/test_observability_validate.py
+tools/data_sync/tests/test_observability_sync.py
+tools/data_sync/tests/test_observability_generators.py
+tools/data_sync/tests/test_observability_emission_guards.py
 ```
 
 Source roots:

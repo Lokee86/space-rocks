@@ -85,7 +85,7 @@ The room manager owns:
 * returning game-over rooms to the lobby
 * stopping cleanup timers and game instances during process-level `StopAll`
 * returning room-domain errors as stable code/message pairs for networking to convert into room error packets
-* emitting room lifecycle diagnostics through `logging.Rooms`
+* emitting room lifecycle diagnostics through the canonical game-server logging owner
 
 ## Does not own
 
@@ -368,7 +368,7 @@ Process caller:
 Related systems:
 
 * `services/game-server/internal/game/` - Owns simulation after a room starts a game instance.
-* `services/game-server/internal/logging/logger.go` - Provides `logging.Rooms`.
+* `services/game-server/internal/logging/logger.go` - Provides the canonical game-server `logging.Emit` boundary.
 * `services/game-server/internal/matchreporting/` - Owns reporter construction for match-result persistence.
 * `services/player-data/` - Owns durable player-data and match-result storage.
 

@@ -288,12 +288,14 @@ type must not be empty after trimming
 payload, when present, must be a Dictionary
 ```
 
-If decoding fails, `NetworkClient` records the failure in runtime metrics and emits a structured network warning event through `ClientLogger`:
+If decoding fails, `NetworkClient` records the failure in runtime metrics and emits the canonical failure event through `ClientLogger.emit_canonical`, using the owning connection trace:
 
 ```text
 event: packet_decode_failed
 level: warn
 category: network
+context:
+  trace_id: owning connection trace
 fields:
   error
   raw_bytes
@@ -354,12 +356,14 @@ If the socket is open, the packet dictionary is passed to:
 PacketCodec.encode(packet)
 ```
 
-The current codec serializes the dictionary as JSON text. If encoding fails, `NetworkClient` records the failure in runtime metrics and emits a structured network warning event through `ClientLogger`:
+The current codec serializes the dictionary as JSON text. If encoding fails, `NetworkClient` records the failure in runtime metrics and emits the canonical failure event through `ClientLogger.emit_canonical`, using the owning connection trace:
 
 ```text
 event: packet_encode_failed
 level: warn
 category: network
+context:
+  trace_id: owning connection trace
 fields:
   error
   packet_type
@@ -547,7 +551,7 @@ A successful WebSocket connection is only transport readiness. Authentication, r
 
 `PacketCodec` should stay small. If packet versioning, binary transport, compression, compatibility negotiation, or schema-level validation moves into the client codec, it should receive its own service or protocol document.
 
-`NetworkClient` records packet decode and encode failures in runtime metrics and reports them through structured `ClientLogger.network_event(...)` calls, but this document does not own the logger implementation details.
+`NetworkClient` records packet decode and encode failures in runtime metrics and reports them through canonical `ClientLogger.emit_canonical(...)` calls with the owning connection trace. Compatibility logging details belong to [Client Logging](../client-logging.md).
 
 `ClientConnectionService.reset_realtime_session()` preserves the `RealtimePacketPipeline` object identity while resetting its state, closing and clearing the active `RealtimeTransportSession`, and updating `ClientInboundCoordinator` with a null transport-session reference. Its websocket auth user-id cache uses the integer `NO_WEBSOCKET_AUTH_USER_ID` (`-1`) rather than `null` when no identity is accepted.
 

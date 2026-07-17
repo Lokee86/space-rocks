@@ -16,7 +16,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning.
+Active planning. Deterministic game-owned RNG is implemented and benchmark foundations exist. The scripted/synthetic runtime scenario harness is not implemented.
 
 ## Ownership Boundary
 
@@ -314,7 +314,7 @@ Casual and local modes may tolerate looser thresholds during early development a
 
 Runtime pressure should eventually be visible through devtools or diagnostics.
 
-The World Telemetry Overlay may grow beyond packet metrics to show useful runtime pressure such as entity counts, frame pressure, and server/runtime timing where available. Seeded scenario evidence can preserve the configuration and seed locally, but emitting that seed through canonical observability events or diagnostic bundles stays deferred until P3B observability integration settles.
+The World Telemetry Overlay may grow beyond packet metrics to show useful runtime pressure such as entity counts, frame pressure, and server/runtime timing where available. Seeded scenario evidence can preserve the configuration and seed locally. Seed emission through canonical observability events or diagnostic bundles remains deferred on its own product/diagnostic merits; the observability contract and emitter boundary are settled.
 
 This remains development and diagnostics tooling. It should not become player-facing HUD behavior by default.
 

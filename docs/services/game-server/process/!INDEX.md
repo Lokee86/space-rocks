@@ -20,7 +20,7 @@ This folder owns executable startup, route composition, dependency construction,
 <!-- doc-ledger:files:start -->
 
 - [route-composition.md](route-composition.md) - Route Composition documentation.
-- [service-shutdown.md](service-shutdown.md) - Game-server process shutdown and room-manager cleanup documentation.
+- [service-shutdown.md](service-shutdown.md) - Graceful game-server process shutdown, HTTP draining, service closure, and room cleanup documentation.
 - [service-startup.md](service-startup.md) - Service Startup documentation.
 <!-- doc-ledger:files:end -->
 ## Stub Files

@@ -50,7 +50,7 @@ Current technical sequencing is:
 P1 initial measurement checkpoint complete.
 P2 active protocol baseline established; remaining advanced work is evidence-driven.
 P3A automated verification baseline implemented.
-P3B observability contracts plus minimal product log aggregation are the next major block.
+P3 observability and release-foundation baseline is implemented; remaining work is explicit below.
 ```
 
 Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
@@ -274,7 +274,26 @@ P3C. Runtime measurement and operational readiness.
 P3D. Build, release, environment, and compatibility gates.
 ```
 
-P3A is the implemented automated verification baseline. P3B is the next major block; P3C and P3D follow in order as evidence and release needs justify them. Seeded game-owned RNG is now an implemented P3C enabling foundation, but it does not complete P3C.
+P3 state is:
+
+```text
+Implemented:
+- P3A automated verification baseline
+- observability SSoT and generated consumers
+- service-owned rolling runtimes
+- canonical cross-language emitters
+- bounded diagnostic-aggregator intake/storage
+- completed targeted workflow migrations
+- game-server canonical-only migration
+
+Remaining:
+- product diagnostic producers/uploads
+- diagnostic bundles and copy diagnostics
+- compatibility bridge cleanup
+- P3C scripted/synthetic runtime scenarios
+- operational thresholds and release verification
+- P3D release/environment/compatibility gates
+```
 
 P3D is the release gate for local-profile schema changes that ship in public packaged beta, release candidate, or launch builds. Disposable local development and testing profiles do not need backup or migration protection. Before a public packaged beta, release candidate, or launch build introduces or ships a local-profile schema change, the gate requires schema versioning, a forward migration path, automatic pre-migration backup, validation, visible safe failure, preservation of the original data, and migration tests.
 
@@ -292,13 +311,13 @@ observability, logging, and diagnostics
 ### Priority Order
 
 ```text
-1. P3A verification and architecture gates.
-2. P3B observability contracts and log aggregation.
-3. P3C runtime measurement and operational readiness.
-4. P3D build/release/environment/compatibility gates.
+1. P3A verification and architecture gates (implemented).
+2. Observability SSoT, emitters, service runtimes, and bounded aggregator (implemented).
+3. P3C runtime measurement and operational readiness (scripted/synthetic scenarios remain).
+4. P3D build/release/environment/compatibility gates (remaining).
 ```
 
-P3B includes the observability SSoT, canonical envelope, minimal aggregator service, cross-service correlation, service integration, diagnostic bundles, redaction, bounded non-blocking delivery, the durable storage boundary, health/readiness, and release verification. Every product service owns independently useful, bounded local structured JSONL logs; the aggregator receives a correlated second copy and is not the sole source of diagnostics. Service-owned files use managed rolling segments with rotation by age and size, compression of completed segments, crash recovery, retention by age and total bytes, and non-fatal behavior on logging failure. Long-running file guards are required for both the game-server and API-server. API-server logging must be safe for future Puma worker scaling: active files are owned per worker/process, shared-file writes are unsafe and prohibited, and retention cleanup is coordinated. The desired observability flows and call-site inventory are already documented in the observability planning document; implementation proceeds through a gap matrix and workflow-based rollout rather than redesigning the inventory. Aggregator failure must degrade diagnostics rather than gameplay. Production-scale dashboards, alerting, OpenTelemetry-style tracing, and long-term hosted retention remain deferred.
+The implemented observability baseline includes the SSoT, canonical envelope, generated consumers, service-owned rolling runtimes, cross-service workflow correlation, bounded aggregator intake/storage, redaction, recovery, compression, retention, and non-fatal logging degradation. Remaining P3 work is product diagnostics, bundles/copy diagnostics, compatibility cleanup, scripted/synthetic runtime scenarios, operational thresholds, hosted release verification, and P3D environment/compatibility gates. Production-scale dashboards, alerting, OpenTelemetry-style tracing, optional centralized collection, and long-term hosted retention remain deferred.
 
 ### Completion Criteria
 
@@ -307,7 +326,7 @@ local development sanity gate exists
 documentation and contract gate exists
 local packaged single-player beta gate exists
 dev-hosted multiplayer gate exists
-hosted staging gate requires validated central log aggregation
+hosted staging gate requires validated hosted observability and diagnostic verification; continuous centralized log collection remains optional future work
 production candidate blockers are explicit
 runtime-heavy features require measurement before release-shaped expansion
 shared observability contract and canonical envelope exist
@@ -329,6 +348,8 @@ implementation follows the documented observability flows and call-site inventor
 ### Goal
 
 Define what a match is, how rules are resolved, how results are finalized, and how player builds enter a match.
+
+Stage 1 product decisions are complete. P4 implementation has started. Team/participant work is currently branch work pending consolidation; P4 is not all implemented.
 
 ### Priority Order
 

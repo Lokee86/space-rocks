@@ -542,6 +542,8 @@ Current verified behavior includes:
 
 ## Related docs
 
+See [Player-data observability and logging](observability-and-logging.md) for the shared emitter, request identity, dispatcher events, and rolling runtime.
+
 * [Player Data](./!INDEX.md)
 * [Game Server Player Data HTTP Hosting](../game-server/integrations/player-data-http-hosting.md)
 * [Game Server Match Result Reporting](../game-server/integrations/match-result-reporting.md)

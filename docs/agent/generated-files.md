@@ -13,15 +13,18 @@ Generated outputs must be changed through their source-of-truth files or generat
 
 - Do not hand-edit generated packet files.
 - Do not hand-edit generated constants files.
+- Do not hand-edit generated observability contract files.
 - Do not hand-edit generated collision JSON as a convenience.
 - Find the source-of-truth file first.
 - Use data docs for pipeline details.
 - Packet and constants changes flow through shared source files and data-sync.
+- Observability contract changes flow through `shared/contracts/observability/` and data-sync; generated Ruby, Go, GDScript, JSON, and Markdown outputs are prohibited hand-edit targets.
 - Collision-shape data comes from the Godot exporter.
 
 ## Related docs
 
 - [Data](../data/!INDEX.md)
+- [Observability Contract](../data/observability-contract.md) - observability source files, generated outputs, and commands.
 - [Testing](./testing.md)
 - [Documentation Editing](./documentation-editing.md)
 

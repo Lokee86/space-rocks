@@ -37,4 +37,4 @@ This folder owns canonical service diagnostics and logging documentation for the
 
 ## Notes
 
-The game-server call-site rollout and local compatibility logger removal are complete. Repository-wide bridge retirement and P3C runtime scenarios remain separate follow-up work; this boundary stays focused on canonical diagnostics and service-level visibility.
+The game-server call-site rollout is complete and production emission is canonical-only through `logging.Emit`. Repository-wide bridge retirement remains separate follow-up work for services that still retain compatibility adapters, and P3C runtime scenarios remain separate planning work; this boundary stays focused on canonical diagnostics and service-level visibility.

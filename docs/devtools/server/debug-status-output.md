@@ -231,14 +231,14 @@ Debug status is live diagnostic telemetry, not analytics.
 
 The packet reports current server state. It is transient and is not persisted.
 
-Encoding failures are logged through the networking logger with room, player, and remote-address context. When encoding fails, the server skips that status write and keeps the session alive.
+Encoding failures are emitted through the canonical networking owner with room, player, and remote-address context. When encoding fails, the server skips that status write and keeps the session alive.
 
 Current encode path:
 
 ```text
 BuildDebugStatusResponse
 -> packetcodec.Encode
--> logging.Network.Error on encode failure
+-> canonical packet-encode failure event through the networking owner
 ```
 
 Debug status encode failures are logged by the builder path. Routine successful writes should stay quiet when a write-loop delivery path is active.

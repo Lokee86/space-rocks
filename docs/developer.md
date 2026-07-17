@@ -135,6 +135,17 @@ tools/data_sync/
 
 Use data-sync when changing shared packet or constants sources. Do not hand-edit generated outputs as the source of truth.
 
+Observability is also an active data-sync domain. Edit only `shared/contracts/observability/*.toml`, then run:
+
+```bash
+data-sync -validate -observability
+data-sync -diff -observability -go -gds -ruby -json -docs
+data-sync -push -observability -go -gds -ruby -json -docs
+data-sync -check -observability -go -gds -ruby -json -docs
+```
+
+See [Observability Contract](data/observability-contract.md) for the source/output owner map.
+
 Common validation commands:
 
 ```bash
@@ -291,7 +302,7 @@ Run the server from the repo root with:
 
 ```bash
 cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go run ./cmd/game-server); }
+{ (cd services/game-server && BUILD_VERSION=dev ENVIRONMENT=development go run ./cmd/game-server); }
 ```
 
 Run all game-server tests with:
@@ -364,7 +375,7 @@ Run it from the game-server service root:
 
 ```bash
 cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && air); }
+{ (cd services/game-server && set -a && source ../../.env && set +a && air); }
 ```
 
 Use Air for local convenience only. A normal `go run` or `go test` path should still work without Air.
@@ -403,6 +414,15 @@ docs/agent/mcp-servers.md
 
 ## Running The Project
 
+### Logging identities and locations
+
+Game-server startup requires `BUILD_VERSION` and `ENVIRONMENT` for separate `game-server` and hosted `player-data` service identities. `LOG_LEVEL` is the game-server level boundary. Local game-server and player-data output uses an active `.jsonl.open` file with completed gzip-compressed segments under the service archive directory. API-server output uses per-process/worker active files under `API_OBSERVABILITY_LOG_ROOT`, with coordinated retention and compressed archives. Client output uses Godot's `user://logs` active/archive layout. See the owner docs rather than duplicating runtime policy here:
+
+- [Game-server startup and logging](services/game-server/process/service-startup.md)
+- [Player-data observability](services/player-data/observability-and-logging.md)
+- [API-server observability](services/api-server/observability-and-logging.md)
+- [Client logging](services/client/client-logging.md)
+
 ### Run The Game Server
 
 From the repo root:
@@ -420,7 +440,7 @@ To run with server devtools disabled:
 
 ```bash
 cd /mnt/d/\!bin/space-rocks
-{ (cd services/game-server && go run -tags nodevtools ./cmd/game-server); }
+{ (cd services/game-server && BUILD_VERSION=dev ENVIRONMENT=development go run -tags nodevtools ./cmd/game-server); }
 ```
 
 ### Run The API Server

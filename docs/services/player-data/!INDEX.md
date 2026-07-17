@@ -24,6 +24,7 @@ Player-data does not host, import, call, persist for, or reach through to diagno
 
 - [local-profiles-http-api.md](local-profiles-http-api.md) - Player-data local profiles HTTP API documentation.
 - [match-result-sinks.md](match-result-sinks.md) - Player-data match result sink documentation.
+- [observability-and-logging.md](observability-and-logging.md) - Player-data canonical HTTP and dispatcher observability, compatibility layer, and rolling runtime.
 - [profile-stats-flow.md](profile-stats-flow.md) - Player-data profile stats flow documentation.
 - [runtime-and-store-routing.md](runtime-and-store-routing.md) - Player-data runtime and store routing documentation.
 <!-- doc-ledger:files:end -->

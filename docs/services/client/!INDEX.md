@@ -20,7 +20,7 @@ This folder owns docs for the client runtime and its implementation responsibili
 
 - [auth-session-flow.md](auth-session-flow.md) - Client auth session flow documentation.
 - [client-http-api-flow.md](client-http-api-flow.md) - Client shared HTTP API helper, request-result, auth API, profile API, and local profile API flow documentation.
-- [client-logging.md](client-logging.md) - Client Logging documentation.
+- [client-logging.md](client-logging.md) - Canonical client envelope, emitter validation/status, operation traces, compatibility emission, and rolling local JSONL output.
 - [hud-and-gameplay-ui.md](hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
 - [input-and-targeting.md](input-and-targeting.md) - Client input and targeting documentation.
 - [menu-flow.md](menu-flow.md) - Client high-level menu flow documentation.
@@ -52,4 +52,4 @@ This folder owns docs for the client runtime and its implementation responsibili
 
 ## Notes
 
-This index stays at the client service boundary and does not try to describe broader domain flows. Presentation consumers within the client branch read `RealtimePresentationState` after runtime routing, and the service index only summarizes that seam at a high level.
+This index stays at the client service boundary and does not try to describe broader domain flows. Client observability ownership is documented in [Client Logging](client-logging.md); presentation consumers within the client branch read `RealtimePresentationState` after runtime routing, and the service index only summarizes that seam at a high level.

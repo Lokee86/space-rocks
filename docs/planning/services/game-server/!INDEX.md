@@ -25,7 +25,7 @@ Client presentation, API-server planning, and unrelated product design belong in
 
 - [integrations](integrations/!INDEX.md) - Integrations documentation.
 - [networking](networking/!INDEX.md) - Networking documentation.
-- [observability](observability/!INDEX.md) - Observability documentation.
+
 - [process](process/!INDEX.md) - Process documentation.
 - [rooms](rooms/!INDEX.md) - Rooms documentation.
 - [simulation](simulation/!INDEX.md) - Simulation documentation.

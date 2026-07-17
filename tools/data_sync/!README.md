@@ -9,7 +9,9 @@
 - constants
 - packets
 - drop_tables
+- player_data
 - realtime_wire
+- observability
 
 The `realtime_wire` domain owns the physical compact realtime contract. It is
 distinct from the logical packet TOML, which remains the source for packet
@@ -22,7 +24,7 @@ types, structs, fields, and JSON names.
 - Godot scene/node structure
 - collision export source scenes/assets
 
-`player_data` is a logical-schema domain with partial/planned pipeline support. The authoritative overview for project-wide ownership lives in [source-of-truth-map](../../docs/data/source-of-truth-map.md).
+`player_data` is an active logical-schema domain with validation-only pipeline support. The authoritative overview for project-wide ownership lives in [source-of-truth-map](../../docs/data/source-of-truth-map.md).
 
 HTTP contracts are separate from data-sync and are documented elsewhere.
 
@@ -33,9 +35,12 @@ This README describes data-sync-supported domains only, not every project source
 - TOML sources of truth for active constants:
   - `shared/constants/server_constants.toml`
   - `shared/constants/server_entities.toml`
+  - `shared/constants/weapons.toml`
   - `shared/constants/client/presentation.toml`
   - `shared/constants/client/shell.toml`
   - `shared/constants/client/lobby.toml`
+  - `shared/constants/pickups.toml`
+  - `shared/constants/weapon_pickups.toml`
 - TOML sources of truth for active packets:
   - `shared/packets/outputs.toml`
   - `shared/packets/gameplay.toml`
@@ -45,11 +50,21 @@ This README describes data-sync-supported domains only, not every project source
   - `shared/packets/player_data.toml`
 - TOML sources of truth for active drop tables:
   - `shared/drop_tables/*.toml`
-- Planned future TOML sources of truth for player-data schema:
-  - `shared/player_data/*.toml`
-- Go game server files
-- GDScript Godot client files
-- TypeScript API server files, later, when enabled
+- TOML sources of truth for active observability:
+  - `shared/contracts/observability/schema.toml`
+  - `shared/contracts/observability/services.toml`
+  - `shared/contracts/observability/events.toml`
+  - `shared/contracts/observability/fields.toml`
+  - `shared/contracts/observability/redaction.toml`
+  - `shared/contracts/observability/retention_tiers.toml`
+  - `shared/contracts/observability/diagnostic_bundle.toml`
+- TOML sources of truth for active player-data logical schema validation:
+  - `shared/player_data/stats.toml`
+  - `shared/player_data/match_result.toml`
+- Go outputs: game-server, shared Go, player-data, and other Go generated outputs
+- GDScript outputs: generated Godot client constants, packets, realtime-wire, and observability contract outputs
+- Ruby API-server observability output: generated `services/api-server/app/lib/observability/contract_generated.rb`
+- TypeScript output is disabled in the default configuration and remains future scope
 
 For constants, the tool uses `data-sync` destination blocks discovered through
 `[constants.scan]`. `-push` maps each TOML `constants.*` section to matching
@@ -66,23 +81,26 @@ constants -> Go, GDScript, and TypeScript when enabled
 packets -> Go and GDScript
 realtime_wire -> Go, GDScript, JSON, and docs
 drop_tables -> Go only
+player_data -> validation only
+observability -> Go, GDScript, Ruby, JSON, and docs
 ```
 
 Deferred data-sync scope:
 
 ```text
 TypeScript output
-player_data logical schema domain
 migration skeleton generation
 ```
 
-## Future Player-Data Schema Domain
+## Player-Data Logical Schema Domain
 
-Player-data schema is a logical schema SSoT, not raw database DDL, and the pipeline support here is still partial/planned.
+Player-data schema is a logical schema SSoT, not raw database DDL. The current data-sync support is validation-only:
 
-The likely future domain flag is `-player-data`, but it is not implemented yet.
+```bash
+data-sync -validate -player_data
+```
 
-Future outputs may include Go structs/contracts, schema docs, contract fixtures, Rails migration skeletons, and embedded DB migration skeletons.
+The active sources are `shared/player_data/stats.toml` and `shared/player_data/match_result.toml`. The validator checks source/config shape; it does not generate Go structs, Rails migrations, or embedded DB migrations.
 
 See the broader [source-of-truth map](../../docs/data/source-of-truth-map.md) and [player-data schema source of truth](../../docs/data/player-data-schema.md).
 
@@ -107,14 +125,14 @@ The canonical sources for data-sync-supported active drop tables are the TOML fi
 
 Debug/devtools packet schema lives in `shared/packets/debug.toml`. Data-sync generates server devtools packet types into `services/game-server/internal/devtools/packets_generated.go` through the `server_devtools_packets` output id.
 
-The split constants SoT files under `shared/constants/` contain constants only.
+The split constants SoT files under `shared/constants/` contain constants only, including `weapons.toml`, `pickups.toml`, and `weapon_pickups.toml`.
 Obsolete packet reference data was removed when the packet TOML pipeline was
 adopted. Packet schema changes should be made under `shared/packets/`.
 Client constants use nested subcategory sections under
 `constants.client.presentation.*`, `constants.client.shell.*`, and
 `constants.client.lobby.*`.
 
-New constants and packet schema changes should be made in TOML. Active gameplay packet output is lane-native, and language files are generated from TOML through `-push`.
+The active packet Go outputs include `server_realtime_packets` in `services/game-server/internal/protocol/realtime/packets_generated.go` and `player_data_packets` in `services/player-data/protocol/packets.go`, alongside the game/runtime and devtools packet outputs. The physical realtime-wire output is separate and is generated into `services/game-server/internal/protocol/realtimewire/generated.go`.
 
 ## Commands
 
@@ -134,7 +152,9 @@ Domains:
 -constants
 -packets
 -drop-tables
+-player_data
 -realtime-wire
+-observability
 ```
 
 Languages:
@@ -143,9 +163,10 @@ Languages:
 -go
 -gds
 -ts
+-ruby
 ```
 
-Realtime-wire-only output selectors:
+Realtime-wire and observability output selectors:
 
 ```bash
 -json
@@ -153,7 +174,7 @@ Realtime-wire-only output selectors:
 ```
 
 `-go`, `-gds`, and `-ts` are language selectors. The realtime-wire domain
-rejects `-ts`; `-json` and `-docs` are not general language targets.
+rejects `-ts`; observability supports `-go`, `-gds`, and `-ruby`; `-json` and `-docs` select realtime-wire or observability outputs.
 
 Options:
 
@@ -178,6 +199,11 @@ data-sync -push -realtime-wire -go -gds -json -docs
 data-sync -diff -realtime-wire -go -gds -json -docs
 data-sync -check -realtime-wire -go -gds -json -docs
 data-sync -validate -realtime-wire
+data-sync -validate -player_data
+data-sync -push -observability -go -gds -ruby -json -docs
+data-sync -diff -observability -go -gds -ruby -json -docs
+data-sync -check -observability -go -gds -ruby -json -docs
+data-sync -validate -observability
 data-sync -push -drop-tables -go
 data-sync -diff -drop-tables -go
 data-sync -check -drop-tables -go
@@ -185,7 +211,7 @@ data-sync -validate
 data-sync -validate -constants
 ```
 
-`-push`, `-pull`, `-diff`, and `-check` require at least one domain and one output selector. Ordinary domains use language selectors; realtime-wire accepts `-go -gds -json -docs`. `-pull` accepts only one language at a time for supported pull domains and is not supported for realtime-wire.
+`-push`, `-pull`, `-diff`, and `-check` require at least one domain and one output selector for generation domains. `-player_data` is validation-only and is used with `-validate` without a generated output selector. Ordinary generation domains use language selectors; realtime-wire accepts `-go -gds -json -docs`. `-pull` accepts only one language at a time for supported pull domains and is not supported for realtime-wire or player_data.
 `-constants` does not generate drop tables.
 
 ## Operation Behavior
@@ -206,6 +232,9 @@ nothing.
 `-validate` checks config, TOML integrity, supported values/types, configured
 file existence, and required managed blocks. Realtime-wire validation also
 cross-validates the physical contract against the logical packet schema.
+Player-data validation checks `shared/player_data/stats.toml` and
+`shared/player_data/match_result.toml` against the configured logical schema;
+it has no generated output.
 
 `-pull` is intentionally restricted. Constants pull reads discovered generated
 blocks for the selected language, updates existing TOML values only, and writes
@@ -235,9 +264,12 @@ Shape:
 paths = [
   "shared/constants/server_constants.toml",
   "shared/constants/server_entities.toml",
+  "shared/constants/weapons.toml",
   "shared/constants/client/presentation.toml",
   "shared/constants/client/shell.toml",
   "shared/constants/client/lobby.toml",
+  "shared/constants/pickups.toml",
+  "shared/constants/weapon_pickups.toml",
 ]
 
 [sot.packets]
@@ -258,23 +290,49 @@ paths = [
   "shared/drop_tables/basicasteroids.toml",
 ]
 
+[sot.player_data]
+paths = [
+  "shared/player_data/stats.toml",
+  "shared/player_data/match_result.toml",
+]
+
+[sot.observability]
+paths = [
+  "shared/contracts/observability/schema.toml",
+  "shared/contracts/observability/services.toml",
+  "shared/contracts/observability/events.toml",
+  "shared/contracts/observability/fields.toml",
+  "shared/contracts/observability/redaction.toml",
+  "shared/contracts/observability/retention_tiers.toml",
+  "shared/contracts/observability/diagnostic_bundle.toml",
+]
+
 [constants.scan]
-include = ["services/**/*.go", "client/**/*.gd", "services/**/*.ts"]
+include = ["services/game-server/internal/constants/*.go", "client/scripts/generated/constants/*.gd"]
 exclude = [".git/**", "**/.godot/**", "**/node_modules/**"]
 
 [packets.go]
 files = [
   "services/game-server/internal/game/runtime/packets_generated.go",
   "services/game-server/internal/game/packets.go",
+  "services/game-server/internal/protocol/realtime/packets_generated.go",
   "services/game-server/internal/devtools/packets_generated.go",
+  "services/player-data/protocol/packets.go",
 ]
 sections = ["packets"]
 owns = []
-outputs = ["server_entities_packets", "server_game_packets", "server_devtools_packets"]
+outputs = ["server_entities_packets", "server_game_packets", "server_realtime_packets", "server_devtools_packets", "player_data_packets"]
 
 [packets.gds]
 files = ["client/scripts/generated/networking/packets/packets.gd"]
 sections = ["packets"]
+owns = []
+outputs = ["client_packets"]
+
+[packets.ts]
+enabled = false
+files = []
+sections = []
 owns = []
 
 [realtime_wire.go]
@@ -306,6 +364,38 @@ files = ["services/game-server/internal/game/drops/drop_tables.go"]
 sections = []
 owns = []
 outputs = ["server_drop_tables"]
+
+[observability.go]
+enabled = true
+files = [
+  "shared/go/observabilityevent/contract_generated.go",
+]
+sections = []
+owns = []
+
+[observability.gds]
+enabled = true
+files = ["client/scripts/generated/observability/contract_generated.gd"]
+sections = []
+owns = []
+
+[observability.ruby]
+enabled = true
+files = ["services/api-server/app/lib/observability/contract_generated.rb"]
+sections = []
+owns = []
+
+[observability.json]
+enabled = true
+files = ["shared/contracts/observability/generated/contract.json"]
+sections = []
+owns = []
+
+[observability.docs]
+enabled = true
+files = ["docs/observability/generated/contract-reference.md"]
+sections = []
+owns = []
 ```
 
 Constants and packets have separate SoT paths. `-constants` commands read/write
@@ -451,9 +541,12 @@ The active TOML sources are:
 ```text
 shared/constants/server_constants.toml
 shared/constants/server_entities.toml
+shared/constants/weapons.toml
 shared/constants/client/presentation.toml
 shared/constants/client/shell.toml
 shared/constants/client/lobby.toml
+shared/constants/pickups.toml
+shared/constants/weapon_pickups.toml
 shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
@@ -461,12 +554,21 @@ shared/packets/lobby.toml
 shared/packets/webrtc.toml
 shared/packets/player_data.toml
 shared/packets/realtime_wire.toml
+shared/player_data/stats.toml
+shared/player_data/match_result.toml
+shared/contracts/observability/schema.toml
+shared/contracts/observability/services.toml
+shared/contracts/observability/events.toml
+shared/contracts/observability/fields.toml
+shared/contracts/observability/redaction.toml
+shared/contracts/observability/retention_tiers.toml
+shared/contracts/observability/diagnostic_bundle.toml
 shared/drop_tables/basicasteroids.toml
 ```
 
 ## Active Constants Workflow
 
-1. Edit the needed constants SoT file under `shared/constants/` (`server_constants.toml`, `server_entities.toml`, `client/presentation.toml`, `client/shell.toml`, or `client/lobby.toml`).
+1. Edit the needed constants SoT file under `shared/constants/` (`server_constants.toml`, `server_entities.toml`, `weapons.toml`, `client/presentation.toml`, `client/shell.toml`, `client/lobby.toml`, `pickups.toml`, or `weapon_pickups.toml`).
 2. Run `data-sync -validate -constants`.
 3. Run `data-sync -diff -constants -go -gds`.
 4. Run `data-sync -push -constants -go -gds`.
@@ -474,7 +576,7 @@ shared/drop_tables/basicasteroids.toml
 
 ## Active Packet Workflow
 
-1. Edit packet schema files under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, and `lobby.toml`).
+1. Edit packet schema files under `shared/packets/` (`outputs.toml`, `gameplay.toml`, `debug.toml`, `lobby.toml`, `webrtc.toml`, or `player_data.toml`).
 2. Run `data-sync -validate -packets`.
 3. Run `data-sync -diff -packets -go -gds`.
 4. Review the diff.

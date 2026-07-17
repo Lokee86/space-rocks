@@ -19,6 +19,7 @@ constants
 packets
 drop_tables
 realtime_wire
+observability
 ```
 
 The data-sync tool reads TOML sources under `shared/`, renders deterministic language outputs, and either writes them, diffs them, or verifies that generated outputs are current.
@@ -79,6 +80,18 @@ shared/player_data/stats.toml
 shared/player_data/match_result.toml
 ```
 
+Observability contract sources:
+
+```text
+shared/contracts/observability/schema.toml
+shared/contracts/observability/services.toml
+shared/contracts/observability/events.toml
+shared/contracts/observability/fields.toml
+shared/contracts/observability/redaction.toml
+shared/contracts/observability/retention_tiers.toml
+shared/contracts/observability/diagnostic_bundle.toml
+```
+
 Adjacent source-of-truth files not owned by data-sync generation:
 
 ```text
@@ -105,6 +118,7 @@ That configuration defines:
 [sot.drop_tables]
 [sot.player_data]
 [sot.realtime_wire]
+[sot.observability]
 [realtime_wire.go]
 [realtime_wire.gds]
 [realtime_wire.json]
@@ -114,6 +128,11 @@ That configuration defines:
 [packets.gds]
 [packets.ts]
 [drop_tables.go]
+[observability.go]
+[observability.gds]
+[observability.ruby]
+[observability.json]
+[observability.docs]
 ```
 
 `[sot.*]` sections define source-of-truth input paths.
@@ -183,6 +202,16 @@ Drop-table outputs:
 
 ```text
 services/game-server/internal/game/drops/drop_tables.go
+```
+
+Observability outputs:
+
+```text
+shared/go/observabilityevent/contract_generated.go
+client/scripts/generated/observability/contract_generated.gd
+services/api-server/app/lib/observability/contract_generated.rb
+shared/contracts/observability/generated/contract.json
+docs/observability/generated/contract-reference.md
 ```
 
 Adjacent generated or exported outputs outside data-sync:
@@ -257,6 +286,7 @@ Supported active generation domains are:
 -packets
 -drop-tables
 -realtime-wire
+-observability
 ```
 
 `-player_data` is currently validation-only.
@@ -267,9 +297,10 @@ Supported language flags are:
 -go
 -gds
 -ts
+-ruby
 ```
 
-For `-realtime-wire`, `-go`, `-gds`, `-json`, and `-docs` select the generated outputs. `-json` and `-docs` are realtime-wire output selectors, not programming languages or general language targets for every domain.
+For `-realtime-wire`, `-go`, `-gds`, `-json`, and `-docs` select the generated outputs. For `-observability`, `-go`, `-gds`, `-ruby`, `-json`, and `-docs` select the generated outputs. `-json` and `-docs` apply to both realtime wire and observability; they are output selectors, not programming languages or general language targets for every domain.
 
 `-push` writes generated output.
 
@@ -278,6 +309,7 @@ data-sync -push -constants -go -gds
 data-sync -push -packets -go -gds
 data-sync -push -drop-tables -go
 data-sync -push -realtime-wire -go -gds -json -docs
+data-sync -push -observability -go -gds -ruby -json -docs
 ```
 
 `-diff` renders generated output and prints a unified diff without writing.
@@ -287,6 +319,7 @@ data-sync -diff -constants -go -gds
 data-sync -diff -packets -go -gds
 data-sync -diff -drop-tables -go
 data-sync -diff -realtime-wire -go -gds -json -docs
+data-sync -diff -observability -go -gds -ruby -json -docs
 ```
 
 `-check` renders generated output, writes nothing, exits `0` when outputs are current, and exits `1` when generated files differ.
@@ -296,6 +329,7 @@ data-sync -check -constants -go -gds
 data-sync -check -packets -go -gds
 data-sync -check -drop-tables -go
 data-sync -check -realtime-wire -go -gds -json -docs
+data-sync -check -observability -go -gds -ruby -json -docs
 ```
 
 `-validate` checks configuration, source TOML structure, supported values, configured files, managed blocks, packet schemas, drop-table schemas, and player-data logical schema where requested.
@@ -307,6 +341,7 @@ data-sync -validate -packets
 data-sync -validate -realtime-wire
 data-sync -validate -drop-tables
 data-sync -validate -player_data
+data-sync -validate -observability
 ```
 
 `-pull` is restricted to constants and one language at a time.
@@ -353,12 +388,14 @@ Realtime-wire validation and drift check:
 ```text
 data-sync -validate -realtime-wire
 data-sync -check -realtime-wire -go -gds -json -docs
+data-sync -check -observability -go -gds -ruby -json -docs
 ```
 
 Player-data logical schema validation:
 
 ```text
 data-sync -validate -player_data
+data-sync -validate -observability
 ```
 
 Tool test suite:
@@ -416,6 +453,8 @@ Invalid record, fixed-tuple, sparse-tuple, or sparse-positional layouts fail val
 Missing or invalid quantization, ID codec or selector, event, or decode-alternative references fail validation.
 
 Generated Go, GDScript, JSON, or documentation drift is reported by the realtime-wire check command.
+
+Observability validation fails for malformed contract TOML, duplicate services/events/fields, invalid service allowlists or trace requirements, unsupported field types or limits, ambiguous redaction rules, unknown retention/diagnostic-bundle references, missing configured targets, or non-deterministic generated output. Its generated Go, GDScript, Ruby, JSON, and Markdown drift is reported by the observability check command. Runtime rejection/write failures are bounded emitter outcomes and are distinct from data-sync failures.
 
 Packet pull fails by design. Packet schemas are edited in TOML, not reconstructed from generated Go or GDScript.
 
@@ -493,6 +532,20 @@ tools/data_sync/data_sync/generators/realtime_wire_json.py
 tools/data_sync/data_sync/generators/realtime_wire_docs.py
 ```
 
+Observability pipeline:
+
+```text
+tools/data_sync/data_sync/model/observability.py
+tools/data_sync/data_sync/observability_toml.py
+tools/data_sync/data_sync/observability_validate.py
+tools/data_sync/data_sync/observability_sync.py
+tools/data_sync/data_sync/generators/observability_go.py
+tools/data_sync/data_sync/generators/observability_gds.py
+tools/data_sync/data_sync/generators/observability_ruby.py
+tools/data_sync/data_sync/generators/observability_json.py
+tools/data_sync/data_sync/generators/observability_docs.py
+```
+
 Drop-table pipeline:
 
 ```text
@@ -512,6 +565,11 @@ Tool tests:
 
 ```text
 tools/data_sync/tests/
+tools/data_sync/tests/test_observability_toml.py
+tools/data_sync/tests/test_observability_validate.py
+tools/data_sync/tests/test_observability_sync.py
+tools/data_sync/tests/test_observability_generators.py
+tools/data_sync/tests/test_observability_emission_guards.py
 ```
 
 Primary configuration:
@@ -554,4 +612,4 @@ Legacy data-sync docs layout links should now point at this document for workflo
 
 `SSoT` in this document means source of truth. It does not imply every source of truth is handled by `tools/data_sync`.
 
-The data-sync pipeline is intentionally narrower than the project-wide source-of-truth map. Constants, packets, drop tables, and realtime wire are active generated domains. Player-data logical schema is validate-only. HTTP contracts, collision exports, asteroid variants, Rails migrations, and Godot scenes use separate ownership and verification paths.
+The data-sync pipeline is intentionally narrower than the project-wide source-of-truth map. Constants, packets, drop tables, realtime wire, and observability are active generated domains. Player-data logical schema is validate-only. HTTP contracts, collision exports, asteroid variants, Rails migrations, and Godot scenes use separate ownership and verification paths.

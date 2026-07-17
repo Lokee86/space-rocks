@@ -226,11 +226,19 @@ Settled:
 - Encounter Spawn Profiles owner-system planning
 - Encounter Lifecycle And Despawn owner-system planning
 
-Still requires system planning:
-- match-end policies
-- results
-- damage rules
-- join restrictions
+Product-level Stage 1 decisions complete:
+- teams
+- lives/death/respawn
+- awards/counters
+- objectives
+- player spawning
+- encounter spawning/lifecycle
+- damage/healing
+- participation/joining
+- match outcomes/results
+- modes/match rules
+
+Implementation-level work remains.
 ```
 
 The narrower owner documents define these policy contracts and exact semantics. This umbrella records the settled foundation and integration handoffs without duplicating detailed owner-system plans.
@@ -601,21 +609,20 @@ EndOfMatchFlow
 Recommended implementation direction:
 
 ```text
-1. Promote this doc out of stubs after completion.
-2. Keep current menu, local pilot, lobby, match result, replay, and return-to-lobby behavior intact.
-3. Use the completed Gameplay Awards And Counters, Objectives And Objective Runtime, Teams And Team Rules, Lives, Death, Elimination, And Respawn, Player Spawn Profiles, Encounter Spawn Profiles, and Encounter Lifecycle And Despawn owner-system plans while continuing the remaining lower-level planning for match end, results, damage, and join restrictions.
-4. Define the remaining policy contracts, runtime facts, MatchDecision, and one-time match lock, integrating the completed owner-system contracts.
-5. Resolve the baseline plus mode/config overrides into ResolvedMatchRules.
-6. Map current single-player play through the RoomContentConfig path.
-7. Map multiplayer create through the RoomContentConfig path.
-8. Make join flow consume resolved room summary / ResolvedMatchRules-derived data.
-9. Add resolved match/mode/objective summary presentation to lobby.
-10. Add display names, owner/local markers, ready state, and player/team slot presentation to lobby.
-11. Add lobby loadout display and existing-loadout selection.
-12. Add blocked/invalid loadout display where resolved rules disqualify a selected loadout.
-13. Add team assignment controls and player colour selection only when their owning resolved policies allow them.
-14. Add start countdown with unready-cancel behavior until the final 1 second.
-15. Add post-match progression, reward, currency, and achievement presentation through their owner seams.
+1. Keep current menu, local pilot, lobby, match result, replay, and return-to-lobby behavior intact.
+2. Use the authoritative Stage 1 owner documents while implementation work is consolidated.
+3. Define and implement the remaining runtime contracts, facts, `MatchDecision`, and one-time match lock from the settled product decisions.
+4. Resolve the baseline plus mode/config overrides into `ResolvedMatchRules`.
+5. Map current single-player play through the `RoomContentConfig` path.
+6. Map multiplayer create through the `RoomContentConfig` path.
+7. Make join flow consume resolved room summary / `ResolvedMatchRules`-derived data.
+8. Add resolved match/mode/objective summary presentation to lobby.
+9. Add display names, owner/local markers, ready state, and player/team slot presentation to lobby.
+10. Add lobby loadout display and existing-loadout selection.
+11. Add blocked/invalid loadout display where resolved rules disqualify a selected loadout.
+12. Add team assignment controls and player colour selection only when their owning resolved policies allow them.
+13. Add start countdown with unready-cancel behavior until the final 1 second.
+14. Add post-match progression, reward, currency, and achievement presentation through their owner seams.
 ```
 
 Early slices should preserve current behavior while routing new presentation through the planned seams.

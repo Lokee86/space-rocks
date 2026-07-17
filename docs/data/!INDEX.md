@@ -24,6 +24,7 @@ This folder owns data documentation indexes for current Space Rocks data sources
 - [constants.md](constants.md) - Constants documentation.
 - [data-sync-and-ssot-pipeline.md](data-sync-and-ssot-pipeline.md) - Data sync and source-of-truth pipeline documentation.
 - [drop-tables.md](drop-tables.md) - Drop Tables documentation.
+- [observability-contract.md](observability-contract.md) - Observability contract source files, generated consumers, validation, and data-sync workflow.
 - [packet-schemas.md](packet-schemas.md) - Packet Schemas documentation.
 - [player-data-schema.md](player-data-schema.md) - Player-data schema documentation.
 - [source-of-truth-map.md](source-of-truth-map.md) - Source-of-truth map documentation.

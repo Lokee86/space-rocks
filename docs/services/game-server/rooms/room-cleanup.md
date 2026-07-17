@@ -61,7 +61,7 @@ Room cleanup owns:
 * deleting cleaned rooms from the room manager map
 * stopping cleanup timers during room-manager teardown
 * deleting all rooms during room-manager teardown
-* logging room cleanup lifecycle events through `logging.Rooms`
+* emitting room cleanup lifecycle events through the canonical game-server logging owner
 
 ## Does not own
 
@@ -433,7 +433,7 @@ StopAll:
 Room cleanup logs through:
 
 ```go
-logging.Rooms
+canonical room cleanup event through `logging.Emit`
 ```
 
 Current room cleanup lifecycle events include:

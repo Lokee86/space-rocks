@@ -27,7 +27,6 @@ The collection currently exercises:
 ```text
 POST /v1/diagnostic-reports
 GET  /v1/diagnostic-reports/{{diagnostic_report_id}}
-GET  /v1/diagnostic-reports
 ```
 
 The collection is a manual smoke-check client. It does not own the HTTP contract, and it does not replace Go tests or server-side contract assertions.
@@ -66,6 +65,8 @@ Example local WSL setup:
 export DIAGNOSTIC_AGGREGATOR_ENABLED=true
 export DIAGNOSTIC_AGGREGATOR_TOKEN=local-diagnostic-token
 export DIAGNOSTIC_AGGREGATOR_STORAGE_ROOT=/tmp/space-rocks-diagnostic-reports
+export BUILD_VERSION=dev
+export ENVIRONMENT=development
 
 cd services/game-server
 go run ./cmd/game-server
@@ -123,8 +124,9 @@ Bruno exercises the real hosted report routes:
 ```text
 POST /v1/diagnostic-reports
 GET  /v1/diagnostic-reports/{{diagnostic_report_id}}
-GET  /v1/diagnostic-reports
 ```
+
+The collection-level `GET /v1/diagnostic-reports` request is intentionally kept in `method-not-allowed.yml` as the HTTP 405 test. The collection endpoint accepts `POST` only; retrieval requires a report ID.
 
 The hosted service owns:
 

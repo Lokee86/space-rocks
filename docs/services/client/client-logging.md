@@ -4,232 +4,94 @@ Parent index: [Client](./!INDEX.md)
 
 ## Purpose
 
-This document is the canonical reference for the current client logging helper implementation.
+This document describes the current client observability architecture. The canonical envelope is the primary record model; `ClientLogger` is the compatibility-facing facade around the canonical emitter and the local rolling writer.
 
-## Overview
+## Primary record model
 
-`client/scripts/logging/logger.gd` provides the client-side logging helper used by client runtime code.
+Client production diagnostics are canonical observability records, not the former six-field text record. A record contains the generated contract envelope fields (`timestamp`, `level`, `event`, `event_id`, `service`, `environment`, `build_version`, `schema_version`, `service_instance_id`, `category`, and `retention_tier`) plus validated context and fields when present. Context carries identifiers such as `trace_id`, `request_id`, `session_id`, `room_id`, `player_id`, `account_id`, `match_id`, `route`, `packet_type`, and `duration_ms` according to the generated contract.
 
-Existing text helper calls still emit console-compatible lines, but they do so through structured records with event `log_message`. Structured logging is the core behavior, not a wrapper around a separate text-only logger.
+`client/scripts/logging/observability_emitter.gd` is the canonical validation and serialization boundary. It consumes `client/scripts/generated/observability/contract_generated.gd` and owns service/event eligibility, required traces, UUID and type checks, field/key/count/size limits, redaction, unsafe-field rejection, canonical JSON serialization, and bounded status. Rejected values are not written. Writer failures return a stable `write_failed` result and increment emitter status rather than raising into gameplay.
 
-The helper supports structured event logging, category-specific convenience wrappers, and optional local JSONL file output for diagnostics.
+## Emission API
 
-## Code root
+Use `ClientLogger.emit_canonical(event_name, message, context, fields)` for new semantic events. It calls the emitter, reports rejection/write-failure status through the client logging surface, and keeps event ownership with the workflow that has the relevant context.
+
+`emit_legacy` remains a compatibility path for existing text/category helpers. `Logger.info`, `network_info`, `shell_warn`, and similar helpers may still route through the bridge event so old callers continue to work, but they are not recommended for new semantic events. Do not add new uses of `network_event(...)` or `packets_event(...)`; meaningful network, packet, boot, room, gameplay, and devtools events should use a generated canonical event with an owning trace.
+
+## ClientOperationTrace ownership
+
+`client/scripts/observability/client_operation_trace.gd` creates a UUID-backed operation trace and exposes its operation name and `trace_id`. A trace is created at the boundary that starts the operation and is passed through its complete workflow:
+
+| Workflow | Trace owner and continuation |
+| --- | --- |
+| Auth | Auth/session flow creates or continues the auth operation trace across token and result handling. |
+| Connection | `ClientConnectionService` owns the connection trace for connect, open, failure, close, and reset events. |
+| Boot | Boot flow owns the boot trace and passes it through pending multiplayer/single-player startup. |
+| Room | Room/session flow owns create, join, leave, and room-operation traces; request sends and results use that trace. |
+| Gameplay | Gameplay/session owners continue the active room/match trace for lifecycle, presentation, and match-boundary diagnostics. |
+| Devtools | Devtools command/session flow owns command traces and passes them through server command and result/error handling. |
+
+A lower-level helper must use the supplied owner trace rather than create a second operation identity. `ClientOperationTrace` carries correlation only; event semantics remain with the workflow owner.
+
+## Local rolling output
+
+`ClientLogger.configure_file_output(base_dir, prefix)` creates an active/archive layout:
 
 ```text
-client/
+<base_dir>/active/<prefix>.jsonl.open
+<base_dir>/archive/<timestamped completed segment>.jsonl
+<base_dir>/archive/<timestamped completed segment>.jsonl.gz
 ```
 
-Primary implementation area:
+`client/scripts/logging/rolling_jsonl_writer.gd` owns active writes, age/size rotation, startup recovery of an interrupted `.jsonl.open` file, and retention. Completed segments are compressed by `client/scripts/logging/gzip_archive_compressor.gd`; the uncompressed archive is removed only after the gzip replacement is finalized. The active file is flushed after stored records.
 
-```text
-client/scripts/logging/
-```
+Startup recovery moves stale active content into the archive path before opening a fresh active writer. Retention removes expired or over-budget archives. Shutdown closes and flushes the active writer. Configuration, rotation, recovery, compression, retention, and close failures degrade to console-only logging with bounded warning reporting; they do not block the client workflow. `current_file_output_path()` reports the active path while output is enabled.
 
-## Responsibilities
+Normal startup requests `user://logs` with the `client` prefix. The resolved OS path depends on Godot's user-data directory; tests may use a temporary user-data root.
 
-The client logging helper owns:
+## Status and failure behavior
 
-* client logging levels
-* client logger categories
-* default log-level control
-* category-specific log-level control
-* structured log record construction
-* console log formatting
-* optional local JSONL diagnostic file output
-
-## Behavior
-
-### Levels
-
-The implemented levels are `debug`, `info`, `warn`, `error`, and `off`.
-
-`LEVEL_DEBUG`, `LEVEL_INFO`, `LEVEL_WARN`, and `LEVEL_ERROR` map to the matching lowercase level names. `LEVEL_OFF` is treated as disabled by `_should_log(...)` and `level_name(LEVEL_OFF)` currently returns `unknown`.
-
-The logger compares the requested level against the active level for the category. Records are emitted when the requested level is at least the active level and the active level is not `LEVEL_OFF`.
-
-### Level control
-
-`default_level` is the global fallback threshold.
-
-`category_levels` stores per-category overrides.
-
-`set_default_level(level)` updates the fallback threshold.
-
-`set_category_level(category, level)` updates one category override.
-
-`set_all_categories_level(level)` updates the fallback threshold and all currently stored category overrides.
-
-`enable_debug()` sets the fallback threshold to `LEVEL_DEBUG`.
-
-`disable()` sets the fallback threshold to `LEVEL_OFF`.
-
-`_should_log(category, level)` checks the category override when present, otherwise the fallback threshold. `LEVEL_OFF` suppresses output when it is the active threshold.
-
-### Categories
-
-The implemented categories are:
-
-* `default`
-* `shell`
-* `lobby`
-* `network`
-* `game`
-* `world_sync`
-* `hud`
-* `input`
-* `packets`
-
-If a category does not have an override, it uses the current default level.
-
-### Current gameplay diagnostic usage
-
-Gameplay and presentation diagnostics route through structured `ClientLogger` events rather than direct client `print(...)` calls. Event-batch diagnostics use the `packets` category, gameplay death diagnostics use `game`, HUD lifecycle diagnostics use `hud`, and pickup presentation failures use `world_sync`. These diagnostics use stable event names and structured fields; high-frequency event-batch activity remains debug-level and targeted.
-
-### Text helpers
-
-Use the existing text helpers for ordinary human-readable status lines. They still build structured records with event `log_message`.
-
-Example:
-
-```gdscript
-Logger.network_info("realtime protocol state reset")
-```
-
-The category helpers such as `shell_info(...)` and `network_warn(...)` still produce console-compatible lines. `warn(...)` routes through `push_warning(...)`, `error(...)` routes through `push_error(...)`, and the other helper levels print through the normal console path.
-
-### Structured event logging
-
-Use `event(...)` for category-specific structured logs, `network_event(...)` for network-category structured logs, and `packets_event(...)` for packet-category structured logs.
-
-Use stable event names and fields when the log represents a recurring diagnostic, threshold warning, or failure with structured context. Keep high-frequency packet logs gated or targeted rather than emitted for every routine packet path.
-
-Examples:
-
-```gdscript
-Logger.network_event(
-	Logger.LEVEL_WARN,
-	"packet_decode_failed",
-	"Packet decode failed",
-	{
-		"error": "Invalid JSON",
-		"raw_bytes": 42,
-	}
-)
-```
-
-```gdscript
-Logger.packets_event(
-	Logger.LEVEL_INFO,
-	"packet_sent",
-	"Packet sent",
-	{
-		"packet_type": "world_delta",
-		"bytes": 384,
-	}
-)
-```
-
-### Record schema
-
-Structured records currently contain these fields:
-
-* `timestamp_unix_ms`
-* `level`
-* `category`
-* `event`
-* `message`
-* `fields`
-
-`fields` is stored as a deep duplicate of the caller-provided dictionary, so later caller mutation does not mutate the stored record.
-
-### Console format
-
-Console lines are formatted with category and level brackets first, for example `[network][info]`.
-
-For non-`log_message` events, the console line includes an event bracket such as `[packet_decode_failed]` before the message.
-
-Field output is deterministic because dictionary keys are sorted before formatting. Dictionaries and arrays are JSON-stringified for display.
-
-### JSONL output
-
-`format_json_line(...)` returns one JSON object per line. This is local diagnostic output only.
-
-### Local JSONL output
-
-The logger can optionally mirror emitted records to a rolling local JSONL file. This is local diagnostic output, not server logging, telemetry transport, compression, or durable observability upload.
-
-`configure_file_output(base_dir, prefix)` now uses an active/archive layout under the chosen base directory. The active file is `active/<prefix>.jsonl.open`, and completed segments are archived as timestamped JSONL files under `archive/`.
-
-The default policy uses a 16 MiB active-segment size cap, a one-hour active-segment age rotation cap, a 14-day archive retention age, and a 250 MiB archive retention cap. Callers can override the policy when configuring file output; explicit caller values take precedence over the defaults.
-
-When the active segment grows past the byte cap or ages past the age cap, the writer rotates before the next write. Rotation closes the active handle, archives the completed `.jsonl.open` file with timestamp metadata in the filename, and opens a fresh active file.
-
-If `configure_file_output(...)` finds an interrupted `.jsonl.open` file at startup, the writer recovers it into the archive directory before opening the new active file.
-
-`current_file_output_path()` returns the active path when file output is enabled, and `close_file_output()` flushes and closes the handle, then clears the output state.
-
-`configure_file_output(...)` returns `false` when directory creation, recovery, rotation, or file creation fails. When file output is active, emitted records are written as JSONL and flushed after each stored line. If file output fails, the client keeps console logging working and degrades to console-only output while emitting bounded direct failure warnings rather than spamming repeated warnings for the same configured run.
-
-`AppEntry._ready()` currently calls `ClientLogger.configure_file_output("user://logs", "client")`, so normal client startup attempts to enable structured JSONL file logging under Godot user data. On success, `AppEntry` logs the active path with `ClientLogger.shell_info(...)`; on failure, it logs that client structured log file output is unavailable with `ClientLogger.shell_warn(...)`. `current_file_output_path()` is the source for the active path while file output is enabled.
-
-### Test coverage
-
-`client/tests/unit/test_client_logger.gd` and `client/tests/unit/test_rolling_jsonl_writer.gd` cover:
-
-* level-name mapping
-* record construction
-* field duplication
-* JSONL formatting
-* console formatting for text helpers and named events
-* deterministic field sorting
-* category override behavior
-* rolling active/archive layout
-* active `.jsonl.open` output
-* size and age rotation
-* startup recovery for interrupted active files
-* retention cleanup and archive deletion
-* caller policy overrides
-* bounded failure reporting
-* file-output configuration
-* JSONL emission
-* file-output close/reset behavior
-
-## Boundary
-
-Client logging is not server logging.
-
-Client JSONL is not telemetry transport.
-
-Client JSONL is not durable observability aggregation.
-
-High-frequency packet logs should remain gated or targeted.
+Canonical validation failures expose rejection codes and the rejected key through emitter status. Redacted records increment the redaction counter while storing only the generated replacement marker. A writer or compression failure increments write/failure status and disables the affected file path without turning a diagnostics failure into a gameplay failure. Console compatibility output remains available.
 
 ## Code map
 
-Primary implementation files:
+Implementation:
 
 ```text
+client/scripts/logging/observability_emitter.gd
 client/scripts/logging/logger.gd
 client/scripts/logging/rolling_jsonl_writer.gd
+client/scripts/logging/gzip_archive_compressor.gd
+client/scripts/observability/client_operation_trace.gd
+client/scripts/generated/observability/contract_generated.gd
 ```
 
-Focused tests:
+Tests:
 
 ```text
+client/tests/unit/test_observability_emitter.gd
+client/tests/unit/observability/test_client_operation_trace.gd
 client/tests/unit/test_client_logger.gd
 client/tests/unit/test_rolling_jsonl_writer.gd
+client/tests/unit/test_shell_boot_flow.gd
+client/tests/unit/test_pending_boot_request.gd
+client/tests/unit/test_client_connection_service.gd
+client/tests/unit/test_room_session_controller.gd
+client/tests/unit/networking/realtime/test_realtime_packet_pipeline_match_boundary.gd
+client/tests/unit/devtools/gameplay_debug_flow_test.gd
 ```
+
+The first group covers emitter contract behavior and status; the second covers trace construction/ownership; the migrated workflow tests cover boot, auth, connection, room, gameplay, and devtools call sites.
+
+## Boundaries
+
+Client logging owns local canonical record construction, compatibility helpers, console presentation, operation correlation, and local rolling JSONL output. It does not own server logs, telemetry transport, diagnostic aggregation, packet schema, or gameplay authority. High-frequency packet diagnostics remain explicitly gated and should not become a substitute for semantic workflow events.
 
 ## Related docs
 
-* [Client](./!INDEX.md)
-* [Client Networking Flow](networking-flow/!INDEX.md)
-* [Gameplay Runtime](gameplay-runtime/!INDEX.md)
-* [Developer Guide](../../developer.md)
-* [Agent Testing](../../agent/testing.md)
-* [Input And Targeting](input-and-targeting.md)
-
-## Notes
-
-This document captures the current client logging helper behavior only. It does not define server logging policy, packet metrics, or telemetry transport behavior. For practical log-file lookup and focused test guidance, see [Developer Guide](../../developer.md) and [Agent Testing](../../agent/testing.md).
+- [Canonical event emission](../../observability/canonical-event-emission.md)
+- [Observability contract](../../data/observability-contract.md)
+- [WebSocket connection lifecycle](networking-flow/websocket-connection-lifecycle.md)
+- [Inbound packet routing](networking-flow/inbound-packet-routing.md)
+- [Agent testing](../../agent/testing.md)
+- [Developer guide](../../developer.md)

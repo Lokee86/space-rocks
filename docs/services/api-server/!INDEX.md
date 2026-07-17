@@ -20,6 +20,7 @@ This folder owns docs for the API service runtime and its implementation respons
 
 - [auth-and-oauth.md](auth-and-oauth.md) - API-server auth, OAuth, bearer-token, and internal token-verification responsibilities.
 - [internal-api-surface.md](internal-api-surface.md) - API-server internal service-to-service HTTP surface.
+- [observability-and-logging.md](observability-and-logging.md) - Canonical API request, auth, player-stat, match-result, Puma, and rolling-file observability.
 - [player-stats-and-match-results.md](player-stats-and-match-results.md) - API-server player stats and match results documentation.
 - [runtime-and-health.md](runtime-and-health.md) - API-server runtime, health checks, database config, Puma port, and CI surface documentation.
 <!-- doc-ledger:files:end -->

@@ -15,7 +15,7 @@ Service-specific runtime behavior belongs in the relevant service documentation.
 ## Direct Files
 <!-- doc-ledger:files:start -->
 
-- [Canonical Event Emission](canonical-event-emission.md) - Cross-language canonical JSONL emission, compatibility bridges, validation, and verification.
+- [Canonical Event Emission](canonical-event-emission.md) - Cross-language canonical emitter infrastructure, service migration state, workflow rollout, and bridge retirement.
 <!-- doc-ledger:files:end -->
 
 ## Stub Files
@@ -31,7 +31,12 @@ Service-specific runtime behavior belongs in the relevant service documentation.
 ## Related Docs
 
 - [Generated Contract Reference](generated/contract-reference.md)
+- [Observability Contract](../data/observability-contract.md)
+- [API-server Observability And Logging](../services/api-server/observability-and-logging.md)
+- [Player-data Observability And Logging](../services/player-data/observability-and-logging.md)
+- [Client Logging](../services/client/client-logging.md)
 - [Game Server Logging And Diagnostics](../services/game-server/observability/logging-and-diagnostics.md)
+- [Diagnostic Aggregator Runtime And Report Flow](../services/diagnostic-aggregator/runtime-and-report-flow.md)
 
 ## Notes
 
