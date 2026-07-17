@@ -3,13 +3,22 @@ package rooms
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func TickRoomGameOverLifecycle(room *Room, broadcastRoomSnapshot func(*Room)) bool {
 	if !room.MarkGameOverIfComplete() {
 		return false
 	}
-	logging.Rooms.Info("room game over detected", logging.FieldRoomID, room.ID)
+	logging.Emit(observability.Request{
+		Event: observability.EventNameGameOverDetected,
+		Context: observability.Context{
+			TraceID: traceIDForLifecycle(room),
+			RoomID:  room.ID,
+			MatchID: room.CurrentMatchID(),
+		},
+		Fields: observability.Fields{"reason_code": "simulation_complete"},
+	})
 	broadcastRoomSnapshot(room)
 	return true
 }
@@ -41,8 +50,20 @@ func ReportResolvedMatchResultOnceForReason(room *Room, reporter MatchResultRepo
 	claimedSummary.Players = append([]playerdata.PlayerMatchSummary(nil), summary.Players...)
 	room.match.matchResultReporting = true
 	room.mu.Unlock()
-
-	logging.Rooms.Info("match result report started", logging.FieldRoomID, room.ID, "reason", reason, "match_id", summary.MatchID, "mode", summary.Mode, "player_count", len(summary.Players))
+	traceID := traceIDForLifecycle(room)
+	logging.Emit(observability.Request{
+		Event: observability.EventNameMatchResultReportStarted,
+		Context: observability.Context{
+			TraceID: traceID,
+			RoomID:  room.ID,
+			MatchID: summary.MatchID,
+		},
+		Fields: observability.Fields{
+			"reason_code":  reason,
+			"mode":         string(summary.Mode),
+			"player_count": len(summary.Players),
+		},
+	})
 	err := reporter.ReportMatchResult(claimedSummary)
 
 	room.mu.Lock()
@@ -56,12 +77,39 @@ func ReportResolvedMatchResultOnceForReason(room *Room, reporter MatchResultRepo
 	}
 	room.mu.Unlock()
 	if err != nil {
-		logging.Rooms.Error("room match result report failed", err, logging.FieldRoomID, room.ID, "reason", reason, "match_id", summary.MatchID, "player_count", len(summary.Players))
+		logging.Emit(observability.Request{
+			Event: observability.EventNameMatchResultReportFailed,
+			Context: observability.Context{
+				TraceID: traceID,
+				RoomID:  room.ID,
+				MatchID: summary.MatchID,
+			},
+			Fields: observability.Fields{
+				"reason_code":  reason,
+				"failure_mode": "report_failed",
+				"player_count": len(summary.Players),
+			},
+		})
 		return false
 	}
 	if !claimed {
 		return false
 	}
-	logging.Rooms.Info("match result report succeeded", logging.FieldRoomID, room.ID, "reason", reason, "match_id", summary.MatchID, "player_count", len(summary.Players))
+	logging.Emit(observability.Request{
+		Event: observability.EventNameMatchResultReportSucceeded,
+		Context: observability.Context{
+			TraceID: traceID,
+			RoomID:  room.ID,
+			MatchID: summary.MatchID,
+		},
+		Fields: observability.Fields{
+			"reason_code":  reason,
+			"player_count": len(summary.Players),
+		},
+	})
 	return true
+}
+
+func traceIDForLifecycle(room *Room) string {
+	return room.CurrentOrCreateMatchTraceID()
 }

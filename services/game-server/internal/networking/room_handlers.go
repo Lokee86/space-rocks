@@ -3,6 +3,8 @@ package networking
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 )
 
 func (session *webSocketSession) handleCreateRoomRequest(traceID string) {
@@ -18,10 +20,35 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string) {
 
 	room, err := session.rooms.CreateLobbyRoom()
 	if err != nil {
-		logging.Rooms.Error("create lobby room failed", err, "session_id", session.sessionID)
+		if traceID == "" {
+			traceID = uuid.NewString()
+		}
+		logging.Emit(observability.Request{
+			Event: observability.EventNameRoomCreationFailed,
+			Context: observability.Context{
+				TraceID:   traceID,
+				SessionID: session.sessionID,
+			},
+			Fields: observability.Fields{
+				"error_code":   "room_creation_failed",
+				"failure_mode": "lobby_room_creation_failed",
+			},
+		})
 		session.EnqueueRoomError(traceID, rooms.RoomErrorInvalidRoomState, "Could not create room.")
 		return
 	}
+	if traceID == "" {
+		traceID = uuid.NewString()
+	}
+	logging.Emit(observability.Request{
+		Event: observability.EventNameRoomCreated,
+		Context: observability.Context{
+			TraceID:   traceID,
+			SessionID: session.sessionID,
+			RoomID:    room.ID,
+		},
+		Fields: observability.Fields{"reason_code": "lobby_created"},
+	})
 
 	addSessionMember(room, session.sessionID, session)
 	session.bindRoom(room)
@@ -96,12 +123,9 @@ func (session *webSocketSession) handleStartGameRequest() {
 func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string, traceID string) {
 	_ = localProfileID
 	context := session.sessionContext()
-	logging.Network.Debug("StartSinglePlayerRequest received",
-		logging.FieldRoomID, context.RoomID,
-		logging.FieldPlayerID, context.GamePlayerID,
-		"session_id", session.sessionID,
-		"current_room_id", context.RoomID,
-	)
+	if traceID == "" {
+		traceID = uuid.NewString()
+	}
 
 	if context.RoomID != "" {
 		session.EnqueueRoomError(traceID, rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
@@ -110,10 +134,29 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 
 	room, roomErr := session.rooms.CreateStartedSinglePlayerRoom(session.sessionID)
 	if roomErr != nil {
-		logging.Rooms.Error("create single-player room failed", roomErr, "session_id", session.sessionID)
+		logging.Emit(observability.Request{
+			Event: observability.EventNameRoomCreationFailed,
+			Context: observability.Context{
+				TraceID:   traceID,
+				SessionID: session.sessionID,
+			},
+			Fields: observability.Fields{
+				"error_code":   roomErr.Code,
+				"failure_mode": "single_player_room_creation_failed",
+			},
+		})
 		session.EnqueueRoomError(traceID, roomErr.Code, roomErr.Message)
 		return
 	}
+	logging.Emit(observability.Request{
+		Event: observability.EventNameRoomCreated,
+		Context: observability.Context{
+			TraceID:   traceID,
+			SessionID: session.sessionID,
+			RoomID:    room.ID,
+		},
+		Fields: observability.Fields{"reason_code": "single_player_created"},
+	})
 
 	attachRoomSession(room, session.sessionID, session)
 	session.bindRoom(room)

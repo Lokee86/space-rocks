@@ -3,6 +3,7 @@ package rooms
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
+	"github.com/google/uuid"
 )
 
 func (room *Room) GameInstance() *game.Game {
@@ -34,6 +35,23 @@ func (room *Room) CurrentMatchID() string {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 	return room.match.CurrentMatchID()
+}
+
+func (room *Room) CurrentMatchTraceID() string {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	return room.match.CurrentTraceID()
+}
+
+func (room *Room) CurrentOrCreateMatchTraceID() string {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	if traceID := room.match.CurrentTraceID(); traceID != "" {
+		return traceID
+	}
+	traceID := uuid.NewString()
+	room.match.currentTraceID = traceID
+	return traceID
 }
 
 func (room *Room) ResolvedMatchSummary() (playerdata.MatchResultSummary, bool) {

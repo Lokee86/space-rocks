@@ -3,6 +3,8 @@ package networking
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 )
 
 func (session *webSocketSession) leaveRequestedRoom() {
@@ -58,13 +60,23 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 		if enqueueRoomError {
 			session.EnqueueRoomError("", roomErr.Code, roomErr.Message)
 		} else {
-			logging.Rooms.Warn("websocket room leave failed",
-				logging.FieldError, roomErr,
-				logging.FieldRoomID, context.RoomID,
-				logging.FieldPlayerID, context.GamePlayerID,
-				"session_id", session.sessionID,
-				"reason", reason,
-			)
+			traceID := room.CurrentMatchTraceID()
+			if traceID == "" {
+				traceID = uuid.NewString()
+			}
+			logging.Emit(observability.Request{
+				Event: observability.EventNameRoomLeaveFailed,
+				Context: observability.Context{
+					TraceID:   traceID,
+					SessionID: session.sessionID,
+					RoomID:    context.RoomID,
+					PlayerID:  context.GamePlayerID,
+				},
+				Fields: observability.Fields{
+					"error_code":   roomErr.Code,
+					"failure_mode": reason,
+				},
+			})
 		}
 		return
 	}
