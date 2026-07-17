@@ -85,6 +85,6 @@ func (game *Game) applyRadialHitToPlayer(hit radial.Hit, player *runtime.Ship) {
 		game.recordDomainEvent(event)
 	}
 	if damageResult.Fatal {
-		game.applyFatalPlayerDamage(player.ID, player)
+		game.applyFatalPlayerDamage(player.ID, player, "radial_effect")
 	}
 }

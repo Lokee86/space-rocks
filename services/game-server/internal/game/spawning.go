@@ -8,7 +8,6 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func debugBulletRotation(direction physics.Vector2) float64 {
@@ -59,14 +58,6 @@ func (game *Game) spawnAsteroidFragments(asteroid *runtime.Asteroid) {
 		return
 	}
 
-	position := asteroid.Position()
-	logging.Game.Debug("asteroid split",
-		"asteroid_id", asteroid.ID,
-		"source_size", asteroid.Size,
-		"fragment_size", fragmentSize,
-		"x", position.X,
-		"y", position.Y,
-	)
 	plans := game.spawner.PlanAsteroidFragmentSpawns(asteroid)
 	for _, plan := range plans {
 		game.applyAsteroidSpawn(plan)

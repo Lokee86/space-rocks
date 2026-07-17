@@ -2,7 +2,6 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/scoring"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func (game *Game) awardScore(award scoring.Award) {
@@ -18,11 +17,5 @@ func (game *Game) awardScore(award scoring.Award) {
 		return
 	}
 
-	change := game.addPlayerScoreLocked(award.PlayerID, award.Points)
-	logging.Game.Debug("score awarded",
-		logging.FieldPlayerID, award.PlayerID,
-		"source", string(award.Reason),
-		"amount", award.Points,
-		"score", change.After,
-	)
+	game.addPlayerScoreLocked(award.PlayerID, award.Points)
 }

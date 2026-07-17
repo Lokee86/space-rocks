@@ -9,6 +9,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type playerSession struct {
@@ -72,23 +73,51 @@ func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
 }
 
 func (game *Game) respawnPlayer(playerID string) {
-	logging.Game.Info("respawn requested", logging.FieldPlayerID, playerID)
-
 	session, ok := game.playerSessions[playerID]
 	if !ok {
-		logging.Game.Warn("respawn blocked; session missing", logging.FieldPlayerID, playerID)
+		if game.matchID != "" && game.matchTraceID != "" {
+			logging.Emit(observability.Request{
+				Event: observability.EventNameRespawnBlocked,
+				Context: observability.Context{
+					TraceID:  game.matchTraceID,
+					MatchID:  game.matchID,
+					PlayerID: playerID,
+				},
+				Fields: observability.Fields{"reason_code": "session_missing"},
+			})
+		}
 		return
 	}
 	if !session.CanRespawn() {
-		logging.Game.Info("respawn blocked",
-			logging.FieldPlayerID, playerID,
-			"lives", session.Lives,
-			"respawn_cooldown", session.RespawnCooldown,
-		)
+		if game.matchID != "" && game.matchTraceID != "" {
+			logging.Emit(observability.Request{
+				Event: observability.EventNameRespawnBlocked,
+				Context: observability.Context{
+					TraceID:  game.matchTraceID,
+					MatchID:  game.matchID,
+					PlayerID: playerID,
+				},
+				Fields: observability.Fields{
+					"reason_code":      "respawn_cooldown_or_lives_exhausted",
+					"lives":            session.Lives,
+					"respawn_cooldown": session.RespawnCooldown,
+				},
+			})
+		}
 		return
 	}
 	if _, ok := game.entities.Players[playerID]; ok {
-		logging.Game.Info("respawn blocked; player already active", logging.FieldPlayerID, playerID)
+		if game.matchID != "" && game.matchTraceID != "" {
+			logging.Emit(observability.Request{
+				Event: observability.EventNameRespawnBlocked,
+				Context: observability.Context{
+					TraceID:  game.matchTraceID,
+					MatchID:  game.matchID,
+					PlayerID: playerID,
+				},
+				Fields: observability.Fields{"reason_code": "already_active"},
+			})
+		}
 		return
 	}
 
@@ -97,12 +126,6 @@ func (game *Game) respawnPlayer(playerID string) {
 	player := session.NewShip(spawnPosition)
 	game.entities.Players[playerID] = player
 	game.setPlayerCameraViewLocked(playerID, player)
-	logging.Game.Info("player respawned",
-		logging.FieldPlayerID, playerID,
-		"x", spawnPosition.X,
-		"y", spawnPosition.Y,
-		"lives", session.Lives,
-	)
 }
 
 func (game *Game) planInitialPlayerSpawn(playerIndex int, playerID string) PlayerSpawnPlan {

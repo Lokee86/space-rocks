@@ -4,7 +4,6 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func (game *Game) setPlayerPaused(playerID string, paused bool) {
@@ -17,24 +16,16 @@ func (game *Game) setPlayerPaused(playerID string, paused bool) {
 		return
 	}
 	if player.IsPendingDespawn() {
-		if !paused {
-			logging.Game.Debug("resume ignored; player pending despawn", logging.FieldPlayerID, playerID)
-		}
 		return
 	}
 	session.Suspension.SetPaused(paused)
 	if paused {
 		player.ClearInput()
 		player.Velocity = physics.Vector2{}
-		logging.Game.Debug("player paused", logging.FieldPlayerID, playerID)
 		return
 	}
 	player.ClearInput()
 	player.InvulnerabilityRemaining = constants.PlayerResumeInvulnerabilitySeconds
-	logging.Game.Debug("player resumed",
-		logging.FieldPlayerID, playerID,
-		"invulnerability", constants.PlayerResumeInvulnerabilitySeconds,
-	)
 }
 
 func (game *Game) togglePlayerPaused(playerID string) {

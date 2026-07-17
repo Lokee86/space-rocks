@@ -81,6 +81,9 @@ func (rm *roomMatch) BeginNextMatch(roomID string) string {
 	rm.matchResultReported = false
 	rm.matchResultReporting = false
 	rm.ClearResolvedSummary()
+	if rm.game != nil {
+		rm.game.SetMatchContext(rm.currentMatchID, rm.currentTraceID)
+	}
 	return rm.currentMatchID
 }
 

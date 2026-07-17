@@ -14,6 +14,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spatial/grid"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type Game struct {
@@ -25,6 +26,8 @@ type Game struct {
 	nextID                    int
 	nextPickupID              int
 	nextPresentationEventID   int
+	matchID                   string
+	matchTraceID              string
 	spawner                   *spawning.Spawner
 	scoringPolicy             scoring.Policy
 	dropTables                drops.Tables
@@ -56,7 +59,10 @@ func NewWithSeed(seed int64) *Game {
 func newGame(source *rng.Source) *Game {
 	collisionShapes, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
-		logging.Game.Warn("collision shapes unavailable", logging.FieldError, err)
+		logging.Emit(observability.Request{
+			Event:  observability.EventNameCollisionShapeMissing,
+			Fields: observability.Fields{"failure_mode": "collision_shape_catalog_unavailable"},
+		})
 	}
 
 	game := &Game{
@@ -79,6 +85,13 @@ func newGame(source *rng.Source) *Game {
 
 func (game *Game) SimulationSeed() int64 {
 	return game.rngSource.Seed()
+}
+
+func (game *Game) SetMatchContext(matchID string, traceID string) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+	game.matchID = matchID
+	game.matchTraceID = traceID
 }
 
 func (game *Game) Start() {

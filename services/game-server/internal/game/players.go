@@ -5,7 +5,6 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func (game *Game) AddPlayer() string {
@@ -25,12 +24,6 @@ func (game *Game) AddPlayer() string {
 	game.setPlayerCameraViewLocked(playerID, player)
 	game.pendingPresentationEvents[playerID] = nil
 	game.publishPresentationFrameLocked()
-	logging.Game.Debug("player added",
-		logging.FieldPlayerID, playerID,
-		"x", spawnPosition.X,
-		"y", spawnPosition.Y,
-		"lives", session.Lives,
-	)
 
 	return playerID
 }
@@ -80,7 +73,6 @@ func (game *Game) RemovePlayer(playerID string) {
 	game.clearTargetsForMissingPlayersLocked()
 	delete(game.pendingPresentationEvents, playerID)
 	game.publishPresentationFrameLocked()
-	logging.Game.Debug("player removed", logging.FieldPlayerID, playerID)
 }
 
 func (game *Game) playerLives(playerID string) int {

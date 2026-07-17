@@ -151,7 +151,7 @@ func (target *Control) ApplyPlayerDefeat(sourcePlayerID string, targetPlayerID s
 	targetPlayer.Health = damageResult.RemainingHealth
 	targetPlayer.Shields = damageResult.RemainingShield
 	if damageResult.Fatal {
-		target.game.applyFatalPlayerDamage(targetPlayerID, targetPlayer)
+		target.game.applyFatalPlayerDamage(targetPlayerID, targetPlayer, "devtools")
 	}
 	target.game.publishPresentationFrameLocked()
 	return true

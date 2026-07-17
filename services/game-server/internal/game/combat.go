@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func (game *Game) handleBulletAsteroidCollisions() {
@@ -170,10 +171,10 @@ func (game *Game) handleShipAsteroidCollisions() {
 }
 
 func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *runtime.Ship) {
-	game.applyFatalPlayerDamage(playerID, player)
+	game.applyFatalPlayerDamage(playerID, player, "collision")
 }
 
-func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) {
+func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, reason string) {
 	position := player.Position()
 	if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
 		cameraView.X = position.X
@@ -187,10 +188,8 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) 
 	}
 	player.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	lives := 0
-	score := 0
 	respawnDelay := 0.0
 	if session, ok := game.playerSessions[playerID]; ok {
-		score = session.Score
 		session.ShipDeaths++
 		if session.LifeOptions.CanLoseLives() && session.Lives > 0 {
 			game.addPlayerLivesLocked(playerID, -1)
@@ -201,21 +200,22 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship) 
 		lives = session.Lives
 		respawnDelay = session.RespawnCooldown
 	}
-	if lives <= 0 {
-		logging.Game.Info("player game over",
-			logging.FieldPlayerID, playerID,
-			"score", score,
-			"x", position.X,
-			"y", position.Y,
-		)
-	} else {
-		logging.Game.Info("player died",
-			logging.FieldPlayerID, playerID,
-			"lives", lives,
-			"respawn_delay", respawnDelay,
-			"x", position.X,
-			"y", position.Y,
-		)
+	if lives > 0 && game.matchID != "" && game.matchTraceID != "" {
+		logging.Emit(observability.Request{
+			Event: observability.EventNamePlayerDied,
+			Context: observability.Context{
+				TraceID:  game.matchTraceID,
+				MatchID:  game.matchID,
+				PlayerID: playerID,
+			},
+			Fields: observability.Fields{
+				"reason_code":   reason,
+				"lives":         lives,
+				"respawn_delay": respawnDelay,
+				"x":             position.X,
+				"y":             position.Y,
+			},
+		})
 	}
 	game.recordDomainEvent(events.Event{
 		Type:         events.EventShipDeath,
