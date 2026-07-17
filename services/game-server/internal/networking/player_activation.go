@@ -1,6 +1,9 @@
 package networking
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+)
 
 var activateMemberPlayerCall = func(room *rooms.Room, expected rooms.GameplayContext, sessionID, playerID string) bool {
 	return room.ActivateMemberPlayer(expected, sessionID, playerID)
@@ -12,13 +15,23 @@ func activateRoomPlayers(room *rooms.Room) {
 	if gameplayContext.Game == nil {
 		return
 	}
+	teamSnapshot, ok := room.TeamStartSnapshot()
+	if !ok {
+		return
+	}
+	gameplayContext.Game.SetTeamStructure(teamSnapshot.Config.Structure)
 	memberSnapshot := room.MembersSnapshot()
 	memberIDs := make([]string, 0, len(memberSnapshot))
+	teamBySessionID := make(map[string]teams.ID, len(memberSnapshot))
 	for _, member := range memberSnapshot {
 		if !member.Connected || member.IsBot {
 			continue
 		}
 		memberIDs = append(memberIDs, member.SessionID)
+		teamID, assigned := teamSnapshot.Assignments[member.MemberID]
+		if assigned {
+			teamBySessionID[member.SessionID] = teamID
+		}
 	}
 
 	sessions := snapshotRoomSessions(room, memberIDs)
@@ -31,7 +44,11 @@ func activateRoomPlayers(room *rooms.Room) {
 			continue
 		}
 
-		playerID := gameplayContext.Game.AddPlayer()
+		teamID, assigned := teamBySessionID[session.sessionID]
+		if !assigned {
+			continue
+		}
+		playerID := gameplayContext.Game.AddPlayerWithTeam(teamID)
 		if !session.setGamePlayerIDForRoom(room, playerID) {
 			gameplayContext.Game.RollbackPlayerAdd(playerID)
 			continue

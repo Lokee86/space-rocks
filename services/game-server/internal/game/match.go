@@ -31,6 +31,7 @@ func (game *Game) PlayerMatchFacts() []PlayerMatchFact {
 		}
 		facts = append(facts, PlayerMatchFact{
 			GamePlayerID: record.ID,
+			TeamID:       record.TeamID,
 			Score:        record.Score,
 			ShipDeaths:   record.ShipDeaths,
 		})

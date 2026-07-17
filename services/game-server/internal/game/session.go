@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -14,6 +15,7 @@ import (
 
 type playerSession struct {
 	ID              string
+	TeamID          teams.ID
 	ShipTypeID      string
 	Stats           runtime.ShipStats
 	SpawnPosition   physics.Vector2
