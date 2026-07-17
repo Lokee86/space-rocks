@@ -69,6 +69,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 				SessionID: session.sessionID,
 				RoomID:    context.RoomID,
 				PlayerID:  context.GamePlayerID,
+				MatchID:   gameplayContext.MatchID,
 			},
 			Fields: observability.Fields{
 				"error_code":   "realtime_payload_build_failed",
@@ -93,10 +94,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			logging.Emit(observability.Request{
 				Event: observability.EventNamePacketRouteFailed,
 				Context: observability.Context{
-					TraceID:   session.connectionTraceID,
-					SessionID: session.sessionID,
-					RoomID:    context.RoomID,
-					PlayerID:  context.GamePlayerID,
+					TraceID:    session.connectionTraceID,
+					SessionID:  session.sessionID,
+					RoomID:     context.RoomID,
+					PlayerID:   context.GamePlayerID,
+					MatchID:    gameplayContext.MatchID,
+					PacketType: candidate.PacketFamily(),
 				},
 				Fields: observability.Fields{
 					"error_code":   "control_lane_wrong_transport",
@@ -111,10 +114,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			logging.Emit(observability.Request{
 				Event: observability.EventNamePacketRouteFailed,
 				Context: observability.Context{
-					TraceID:   session.connectionTraceID,
-					SessionID: session.sessionID,
-					RoomID:    context.RoomID,
-					PlayerID:  context.GamePlayerID,
+					TraceID:    session.connectionTraceID,
+					SessionID:  session.sessionID,
+					RoomID:     context.RoomID,
+					PlayerID:   context.GamePlayerID,
+					MatchID:    gameplayContext.MatchID,
+					PacketType: candidate.PacketFamily(),
 				},
 				Fields: observability.Fields{
 					"error_code":   "webrtc_transport_missing",
@@ -129,10 +134,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			logging.Emit(observability.Request{
 				Event: observability.EventNamePacketRouteFailed,
 				Context: observability.Context{
-					TraceID:   session.connectionTraceID,
-					SessionID: session.sessionID,
-					RoomID:    context.RoomID,
-					PlayerID:  context.GamePlayerID,
+					TraceID:    session.connectionTraceID,
+					SessionID:  session.sessionID,
+					RoomID:     context.RoomID,
+					PlayerID:   context.GamePlayerID,
+					MatchID:    gameplayContext.MatchID,
+					PacketType: candidate.PacketFamily(),
 				},
 				Fields: observability.Fields{
 					"error_code":   "webrtc_transport_not_ready",
@@ -148,10 +155,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			logging.Emit(observability.Request{
 				Event: observability.EventNamePacketRouteFailed,
 				Context: observability.Context{
-					TraceID:   session.connectionTraceID,
-					SessionID: session.sessionID,
-					RoomID:    context.RoomID,
-					PlayerID:  context.GamePlayerID,
+					TraceID:    session.connectionTraceID,
+					SessionID:  session.sessionID,
+					RoomID:     context.RoomID,
+					PlayerID:   context.GamePlayerID,
+					MatchID:    gameplayContext.MatchID,
+					PacketType: candidate.PacketFamily(),
 				},
 				Fields: observability.Fields{
 					"error_code":   "webrtc_lane_channel_missing",
@@ -169,10 +178,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			logging.Emit(observability.Request{
 				Event: observability.EventNameGameServerWriteFailed,
 				Context: observability.Context{
-					TraceID:   session.connectionTraceID,
-					SessionID: session.sessionID,
-					RoomID:    context.RoomID,
-					PlayerID:  context.GamePlayerID,
+					TraceID:    session.connectionTraceID,
+					SessionID:  session.sessionID,
+					RoomID:     context.RoomID,
+					PlayerID:   context.GamePlayerID,
+					MatchID:    gameplayContext.MatchID,
+					PacketType: candidate.PacketFamily(),
 				},
 				Fields: observability.Fields{
 					"error_code":   "webrtc_lane_write_failed",

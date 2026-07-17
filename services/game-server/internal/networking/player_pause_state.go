@@ -31,6 +31,7 @@ func (session *webSocketSession) EnqueuePlayerPauseState() {
 				SessionID:  session.sessionID,
 				RoomID:     context.RoomID,
 				PlayerID:   context.GamePlayerID,
+				MatchID:    gameplayContext.MatchID,
 				PacketType: game.PacketTypePlayerPauseState,
 			},
 			Fields: observability.Fields{

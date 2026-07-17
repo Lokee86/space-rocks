@@ -33,6 +33,9 @@ type webSocketSession struct {
 	// realtimeState is owned exclusively by the write loop and intentionally not guarded by mu.
 	realtimeState               realtime.RealtimeSessionState
 	debugShapeCatalogSentRoomID string
+	firstPacketMatchID          string
+	firstInputPacketLogged      bool
+	firstRespawnPacketLogged    bool
 	webrtcTransport             *WebRTCTransport
 }
 
@@ -65,6 +68,37 @@ func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, a
 	session.mu.Lock()
 	session.identity = NewAuthenticatedAccountIdentity(userID, accountID, displayName)
 	session.mu.Unlock()
+}
+
+func (session *webSocketSession) shouldLogFirstInputPacket(matchID string) bool {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	session.resetFirstPacketLoggingLocked(matchID)
+	if session.firstInputPacketLogged {
+		return false
+	}
+	session.firstInputPacketLogged = true
+	return true
+}
+
+func (session *webSocketSession) shouldLogFirstRespawnPacket(matchID string) bool {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	session.resetFirstPacketLoggingLocked(matchID)
+	if session.firstRespawnPacketLogged {
+		return false
+	}
+	session.firstRespawnPacketLogged = true
+	return true
+}
+
+func (session *webSocketSession) resetFirstPacketLoggingLocked(matchID string) {
+	if session.firstPacketMatchID == matchID {
+		return
+	}
+	session.firstPacketMatchID = matchID
+	session.firstInputPacketLogged = false
+	session.firstRespawnPacketLogged = false
 }
 
 func (session *webSocketSession) hasReadyWebRTCGameplayTransport() bool {
@@ -224,6 +258,7 @@ func (session *webSocketSession) HandleWebRTCOffer(descriptionType string, sdp s
 			Fields: observability.Fields{
 				"error_code":   "webrtc_offer_handling_failed",
 				"failure_mode": "webrtc_offer_handling_failed",
+				"transport":    "webrtc",
 			},
 		})
 		session.clearWebRTCTransport()
@@ -251,6 +286,7 @@ func (session *webSocketSession) HandleWebRTCIceCandidate(media string, index in
 			Fields: observability.Fields{
 				"error_code":   "webrtc_ice_candidate_handling_failed",
 				"failure_mode": "webrtc_ice_candidate_handling_failed",
+				"transport":    "webrtc",
 			},
 		})
 	}
@@ -283,6 +319,7 @@ func (session *webSocketSession) handleWebRTCPacket(packet map[string]any) {
 			Fields: observability.Fields{
 				"error_code":   "webrtc_smoke_reply_failed",
 				"failure_mode": "webrtc_smoke_reply_failed",
+				"transport":    "webrtc",
 			},
 		})
 	}
