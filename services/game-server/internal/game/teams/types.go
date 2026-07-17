@@ -1,5 +1,7 @@
 package teams
 
+import "fmt"
+
 // TeamID is the canonical identity for a gameplay team.
 type TeamID string
 
@@ -27,6 +29,65 @@ const (
 	Team8ID = Team8
 )
 
+type Structure string
+
+const (
+	StructureFFA          Structure = "ffa"
+	StructureCoOp         Structure = "co_op"
+	StructureCoop                   = StructureCoOp
+	StructureCustom       Structure = "custom"
+	StructureAutoBalanced Structure = "auto_balanced"
+	FFA                             = StructureFFA
+	CoOp                            = StructureCoOp
+	Custom                          = StructureCustom
+	AutoBalanced                    = StructureAutoBalanced
+)
+
+type AssignmentMode string
+
+const (
+	AssignmentPlayerSelected     AssignmentMode = "player_selected"
+	AssignmentOwnerAssigned      AssignmentMode = "owner_assigned"
+	AssignmentModePlayerSelected                = AssignmentPlayerSelected
+	AssignmentModeOwnerAssigned                 = AssignmentOwnerAssigned
+)
+
+type Relationship string
+
+const (
+	RelationshipSelf         Relationship = "self"
+	RelationshipSameTeam     Relationship = "same_team"
+	RelationshipOpposing     Relationship = "opposing"
+	RelationshipUnaffiliated Relationship = "unaffiliated"
+)
+
+type Config struct {
+	Structure      Structure
+	AssignmentMode AssignmentMode
+	AutoTeamCount  int
+}
+
+type Assignments map[string]ID
+
 func OrderedIDs() []TeamID {
 	return []TeamID{Team1, Team2, Team3, Team4, Team5, Team6, Team7, Team8}
+}
+
+func IsValidTeamID(id ID) bool {
+	for _, valid := range OrderedIDs() {
+		if id == valid {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidateTeamID(id ID) error {
+	if id == NoTeam {
+		return nil
+	}
+	if !IsValidTeamID(id) {
+		return fmt.Errorf("team ID %q is invalid", id)
+	}
+	return nil
 }

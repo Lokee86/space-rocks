@@ -1,6 +1,9 @@
 package teams
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestTeamIDValues(t *testing.T) {
 	tests := []struct {
@@ -44,15 +47,30 @@ func TestIDCompatibilityAlias(t *testing.T) {
 	}
 }
 
-func TestOrderedIDs(t *testing.T) {
-	want := []TeamID{Team1, Team2, Team3, Team4, Team5, Team6, Team7, Team8}
-	got := OrderedIDs()
-	if len(got) != len(want) {
-		t.Fatalf("OrderedIDs() length = %d, want %d", len(got), len(want))
+func TestStableIdentifiers(t *testing.T) {
+	if StructureFFA != "ffa" || StructureCoOp != "co_op" || StructureCustom != "custom" || StructureAutoBalanced != "auto_balanced" {
+		t.Fatalf("unexpected structure identifiers: %q, %q, %q, %q", StructureFFA, StructureCoOp, StructureCustom, StructureAutoBalanced)
 	}
-	for index := range want {
-		if got[index] != want[index] {
-			t.Fatalf("OrderedIDs()[%d] = %q, want %q", index, got[index], want[index])
-		}
+	if AssignmentPlayerSelected != "player_selected" || AssignmentOwnerAssigned != "owner_assigned" {
+		t.Fatalf("unexpected assignment mode identifiers: %q, %q", AssignmentPlayerSelected, AssignmentOwnerAssigned)
+	}
+	if RelationshipSelf != "self" || RelationshipSameTeam != "same_team" || RelationshipOpposing != "opposing" || RelationshipUnaffiliated != "unaffiliated" {
+		t.Fatalf("unexpected relationship identifiers")
+	}
+	if NoTeam != "" {
+		t.Fatalf("NoTeam = %q, want zero ID", NoTeam)
+	}
+}
+
+func TestOrderedIDs(t *testing.T) {
+	want := []ID{Team1, Team2, Team3, Team4, Team5, Team6, Team7, Team8}
+	got := OrderedIDs()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("OrderedIDs() = %v, want %v", got, want)
+	}
+
+	got[0] = ID("changed")
+	if OrderedIDs()[0] != Team1 {
+		t.Fatal("OrderedIDs exposes mutable package state")
 	}
 }
