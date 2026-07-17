@@ -42,6 +42,15 @@ func (membership *roomMembership) memberByPlayerID(playerID string) (*RoomMember
 	return member, ok
 }
 
+func (membership *roomMembership) memberByMemberID(memberID string) (*RoomMember, bool) {
+	for _, member := range membership.members {
+		if member.MemberID == memberID {
+			return member, true
+		}
+	}
+	return nil, false
+}
+
 func (membership *roomMembership) setMemberPlayerIDForSession(sessionID string, playerID string) bool {
 	for currentPlayerID, member := range membership.members {
 		if member.SessionID != sessionID {

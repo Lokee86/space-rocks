@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/google/uuid"
@@ -61,6 +62,14 @@ func (manager *RoomManager) Find(roomID string) (*Room, bool) {
 }
 
 func (manager *RoomManager) CreateLobbyRoom() (*Room, error) {
+	return manager.CreateLobbyRoomWithConfig(DefaultRoomCreationConfig())
+}
+
+func (manager *RoomManager) CreateLobbyRoomWithConfig(creation RoomCreationConfig) (*Room, error) {
+	creation = normalizeRoomCreationConfig(creation)
+	if err := validateRoomCreationConfig(creation); err != nil {
+		return nil, err
+	}
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
@@ -73,7 +82,10 @@ func (manager *RoomManager) CreateLobbyRoom() (*Room, error) {
 			continue
 		}
 
-		room := NewRoom(roomID, RoomStateLobby, nil)
+		room, err := NewRoomWithConfig(roomID, RoomStateLobby, nil, creation)
+		if err != nil {
+			return nil, err
+		}
 		manager.rooms[roomID] = room
 
 		return room, nil
@@ -176,6 +188,22 @@ func (manager *RoomManager) SetReady(roomID string, sessionID string, ready bool
 		return nil, roomErr
 	}
 
+	return room, nil
+}
+
+func (manager *RoomManager) SetTeamAssignment(roomID string, sessionID string, targetPlayerID string, teamID teams.ID) (*Room, *RoomDomainError) {
+	roomID = NormalizeRoomID(roomID)
+
+	manager.mu.Lock()
+	room, ok := manager.rooms[roomID]
+	manager.mu.Unlock()
+	if !ok {
+		return nil, &RoomDomainError{Code: RoomErrorRoomNotFound, Message: "Room was not found."}
+	}
+
+	if roomErr := room.SetTeamAssignment(sessionID, targetPlayerID, teamID); roomErr != nil {
+		return nil, roomErr
+	}
 	return room, nil
 }
 

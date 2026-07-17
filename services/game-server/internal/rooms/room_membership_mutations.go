@@ -83,7 +83,9 @@ func (room *Room) RemoveMemberForSession(sessionID string) (removed RoomMember, 
 	}
 	removed = *member
 	room.match.RememberParticipantIdentity(removed)
+	delete(room.roomTeams.assignments, member.MemberID)
 	room.membership.removeMember(member.PlayerID)
+	_ = room.rebalanceAutoBalancedLocked()
 	return removed, room.membership.memberCount(), true
 }
 

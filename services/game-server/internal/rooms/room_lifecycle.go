@@ -38,7 +38,11 @@ func (room *Room) reserveStartLocked(playerID string) (*game.Game, *RoomDomainEr
 	if roomErr := room.validateStartLocked(playerID); roomErr != nil {
 		return nil, roomErr
 	}
+	if roomErr := room.lockTeamAssignmentsLocked(); roomErr != nil {
+		return nil, roomErr
+	}
 	if roomErr := room.markStartingLocked(); roomErr != nil {
+		room.unlockTeamAssignmentsLocked()
 		return nil, roomErr
 	}
 	return room.match.Game(), nil
@@ -54,6 +58,7 @@ func (room *Room) finishStart(reservedGame *game.Game, newGame func() *game.Game
 		room.mu.Lock()
 		if room.State == RoomStateStarting && room.match.Game() == reservedGame {
 			room.State = RoomStateLobby
+			room.unlockTeamAssignmentsLocked()
 		}
 		room.mu.Unlock()
 		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Could not create game."}
@@ -73,6 +78,9 @@ func (room *Room) finishStart(reservedGame *game.Game, newGame func() *game.Game
 	if !valid {
 		room.mu.Lock()
 		ownedActive := room.State == RoomStateInGame && room.match.Game() == startedGame
+		if room.State == RoomStateStarting && room.match.Game() == reservedGame {
+			room.unlockTeamAssignmentsLocked()
+		}
 		room.mu.Unlock()
 		if !ownedActive {
 			stopGameCall(startedGame)
@@ -196,6 +204,7 @@ func (room *Room) captureGameOverLocked() (gameOverCapture, *RoomDomainError) {
 			IsBot:          member.IsBot,
 		}
 	}
+
 	return gameOverCapture{
 		State:                 room.State,
 		Game:                  room.match.Game(),
@@ -253,6 +262,7 @@ func (room *Room) resetToLobbyLocked(playerID string) (*game.Game, *RoomDomainEr
 	room.membership.setAllReady(false)
 	room.match.ClearGame()
 	room.match.SetActivePlayers(0)
+	room.unlockTeamAssignmentsLocked()
 	room.State = RoomStateLobby
 	return oldGame, nil
 }
@@ -277,7 +287,12 @@ func (room *Room) StartSinglePlayerGame(newGame func() *game.Game) *RoomDomainEr
 		room.mu.Unlock()
 		return roomErr
 	}
+	if roomErr := room.lockTeamAssignmentsLocked(); roomErr != nil {
+		room.mu.Unlock()
+		return roomErr
+	}
 	if roomErr := room.markStartingLocked(); roomErr != nil {
+		room.unlockTeamAssignmentsLocked()
 		room.mu.Unlock()
 		return roomErr
 	}

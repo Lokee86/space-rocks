@@ -19,6 +19,7 @@ const (
 	PacketTypeJoinRoomRequest               = "join_room_request"
 	PacketTypeLeaveRoomRequest              = "leave_room_request"
 	PacketTypeSetReadyRequest               = "set_ready_request"
+	PacketTypeSetTeamAssignmentRequest      = "set_team_assignment_request"
 	PacketTypeStartGameRequest              = "start_game_request"
 	PacketTypeAddBotRequest                 = "add_bot_request"
 	PacketTypeRemoveRoomMemberRequest       = "remove_room_member_request"
@@ -38,30 +39,40 @@ const (
 )
 
 type ClientPacket struct {
-	Type           string               `json:"type"`
-	TraceID        string               `json:"trace_id"`
-	MatchID        string               `json:"match_id"`
-	Input          runtime.InputState   `json:"input"`
-	Config         runtime.ClientConfig `json:"config"`
-	RoomCode       string               `json:"room_code"`
-	LocalProfileID string               `json:"local_profile_id"`
-	Ready          bool                 `json:"ready"`
-	PlayerID       string               `json:"player_id"`
-	X              float64              `json:"x"`
-	Y              float64              `json:"y"`
-	TargetKind     string               `json:"target_kind"`
-	TargetID       string               `json:"target_id"`
-	Token          string               `json:"token"`
-	Sequence       int                  `json:"sequence"`
-	Lane           string               `json:"lane"`
-	BaselineID     string               `json:"baseline_id"`
-	Reason         string               `json:"reason"`
+	Type               string               `json:"type"`
+	TraceID            string               `json:"trace_id"`
+	MatchID            string               `json:"match_id"`
+	Input              runtime.InputState   `json:"input"`
+	Config             runtime.ClientConfig `json:"config"`
+	RoomCode           string               `json:"room_code"`
+	LocalProfileID     string               `json:"local_profile_id"`
+	TeamStructure      string               `json:"team_structure"`
+	TeamAssignmentMode string               `json:"team_assignment_mode"`
+	TeamCount          int                  `json:"team_count"`
+	MaxPlayers         int                  `json:"max_players"`
+	TargetPlayerID     string               `json:"target_player_id"`
+	TeamID             string               `json:"team_id"`
+	Ready              bool                 `json:"ready"`
+	PlayerID           string               `json:"player_id"`
+	X                  float64              `json:"x"`
+	Y                  float64              `json:"y"`
+	TargetKind         string               `json:"target_kind"`
+	TargetID           string               `json:"target_id"`
+	Token              string               `json:"token"`
+	Sequence           int                  `json:"sequence"`
+	Lane               string               `json:"lane"`
+	BaselineID         string               `json:"baseline_id"`
+	Reason             string               `json:"reason"`
 }
 
 type CreateRoomRequest struct {
-	Type           string `json:"type"`
-	TraceID        string `json:"trace_id"`
-	LocalProfileID string `json:"local_profile_id"`
+	Type               string `json:"type"`
+	TraceID            string `json:"trace_id"`
+	LocalProfileID     string `json:"local_profile_id"`
+	TeamStructure      string `json:"team_structure"`
+	TeamAssignmentMode string `json:"team_assignment_mode"`
+	TeamCount          int    `json:"team_count"`
+	MaxPlayers         int    `json:"max_players"`
 }
 
 type JoinRoomRequest struct {
@@ -77,6 +88,12 @@ type LeaveRoomRequest struct {
 type SetReadyRequest struct {
 	Type  string `json:"type"`
 	Ready bool   `json:"ready"`
+}
+
+type SetTeamAssignmentRequest struct {
+	Type           string `json:"type"`
+	TargetPlayerID string `json:"target_player_id"`
+	TeamID         string `json:"team_id"`
 }
 
 type StartGameRequest struct {
@@ -123,6 +140,7 @@ type RoomMemberState struct {
 	Ready     bool   `json:"ready"`
 	Connected bool   `json:"connected"`
 	IsBot     bool   `json:"is_bot"`
+	TeamID    string `json:"team_id"`
 }
 
 type RoomPlayerMatchSummary struct {
@@ -139,15 +157,19 @@ type RoomMatchResultSummary struct {
 }
 
 type RoomSnapshot struct {
-	Type           string                 `json:"type"`
-	RoomCode       string                 `json:"room_code"`
-	RoomState      string                 `json:"room_state"`
-	CurrentMatchID string                 `json:"current_match_id"`
-	Members        []RoomMemberState      `json:"members"`
-	LocalPlayerID  string                 `json:"local_player_id"`
-	OwnerID        string                 `json:"owner_id"`
-	MaxPlayers     int                    `json:"max_players"`
-	MatchResult    RoomMatchResultSummary `json:"match_result"`
+	Type                  string                 `json:"type"`
+	RoomCode              string                 `json:"room_code"`
+	RoomState             string                 `json:"room_state"`
+	CurrentMatchID        string                 `json:"current_match_id"`
+	Members               []RoomMemberState      `json:"members"`
+	LocalPlayerID         string                 `json:"local_player_id"`
+	OwnerID               string                 `json:"owner_id"`
+	MaxPlayers            int                    `json:"max_players"`
+	TeamStructure         string                 `json:"team_structure"`
+	TeamAssignmentMode    string                 `json:"team_assignment_mode"`
+	TeamCount             int                    `json:"team_count"`
+	TeamAssignmentsLocked bool                   `json:"team_assignments_locked"`
+	MatchResult           RoomMatchResultSummary `json:"match_result"`
 }
 
 type RoomStateChanged struct {

@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
@@ -30,14 +31,18 @@ func (room *Room) gameplayContextLocked() GameplayContext {
 }
 
 type RoomSnapshot struct {
-	RoomID           string
-	State            RoomState
-	CurrentMatchID   string
-	Members          []RoomMember
-	LocalPlayerID    string
-	OwnerID          string
-	ResolvedSummary  playerdata.MatchResultSummary
-	HasResolvedMatch bool
+	RoomID                string
+	State                 RoomState
+	CurrentMatchID        string
+	Members               []RoomMember
+	LocalPlayerID         string
+	OwnerID               string
+	TeamConfig            teams.Config
+	TeamAssignments       teams.Assignments
+	TeamAssignmentsLocked bool
+	MaxPlayers            int
+	ResolvedSummary       playerdata.MatchResultSummary
+	HasResolvedMatch      bool
 }
 
 func (room *Room) SnapshotForSession(sessionID string) RoomSnapshot {
@@ -50,13 +55,17 @@ func (room *Room) SnapshotForSession(sessionID string) RoomSnapshot {
 		resolvedSummary.Players = append([]playerdata.PlayerMatchSummary(nil), resolvedSummary.Players...)
 	}
 	return RoomSnapshot{
-		RoomID:           room.ID,
-		State:            room.State,
-		CurrentMatchID:   room.match.CurrentMatchID(),
-		Members:          room.membership.membersSnapshot(),
-		LocalPlayerID:    localPlayerID,
-		OwnerID:          room.membership.ownerIDValue(),
-		ResolvedSummary:  resolvedSummary,
-		HasResolvedMatch: hasResolvedMatch,
+		RoomID:                room.ID,
+		State:                 room.State,
+		CurrentMatchID:        room.match.CurrentMatchID(),
+		Members:               room.membership.membersSnapshot(),
+		LocalPlayerID:         localPlayerID,
+		OwnerID:               room.membership.ownerIDValue(),
+		TeamConfig:            room.roomTeams.rules,
+		TeamAssignments:       copyTeamAssignments(room.roomTeams.assignments),
+		TeamAssignmentsLocked: room.roomTeams.locked,
+		MaxPlayers:            room.MaxPlayers,
+		ResolvedSummary:       resolvedSummary,
+		HasResolvedMatch:      hasResolvedMatch,
 	}
 }

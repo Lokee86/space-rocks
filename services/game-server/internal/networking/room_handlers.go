@@ -1,12 +1,13 @@
 package networking
 
 import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
-func (session *webSocketSession) handleCreateRoomRequest(traceID string) {
+func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int) {
 	if !requireAuthenticatedAccount(session, traceID) {
 		return
 	}
@@ -17,7 +18,14 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string) {
 		return
 	}
 
-	room, err := session.rooms.CreateLobbyRoom()
+	room, err := session.rooms.CreateLobbyRoomWithConfig(rooms.RoomCreationConfig{
+		TeamConfig: teams.Config{
+			Structure:      teams.Structure(teamStructure),
+			AssignmentMode: teams.AssignmentMode(teamAssignmentMode),
+			AutoTeamCount:  teamCount,
+		},
+		MaxPlayers: maxPlayers,
+	})
 	if err != nil {
 		failureTraceID := traceID
 		if failureTraceID == "" {
@@ -95,6 +103,22 @@ func (session *webSocketSession) handleSetReadyRequest(ready bool) {
 	room, roomErr := session.rooms.SetReady(context.RoomID, session.sessionID, ready)
 	if roomErr != nil {
 		session.EnqueueRoomError("", roomErr.Code, roomErr.Message)
+		return
+	}
+
+	BroadcastRoomSnapshot(room)
+}
+
+func (session *webSocketSession) handleSetTeamAssignmentRequest(targetPlayerID string, teamID string, traceID string) {
+	context := session.sessionContext()
+	if context.RoomID == "" || session.sessionID == "" {
+		session.EnqueueRoomError(traceID, rooms.RoomErrorNotInRoom, "Session is not in a room.")
+		return
+	}
+
+	room, roomErr := session.rooms.SetTeamAssignment(context.RoomID, session.sessionID, targetPlayerID, teams.ID(teamID))
+	if roomErr != nil {
+		session.EnqueueRoomError(traceID, roomErr.Code, roomErr.Message)
 		return
 	}
 

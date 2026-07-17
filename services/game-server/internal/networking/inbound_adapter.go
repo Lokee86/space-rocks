@@ -50,8 +50,8 @@ func (a inboundSessionAdapter) HandleAuthenticateRequest(token string, traceID s
 	a.session.handleAuthenticateRequest(token, traceID)
 }
 
-func (a inboundSessionAdapter) HandleCreateRoomRequest(traceID string) {
-	a.session.handleCreateRoomRequest(traceID)
+func (a inboundSessionAdapter) HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int) {
+	a.session.handleCreateRoomRequest(traceID, teamStructure, teamAssignmentMode, teamCount, maxPlayers)
 }
 
 func (a inboundSessionAdapter) HandleJoinRoomRequest(roomCode string, traceID string) {
@@ -64,6 +64,10 @@ func (a inboundSessionAdapter) HandleLeaveRoomRequest() {
 
 func (a inboundSessionAdapter) HandleSetReadyRequest(ready bool) {
 	a.session.handleSetReadyRequest(ready)
+}
+
+func (a inboundSessionAdapter) HandleSetTeamAssignmentRequest(targetPlayerID string, teamID string, traceID string) {
+	a.session.handleSetTeamAssignmentRequest(targetPlayerID, teamID, traceID)
 }
 
 func (a inboundSessionAdapter) HandleStartGameRequest() {

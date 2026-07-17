@@ -24,7 +24,7 @@ func (room *Room) ValidateJoin() *RoomDomainError {
 		State:       string(room.State),
 		Joinable:    room.Joinable,
 		MemberCount: room.membership.memberCount(),
-		MaxMembers:  MaxPlayersPerRoom,
+		MaxMembers:  room.MaxPlayers,
 	})
 	if roomErr := roomDomainErrorFromDecision(decision); roomErr != nil {
 		return roomErr
@@ -41,7 +41,7 @@ func (room *Room) JoinMember(sessionID string) *RoomDomainError {
 		State:       string(room.State),
 		Joinable:    room.Joinable,
 		MemberCount: room.membership.memberCount(),
-		MaxMembers:  MaxPlayersPerRoom,
+		MaxMembers:  room.MaxPlayers,
 	})
 	if roomErr := roomDomainErrorFromDecision(decision); roomErr != nil {
 		return roomErr

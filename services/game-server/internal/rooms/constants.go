@@ -40,4 +40,5 @@ const (
 	RoomErrorAuthRequired                 = "auth_required"
 	RoomErrorInvalidToken                 = "invalid_token"
 	RoomErrorTokenVerificationUnavailable = "token_verification_unavailable"
+	RoomErrorInvalidTeamAssignment        = "invalid_team_assignment"
 )

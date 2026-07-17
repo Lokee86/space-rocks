@@ -1,5 +1,7 @@
 package rooms
 
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
+
 func (room *Room) AddMember(member *RoomMember) *RoomMember {
 	room.mu.Lock()
 	defer room.mu.Unlock()
@@ -8,7 +10,13 @@ func (room *Room) AddMember(member *RoomMember) *RoomMember {
 }
 
 func (room *Room) addMemberLocked(member *RoomMember) *RoomMember {
-	return room.membership.addMember(member)
+	member = room.membership.addMember(member)
+	if _, exists := room.roomTeams.assignments[member.MemberID]; !exists {
+		room.roomTeams.assignments[member.MemberID] = defaultAssignmentForStructure(room.roomTeams.rules.Structure)
+	}
+	room.roomTeams.assignments[member.MemberID] = teams.ID(room.roomTeams.assignments[member.MemberID])
+	_ = room.rebalanceAutoBalancedLocked()
+	return member
 }
 
 func (room *Room) AddMemberSessionID(sessionID string) *RoomMember {
@@ -76,7 +84,11 @@ func (room *Room) RemoveMember(playerID string) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
+	if member, ok := room.membership.memberByPlayerID(playerID); ok {
+		delete(room.roomTeams.assignments, member.MemberID)
+	}
 	room.membership.removeMember(playerID)
+	_ = room.rebalanceAutoBalancedLocked()
 }
 
 func (room *Room) MemberCount() int {
@@ -87,7 +99,9 @@ func (room *Room) MemberCount() int {
 }
 
 func (room *Room) IsFull() bool {
-	return room.MemberCount() >= MaxPlayersPerRoom
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	return room.membership.memberCount() >= room.MaxPlayers
 }
 
 func (room *Room) IsEmpty() bool {

@@ -24,19 +24,24 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 			Ready:     member.Ready,
 			Connected: member.Connected,
 			IsBot:     member.IsBot,
+			TeamID:    string(projection.TeamAssignments[member.MemberID]),
 		})
 	}
 
 	return game.RoomSnapshot{
-		Type:           game.PacketTypeRoomSnapshot,
-		RoomCode:       projection.RoomID,
-		RoomState:      string(projection.State),
-		CurrentMatchID: projection.CurrentMatchID,
-		Members:        members,
-		LocalPlayerID:  projection.LocalPlayerID,
-		OwnerID:        projection.OwnerID,
-		MaxPlayers:     rooms.MaxPlayersPerRoom,
-		MatchResult:    buildRoomMatchResultSummary(projection),
+		Type:                  game.PacketTypeRoomSnapshot,
+		RoomCode:              projection.RoomID,
+		RoomState:             string(projection.State),
+		CurrentMatchID:        projection.CurrentMatchID,
+		Members:               members,
+		LocalPlayerID:         projection.LocalPlayerID,
+		OwnerID:               projection.OwnerID,
+		MaxPlayers:            projection.MaxPlayers,
+		TeamStructure:         string(projection.TeamConfig.Structure),
+		TeamAssignmentMode:    string(projection.TeamConfig.AssignmentMode),
+		TeamCount:             rooms.TeamCountForConfig(projection.TeamConfig),
+		TeamAssignmentsLocked: projection.TeamAssignmentsLocked,
+		MatchResult:           buildRoomMatchResultSummary(projection),
 	}
 }
 

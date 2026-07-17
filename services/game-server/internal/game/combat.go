@@ -174,7 +174,11 @@ func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *runtime.S
 	game.applyFatalPlayerDamage(playerID, player, "collision")
 }
 
-func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, reason string) {
+func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, reasons ...string) {
+	reason := "collision"
+	if len(reasons) > 0 && reasons[0] != "" {
+		reason = reasons[0]
+	}
 	position := player.Position()
 	if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
 		cameraView.X = position.X

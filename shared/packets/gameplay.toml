@@ -50,6 +50,42 @@ type = "string"
 
 [[structs.fields]]
 
+name = "team_structure"
+json = "team_structure"
+type = "string"
+
+[[structs.fields]]
+
+name = "team_assignment_mode"
+json = "team_assignment_mode"
+type = "string"
+
+[[structs.fields]]
+
+name = "team_count"
+json = "team_count"
+type = "int"
+
+[[structs.fields]]
+
+name = "max_players"
+json = "max_players"
+type = "int"
+
+[[structs.fields]]
+
+name = "target_player_id"
+json = "target_player_id"
+type = "string"
+
+[[structs.fields]]
+
+name = "team_id"
+json = "team_id"
+type = "string"
+
+[[structs.fields]]
+
 name = "ready"
 json = "ready"
 type = "bool"

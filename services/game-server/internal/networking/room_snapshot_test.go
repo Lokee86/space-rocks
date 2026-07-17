@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
@@ -21,6 +22,53 @@ func TestBuildRoomSnapshotMatchResultIsEmptyWithoutResolvedSummary(t *testing.T)
 	}
 	if len(snapshot.MatchResult.Players) != 0 {
 		t.Fatalf("expected 0 match result players, got %d", len(snapshot.MatchResult.Players))
+	}
+}
+
+func TestBuildRoomSnapshotProjectsTeamIDFromMemberIDAssignment(t *testing.T) {
+	room, err := rooms.NewRoomWithConfig("room", rooms.RoomStateLobby, nil, rooms.RoomCreationConfig{
+		TeamConfig: teams.Config{Structure: teams.StructureCustom, AssignmentMode: teams.AssignmentOwnerAssigned},
+		MaxPlayers: rooms.MaxPlayersPerRoom,
+	})
+	if err != nil {
+		t.Fatalf("create room: %v", err)
+	}
+	member := room.AddMember(rooms.NewRoomMember("session-owner"))
+	if err := room.SetTeamAssignment(member.SessionID, member.PlayerID, teams.Team2); err != nil {
+		t.Fatalf("set assignment: %v", err)
+	}
+
+	snapshot := BuildRoomSnapshot(room, member.SessionID)
+	if len(snapshot.Members) != 1 || snapshot.Members[0].TeamID != string(teams.Team2) {
+		t.Fatalf("expected projected team assignment, got %+v", snapshot.Members)
+	}
+}
+
+func TestBuildRoomSnapshotProjectsStructureAwareTeamCount(t *testing.T) {
+	tests := []struct {
+		name   string
+		config teams.Config
+		want   int
+	}{
+		{name: "ffa", config: teams.Config{Structure: teams.StructureFFA}, want: 0},
+		{name: "co-op", config: teams.Config{Structure: teams.StructureCoOp}, want: 1},
+		{name: "custom", config: teams.Config{Structure: teams.StructureCustom, AssignmentMode: teams.AssignmentOwnerAssigned}, want: 8},
+		{name: "auto-balanced", config: teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 3}, want: 3},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			room, err := rooms.NewRoomWithConfig("room", rooms.RoomStateLobby, nil, rooms.RoomCreationConfig{
+				TeamConfig: test.config,
+				MaxPlayers: rooms.MaxPlayersPerRoom,
+			})
+			if err != nil {
+				t.Fatalf("create room: %v", err)
+			}
+			if got := BuildRoomSnapshot(room, "").TeamCount; got != test.want {
+				t.Fatalf("team count = %d, want %d", got, test.want)
+			}
+		})
 	}
 }
 

@@ -70,6 +70,7 @@ const TYPE_CREATE_ROOM_REQUEST := "create_room_request"
 const TYPE_JOIN_ROOM_REQUEST := "join_room_request"
 const TYPE_LEAVE_ROOM_REQUEST := "leave_room_request"
 const TYPE_SET_READY_REQUEST := "set_ready_request"
+const TYPE_SET_TEAM_ASSIGNMENT_REQUEST := "set_team_assignment_request"
 const TYPE_START_GAME_REQUEST := "start_game_request"
 const TYPE_ADD_BOT_REQUEST := "add_bot_request"
 const TYPE_REMOVE_ROOM_MEMBER_REQUEST := "remove_room_member_request"
@@ -207,6 +208,11 @@ const FIELD_TARGET_ID := "target_id"
 const FIELD_TARGET_KIND := "target_kind"
 const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TARGET_SCOPE := "target_scope"
+const FIELD_TEAM_ASSIGNMENT_MODE := "team_assignment_mode"
+const FIELD_TEAM_ASSIGNMENTS_LOCKED := "team_assignments_locked"
+const FIELD_TEAM_COUNT := "team_count"
+const FIELD_TEAM_ID := "team_id"
+const FIELD_TEAM_STRUCTURE := "team_structure"
 const FIELD_THRUSTING := "thrusting"
 const FIELD_TIMESTAMP_MSEC := "timestamp_msec"
 const FIELD_TOKEN := "token"
@@ -484,10 +490,15 @@ static func client_config_packet(visible_world_width, visible_world_height) -> D
 	packet[FIELD_CONFIG] = packet_config
 	return packet
 
-static func create_room_request_packet(trace_id) -> Dictionary:
+static func create_room_request_packet(trace_id, local_profile_id, team_structure, team_assignment_mode, team_count, max_players) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "create_room_request"
 	packet[FIELD_TRACE_ID] = trace_id
+	packet[FIELD_LOCAL_PROFILE_ID] = local_profile_id
+	packet[FIELD_TEAM_STRUCTURE] = team_structure
+	packet[FIELD_TEAM_ASSIGNMENT_MODE] = team_assignment_mode
+	packet[FIELD_TEAM_COUNT] = team_count
+	packet[FIELD_MAX_PLAYERS] = max_players
 	return packet
 
 static func join_room_request_packet(room_code, trace_id) -> Dictionary:
@@ -506,6 +517,13 @@ static func set_ready_request_packet(ready) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "set_ready_request"
 	packet[FIELD_READY] = ready
+	return packet
+
+static func set_team_assignment_request_packet(target_player_id, team_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "set_team_assignment_request"
+	packet[FIELD_TARGET_PLAYER_ID] = target_player_id
+	packet[FIELD_TEAM_ID] = team_id
 	return packet
 
 static func start_game_request_packet() -> Dictionary:
