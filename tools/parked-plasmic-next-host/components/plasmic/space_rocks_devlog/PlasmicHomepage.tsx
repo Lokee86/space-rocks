@@ -91,9 +91,14 @@ export type PageCtx = {
 
 export function generateDynamicMetadata($q: any, $ctx: PageCtx) {
   return {
-    openGraph: {},
+    title: "Devlog Archive",
+
+    openGraph: {
+      title: "Devlog Archive"
+    },
     twitter: {
-      card: "summary" as const
+      card: "summary" as const,
+      title: "Devlog Archive"
     }
   };
 }
@@ -115,12 +120,30 @@ export type PlasmicHomepage__OverridesType = {
   nav?: Flex__<"nav">;
   hero?: Flex__<"section">;
   screenStack?: Flex__<"div">;
+  heroMediaFrame?: Flex__<typeof CrtMediaFrame>;
+  heroLine1Media?: Flex__<"span">;
+  heroLine2Media?: Flex__<"span">;
+  heroLine3Media?: Flex__<"span">;
+  heroLine1Desktop?: Flex__<"span">;
+  heroLine2Desktop?: Flex__<"span">;
+  heroLine3Desktop?: Flex__<"span">;
   article?: Flex__<"article">;
-  h1?: Flex__<"h1">;
+  articleLabel?: Flex__<"span">;
+  articleTitle?: Flex__<"h1">;
+  introText?: Flex__<"div">;
   screenStack2?: Flex__<"div">;
-  blockquote?: Flex__<"blockquote">;
+  articleMediaFrame?: Flex__<typeof CrtMediaFrame>;
   aside?: Flex__<"aside">;
+  finishedTitle?: Flex__<"span">;
+  finishedBody?: Flex__<"p">;
+  nowTitle?: Flex__<"span">;
+  nowBody?: Flex__<"p">;
+  comingUpTitle?: Flex__<"span">;
+  comingUpBody?: Flex__<"p">;
+  utilityTitle?: Flex__<"span">;
+  utilityText?: Flex__<"p">;
   footer?: Flex__<"footer">;
+  finePrint?: Flex__<"span">;
 };
 
 export interface DefaultHomepageProps {}
@@ -175,7 +198,16 @@ function PlasmicHomepage__RenderFunc(props: {
 
   return (
     <React.Fragment>
-      <Head></Head>
+      <Head>
+        <meta name="twitter:card" content="summary" />
+        <title key="title">{pageMetadata.title}</title>
+        <meta key="og:title" property="og:title" content={pageMetadata.title} />
+        <meta
+          key="twitter:title"
+          property="twitter:title"
+          content={pageMetadata.title}
+        />
+      </Head>
 
       <style>{`
         body {
@@ -198,6 +230,14 @@ function PlasmicHomepage__RenderFunc(props: {
             sty.root
           )}
           id={"uW6XQJEMGRlw"}
+          style={{
+            mixinTsJuVnJzaWaColor: "rgb(0, 229, 255)",
+            backgroundImage:
+              'url("/assets/ui/backgroun-fore.png"), url("/assets/ui/background.png")',
+            backgroundSize: "cover, cover",
+            backgroundPosition: "center center, center top",
+            backgroundRepeat: "no-repeat, no-repeat"
+          }}
         >
           <header
             data-plasmic-name={"header"}
@@ -311,7 +351,7 @@ function PlasmicHomepage__RenderFunc(props: {
               <PlasmicLink__
                 className={classNames("all", "a", "a__uNJep", sty.link__jyTn4)}
                 component={Link}
-                href={"#latest"}
+                href={"/"}
                 id={"9d3FT6XjLgDj"}
                 legacyBehavior={false}
                 platform={"nextjs"}
@@ -322,17 +362,16 @@ function PlasmicHomepage__RenderFunc(props: {
                     "span",
                     "span__uNJep",
                     "__wab_text",
-                    sty.span__jkler
+                    sty.span__b4VVy
                   )}
-                  id={"rPs-U--Ym39L"}
                 >
-                  {"Devlog"}
+                  {"Home"}
                 </span>
               </PlasmicLink__>
               <PlasmicLink__
                 className={classNames("all", "a", "a__uNJep", sty.link__isIz)}
                 component={Link}
-                href={"#archive"}
+                href={"/archive/"}
                 id={"rW8um3abfDUl"}
                 legacyBehavior={false}
                 platform={"nextjs"}
@@ -353,7 +392,7 @@ function PlasmicHomepage__RenderFunc(props: {
               <PlasmicLink__
                 className={classNames("all", "a", "a__uNJep", sty.link__t6Ksv)}
                 component={Link}
-                href={"#"}
+                href={"https://github.com/Lokee86/space-rocks"}
                 id={"gbV0TczdRWrh"}
                 legacyBehavior={false}
                 platform={"nextjs"}
@@ -372,6 +411,27 @@ function PlasmicHomepage__RenderFunc(props: {
                 </span>
               </PlasmicLink__>
             </nav>
+            <PlasmicLink__
+              aria-label={"Discord"}
+              className={classNames("all", "a", "a__uNJep", sty.link___1Ia7F)}
+              component={Link}
+              href={"https://discord.gg/kWvNWRjQxt"}
+              legacyBehavior={false}
+              platform={"nextjs"}
+            >
+              <PlasmicImg__
+                alt={"Discord"}
+                className={classNames(sty.img__a9MFr)}
+                displayHeight={"min(20px, calc(2.285714vw - 1.257143px))"}
+                displayMaxHeight={"none"}
+                displayMaxWidth={"none"}
+                displayMinHeight={"0"}
+                displayMinWidth={"0"}
+                displayWidth={"min(140px, calc(16vw - 8.8px))"}
+                loading={"lazy"}
+                src={"/assets/ui/discord-logo.png"}
+              />
+            </PlasmicLink__>
           </header>
           <div
             className={classNames("all", sty.freeBox__ket3A)}
@@ -385,21 +445,24 @@ function PlasmicHomepage__RenderFunc(props: {
               style={
                 hasVariant(globalVariants, "screen", "mobile")
                   ? {
-                      gridTemplateColumns: "1fr",
+                      gridTemplateColumns: "minmax(0, 1fr)",
                       gridAutoRows: "auto",
-                      justifyItems: "center"
+                      justifyItems: "center",
+                      gridTemplateRows: "auto"
                     }
                   : hasVariant(globalVariants, "screen", "tablet")
                     ? {
                         backgroundPosition: "center top",
                         backgroundSize: "cover",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(max(225px, calc((100% - 15px) / 2)), 1fr))",
-                        justifyItems: "center"
+                        gridTemplateColumns: "minmax(0, 1fr)",
+                        justifyItems: "center",
+                        gridTemplateRows: "auto"
                       }
                     : {
                         backgroundPosition: "right center",
-                        backgroundSize: "cover"
+                        backgroundSize: "cover",
+                        gridTemplateColumns: "minmax(0, 46%) minmax(0, 1fr)",
+                        gridTemplateRows: "auto 1fr auto"
                       }
               }
             >
@@ -409,25 +472,27 @@ function PlasmicHomepage__RenderFunc(props: {
                 className={classNames("all", sty.screenStack)}
                 id={"J8HFxhDbsPA3"}
                 style={
-                  hasVariant(globalVariants, "screen", "tablet")
-                    ? {
-                        order: "1",
-                        gridColumn: "1 / -1",
-                        justifySelf: "center"
-                      }
-                    : undefined
+                  hasVariant(globalVariants, "screen", "mobile")
+                    ? { gridColumn: "1", gridRow: "auto" }
+                    : hasVariant(globalVariants, "screen", "tablet")
+                      ? {
+                          order: "1",
+                          gridColumn: "1",
+                          justifySelf: "center",
+                          gridRow: "auto"
+                        }
+                      : { gridColumn: "1", gridRow: "1 / 4" }
                 }
               >
                 <CrtMediaFrame
+                  data-plasmic-name={"heroMediaFrame"}
+                  data-plasmic-override={overrides.heroMediaFrame}
                   alt={""}
                   animationSpeed={1}
                   aspectRatio={"16 / 9"}
                   autoAdvanceMs={5000}
                   baseColor={"#020617"}
-                  className={classNames(
-                    "__wab_instance",
-                    sty.crtMediaFrame__wGtqv
-                  )}
+                  className={classNames("__wab_instance", sty.heroMediaFrame)}
                   disabledControls={""}
                   edgeCornerGlowPower={2.2}
                   edgeCornerGlowWidth={0.055}
@@ -531,16 +596,17 @@ function PlasmicHomepage__RenderFunc(props: {
                       id={"JQUEp_z-buj3"}
                     >
                       <span
+                        data-plasmic-name={"heroLine1Media"}
+                        data-plasmic-override={overrides.heroLine1Media}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span___1FqJ
+                          sty.heroLine1Media
                         )}
-                        id={"NzSf9Y9fVjp8"}
                       >
-                        {"Lorem ipsum dolor"}
+                        {"MYSTERIOUS TRANSMISSION"}
                       </span>
                     </span>
                     <span
@@ -553,16 +619,17 @@ function PlasmicHomepage__RenderFunc(props: {
                       id={"VuOMS-AA1yAs"}
                     >
                       <span
+                        data-plasmic-name={"heroLine2Media"}
+                        data-plasmic-override={overrides.heroLine2Media}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span___3WKx9
+                          sty.heroLine2Media
                         )}
-                        id={"LeNRnq4QrpBe"}
                       >
-                        {"sit amet, consectetur"}
+                        {"COMPROMISED SYSTEM"}
                       </span>
                     </span>
                     <span
@@ -575,16 +642,17 @@ function PlasmicHomepage__RenderFunc(props: {
                       id={"Ihv6qwVFlaQT"}
                     >
                       <span
+                        data-plasmic-name={"heroLine3Media"}
+                        data-plasmic-override={overrides.heroLine3Media}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span__bqnXg
+                          sty.heroLine3Media
                         )}
-                        id={"D9CgjTnY0hm0"}
                       >
-                        {"adipiscing elit, sed do"}
+                        {"UNKNOWN HOSTILES"}
                       </span>
                     </span>
                   </div>
@@ -606,20 +674,24 @@ function PlasmicHomepage__RenderFunc(props: {
                     }
                     displayMaxHeight={"none"}
                     displayMaxWidth={
-                      hasVariant(globalVariants, "screen", "mobile")
-                        ? "100%"
-                        : hasVariant(globalVariants, "screen", "tablet")
-                          ? "100%"
-                          : "30%"
+                      hasVariant(globalVariants, "screen", "narrow")
+                        ? "48%"
+                        : hasVariant(globalVariants, "screen", "mobile")
+                          ? "42%"
+                          : hasVariant(globalVariants, "screen", "tablet")
+                            ? "100%"
+                            : "30%"
                     }
                     displayMinHeight={"0"}
                     displayMinWidth={"0"}
                     displayWidth={
-                      hasVariant(globalVariants, "screen", "mobile")
-                        ? "min(320px, 100%)"
-                        : hasVariant(globalVariants, "screen", "tablet")
-                          ? "min(320px, 100%)"
-                          : "min(340px, 30%)"
+                      hasVariant(globalVariants, "screen", "narrow")
+                        ? "min(190px, 48%)"
+                        : hasVariant(globalVariants, "screen", "mobile")
+                          ? "min(210px, 42%)"
+                          : hasVariant(globalVariants, "screen", "tablet")
+                            ? "min(320px, 100%)"
+                            : "min(340px, 30%)"
                     }
                     id={"_sxn1Y_NLVgG"}
                     loading={"lazy"}
@@ -654,25 +726,28 @@ function PlasmicHomepage__RenderFunc(props: {
                   hasVariant(globalVariants, "screen", "mobile")
                     ? {
                         order: "2",
-                        gridColumn: "1 / -1",
+                        gridColumn: "1",
                         justifySelf: "center",
                         textShadow:
-                          "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px"
+                          "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
+                        gridRow: "auto"
                       }
                     : hasVariant(globalVariants, "screen", "tablet")
                       ? {
                           order: "2",
                           textShadow:
                             "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
-                          gridColumn: "auto",
-                          justifySelf: "center"
+                          gridColumn: "1",
+                          justifySelf: "center",
+                          gridRow: "auto"
                         }
                       : {
                           textShadow:
                             "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
                           order: "0",
-                          gridColumn: "auto",
-                          justifySelf: "auto"
+                          gridColumn: "2",
+                          justifySelf: "stretch",
+                          gridRow: "1"
                         }
                 }
               >
@@ -686,16 +761,17 @@ function PlasmicHomepage__RenderFunc(props: {
                   id={"JQUEp_z-buj3"}
                 >
                   <span
+                    data-plasmic-name={"heroLine1Desktop"}
+                    data-plasmic-override={overrides.heroLine1Desktop}
                     className={classNames(
                       "all",
                       "span",
                       "span__uNJep",
                       "__wab_text",
-                      sty.span___3Oyof
+                      sty.heroLine1Desktop
                     )}
-                    id={"NzSf9Y9fVjp8"}
                   >
-                    {"Lorem ipsum dolor"}
+                    {"MYSTERIOUS TRANSMISSION"}
                   </span>
                 </span>
                 <span
@@ -708,16 +784,17 @@ function PlasmicHomepage__RenderFunc(props: {
                   id={"VuOMS-AA1yAs"}
                 >
                   <span
+                    data-plasmic-name={"heroLine2Desktop"}
+                    data-plasmic-override={overrides.heroLine2Desktop}
                     className={classNames(
                       "all",
                       "span",
                       "span__uNJep",
                       "__wab_text",
-                      sty.span__yrWqz
+                      sty.heroLine2Desktop
                     )}
-                    id={"LeNRnq4QrpBe"}
                   >
-                    {"sit amet, consectetur"}
+                    {"COMPROMISED SYSTEM"}
                   </span>
                 </span>
                 <span
@@ -730,16 +807,17 @@ function PlasmicHomepage__RenderFunc(props: {
                   id={"Ihv6qwVFlaQT"}
                 >
                   <span
+                    data-plasmic-name={"heroLine3Desktop"}
+                    data-plasmic-override={overrides.heroLine3Desktop}
                     className={classNames(
                       "all",
                       "span",
                       "span__uNJep",
                       "__wab_text",
-                      sty.span__gLha2
+                      sty.heroLine3Desktop
                     )}
-                    id={"D9CgjTnY0hm0"}
                   >
-                    {"adipiscing elit, sed do"}
+                    {"UNKNOWN HOSTILES"}
                   </span>
                 </span>
               </div>
@@ -753,20 +831,24 @@ function PlasmicHomepage__RenderFunc(props: {
                 }
                 displayMaxHeight={"none"}
                 displayMaxWidth={
-                  hasVariant(globalVariants, "screen", "mobile")
-                    ? "100%"
-                    : hasVariant(globalVariants, "screen", "tablet")
+                  hasVariant(globalVariants, "screen", "narrow")
+                    ? "52%"
+                    : hasVariant(globalVariants, "screen", "mobile")
                       ? "100%"
-                      : "30%"
+                      : hasVariant(globalVariants, "screen", "tablet")
+                        ? "34%"
+                        : "78%"
                 }
                 displayMinHeight={"0"}
                 displayMinWidth={"0"}
                 displayWidth={
-                  hasVariant(globalVariants, "screen", "mobile")
-                    ? "min(320px, 100%)"
-                    : hasVariant(globalVariants, "screen", "tablet")
+                  hasVariant(globalVariants, "screen", "narrow")
+                    ? "min(210px, 52%)"
+                    : hasVariant(globalVariants, "screen", "mobile")
                       ? "min(320px, 100%)"
-                      : "min(340px, 30%)"
+                      : hasVariant(globalVariants, "screen", "tablet")
+                        ? "min(300px, 34%)"
+                        : "min(340px, 78%)"
                 }
                 id={"_sxn1Y_NLVgG"}
                 loading={"lazy"}
@@ -775,23 +857,60 @@ function PlasmicHomepage__RenderFunc(props: {
                   hasVariant(globalVariants, "screen", "mobile")
                     ? {
                         order: "3",
-                        gridColumn: "1 / -1",
-                        justifySelf: "center"
+                        gridColumn: "1",
+                        justifySelf: "center",
+                        gridRow: "auto"
                       }
                     : hasVariant(globalVariants, "screen", "tablet")
                       ? {
                           order: "3",
-                          gridColumn: "auto",
-                          justifySelf: "center"
+                          gridColumn: "1",
+                          justifySelf: "center",
+                          gridRow: "auto"
                         }
                       : {
                           filter: "none",
                           order: "0",
-                          gridColumn: "auto",
-                          justifySelf: "auto"
+                          gridColumn: "2",
+                          justifySelf: "end",
+                          gridRow: "3"
                         }
                 }
               />
+
+              <PlasmicLink__
+                aria-label={"Discord"}
+                className={classNames("all", "a", "a__uNJep", sty.link__traDh)}
+                component={Link}
+                href={"https://discord.gg/kWvNWRjQxt"}
+                legacyBehavior={false}
+                platform={"nextjs"}
+              >
+                <PlasmicImg__
+                  alt={"Discord"}
+                  className={classNames(sty.img__mwSaS)}
+                  displayHeight={
+                    hasVariant(globalVariants, "screen", "narrow")
+                      ? "44.44%"
+                      : "100%"
+                  }
+                  displayMaxHeight={"none"}
+                  displayMaxWidth={
+                    hasVariant(globalVariants, "screen", "narrow")
+                      ? "100%"
+                      : "100%"
+                  }
+                  displayMinHeight={"0"}
+                  displayMinWidth={"0"}
+                  displayWidth={
+                    hasVariant(globalVariants, "screen", "narrow")
+                      ? "55.56%"
+                      : "100%"
+                  }
+                  loading={"lazy"}
+                  src={"/assets/ui/discord-symbol.png"}
+                />
+              </PlasmicLink__>
             </section>
             <section
               className={classNames("all", sty.section___4BcfR)}
@@ -811,7 +930,6 @@ function PlasmicHomepage__RenderFunc(props: {
                 <div
                   className={classNames("all", sty.freeBox__pNhK)}
                   id={"lyrSSAnBMjvn"}
-                  style={{ mixBlendMode: "screen" }}
                 />
 
                 <div
@@ -823,12 +941,14 @@ function PlasmicHomepage__RenderFunc(props: {
                     id={"2RDFfzp8Eh0J"}
                   >
                     <span
+                      data-plasmic-name={"articleLabel"}
+                      data-plasmic-override={overrides.articleLabel}
                       className={classNames(
                         "all",
                         "span",
                         "span__uNJep",
                         "__wab_text",
-                        sty.span___203TA
+                        sty.articleLabel
                       )}
                       id={"d7Y2Thqs0Eze"}
                     >
@@ -836,33 +956,38 @@ function PlasmicHomepage__RenderFunc(props: {
                     </span>
                   </div>
                   <h1
-                    data-plasmic-name={"h1"}
-                    data-plasmic-override={overrides.h1}
+                    data-plasmic-name={"articleTitle"}
+                    data-plasmic-override={overrides.articleTitle}
                     className={classNames(
                       "all",
                       "h1",
                       "h1__uNJep",
                       "__wab_text",
-                      sty.h1
+                      sty.articleTitle
                     )}
                     id={"zjUo3Aobz4Hf"}
                   >
                     {"Lorem Ipsum Delor"}
                   </h1>
-                  <p
-                    className={classNames(
-                      "all",
-                      "p",
-                      "p__uNJep",
-                      "__wab_text",
-                      sty.p__pMlfd
-                    )}
-                    id={"2k_fW1gkoIiS"}
+                  <div
+                    data-plasmic-name={"introText"}
+                    data-plasmic-override={overrides.introText}
+                    className={classNames("all", sty.introText)}
                   >
-                    {
-                      "Main article content goes here. This panel is the reusable devlog body area. Screenshots and clips can use framed media components inside the article flow."
-                    }
-                  </p>
+                    <span
+                      className={classNames(
+                        "all",
+                        "span",
+                        "span__uNJep",
+                        "__wab_text",
+                        sty.span__xBgWl
+                      )}
+                    >
+                      {
+                        "Main article content goes here. This panel is the reusable devlog body area. Screenshots and clips can use framed media components inside the article flow."
+                      }
+                    </span>
+                  </div>
                   <div
                     data-plasmic-name={"screenStack2"}
                     data-plasmic-override={overrides.screenStack2}
@@ -870,6 +995,8 @@ function PlasmicHomepage__RenderFunc(props: {
                     id={"Fe-CSVAjzAup"}
                   >
                     <CrtMediaFrame
+                      data-plasmic-name={"articleMediaFrame"}
+                      data-plasmic-override={overrides.articleMediaFrame}
                       alt={""}
                       animationSpeed={1}
                       aspectRatio={"16 / 9"}
@@ -877,7 +1004,7 @@ function PlasmicHomepage__RenderFunc(props: {
                       baseColor={"#020617"}
                       className={classNames(
                         "__wab_instance",
-                        sty.crtMediaFrame___69LEq
+                        sty.articleMediaFrame
                       )}
                       disabledControls={""}
                       edgeCornerGlowPower={2.2}
@@ -936,75 +1063,6 @@ function PlasmicHomepage__RenderFunc(props: {
                       waveStrength={1}
                     />
                   </div>
-                  <h2
-                    className={classNames(
-                      "all",
-                      "h2",
-                      "h2__uNJep",
-                      "__wab_text",
-                      sty.h2__in94K
-                    )}
-                    id={"Ae5U6wXArW_l"}
-                  >
-                    {"What changed"}
-                  </h2>
-                  <p
-                    className={classNames(
-                      "all",
-                      "p",
-                      "p__uNJep",
-                      "__wab_text",
-                      sty.p__giPpg
-                    )}
-                    id={"OEGT_uR78XFv"}
-                  >
-                    {
-                      "Use this content panel for the current article. Body text, bullet lists, screenshots, GIFs, and comparison images all live here."
-                    }
-                  </p>
-                  <blockquote
-                    data-plasmic-name={"blockquote"}
-                    data-plasmic-override={overrides.blockquote}
-                    className={classNames("all", sty.blockquote)}
-                    id={"yDJN7vxc91bA"}
-                  >
-                    <span
-                      className={classNames(
-                        "all",
-                        "span",
-                        "span__uNJep",
-                        "__wab_text",
-                        sty.span__mr3S
-                      )}
-                      id={"ksvrQbBLRcHG"}
-                    >
-                      {"Callout / quote / patch note highlight goes here."}
-                    </span>
-                  </blockquote>
-                  <h2
-                    className={classNames(
-                      "all",
-                      "h2",
-                      "h2__uNJep",
-                      "__wab_text",
-                      sty.h2__vg9B
-                    )}
-                    id={"E0-KynfStX4T"}
-                  >
-                    {"What\u2019s next"}
-                  </h2>
-                  <p
-                    className={classNames(
-                      "all",
-                      "p",
-                      "p__uNJep",
-                      "__wab_text",
-                      sty.p__iNupL
-                    )}
-                    id={"FlNdghLeU55C"}
-                  >
-                    {"Next steps, rough roadmap, and developer notes go here."}
-                  </p>
                 </div>
               </article>
               <aside
@@ -1031,11 +1089,10 @@ function PlasmicHomepage__RenderFunc(props: {
                   style={
                     hasVariant(globalVariants, "screen", "tablet")
                       ? {
-                          backgroundImage:
-                            "linear-gradient(rgba(20,23,24,0.88), rgba(20,23,24,0.88)), url('/assets/ui/backgroun-fore.png')",
-                          backgroundSize: "auto, cover",
-                          backgroundPosition: "center center, center center",
-                          backgroundRepeat: "repeat, no-repeat",
+                          backgroundImage: "none",
+                          backgroundSize: "auto",
+                          backgroundPosition: "center center",
+                          backgroundRepeat: "repeat",
                           borderImageSource: "url('/assets/ui/card_frame.png')",
                           borderImageSlice: "78 58",
                           borderImageWidth: "42px",
@@ -1070,10 +1127,10 @@ function PlasmicHomepage__RenderFunc(props: {
                     className={classNames("all", sty.freeBox__vvgXp)}
                     style={{
                       backgroundImage:
-                        'linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88)), url("/assets/ui/backgroun-fore.png")',
-                      backgroundSize: "auto, cover",
-                      backgroundPosition: "center center, center center",
-                      backgroundRepeat: "repeat, no-repeat"
+                        "linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88))",
+                      backgroundSize: "auto",
+                      backgroundPosition: "center center",
+                      backgroundRepeat: "repeat"
                     }}
                   />
 
@@ -1103,24 +1160,28 @@ function PlasmicHomepage__RenderFunc(props: {
                       }}
                     >
                       <span
+                        data-plasmic-name={"finishedTitle"}
+                        data-plasmic-override={overrides.finishedTitle}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span__eKbhG
+                          sty.finishedTitle
                         )}
                       >
                         {"Client V2"}
                       </span>
                     </div>
                     <p
+                      data-plasmic-name={"finishedBody"}
+                      data-plasmic-override={overrides.finishedBody}
                       className={classNames(
                         "all",
                         "p",
                         "p__uNJep",
                         "__wab_text",
-                        sty.p__auwjt
+                        sty.finishedBody
                       )}
                     >
                       {"Current client foundation."}
@@ -1133,8 +1194,7 @@ function PlasmicHomepage__RenderFunc(props: {
                   style={
                     hasVariant(globalVariants, "screen", "tablet")
                       ? {
-                          backgroundImage:
-                            "linear-gradient(rgba(20,23,24,0.88), rgba(20,23,24,0.88)), url('/assets/ui/backgroun-fore.png')",
+                          backgroundImage: "none",
                           backgroundSize: "auto, cover",
                           backgroundPosition: "center center, center center",
                           backgroundRepeat: "repeat, no-repeat",
@@ -1172,10 +1232,10 @@ function PlasmicHomepage__RenderFunc(props: {
                     className={classNames("all", sty.freeBox__aFdp)}
                     style={{
                       backgroundImage:
-                        'linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88)), url("/assets/ui/backgroun-fore.png")',
-                      backgroundSize: "auto, cover",
-                      backgroundPosition: "center center, center center",
-                      backgroundRepeat: "repeat, no-repeat"
+                        "linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88))",
+                      backgroundSize: "auto",
+                      backgroundPosition: "center center",
+                      backgroundRepeat: "repeat"
                     }}
                   />
 
@@ -1205,24 +1265,28 @@ function PlasmicHomepage__RenderFunc(props: {
                       }}
                     >
                       <span
+                        data-plasmic-name={"nowTitle"}
+                        data-plasmic-override={overrides.nowTitle}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span___11XoU
+                          sty.nowTitle
                         )}
                       >
                         {"Devlog"}
                       </span>
                     </div>
                     <p
+                      data-plasmic-name={"nowBody"}
+                      data-plasmic-override={overrides.nowBody}
                       className={classNames(
                         "all",
                         "p",
                         "p__uNJep",
                         "__wab_text",
-                        sty.p__d4Wo
+                        sty.nowBody
                       )}
                     >
                       {"Website and presentation pass."}
@@ -1235,8 +1299,7 @@ function PlasmicHomepage__RenderFunc(props: {
                   style={
                     hasVariant(globalVariants, "screen", "tablet")
                       ? {
-                          backgroundImage:
-                            "linear-gradient(rgba(20,23,24,0.88), rgba(20,23,24,0.88)), url('/assets/ui/backgroun-fore.png')",
+                          backgroundImage: "none",
                           backgroundSize: "auto, cover",
                           backgroundPosition: "center center, center center",
                           backgroundRepeat: "repeat, no-repeat",
@@ -1274,10 +1337,10 @@ function PlasmicHomepage__RenderFunc(props: {
                     className={classNames("all", sty.freeBox__rB9Hu)}
                     style={{
                       backgroundImage:
-                        'linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88)), url("/assets/ui/backgroun-fore.png")',
-                      backgroundSize: "auto, cover",
-                      backgroundPosition: "center center, center center",
-                      backgroundRepeat: "repeat, no-repeat"
+                        "linear-gradient(rgba(20, 23, 24, 0.88), rgba(20, 23, 24, 0.88))",
+                      backgroundSize: "auto",
+                      backgroundPosition: "center center",
+                      backgroundRepeat: "repeat"
                     }}
                   />
 
@@ -1307,24 +1370,28 @@ function PlasmicHomepage__RenderFunc(props: {
                       }}
                     >
                       <span
+                        data-plasmic-name={"comingUpTitle"}
+                        data-plasmic-override={overrides.comingUpTitle}
                         className={classNames(
                           "all",
                           "span",
                           "span__uNJep",
                           "__wab_text",
-                          sty.span__fi2Y
+                          sty.comingUpTitle
                         )}
                       >
                         {"Protocol"}
                       </span>
                     </div>
                     <p
+                      data-plasmic-name={"comingUpBody"}
+                      data-plasmic-override={overrides.comingUpBody}
                       className={classNames(
                         "all",
                         "p",
                         "p__uNJep",
                         "__wab_text",
-                        sty.p__yd36N
+                        sty.comingUpBody
                       )}
                     >
                       {"Realtime packet cleanup."}
@@ -1369,12 +1436,14 @@ function PlasmicHomepage__RenderFunc(props: {
                     }}
                   >
                     <span
+                      data-plasmic-name={"utilityTitle"}
+                      data-plasmic-override={overrides.utilityTitle}
                       className={classNames(
                         "all",
                         "span",
                         "span__uNJep",
                         "__wab_text",
-                        sty.span__txctb
+                        sty.utilityTitle
                       )}
                       id={"ouzuXoWOEzne"}
                     >
@@ -1382,12 +1451,14 @@ function PlasmicHomepage__RenderFunc(props: {
                     </span>
                   </div>
                   <p
+                    data-plasmic-name={"utilityText"}
+                    data-plasmic-override={overrides.utilityText}
                     className={classNames(
                       "all",
                       "p",
                       "p__uNJep",
                       "__wab_text",
-                      sty.p__onpJs
+                      sty.utilityText
                     )}
                     id={"PSA7Vlu9NjQY"}
                     style={
@@ -1490,12 +1561,14 @@ function PlasmicHomepage__RenderFunc(props: {
             id={"xBsj_u1286GT"}
           >
             <span
+              data-plasmic-name={"finePrint"}
+              data-plasmic-override={overrides.finePrint}
               className={classNames(
                 "all",
                 "span",
                 "span__uNJep",
                 "__wab_text",
-                sty.span__dyyxN
+                sty.finePrint
               )}
               id={"-vFjetRuUugf"}
             >
@@ -1517,23 +1590,92 @@ const PlasmicDescendants = {
     "nav",
     "hero",
     "screenStack",
+    "heroMediaFrame",
+    "heroLine1Media",
+    "heroLine2Media",
+    "heroLine3Media",
+    "heroLine1Desktop",
+    "heroLine2Desktop",
+    "heroLine3Desktop",
     "article",
-    "h1",
+    "articleLabel",
+    "articleTitle",
+    "introText",
     "screenStack2",
-    "blockquote",
+    "articleMediaFrame",
     "aside",
-    "footer"
+    "finishedTitle",
+    "finishedBody",
+    "nowTitle",
+    "nowBody",
+    "comingUpTitle",
+    "comingUpBody",
+    "utilityTitle",
+    "utilityText",
+    "footer",
+    "finePrint"
   ],
   header: ["header", "nav"],
   nav: ["nav"],
-  hero: ["hero", "screenStack"],
-  screenStack: ["screenStack"],
-  article: ["article", "h1", "screenStack2", "blockquote"],
-  h1: ["h1"],
-  screenStack2: ["screenStack2"],
-  blockquote: ["blockquote"],
-  aside: ["aside"],
-  footer: ["footer"]
+  hero: [
+    "hero",
+    "screenStack",
+    "heroMediaFrame",
+    "heroLine1Media",
+    "heroLine2Media",
+    "heroLine3Media",
+    "heroLine1Desktop",
+    "heroLine2Desktop",
+    "heroLine3Desktop"
+  ],
+  screenStack: [
+    "screenStack",
+    "heroMediaFrame",
+    "heroLine1Media",
+    "heroLine2Media",
+    "heroLine3Media"
+  ],
+  heroMediaFrame: ["heroMediaFrame"],
+  heroLine1Media: ["heroLine1Media"],
+  heroLine2Media: ["heroLine2Media"],
+  heroLine3Media: ["heroLine3Media"],
+  heroLine1Desktop: ["heroLine1Desktop"],
+  heroLine2Desktop: ["heroLine2Desktop"],
+  heroLine3Desktop: ["heroLine3Desktop"],
+  article: [
+    "article",
+    "articleLabel",
+    "articleTitle",
+    "introText",
+    "screenStack2",
+    "articleMediaFrame"
+  ],
+  articleLabel: ["articleLabel"],
+  articleTitle: ["articleTitle"],
+  introText: ["introText"],
+  screenStack2: ["screenStack2", "articleMediaFrame"],
+  articleMediaFrame: ["articleMediaFrame"],
+  aside: [
+    "aside",
+    "finishedTitle",
+    "finishedBody",
+    "nowTitle",
+    "nowBody",
+    "comingUpTitle",
+    "comingUpBody",
+    "utilityTitle",
+    "utilityText"
+  ],
+  finishedTitle: ["finishedTitle"],
+  finishedBody: ["finishedBody"],
+  nowTitle: ["nowTitle"],
+  nowBody: ["nowBody"],
+  comingUpTitle: ["comingUpTitle"],
+  comingUpBody: ["comingUpBody"],
+  utilityTitle: ["utilityTitle"],
+  utilityText: ["utilityText"],
+  footer: ["footer"],
+  finePrint: ["finePrint"]
 } as const;
 type NodeNameType = keyof typeof PlasmicDescendants;
 type DescendantsType<T extends NodeNameType> =
@@ -1544,12 +1686,30 @@ type NodeDefaultElementType = {
   nav: "nav";
   hero: "section";
   screenStack: "div";
+  heroMediaFrame: typeof CrtMediaFrame;
+  heroLine1Media: "span";
+  heroLine2Media: "span";
+  heroLine3Media: "span";
+  heroLine1Desktop: "span";
+  heroLine2Desktop: "span";
+  heroLine3Desktop: "span";
   article: "article";
-  h1: "h1";
+  articleLabel: "span";
+  articleTitle: "h1";
+  introText: "div";
   screenStack2: "div";
-  blockquote: "blockquote";
+  articleMediaFrame: typeof CrtMediaFrame;
   aside: "aside";
+  finishedTitle: "span";
+  finishedBody: "p";
+  nowTitle: "span";
+  nowBody: "p";
+  comingUpTitle: "span";
+  comingUpBody: "p";
+  utilityTitle: "span";
+  utilityText: "p";
   footer: "footer";
+  finePrint: "span";
 };
 
 type ReservedPropsType = "variants" | "args" | "overrides";
@@ -1618,12 +1778,30 @@ export const PlasmicHomepage = Object.assign(
     nav: makeNodeComponent("nav"),
     hero: makeNodeComponent("hero"),
     screenStack: makeNodeComponent("screenStack"),
+    heroMediaFrame: makeNodeComponent("heroMediaFrame"),
+    heroLine1Media: makeNodeComponent("heroLine1Media"),
+    heroLine2Media: makeNodeComponent("heroLine2Media"),
+    heroLine3Media: makeNodeComponent("heroLine3Media"),
+    heroLine1Desktop: makeNodeComponent("heroLine1Desktop"),
+    heroLine2Desktop: makeNodeComponent("heroLine2Desktop"),
+    heroLine3Desktop: makeNodeComponent("heroLine3Desktop"),
     article: makeNodeComponent("article"),
-    h1: makeNodeComponent("h1"),
+    articleLabel: makeNodeComponent("articleLabel"),
+    articleTitle: makeNodeComponent("articleTitle"),
+    introText: makeNodeComponent("introText"),
     screenStack2: makeNodeComponent("screenStack2"),
-    blockquote: makeNodeComponent("blockquote"),
+    articleMediaFrame: makeNodeComponent("articleMediaFrame"),
     aside: makeNodeComponent("aside"),
+    finishedTitle: makeNodeComponent("finishedTitle"),
+    finishedBody: makeNodeComponent("finishedBody"),
+    nowTitle: makeNodeComponent("nowTitle"),
+    nowBody: makeNodeComponent("nowBody"),
+    comingUpTitle: makeNodeComponent("comingUpTitle"),
+    comingUpBody: makeNodeComponent("comingUpBody"),
+    utilityTitle: makeNodeComponent("utilityTitle"),
+    utilityText: makeNodeComponent("utilityText"),
     footer: makeNodeComponent("footer"),
+    finePrint: makeNodeComponent("finePrint"),
 
     // Metadata about props expected for PlasmicHomepage
     internalVariantProps: PlasmicHomepage__VariantProps,

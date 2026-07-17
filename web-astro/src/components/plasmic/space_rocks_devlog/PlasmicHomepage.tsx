@@ -405,21 +405,24 @@ function PlasmicHomepage__RenderFunc(props: {
               style={
                 hasVariant(globalVariants, "screen", "mobile")
                   ? {
-                      gridTemplateColumns: "1fr",
+                      gridTemplateColumns: "minmax(0, 1fr)",
                       gridAutoRows: "auto",
-                      justifyItems: "center"
+                      justifyItems: "center",
+                      gridTemplateRows: "auto"
                     }
                   : hasVariant(globalVariants, "screen", "tablet")
                     ? {
                         backgroundPosition: "center top",
                         backgroundSize: "cover",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(max(225px, calc((100% - 15px) / 2)), 1fr))",
-                        justifyItems: "center"
+                        gridTemplateColumns: "minmax(0, 1fr)",
+                        justifyItems: "center",
+                        gridTemplateRows: "auto"
                       }
                     : {
                         backgroundPosition: "right center",
-                        backgroundSize: "cover"
+                        backgroundSize: "cover",
+                        gridTemplateColumns: "minmax(0, 46%) minmax(0, 1fr)",
+                        gridTemplateRows: "auto 1fr auto"
                       }
               }
             >
@@ -429,13 +432,16 @@ function PlasmicHomepage__RenderFunc(props: {
                 className={classNames("all", sty.screenStack)}
                 id={"J8HFxhDbsPA3"}
                 style={
-                  hasVariant(globalVariants, "screen", "tablet")
-                    ? {
-                        order: "1",
-                        gridColumn: "1 / -1",
-                        justifySelf: "center"
-                      }
-                    : undefined
+                  hasVariant(globalVariants, "screen", "mobile")
+                    ? { gridColumn: "1", gridRow: "auto" }
+                    : hasVariant(globalVariants, "screen", "tablet")
+                      ? {
+                          order: "1",
+                          gridColumn: "1",
+                          justifySelf: "center",
+                          gridRow: "auto"
+                        }
+                      : { gridColumn: "1", gridRow: "1 / 4" }
                 }
               >
                 <CrtMediaFrame
@@ -559,9 +565,8 @@ function PlasmicHomepage__RenderFunc(props: {
                           "__wab_text",
                           sty.heroLine1Media
                         )}
-                        id={"NzSf9Y9fVjp8"}
                       >
-                        {"Lorem ipsum dolor"}
+                        {"MYSTERIOUS TRANSMISSION"}
                       </span>
                     </span>
                     <span
@@ -583,9 +588,8 @@ function PlasmicHomepage__RenderFunc(props: {
                           "__wab_text",
                           sty.heroLine2Media
                         )}
-                        id={"LeNRnq4QrpBe"}
                       >
-                        {"sit amet, consectetur"}
+                        {"COMPROMISED SYSTEM"}
                       </span>
                     </span>
                     <span
@@ -607,9 +611,8 @@ function PlasmicHomepage__RenderFunc(props: {
                           "__wab_text",
                           sty.heroLine3Media
                         )}
-                        id={"D9CgjTnY0hm0"}
                       >
-                        {"adipiscing elit, sed do"}
+                        {"UNKNOWN HOSTILES"}
                       </span>
                     </span>
                   </div>
@@ -631,20 +634,24 @@ function PlasmicHomepage__RenderFunc(props: {
                     }
                     displayMaxHeight={"none"}
                     displayMaxWidth={
-                      hasVariant(globalVariants, "screen", "mobile")
-                        ? "100%"
-                        : hasVariant(globalVariants, "screen", "tablet")
-                          ? "100%"
-                          : "30%"
+                      hasVariant(globalVariants, "screen", "narrow")
+                        ? "48%"
+                        : hasVariant(globalVariants, "screen", "mobile")
+                          ? "42%"
+                          : hasVariant(globalVariants, "screen", "tablet")
+                            ? "100%"
+                            : "30%"
                     }
                     displayMinHeight={"0"}
                     displayMinWidth={"0"}
                     displayWidth={
-                      hasVariant(globalVariants, "screen", "mobile")
-                        ? "min(320px, 100%)"
-                        : hasVariant(globalVariants, "screen", "tablet")
-                          ? "min(320px, 100%)"
-                          : "min(340px, 30%)"
+                      hasVariant(globalVariants, "screen", "narrow")
+                        ? "min(190px, 48%)"
+                        : hasVariant(globalVariants, "screen", "mobile")
+                          ? "min(210px, 42%)"
+                          : hasVariant(globalVariants, "screen", "tablet")
+                            ? "min(320px, 100%)"
+                            : "min(340px, 30%)"
                     }
                     id={"_sxn1Y_NLVgG"}
                     loading={"lazy"}
@@ -679,25 +686,28 @@ function PlasmicHomepage__RenderFunc(props: {
                   hasVariant(globalVariants, "screen", "mobile")
                     ? {
                         order: "2",
-                        gridColumn: "1 / -1",
+                        gridColumn: "1",
                         justifySelf: "center",
                         textShadow:
-                          "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px"
+                          "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
+                        gridRow: "auto"
                       }
                     : hasVariant(globalVariants, "screen", "tablet")
                       ? {
                           order: "2",
                           textShadow:
                             "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
-                          gridColumn: "auto",
-                          justifySelf: "center"
+                          gridColumn: "1",
+                          justifySelf: "center",
+                          gridRow: "auto"
                         }
                       : {
                           textShadow:
                             "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
                           order: "0",
-                          gridColumn: "auto",
-                          justifySelf: "auto"
+                          gridColumn: "2",
+                          justifySelf: "stretch",
+                          gridRow: "1"
                         }
                 }
               >
@@ -720,11 +730,8 @@ function PlasmicHomepage__RenderFunc(props: {
                       "__wab_text",
                       sty.heroLine1Desktop
                     )}
-                    id={"NzSf9Y9fVjp8"}
                   >
-                    {hasVariant(globalVariants, "screen", "narrow")
-                      ? "Lorem ipsum dolor"
-                      : "Lorem ipsum dolor"}
+                    {"MYSTERIOUS TRANSMISSION"}
                   </span>
                 </span>
                 <span
@@ -746,11 +753,8 @@ function PlasmicHomepage__RenderFunc(props: {
                       "__wab_text",
                       sty.heroLine2Desktop
                     )}
-                    id={"LeNRnq4QrpBe"}
                   >
-                    {hasVariant(globalVariants, "screen", "narrow")
-                      ? "sit amet, consectetur"
-                      : "sit amet, consectetur"}
+                    {"COMPROMISED SYSTEM"}
                   </span>
                 </span>
                 <span
@@ -772,11 +776,8 @@ function PlasmicHomepage__RenderFunc(props: {
                       "__wab_text",
                       sty.heroLine3Desktop
                     )}
-                    id={"D9CgjTnY0hm0"}
                   >
-                    {hasVariant(globalVariants, "screen", "narrow")
-                      ? "adipiscing elit, sed do"
-                      : "adipiscing elit, sed do"}
+                    {"UNKNOWN HOSTILES"}
                   </span>
                 </span>
               </div>
@@ -790,20 +791,24 @@ function PlasmicHomepage__RenderFunc(props: {
                 }
                 displayMaxHeight={"none"}
                 displayMaxWidth={
-                  hasVariant(globalVariants, "screen", "mobile")
-                    ? "100%"
-                    : hasVariant(globalVariants, "screen", "tablet")
+                  hasVariant(globalVariants, "screen", "narrow")
+                    ? "52%"
+                    : hasVariant(globalVariants, "screen", "mobile")
                       ? "100%"
-                      : "30%"
+                      : hasVariant(globalVariants, "screen", "tablet")
+                        ? "34%"
+                        : "78%"
                 }
                 displayMinHeight={"0"}
                 displayMinWidth={"0"}
                 displayWidth={
-                  hasVariant(globalVariants, "screen", "mobile")
-                    ? "min(320px, 100%)"
-                    : hasVariant(globalVariants, "screen", "tablet")
+                  hasVariant(globalVariants, "screen", "narrow")
+                    ? "min(210px, 52%)"
+                    : hasVariant(globalVariants, "screen", "mobile")
                       ? "min(320px, 100%)"
-                      : "min(340px, 30%)"
+                      : hasVariant(globalVariants, "screen", "tablet")
+                        ? "min(300px, 34%)"
+                        : "min(340px, 78%)"
                 }
                 id={"_sxn1Y_NLVgG"}
                 loading={"lazy"}
@@ -812,20 +817,23 @@ function PlasmicHomepage__RenderFunc(props: {
                   hasVariant(globalVariants, "screen", "mobile")
                     ? {
                         order: "3",
-                        gridColumn: "1 / -1",
-                        justifySelf: "center"
+                        gridColumn: "1",
+                        justifySelf: "center",
+                        gridRow: "auto"
                       }
                     : hasVariant(globalVariants, "screen", "tablet")
                       ? {
                           order: "3",
-                          gridColumn: "auto",
-                          justifySelf: "center"
+                          gridColumn: "1",
+                          justifySelf: "center",
+                          gridRow: "auto"
                         }
                       : {
                           filter: "none",
                           order: "0",
-                          gridColumn: "auto",
-                          justifySelf: "auto"
+                          gridColumn: "2",
+                          justifySelf: "end",
+                          gridRow: "3"
                         }
                 }
               />

@@ -41,6 +41,20 @@
           "scheme": "blackbox",
           "componentType": "page",
           "path": "/"
+        },
+        {
+          "id": "wTh9TbjoZa0r",
+          "name": "Archive",
+          "type": "managed",
+          "projectId": "uNJepqX5kmDcUn9dDb3UVD",
+          "renderModuleFilePath": "plasmic/space_rocks_devlog/PlasmicArchive.tsx",
+          "importSpec": {
+            "modulePath": "../pages/archive.tsx"
+          },
+          "cssFilePath": "plasmic/space_rocks_devlog/PlasmicArchive.module.css",
+          "scheme": "blackbox",
+          "componentType": "page",
+          "path": "/archive"
         }
       ],
       "icons": [],
@@ -95,6 +109,6 @@
   "nextjsConfig": {
     "pagesDir": "../pages"
   },
-  "cliVersion": "0.1.364",
-  "$schema": "https://unpkg.com/@plasmicapp/cli@0.1.364/dist/plasmic.schema.json"
+  "cliVersion": "0.1.365",
+  "$schema": "https://unpkg.com/@plasmicapp/cli@0.1.365/dist/plasmic.schema.json"
 }
