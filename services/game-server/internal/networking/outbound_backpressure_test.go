@@ -10,7 +10,7 @@ import (
 func TestEnqueueSaturatedSessionReturnsPromptly(t *testing.T) {
 	session := &webSocketSession{
 		connectionTraceID: "550e8400-e29b-41d4-a716-446655440030",
-		outbound:           make(chan []byte, 1),
+		outbound:          make(chan []byte, 1),
 	}
 	session.outbound <- []byte("already queued")
 
