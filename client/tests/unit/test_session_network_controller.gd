@@ -228,7 +228,7 @@ func test_connection_does_not_send_create_room_after_invalid_token_auth_failure(
 
 func _create_controller(connection: FakeConnectionService, flow: FakeShellBootFlow) -> SessionNetworkController:
 	var controller := SessionNetworkController.new()
-	controller.configure(connection, flow, Callable(), {})
+	controller.configure(connection, flow, {})
 	controller.connect_connection_signals()
 	return controller
 
@@ -278,7 +278,7 @@ func _create_match_controller() -> Array:
 	var gameplay := FakeGameplaySessionController.new()
 	gameplay.set_events(connection.events)
 	var controller := SessionNetworkController.new()
-	controller.configure(connection, null, Callable(), {})
+	controller.configure(connection, null, {})
 	controller.configure_room_session_controller(room)
 	controller.configure_gameplay_session_controller(gameplay)
 	controller.connect_connection_signals()

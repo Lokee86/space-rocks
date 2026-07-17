@@ -3,6 +3,7 @@ extends GutTest
 const DevtoolsCommandContext := preload("res://scripts/devtools/context/devtools_command_context.gd")
 const DevtoolsStateContext := preload("res://scripts/devtools/context/devtools_state_context.gd")
 const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const GameplayDebugFlow := preload("res://scripts/devtools/gameplay_debug_flow.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 const PresentationEventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
@@ -10,9 +11,11 @@ const PresentationEventCapture := preload("res://tests/unit/logging/presentation
 
 class FakeConnectionService:
 	var sent_packets: Array = []
+	var sent_trace_ids: Array = []
 
-	func send_packet(packet) -> void:
+	func send_packet(packet, trace_id: String = "") -> void:
 		sent_packets.append(packet)
+		sent_trace_ids.append(trace_id)
 
 
 class FakeDebugFlow:
@@ -202,6 +205,44 @@ func test_missing_debug_flow_emits_dependency_without_request_event() -> void:
 	var record: Dictionary = JSON.parse_string(writer.written_lines[0])
 	assert_eq(record["event"], "client_dependency_unavailable")
 	assert_ne(record["event"], "devtools_command_requested")
+
+
+func test_valid_counter_commands_reuse_one_context_trace_for_event_and_packet() -> void:
+	var writer := PresentationEventCapture.new()
+	ClientLogger._set_file_writer_for_tests(writer)
+	var connection := FakeConnectionService.new()
+	var debug_flow := GameplayDebugFlow.new()
+	var state_context := FakeStateContext.new()
+	state_context.lane_baseline_sync = true
+	var trace_ids := [
+		"00000000-0000-4000-8000-000000000721",
+		"00000000-0000-4000-8000-000000000722",
+		"00000000-0000-4000-8000-000000000723",
+		"00000000-0000-4000-8000-000000000724",
+	]
+	var trace_state := {"index": 0}
+	var trace_factory := func(operation_name: String):
+		var trace_id: String = trace_ids[trace_state["index"]]
+		trace_state["index"] += 1
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+	debug_flow.configure(connection, trace_factory)
+	var context := DevtoolsCommandContext.new()
+	context.configure(debug_flow, state_context, trace_factory)
+
+	context.request_set_score(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 42)
+	context.request_add_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 5)
+	context.request_set_lives(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 3)
+	context.request_add_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 1)
+
+	assert_eq(trace_state["index"], trace_ids.size())
+	assert_eq(connection.sent_packets.size(), trace_ids.size())
+	assert_eq(writer.written_lines.size(), trace_ids.size())
+	for index in range(trace_ids.size()):
+		assert_eq(connection.sent_trace_ids[index], trace_ids[index])
+		assert_eq(connection.sent_packets[index]["trace_id"], trace_ids[index])
+		var record: Dictionary = JSON.parse_string(writer.written_lines[index])
+		assert_eq(record["event"], "devtools_command_requested")
+		assert_eq(record["trace_id"], trace_ids[index])
 
 
 func _assert_counter_rejection(command_type: String, trace_id: String, request: Callable) -> void:

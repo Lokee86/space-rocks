@@ -104,37 +104,41 @@ func toggle_freeze_player(
 func set_score(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
-	score: int = 0
+	score: int = 0,
+	operation_trace: ClientOperationTrace = null
 ) -> void:
-	var operation_trace := create_operation_trace("devtools.set_score")
-	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_SET_SCORE, target_scope, target_player_id, Packets.FIELD_SCORE, score), operation_trace)
+	var trace := operation_trace if operation_trace != null else create_operation_trace("devtools.set_score")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_SET_SCORE, target_scope, target_player_id, Packets.FIELD_SCORE, score), trace)
 
 
 func add_score(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
-	amount: int = 0
+	amount: int = 0,
+	operation_trace: ClientOperationTrace = null
 ) -> void:
-	var operation_trace := create_operation_trace("devtools.add_score")
-	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_ADD_SCORE, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount), operation_trace)
+	var trace := operation_trace if operation_trace != null else create_operation_trace("devtools.add_score")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_ADD_SCORE, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount), trace)
 
 
 func set_lives(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
-	lives: int = 0
+	lives: int = 0,
+	operation_trace: ClientOperationTrace = null
 ) -> void:
-	var operation_trace := create_operation_trace("devtools.set_lives")
-	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_SET_LIVES, target_scope, target_player_id, Packets.FIELD_LIVES, lives), operation_trace)
+	var trace := operation_trace if operation_trace != null else create_operation_trace("devtools.set_lives")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_SET_LIVES, target_scope, target_player_id, Packets.FIELD_LIVES, lives), trace)
 
 
 func add_lives(
 	target_scope: String = DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER,
 	target_player_id: String = "",
-	amount: int = 0
+	amount: int = 0,
+	operation_trace: ClientOperationTrace = null
 ) -> void:
-	var operation_trace := create_operation_trace("devtools.add_lives")
-	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_ADD_LIVES, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount), operation_trace)
+	var trace := operation_trace if operation_trace != null else create_operation_trace("devtools.add_lives")
+	_send_command(_build_counter_packet(Packets.TYPE_DEBUG_ADD_LIVES, target_scope, target_player_id, Packets.FIELD_AMOUNT, amount), trace)
 
 
 func clear_bullets() -> void:

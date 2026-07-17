@@ -48,6 +48,7 @@ var menu_flow_controller
 var multiplayer_entry_flow
 
 func _ready() -> void:
+	var logger_callable := Callable(ClientLogger, "shell_info")
 	if !ClientLogger.configure_file_output("user://logs", "client"):
 		ClientLogger.emit_canonical(
 			ObservabilityContract.EVENT_OBSERVABILITY_UNAVAILABLE,
@@ -59,7 +60,7 @@ func _ready() -> void:
 
 	get_tree().set_auto_accept_quit(false)
 
-	_setup_boot_and_config()
+	_setup_boot_and_config(logger_callable)
 
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
@@ -101,6 +102,7 @@ func _ready() -> void:
 		main_menu,
 		session_boot_controller.get_session_context(),
 		session_boot_controller.get_shell_boot_flow(),
+		logger_callable,
 	)
 	gameplay_session_controller.replay_requested.connect(_on_gameplay_replay_requested)
 	gameplay_session_controller.return_to_pregame_requested.connect(_on_gameplay_return_to_pregame_requested)
@@ -144,6 +146,7 @@ func _ready() -> void:
 	main_menu_session_controller.configure(
 		main_menu,
 		session_boot_controller,
+		logger_callable,
 	)
 
 	menu_flow_controller = MenuFlowControllerScript.new()
@@ -184,8 +187,9 @@ func _exit_tree() -> void:
 	ClientLogger.close_file_output()
 
 
-func _setup_boot_and_config() -> void:
+func _setup_boot_and_config(logger_callable: Callable) -> void:
 	session_boot_controller = SessionBootController.new()
+	session_boot_controller.configure(logger_callable)
 	add_child(session_boot_controller)
 
 	client_config_controller = ClientConfigController.new()
@@ -199,7 +203,16 @@ func _setup_boot_and_config() -> void:
 
 func _connect_main_menu_signals() -> void:
 	if main_menu == null:
-		push_error("Missing main menu")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+			"",
+			{},
+			{
+				"subsystem": "app_entry",
+				"dependency": "main_menu",
+				"failure_mode": "not_configured",
+			}
+		)
 		return
 
 	_connect_main_menu_signal("single_player_requested", _on_single_player_requested)
@@ -210,7 +223,16 @@ func _connect_main_menu_signals() -> void:
 
 func _connect_auth_signals() -> void:
 	if auth_session_controller == null:
-		push_error("Missing auth session controller")
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CONFIGURATION_INVALID,
+			"",
+			{},
+			{
+				"subsystem": "app_entry",
+				"configuration_key": "auth_session_controller",
+				"reason_code": "missing_required_dependency",
+			}
+		)
 		return
 
 	if !auth_session_controller.auth_state_changed.is_connected(_on_auth_state_changed):
@@ -232,10 +254,6 @@ func _connect_boot_flow_signal(signal_name: StringName, handler: Callable) -> vo
 	var shell_boot_flow = session_boot_controller.get_shell_boot_flow()
 	if shell_boot_flow.has_signal(signal_name) && !shell_boot_flow.is_connected(signal_name, handler):
 		shell_boot_flow.connect(signal_name, handler)
-
-
-func _log_shell_status(message: String) -> void:
-	ClientLogger.shell_info(message)
 
 
 func _on_single_player_requested() -> void:

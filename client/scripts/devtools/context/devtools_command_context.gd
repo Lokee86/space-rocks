@@ -145,7 +145,7 @@ func request_set_score(target_scope: String, target_player_id: String, score: in
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		_reject(operation_trace, "debug_set_score", "target_required")
 		return
-	debug_flow.set_score(target_scope, target_player_id, score)
+	debug_flow.set_score(target_scope, target_player_id, score, operation_trace)
 
 
 func request_add_score(target_scope: String, target_player_id: String, amount: int) -> void:
@@ -155,7 +155,7 @@ func request_add_score(target_scope: String, target_player_id: String, amount: i
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		_reject(operation_trace, "debug_add_score", "target_required")
 		return
-	debug_flow.add_score(target_scope, target_player_id, amount)
+	debug_flow.add_score(target_scope, target_player_id, amount, operation_trace)
 
 
 func request_set_lives(target_scope: String, target_player_id: String, lives: int) -> void:
@@ -165,7 +165,7 @@ func request_set_lives(target_scope: String, target_player_id: String, lives: in
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		_reject(operation_trace, "debug_set_lives", "target_required")
 		return
-	debug_flow.set_lives(target_scope, target_player_id, lives)
+	debug_flow.set_lives(target_scope, target_player_id, lives, operation_trace)
 
 
 func request_add_lives(target_scope: String, target_player_id: String, amount: int) -> void:
@@ -175,7 +175,7 @@ func request_add_lives(target_scope: String, target_player_id: String, amount: i
 	if target_scope == DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER and target_player_id == "":
 		_reject(operation_trace, "debug_add_lives", "target_required")
 		return
-	debug_flow.add_lives(target_scope, target_player_id, amount)
+	debug_flow.add_lives(target_scope, target_player_id, amount, operation_trace)
 
 
 func _reject(operation_trace: ClientOperationTrace, command_type: String, reason: String) -> void:
