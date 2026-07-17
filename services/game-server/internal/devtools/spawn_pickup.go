@@ -4,7 +4,6 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func debugPickupSpawnPosition(request DebugCommand) physics.Vector2 {
@@ -14,23 +13,10 @@ func debugPickupSpawnPosition(request DebugCommand) physics.Vector2 {
 func handleDebugSpawnPickup(target Target, playerID string, command DebugCommand) bool {
 	pickupType := pickups.PickupType(command.PickupType)
 	position := debugPickupSpawnPosition(command)
-	pickup, ok, err := target.SpawnPickup(pickupType, position)
+	_, ok, err := target.SpawnPickup(pickupType, position)
 	if err != nil || !ok {
-		logging.Game.Debug("debug pickup spawn ignored",
-			logging.FieldPlayerID, playerID,
-			"pickup_type", command.PickupType,
-			"x", position.X,
-			"y", position.Y,
-		)
 		return true
 	}
 
-	logging.Game.Debug("debug pickup spawned",
-		logging.FieldPlayerID, playerID,
-		"pickup_id", pickup.ID,
-		"pickup_type", string(pickup.Type),
-		"x", pickup.X,
-		"y", pickup.Y,
-	)
 	return true
 }

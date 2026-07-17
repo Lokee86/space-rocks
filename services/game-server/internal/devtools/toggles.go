@@ -1,9 +1,5 @@
 package devtools
 
-import (
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
-)
-
 const (
 	freezeTargetAll        = "all"
 	freezeTargetAsteroids  = "asteroids"
@@ -47,11 +43,6 @@ func setDebugInvincibleForPlayers(target Target, playerID string, targetPlayerID
 
 func setDebugInvincibleForPlayer(target Target, playerID string, targetPlayerID string, enabled bool) {
 	target.SetPlayerInvincible(targetPlayerID, enabled)
-	logging.Game.Info("debug invincibility set",
-		logging.FieldPlayerID, playerID,
-		"target_player_id", targetPlayerID,
-		"enabled", enabled,
-	)
 }
 
 func handleToggleDebugInfiniteLives(target Target, playerID string, command DebugCommand) bool {
@@ -81,49 +72,29 @@ func setDebugInfiniteLivesForPlayers(target Target, playerID string, targetPlaye
 
 func setDebugInfiniteLivesForPlayer(target Target, playerID string, targetPlayerID string, enabled bool) {
 	target.SetInfiniteLives(targetPlayerID, enabled)
-	logging.Game.Info("debug infinite lives set",
-		logging.FieldPlayerID, playerID,
-		"target_player_id", targetPlayerID,
-		"enabled", enabled,
-	)
 }
 
 func handleToggleDebugFreezeWorld(target Target, playerID string, command DebugCommand) bool {
 	freezeTarget := freezeTargetFromCommand(command)
 
 	if freezeTarget == freezeTargetAll {
-		enabled := target.ToggleFreezeWorld()
-		logging.Game.Info("debug world freeze toggled",
-			logging.FieldPlayerID, playerID,
-			"freeze_target", freezeTarget,
-			"enabled", enabled,
-		)
+		target.ToggleFreezeWorld()
 		return true
 	}
 
-	enabled := false
 	switch freezeTarget {
 	case freezeTargetAsteroids:
-		enabled = target.ToggleFreezeAsteroids()
+		target.ToggleFreezeAsteroids()
 	case freezeTargetBullets:
-		enabled = target.ToggleFreezeBullets()
+		target.ToggleFreezeBullets()
 	case freezeTargetSpawning, freezeTargetSpawns:
-		enabled = target.ToggleFreezeSpawning()
+		target.ToggleFreezeSpawning()
 	case freezeTargetCollisions:
-		enabled = target.ToggleFreezeCollisions()
+		target.ToggleFreezeCollisions()
 	default:
-		logging.Game.Info("debug world freeze target ignored",
-			logging.FieldPlayerID, playerID,
-			"freeze_target", freezeTarget,
-		)
 		return true
 	}
 
-	logging.Game.Info("debug world freeze toggled",
-		logging.FieldPlayerID, playerID,
-		"freeze_target", freezeTarget,
-		"enabled", enabled,
-	)
 	return true
 }
 
@@ -154,11 +125,6 @@ func setDebugFreezePlayerForPlayers(target Target, playerID string, targetPlayer
 
 func setDebugFreezePlayerForPlayer(target Target, playerID string, targetPlayerID string, enabled bool) {
 	target.SetPlayerFrozen(targetPlayerID, enabled)
-	logging.Game.Info("debug player freeze set",
-		logging.FieldPlayerID, playerID,
-		"target_player_id", targetPlayerID,
-		"enabled", enabled,
-	)
 }
 
 func nextAllPlayersToggleState(targetPlayerIDs []string, status func(string) (bool, bool)) bool {

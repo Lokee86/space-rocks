@@ -1,9 +1,5 @@
 package devtools
 
-import (
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
-)
-
 func handleDebugRespawnPlayer(target Target, playerID string, command DebugCommand) bool {
 	if command.TargetScope == targetScopeAllPlayers {
 		for _, targetPlayerID := range resolveCommandTargetPlayerIDs(target, playerID, command) {
@@ -24,27 +20,12 @@ func handleDebugRespawnPlayer(target Target, playerID string, command DebugComma
 }
 
 func handleDebugRespawnPlayerTarget(target Target, playerID string, request RespawnPlayerRequest) bool {
-	logging.Game.Info("debug respawn player received",
-		logging.FieldPlayerID, playerID,
-		"target_player_id", request.TargetPlayerID,
-		"x", request.X,
-		"y", request.Y,
-	)
-
 	if target == nil {
-		logging.Game.Info("debug respawn player ignored",
-			logging.FieldPlayerID, playerID,
-			"target_player_id", request.TargetPlayerID,
-		)
 		return true
 	}
 
 	normalizedTargetPlayerID, ok := resolveDebugRespawnTargetPlayerID(request)
 	if !ok {
-		logging.Game.Info("debug respawn player ignored",
-			logging.FieldPlayerID, playerID,
-			"target_player_id", request.TargetPlayerID,
-		)
 		return true
 	}
 
@@ -57,29 +38,15 @@ func handleDebugRespawnPlayerTarget(target Target, playerID string, request Resp
 	}
 
 	if isPlayerAlive {
-		logging.Game.Info("debug respawn player ignored",
-			logging.FieldPlayerID, playerID,
-			"target_player_id", normalizedTargetPlayerID,
-		)
 		return true
 	}
 
 	request.TargetPlayerID = normalizedTargetPlayerID
 
-	respawnedPlayerID, spawnPosition, ok := applyDebugRespawnPlayer(target, request)
+	_, _, ok = applyDebugRespawnPlayer(target, request)
 	if !ok {
-		logging.Game.Info("debug respawn player ignored",
-			logging.FieldPlayerID, playerID,
-			"target_player_id", request.TargetPlayerID,
-		)
 		return true
 	}
 
-	logging.Game.Info("debug force respawn applied",
-		logging.FieldPlayerID, playerID,
-		"target_player_id", respawnedPlayerID,
-		"x", spawnPosition.X,
-		"y", spawnPosition.Y,
-	)
 	return true
 }
