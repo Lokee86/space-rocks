@@ -39,6 +39,18 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string) {
 		return
 	}
 
+	if traceID == "" {
+		traceID = session.connectionTraceID
+	}
+	logging.Emit(observability.Request{
+		Event: observability.EventNameRoomCreated,
+		Context: observability.Context{
+			TraceID:   traceID,
+			SessionID: session.sessionID,
+			RoomID:    room.ID,
+		},
+		Fields: observability.Fields{"reason_code": "lobby_created"},
+	})
 	addSessionMember(room, session.sessionID, session)
 	session.bindRoom(room)
 	session.resetDebugShapeCatalogSent()
@@ -112,6 +124,9 @@ func (session *webSocketSession) handleStartGameRequest() {
 func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string, traceID string) {
 	_ = localProfileID
 	context := session.sessionContext()
+	if traceID == "" {
+		traceID = session.connectionTraceID
+	}
 
 	if context.RoomID != "" {
 		session.EnqueueRoomError(traceID, rooms.RoomErrorAlreadyInRoom, "Session is already in a room.")
@@ -140,6 +155,15 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 		return
 	}
 
+	logging.Emit(observability.Request{
+		Event: observability.EventNameRoomCreated,
+		Context: observability.Context{
+			TraceID:   traceID,
+			SessionID: session.sessionID,
+			RoomID:    room.ID,
+		},
+		Fields: observability.Fields{"reason_code": "single_player_created"},
+	})
 	attachRoomSession(room, session.sessionID, session)
 	session.bindRoom(room)
 	session.resetDebugShapeCatalogSent()

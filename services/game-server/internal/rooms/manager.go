@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+	"github.com/google/uuid"
 )
 
 type RoomManager struct {
@@ -72,7 +74,6 @@ func (manager *RoomManager) CreateLobbyRoom() (*Room, error) {
 
 		room := NewRoom(roomID, RoomStateLobby, nil)
 		manager.rooms[roomID] = room
-		logging.Rooms.Debug("lobby room created", logging.FieldRoomID, roomID)
 
 		return room, nil
 	}
@@ -97,7 +98,6 @@ func (manager *RoomManager) CreateSinglePlayerRoom(sessionID string) (*Room, err
 		room.SetJoinable(false)
 		room.AddMemberSessionID(sessionID)
 		manager.rooms[roomID] = room
-		logging.Rooms.Debug("single-player room created", logging.FieldRoomID, roomID)
 
 		return room, nil
 	}
@@ -183,9 +183,8 @@ func (manager *RoomManager) StopAll() {
 		delete(manager.rooms, roomID)
 	}
 	manager.mu.Unlock()
-	for roomID, room := range rooms {
+	for _, room := range rooms {
 		room.StopCleanupTimer()
-		logging.Rooms.Debug("room stopped", logging.FieldRoomID, roomID)
 		room.StopGameIfPresent()
 	}
 }
@@ -215,57 +214,40 @@ func (manager *RoomManager) cleanupEmptyRoom(roomID string, cleanupVersion int) 
 	room, ok := manager.rooms[roomID]
 	if !ok {
 		manager.mu.Unlock()
-		logging.Rooms.Debug("room cleanup skipped; room already removed",
-			logging.FieldRoomID, roomID,
-			"cleanup_version", cleanupVersion,
-		)
 		return
 	}
 	population := room.Population()
 	if population.ActivePlayers > 0 {
 		manager.mu.Unlock()
-		logging.Rooms.Debug("room cleanup skipped; room active",
-			logging.FieldRoomID, roomID,
-			"active_players", population.ActivePlayers,
-			"cleanup_version", cleanupVersion,
-		)
 		return
 	}
 	if population.Members != 0 {
 		manager.mu.Unlock()
-		logging.Rooms.Debug("room cleanup skipped; room has members",
-			logging.FieldRoomID, roomID,
-			"members", population.Members,
-			"cleanup_version", cleanupVersion,
-		)
 		return
 	}
 	if !room.CleanupVersionMatches(cleanupVersion) {
 		manager.mu.Unlock()
-		logging.Rooms.Debug("room cleanup skipped; stale cleanup",
-			logging.FieldRoomID, roomID,
-			"cleanup_version", cleanupVersion,
-			"current_cleanup_version", room.CurrentCleanupVersion(),
-		)
 		return
 	}
 
 	delete(manager.rooms, roomID)
 	manager.mu.Unlock()
 	stopRoomForCleanup(room)
-	logging.Rooms.Debug("room cleaned up",
-		logging.FieldRoomID, roomID,
-		"cleanup_version", cleanupVersion,
-	)
+	logging.Emit(observability.Request{
+		Event: observability.EventNameRoomCleanedUp,
+		Context: observability.Context{
+			TraceID: uuid.NewString(),
+			RoomID:  roomID,
+		},
+		Fields: observability.Fields{
+			"reason_code":     "empty_room_cleanup",
+			"cleanup_version": cleanupVersion,
+		},
+	})
 }
 
 func (manager *RoomManager) scheduleCleanupLocked(roomID string, room *Room) {
-	cleanupVersion := room.ScheduleCleanupTimer(manager.cleanupDelay, func(cleanupVersion int) {
+	room.ScheduleCleanupTimer(manager.cleanupDelay, func(cleanupVersion int) {
 		manager.cleanupEmptyRoom(roomID, cleanupVersion)
 	})
-	logging.Rooms.Debug("room cleanup scheduled",
-		logging.FieldRoomID, roomID,
-		"cleanup_delay", manager.cleanupDelay.String(),
-		"cleanup_version", cleanupVersion,
-	)
 }

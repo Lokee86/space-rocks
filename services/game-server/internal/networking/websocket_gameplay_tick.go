@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
@@ -23,11 +22,6 @@ func tickSessionGameplayLifecycle(session *webSocketSession, done <-chan struct{
 			}
 
 			if rooms.TickRoomGameOverLifecycle(context.Room, BroadcastRoomSnapshot) {
-				logging.Rooms.Info("room game-over lifecycle advanced; reporting match result",
-					logging.FieldRoomID, context.RoomID,
-					logging.FieldPlayerID, context.GamePlayerID,
-					"session_id", session.sessionID,
-				)
 				rooms.ReportResolvedMatchResultOnce(context.Room, session.matchResultReporter)
 			}
 		}
