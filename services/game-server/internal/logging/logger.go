@@ -14,27 +14,7 @@ import (
 )
 
 const (
-	CategoryGame    = "game"
-	CategoryNetwork = "network"
-	CategoryRooms   = "rooms"
-	CategoryServer  = "server"
-)
-
-const (
-	EnvGameLevel    = "LOG_GAME"
-	EnvGlobalLevel  = "LOG_LEVEL"
-	EnvNetworkLevel = "LOG_NETWORK"
-	EnvRoomsLevel   = "LOG_ROOMS"
-	EnvServerLevel  = "LOG_SERVER"
-)
-
-const (
-	FieldCategory   = "category"
-	FieldError      = "error"
-	FieldPacketType = "packet_type"
-	FieldPlayerID   = "player_id"
-	FieldRemoteAddr = "remote_addr"
-	FieldRoomID     = "room_id"
+	EnvGlobalLevel = "LOG_LEVEL"
 )
 
 const (
@@ -47,27 +27,11 @@ const (
 
 var (
 	rootLevel    = new(slog.LevelVar)
-	gameLevel    = new(slog.LevelVar)
-	networkLevel = new(slog.LevelVar)
-	roomsLevel   = new(slog.LevelVar)
-	serverLevel  = new(slog.LevelVar)
 	logRuntime   *servicelog.Runtime
 	eventEmitter *observability.Emitter
 	identity     servicelog.ServiceIdentity
 	lastStatus   servicelog.Status
 )
-
-var (
-	Game    = newCategoryLogger(CategoryGame, gameLevel)
-	Network = newCategoryLogger(CategoryNetwork, networkLevel)
-	Rooms   = newCategoryLogger(CategoryRooms, roomsLevel)
-	Server  = newCategoryLogger(CategoryServer, serverLevel)
-)
-
-type CategoryLogger struct {
-	name  string
-	level *slog.LevelVar
-}
 
 // Emit is the semantic entry point for game-server-owned canonical events.
 func Emit(request observability.Request) observability.Result {
@@ -77,45 +41,15 @@ func Emit(request observability.Request) observability.Result {
 	return eventEmitter.Emit(request)
 }
 
-func newCategoryLogger(name string, level *slog.LevelVar) CategoryLogger {
-	return CategoryLogger{name: name, level: level}
-}
-
-func (logger CategoryLogger) Debug(message string, args ...any) {
-	logger.log(slog.LevelDebug, message, args...)
-}
-
-func (logger CategoryLogger) Info(message string, args ...any) {
-	logger.log(slog.LevelInfo, message, args...)
-}
-
-func (logger CategoryLogger) Warn(message string, args ...any) {
-	logger.log(slog.LevelWarn, message, args...)
-}
-
-func (logger CategoryLogger) Error(message string, err error, args ...any) {
-	logger.log(slog.LevelError, message, append(args, FieldError, err)...)
-}
-
-func (logger CategoryLogger) log(messageLevel slog.Level, message string, args ...any) {
-	if logger.level == nil || messageLevel < logger.level.Level() {
-		return
-	}
-	emitLegacy(logger.name, messageLevel, message, args...)
-}
-
 func init() {
 	rootLevel.Set(slog.LevelWarn)
-	configureCategoryLevels(slog.LevelWarn)
 	eventEmitter = fallbackEmitter()
-	rebuildLoggers()
 }
 
+// Configure retains the process-level logging configuration entry point. The
+// canonical emitter uses generated event levels and categories directly.
 func Configure(configuredLevel string) {
-	defaultLevel := parseLevel(configuredLevel)
-	rootLevel.Set(defaultLevel)
-	configureCategoryLevels(defaultLevel)
-	rebuildLoggers()
+	rootLevel.Set(parseLevel(configuredLevel))
 }
 
 func ConfigureRuntime(configuredIdentity servicelog.ServiceIdentity) error {
@@ -147,7 +81,6 @@ func CloseFileOutput() error {
 	oldRuntime := logRuntime
 	logRuntime = nil
 	eventEmitter = fallbackEmitter()
-	rebuildLoggers()
 	if oldRuntime == nil {
 		return nil
 	}
@@ -181,25 +114,10 @@ func replaceRuntime(runtime *servicelog.Runtime, configuredIdentity servicelog.S
 	eventEmitter = emitter
 	identity = configuredIdentity
 	lastStatus = runtime.Status()
-	rebuildLoggers()
 	if oldRuntime != nil {
 		return oldRuntime.Close()
 	}
 	return nil
-}
-
-func Debug(message string, args ...any) { emit(slog.LevelDebug, message, args...) }
-func Info(message string, args ...any)  { emit(slog.LevelInfo, message, args...) }
-func Warn(message string, args ...any)  { emit(slog.LevelWarn, message, args...) }
-
-func Error(message string, err error, args ...any) {
-	emit(slog.LevelError, message, append(args, FieldError, err)...)
-}
-
-func emit(messageLevel slog.Level, message string, args ...any) {
-	if messageLevel >= rootLevel.Level() {
-		emitLegacy(CategoryServer, messageLevel, message, args...)
-	}
 }
 
 func parseLevel(configuredLevel string) slog.Level {
@@ -216,49 +134,6 @@ func parseLevel(configuredLevel string) slog.Level {
 		return levelOff
 	default:
 		return slog.LevelInfo
-	}
-}
-
-func configureCategoryLevels(defaultLevel slog.Level) {
-	gameLevel.Set(parseLevelOrDefault(os.Getenv(EnvGameLevel), defaultLevel))
-	networkLevel.Set(parseLevelOrDefault(os.Getenv(EnvNetworkLevel), defaultLevel))
-	roomsLevel.Set(parseLevelOrDefault(os.Getenv(EnvRoomsLevel), defaultLevel))
-	serverLevel.Set(parseLevelOrDefault(os.Getenv(EnvServerLevel), defaultLevel))
-}
-
-func parseLevelOrDefault(configuredLevel string, defaultLevel slog.Level) slog.Level {
-	if strings.TrimSpace(configuredLevel) == "" {
-		return defaultLevel
-	}
-	return parseLevel(configuredLevel)
-}
-
-func rebuildLoggers() {
-	Game = newCategoryLogger(CategoryGame, gameLevel)
-	Network = newCategoryLogger(CategoryNetwork, networkLevel)
-	Rooms = newCategoryLogger(CategoryRooms, roomsLevel)
-	Server = newCategoryLogger(CategoryServer, serverLevel)
-}
-
-func emitLegacy(category string, messageLevel slog.Level, message string, args ...any) {
-	if eventEmitter == nil {
-		eventEmitter = fallbackEmitter()
-	}
-	eventEmitter.EmitLegacyArgs(observability.LegacyRequest{
-		Level: observability.Level(levelName(messageLevel)), Category: category, Message: message,
-	}, args...)
-}
-
-func levelName(level slog.Level) string {
-	switch {
-	case level >= slog.LevelError:
-		return "error"
-	case level >= slog.LevelWarn:
-		return "warn"
-	case level >= slog.LevelInfo:
-		return "info"
-	default:
-		return "debug"
 	}
 }
 

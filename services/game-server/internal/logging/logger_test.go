@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/Lokee86/space-rocks/shared/go/servicelog"
 )
 
@@ -16,29 +17,6 @@ func testIdentity() servicelog.ServiceIdentity {
 		Version:     "test-build",
 		Environment: "test",
 		InstanceID:  "550e8400-e29b-41d4-a716-446655440000",
-	}
-}
-
-func TestCategoryFilteringHonorsCategoryLevelEnvironment(t *testing.T) {
-	resetLogging(t)
-	restore := captureStderr(t)
-	if err := CloseFileOutput(); err != nil {
-		t.Fatalf("CloseFileOutput() error = %v", err)
-	}
-	if err := ConfigureRuntime(testIdentity()); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv(EnvGameLevel, "error")
-	Configure("info")
-
-	Game.Info("game filtered")
-	Network.Info("network emitted")
-	output := restore()
-	if strings.Contains(output, "game filtered") {
-		t.Fatalf("expected game category info to be filtered, got %q", output)
-	}
-	if !strings.Contains(output, "network emitted") {
-		t.Fatalf("expected network category info to be emitted, got %q", output)
 	}
 }
 
@@ -62,7 +40,11 @@ func TestConfigureFileOutputReturnsActivePathAndWritesRecords(t *testing.T) {
 	if path != wantPath {
 		t.Fatalf("ConfigureFileOutput() path = %q, want %q", path, wantPath)
 	}
-	Game.Info("active file output", "mode", "file")
+	Emit(observability.Request{
+		Event:   observability.EventNameServiceStarting,
+		Message: "active file output",
+		Fields:  observability.Fields{"mode": "file"},
+	})
 	if err := CloseFileOutput(); err != nil {
 		t.Fatalf("CloseFileOutput() error = %v", err)
 	}
@@ -72,7 +54,7 @@ func TestConfigureFileOutputReturnsActivePathAndWritesRecords(t *testing.T) {
 		t.Fatalf("os.ReadFile(%q) error = %v", wantPath, err)
 	}
 	content := string(data)
-	for _, value := range []string{`"event":"log_message"`, `"message":"active file output"`, `"category":"game"`, `"retention_tier":"operational"`, `"mode":"file"`} {
+	for _, value := range []string{`"event":"service_starting"`, `"message":"active file output"`, `"category":"service_lifecycle"`, `"retention_tier":"operational"`, `"mode":"file"`} {
 		if !strings.Contains(content, value) {
 			t.Fatalf("expected file output to include %s, got %q", value, content)
 		}
@@ -97,11 +79,11 @@ func TestCloseFileOutputReturnsConsoleOnlyLogging(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ConfigureFileOutput() error = %v", err)
 	}
-	Game.Info("file phase")
+	Emit(observability.Request{Event: observability.EventNameServiceStarting, Message: "file phase"})
 	if err := CloseFileOutput(); err != nil {
 		t.Fatalf("CloseFileOutput() error = %v", err)
 	}
-	Game.Info("console phase")
+	Emit(observability.Request{Event: observability.EventNameServiceStarting, Message: "console phase"})
 	stderr := restore()
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -131,7 +113,7 @@ func TestConfiguredIdentityAndStatusReachFileOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	Server.Info("identity record")
+	Emit(observability.Request{Event: observability.EventNameServiceStarting, Message: "identity record"})
 	if Status().Degraded {
 		t.Fatalf("status=%#v", Status())
 	}

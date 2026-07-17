@@ -4,13 +4,13 @@ Parent index: [Game Server Observability](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server logging and diagnostics boundary. It explains how game-server owners emit canonical structured runtime events, how compatibility log levels remain configured, which diagnostic events belong in logs, and what this boundary does not own.
+This document describes the game-server logging and diagnostics boundary. It explains how game-server owners emit canonical structured runtime events, how process-level logging configuration is retained, which diagnostic events belong in logs, and what this boundary does not own.
 
 ## Overview
 
 Game-server logging is a small internal access point for the shared canonical observability emitter. Production call sites submit `observability.Request` values directly through `logging.Emit`; they do not use category logger methods or scatter raw `slog`, `log`, or `fmt.Println` calls through service code.
 
-The current implementation uses the shared `shared/go/servicelog` runtime for generic console/file fanout and active-file lifecycle. Generated observability definitions own canonical event categories and default levels. The game-server adapter owns runtime configuration, compatibility-category filtering, environment variables, and service-specific byte limits.
+The current implementation uses the shared `shared/go/servicelog` runtime for generic console/file fanout and active-file lifecycle. Generated observability definitions own canonical event categories and default levels. The game-server adapter owns the process-level configuration entry point, environment variable, and service-specific byte limits.
 
 Current runtime flow:
 
@@ -31,7 +31,6 @@ services/game-server/
 Logging and diagnostics own the game-server side of:
 
 - Structured canonical event emission through the internal logging package.
-- Compatibility category loggers for server, networking, rooms, and game behavior while repository-wide bridge retirement remains separate.
 - Environment-based log-level configuration.
 - Shared log field names for common diagnostic dimensions.
 - Runtime diagnostics for recoverable errors, lifecycle events, and unusual conditions.
@@ -39,7 +38,7 @@ Logging and diagnostics own the game-server side of:
 - Keeping logs useful without enabling per-tick or per-entity output by default.
 - Passing file-policy values through to shared servicelog for structured JSONL output.
 
-The game-server adapter owns compatibility category filtering, environment variables, and service-specific byte limits used for file-output policy. Canonical event names, categories, default levels, trace requirements, and retention tiers come from generated observability contract data.
+The game-server adapter owns the process-level configuration entry point, environment variable, and service-specific byte limits used for file-output policy. Canonical event names, categories, default levels, trace requirements, and retention tiers come from generated observability contract data.
 
 The shared `shared/go/observabilityevent` package owns contract validation, redaction, canonical serialization, and stable rejection outcomes. The shared `shared/go/servicelog` package owns direct canonical-record console/file fanout and active-file lifecycle without reshaping records through `slog`.
 
@@ -99,38 +98,7 @@ logging.Emit(observability.Request{
 })
 ```
 
-The former category loggers remain compatibility surfaces only:
-
-```go
-logging.Server
-logging.Network
-logging.Rooms
-logging.Game
-```
-
-Their adapter methods are retained only for compatibility with code outside the completed game-server production call-site rollout. New or migrated game-server code must use generated canonical event names and `logging.Emit`. Category logger calls are not the preferred API and no production game-server call sites remain.
-
-Compatibility category methods support:
-
-```go
-Debug(message string, args ...any)
-Info(message string, args ...any)
-Warn(message string, args ...any)
-Error(message string, err error, args ...any)
-```
-
-Compatibility methods attach their legacy category and enter the bridge-only `log_message` path. They must not be used to introduce new semantic events.
-
-Package-level helpers also exist:
-
-```go
-logging.Debug(...)
-logging.Info(...)
-logging.Warn(...)
-logging.Error(...)
-```
-
-Package-level compatibility helpers also exist, but they are not a production call-site API. Canonical event filtering uses the generated event definition; `LOG_*` compatibility overrides apply to the retained category adapter methods.
+Category logger objects and package-level text logging helpers were removed from the game-server package after the production call-site rollout. `logging.Emit` is the only game-server event emission API. The shared bridge remains available to other services until their compatibility paths are migrated.
 
 ### File output behavior
 
@@ -147,7 +115,7 @@ At runtime, the canonical emitter and shared sink fan records to:
 - a safe human-readable rendering on stderr
 - the canonical JSON envelope in the active JSONL file
 
-Ordinary canonical event emission cannot emit `log_message`; that bridge-only event is reserved for compatibility adapters. Service names, event metadata, trace requirements, limits, rejection codes, and redaction policy come from generated contract data.
+Game-server canonical emission uses the generated service identity, event metadata, trace requirements, limits, rejection codes, and redaction policy. It does not emit the shared bridge-only `log_message` event.
 
 Current logging package file-output helpers are:
 
@@ -178,16 +146,7 @@ The global environment variable is:
 LOG_LEVEL
 ```
 
-Category overrides are:
-
-```text
-LOG_GAME
-LOG_NETWORK
-LOG_ROOMS
-LOG_SERVER
-```
-
-If a category override is empty or unset, that category inherits `LOG_LEVEL`.
+No game-server category overrides remain. Canonical event categories and default levels come from generated observability contract data.
 
 Supported level values are:
 
@@ -204,7 +163,7 @@ Current parsing behavior:
 
 - Empty level values resolve to `warn`.
 - `warning` is treated as `warn`.
-- `off` maps to a level above `error`, suppressing logs for that scope.
+- `off` maps to a level above `error` in the retained configuration state.
 - Any non-empty unrecognized value currently resolves to `info`.
 
 Default behavior is quiet:
@@ -213,9 +172,9 @@ Default behavior is quiet:
 LOG_LEVEL unset -> warn
 ```
 
-That means `debug` and `info` logs are hidden unless enabled globally or by category.
+Canonical event emission is not filtered through this setting; generated event definitions supply the emitted level and category.
 
-### Example configurations
+### Example configuration
 
 Default warnings and errors only:
 
@@ -224,32 +183,11 @@ cd services/game-server
 go run ./cmd/game-server
 ```
 
-Show process-level startup and shutdown logs:
+Set the retained process-level configuration value:
 
 ```bash
 cd services/game-server
-LOG_SERVER=info go run ./cmd/game-server
-```
-
-Debug room lifecycle only:
-
-```bash
-cd services/game-server
-LOG_LEVEL=warn LOG_ROOMS=debug go run ./cmd/game-server
-```
-
-Debug WebSocket and packet routing only:
-
-```bash
-cd services/game-server
-LOG_LEVEL=warn LOG_NETWORK=debug go run ./cmd/game-server
-```
-
-Disable all categories except network warnings and errors:
-
-```bash
-cd services/game-server
-LOG_LEVEL=off LOG_NETWORK=warn go run ./cmd/game-server
+LOG_LEVEL=info go run ./cmd/game-server
 ```
 
 Startup file-output status is emitted through the canonical observability flow:
@@ -259,114 +197,19 @@ Startup file-output status is emitted through the canonical observability flow:
 - failure event: `observability_unavailable` with a stable `failure_mode` such as `logging_file_open_failed`, `logging_runtime_degraded`, or `logging_file_close_failed`
 - file paths and raw errors are not emitted as canonical fields
 
-## Compatibility category mapping
-
-The names below are retained only for compatibility filtering and adapter diagnostics. They are not production call-site APIs. Production records use the generated event definition's canonical category, such as `service_lifecycle`, `game_networking`, `networking`, `room_lifecycle`, `gameplay`, or `devtools_admin`.
-
-### Server
-
-The compatibility `server` category covers process-level and runtime-wiring diagnostics.
-
-Current examples include:
-
-- server starting
-- server stopped
-- player-data runtime initialization failure
-- player-data reporter initialization failure
-- auth verifier initialization failure
-
-This category should not become the home for room, packet, or simulation diagnostics.
-
-### Network
-
-The compatibility `network` category covers WebSocket, packet routing, and transport diagnostics.
-
-Current examples include:
-
-- WebSocket upgrade failure
-- WebSocket connection and disconnection
-- expected WebSocket read/write close
-- unexpected WebSocket read failure
-- WebSocket write failure
-- packet envelope decode failure
-- packet decode failure
-- room snapshot marshal failure
-- pause-state marshal failure
-- telemetry pong encode failure
-- debug packet encode/load failure
-- debug realtime packet write diagnostics when `LOG_NETWORK=debug`
-
-This category should not own gameplay decisions. It should report network-facing symptoms and include room, player, session, and remote address fields where available.
-
-### Rooms
-
-The compatibility `rooms` category covers room manager, room lifecycle, membership, and match-result lifecycle diagnostics.
-
-Current examples include:
-
-- lobby room created
-- single-player room created
-- room member left
-- room snapshot broadcast after leave
-- room cleanup scheduled
-- room cleanup skipped
-- room cleaned up
-- room stopped
-- room game over detected
-- match result report started
-- match result report skipped
-- match result report failed
-- match result report succeeded
-
-This category should not own simulation internals. It should describe room state transitions and room-owned lifecycle effects.
-
-### Game
-
-The compatibility `game` category covers simulation and player lifecycle diagnostics.
-
-Current examples include:
-
-- collision shapes unavailable
-- player added
-- player removed
-- player paused or resumed
-- respawn requested
-- respawn blocked
-- player respawned
-- player died
-- player game over
-- score awarded
-- asteroid split
-- devtools gameplay effects routed through real game seams
-
-This category should not log every tick, entity update, or normal packet write.
-
 ## Diagnostic field rules
 
-Shared field constants exist for common log dimensions:
-
-```go
-logging.FieldCategory   // "category"
-logging.FieldError      // "error"
-logging.FieldPacketType // "packet_type"
-logging.FieldPlayerID   // "player_id"
-logging.FieldRemoteAddr // "remote_addr"
-logging.FieldRoomID     // "room_id"
-```
-
-Use these constants instead of spelling common field names by hand.
-
-For fields without constants, use short snake_case names:
+Canonical context fields use generated names such as `trace_id`, `session_id`, `room_id`, `player_id`, `match_id`, `packet_type`, and `duration_ms`. Event-specific scalar fields use short snake_case names such as:
 
 ```text
-session_id
-current_room_id
+reason_code
+failure_mode
+error_code
 cleanup_version
 active_players
 remaining_members
 packet_size
 write_duration_ms
-match_id
 player_count
 mode
 ```
@@ -471,7 +314,7 @@ Logs should make production and development failures easier to diagnose without 
 
 ## Current realtime packet debug logs
 
-Realtime packet debug output is currently focused on written gameplay packets only, and only when network debug logging is enabled.
+Realtime packet debug output is currently focused on written gameplay packets only, and only when the owning realtime runtime enables it.
 
 Current active debug messages:
 
@@ -513,7 +356,7 @@ Current behavior notes:
 - Current debug output is diagnostic only; scheduler and active encoding should not reject already-chunked hot movement packets for size.
 - Record/entity-level prioritization, cross-tick replay, and supersession guarantees remain future or non-current behavior.
 
-Under extreme hot-lane stress, `lane protocol gameplay wire packet written` can produce one debug log per emitted hot-lane chunk. That can be hundreds of network debug records per second. This is expected diagnostic volume when `LOG_NETWORK=debug` is enabled; it is not normal quiet-mode output and does not define packet-budget policy.
+Under extreme hot-lane stress, `lane protocol gameplay wire packet written` can produce one debug log per emitted hot-lane chunk. That can be hundreds of network debug records per second. This is expected diagnostic volume when realtime debug output is enabled; it is not normal quiet-mode output and does not define packet-budget policy.
 
 ## Code map
 
@@ -589,8 +432,9 @@ These tests inspect representative JSONL records for startup/degraded logging, p
 The completed game-server rollout gate was run from the repository root:
 
 - `bash tools/ci/run_go_tests.sh` passed shared servicelog, player-data, diagnostic-aggregator, game-server default, and game-server `nodevtools` stages.
+- `services/game-server/internal/logging` tests passed after converting sink/file assertions to canonical event records.
 - `go vet -buildvcs=false ./...` and `go vet -tags nodevtools -buildvcs=false ./...` passed in `services/game-server`.
-- `gofmt -l` was clean for non-generated rollout source files; one generated packet file reports formatting drift and was left unchanged under the generated-file policy.
+- `gofmt -l` was clean for the cleanup files `internal/logging/logger.go` and `internal/logging/logger_test.go`; the repository-wide scan still reports unrelated existing drift, including generated outputs.
 - `PYTHONPATH=. python -m pytest tests tools/tests tools/data_sync/tests` passed, including architecture and observability emission guards.
 - `python tools/architecture_guard/main.py` passed.
 - `python tools/data_sync/main.py -validate` passed.
@@ -600,28 +444,23 @@ The completed game-server rollout gate was run from the repository root:
 
 The repository wrapper `bash tools/ci/run_repo_checks.sh` requires `PYTHONPATH=.` for the local Windows Python module-import environment; the equivalent stages were rerun with that environment and passed. No rollout-related verification failure remained.
 
-Representative canonical envelopes confirm stable event names, valid owning-flow traces, required identifiers, stable reason/failure classifications, one emission per tested transition, and no raw error or unsafe payload fields. Compatibility cleanup is intentionally separate from this rollout record.
+Representative canonical envelopes confirm stable event names, valid owning-flow traces, required identifiers, stable reason/failure classifications, one emission per tested transition, and no raw error or unsafe payload fields. The game-server-local compatibility logger API is now absent; the shared bridge remains a separate cross-service cleanup boundary.
 
-### Manual compatibility-level checks
+### Configuration smoke check
 
-These commands exercise the retained compatibility adapter filtering; canonical event emission remains governed by generated event definitions.
+The retained `LOG_LEVEL` configuration entry point can be exercised without changing canonical event selection:
 
 ```bash
 cd services/game-server
-LOG_SERVER=info go run ./cmd/game-server
+LOG_LEVEL=info go run ./cmd/game-server
 ```
 
 ```bash
 cd services/game-server
-LOG_LEVEL=warn LOG_ROOMS=debug go run ./cmd/game-server
+LOG_LEVEL=warn go run ./cmd/game-server
 ```
 
-```bash
-cd services/game-server
-LOG_LEVEL=warn LOG_NETWORK=debug go run ./cmd/game-server
-```
-
-Expected stderr output is the safe compatibility rendering with category and level context. Direct canonical calls write exactly one canonical JSON envelope to the active JSONL file; compatibility calls remain isolated to the bridge-only path.
+Expected stderr output is the safe canonical rendering with generated category and level context. Direct canonical calls write exactly one canonical JSON envelope to the active JSONL file.
 
 ## Related docs
 
@@ -642,4 +481,4 @@ Expected stderr output is the safe compatibility rendering with category and lev
 
 The current logging implementation is intentionally small. It should remain a thin service diagnostic layer until the game server needs a durable observability backend.
 
-The old legacy server logging notes described the same core design, but the current implementation now routes through the shared servicelog runtime, keeps adapter-owned category/level/environment policy local, and preserves the existing diagnostic fields and call-site behavior.
+The old legacy server logging notes described category adapters that no longer exist in the game-server package. The current implementation routes canonical events through the shared servicelog runtime and keeps event policy in generated observability contract data.
