@@ -45,6 +45,12 @@ Planning outputs for the remaining protocol work:
 - decision points for representation, compatibility, and versioning changes
 - follow-up implementation tasks that move from planning into current docs when shipped
 
+## Future Tooling Transport
+
+`sr.tooling` is a planned mandatory DataChannel for every gameplay connection. It must be reliable, ordered, bidirectional, included in connection readiness, and long-lived for the room/game session. It carries capability-authorized developer, admin, and measurement traffic; WebSocket retains auth, signaling, lobby, and session/control setup.
+
+Runtime measurement is the first planned `sr.tooling` consumer. Existing WebSocket devtools traffic migrates later. Consumer policy, attachment modes, permissions, and migration sequencing belong in [Devtools And Telemetry](../devtools/devtools-and-telemetry.md).
+
 ## Related Docs
 
 - [Planning](../!INDEX.md)
@@ -58,13 +64,14 @@ Planning outputs for the remaining protocol work:
 - [Spatial Query Index](../../services/game-server/simulation/world/spatial-query-index.md)
 - [Network Observability And Packet Budget](../domains/technical/network-observability-and-packet-budget.md)
 - [Testing And Smoke Strategy](../domains/technical/verification-and-quality-gates.md)
+- [Devtools And Telemetry](../devtools/devtools-and-telemetry.md)
 - [Development Roadmap](../development-roadmap.md)
 
 ## Open Planning Questions
 
 - Which packet-budget policy changes require protocol-version compatibility?
 - Which resync hardening behaviors should be treated as mandatory versus optional?
-- What physical lane/channel evolution is worth planning beyond the current mixed lane policy?
+- What additional physical gameplay lane/channel evolution is worth planning beyond the current mixed lane policy?
 
 ## Phase P2 - Realtime Protocol Architecture
 

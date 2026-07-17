@@ -725,10 +725,11 @@ shared/packets/ owns packet shape, not runtime command semantics.
 * [Client Networking Flow](../../services/client/networking-flow/!INDEX.md)
 * [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md)
 * [Outbound Packet Sending](../../services/client/networking-flow/outbound-packet-sending.md)
+* [Devtools And Telemetry](../../planning/devtools/devtools-and-telemetry.md)
 
 ## Notes
 
-The devtools packet protocol deliberately reuses the normal WebSocket packet transport. Any future developer console should call the same packet path rather than bypassing server authority.
+Current devtools use the normal WebSocket packet path; `sr.tooling` is not implemented. Any future developer console must preserve server authority and route actions through the owning gameplay/devtools seams; future transport migration is planned in [Devtools And Telemetry](../../planning/devtools/devtools-and-telemetry.md).
 
 `debug_status` and `debug_shape_catalog` are devtools readout packets. They help the client render debug controls and overlays, but they do not replace normal lane-native realtime packets.
 

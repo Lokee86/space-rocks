@@ -60,6 +60,8 @@ The devtools ownership extraction is implemented as current state. The live runt
 
 Current runtime devtools are implemented around the Godot client, Go game-server `Controller`/`Target`/`Control` architecture, and generated debug packets.
 
+The dedicated tooling channel described below is planned, not implemented. Current devtools still use WebSocket.
+
 Implemented references:
 
 - [Game Control Devtools Adapter](../../devtools/server/game-control-devtools-adapter.md)
@@ -74,10 +76,52 @@ admin and developer gates are not separated
 full telemetry needs a dedicated window instead of only an overlay
 scenario/load-test tooling is not established
 taint/integrity propagation is not implemented
+the planned `sr.tooling` transport and room attachment modes are not implemented
 normal-event simulation for rewards and commerce is not implemented
 inbound server devtools commands are not yet protected by a production-ready authorization/disablement boundary
 the package-level `nodevtools` helper is not currently enough by itself
 ```
+
+## Planned tooling transport
+
+Future gameplay connections must create an `sr.tooling` channel for every connection. The channel is mandatory, reliable, ordered, bidirectional, included in gameplay readiness, and available for the room/game lifetime. Channel existence is mandatory; commands and data remain capability-authorized server-side.
+
+WebSocket remains responsible for auth, signaling, lobby, and session/control setup. The migration is staged:
+
+```text
+runtime measurement
+-> first consumer of sr.tooling
+
+existing devtools commands and readouts
+-> migrate later
+
+admin tooling
+-> migrate after existing devtools
+```
+
+The channel and its packet-lane mechanics remain owned by realtime protocol planning; this document only records the tooling transport decision and its consumers.
+
+## Planned room attachment modes
+
+Tooling connections may attach to a room as one of four planned modes:
+
+```text
+observer
+-> attached without a ship
+
+ghost operator
+-> controllable non-interacting presence
+
+active operator
+-> controllable gameplay-interacting presence excluded from participation accounting
+
+normal test participant
+-> ordinary player participation semantics
+```
+
+Observer, ghost operator, and active operator attachments do not consume player capacity; authorized developers/admins can attach regardless of room capacity. They do not affect teams, balancing, readiness, objectives, scoring, outcomes, rewards, progression, stats, rankings, or match results. Active operators may physically affect gameplay, so the run must be marked tooling-affected/tainted. Normal test participants use ordinary participation rules.
+
+Attachment mode does not replace server-side capability authorization for tooling commands or data.
 
 ## Ownership boundary
 
@@ -581,23 +625,29 @@ A system is also not tooling-complete if it can mutate state without owning-seam
 
 3. Harden existing runtime devtools around command ownership, gates, and action logging while preserving the intentional alpha exception and documenting the later gate.
 
-4. Add a telemetry window and make the world overlay configurable from it.
+4. Implement runtime measurement as the first `sr.tooling` consumer, then add a telemetry window and make the world overlay configurable from it.
 
 5. Implement packet and runtime telemetry requirements from the packet-budget plan without duplicating protocol-lane work here.
 
-6. Add mode/rules/result readouts when mode and match-result systems mature.
+6. Migrate existing devtools commands and readouts to `sr.tooling` after runtime measurement is established.
 
-7. Add integrity readouts for automation lane, result category, debug/devtools usage, taint, verdict, and eligibility.
+7. Add planned room attachment modes and their tooling-affected/tainted run handling.
 
-8. Add durable developer tools for player-data, GrantAward simulation, inventory, wallet, achievements, and commerce.
+8. Add mode/rules/result readouts when mode and match-result systems mature.
 
-9. Add normal-event simulation modes for rewards and commerce in development-safe environments.
+9. Add integrity readouts for automation lane, result category, debug/devtools usage, taint, verdict, and eligibility.
 
-10. Add scenario/load-test tooling for runtime-heavy feature gates.
+10. Add durable developer tools for player-data, GrantAward simulation, inventory, wallet, achievements, and commerce.
 
-11. Separate production admin tooling from developer tooling.
+11. Add normal-event simulation modes for rewards and commerce in development-safe environments.
 
-12. Add release-gate checks for production client devtools removal and production server admin/developer gating; make inbound protection a public post-alpha release blocker with inbound integration coverage.
+12. Add scenario/load-test tooling for runtime-heavy feature gates.
+
+13. Migrate admin tooling to `sr.tooling` after existing devtools commands and readouts.
+
+14. Separate production admin tooling from developer tooling.
+
+15. Add release-gate checks for production client devtools removal and production server admin/developer gating; make inbound protection a public post-alpha release blocker with inbound integration coverage.
 
 ## Open decisions
 
@@ -609,6 +659,9 @@ exact devtools action audit schema
 exact source-tag vocabulary shared by devtools, admin, progression, and commerce
 exact developer live-server access policy
 exact scenario runner format
+exact `sr.tooling` capability vocabulary and authorization mapping
+exact room attachment admission/transition mechanics and taint propagation
+exact runtime measurement payload and collection boundaries
 which current server devtools become production admin tools
 which future content domains belong in data-sync versus separate content tooling
 how normal-source simulation is represented in audit records
@@ -625,6 +678,11 @@ Developer tooling and admin tooling have separate gates.
 Normal-event simulation is allowed for development and testing but not normal deployment access.
 Telemetry belongs primarily in a telemetry window, with a configurable world overlay subset.
 Content and source-of-truth tooling is related to devtooling but remains its own tooling category.
+The dedicated `sr.tooling` channel is mandatory for every future gameplay connection, but its existence does not grant tooling capabilities.
+WebSocket owns auth, signaling, lobby, and session/control setup; `sr.tooling` owns future tooling transport after readiness.
+Runtime measurement is the first planned `sr.tooling` consumer; existing devtools and admin tooling migrate later.
+Observer, ghost operator, and active operator attachments do not consume player capacity; authorized developers/admins can attach regardless of room capacity, without changing gameplay participation accounting; active operator runs are tooling-affected/tainted.
+Normal test participants use ordinary participation rules.
 Production client devtools capability must be absent.
 Production server developer/admin paths must be gated, tagged, and auditable.
 Controlled alpha may intentionally expose devtools to testers.
