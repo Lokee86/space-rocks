@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapshot {
@@ -70,10 +71,17 @@ func (session *webSocketSession) EnqueueRoomSnapshot(room *rooms.Room) {
 	packet := BuildRoomSnapshot(room, session.sessionID)
 	payload, err := packetcodec.Encode(packet)
 	if err != nil {
-		logging.Network.Error("room snapshot marshal failed", err,
-			logging.FieldRoomID, room.ID,
-			"session_id", session.sessionID,
-		)
+		logging.Emit(observability.Request{
+			Event: observability.EventNameOutboundPacketEncodeFailed,
+			Context: observability.Context{
+				TraceID:   session.traceID,
+				SessionID: session.sessionID,
+				RoomID:    room.ID,
+			},
+			Fields: observability.Fields{
+				"failure_mode": "room_snapshot_encode_failed",
+			},
+		})
 		return
 	}
 

@@ -4,18 +4,9 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 )
 
 func AssertNoRawFloats(lane string, fieldPath string, value any) {
-	for _, leak := range CollectRawFloatLeaks(fieldPath, value) {
-		logging.Warn("realtime quantization raw float leak",
-			"lane", lane,
-			"field_path", leak.FieldPath,
-			"value", leak.Value,
-		)
-	}
 }
 
 type RawFloatLeak struct {

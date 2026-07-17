@@ -1,6 +1,9 @@
 package networking
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+)
 
 func (session *webSocketSession) enqueue(payload []byte) {
 	select {
@@ -9,11 +12,18 @@ func (session *webSocketSession) enqueue(payload []byte) {
 	default:
 		session.outboundOverflowOnce.Do(func() {
 			context := session.sessionContext()
-			logging.Network.Warn("websocket outbound queue full; closing slow session",
-				logging.FieldRoomID, context.RoomID,
-				logging.FieldPlayerID, context.GamePlayerID,
-				"session_id", session.sessionID,
-			)
+			logging.Emit(observability.Request{
+				Event: observability.EventNameGameServerClientDisconnected,
+				Context: observability.Context{
+					TraceID:   session.traceID,
+					SessionID: session.sessionID,
+					RoomID:    context.RoomID,
+					PlayerID:  context.GamePlayerID,
+				},
+				Fields: observability.Fields{
+					"failure_mode": "outbound_queue_full",
+				},
+			})
 			if session.conn != nil {
 				_ = session.conn.Close()
 			}
