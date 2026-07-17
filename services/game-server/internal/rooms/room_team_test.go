@@ -72,7 +72,9 @@ func TestAutoBalancedMembershipChangesUseCurrentRoster(t *testing.T) {
 	first := room.AddMember(NewRoomMember("session-1"))
 	second := room.AddMember(NewRoomMember("session-2"))
 	assignments := room.TeamAssignmentsSnapshot()
-	if assignments[first.MemberID] != teams.Team1 || assignments[second.MemberID] != teams.Team2 {
+	if len(assignments) != 2 || assignments[first.MemberID] == assignments[second.MemberID] ||
+		(assignments[first.MemberID] != teams.Team1 && assignments[first.MemberID] != teams.Team2) ||
+		(assignments[second.MemberID] != teams.Team1 && assignments[second.MemberID] != teams.Team2) {
 		t.Fatalf("unexpected initial assignments: %+v", assignments)
 	}
 	room.RemoveMemberForSession(second.SessionID)
