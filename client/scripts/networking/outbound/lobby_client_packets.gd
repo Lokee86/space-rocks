@@ -3,8 +3,22 @@ extends RefCounted
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 
 
-static func create_room_request_packet(trace_id := "") -> Dictionary:
-	return Packets.create_room_request_packet(trace_id)
+static func create_room_request_packet(
+		trace_id := "",
+		local_profile_id := "",
+		team_structure := "ffa",
+		team_assignment_mode := "",
+		team_count := 0,
+		max_players := 0
+) -> Dictionary:
+	return Packets.create_room_request_packet(
+		trace_id,
+		local_profile_id,
+		team_structure,
+		team_assignment_mode,
+		team_count,
+		max_players
+	)
 
 
 static func join_room_request_packet(room_code, trace_id := "") -> Dictionary:
@@ -37,4 +51,3 @@ static func start_single_player_request_packet(local_profile_id := "", trace_id 
 
 static func return_to_lobby_request_packet() -> Dictionary:
 	return Packets.return_to_lobby_request_packet()
-

@@ -114,8 +114,22 @@ func send_clear_target_request() -> void:
 
 
 # Lobby
-func send_create_room_request(trace_id := "") -> void:
-	send_packet(LobbyClientPackets.create_room_request_packet(trace_id))
+func send_create_room_request(
+		trace_id := "",
+		local_profile_id := "",
+		team_structure := "ffa",
+		team_assignment_mode := "",
+		team_count := 0,
+		max_players := 0
+) -> void:
+	send_packet(LobbyClientPackets.create_room_request_packet(
+		trace_id,
+		local_profile_id,
+		team_structure,
+		team_assignment_mode,
+		team_count,
+		max_players
+	))
 
 
 func send_join_room_request(room_code: String, trace_id := "") -> void:

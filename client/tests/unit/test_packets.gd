@@ -8,7 +8,7 @@ func test_packet_builders_set_expected_type() -> void:
 		[Packets.toggle_debug_invincible_packet(), Packets.TYPE_TOGGLE_DEBUG_INVINCIBLE],
 		[Packets.toggle_debug_infinite_lives_packet(), Packets.TYPE_TOGGLE_DEBUG_INFINITE_LIVES],
 		[Packets.toggle_debug_freeze_world_packet(), Packets.TYPE_TOGGLE_DEBUG_FREEZE_WORLD],
-		[Packets.create_room_request_packet(""), Packets.TYPE_CREATE_ROOM_REQUEST],
+		[Packets.create_room_request_packet("", "", "ffa", "", 0, 0), Packets.TYPE_CREATE_ROOM_REQUEST],
 		[Packets.leave_room_request_packet(), Packets.TYPE_LEAVE_ROOM_REQUEST],
 		[Packets.start_game_request_packet(), Packets.TYPE_START_GAME_REQUEST],
 		[Packets.return_to_lobby_request_packet(), Packets.TYPE_RETURN_TO_LOBBY_REQUEST],
@@ -102,8 +102,12 @@ func test_lobby_packet_type_constants_exist() -> void:
 func test_initial_room_packet_builders_carry_trace_id() -> void:
 	var trace_id := "00000000-0000-4000-8000-000000000021"
 
-	var create_packet := Packets.create_room_request_packet(trace_id)
+	var create_packet := Packets.create_room_request_packet(trace_id, "profile-1", "custom", "owner_assigned", 0, 8)
 	assert_eq(create_packet[Packets.FIELD_TRACE_ID], trace_id)
+	assert_eq(create_packet[Packets.FIELD_TEAM_STRUCTURE], "custom")
+	assert_eq(create_packet[Packets.FIELD_TEAM_ASSIGNMENT_MODE], "owner_assigned")
+	assert_eq(create_packet[Packets.FIELD_TEAM_COUNT], 0)
+	assert_eq(create_packet[Packets.FIELD_MAX_PLAYERS], 8)
 
 	var join_packet := Packets.join_room_request_packet("TEST", trace_id)
 	assert_eq(join_packet[Packets.FIELD_TRACE_ID], trace_id)
@@ -111,6 +115,6 @@ func test_initial_room_packet_builders_carry_trace_id() -> void:
 	var single_player_packet := Packets.start_single_player_request_packet("profile-1", trace_id)
 	assert_eq(single_player_packet[Packets.FIELD_TRACE_ID], trace_id)
 
-	var empty_trace_packet := Packets.create_room_request_packet("")
+	var empty_trace_packet := Packets.create_room_request_packet("", "", "ffa", "", 0, 0)
 	assert_true(empty_trace_packet.has(Packets.FIELD_TRACE_ID))
 	assert_eq(empty_trace_packet[Packets.FIELD_TRACE_ID], "")
