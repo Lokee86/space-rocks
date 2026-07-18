@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 	pickuprules "github.com/Lokee86/space-rocks/services/game-server/internal/game/pickups"
 )
@@ -41,6 +42,11 @@ func (game *Game) handlePlayerPickupCollisions() {
 				Y:          pickup.Y,
 			})
 			if collection.Collected {
+				_, _ = game.applyAwardMutationsLocked("pickup:"+collection.PickupID, []awards.Mutation{{
+					Owner:     awards.Owner{Scope: awards.ScopePlayer, ID: collection.PlayerID},
+					CounterID: awards.CounterResourcesCollected, Operation: awards.MutationIncrement,
+					Value: 1, Source: "pickup_collected",
+				}})
 				game.recordDomainEvent(events.Event{
 					Type:       events.EventPickupCollected,
 					PlayerID:   collection.PlayerID,

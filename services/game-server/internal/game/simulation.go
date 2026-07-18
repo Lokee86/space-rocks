@@ -37,6 +37,10 @@ func (game *Game) Step(delta float64) {
 		defer game.publishPresentationFrameLocked()
 
 		bounds := space.DefaultBounds()
+		if delta > 0 && !game.worldSimulationOptions.IsWorldFrozen() {
+			game.awardClock += delta
+			game.awardsRuntime().PruneContributions(game.awardClock, game.awardPolicy.Assists)
+		}
 		game.advanceEncounterLifecycle(delta)
 
 		game.applyPendingPlayerInputsLocked()

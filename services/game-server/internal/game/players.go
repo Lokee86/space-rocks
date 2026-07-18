@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
@@ -108,6 +109,7 @@ func (game *Game) DiscardPlayer(playerID string) {
 
 	game.lifeRuntime.RollbackParticipant(playerID)
 	game.participationRuntime.UnregisterParticipant(playerID)
+	game.awardsRuntime().RemoveOwner(awards.Owner{Scope: awards.ScopePlayer, ID: playerID})
 	game.removeActivePlayerLocked(playerID)
 	delete(game.participantRecords, playerID)
 }

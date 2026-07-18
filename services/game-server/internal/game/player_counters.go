@@ -1,5 +1,7 @@
 package game
 
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
+
 type PlayerCounterChange struct {
 	PlayerID string
 	Found    bool
@@ -45,11 +47,11 @@ func clampPlayerCounter(value int) int {
 }
 
 func (game *Game) currentPlayerScoreLocked(playerID string) (int, bool) {
-	if session, ok := game.playerSessions[playerID]; ok {
-		return session.Score, true
+	if _, ok := game.playerSessions[playerID]; !ok {
+		return 0, false
 	}
-
-	return 0, false
+	value, _ := game.awardsRuntime().Counter(awards.Owner{Scope: awards.ScopePlayer, ID: playerID}, awards.CounterScore)
+	return int(value), true
 }
 
 func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounterChange {
@@ -59,19 +61,20 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	}
 
 	after := clampPlayerCounter(score)
-	if session, ok := game.playerSessions[playerID]; ok {
-		session.Score = after
+	result, err := game.applyAwardMutationsLocked(game.nextAwardEventIDLocked("dev_score_set"), []awards.Mutation{{
+		Owner: awards.Owner{Scope: awards.ScopePlayer, ID: playerID}, CounterID: awards.CounterScore,
+		Operation: awards.MutationSet, Value: float64(after), Source: "devtools",
+	}})
+	if err != nil || !result.Applied || len(result.Changes) == 0 {
+		return PlayerCounterChange{PlayerID: playerID, Found: true, Before: before, After: before}
 	}
-	if record, ok := game.participantRecords[playerID]; ok && record != nil {
-		record.Score = after
-	}
-
+	change := result.Changes[0]
 	return PlayerCounterChange{
 		PlayerID: playerID,
 		Found:    true,
-		Before:   before,
-		After:    after,
-		Delta:    after - before,
+		Before:   int(change.Before),
+		After:    int(change.After),
+		Delta:    int(change.Delta),
 	}
 }
 

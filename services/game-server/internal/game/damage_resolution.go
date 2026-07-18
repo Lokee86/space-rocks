@@ -41,7 +41,9 @@ func (game *Game) resolveDamageRequest(request damage.DamageResolutionRequest) d
 	if !eligibility.Eligible {
 		return damage.BlockedResult(request, eligibility.Reason)
 	}
-	return damage.ResolveSingle(request)
+	result := damage.ResolveSingle(request)
+	game.recordDamageAwardConsequences(request, result)
+	return result
 }
 
 func (game *Game) damageRelationship(source damage.DamageSource, target damage.DamageTarget) damage.Relationship {

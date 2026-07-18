@@ -14,9 +14,7 @@ func (game *Game) applyProjectileAsteroidDestruction(playerID string, asteroid *
 		TargetID:     asteroid.ID,
 		AsteroidSize: asteroid.Size,
 	})
-	for _, award := range awards {
-		game.awardScore(award)
-	}
+	game.applyDestructionAwardsLocked(asteroid.ID, awards)
 
 	asteroid.MarkPendingDespawn(constants.CollisionDespawnDelay)
 	game.spawnAsteroidFragments(asteroid)

@@ -15,7 +15,35 @@ This doc is the authoritative P4 planning owner for gameplay awards and counters
 
 It defines how authoritative gameplay events become attributed awards, counter mutations, assists, combos, multipliers, streaks, and team distributions. It also defines the runtime ownership, visibility, idempotency, and handoff boundaries required for those facts to remain consistent through match resolution.
 
-This document is a planning specification. It does not claim that the described systems or implementation already exist.
+## Current Implementation Status
+
+The first authoritative Gameplay Awards And Counters slice is implemented under `standard_awards_v1`.
+
+Implemented:
+
+- Stable fixed counters plus validated custom numeric counters.
+- Player, team, match-wide, and objective-specific ownership scopes.
+- Visibility metadata and deterministic counter/combo/streak/team snapshots.
+- Increment, decrement, set, minimum, maximum, and timed-accumulation mutations.
+- Authoritative event/distribution identities, duplicate suppression, and a completed-distribution observer handoff.
+- SCORE compatibility projection into existing player session and match facts.
+- Asteroid size-scaled SCORE and KILLS through the common pipeline.
+- Applied DAMAGE_DEALT and DAMAGE_TAKEN from the shared damage resolver.
+- Bounded contribution history and mode-enabled 5% / 5-second multi-recipient assists.
+- Player combo state at 1.0x, +0.25x per qualifying award, a 0.75-second window, no cap, and death reset.
+- Generic named streak state with death reset and future trigger seams.
+- Pickup-driven RESOURCES_COLLECTED mutations.
+- Default team totals derived by summing player counters without duplicate team mutation.
+- Removed-player counter retention, provisional-player rollback cleanup, match reset, and clean final snapshot access.
+
+Future or owned elsewhere:
+
+- Objective-specific source adapters and objective evaluation.
+- Survival/time milestone producers.
+- Mode-resolved alternate distributions, penalties, and team-owned combo activation.
+- Full award packet projection and client presentation.
+- Match-result, persistence, progression, achievement, and ranking projections.
+- Richer environmental attribution windows and content-specific source adapters.
 
 ## Ownership Boundary
 
@@ -364,7 +392,7 @@ The source systems that own combat, collision, pickups, objectives, and other ga
 
 ## Implementation Direction
 
-The first implementation slice should proceed from resolved rules through one authoritative award pipeline:
+The implemented first slice follows one authoritative award pipeline:
 
 ```text
 1. Define normalized catalogue, custom-counter extension, scope, visibility, and mutation shapes.
@@ -383,7 +411,7 @@ The first implementation slice should proceed from resolved rules through one au
 Implementation should keep award policy in a focused gameplay owner. Networking, presentation, game-loop coordination, objective code, team code, result code, and progression code should route authoritative facts or execute their own policy rather than becoming alternate award authorities.
 
 
-The first implementation slice also preserves current asteroid size-based SCORE behavior behind an explicit award definition before extending the counter system. New source, assist, combo, streak, team-distribution, and custom-counter behavior remains behind explicit ownership seams.
+The current implementation preserves asteroid size-based SCORE behind the existing explicit scoring definition while routing mutation through the awards owner. New objective, survival/time, alternate-distribution, penalty, and presentation behavior remains behind explicit ownership seams.
 
 ## Testing Direction
 

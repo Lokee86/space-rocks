@@ -3,6 +3,7 @@ package game
 import (
 	"sync"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
@@ -38,6 +39,8 @@ type Game struct {
 	nextID                     int
 	nextPickupID               int
 	nextPresentationEventID    int
+	nextAwardEventID           int
+	awardClock                 float64
 	matchID                    string
 	matchTraceID               string
 	modeID                     string
@@ -46,6 +49,8 @@ type Game struct {
 	damagePolicy               damage.Policy
 	damageOverTimeRuntime      *damage.DamageOverTimeRuntime
 	scoringPolicy              scoring.Policy
+	awardPolicy                awards.Policy
+	awardRuntime               *awards.Runtime
 	dropTables                 drops.Tables
 	radialEffects              radial.Store
 	encounterSpawnRuntime      *encounterspawn.Runtime
@@ -60,6 +65,7 @@ type Game struct {
 	collisionProjectileIDs     []string
 	simulationStepObservers    []simulationStepObserver
 	simulationStepObserverKeys map[string]struct{}
+	awardEventObservers        []func(awards.EventResult)
 	encounterLifecycleRuntime  *encounterlifecycle.Runtime
 	cameraViews                map[string]*runtime.CameraView
 	playerSessions             map[string]*playerSession
@@ -164,6 +170,8 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 		damagePolicy:               damage.NewStandardPolicy(),
 		damageOverTimeRuntime:      damage.NewDamageOverTimeRuntime(),
 		scoringPolicy:              scoring.NewDefaultPolicy(),
+		awardPolicy:                awards.NewStandardPolicy(),
+		awardRuntime:               awards.NewRuntime(),
 		dropTables:                 drops.GeneratedTables,
 		radialEffects:              radial.NewStore(),
 		entities:                   runtime.NewEntityStore(),

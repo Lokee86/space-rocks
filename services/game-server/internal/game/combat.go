@@ -216,6 +216,7 @@ func (game *Game) applyFatalPlayerDamageWithInput(playerID string, player *runti
 		if !deathFact.Accepted {
 			return
 		}
+		game.applyDeathAwardsLocked(deathFact)
 		game.damageOverTime().RemoveTarget(playerID)
 		if state, ok := game.lifeRuntime.ParticipantSnapshot(playerID); ok {
 			lives = game.projectedPlayerLives(playerID, state)
