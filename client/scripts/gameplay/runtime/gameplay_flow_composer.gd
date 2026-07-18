@@ -97,6 +97,11 @@ func configure(
 		client_measurement_report_writer
 	)
 	client_measurement_snapshot_scheduler = ClientMeasurementSnapshotSchedulerScript.new(client_measurement_coordinator)
+	if devtools_context != null and devtools_context.has_method("configure_measurement"):
+		devtools_context.configure_measurement(
+			client_measurement_coordinator,
+			client_measurement_context
+		)
 	if world_sync_ref != null and world_sync_ref.has_method("configure_measurement_observer"):
 		world_sync_ref.configure_measurement_observer(Callable(client_measurement_context, "record_lifecycle"))
 	if runtime_context_ref != null and runtime_context_ref.respawn_flow != null and runtime_context_ref.respawn_flow.has_method("mark_awaiting_confirmation") and devtools_context != null and devtools_context.has_method("configure_local_respawn_confirmation_marker"):

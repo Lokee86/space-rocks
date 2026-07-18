@@ -7,6 +7,7 @@ const MAX_RECENT_RESET_REQUESTS := 8
 var request_ids: Dictionary = {}
 var pending_request_ids: Dictionary = {}
 var latest_server_snapshot: Dictionary = {}
+var latest_server_snapshot_received_at_msec := -1
 var latest_server_report: Dictionary = {}
 var latest_client_report: Dictionary = {}
 var latest_combined_report: Dictionary = {}
@@ -19,6 +20,7 @@ var _recent_reset_request_ids: Array = []
 
 func clear_for_new_run() -> void:
 	latest_server_snapshot.clear()
+	latest_server_snapshot_received_at_msec = -1
 	latest_server_report.clear()
 	latest_client_report.clear()
 	latest_combined_report.clear()
@@ -27,6 +29,7 @@ func clear_for_new_run() -> void:
 
 func set_server_snapshot(report) -> Dictionary:
 	latest_server_snapshot = report.duplicate(true) if report is Dictionary else {}
+	latest_server_snapshot_received_at_msec = Time.get_ticks_msec() if !latest_server_snapshot.is_empty() else -1
 	return latest_server_snapshot.duplicate(true)
 
 
@@ -57,6 +60,7 @@ func get_state(active_run_id: String, recording: bool) -> Dictionary:
 		"request_ids": request_ids.duplicate(true),
 		"pending_request_ids": pending_request_ids.duplicate(true),
 		"latest_server_snapshot": latest_server_snapshot.duplicate(true),
+		"latest_server_snapshot_received_at_msec": latest_server_snapshot_received_at_msec,
 		"latest_server_report": latest_server_report.duplicate(true),
 		"latest_combined_report": latest_combined_report.duplicate(true),
 		"last_tooling_error": last_tooling_error.duplicate(true),

@@ -4,6 +4,7 @@ const DevtoolsWindowTelemetry := preload("res://scripts/devtools/devtools_window
 const DevtoolsWindowTargetSelectors := preload("res://scripts/devtools/devtools_window_target_selectors.gd")
 const DevtoolsWindowSpawnControls := preload("res://scripts/devtools/devtools_window_spawn_controls.gd")
 const DevtoolsWindowCounterControls := preload("res://scripts/devtools/devtools_window_counter_controls.gd")
+const DevtoolsWindowMeasurement := preload("res://scripts/devtools/devtools_window_measurement.gd")
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)
@@ -25,6 +26,9 @@ signal game_target_set_requested(target_player_id: String)
 signal game_target_clear_requested()
 signal show_server_hitboxes_changed(enabled: bool)
 signal telemetry_sources_changed(local_source: String, target_source: String)
+signal measurement_start_requested(scenario_label: String)
+signal measurement_stop_requested
+signal measurement_reset_requested
 
 @onready var invincible_button: Button = %InvincibleButton
 @onready var infinite_lives_button: Button = %InfiniteLivesButton
@@ -80,6 +84,7 @@ var telemetry: DevtoolsWindowTelemetry
 var target_selectors: DevtoolsWindowTargetSelectors
 var spawn_controls: DevtoolsWindowSpawnControls
 var counter_controls: DevtoolsWindowCounterControls
+var measurement: DevtoolsWindowMeasurement
 
 
 func _ready() -> void:
@@ -137,6 +142,11 @@ func _ready() -> void:
 	counter_controls = DevtoolsWindowCounterControls.new()
 	counter_controls.configure(self)
 	counter_controls.initialize()
+	measurement = DevtoolsWindowMeasurement.new()
+	measurement.configure(self)
+	measurement.start_requested.connect(_on_measurement_start_requested)
+	measurement.stop_requested.connect(_on_measurement_stop_requested)
+	measurement.reset_requested.connect(_on_measurement_reset_requested)
 	if !local_telemetry_select.item_selected.is_connected(_on_local_telemetry_select_item_selected):
 		local_telemetry_select.item_selected.connect(_on_local_telemetry_select_item_selected)
 	if !target_telemetry_select.item_selected.is_connected(_on_target_telemetry_select_item_selected):
@@ -280,6 +290,11 @@ func set_telemetry_sources(local_source: String, target_source: String) -> void:
 	telemetry.set_sources(local_source, target_source)
 
 
+func refresh_measurement_state(state: Dictionary) -> void:
+	if measurement != null:
+		measurement.refresh_state(state)
+
+
 func _on_close_requested() -> void:
 	hide_window()
 
@@ -374,6 +389,18 @@ func _on_local_telemetry_select_item_selected(_index: int) -> void:
 
 func _on_target_telemetry_select_item_selected(_index: int) -> void:
 	_emit_telemetry_sources_changed()
+
+
+func _on_measurement_start_requested(scenario_label: String) -> void:
+	measurement_start_requested.emit(scenario_label)
+
+
+func _on_measurement_stop_requested() -> void:
+	measurement_stop_requested.emit()
+
+
+func _on_measurement_reset_requested() -> void:
+	measurement_reset_requested.emit()
 
 
 func set_show_server_hitboxes(enabled: bool) -> void:

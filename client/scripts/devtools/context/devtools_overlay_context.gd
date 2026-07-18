@@ -43,6 +43,11 @@ func get_world_telemetry_context():
 	return world_telemetry_context
 
 
+func configure_measurement_snapshot_provider(provider: Callable) -> void:
+	if world_telemetry_context != null and world_telemetry_context.has_method("configure_measurement_snapshot_provider"):
+		world_telemetry_context.configure_measurement_snapshot_provider(provider)
+
+
 func get_server_hitbox_overlay():
 	return server_hitbox_overlay
 

@@ -17,6 +17,9 @@ signal placement_action_requested(action_name: StringName, placement_context: Di
 signal respawn_player_requested(target_scope: String, target_player_id: String)
 signal show_server_hitboxes_changed(enabled: bool)
 signal telemetry_sources_changed(local_source: String, target_source: String)
+signal measurement_start_requested(scenario_label: String)
+signal measurement_stop_requested
+signal measurement_reset_requested
 
 const DevtoolsWindowScene := preload("res://scenes/devtools/devtools_window.tscn")
 var window: Window
@@ -35,6 +38,7 @@ var latest_target_id := ""
 var latest_target_state := {}
 var latest_local_telemetry_source := "players"
 var latest_target_telemetry_source := "players"
+var latest_measurement_state := {}
 var kill_player_request_route: Callable
 var self_player_id := ""
 var game_target_kind := ""
@@ -84,6 +88,8 @@ func ensure_window() -> Window:
 		window.refresh_local_player_state(latest_local_player_state)
 	if window.has_method("refresh_target_state"):
 		window.refresh_target_state(latest_target_kind, latest_target_id, latest_target_state)
+	if window.has_method("refresh_measurement_state"):
+		window.refresh_measurement_state(latest_measurement_state)
 	return window
 
 
@@ -187,6 +193,14 @@ func refresh_target_state(target_kind: String, target_id: String, state: Diction
 		window.refresh_target_state(target_kind, target_id, state)
 
 
+func refresh_measurement_state(state: Dictionary) -> void:
+	latest_measurement_state = state.duplicate(true)
+	if window == null or !is_instance_valid(window):
+		return
+	if window.has_method("refresh_measurement_state"):
+		window.refresh_measurement_state(latest_measurement_state)
+
+
 func local_telemetry_source() -> String:
 	return latest_local_telemetry_source
 
@@ -265,6 +279,12 @@ func _connect_window_signals() -> void:
 		window.show_server_hitboxes_changed.connect(_on_show_server_hitboxes_changed)
 	if window.has_signal("telemetry_sources_changed") and !window.telemetry_sources_changed.is_connected(_on_telemetry_sources_changed):
 		window.telemetry_sources_changed.connect(_on_telemetry_sources_changed)
+	if window.has_signal("measurement_start_requested") and !window.measurement_start_requested.is_connected(_on_measurement_start_requested):
+		window.measurement_start_requested.connect(_on_measurement_start_requested)
+	if window.has_signal("measurement_stop_requested") and !window.measurement_stop_requested.is_connected(_on_measurement_stop_requested):
+		window.measurement_stop_requested.connect(_on_measurement_stop_requested)
+	if window.has_signal("measurement_reset_requested") and !window.measurement_reset_requested.is_connected(_on_measurement_reset_requested):
+		window.measurement_reset_requested.connect(_on_measurement_reset_requested)
 
 
 func _on_telemetry_sources_changed(local_source: String, target_source: String) -> void:
@@ -273,6 +293,18 @@ func _on_telemetry_sources_changed(local_source: String, target_source: String) 
 	latest_local_telemetry_source = local_source
 	latest_target_telemetry_source = target_source
 	telemetry_sources_changed.emit(local_source, target_source)
+
+
+func _on_measurement_start_requested(scenario_label: String) -> void:
+	measurement_start_requested.emit(scenario_label)
+
+
+func _on_measurement_stop_requested() -> void:
+	measurement_stop_requested.emit()
+
+
+func _on_measurement_reset_requested() -> void:
+	measurement_reset_requested.emit()
 
 
 func _on_toggle_invincible_requested(target_player_id: String) -> void:
