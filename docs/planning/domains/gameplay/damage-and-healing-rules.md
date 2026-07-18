@@ -17,6 +17,33 @@ It defines how authoritative damage and healing intent becomes an eligible, reso
 
 The conceptual and implementation reference for the current damage model is [Damage](../../../systems-design/combat/damage.md). That document remains a reference for existing concepts and seams; this document owns the P4 product policy described here.
 
+## Current Implementation Status
+
+The first implementation slice has begun and the core authoritative damage/healing seams are implemented.
+
+Implemented:
+
+- `standard_damage_v1` is the default named policy.
+- Eligibility, pure resolution, and downstream consequences remain separate; the resolver stays pure.
+- Source attribution and relationship permissions are normalized, with team/PvP eligibility owned by the game layer.
+- Invulnerability is enforced, with bypass limited to authorized dev/admin sources.
+- Signed damage, healing, and repair use the shared resolver with distinct result/event kinds.
+- Shield-first resolution supports bypass, pass-through overflow, and shield-gated discard overflow.
+- Radial and annular effects use linear falloff.
+- Surviving collision pairs receive physics-owned repulsion.
+- DoT runtime supports stack, replace, refresh, and limit behavior with retained source context, pause behavior, deterministic ticks, and removal on death.
+- Post-lethal requests for the same target are discarded.
+- Existing projectile, collision, radial, DoT, and dev/admin paths converge on the shared damage/healing model.
+
+Future or owned elsewhere:
+
+- Richer mode-resolved overrides through `ResolvedMatchRules`.
+- Enemy, hazard, and scripted content call sites beyond the supported contracts.
+- Broad cleansing and status-effect lifecycle ownership.
+- Enemy death consequences.
+- Awards and environmental-attribution windows.
+- Richer packet projection.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -312,25 +339,7 @@ The client presents server-authored damage, healing, repair, blocked-hit, shield
 
 ## Implementation Direction
 
-The first implementation slice should proceed from the settled policy into small authoritative seams:
-
-```text
-1. Resolve standard_damage_v1 as the default named policy.
-2. Normalize source attribution and default relationship permissions.
-3. Evaluate source/target eligibility using teams, PvP rules, mode overrides, and invulnerability state.
-4. Preserve the existing damage types, causes, modifier categories, operations, and calculation order.
-5. Extend the shared pure resolver to signed damage, healing, and repair result semantics.
-6. Apply shield-first, bypass, and explicit overflow behavior without a catastrophic-kill special case.
-7. Route collision survivor repulsion/knockback to the physics owner.
-8. Route radial, annular, hazard, projectile, scripted, enemy, and dev/admin requests through the same boundaries.
-9. Preserve source attribution through chained and delayed effects and owner disconnect.
-10. Apply default DoT stacking and stop DoT on death while leaving cleansing to a future effect owner.
-11. Discard post-lethal damage for the target while allowing distinct-target mutual kills in one authoritative step.
-12. Emit distinct authoritative result/event facts for applied, blocked, healing, repair, ineffective, and overkill-discarded outcomes.
-13. Hand lethal and environmental-attribution candidates to lives/death and awards/attribution owners.
-```
-
-Implementation should keep eligibility, pure resolution, and consequences visibly separate. Exact schema/type/package choices remain implementation-level decisions. Existing direct, projectile, collision, radial, DoT, and devtools paths should converge on the shared resolver rather than growing parallel damage math.
+Implementation should keep eligibility, pure resolution, and consequences visibly separate. Exact schema/type/package choices remain implementation-level decisions. The remaining work is limited to the future or separately owned items listed above; existing direct, projectile, collision, radial, DoT, and devtools paths should continue to converge on the shared resolver rather than growing parallel damage math.
 
 ## Testing Direction
 

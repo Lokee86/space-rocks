@@ -5,9 +5,15 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
+)
+
+const (
+	shipAsteroidRepulsionImpulse = 300.0
+	asteroidRepulsionImpulse     = 75.0
 )
 
 func (game *Game) handleBulletAsteroidCollisions() {
@@ -51,11 +57,12 @@ func (game *Game) handleBulletAsteroidCollisions() {
 			}
 
 			damageRequest := projectileAsteroidDamageRequest(collision, bullet, asteroid)
-			damageResult := damage.ResolveSingle(damageRequest)
+			damageResult := game.resolveDamageRequest(damageRequest)
 			applyDamageResultToAsteroid(asteroid, damageResult)
-			if event, ok := damageAppliedEventForResult(damageResult, collision.ImpactPosition.X, collision.ImpactPosition.Y); ok {
+			if event, ok := damageResultEvent(damageResult, collision.ImpactPosition.X, collision.ImpactPosition.Y); ok {
 				game.recordDomainEvent(event)
 			}
+			game.acceptCreatedDamageOverTime(damageResult)
 			game.spawnRadialEffectFromBullet(bullet, bullet.OwnerID, collision.ImpactPosition)
 			hitBullets[bulletID] = true
 			if !damageResult.Destroyed {
@@ -151,10 +158,14 @@ func (game *Game) handleShipAsteroidCollisions() {
 			}
 
 			damageRequest := playerAsteroidDamageRequest(collision, asteroidID, player, asteroid)
-			damageResult := damage.ResolveSingle(damageRequest)
+			damageResult := game.resolveDamageRequest(damageRequest)
 			applyDamageResultToPlayer(player, damageResult)
 			if event, ok := damageAppliedEventForResult(damageResult, player.Position().X, player.Position().Y); ok {
 				game.recordDomainEvent(event)
+			}
+			game.acceptCreatedDamageOverTime(damageResult)
+			if !damageResult.Destroyed {
+				motion.ApplyShipAsteroidRepulsion(player, asteroid, shipAsteroidRepulsionImpulse, asteroidRepulsionImpulse)
 			}
 			if !damageResult.Fatal || damageResult.TargetEntityType != damage.EntityTypePlayer {
 				continue
@@ -205,6 +216,7 @@ func (game *Game) applyFatalPlayerDamageWithInput(playerID string, player *runti
 		if !deathFact.Accepted {
 			return
 		}
+		game.damageOverTime().RemoveTarget(playerID)
 		if state, ok := game.lifeRuntime.ParticipantSnapshot(playerID); ok {
 			lives = game.projectedPlayerLives(playerID, state)
 		}

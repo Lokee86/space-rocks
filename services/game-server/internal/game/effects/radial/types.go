@@ -11,5 +11,12 @@ type ExpirationMode string
 
 const (
 	ExpirationSimultaneous ExpirationMode = "simultaneous"
-	ExpirationSequential    ExpirationMode = "sequential"
+	ExpirationSequential   ExpirationMode = "sequential"
+)
+
+type FalloffMode string
+
+const (
+	FalloffNone   FalloffMode = "none"
+	FalloffLinear FalloffMode = "linear"
 )

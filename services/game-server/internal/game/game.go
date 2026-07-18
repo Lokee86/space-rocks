@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterlifecycle"
@@ -42,6 +43,8 @@ type Game struct {
 	modeID                     string
 	teamStructure              teams.Structure
 	spawner                    *spawning.Spawner
+	damagePolicy               damage.Policy
+	damageOverTimeRuntime      *damage.DamageOverTimeRuntime
 	scoringPolicy              scoring.Policy
 	dropTables                 drops.Tables
 	radialEffects              radial.Store
@@ -158,6 +161,8 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 		spawner:                    spawning.New(source),
 		encounterSpawnRuntime:      encounterSpawnRuntime,
 		encounterLifecycleRuntime:  encounterlifecycle.NewRuntime(),
+		damagePolicy:               damage.NewStandardPolicy(),
+		damageOverTimeRuntime:      damage.NewDamageOverTimeRuntime(),
 		scoringPolicy:              scoring.NewDefaultPolicy(),
 		dropTables:                 drops.GeneratedTables,
 		radialEffects:              radial.NewStore(),

@@ -125,25 +125,33 @@ func (target *Control) ApplyPlayerDefeat(sourcePlayerID string, targetPlayerID s
 	}
 	damageRequest := damage.DamageResolutionRequest{
 		Source: damage.DamageSource{
-			EntityID:   sourcePlayerID,
-			EntityType: damage.EntityTypePlayer,
-			Cause:      damage.DamageCauseDebug,
+			EntityID:                 sourcePlayerID,
+			EntityType:               damage.EntityTypePlayer,
+			Cause:                    damage.DamageCauseDebug,
+			ResponsiblePlayerID:      sourcePlayerID,
+			OriginalInstigatorID:     sourcePlayerID,
+			BypassInvulnerability:    true,
+			AuthorizedDevAdminSource: true,
 		},
 		Target: damage.DamageTarget{
-			EntityID:   targetPlayerID,
-			EntityType: damage.EntityTypePlayer,
-			Health:     targetPlayer.Health,
-			Shield:     targetPlayer.Shields,
+			EntityID:     targetPlayerID,
+			EntityType:   damage.EntityTypePlayer,
+			Health:       targetPlayer.Health,
+			MaxHealth:    targetPlayer.Stats.MaxHealth,
+			Shield:       targetPlayer.Shields,
+			MaxShield:    targetPlayer.Stats.MaxShields,
+			Invulnerable: targetPlayer.IsInvulnerable() || !targetPlayer.DamageOptions.CanTakeDamage(),
 		},
 		Spec: damage.DamageSpec{
-			Amount: targetPlayer.Health,
-			Type:   damage.DamageTypeKinetic,
-			Cause:  damage.DamageCauseDebug,
+			Amount:       targetPlayer.Health,
+			Type:         damage.DamageTypeKinetic,
+			Cause:        damage.DamageCauseDebug,
+			BypassShield: true,
 		},
 	}
-	damageResult := damage.ResolveSingle(damageRequest)
-	targetPlayer.Health = damageResult.RemainingHealth
-	targetPlayer.Shields = damageResult.RemainingShield
+	damageResult := target.game.resolveDamageRequest(damageRequest)
+	applyDamageResultToPlayer(targetPlayer, damageResult)
+	target.game.acceptCreatedDamageOverTime(damageResult)
 	if damageResult.Fatal {
 		attribution := lives.AttributionUnattributed
 		if sourcePlayerID == targetPlayerID {

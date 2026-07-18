@@ -75,13 +75,62 @@ func eventStateForDomainEvent(event events.Event) EventState {
 		}
 	case events.EventDamageApplied:
 		return EventState{
-			Type:         "damage_applied",
-			SourceType:   event.SourceType,
-			SourceID:     event.SourceID,
-			EffectType:   event.DamageType,
-			Amount:       event.ModifiedAmount,
-			X:            event.X,
-			Y:            event.Y,
+			Type:       "damage_applied",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			Amount:     event.ModifiedAmount,
+			X:          event.X,
+			Y:          event.Y,
+		}
+	case events.EventDamageBlocked:
+		return EventState{
+			Type:       "damage_blocked",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			Amount:     event.ModifiedAmount,
+			X:          event.X,
+			Y:          event.Y,
+		}
+	case events.EventHealingApplied:
+		return EventState{
+			Type:       "healing_applied",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			Amount:     event.RestoredToHealth,
+			X:          event.X,
+			Y:          event.Y,
+		}
+	case events.EventRepairApplied:
+		return EventState{
+			Type:       "repair_applied",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			Amount:     event.RestoredToShield,
+			X:          event.X,
+			Y:          event.Y,
+		}
+	case events.EventDamageIneffective:
+		return EventState{
+			Type:       "damage_ineffective",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			X:          event.X,
+			Y:          event.Y,
+		}
+	case events.EventDamageDiscarded:
+		return EventState{
+			Type:       "damage_discarded",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			Amount:     event.ModifiedAmount,
+			X:          event.X,
+			Y:          event.Y,
 		}
 	case events.EventDamageOverTimeStarted:
 		return EventState{
@@ -93,13 +142,13 @@ func eventStateForDomainEvent(event events.Event) EventState {
 		}
 	case events.EventDamageOverTimeTick:
 		return EventState{
-			Type:         "damage_over_time_tick",
-			SourceType:   event.SourceType,
-			SourceID:     event.SourceID,
-			EffectType:   event.DamageType,
-			Amount:       event.ModifiedAmount,
-			X:            event.X,
-			Y:            event.Y,
+			Type:       "damage_over_time_tick",
+			SourceType: event.SourceType,
+			SourceID:   event.SourceID,
+			EffectType: event.DamageType,
+			Amount:     event.ModifiedAmount,
+			X:          event.X,
+			Y:          event.Y,
 		}
 	default:
 		return EventState{}

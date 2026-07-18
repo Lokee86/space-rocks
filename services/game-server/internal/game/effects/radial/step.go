@@ -1,6 +1,9 @@
 package radial
 
 import (
+	"math"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
 
@@ -22,7 +25,8 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 			if !effect.Spec.TargetFilter.Allows(candidate.Kind) {
 				continue
 			}
-			if !fillOverlapsCandidate(radius, space.Delta(effect.Origin, candidate.Position).Length(), candidate.Radius) {
+			distance := space.Delta(effect.Origin, candidate.Position).Length()
+			if !fillOverlapsCandidate(radius, distance, candidate.Radius) {
 				continue
 			}
 
@@ -33,7 +37,7 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 				TargetID:       candidate.ID,
 				TargetKind:     candidate.Kind,
 				TargetPosition: candidate.Position,
-				Damage:         effect.Spec.Damage,
+				Damage:         damageAtDistance(effect.Spec, distance),
 			})
 		}
 
@@ -58,7 +62,8 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 				continue
 			}
 
-			if !zoneOverlapsCandidate(*zone, space.Delta(effect.Origin, candidate.Position).Length(), candidate.Radius) {
+			distance := space.Delta(effect.Origin, candidate.Position).Length()
+			if !zoneOverlapsCandidate(*zone, distance, candidate.Radius) {
 				continue
 			}
 
@@ -70,7 +75,7 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 				TargetID:       candidate.ID,
 				TargetKind:     candidate.Kind,
 				TargetPosition: candidate.Position,
-				Damage:         effect.Spec.Damage,
+				Damage:         damageAtDistance(effect.Spec, distance),
 			})
 		}
 
@@ -80,6 +85,22 @@ func Step(effect *Effect, delta float64, candidates []Candidate) StepResult {
 	effect.AgeSeconds += delta
 
 	return result
+}
+
+func damageAtDistance(spec Spec, distance float64) damage.DamageSpec {
+	resolved := spec.Damage
+	if spec.FalloffMode != FalloffLinear || resolved.Amount == 0 {
+		return resolved
+	}
+	maximumRadius := float64(spec.ZoneCount) * spec.ZoneWidth
+	if maximumRadius <= 0 {
+		return resolved
+	}
+	minimum := math.Max(0, math.Min(spec.MinimumMultiplier, 1))
+	ratio := math.Max(0, math.Min(distance/maximumRadius, 1))
+	multiplier := 1 - ratio*(1-minimum)
+	resolved.Amount = int(math.Round(float64(resolved.Amount) * multiplier))
+	return resolved
 }
 
 func effectFillRadius(effect *Effect) float64 {

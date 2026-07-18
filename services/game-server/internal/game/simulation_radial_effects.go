@@ -1,7 +1,6 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
@@ -58,33 +57,36 @@ func (game *Game) applyRadialHit(hit radial.Hit) {
 }
 
 func (game *Game) applyRadialHitToAsteroid(hit radial.Hit, asteroid *runtime.Asteroid) {
-	damageResult := damage.ResolveSingle(radialDamageRequestFromHitAndAsteroid(hit, asteroid))
+	damageResult := game.resolveDamageRequest(radialDamageRequestFromHitAndAsteroid(hit, asteroid))
 	applyDamageResultToAsteroid(asteroid, damageResult)
-	if event, ok := damageAppliedEventForResult(damageResult, hit.TargetPosition.X, hit.TargetPosition.Y); ok {
+	if event, ok := damageResultEvent(damageResult, hit.TargetPosition.X, hit.TargetPosition.Y); ok {
 		game.recordDomainEvent(event)
 	}
+	game.acceptCreatedDamageOverTime(damageResult)
 	if damageResult.Destroyed {
 		game.applyProjectileAsteroidDestruction(hit.SourcePlayerID, asteroid)
 	}
 }
 
 func (game *Game) applyRadialHitToEnemy(hit radial.Hit, enemy *runtime.Ship) {
-	damageResult := damage.ResolveSingle(radialDamageRequestFromHitAndEnemy(hit, enemy))
+	damageResult := game.resolveDamageRequest(radialDamageRequestFromHitAndEnemy(hit, enemy))
 	applyDamageResultToEnemy(enemy, damageResult)
-	if event, ok := damageAppliedEventForResult(damageResult, hit.TargetPosition.X, hit.TargetPosition.Y); ok {
+	if event, ok := damageResultEvent(damageResult, hit.TargetPosition.X, hit.TargetPosition.Y); ok {
 		game.recordDomainEvent(event)
 	}
+	game.acceptCreatedDamageOverTime(damageResult)
 	if damageResult.Destroyed {
 		// Enemy death consequences are not wired yet.
 	}
 }
 
 func (game *Game) applyRadialHitToPlayer(hit radial.Hit, player *runtime.Ship) {
-	damageResult := damage.ResolveSingle(radialDamageRequestFromHitAndPlayer(hit, player))
+	damageResult := game.resolveDamageRequest(radialDamageRequestFromHitAndPlayer(hit, player))
 	applyDamageResultToPlayer(player, damageResult)
 	if event, ok := damageAppliedEventForResult(damageResult, hit.TargetPosition.X, hit.TargetPosition.Y); ok {
 		game.recordDomainEvent(event)
 	}
+	game.acceptCreatedDamageOverTime(damageResult)
 	if damageResult.Fatal {
 		attribution := lives.AttributionUnattributed
 		if hit.SourcePlayerID == player.ID {

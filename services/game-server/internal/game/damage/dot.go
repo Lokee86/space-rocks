@@ -1,5 +1,14 @@
 package damage
 
+type DamageOverTimeStackingPolicy string
+
+const (
+	DamageOverTimeStack   DamageOverTimeStackingPolicy = "stack"
+	DamageOverTimeReplace DamageOverTimeStackingPolicy = "replace"
+	DamageOverTimeRefresh DamageOverTimeStackingPolicy = "refresh"
+	DamageOverTimeLimit   DamageOverTimeStackingPolicy = "limit"
+)
+
 type DamageOverTimeSpec struct {
 	Enabled         bool
 	AmountPerTick   int
@@ -7,6 +16,9 @@ type DamageOverTimeSpec struct {
 	DurationSeconds float64
 	Type            DamageType
 	Modifiers       []DamageModifier
+	StackKey        string
+	StackingPolicy  DamageOverTimeStackingPolicy
+	MaxStacks       int
 }
 
 type DamageTargetRef struct {
@@ -15,39 +27,42 @@ type DamageTargetRef struct {
 }
 
 type ActiveDamageOverTime struct {
-	Source         DamageSource
-	Target         DamageTargetRef
-	AmountPerTick  int
-	TickSeconds    float64
+	Source          DamageSource
+	Target          DamageTargetRef
+	AmountPerTick   int
+	TickSeconds     float64
 	DurationSeconds float64
-	Type           DamageType
-	Modifiers      []DamageModifier
+	Type            DamageType
+	Modifiers       []DamageModifier
+	StackKey        string
+	StackingPolicy  DamageOverTimeStackingPolicy
+	MaxStacks       int
 }
 
 type DamageOverTimeTickResult struct {
-	Source           DamageSource
-	Target           DamageTargetRef
-	AmountPerTick    int
-	TickSeconds      float64
-	TickRemaining    float64
-	DurationSeconds float64
+	Source            DamageSource
+	Target            DamageTargetRef
+	AmountPerTick     int
+	TickSeconds       float64
+	TickRemaining     float64
+	DurationSeconds   float64
 	DurationRemaining float64
-	Type             DamageType
-	Modifiers        []DamageModifier
-	Results          []DamageResult
-	Expired          bool
+	Type              DamageType
+	Modifiers         []DamageModifier
+	Results           []DamageResult
+	Expired           bool
 }
 
 func TickDamageOverTime(effect ActiveDamageOverTime, target DamageTarget, delta float64) DamageOverTimeTickResult {
 	result := DamageOverTimeTickResult{
-		Source:           effect.Source,
-		Target:           effect.Target,
-		AmountPerTick:    effect.AmountPerTick,
-		TickSeconds:      effect.TickSeconds,
-		DurationSeconds:  effect.DurationSeconds,
+		Source:            effect.Source,
+		Target:            effect.Target,
+		AmountPerTick:     effect.AmountPerTick,
+		TickSeconds:       effect.TickSeconds,
+		DurationSeconds:   effect.DurationSeconds,
 		DurationRemaining: max(effect.DurationSeconds-delta, 0),
-		Type:             effect.Type,
-		Modifiers:        effect.Modifiers,
+		Type:              effect.Type,
+		Modifiers:         effect.Modifiers,
 	}
 
 	if delta <= 0 {
@@ -92,4 +107,3 @@ func TickDamageOverTime(effect ActiveDamageOverTime, target DamageTarget, delta 
 	result.Expired = result.DurationRemaining <= 0
 	return result
 }
-

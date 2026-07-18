@@ -2,8 +2,8 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func (game *Game) setPlayerPaused(playerID string, paused bool) {
@@ -103,9 +103,7 @@ func (game *Game) playerCanTakeCollisionDamage(playerID string, player *runtime.
 	if !ok {
 		return false
 	}
-	return !session.Suspension.IsSuspended() &&
-		!player.IsInvulnerable() &&
-		player.DamageOptions.CanTakeDamage()
+	return !session.Suspension.IsSuspended()
 }
 
 func (game *Game) playerCanReceiveScore(playerID string, player *runtime.Ship) bool {

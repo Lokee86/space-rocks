@@ -1,5 +1,7 @@
 package damage
 
+import "math"
+
 type DamageModifierCategory string
 
 const (
@@ -133,11 +135,7 @@ func ResolveModifiedAmount(baseAmount int, modifiers []DamageModifier, kind Dama
 		}
 	}
 
-	if modified < 0 {
-		modified = 0
-	}
-
-	result.ModifiedAmount = int(modified + 0.5)
+	result.ModifiedAmount = int(math.Round(modified))
 	for _, modifier := range applicable {
 		result.AppliedModifiers = append(result.AppliedModifiers, AppliedDamageModifier{
 			Modifier: modifier,

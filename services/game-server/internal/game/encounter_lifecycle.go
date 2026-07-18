@@ -162,5 +162,6 @@ func (game *Game) removeAsteroidAuthoritatively(entityID string) bool {
 	}
 	delete(game.entities.Asteroids, entityID)
 	game.encounterLifecycle().Remove(entityID)
+	game.damageOverTime().RemoveTarget(entityID)
 	return true
 }

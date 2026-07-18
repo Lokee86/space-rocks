@@ -21,14 +21,17 @@ func projectileAsteroidDamageRequest(
 
 	return damage.DamageResolutionRequest{
 		Source: damage.DamageSource{
-			EntityID:   collision.ProjectileID,
-			EntityType: damage.EntityTypeProjectile,
-			Cause:      damage.DamageCauseProjectile,
+			EntityID:             collision.ProjectileID,
+			EntityType:           damage.EntityTypeProjectile,
+			Cause:                damage.DamageCauseProjectile,
+			ResponsiblePlayerID:  bullet.OwnerID,
+			OriginalInstigatorID: bullet.OwnerID,
 		},
 		Target: damage.DamageTarget{
 			EntityID:   collision.AsteroidID,
 			EntityType: damage.EntityTypeAsteroid,
 			Health:     asteroid.Health,
+			MaxHealth:  asteroid.Health,
 			Modifiers:  asteroid.DamageModifiers,
 		},
 		Spec: spec,
@@ -48,11 +51,14 @@ func playerAsteroidDamageRequest(
 			Cause:      damage.DamageCauseCollision,
 		},
 		Target: damage.DamageTarget{
-			EntityID:   collision.PlayerID,
-			EntityType: damage.EntityTypePlayer,
-			Health:     player.Health,
-			Shield:     player.Shields,
-			Modifiers:  player.DamageModifiers,
+			EntityID:     collision.PlayerID,
+			EntityType:   damage.EntityTypePlayer,
+			Health:       player.Health,
+			MaxHealth:    player.Stats.MaxHealth,
+			Shield:       player.Shields,
+			MaxShield:    player.Stats.MaxShields,
+			Invulnerable: player.IsInvulnerable() || !player.DamageOptions.CanTakeDamage(),
+			Modifiers:    player.DamageModifiers,
 		},
 		Spec: damage.DamageSpec{
 			Amount: asteroid.CollisionDamage,
@@ -61,4 +67,3 @@ func playerAsteroidDamageRequest(
 		},
 	}
 }
-

@@ -180,12 +180,12 @@ func TestResolveModifiedAmountZeroMultiplier(t *testing.T) {
 	}
 }
 
-func TestResolveModifiedAmountNegativeClamp(t *testing.T) {
+func TestResolveModifiedAmountPreservesNegativeResult(t *testing.T) {
 	result := ResolveModifiedAmount(5, []DamageModifier{
 		{Operation: DamageModifierOperationAdd, Value: -10},
 	}, DamageTypeThermal)
 
-	if result.ModifiedAmount != 0 {
-		t.Fatalf("expected modified amount %d, got %d", 0, result.ModifiedAmount)
+	if result.ModifiedAmount != -5 {
+		t.Fatalf("expected modified amount %d, got %d", -5, result.ModifiedAmount)
 	}
 }

@@ -3,10 +3,11 @@ package damage
 type EntityType string
 
 const (
-	EntityTypePlayer     EntityType = "player"
-	EntityTypeAsteroid   EntityType = "asteroid"
-	EntityTypeProjectile EntityType = "projectile"
-	EntityTypeEnemy      EntityType = "enemy"
+	EntityTypePlayer      EntityType = "player"
+	EntityTypeAsteroid    EntityType = "asteroid"
+	EntityTypeProjectile  EntityType = "projectile"
+	EntityTypeEnemy       EntityType = "enemy"
+	EntityTypeEnvironment EntityType = "environment"
 )
 
 type DamageCause string
@@ -17,6 +18,8 @@ const (
 	DamageCauseDebug      DamageCause = "debug"
 	DamageCauseArea       DamageCause = "area"
 	DamageCauseDot        DamageCause = "dot"
+	DamageCauseHazard     DamageCause = "hazard"
+	DamageCauseScripted   DamageCause = "scripted"
 )
 
 type DamageType string

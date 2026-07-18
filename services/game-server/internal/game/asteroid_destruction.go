@@ -7,6 +7,7 @@ import (
 )
 
 func (game *Game) applyProjectileAsteroidDestruction(playerID string, asteroid *runtime.Asteroid) {
+	game.damageOverTime().RemoveTarget(asteroid.ID)
 	awards := game.scoringPolicy.Evaluate(scoring.Event{
 		Kind:         scoring.EventAsteroidDestroyed,
 		PlayerID:     playerID,
