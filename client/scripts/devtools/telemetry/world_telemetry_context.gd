@@ -7,6 +7,7 @@ const PING_INTERVAL_MSEC := 1000
 var overlay_flow = null
 var network_metrics = null
 var connection_service = null
+var measurement_snapshot_provider: Callable
 var last_ping_msec: int = -1
 
 
@@ -20,6 +21,10 @@ func configure(connection_service_ref) -> void:
 		var apply_pong_callable := Callable(self, "_on_telemetry_pong_received")
 		if not connection_service_ref.is_connected("telemetry_pong_received", apply_pong_callable):
 			connection_service_ref.connect("telemetry_pong_received", apply_pong_callable)
+
+
+func configure_measurement_snapshot_provider(provider: Callable) -> void:
+	measurement_snapshot_provider = provider
 
 
 func reset() -> void:
@@ -42,6 +47,11 @@ func process(required_lane_baselines_synced: bool, delta: float = 0.0) -> void:
 		if network_metrics != null:
 			overlay_flow.set_network_metrics(network_metrics.snapshot())
 			_process_ping()
+		if overlay_flow.is_visible() and measurement_snapshot_provider.is_valid():
+			var measurement_snapshot = measurement_snapshot_provider.call()
+			overlay_flow.set_measurement_metrics(
+				measurement_snapshot if measurement_snapshot is Dictionary else {}
+			)
 		overlay_flow.process(required_lane_baselines_synced, delta)
 
 

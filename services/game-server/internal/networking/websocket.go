@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	toolingrouter "github.com/Lokee86/space-rocks/services/game-server/internal/networking/tooling"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/google/uuid"
@@ -21,6 +22,10 @@ func WebSocketHandlerWithAuth(roomManager *rooms.RoomManager, verifier TokenVeri
 }
 
 func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter) http.HandlerFunc {
+	return WebSocketHandlerWithAuthAndReporterAndTooling(roomManager, verifier, reporter, nil, nil)
+}
+
+func WebSocketHandlerWithAuthAndReporterAndTooling(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter, measurementController toolingrouter.MeasurementController, telemetryProvider toolingrouter.TelemetryProvider) http.HandlerFunc {
 	originPolicy := newWebSocketOriginPolicy()
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -44,7 +49,7 @@ func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifie
 		}
 		conn.SetReadLimit(webSocketReadLimit)
 
-		session := newWebSocketSession(conn, roomManager, verifier, reporter)
+		session := newWebSocketSessionWithTooling(conn, roomManager, verifier, reporter, measurementController, telemetryProvider)
 		handleConnection(session, r.RemoteAddr)
 	}
 }

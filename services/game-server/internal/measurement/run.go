@@ -16,11 +16,11 @@ const (
 type RunOption func(*runConfig)
 
 type runConfig struct {
-	clock           func() time.Time
-	sampleInterval  time.Duration
-	sampleCapacity  int
-	processSampler  *ProcessSampler
-	roomCount       func() int
+	clock          func() time.Time
+	sampleInterval time.Duration
+	sampleCapacity int
+	processSampler *ProcessSampler
+	roomCount      func() int
 }
 
 func WithClock(clock func() time.Time) RunOption {
@@ -60,22 +60,25 @@ func WithRoomCountProvider(provider func() int) RunOption {
 }
 
 type Run struct {
-	mu                          sync.Mutex
-	context                     RunContext
-	clock                       func() time.Time
-	start                       time.Time
-	sampleInterval              time.Duration
-	nextSampleElapsed           time.Duration
-	processSampler              *ProcessSampler
-	roomCount                   func() int
-	active                      bool
-	finalReport                 *ServerReport
-	ticks                       tickAccumulator
-	window                      tickAccumulator
-	lastEntities                EntityCounts
-	packets                     map[packetKey]*PacketSummary
-	droppedPacketObservations   uint64
-	samples                     sampleRing
+	mu                        sync.Mutex
+	context                   RunContext
+	clock                     func() time.Time
+	start                     time.Time
+	sampleInterval            time.Duration
+	nextSampleElapsed         time.Duration
+	processSampler            *ProcessSampler
+	roomCount                 func() int
+	sampleCapacity            int
+	active                    bool
+	finalReport               *ServerReport
+	ticks                     tickAccumulator
+	window                    tickAccumulator
+	lastEntities              EntityCounts
+	hasEntities               bool
+	lastSampleElapsed         time.Duration
+	packets                   map[packetKey]*PacketSummary
+	droppedPacketObservations uint64
+	samples                   sampleRing
 }
 
 type packetKey struct {
@@ -108,6 +111,7 @@ func NewRun(context RunContext, options ...RunOption) *Run {
 		nextSampleElapsed: config.sampleInterval,
 		processSampler:    config.processSampler,
 		roomCount:         config.roomCount,
+		sampleCapacity:    config.sampleCapacity,
 		active:            true,
 		packets:           make(map[packetKey]*PacketSummary),
 		samples:           newSampleRing(config.sampleCapacity),
@@ -127,25 +131,14 @@ func (run *Run) ObserveSimulation(duration time.Duration, entities EntityCounts)
 	run.ticks.add(duration)
 	run.window.add(duration)
 	run.lastEntities = entities
+	run.hasEntities = true
 	now := run.clock()
 	elapsed := now.Sub(run.start)
 	if elapsed < run.nextSampleElapsed {
 		return
 	}
 
-	process := run.processSampler.Sample(now)
-	roomCount := 0
-	if run.roomCount != nil {
-		roomCount = run.roomCount()
-	}
-	run.samples.add(PeriodicSample{
-		Elapsed:    elapsed,
-		Entities:   entities,
-		Process:    process,
-		RoomCount:  roomCount,
-		TickWindow: run.window.snapshot(),
-	})
-	run.window = tickAccumulator{}
+	run.sampleLocked(now, elapsed)
 	run.nextSampleElapsed = elapsed + run.sampleInterval
 }
 
@@ -199,6 +192,13 @@ func (run *Run) Finalize(reasons ...StopReason) ServerReport {
 	if len(reasons) > 0 && reasons[0] != "" {
 		reason = reasons[0]
 	}
+	if run.hasEntities {
+		now := run.clock()
+		elapsed := now.Sub(run.start)
+		if elapsed > run.lastSampleElapsed || len(run.samples.list()) == 0 {
+			run.sampleLocked(now, elapsed)
+		}
+	}
 	report := run.reportLocked(reason)
 	run.active = false
 	run.finalReport = &report
@@ -211,19 +211,42 @@ func (run *Run) IsActive() bool {
 	return run.active
 }
 
+// Reset clears an active run's accumulated measurements while preserving its
+// run identity and observer attachment.
+func (run *Run) Reset() {
+	run.mu.Lock()
+	defer run.mu.Unlock()
+	if !run.active {
+		return
+	}
+
+	now := run.clock()
+	run.start = now
+	run.context.StartTime = now
+	run.nextSampleElapsed = run.sampleInterval
+	run.ticks = tickAccumulator{}
+	run.window = tickAccumulator{}
+	run.lastEntities = EntityCounts{}
+	run.hasEntities = false
+	run.lastSampleElapsed = 0
+	run.packets = make(map[packetKey]*PacketSummary)
+	run.droppedPacketObservations = 0
+	run.samples = newSampleRing(run.sampleCapacity)
+}
+
 func (run *Run) reportLocked(reason StopReason) ServerReport {
 	ended := run.clock()
 	report := ServerReport{
-		Version:                ReportVersion,
-		Context:                run.context,
-		StopReason:             reason,
-		Complete:               reason == StopReasonComplete,
-		StartedAt:              run.start,
-		EndedAt:                ended,
-		Duration:               ended.Sub(run.start),
-		Ticks:                  run.ticks.snapshot(),
-		Samples:                run.samples.list(),
-		OverwrittenSampleCount: run.samples.overwritten,
+		Version:                   ReportVersion,
+		Context:                   run.context,
+		StopReason:                reason,
+		Complete:                  reason == StopReasonComplete,
+		StartedAt:                 run.start,
+		EndedAt:                   ended,
+		Duration:                  ended.Sub(run.start),
+		Ticks:                     run.ticks.snapshot(),
+		Samples:                   run.samples.list(),
+		OverwrittenSampleCount:    run.samples.overwritten,
 		DroppedPacketObservations: run.droppedPacketObservations,
 	}
 	for _, summary := range run.packets {
@@ -242,6 +265,23 @@ func (run *Run) reportLocked(reason StopReason) ServerReport {
 		report.Packets = []PacketSummary{}
 	}
 	return report
+}
+
+func (run *Run) sampleLocked(now time.Time, elapsed time.Duration) {
+	process := run.processSampler.Sample(now)
+	roomCount := 0
+	if run.roomCount != nil {
+		roomCount = run.roomCount()
+	}
+	run.samples.add(PeriodicSample{
+		Elapsed:    elapsed,
+		Entities:   run.lastEntities,
+		Process:    process,
+		RoomCount:  roomCount,
+		TickWindow: run.window.snapshot(),
+	})
+	run.window = tickAccumulator{}
+	run.lastSampleElapsed = elapsed
 }
 
 func validIdentifier(value string) bool {

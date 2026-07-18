@@ -9,6 +9,7 @@ var metrics = null
 var connection_service = null
 var last_refresh_msec: int = -1
 var network_metrics: Dictionary = {}
+var measurement_metrics: Dictionary = {}
 
 
 func configure(connection_service_ref = null) -> void:
@@ -22,6 +23,7 @@ func reset() -> void:
 	if is_instance_valid(overlay):
 		overlay.queue_free()
 	overlay = null
+	measurement_metrics.clear()
 	last_refresh_msec = -1
 
 
@@ -73,6 +75,10 @@ func set_network_metrics(metrics_data: Dictionary) -> void:
 		metrics.set_network_metrics(metrics_data)
 
 
+func set_measurement_metrics(metrics_data: Dictionary) -> void:
+	measurement_metrics = metrics_data.duplicate(true)
+
+
 func world_packet_metrics_snapshot() -> Dictionary:
 	if metrics == null:
 		return {}
@@ -98,6 +104,8 @@ func _refresh_overlay() -> void:
 	var merged_metrics: Dictionary = metrics.snapshot()
 	for key in network_metrics.keys():
 		merged_metrics[key] = network_metrics[key]
+	for key in measurement_metrics.keys():
+		merged_metrics[key] = measurement_metrics[key]
 	var fps: float = Engine.get_frames_per_second()
 	merged_metrics["fps"] = fps
 	merged_metrics["frame_ms"] = 1000.0 / max(fps, 1.0)

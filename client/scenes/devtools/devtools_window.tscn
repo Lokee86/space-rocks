@@ -11,7 +11,7 @@ bg_color = Color(0.08, 0.1, 0.14, 0.78)
 oversampling_override = 1.0
 title = "Space Rocks Devtools"
 position = Vector2i(0, 36)
-size = Vector2i(670, 965)
+size = Vector2i(670, 1115)
 visible = false
 always_on_top = true
 script = ExtResource("1_devtools_window")
@@ -601,3 +601,54 @@ theme_override_constants/margin_bottom = 10
 [node name="TargetTelemetryText" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/HBoxContainer2/TargetTelemetry/VBoxContainer/CenterContainer/MarginContainer" unique_id=438750286]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="MeasurementPanel" type="PanelContainer" parent="MarginContainer/CenterContainer/VBoxContainer" unique_id=1714803654]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="MeasurementVBox" type="VBoxContainer" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel" unique_id=1225539410]
+layout_mode = 2
+
+[node name="MeasurementTitle" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox" unique_id=770851246]
+layout_mode = 2
+text = "Runtime Measurement"
+
+[node name="MeasurementControls" type="HBoxContainer" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox" unique_id=1786441129]
+layout_mode = 2
+
+[node name="MeasurementScenarioLabel" type="LineEdit" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox/MeasurementControls" unique_id=1828311638]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Scenario label (optional)"
+
+[node name="MeasurementStartButton" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox/MeasurementControls" unique_id=1549644977]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Start"
+
+[node name="MeasurementStopButton" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox/MeasurementControls" unique_id=1270917626]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Stop"
+
+[node name="MeasurementResetButton" type="Button" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox/MeasurementControls" unique_id=1922948357]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reset"
+
+[node name="MeasurementStatusLabel" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox" unique_id=1553556167]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Status: Idle"
+
+[node name="MeasurementActiveRunIdLabel" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox" unique_id=1333855174]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Active run: —"
+
+[node name="MeasurementExportLabel" type="Label" parent="MarginContainer/CenterContainer/VBoxContainer/MeasurementPanel/MeasurementVBox" unique_id=1865884609]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Latest export: —"

@@ -88,3 +88,76 @@ func test_pickup_select_includes_catalog_types_and_defaults_to_1_up() -> void:
 	var selected_index := pickup_select.get_selected()
 	assert_gte(selected_index, 0)
 	assert_eq(str(pickup_select.get_item_metadata(selected_index)), "1_up")
+
+
+func test_measurement_buttons_route_scenario_start_stop_and_reset_requests() -> void:
+	var window := DevtoolsWindowScene.instantiate()
+	add_child_autofree(window)
+	var started_labels: Array = []
+	var stop_count := [0]
+	var reset_count := [0]
+	window.measurement_start_requested.connect(func(scenario_label: String) -> void:
+		started_labels.append(scenario_label)
+	)
+	window.measurement_stop_requested.connect(func() -> void:
+		stop_count[0] += 1
+	)
+	window.measurement_reset_requested.connect(func() -> void:
+		reset_count[0] += 1
+	)
+
+	var scenario_input := window.find_child("MeasurementScenarioLabel", true, false) as LineEdit
+	var start_button := window.find_child("MeasurementStartButton", true, false) as Button
+	var stop_button := window.find_child("MeasurementStopButton", true, false) as Button
+	var reset_button := window.find_child("MeasurementResetButton", true, false) as Button
+	assert_not_null(scenario_input)
+	assert_not_null(start_button)
+	assert_not_null(stop_button)
+	assert_not_null(reset_button)
+
+	scenario_input.text = "  soak  "
+	start_button.pressed.emit()
+	window.refresh_measurement_state({"recording": true, "active_run_id": "run-1", "pending_request_ids": {}})
+	stop_button.pressed.emit()
+	reset_button.pressed.emit()
+
+	assert_eq(started_labels, ["soak"])
+	assert_eq(stop_count[0], 1)
+	assert_eq(reset_count[0], 1)
+
+
+func test_measurement_state_refresh_updates_status_run_id_and_export_fields() -> void:
+	var window := DevtoolsWindowScene.instantiate()
+	add_child_autofree(window)
+
+	window.refresh_measurement_state({
+		"recording": true,
+		"active_run_id": "run-7",
+		"pending_request_ids": {},
+		"latest_export_result": {"success": true, "path": "user://measurements/run-7.json"},
+		"last_tooling_error": {},
+	})
+
+	var status_label := window.find_child("MeasurementStatusLabel", true, false) as Label
+	var run_id_label := window.find_child("MeasurementActiveRunIdLabel", true, false) as Label
+	var export_label := window.find_child("MeasurementExportLabel", true, false) as Label
+	var start_button := window.find_child("MeasurementStartButton", true, false) as Button
+	var stop_button := window.find_child("MeasurementStopButton", true, false) as Button
+	var reset_button := window.find_child("MeasurementResetButton", true, false) as Button
+	assert_eq(status_label.text, "Status: Recording")
+	assert_eq(run_id_label.text, "Active run: run-7")
+	assert_eq(export_label.text, "Latest export: user://measurements/run-7.json")
+	assert_true(start_button.disabled)
+	assert_false(stop_button.disabled)
+
+	window.refresh_measurement_state({
+		"recording": false,
+		"active_run_id": "",
+		"pending_request_ids": {"start": "request-1"},
+		"latest_export_result": {"success": false, "error": "disk full"},
+		"last_tooling_error": {},
+	})
+	assert_eq(status_label.text, "Status: Starting")
+	assert_eq(run_id_label.text, "Active run: —")
+	assert_eq(export_label.text, "Latest export error: disk full")
+	assert_true(reset_button.disabled)

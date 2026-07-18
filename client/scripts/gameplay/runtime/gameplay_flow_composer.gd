@@ -7,6 +7,9 @@ const GameplayTargetingContextScript = preload("res://scripts/gameplay/targeting
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
 const ClientMeasurementContextScript = preload("res://scripts/devtools/measurement/client_measurement_context.gd")
+const ClientMeasurementCoordinatorScript = preload("res://scripts/devtools/measurement/client_measurement_coordinator.gd")
+const ClientMeasurementReportWriterScript = preload("res://scripts/devtools/measurement/measurement_report_writer.gd")
+const ClientMeasurementSnapshotSchedulerScript = preload("res://scripts/devtools/measurement/client_measurement_snapshot_scheduler.gd")
 
 var event_lifecycle_flow
 var local_lifecycle_flow
@@ -20,6 +23,9 @@ var gameplay_process_flow
 var server_hitbox_overlay_flow
 var match_end_flow
 var client_measurement_context
+var client_measurement_coordinator
+var client_measurement_report_writer
+var client_measurement_snapshot_scheduler
 
 
 func configure(
@@ -84,6 +90,18 @@ func configure(
 	if devtools_context != null and devtools_context.has_method("get_world_telemetry_context"):
 		telemetry_context = devtools_context.get_world_telemetry_context()
 	client_measurement_context.configure(connection_service_ref, realtime_packet_pipeline, world_sync_ref, telemetry_context)
+	client_measurement_report_writer = ClientMeasurementReportWriterScript.new()
+	client_measurement_coordinator = ClientMeasurementCoordinatorScript.new(
+		connection_service_ref,
+		client_measurement_context,
+		client_measurement_report_writer
+	)
+	client_measurement_snapshot_scheduler = ClientMeasurementSnapshotSchedulerScript.new(client_measurement_coordinator)
+	if devtools_context != null and devtools_context.has_method("configure_measurement"):
+		devtools_context.configure_measurement(
+			client_measurement_coordinator,
+			client_measurement_context
+		)
 	if world_sync_ref != null and world_sync_ref.has_method("configure_measurement_observer"):
 		world_sync_ref.configure_measurement_observer(Callable(client_measurement_context, "record_lifecycle"))
 	if runtime_context_ref != null and runtime_context_ref.respawn_flow != null and runtime_context_ref.respawn_flow.has_method("mark_awaiting_confirmation") and devtools_context != null and devtools_context.has_method("configure_local_respawn_confirmation_marker"):
@@ -145,6 +163,46 @@ func get_client_measurement_context():
 	return client_measurement_context
 
 
+func get_client_measurement_coordinator():
+	return client_measurement_coordinator
+
+
+func start_measurement(scenario_label: String = "", metadata: Dictionary = {}) -> String:
+	if client_measurement_coordinator == null:
+		return ""
+	return client_measurement_coordinator.start(scenario_label, metadata)
+
+
+func stop_measurement() -> String:
+	if client_measurement_coordinator == null:
+		return ""
+	return client_measurement_coordinator.stop()
+
+
+func reset_measurement() -> String:
+	if client_measurement_coordinator == null:
+		return ""
+	return client_measurement_coordinator.reset()
+
+
+func snapshot_measurement() -> String:
+	if client_measurement_coordinator == null:
+		return ""
+	return client_measurement_coordinator.snapshot()
+
+
+func get_measurement_state() -> Dictionary:
+	if client_measurement_coordinator == null:
+		return {}
+	return client_measurement_coordinator.get_state()
+
+
+func get_latest_measurement_export_result() -> Dictionary:
+	if client_measurement_coordinator == null:
+		return {}
+	return client_measurement_coordinator.get_latest_export_result()
+
+
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if devtools_context != null:
 		devtools_context.apply_gameplay_state(state)
@@ -195,9 +253,10 @@ func refresh_devtools_spawn_player_slots(max_players: int) -> void:
 
 
 func process(delta: float, required_lane_baselines_synced: bool) -> void:
-	if gameplay_process_flow == null:
-		return
-	gameplay_process_flow.process(delta, required_lane_baselines_synced)
+	if gameplay_process_flow != null:
+		gameplay_process_flow.process(delta, required_lane_baselines_synced)
+	if client_measurement_snapshot_scheduler != null:
+		client_measurement_snapshot_scheduler.process(delta)
 
 
 func reset() -> void:
@@ -213,5 +272,9 @@ func reset() -> void:
 		spectate_context.reset()
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.reset()
-	if client_measurement_context != null:
+	if client_measurement_snapshot_scheduler != null:
+		client_measurement_snapshot_scheduler.reset()
+	if client_measurement_coordinator != null:
+		client_measurement_coordinator.reset_local_state()
+	elif client_measurement_context != null:
 		client_measurement_context.reset()
