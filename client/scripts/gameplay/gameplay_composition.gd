@@ -109,6 +109,12 @@ func get_local_lifecycle_flow():
 		return null
 	return gameplay_shell_flow.get_local_lifecycle_flow()
 
+
+func get_client_measurement_context():
+	if gameplay_shell_flow == null or not gameplay_shell_flow.has_method("get_client_measurement_context"):
+		return null
+	return gameplay_shell_flow.get_client_measurement_context()
+
 func get_world_sync() -> WorldSync:
 	return world_sync
 

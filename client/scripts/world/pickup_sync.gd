@@ -18,10 +18,15 @@ var initialized_pickups = {}
 var target_pickup_positions = {}
 var pickup_server_positions = {}
 var pickup_visual_positions = {}
+var _measurement_observer: Callable
 
 
 func configure(layer: Node2D) -> void:
 	pickups_layer = layer
+
+
+func set_measurement_observer(observer: Callable) -> void:
+	_measurement_observer = observer
 
 
 func reset() -> void:
@@ -139,6 +144,7 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 	pickup_nodes[pickup_id] = pickup_node
 	pickup_types[pickup_id] = pickup_type
 	pickup_classes[pickup_id] = pickup_class
+	_record_lifecycle("created")
 
 	return pickup_node
 
@@ -155,6 +161,7 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 		var pickup_node: PickupPresentation = get_pickup_node(resolved_pickup_id, pickup_type, pickup_class)
 		if pickup_node == null:
 			continue
+		_record_lifecycle("updated")
 
 		var age_seconds = PickupSyncState.age_seconds(state)
 		var lifespan_seconds = PickupSyncState.lifespan_seconds(state)
@@ -204,6 +211,7 @@ func remove_missing(server_pickups: Dictionary) -> void:
 		target_pickup_positions.erase(pickup_id)
 		pickup_server_positions.erase(pickup_id)
 		pickup_visual_positions.erase(pickup_id)
+		_record_lifecycle("removed")
 
 
 func pickup_position_entries() -> Dictionary:
@@ -221,6 +229,11 @@ func pickup_position_entries() -> Dictionary:
 		}
 
 	return positions
+
+
+func _record_lifecycle(operation: String) -> void:
+	if _measurement_observer.is_valid():
+		_measurement_observer.call("pickups", operation, 1)
 
 
 func interpolate(weight: float) -> void:

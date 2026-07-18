@@ -4,6 +4,13 @@ const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realt
 const ResyncState := preload("res://scripts/protocol/realtime/resync_state.gd")
 
 
+class MeasurementObserver:
+	var observations: Array = []
+
+	func record(lane: String, duration_ms: float) -> void:
+		observations.append({"lane": lane, "duration_ms": duration_ms})
+
+
 func test_valid_realtime_packet_mutates_router_state_before_signal_callback() -> void:
 	var pipeline := RealtimePacketPipeline.new()
 	pipeline.begin_match("match-1")
@@ -41,6 +48,29 @@ func test_valid_realtime_packet_mutates_router_state_before_signal_callback() ->
 	assert_true(presentation_state.world_lane_state != null)
 	assert_true(presentation_state.world_lane_state.ships.is_empty())
 	assert_true(pipeline.get_presentation_state() == presentation_state_identity)
+
+
+func test_valid_realtime_packet_reports_lane_application_after_apply() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	var observer := MeasurementObserver.new()
+	pipeline.set_measurement_observer(Callable(observer, "record"))
+	pipeline.begin_match("match-1")
+	pipeline.apply_packet({
+		"type": "world_full",
+		"match_id": "match-1",
+		"baseline_id": "world-baseline-1",
+		"sequence": 1,
+		"snapshot_id": "world-snapshot-1",
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+
+	assert_eq(observer.observations.size(), 1)
+	assert_eq(observer.observations[0]["lane"], "world")
+	assert_true(float(observer.observations[0]["duration_ms"]) >= 0.0)
 
 
 func test_invalid_or_unsupported_packets_do_not_emit_gameplay_packet_applied() -> void:

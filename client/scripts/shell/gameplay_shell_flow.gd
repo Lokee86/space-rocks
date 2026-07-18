@@ -94,6 +94,12 @@ func get_local_lifecycle_flow():
 		return null
 	return flow_composer.get_local_lifecycle_flow()
 
+
+func get_client_measurement_context():
+	if flow_composer == null or not flow_composer.has_method("get_client_measurement_context"):
+		return null
+	return flow_composer.get_client_measurement_context()
+
 func apply_player_pause_state_packet(packet: Dictionary) -> void:
 	if gameplay_pause_state_flow == null:
 		return

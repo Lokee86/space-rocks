@@ -14,6 +14,7 @@ var target_player_rotations := player_targets.target_player_rotations
 var view_target_player_id := ""
 var player_hue_presenter := PlayerHuePresenter.new()
 var pause_state_tracker
+var measurement_observer: Callable
 
 
 func configure(game_owner: Node2D, player: Player, pause_tracker = null) -> void:
@@ -25,6 +26,11 @@ func configure(game_owner: Node2D, player: Player, pause_tracker = null) -> void
 		Callable(self, "apply_local_player_hue"),
 		Callable(self, "apply_remote_player_hue")
 	)
+
+
+func set_measurement_observer(observer: Callable) -> void:
+	measurement_observer = observer
+	player_lifecycle.set_measurement_observer(observer)
 
 
 func reset() -> void:
@@ -123,6 +129,8 @@ func apply(
 			player_lifecycle.mark_initialized(player_id)
 			player_node.position = visual_position
 			player_node.rotation = server_rotation
+		if measurement_observer.is_valid():
+			measurement_observer.call("players", "updated", 1)
 
 
 func apply_with_anchor(
@@ -182,6 +190,8 @@ func apply_with_anchor(
 			player_lifecycle.mark_initialized(player_id)
 			player_node.position = visual_position
 			player_node.rotation = server_rotation
+		if measurement_observer.is_valid():
+			measurement_observer.call("players", "updated", 1)
 
 
 func apply_local_player_hue(player: Player) -> void:
@@ -247,4 +257,3 @@ func _visual_position_for_player(
 		anchor_server_position,
 		Vector2(state[Packets.FIELD_X], state[Packets.FIELD_Y])
 	)
-

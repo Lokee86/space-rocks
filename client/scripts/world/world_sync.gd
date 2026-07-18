@@ -17,6 +17,7 @@ var world_lane_state
 var view_anchor: Node2D
 var local_player: Player
 var current_self_id := ""
+var _measurement_observer: Callable
 
 
 func configure(
@@ -44,6 +45,41 @@ func configure(
 	asteroids.z_index = Constants.ASTEROID_Z_INDEX
 	pickups.z_index = Constants.PICKUP_Z_INDEX
 	bullets.z_index = Constants.BULLET_Z_INDEX
+
+
+func configure_measurement_observer(observer: Callable) -> void:
+	_measurement_observer = observer
+	if player_render_api != null and player_render_api.has_method("set_measurement_observer"):
+		player_render_api.set_measurement_observer(observer)
+	if asteroid_sync != null and asteroid_sync.has_method("set_measurement_observer"):
+		asteroid_sync.set_measurement_observer(observer)
+	if projectile_sync != null and projectile_sync.has_method("set_measurement_observer"):
+		projectile_sync.set_measurement_observer(observer)
+	if pickup_sync != null and pickup_sync.has_method("set_measurement_observer"):
+		pickup_sync.set_measurement_observer(observer)
+
+
+func entity_counts() -> Dictionary:
+	return {
+		"players": player_nodes().size(),
+		"bullets": _dictionary_size(projectile_sync, "projectile_nodes"),
+		"asteroids": _dictionary_size(asteroid_sync, "asteroid_nodes"),
+		"pickups": _dictionary_size(pickup_sync, "pickup_nodes"),
+	}
+
+
+func scene_node_count() -> int:
+	if view_anchor == null or not view_anchor.has_method("get_tree"):
+		return -1
+	var tree := view_anchor.get_tree()
+	return tree.get_node_count() if tree != null else -1
+
+
+func _dictionary_size(owner, property_name: String) -> int:
+	if owner == null:
+		return 0
+	var value = owner.get(property_name)
+	return value.size() if value is Dictionary else 0
 
 
 

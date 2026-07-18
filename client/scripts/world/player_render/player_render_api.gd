@@ -27,6 +27,11 @@ func configure(game_owner: Node2D, player: Player, view_anchor: Node2D, pause_st
 	player_meaning.configure(game_owner, player, pause_state_tracker)
 
 
+func set_measurement_observer(observer: Callable) -> void:
+	if player_meaning != null and player_meaning.has_method("set_measurement_observer"):
+		player_meaning.set_measurement_observer(observer)
+
+
 func reset() -> void:
 	player_meaning.reset()
 	view_anchor_sync.reset()

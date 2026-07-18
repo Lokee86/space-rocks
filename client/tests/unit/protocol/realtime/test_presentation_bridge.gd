@@ -45,6 +45,12 @@ class FakeLogger:
 	func record(message: String) -> void:
 		messages.append(message)
 
+class FakeMeasurementObserver:
+	var durations: Array = []
+
+	func record(duration_ms: float) -> void:
+		durations.append(duration_ms)
+
 class FakeGameplayComposition:
 	extends GameplayComposition
 
@@ -169,6 +175,17 @@ func test_flush_pending_fanout_order_runs_before_devtools() -> void:
 	assert_eq(presentation_adapter.calls[0]["gameplay_hud_flow"], composition.gameplay_hud_flow)
 	assert_eq(presentation_adapter.calls[0]["event_flow"], composition.event_lifecycle_flow)
 	assert_eq(presentation_adapter.calls[0]["local_lifecycle_flow"], composition.local_lifecycle_flow)
+
+func test_flush_pending_reports_presentation_duration_without_changing_fanout() -> void:
+	var fixture := _make_bridge()
+	var bridge = fixture.bridge
+	var observer := FakeMeasurementObserver.new()
+	bridge.set_measurement_observer(Callable(observer, "record"))
+	bridge.handle_gameplay_packet({"type": "world_state", "world": {"ships": {}}})
+
+	assert_true(bridge.flush_pending())
+	assert_eq(observer.durations.size(), 1)
+	assert_true(float(observer.durations[0]) >= 0.0)
 
 func test_non_event_packet_flush_passes_local_lifecycle_without_event_flow() -> void:
 	var fixture := _make_bridge()

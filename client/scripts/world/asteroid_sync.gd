@@ -21,10 +21,15 @@ var asteroid_visual_positions := {}
 var asteroid_variants := {}
 var deleted_asteroid_ids := {}
 var _deleted_asteroid_id_order := []
+var _measurement_observer: Callable
 
 
 func configure(layer: Node2D) -> void:
 	asteroids_layer = layer
+
+
+func set_measurement_observer(observer: Callable) -> void:
+	_measurement_observer = observer
 
 
 func reset() -> void:
@@ -93,6 +98,7 @@ func get_asteroid_node(asteroid_id: String) -> AsteroidPresentation:
 		return null
 	asteroids_layer.add_child(asteroid_node)
 	asteroid_nodes[asteroid_id] = asteroid_node
+	_record_lifecycle("created")
 
 	return asteroid_node
 
@@ -137,6 +143,7 @@ func apply_asteroid(
 	var asteroid_node: AsteroidPresentation = get_asteroid_node(asteroid_id)
 	if asteroid_node == null:
 		return
+	_record_lifecycle("updated")
 	var raw_server_position := AsteroidSyncState.server_position(state)
 	var visual_position: Vector2
 
@@ -210,6 +217,12 @@ func remove_asteroid(asteroid_id: String) -> void:
 	asteroid_server_positions.erase(asteroid_id)
 	asteroid_visual_positions.erase(asteroid_id)
 	asteroid_variants.erase(asteroid_id)
+	_record_lifecycle("removed")
+
+
+func _record_lifecycle(operation: String) -> void:
+	if _measurement_observer.is_valid():
+		_measurement_observer.call("asteroids", operation, 1)
 
 func _clear_deleted_asteroid_id(asteroid_id: String) -> void:
 	if not deleted_asteroid_ids.has(asteroid_id):
