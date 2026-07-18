@@ -48,6 +48,7 @@ func (game *Game) spawnAsteroid(view *runtime.CameraView) {
 func (game *Game) applyAsteroidSpawn(plan spawning.AsteroidSpawnPlan) *runtime.Asteroid {
 	asteroidID := game.spawner.NextAsteroidID(game.entities.Asteroids)
 	asteroid := runtime.NewAsteroid(asteroidID, plan.Position, plan.Velocity, plan.Size, plan.Variant)
+	game.registerAsteroidLifecycle(asteroid)
 	game.entities.Asteroids[asteroidID] = asteroid
 	return asteroid
 }

@@ -13,7 +13,25 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc is the authoritative P4 planning owner for non-player encounter retirement, despawn, and lifecycle evaluation after spawn.
 
-It defines how spawned encounter entities remain eligible, become softly or hard-retired, and hand off cleanup without claiming that the implementation already exists. It keeps retirement policy separate from encounter scheduling, entity behavior, player spawning, objectives, match-end policy, and scene reset ownership.
+It defines how spawned encounter entities remain eligible, become softly or hard-retired, and hand off cleanup. It keeps retirement policy separate from encounter scheduling, entity behavior, player spawning, objectives, match-end policy, and scene reset ownership.
+
+## Implementation Status
+
+The first server implementation slice is complete on the P4 branch:
+
+```text
+focused encounterlifecycle contract, policy, evaluator, and runtime registry
+origin metadata and weighted population accounting
+deterministic trigger precedence and population-cleanup candidate ordering
+Game-owned lifecycle runtime
+baseline asteroid registration and legacy-asteroid adoption
+wrap-aware outside-all-relevant-players evaluation
+whole-world-freeze pause semantics
+soft-retirement and hard-removal handoffs
+one authoritative asteroid removal path, including scripted devtools cleanup
+```
+
+All planned trigger families are represented and unit-tested. Production integration currently supplies facts already owned by the runtime: lifetime, player/view distance, whole-world pause, and explicit scripted cleanup. Allowed-region, population-pressure, profile/phase, campaign, and match-transition requests will connect through the existing boundary when their owning systems provide those facts. Encounter scheduling and profile activation remain separate future work.
 
 ## Ownership Boundary
 
@@ -244,7 +262,7 @@ The first implementation slice should establish a focused lifecycle owner withou
 10. Integrate match transition/reset hard removal without making match results wait for retirement.
 ```
 
-Implementation should keep retirement policy in this focused owner. Scheduling, entity behavior, player lifecycle, objectives, match results, campaign meaning, devtools, and scene reset should provide facts or consume outcomes rather than becoming alternate encounter-lifecycle authorities. This document describes planning direction only; it does not claim that these steps are implemented.
+Implementation keeps retirement policy in this focused owner. Scheduling, entity behavior, player lifecycle, objectives, match results, campaign meaning, devtools, and scene reset provide facts or consume outcomes rather than becoming alternate encounter-lifecycle authorities. The first runtime and asteroid integration slice is implemented; remaining integrations depend on their owning systems supplying the corresponding facts and requests.
 
 ## Testing Direction
 

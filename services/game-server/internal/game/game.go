@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterlifecycle"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/participation"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
@@ -54,6 +55,7 @@ type Game struct {
 	collisionProjectileIDs     []string
 	simulationStepObservers    []simulationStepObserver
 	simulationStepObserverKeys map[string]struct{}
+	encounterLifecycleRuntime  *encounterlifecycle.Runtime
 	cameraViews                map[string]*runtime.CameraView
 	playerSessions             map[string]*playerSession
 	botControllers             map[string]*bots.Controller
@@ -148,6 +150,7 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 		presentationDerived:        make(map[string][]presentationDerivedEntry),
 		runtimeMeasurements:        make(map[uint64]measurement.SimulationObserver),
 		spawner:                    spawning.New(source),
+		encounterLifecycleRuntime:  encounterlifecycle.NewRuntime(),
 		scoringPolicy:              scoring.NewDefaultPolicy(),
 		dropTables:                 drops.GeneratedTables,
 		radialEffects:              radial.NewStore(),

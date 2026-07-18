@@ -37,6 +37,7 @@ func (game *Game) Step(delta float64) {
 		defer game.publishPresentationFrameLocked()
 
 		bounds := space.DefaultBounds()
+		game.advanceEncounterLifecycle(delta)
 
 		game.applyPendingPlayerInputsLocked()
 		game.stepPlayerSessions(delta)
