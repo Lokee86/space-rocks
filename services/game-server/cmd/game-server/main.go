@@ -14,7 +14,9 @@ import (
 	playerlogging "github.com/Lokee86/space-rocks/player-data/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
+	servertooling "github.com/Lokee86/space-rocks/services/game-server/internal/tooling"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/google/uuid"
 )
@@ -124,6 +126,11 @@ func runWithContext(ctx context.Context) int {
 	defer closeDiagnosticAggregator(diagnosticService, shutdownTraceID)
 	rooms := networking.NewRoomManager()
 	defer rooms.StopAll()
+	measurementController := servertooling.NewController(servertooling.Dependencies{
+		Rooms:        rooms,
+		BuildVersion: gameIdentity.Version,
+		ReportWriter: measurement.NewReportWriter("measurement-results/game-server"),
+	})
 
 	webRTCTransportConfig := buildWebRTCTransportConfigFromEnv()
 	networking.SetWebRTCTransportConfig(webRTCTransportConfig)
@@ -151,7 +158,7 @@ func runWithContext(ctx context.Context) int {
 	authVerifier := buildAuthVerifierFromEnv(startupTraceID)
 
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporter(rooms, authVerifier, reporter))
+	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporterAndTooling(rooms, authVerifier, reporter, measurementController, nil))
 
 	playerDataProfileHandler := newPlayerDataProfileHTTPHandler(playerDataRuntime, authVerifier)
 	playerDataLocalProfilesHandler := newPlayerDataLocalProfilesHTTPHandler(playerDataRuntime)

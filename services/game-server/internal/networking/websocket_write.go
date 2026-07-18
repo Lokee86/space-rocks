@@ -196,6 +196,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			})
 			return false
 		}
+		session.observePacketWrite(string(candidate.Lane()), candidate.PacketFamily(), len(encodedPacket))
 		if candidate.Kind() == realtime.RealtimeLaneCandidateKindEventBatch {
 			drainActiveEventBatchAfterWrite(gameplayContext.Game, context.GamePlayerID, result.EventBatchEventIDs)
 		}

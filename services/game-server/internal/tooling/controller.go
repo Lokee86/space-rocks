@@ -15,10 +15,15 @@ import (
 
 var _ networkingtooling.MeasurementController = (*Controller)(nil)
 
+type ServerReportWriter interface {
+	Write(measurement.ServerReport) (string, error)
+}
+
 type Dependencies struct {
 	Rooms        *rooms.RoomManager
 	BuildVersion string
 	RunOptions   []measurement.RunOption
+	ReportWriter ServerReportWriter
 }
 
 type Controller struct {
@@ -27,6 +32,7 @@ type Controller struct {
 	buildVersion string
 	runs         map[string]*ownedRun
 	runOptions   []measurement.RunOption
+	reportWriter ServerReportWriter
 }
 
 type ownedRun struct {
@@ -42,6 +48,7 @@ func NewController(deps Dependencies) *Controller {
 		buildVersion: deps.BuildVersion,
 		runs:         make(map[string]*ownedRun),
 		runOptions:   append([]measurement.RunOption(nil), deps.RunOptions...),
+		reportWriter: deps.ReportWriter,
 	}
 }
 
@@ -98,10 +105,12 @@ func (controller *Controller) Stop(context networkingtooling.Context, request pr
 		return protocol.MeasurementStopped{}, err
 	}
 	report := state.finalize(measurement.StopReasonComplete)
+	exportResult, _ := controller.persistReport(report)
 	payload, err := reportMap(report)
 	if err != nil {
 		return protocol.MeasurementStopped{}, err
 	}
+	payload["server_export"] = exportResult
 	controller.removeRun(context.SessionID, state)
 	return protocol.MeasurementStopped{
 		Type:          protocol.PacketTypeMeasurementStopped,
@@ -158,9 +167,23 @@ func (controller *Controller) FinalizePartial(context networkingtooling.Context,
 	if state == nil {
 		return nil
 	}
-	state.finalize(partialStopReason(reason))
+	report := state.finalize(partialStopReason(reason))
+	_, writeErr := controller.persistReport(report)
 	controller.removeRun(context.SessionID, state)
-	return nil
+	return writeErr
+}
+
+func (controller *Controller) ObservePacketWrite(context networkingtooling.Context, lane string, packetFamily string, encodedBytes int) {
+	if context.SessionID == "" {
+		return
+	}
+	controller.mu.Lock()
+	state := controller.runs[context.SessionID]
+	controller.mu.Unlock()
+	if state == nil {
+		return
+	}
+	state.observePacketWrite(lane, packetFamily, encodedBytes)
 }
 
 func (controller *Controller) resolveRoomGame(context networkingtooling.Context) (*rooms.Room, *game.Game, error) {
@@ -225,12 +248,38 @@ func (state *ownedRun) reset() bool {
 	return true
 }
 
+func (state *ownedRun) observePacketWrite(lane string, packetFamily string, encodedBytes int) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	state.run.ObservePacketWrite(lane, packetFamily, encodedBytes)
+}
+
 func (state *ownedRun) finalize(reason measurement.StopReason) measurement.ServerReport {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	report := state.run.Finalize(reason)
 	state.detachOnce.Do(state.detach)
 	return report
+}
+
+func (controller *Controller) persistReport(report measurement.ServerReport) (map[string]any, error) {
+	result := map[string]any{
+		"success": false,
+		"path":    "",
+		"error":   "",
+	}
+	if controller.reportWriter == nil {
+		result["error"] = "measurement report writer is not configured"
+		return result, nil
+	}
+	path, err := controller.reportWriter.Write(report)
+	if err != nil {
+		result["error"] = err.Error()
+		return result, err
+	}
+	result["success"] = true
+	result["path"] = path
+	return result, nil
 }
 
 func partialStopReason(reason string) measurement.StopReason {

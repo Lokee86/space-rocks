@@ -38,10 +38,15 @@ type webSocketSession struct {
 	firstInputPacketLogged      bool
 	firstRespawnPacketLogged    bool
 	webrtcTransport             *WebRTCTransport
+	packetObserver              packetObserver
 	toolingRouter               *toolingrouter.Router
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
+	return newWebSocketSessionWithTooling(conn, roomManager, authVerifier, reporter, nil, nil)
+}
+
+func newWebSocketSessionWithTooling(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter, measurementController toolingrouter.MeasurementController, telemetryProvider toolingrouter.TelemetryProvider) *webSocketSession {
 	sessionNumber := nextSessionID.Add(1)
 	if reporter == nil {
 		reporter = rooms.NoopMatchResultReporter{}
@@ -57,7 +62,8 @@ func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, a
 		identity:            NewGuestSessionIdentity(),
 		authVerifier:        authVerifier,
 		matchResultReporter: reporter,
-		toolingRouter:       toolingrouter.NewRouter(nil, nil),
+		packetObserver:      packetObserverFor(measurementController),
+		toolingRouter:       toolingrouter.NewRouter(measurementController, telemetryProvider),
 	}
 }
 
