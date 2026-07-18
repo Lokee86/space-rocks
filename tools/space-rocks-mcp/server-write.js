@@ -14,7 +14,7 @@ const chromeDevtoolsEnabled = process.env.ENABLE_CHROME_DEVTOOLS === "1";
 function createMcpServer() {
   const server = new McpServer({
     name: "space-rocks-write-mcp",
-    version: "0.1.0",
+    version: "0.2.0",
   });
 
   registerRepoWriteTools(server);

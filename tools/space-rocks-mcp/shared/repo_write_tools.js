@@ -1,29 +1,14 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-
 import { z } from "zod";
 
-import { repoPath, repoRelative } from "./paths.js";
 import { textResponse } from "./responses.js";
-import { isProbablyTextFile } from "./text_files.js";
 import { listAllowedCommands, runAllowedCommand } from "./allowed_commands.js";
+import { defaultWorkspaceWriteService } from "./workspace_writes.js";
 
-async function fileExists(filePath) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
+function changedFilesResponse(result) {
+  return textResponse(JSON.stringify({ changed_files: result.changedFiles }));
 }
 
-function assertWritableTextFile(filePath) {
-  if (!isProbablyTextFile(filePath)) {
-    throw new Error("Refusing to write non-text or unsupported file type");
-  }
-}
-
-export function registerRepoWriteTools(server) {
+export function registerRepoWriteTools(server, { workspaceWriteService = defaultWorkspaceWriteService } = {}) {
   server.registerTool(
     "ping",
     {
@@ -41,8 +26,8 @@ export function registerRepoWriteTools(server) {
   server.registerTool(
     "write_repo_file",
     {
-      title: "Write repo file",
-      description: "Write a UTF-8 text file inside the Space Rocks repo.",
+      title: "Write workspace file",
+      description: "Write a UTF-8 text file inside the configured workspace.",
       inputSchema: {
         path: z.string(),
         text: z.string(),
@@ -50,25 +35,16 @@ export function registerRepoWriteTools(server) {
       },
     },
     async ({ path: requestedPath, text, overwrite = false }) => {
-      const filePath = repoPath(requestedPath);
-      assertWritableTextFile(filePath);
-
-      if (!overwrite && await fileExists(filePath)) {
-        throw new Error("File already exists. Set overwrite=true to replace it.");
-      }
-
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, text, "utf8");
-
-      return textResponse(`Wrote ${repoRelative(filePath)}`);
+      const result = await workspaceWriteService.applyBatch([{ type: "write", path: requestedPath, text, overwrite }]);
+      return changedFilesResponse(result);
     }
   );
 
   server.registerTool(
     "replace_in_repo_file",
     {
-      title: "Replace in repo file",
-      description: "Replace exactly one text occurrence in a repo file.",
+      title: "Replace in workspace file",
+      description: "Replace exactly one text occurrence in a configured workspace file.",
       inputSchema: {
         path: z.string(),
         expected: z.string(),
@@ -76,23 +52,36 @@ export function registerRepoWriteTools(server) {
       },
     },
     async ({ path: requestedPath, expected, replacement }) => {
-      const filePath = repoPath(requestedPath);
-      assertWritableTextFile(filePath);
+      const result = await workspaceWriteService.applyBatch([{ type: "replace", path: requestedPath, expected, replacement }]);
+      return changedFilesResponse(result);
+    }
+  );
 
-      const text = await fs.readFile(filePath, "utf8");
-      const count = text.split(expected).length - 1;
-
-      if (count === 0) {
-        throw new Error("Expected text was not found.");
-      }
-
-      if (count > 1) {
-        throw new Error(`Expected text appears ${count} times. Refusing ambiguous replacement.`);
-      }
-
-      await fs.writeFile(filePath, text.replace(expected, replacement), "utf8");
-
-      return textResponse(`Updated ${repoRelative(filePath)}`);
+  server.registerTool(
+    "apply_repo_file_edits",
+    {
+      title: "Apply workspace file edits",
+      description: "Apply a transactional batch of text writes and exact replacements inside the configured workspace.",
+      inputSchema: {
+        edits: z.array(z.discriminatedUnion("type", [
+          z.object({
+            type: z.literal("write"),
+            path: z.string(),
+            text: z.string(),
+            overwrite: z.boolean().optional(),
+          }),
+          z.object({
+            type: z.literal("replace"),
+            path: z.string(),
+            expected: z.string(),
+            replacement: z.string(),
+          }),
+        ])).min(1).max(100),
+      },
+    },
+    async ({ edits }) => {
+      const result = await workspaceWriteService.applyBatch(edits);
+      return changedFilesResponse(result);
     }
   );
 

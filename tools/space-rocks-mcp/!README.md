@@ -51,11 +51,14 @@ The main shared modules are:
 - `shared/text_files.js` for text-file detection, workspace walking, and workspace search helpers.
 - `shared/allowed_commands.js` for the bounded shell command allowlist.
 - `shared/repo_readonly_tools.js` for workspace read/search tools.
-- `shared/repo_write_tools.js` for bounded repo write tools.
+- `shared/repo_write_tools.js` for compatibility-named configured-workspace write tools.
+- `shared/workspace_writes.js` for transactional text writes and exact replacements within `WORKSPACE_ROOT`.
 - `shared/engineforge_bridge.js` for discovering and calling the local EngineForge bridge.
 - `shared/engineforge_readonly_tools.js` for safe Godot bridge diagnostics.
 - `shared/engineforge_write_tools.js` for Godot mutation tools.
 - `shared/hermes_tools.js` for Hermes CLI MCP tools.
+- `shared/job_manager.js` for the in-memory asynchronous process-job lifecycle, bounded output buffers, cancellation, timeouts, and retention.
+- `shared/job_tools.js` for MCP status, output-read, cancellation, and list tools for process jobs.
 
 ## Chrome DevTools / Plasmic bridge
 
@@ -73,10 +76,33 @@ npm run start:info
 ## Tool groups
 
 - Workspace read tools: `ping`, `workspace_root`, `repo_root`, `list_repo_tree`, `read_repo_file`, `search_repo_text`. The repo-named tools remain compatibility names and operate on workspace-relative paths after `WORKSPACE_ROOT` is configured; `repo_root` returns the configured workspace root as an alias of `workspace_root`.
-- Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `list_allowed_commands`, `run_allowed_command`
+- Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `apply_repo_file_edits`, `list_allowed_commands`, `run_allowed_command`
 - EngineForge read tools: bridge info, bridge status, route probing, command probing, project info, scene tree, node properties, editor logs
 - EngineForge write tools: scene open/save/create, node create/delete/duplicate/reparent/property/transform, script create/edit/detach/delete/attach, resource create, material helpers, editor play/stop/pause, console clear, animation play/stop
-- Hermes tools: `hermes_run`, `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`, `hermes_session_send_batch`, `hermes_terminal_start`, `hermes_terminal_send`, `hermes_terminal_read`, `hermes_terminal_resize`, `hermes_terminal_close`. These tools provide access to the Hermes CLI and persistent Hermes PTY sessions.
+- Hermes tools: `hermes_run`, `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`, `hermes_session_send_batch`, `hermes_job_start`, `hermes_terminal_start`, `hermes_terminal_send`, `hermes_terminal_read`, `hermes_terminal_resize`, `hermes_terminal_close`. These tools provide access to the Hermes CLI, asynchronous Hermes session jobs, and persistent Hermes PTY sessions.
+- Process-job tools: `job_status`, `job_read`, `job_cancel`, `job_list`. These tools inspect and control retained asynchronous process jobs.
+
+## Workspace write tools
+
+The write server's file mutation tools operate inside the configured `WORKSPACE_ROOT`. The compatibility names `write_repo_file` and `replace_in_repo_file` are retained, but they no longer imply that the target must be inside only the Space Rocks repository.
+
+- `write_repo_file` writes a UTF-8 text file and returns `{ "changed_files": [...] }`. Creating a missing file is allowed; replacing an existing file requires `overwrite: true` and the default remains `overwrite: false`.
+- `replace_in_repo_file` replaces exactly one occurrence of `expected` with `replacement` and returns `{ "changed_files": [...] }`.
+- `apply_repo_file_edits` applies a transactional batch and returns `{ "changed_files": [...] }`.
+
+`apply_repo_file_edits` accepts an `edits` array with 1–100 entries. Each entry is one of:
+
+```json
+{ "type": "write", "path": "src/file.js", "text": "content", "overwrite": false }
+```
+
+```json
+{ "type": "replace", "path": "src/file.js", "expected": "old", "replacement": "new" }
+```
+
+The full batch is preflighted before any target is mutated. Edits to the same file are applied in input order, each unique file is committed once, and each final file is staged in its target directory and installed through rename. If a later commit fails, the service makes a best-effort rollback to original contents and removes newly created targets.
+
+Paths under `.worktrees/` and `.workingtrees/` are writable when they remain inside `WORKSPACE_ROOT`. `.git` path components, root escapes, unsupported file types, and paths containing existing symlink components are rejected.
 
 ## Hermes CLI Tools
 
@@ -94,6 +120,28 @@ The Hermes MCP tools provide bounded CLI access:
 - `hermes_terminal_read` - Reads unread incremental output from a PTY session
 - `hermes_terminal_resize` - Resizes a PTY session
 - `hermes_terminal_close` - Closes a PTY session and removes it from the manager
+- `hermes_job_start` - Starts an asynchronous Hermes session prompt job and returns its job snapshot immediately
+
+## Asynchronous Hermes jobs
+
+Asynchronous Hermes jobs use the shared in-memory process-job manager. The workflow is:
+
+1. Call `hermes_job_start` with a prompt, optional `session_name`, optional allowed `cwd`, and optional `timeout_ms`.
+2. The tool returns immediately with the job snapshot and opaque `job_...` ID.
+3. Poll `job_status` with that ID until the job reaches a terminal state.
+4. Call `job_read` for `stdout` or `stderr`, passing the returned cursor as the next `cursor` to read incremental output. The response preserves `nextCursor`, total offsets, rollover start offsets, and `truncated`.
+5. Call `job_cancel` when the job should be stopped before completion.
+
+The process-job states are `queued`, `running`, `succeeded`, `failed`, `cancelled`, and `timed_out`.
+
+The manager defaults are:
+
+- maximum four concurrently running jobs;
+- a 50,000-character rolling buffer for each job's stdout and stderr stream;
+- completed-job retention for 15 minutes, after which status and output are no longer available;
+- a 5-minute default timeout for Hermes jobs, configurable per job up to a maximum of one hour.
+
+Only one queued or running asynchronous job is allowed for a given Hermes `session_name`. Jobs for different session names, and unrelated process jobs, may overlap subject to the shared concurrency limit. A new job may use the session after the previous job reaches a terminal state or expires.
 
 The `hermes_session_send` tool preserves continuous context by sending prompts to the same named Hermes session. The internal command shape is:
 

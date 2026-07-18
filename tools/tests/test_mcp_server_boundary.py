@@ -13,9 +13,17 @@ def test_info_server_blocks_write_tools_but_allows_hermes_cli() -> None:
     assert "repo_write_tools" not in text
     assert "engineforge_write_tools" not in text
     assert "allowed_commands" not in text
+    assert "workspace_writes" not in text
+    assert "apply_repo_file_edits" not in text
+    assert "write_repo_file" not in text
+    assert "replace_in_repo_file" not in text
 
     # Hermes CLI tools are explicitly allowed
     assert "hermes_tools" in text
+
+    # Process-job lifecycle tools are registered on the Info server
+    assert "job_tools" in text
+    assert "registerJobTools" in text
 
 
 def test_readonly_tools_remain_readonly() -> None:
@@ -71,6 +79,7 @@ def test_hermes_tools_allow_hermes_cli_args_but_not_general_shells() -> None:
     assert "hermes_session_send" in text
     assert "hermes_session_status" in text
     assert "hermes_sessions_list" in text
+    assert "hermes_job_start" in text
 
     # Session send uses chat + bounded session interaction flags
     assert "chat" in text
@@ -86,3 +95,12 @@ def test_write_server_imports_write_helpers() -> None:
 
     assert "repo_write_tools" in text
     assert "engineforge_write_tools" in text
+    assert 'version: "0.2.0"' in text
+
+
+def test_repo_write_tools_use_workspace_write_service_and_batch_tool() -> None:
+    text = read_text("tools/space-rocks-mcp/shared/repo_write_tools.js")
+
+    assert "workspace_writes" in text
+    assert "defaultWorkspaceWriteService" in text
+    assert "apply_repo_file_edits" in text

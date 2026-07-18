@@ -36,12 +36,34 @@ Use this as the first stop when you need to decide which MCP server to connect t
 || Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Workspace reads/search, read-only Godot diagnostics, optional Chrome/Plasmic tools, default Hermes session tools |
 || Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
 
+## Shared process-job modules
+
+- `tools/space-rocks-mcp/shared/job_manager.js` owns the in-memory asynchronous process-job lifecycle, process spawning, cancellation, timeouts, bounded output buffers, concurrency, and retention.
+- `tools/space-rocks-mcp/shared/job_tools.js` exposes the read/control MCP surface: `job_status`, `job_read`, `job_cancel`, and `job_list`.
+- The Info MCP server uses one shared `defaultProcessJobManager` for `hermes_job_start` and the four process-job tools.
+
 ## Workspace and project roots
 
 - `WORKSPACE_ROOT` controls the active Info MCP read/search boundary and the default/allowed workspace boundary for Hermes `cwd`. It defaults to the Space Rocks repository root when unset.
 - `SPACE_ROCKS_REPO` remains the Space Rocks-specific repository root for project-specific integrations and compatibility paths. Its package-location default remains the actual Space Rocks repository root.
 - The canonical `workspace_root` tool returns the configured workspace root. Existing repo-named read tools (`repo_root`, `list_repo_tree`, `read_repo_file`, and `search_repo_text`) remain compatibility names but operate workspace-relative after `WORKSPACE_ROOT` is configured; `repo_root` returns the same configured workspace root.
 - EngineForge remains independently configured or discovered through `SPACE_ROCKS_GODOT_PROJECT`, `ENGINEFORGE_BRIDGE_FILE`, and `ENGINEFORGE_BRIDGE_URL`. A broader workspace does not widen EngineForge access beyond its configured Godot project and local bridge.
+
+## Write MCP workspace file tools
+
+The Write MCP file tools operate inside the configured `WORKSPACE_ROOT`:
+
+- `write_repo_file` and `replace_in_repo_file` retain their compatibility names but target the configured workspace.
+- `apply_repo_file_edits` accepts an `edits` array of 1–100 discriminated entries:
+  - `{ "type": "write", "path": "...", "text": "...", "overwrite": false }`
+  - `{ "type": "replace", "path": "...", "expected": "...", "replacement": "..." }`
+- `write_repo_file` permits creating missing files, but an existing target requires `overwrite: true`; its default remains `false`.
+- `replace_in_repo_file` and replace edits require exactly one occurrence of `expected`.
+- All three mutation tools return JSON containing `changed_files`.
+
+The full batch is preflighted before mutation. Same-file edits are applied in input order, each unique file is committed once, and each final file is staged in its target directory and installed through rename. If a later commit fails, the service makes a best-effort rollback to original contents and removes newly created targets.
+
+Descendants under `.worktrees/` and `.workingtrees/` are writable when they remain inside `WORKSPACE_ROOT`. `.git` components, paths escaping the root, unsupported file types, and paths containing existing symlink components are rejected.
 
 ## Hermes CLI Tools
 
@@ -54,6 +76,23 @@ Info MCP exposes Hermes CLI tools for continuous context across prompt sequences
 - `hermes_sessions_list` - Lists all Hermes sessions (runs `hermes sessions list`)
 - `hermes_session_send` - Sends a prompt into a named Hermes session
 - `hermes_session_send_batch` - Sends multiple prompts into a named Hermes session through the connector
+- `hermes_job_start` - Starts an asynchronous Hermes session prompt job and returns immediately with a job snapshot
+
+### Asynchronous Hermes session jobs
+
+Use `hermes_job_start` when a Hermes prompt should run without holding the MCP request open. The lifecycle is:
+
+1. Start the job with `prompt`, optional `session_name`, optional allowed `cwd`, and optional `timeout_ms`.
+2. Receive the immediate response containing the opaque `job_...` ID and initial job snapshot.
+3. Poll `job_status` until the state is terminal.
+4. Read incremental `stdout` or `stderr` with `job_read`, passing each response's `nextCursor` as the next `cursor`. Cursor reads preserve total offsets, rolling-buffer start offsets, and `truncated` when older output has rolled out.
+5. Use `job_cancel` when cancellation is required; use `job_list` to inspect retained jobs, optionally filtered by state.
+
+The lifecycle states are `queued`, `running`, `succeeded`, `failed`, `cancelled`, and `timed_out`.
+
+The shared manager allows four running jobs by default. Each job keeps a separate rolling 50,000-character buffer for stdout and stderr. Completed jobs are retained for 15 minutes before status and output expire. Hermes jobs default to a 5-minute timeout; `timeout_ms` is configurable from 1,000 ms through a maximum of one hour.
+
+Only one queued or running asynchronous Hermes job is allowed for each `session_name`. Unrelated session names and unrelated process jobs may overlap, subject to the shared concurrency limit. A new job for a session is allowed after the prior job reaches a terminal state or expires.
 
 ### hermes_session_send
 
@@ -273,6 +312,7 @@ Use Info MCP when you need:
 Use Write MCP when you need:
 
 - bounded repo writes
+- transactional workspace file writes and exact replacements
 - allowlisted command execution
 - scene edits
 - script edits

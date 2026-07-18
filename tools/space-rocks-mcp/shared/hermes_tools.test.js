@@ -27,10 +27,16 @@ function makeFakePty({ onWrite, onKill } = {}) {
 test("registerHermesTools exposes the new PTY tools", () => {
   const server = createMockServer();
   registerHermesTools(server, { manager: new HermesTerminalManager({ spawnPty: () => { throw new Error("not used"); } }) });
-  for (const name of ["hermes_terminal_start", "hermes_terminal_send", "hermes_terminal_read", "hermes_terminal_resize", "hermes_terminal_close"]) assert.ok(server.tools.has(name), `${name} should be registered`);
+  for (const name of ["hermes_terminal_start", "hermes_terminal_send", "hermes_terminal_read", "hermes_terminal_resize", "hermes_terminal_close", "hermes_job_start"]) assert.ok(server.tools.has(name), `${name} should be registered`);
   const sendSchema = server.tools.get("hermes_terminal_send").config.inputSchema;
   assert.equal(sendSchema.session_id.format, "regex");
   assert.equal(sendSchema.append_enter.def.defaultValue, true);
+  const jobTimeoutSchema = server.tools.get("hermes_job_start").config.inputSchema.timeout_ms;
+  assert.equal(jobTimeoutSchema.def.defaultValue, 300000);
+  assert.equal(jobTimeoutSchema.safeParse(999).success, false);
+  assert.equal(jobTimeoutSchema.safeParse(1000).success, true);
+  assert.equal(jobTimeoutSchema.safeParse(3600000).success, true);
+  assert.equal(jobTimeoutSchema.safeParse(3600001).success, false);
 });
 
 test("HermesTerminalManager starts, queues sends, reads, resizes, and closes sessions", async () => {
@@ -43,7 +49,7 @@ test("HermesTerminalManager starts, queues sends, reads, resizes, and closes ses
       return pty;
     },
   });
-  const { sessionId, session } = manager.start({ cwd: ".", cols: 90, rows: 20 });
+  const { sessionId, session } = manager.start({ cols: 90, rows: 20 });
   assert.match(sessionId, /^ht_/);
   assert.match(created[0].command, /hermes(\.exe)?$/i);
   assert.equal(created[0].options.cwd, WORKSPACE_ROOT);
@@ -109,7 +115,7 @@ test("Hermes tools reject unrelated external cwd values", async () => {
   const manager = new HermesTerminalManager({ spawnPty: () => makeFakePty() });
   const server = createMockServer();
   registerHermesTools(server, { manager, runHermesImpl: async () => ({ ok: true }) });
-  const externalCwd = path.resolve("..", "hermes-external");
+  const externalCwd = path.join(path.dirname(WORKSPACE_ROOT), "hermes-external");
   await assert.rejects(() => server.tools.get("hermes_terminal_start").handler({ cwd: externalCwd }), /cwd must be WORKSPACE_ROOT/);
 });
 
@@ -134,4 +140,71 @@ test("HermesTerminalManager collects initial output during startup", async () =>
   await session.settleStartup();
   assert.equal(session.read({ maxChars: 100 }), "banner> ");
   manager.close(sessionId);
+});
+
+function makeFakeProcessJobManager(jobs = []) {
+  const starts = [];
+  return {
+    jobs,
+    starts,
+    list() { return jobs; },
+    start(options) {
+      starts.push(options);
+      return { jobId: "job_test", state: "queued", args: options.publicArgs, metadata: options.metadata, cwd: options.cwd };
+    },
+  };
+}
+
+test("hermes_job_start registers, starts immediately, and redacts the prompt", async () => {
+  const processJobManager = makeFakeProcessJobManager();
+  const server = createMockServer();
+  registerHermesTools(server, { processJobManager });
+
+  const response = await server.tools.get("hermes_job_start").handler({
+    prompt: "private prompt",
+    session_name: "session-one",
+    cwd: WORKSPACE_ROOT,
+    timeout_ms: 123,
+  });
+  const job = JSON.parse(response.content[0].text);
+  const start = processJobManager.starts[0];
+
+  assert.equal(job.state, "queued");
+  assert.match(start.command, /hermes(\.exe)?$/i);
+  assert.deepEqual(start.args, ["chat", "-Q", "--continue", "session-one", "--query", "private prompt"]);
+  assert.deepEqual(start.publicArgs, ["chat", "-Q", "--continue", "session-one", "--query", "[redacted]"]);
+  assert.equal(start.publicArgs.includes("private prompt"), false);
+  assert.equal(start.cwd, WORKSPACE_ROOT);
+  assert.equal(start.timeoutMs, 123);
+  assert.deepEqual(start.metadata, { kind: "hermes_session_job", session_name: "session-one", prompt_chars: 14 });
+});
+
+test("hermes_job_start validates Hermes cwd", async () => {
+  const processJobManager = makeFakeProcessJobManager();
+  const server = createMockServer();
+  registerHermesTools(server, { processJobManager });
+
+  await assert.rejects(
+    () => server.tools.get("hermes_job_start").handler({ prompt: "hello", session_name: "session-one", cwd: path.resolve("C:/outside-space-rocks") }),
+    /cwd must be WORKSPACE_ROOT/
+  );
+  assert.equal(processJobManager.starts.length, 0);
+});
+
+test("hermes_job_start rejects an active session job and allows terminal jobs", async () => {
+  const jobs = [{ state: "running", metadata: { kind: "hermes_session_job", session_name: "session-one" } }];
+  const processJobManager = makeFakeProcessJobManager(jobs);
+  const server = createMockServer();
+  registerHermesTools(server, { processJobManager });
+  const handler = server.tools.get("hermes_job_start").handler;
+
+  await assert.rejects(
+    () => handler({ prompt: "second", session_name: "session-one", cwd: WORKSPACE_ROOT }),
+    /already queued or running/
+  );
+  assert.equal(processJobManager.starts.length, 0);
+
+  jobs[0].state = "succeeded";
+  await handler({ prompt: "after completion", session_name: "session-one", cwd: WORKSPACE_ROOT });
+  assert.equal(processJobManager.starts.length, 1);
 });
