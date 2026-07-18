@@ -17,6 +17,9 @@ func (game *Game) objectivesRuntime() *objectives.Runtime {
 func (game *Game) RegisterObjectiveDefinition(definition objectives.Definition) error {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	return game.objectivesRuntime().RegisterDefinition(definition)
 }
 
@@ -26,6 +29,9 @@ func (game *Game) CreateObjectiveInstance(
 ) (objectives.InstanceID, error) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return "", fmt.Errorf("match results are locked")
+	}
 	instanceID, events, err := game.objectivesRuntime().CreateInstance(definitionID, registration)
 	game.publishObjectiveEventsLocked(events)
 	return instanceID, err
@@ -34,6 +40,9 @@ func (game *Game) CreateObjectiveInstance(
 func (game *Game) RetireObjectiveDefinition(definitionID objectives.DefinitionID) error {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	events, err := game.objectivesRuntime().RetireDefinition(definitionID)
 	game.publishObjectiveEventsLocked(events)
 	return err
@@ -42,6 +51,9 @@ func (game *Game) RetireObjectiveDefinition(definitionID objectives.DefinitionID
 func (game *Game) ApplyObjectiveFacts(instanceID objectives.InstanceID, facts []objectives.Fact) error {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	events, err := game.objectivesRuntime().ApplyFacts(instanceID, facts)
 	game.publishObjectiveEventsLocked(events)
 	return err
@@ -50,6 +62,9 @@ func (game *Game) ApplyObjectiveFacts(instanceID objectives.InstanceID, facts []
 func (game *Game) ApplyObjectiveFactsToScope(scope objectives.Scope, ownerID string, facts []objectives.Fact) error {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	events, err := game.objectivesRuntime().ApplyFactsToScope(scope, ownerID, facts)
 	game.publishObjectiveEventsLocked(events)
 	return err
@@ -85,6 +100,9 @@ func (game *Game) publishObjectiveEventsLocked(events []objectives.Event) {
 }
 
 func (game *Game) stepObjectives(delta float64) {
+	if game.lockedFinalMatchState != nil {
+		return
+	}
 	simulationPaused := len(game.playerSessions) == 0
 	events := game.objectivesRuntime().Step(delta, simulationPaused)
 	game.publishObjectiveEventsLocked(events)

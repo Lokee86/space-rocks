@@ -82,6 +82,9 @@ func (game *Game) AddGameplayAwardObserver(observer func(awards.EventResult)) {
 func (game *Game) ApplyGameplayAwardEvent(eventID string, mutations []awards.Mutation) (awards.EventResult, error) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return awards.EventResult{}, fmt.Errorf("match results are locked")
+	}
 	for _, mutation := range mutations {
 		if mutation.Owner.Scope == awards.ScopePlayer && !game.playerCanReceiveAwardsLocked(mutation.Owner.ID) {
 			return awards.EventResult{}, fmt.Errorf("player %q cannot receive new awards", mutation.Owner.ID)
@@ -122,6 +125,9 @@ func (game *Game) nextAwardEventIDLocked(prefix string) string {
 }
 
 func (game *Game) applyAwardMutationsLocked(eventID string, mutations []awards.Mutation) (awards.EventResult, error) {
+	if game.lockedFinalMatchState != nil {
+		return awards.EventResult{}, fmt.Errorf("match results are locked")
+	}
 	result, err := game.awardsRuntime().ApplyEvent(eventID, mutations)
 	if err != nil || !result.Applied {
 		return result, err

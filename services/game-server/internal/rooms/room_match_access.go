@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/matchresults"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 	"github.com/google/uuid"
 )
@@ -58,6 +59,18 @@ func (room *Room) ResolvedMatchSummary() (playerdata.MatchResultSummary, bool) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 	return room.match.ResolvedSummary()
+}
+
+func (room *Room) MatchSummary() (matchresults.MatchSummary, bool) {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	return room.match.MatchSummary()
+}
+
+func (room *Room) MatchResultDispatch() (matchresults.DispatchSlices, bool) {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+	return room.match.MatchDispatch()
 }
 
 func (room *Room) MatchResultReported() bool {

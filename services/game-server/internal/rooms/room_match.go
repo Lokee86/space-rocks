@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/matchresults"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 	"github.com/google/uuid"
 )
@@ -17,6 +18,9 @@ type roomMatch struct {
 	currentMatchID        string
 	currentTraceID        string
 	resolvedSummary       *playerdata.MatchResultSummary
+	matchSummary          *matchresults.MatchSummary
+	matchDispatch         *matchresults.DispatchSlices
+	endOfMatchFlow        *matchresults.EndOfMatchFlow
 	matchResultReported   bool
 	matchResultReporting  bool
 }
@@ -32,6 +36,7 @@ func newRoomMatch(gameInstance *game.Game) *roomMatch {
 		game:                  gameInstance,
 		activeSessionIDs:      make(map[string]struct{}),
 		participantIdentities: make(map[string]matchParticipantIdentity),
+		endOfMatchFlow:        matchresults.NewEndOfMatchFlow(),
 	}
 }
 
@@ -92,6 +97,9 @@ func (rm *roomMatch) BeginNextMatch(roomID string) string {
 	rm.participantIdentities = make(map[string]matchParticipantIdentity)
 	rm.matchResultReported = false
 	rm.matchResultReporting = false
+	rm.endOfMatchFlow = matchresults.NewEndOfMatchFlow()
+	rm.matchSummary = nil
+	rm.matchDispatch = nil
 	rm.ClearResolvedSummary()
 	if rm.game != nil {
 		rm.game.SetMatchContext(rm.currentMatchID, rm.currentTraceID)
@@ -127,7 +135,45 @@ func (rm *roomMatch) ResolvedSummary() (playerdata.MatchResultSummary, bool) {
 
 func (rm *roomMatch) ClearResolvedSummary() {
 	rm.resolvedSummary = nil
+	rm.matchSummary = nil
+	rm.matchDispatch = nil
 	rm.matchResultReporting = false
+}
+
+func (rm *roomMatch) ResolveEndOfMatch(input matchresults.BuildInput) (matchresults.MatchSummary, matchresults.DispatchSlices, bool, error) {
+	if rm.endOfMatchFlow == nil {
+		rm.endOfMatchFlow = matchresults.NewEndOfMatchFlow()
+	}
+	summary, emitted, err := rm.endOfMatchFlow.Run(input)
+	if err != nil {
+		return matchresults.MatchSummary{}, matchresults.DispatchSlices{}, false, err
+	}
+	if rm.matchSummary == nil {
+		stored := summary
+		dispatch := (matchresults.MatchSummaryDispatcher{}).Dispatch(summary)
+		if rm.resolvedSummary != nil {
+			dispatch.Persistence = *rm.resolvedSummary
+		} else {
+			rm.SetResolvedSummary(dispatch.Persistence)
+		}
+		rm.matchSummary = &stored
+		rm.matchDispatch = &dispatch
+	}
+	return *rm.matchSummary, *rm.matchDispatch, emitted, nil
+}
+
+func (rm *roomMatch) MatchSummary() (matchresults.MatchSummary, bool) {
+	if rm.endOfMatchFlow == nil {
+		return matchresults.MatchSummary{}, false
+	}
+	return rm.endOfMatchFlow.Summary()
+}
+
+func (rm *roomMatch) MatchDispatch() (matchresults.DispatchSlices, bool) {
+	if rm.matchDispatch == nil {
+		return matchresults.DispatchSlices{}, false
+	}
+	return *rm.matchDispatch, true
 }
 
 func (rm *roomMatch) MarkMatchResultReported() {

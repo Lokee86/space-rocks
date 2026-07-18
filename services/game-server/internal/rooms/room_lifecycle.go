@@ -7,6 +7,7 @@ var (
 	stopGameCall         = func(instance *game.Game) { instance.Stop() }
 	matchDecisionCall    = func(instance *game.Game) bool { return instance.MatchDecision().IsOver }
 	playerMatchFactsCall = func(instance *game.Game) []game.PlayerMatchFact { return instance.PlayerMatchFacts() }
+	finalMatchStateCall  = func(instance *game.Game) (game.FinalMatchState, bool) { return instance.LockFinalMatchState() }
 )
 
 func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game) *RoomDomainError {
@@ -137,14 +138,18 @@ func (room *Room) MarkGameOver() *RoomDomainError {
 		return err
 	}
 	facts := playerMatchFactsCall(capture.Game)
-	summary := buildMatchResultSummary(capture, facts)
+	finalState, locked := finalMatchStateCall(capture.Game)
+	if !locked {
+		finalState = game.FinalMatchState{Players: facts}
+	}
+	input := buildEndOfMatchInput(capture, finalState, "manual_game_over")
 	room.mu.Lock()
 	defer room.mu.Unlock()
 	if !room.gameOverCaptureMatchesLocked(capture) {
 		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Room game state changed."}
 	}
-	if _, ok := room.match.ResolvedSummary(); !ok {
-		room.match.SetResolvedSummary(summary)
+	if _, _, _, flowErr := room.match.ResolveEndOfMatch(input); flowErr != nil {
+		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: flowErr.Error()}
 	}
 	room.State = RoomStateGameOver
 	return nil
@@ -164,14 +169,18 @@ func (room *Room) MarkGameOverIfComplete() bool {
 		return false
 	}
 	facts := playerMatchFactsCall(capture.Game)
-	summary := buildMatchResultSummary(capture, facts)
+	finalState, locked := finalMatchStateCall(capture.Game)
+	if !locked {
+		finalState = game.FinalMatchState{Players: facts}
+	}
+	input := buildEndOfMatchInput(capture, finalState, "simulation_complete")
 	room.mu.Lock()
 	defer room.mu.Unlock()
 	if !room.gameOverCaptureMatchesLocked(capture) || room.State != RoomStateInGame {
 		return false
 	}
-	if _, ok := room.match.ResolvedSummary(); !ok {
-		room.match.SetResolvedSummary(summary)
+	if _, _, _, flowErr := room.match.ResolveEndOfMatch(input); flowErr != nil {
+		return false
 	}
 	room.State = RoomStateGameOver
 	return true

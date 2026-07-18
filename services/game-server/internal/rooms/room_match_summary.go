@@ -2,25 +2,59 @@ package rooms
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/matchresults"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
-func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFact) playerdata.MatchResultSummary {
-	mode := playerdata.MatchModeMultiplayer
+func buildEndOfMatchInput(capture gameOverCapture, state game.FinalMatchState, endReason string) matchresults.BuildInput {
+	session := matchresults.SessionMultiplayer
 	if !capture.Joinable {
-		mode = playerdata.MatchModeSinglePlayer
+		session = matchresults.SessionSinglePlayer
 	}
-	players := make([]playerdata.PlayerMatchSummary, 0, len(facts))
-	for _, fact := range facts {
-		summary := playerdata.PlayerMatchSummary{GamePlayerID: fact.GamePlayerID, TeamID: string(fact.TeamID), Score: fact.Score, ShipDeaths: fact.ShipDeaths}
-		if identity, ok := capture.ParticipantIdentities[fact.GamePlayerID]; ok {
-			summary.AccountID = identity.AccountID
-			summary.LocalProfileID = identity.LocalProfileID
-			summary.IsBot = identity.IsBot
+	modeID := state.ModeID
+	if modeID == "" {
+		modeID = "baseline"
+	}
+	structure := state.TeamStructure
+	if structure == "" {
+		structure = teams.StructureFFA
+	}
+	participants := make([]matchresults.ParticipantFact, 0, len(state.Players))
+	for _, fact := range state.Players {
+		identity := capture.ParticipantIdentities[fact.GamePlayerID]
+		disposition := matchresults.DispositionParticipated
+		if _, active := capture.Members[fact.GamePlayerID]; !active {
+			disposition = matchresults.DispositionDeparted
 		}
-		players = append(players, summary)
+		participants = append(participants, matchresults.ParticipantFact{
+			PlayerRef: matchresults.PlayerRef{
+				GamePlayerID: fact.GamePlayerID, AccountID: identity.AccountID, LocalProfileID: identity.LocalProfileID, IsBot: identity.IsBot,
+			},
+			TeamID: fact.TeamID, Score: fact.Score, ShipDeaths: fact.ShipDeaths, Disposition: disposition,
+		})
 	}
-	summary := playerdata.BuildMatchResultSummary(capture.MatchID, mode, players)
-	summary.TraceID = capture.TraceID
-	return summary
+	objectiveResolutions := make([]matchresults.ObjectiveResolution, 0, len(state.Objectives))
+	for _, snapshot := range state.Objectives {
+		objectiveResolutions = append(objectiveResolutions, matchresults.ObjectiveResolution{
+			DefinitionID: string(snapshot.DefinitionID), InstanceID: string(snapshot.InstanceID), Scope: string(snapshot.Scope),
+			OwnerID: snapshot.OwnerID, Status: string(snapshot.Status), Progress: snapshot.Progress, Target: snapshot.Target,
+			FailureReason: snapshot.FailureReason, Discovered: snapshot.Discovered,
+		})
+	}
+	return matchresults.BuildInput{
+		MatchID: capture.MatchID, TraceID: capture.TraceID, ModeID: modeID, Session: session,
+		TeamStructure: structure, EndReason: endReason, Participants: participants, Objectives: objectiveResolutions,
+	}
+}
+
+// buildMatchResultSummary preserves the legacy helper through the new summary/dispatcher path.
+func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFact) playerdata.MatchResultSummary {
+	input := buildEndOfMatchInput(capture, game.FinalMatchState{ModeID: "baseline", TeamStructure: teams.StructureFFA, Players: facts}, "simulation_complete")
+	flow := matchresults.NewEndOfMatchFlow()
+	summary, _, err := flow.Run(input)
+	if err != nil {
+		return playerdata.MatchResultSummary{TraceID: capture.TraceID, MatchID: capture.MatchID}
+	}
+	return (matchresults.MatchSummaryDispatcher{}).Dispatch(summary).Persistence
 }

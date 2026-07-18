@@ -69,6 +69,7 @@ type Game struct {
 	awardEventObservers        []func(awards.EventResult)
 	objectiveRuntime           *objectives.Runtime
 	objectiveEventObservers    []func(objectives.Event)
+	lockedFinalMatchState      *FinalMatchState
 	encounterLifecycleRuntime  *encounterlifecycle.Runtime
 	cameraViews                map[string]*runtime.CameraView
 	playerSessions             map[string]*playerSession

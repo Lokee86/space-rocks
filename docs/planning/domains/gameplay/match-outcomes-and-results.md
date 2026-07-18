@@ -17,6 +17,49 @@ The goal is to make match end a single explicit flow that consumes the locked de
 
 This doc is about match-end orchestration and result handoff. It is not only a result-data shape.
 
+## Current Implementation Status
+
+The first implementation slice now exists.
+
+Implemented:
+
+```text
+Game-owned one-time FinalMatchState lock
+immutable final participant, award/counter, objective, mode, and team-structure facts
+room-owned EndOfMatchFlow with duplicate execution protection
+one authoritative MatchSummary per match
+separate terminal status, end reason, participant outcome, team outcome, placement, and participation disposition
+normalized player references with persistence identities retained internally
+single-player completed outcomes
+multiplayer unique-winner and draw resolution preserving current score behavior
+dense individual and team placements
+team result aggregation for co-op, custom, and auto-balanced team structures
+objective resolution aggregation from the final authoritative objective snapshot
+mission and challenge aggregation contracts, including challenge aggregation scope
+MatchSummaryDispatcher persistence, progression, achievement-fact, and presentation-safe slices
+existing MatchResultSummary persistence/reporting compatibility through the dispatcher
+presentation projection that excludes account and local-profile identity fields
+historical departed-participant inclusion
+post-lock rejection of late joins, award mutations, objective mutations, objective devtools mutations, and objective timer advancement
+room APIs for the full summary and dissected result slices
+```
+
+The existing room snapshot and player-data reporting paths remain compatible. A pre-seeded compatibility `MatchResultSummary` remains authoritative when tests or transitional callers provide one, while the broader `MatchSummary` is still locked and retained.
+
+Still future or consumer-owned:
+
+```text
+resolved mode-specific MatchDecision policies beyond the preserved baseline score behavior
+Score Attack completion-time and target-score policy
+mode-selected forfeiture, abort, and administrative-termination decisions
+mission and challenge producers
+progression and achievement consumers/sinks
+retry policy for new downstream slices
+richer client packet fields and result UI
+```
+
+Post-match entity cleanup continues through the existing cleanup-safe simulation path, but no new award, objective, participant, or final-result facts can alter the locked summary.
+
 ## Ownership Boundary
 
 This doc owns:

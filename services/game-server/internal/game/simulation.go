@@ -37,6 +37,13 @@ func (game *Game) Step(delta float64) {
 		defer game.publishPresentationFrameLocked()
 
 		bounds := space.DefaultBounds()
+		if game.lockedFinalMatchState != nil {
+			game.stepPostMatchLocked(delta, bounds)
+			if measure {
+				entities = game.runtimeMeasurementEntityCountsLocked()
+			}
+			return
+		}
 		if delta > 0 && !game.worldSimulationOptions.IsWorldFrozen() {
 			game.awardClock += delta
 			game.awardsRuntime().PruneContributions(game.awardClock, game.awardPolicy.Assists)
@@ -47,17 +54,7 @@ func (game *Game) Step(delta float64) {
 		game.applyPendingPlayerInputsLocked()
 		game.stepPlayerSessions(delta)
 		if game.isMatchOverLocked() {
-			game.encounterSpawn().Stop()
-			game.stepPlayers(delta, bounds)
-			game.removeReadyPlayers()
-			game.stepAsteroids(delta, bounds)
-			game.stepBullets(delta, bounds)
-			game.stepPickups(delta)
-			game.stepRadialEffects(delta)
-			game.stepDamageOverTime(delta)
-			for _, observer := range game.simulationStepObservers {
-				observer(delta)
-			}
+			game.stepPostMatchLocked(delta, bounds)
 		} else {
 			game.stepBots()
 			game.stepPlayerWeapons(delta)
@@ -81,6 +78,20 @@ func (game *Game) Step(delta float64) {
 
 	if measure {
 		game.observeRuntimeMeasurement(time.Since(started), entities)
+	}
+}
+
+func (game *Game) stepPostMatchLocked(delta float64, bounds space.Bounds) {
+	game.encounterSpawn().Stop()
+	game.stepPlayers(delta, bounds)
+	game.removeReadyPlayers()
+	game.stepAsteroids(delta, bounds)
+	game.stepBullets(delta, bounds)
+	game.stepPickups(delta)
+	game.stepRadialEffects(delta)
+	game.stepDamageOverTime(delta)
+	for _, observer := range game.simulationStepObservers {
+		observer(delta)
 	}
 }
 

@@ -1,10 +1,17 @@
 package game
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
+import (
+	"fmt"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
+)
 
 func (target *Control) ForceObjectiveProgress(instanceID objectives.InstanceID, amount float64) error {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
+	if target.game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	events, err := target.game.objectivesRuntime().AddProgress(instanceID, amount)
 	target.game.publishObjectiveEventsLocked(events)
 	return err
@@ -13,6 +20,9 @@ func (target *Control) ForceObjectiveProgress(instanceID objectives.InstanceID, 
 func (target *Control) SetObjectiveProgress(instanceID objectives.InstanceID, value float64) error {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
+	if target.game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	events, err := target.game.objectivesRuntime().SetProgress(instanceID, value)
 	target.game.publishObjectiveEventsLocked(events)
 	return err
@@ -65,6 +75,9 @@ func (target *Control) applyObjectiveAction(
 ) error {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
+	if target.game.lockedFinalMatchState != nil {
+		return fmt.Errorf("match results are locked")
+	}
 	events, err := action(target.game.objectivesRuntime())
 	target.game.publishObjectiveEventsLocked(events)
 	return err

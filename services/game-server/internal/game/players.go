@@ -17,6 +17,9 @@ func (game *Game) AddPlayer() string {
 func (game *Game) AddPlayerWithTeam(teamID teams.ID) string {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return ""
+	}
 	if err := teams.ValidateTeamID(teamID); err != nil {
 		teamID = teams.NoTeam
 	}
