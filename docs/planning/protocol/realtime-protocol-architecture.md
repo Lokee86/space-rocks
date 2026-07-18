@@ -47,9 +47,9 @@ Planning outputs for the remaining protocol work:
 
 ## Tooling Transport Foundation And Future Consumers
 
-The `sr.tooling` transport foundation is implemented as the ninth mandatory negotiated DataChannel for every gameplay connection. It uses id 9, is reliable, ordered, bidirectional, and must be ready with the eight gameplay channels for the room/game session. It is transport-only: no tooling packet messages or consumers exist yet, and WebSocket retains auth, signaling, lobby, session/control setup, and existing devtools/admin traffic.
+The `sr.tooling` transport foundation is implemented as the ninth mandatory negotiated DataChannel for every gameplay connection. It uses id 9, is reliable, ordered, bidirectional, and must be ready with the eight gameplay channels for the room/game session. Runtime measurement is implemented on the channel, telemetry routing is partially implemented, and WebSocket retains auth, signaling, lobby, session/control setup, and the remaining legacy devtools/admin traffic.
 
-Runtime measurement is the first planned `sr.tooling` consumer. Existing WebSocket devtools traffic migrates later. Consumer policy, attachment modes, permissions, and migration sequencing remain planning work in [Devtools And Telemetry](../devtools/devtools-and-telemetry.md).
+The packet inventory, capability vocabulary, attachment requirements, and migration sequence are fixed in [Tooling Channel Migration Contract](../../devtools/design/tooling-channel-migration-contract.md). Existing WebSocket runtime debug commands and readouts migrate next.
 
 ## Related Docs
 
@@ -65,6 +65,7 @@ Runtime measurement is the first planned `sr.tooling` consumer. Existing WebSock
 - [Network Observability And Packet Budget](../domains/technical/network-observability-and-packet-budget.md)
 - [Testing And Smoke Strategy](../domains/technical/verification-and-quality-gates.md)
 - [Devtools And Telemetry](../devtools/devtools-and-telemetry.md)
+- [Tooling Channel Migration Contract](../../devtools/design/tooling-channel-migration-contract.md)
 - [Development Roadmap](../development-roadmap.md)
 
 ## Open Planning Questions
@@ -106,7 +107,7 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Known event tuple packing is implemented for compact `event_batch` records.
 - Sparse delta serialization is implemented for active realtime gameplay delta lanes; empty delta sections are omitted from emitted delta wire maps.
 - Client lifecycle application validates explicit world-baseline dependencies, queues future or not-yet-active lifecycle packets, drains them after matching `world_full` activation, and enforces strict independent lifecycle sequences.
-- The `sr.tooling` transport foundation is implemented at negotiated id 9 with reliable, ordered, bidirectional delivery and mandatory readiness alongside the eight gameplay channels. Lane-aware receive routing separates tooling before normal gameplay dispatch; tooling protocol messages and consumers remain future work.
+- The `sr.tooling` transport foundation is implemented at negotiated id 9 with reliable, ordered, bidirectional delivery and mandatory readiness alongside the eight gameplay channels. Lane-aware receive routing separates tooling before normal gameplay dispatch; runtime measurement is implemented, telemetry routing is partial, and the remaining debug-command/readout migration is contract-defined.
 - Unexpected required-channel close recovery preserves the WebSocket/session/room/game context, replaces only the WebRTC peer, and uses a 10-second deadline. Successful recovery preserves the active match and requests fresh world, overlay, and session baselines; failure disables only single-player replay.
 
 Current implementation details live in:

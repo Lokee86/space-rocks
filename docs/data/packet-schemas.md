@@ -44,6 +44,7 @@ Current packet source files:
 shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
+shared/packets/tooling.toml
 shared/packets/lobby.toml
 shared/packets/webrtc.toml
 shared/packets/player_data.toml
@@ -61,6 +62,7 @@ Current output ids:
 server_entities_packets
 server_realtime_packets
 server_game_packets
+server_tooling_packets
 player_data_packets
 client_packets
 server_devtools_packets
@@ -131,6 +133,21 @@ DebugStatusPacket
 It owns devtools packet types for toggles, status, shape catalog output, player mutation commands, entity spawning, pickup spawning, continuous bullet stream commands, respawn commands, score/lives commands, and entity clearing.
 
 Devtools packet schema is shared data, but devtools command behavior is not owned by the packet schema. Runtime behavior is owned by the server devtools implementation, while Controller owns command policy and Control exposes authoritative capabilities.
+
+### `shared/packets/tooling.toml`
+
+`tooling.toml` owns packet shapes carried by the dedicated `sr.tooling` WebRTC DataChannel.
+
+Current schema areas include:
+
+```text
+telemetry subscribe/unsubscribe/ping/snapshot/pong
+measurement start/stop/reset/snapshot requests
+measurement started/snapshot/stopped responses
+tooling_error
+```
+
+Runtime debug commands and readouts remain in `debug.toml` until their migration moves physical routing and schema ownership together. Packet capability and attachment policy are defined by [Tooling Channel Migration Contract](../devtools/design/tooling-channel-migration-contract.md), not by the packet schema alone.
 
 ### `shared/packets/lobby.toml`
 
@@ -315,7 +332,8 @@ Current packet outputs are:
 | ------------------------- | -------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `server_entities_packets` | `outputs.toml` | `services/game-server/internal/game/runtime/packets_generated.go`         | Game-server runtime state structs                                                      |
 | `server_realtime_packets` | `outputs.toml` | `services/game-server/internal/protocol/realtime/packets_generated.go`     | Game-server realtime protocol packet type constants                                    |
-| `server_game_packets`     | `outputs.toml` | `services/game-server/internal/game/packets.go`                           | Game-server gameplay, lobby, auth, telemetry, and room packet structs/constants |
+| `server_game_packets`     | `outputs.toml` | `services/game-server/internal/game/packets.go`                           | Game-server gameplay, lobby, auth, and room packet structs/constants                   |
+| `server_tooling_packets`  | `outputs.toml` | `services/game-server/internal/protocol/tooling/packets_generated.go`      | Game-server `sr.tooling` packet structs/constants                                      |
 | `player_data_packets`     | `outputs.toml` | `services/player-data/protocol/packets.go`                                | Player-data runtime packet structs/constants                                           |
 | `client_packets`          | `outputs.toml` | `client/scripts/generated/networking/packets/packets.gd`                  | Client packet constants, field constants, and outbound packet builders                 |
 | `server_devtools_packets` | `outputs.toml` | `services/game-server/internal/devtools/packets_generated.go`             | Game-server devtools packet structs/constants                                          |
@@ -334,6 +352,7 @@ Primary generated Go files:
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
 services/game-server/internal/protocol/realtime/packets_generated.go
+services/game-server/internal/protocol/tooling/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
@@ -426,7 +445,7 @@ data-sync -push -packets -go -gds
 data-sync -check -packets -go -gds
 ```
 
-`-go` currently covers all configured Go packet outputs, including `server_entities_packets`, `server_realtime_packets`, `server_game_packets`, `server_devtools_packets`, and `player_data_packets`.
+`-go` currently covers all configured Go packet outputs, including `server_entities_packets`, `server_realtime_packets`, `server_game_packets`, `server_tooling_packets`, `server_devtools_packets`, and `player_data_packets`.
 
 `-gds` currently covers the generated client packet helper.
 
@@ -573,6 +592,7 @@ Packet source files:
 shared/packets/outputs.toml
 shared/packets/gameplay.toml
 shared/packets/debug.toml
+shared/packets/tooling.toml
 shared/packets/lobby.toml
 shared/packets/webrtc.toml
 shared/packets/player_data.toml
@@ -613,6 +633,7 @@ client/scripts/generated/networking/packets/packets.gd
 services/game-server/internal/game/packets.go
 services/game-server/internal/game/runtime/packets_generated.go
 services/game-server/internal/protocol/realtime/packets_generated.go
+services/game-server/internal/protocol/tooling/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 services/player-data/protocol/packets.go
 ```

@@ -20,6 +20,7 @@ This folder owns the design notes for devtools-only scope, boundaries, and debug
 
 - [devtools-authority-and-seams.md](devtools-authority-and-seams.md) - Devtools authority and seams documentation.
 - [devtools-packet-protocol.md](devtools-packet-protocol.md) - Devtools packet protocol documentation.
+- [tooling-channel-migration-contract.md](tooling-channel-migration-contract.md) - Authoritative sr.tooling migration inventory, capability, attachment, and request/result contract.
 <!-- doc-ledger:files:end -->
 
 ## Stub Files

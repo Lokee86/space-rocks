@@ -44,15 +44,15 @@ record-level prioritization policy
 
 The current realtime stack uses two separate paths:
 
-WebSocket owns signaling/control and queued non-gameplay server packets:
+WebSocket owns signaling/control and queued pre-readiness/session packets:
 
 ```text
 auth packets
 room packets
 lobby packets
-telemetry packets
 WebRTC signaling packets
 queued one-off server packets
+legacy overlay telemetry ping until its tooling migration
 ```
 
 WebRTC owns active gameplay data packets:
@@ -61,7 +61,7 @@ WebRTC owns active gameplay data packets:
 active realtime gameplay output packets
 ```
 
-The mandatory `sr.tooling` DataChannel is part of the same WebRTC transport foundation. It is a negotiated, reliable, ordered, bidirectional lane that is ready alongside the eight gameplay channels. Existing devtools commands remain WebSocket-owned; no tooling packet protocol or tooling consumer is defined by this transport foundation.
+The mandatory `sr.tooling` DataChannel is part of the same WebRTC transport foundation. It is a negotiated, reliable, ordered, bidirectional lane that is ready alongside the eight gameplay channels. Runtime measurement request/response traffic is implemented on it, telemetry routing is partially implemented, and legacy runtime debug commands/readouts remain WebSocket-owned pending the authoritative migration contract.
 
 Active realtime gameplay output is not WebSocket-owned. There is no WebSocket fallback for active gameplay output packets.
 
@@ -79,7 +79,7 @@ asteroids    | sr.asteroids     | 5             | asteroid_delta
 bullets      | sr.bullets       | 6             | bullet_delta
 asteroids.lifecycle | sr.asteroids.lifecycle | 7 | asteroids_lifecycle
 bullets.lifecycle   | sr.bullets.lifecycle   | 8 | bullets_lifecycle
-tooling             | sr.tooling             | 9 | reserved tooling transport lane
+tooling             | sr.tooling             | 9 | measurement, telemetry, and migrated tooling packets
 ```
 
 The current channel policy is:
@@ -87,7 +87,7 @@ The current channel policy is:
 ```text
 sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, sr.bullets.lifecycle, and sr.tooling are negotiated ordered/reliable channels.
 sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
-sr.tooling is reliable, ordered, bidirectional, and has no tooling packet schema or consumer yet.
+sr.tooling is reliable, ordered, bidirectional, and currently carries measurement packets generated from shared/packets/tooling.toml.
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
 Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
@@ -114,6 +114,8 @@ the selected candidate lane mapped to an open gameplay DataChannel
 ```
 
 The readiness set is exactly the eight gameplay channels (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`) plus `sr.tooling`. Channel IDs are 1 through 9, with `sr.tooling` at id 9. All nine channels must be open before the transport is ready.
+
+Gameplay output eligibility still requires an active game player. Tooling eligibility is separate: authorized tooling may use a room attachment without gameplay participation or a `GamePlayerID`, as defined by [Tooling Channel Migration Contract](../devtools/design/tooling-channel-migration-contract.md).
 
 ## Server Send Boundary
 
@@ -299,6 +301,7 @@ Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing
 ## Related Docs
 
 * [Realtime WebSocket Protocol](realtime-websocket-protocol.md)
+* [Tooling Channel Migration Contract](../devtools/design/tooling-channel-migration-contract.md)
 * [Gameplay Packets](gameplay-packets.md)
 * [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md)
 * [Outbound Message Flow](../services/game-server/networking/outbound-message-flow.md)

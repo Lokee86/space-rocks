@@ -60,7 +60,7 @@ The devtools ownership extraction is implemented as current state. The live runt
 
 Current runtime devtools are implemented around the Godot client, Go game-server `Controller`/`Target`/`Control` architecture, and generated debug packets.
 
-The `sr.tooling` transport foundation is implemented as a mandatory reliable, ordered, bidirectional negotiated channel with id 9, ready alongside the eight gameplay channels. Current devtools commands and admin traffic still use WebSocket; tooling protocol messages and consumers are not implemented.
+The `sr.tooling` transport foundation is implemented as a mandatory reliable, ordered, bidirectional negotiated channel with id 9, ready alongside the eight gameplay channels. Runtime measurement is implemented end to end as its first consumer. Telemetry protocol routing exists but still lacks its production provider and final overlay integration. Runtime debug commands and readouts remain on WebSocket pending the locked migration contract.
 
 Implemented references:
 
@@ -76,7 +76,7 @@ admin and developer gates are not separated
 full telemetry needs a dedicated window instead of only an overlay
 scenario/load-test tooling is not established
 taint/integrity propagation is not implemented
-runtime measurement consumer and migration of existing WebSocket devtools/admin traffic remain future work
+migration of existing WebSocket devtools/admin traffic remains future work; runtime measurement is implemented
 normal-event simulation for rewards and commerce is not implemented
 inbound server devtools commands are not yet protected by a production-ready authorization/disablement boundary
 the package-level `nodevtools` helper is not currently enough by itself
@@ -84,7 +84,7 @@ the package-level `nodevtools` helper is not currently enough by itself
 
 ## Tooling transport foundation and migration
 
-Every gameplay connection now creates an `sr.tooling` channel at negotiated id 9. The channel is mandatory, reliable, ordered, bidirectional, and included in readiness with the eight gameplay channels for the room/game lifetime. Channel existence is implemented; commands and data remain future capability-authorized consumers rather than part of this transport foundation.
+Every gameplay connection now creates an `sr.tooling` channel at negotiated id 9. The channel is mandatory, reliable, ordered, bidirectional, and included in readiness with the eight gameplay channels for the room/game lifetime. Runtime measurement and its request/response lifecycle are implemented on the channel. Telemetry subscription routing is implemented, while its production provider and the remaining devtools migration are unfinished.
 
 Unexpected required-channel close recovery preserves the WebSocket/session/room/game context and replaces only the WebRTC peer with a 10-second deadline. Successful recovery preserves the active match and requests fresh world, overlay, and session baselines. Failure disables only single-player replay.
 
@@ -92,16 +92,22 @@ WebSocket remains responsible for auth, signaling, lobby, and session/control se
 
 ```text
 runtime measurement
--> first consumer of sr.tooling
+-> implemented first consumer of sr.tooling
 
-existing devtools commands and readouts
--> migrate later
+request/result and capability policy foundation
+-> locked by the tooling migration contract
+
+existing devtools commands
+-> migrate next
+
+continuous devtools readouts and telemetry
+-> migrate after command routing
 
 admin tooling
 -> migrate after existing devtools
 ```
 
-The channel and its packet-lane mechanics remain owned by realtime protocol planning; this document records the implemented transport foundation and the future consumer/migration work. Existing devtools commands and readouts remain WebSocket-owned until a later migration.
+The channel and its packet-lane mechanics remain owned by realtime protocol planning. The packet inventory, capability vocabulary, attachment requirements, and migration order are now authoritative in [Tooling Channel Migration Contract](../../devtools/design/tooling-channel-migration-contract.md). Existing runtime debug commands and readouts remain WebSocket-owned until their migration slices are implemented.
 
 ## Planned room attachment modes
 
@@ -627,11 +633,11 @@ A system is also not tooling-complete if it can mutate state without owning-seam
 
 3. Harden existing runtime devtools around command ownership, gates, and action logging while preserving the intentional alpha exception and documenting the later gate.
 
-4. Implement runtime measurement as the first `sr.tooling` consumer, then add a telemetry window and make the world overlay configurable from it.
+4. Runtime measurement is implemented as the first `sr.tooling` consumer, including end-to-end collection, report lifecycle, and minimal devtools UI.
 
-5. Implement packet and runtime telemetry requirements from the packet-budget plan without duplicating protocol-lane work here.
+5. Complete the locked `sr.tooling` request/result and capability-policy foundation, then migrate existing runtime devtools commands.
 
-6. Migrate existing devtools commands and readouts to `sr.tooling` after runtime measurement is established.
+6. Migrate debug-status, shape-catalog, telemetry ping/subscription, and other continuous devtools readouts before repairing the telemetry panel against final transport sources.
 
 7. Add planned room attachment modes and their tooling-affected/tainted run handling.
 
@@ -661,9 +667,9 @@ exact devtools action audit schema
 exact source-tag vocabulary shared by devtools, admin, progression, and commerce
 exact developer live-server access policy
 exact scenario runner format
-exact `sr.tooling` capability vocabulary and authorization mapping
+exact role-to-capability grant source and environment policy for `tooling.read`, `tooling.control`, and `admin.control`
 exact room attachment admission/transition mechanics and taint propagation
-exact runtime measurement payload and collection boundaries
+exact command-specific `tooling_command_result` payloads beyond the common terminal-result contract
 which current server devtools become production admin tools
 which future content domains belong in data-sync versus separate content tooling
 how normal-source simulation is represented in audit records
@@ -682,7 +688,7 @@ Telemetry belongs primarily in a telemetry window, with a configurable world ove
 Content and source-of-truth tooling is related to devtooling but remains its own tooling category.
 The dedicated `sr.tooling` channel is mandatory for every future gameplay connection, but its existence does not grant tooling capabilities.
 WebSocket owns auth, signaling, lobby, and session/control setup; `sr.tooling` owns future tooling transport after readiness.
-Runtime measurement is the first planned `sr.tooling` consumer; existing devtools and admin tooling migrate later.
+Runtime measurement is the first implemented `sr.tooling` consumer; existing runtime devtools and admin tooling migrate through the locked tooling-channel contract.
 Observer, ghost operator, and active operator attachments do not consume player capacity; authorized developers/admins can attach regardless of room capacity, without changing gameplay participation accounting; active operator runs are tooling-affected/tainted.
 Normal test participants use ordinary participation rules.
 Production client devtools capability must be absent.
@@ -697,6 +703,7 @@ Ordinary player access to inbound server devtools is forbidden for public post-a
 * [Devtools](../../devtools/!INDEX.md)
 * [Devtools Authority And Seams](../../devtools/design/devtools-authority-and-seams.md)
 * [Devtools Packet Protocol](../../devtools/design/devtools-packet-protocol.md)
+* [Tooling Channel Migration Contract](../../devtools/design/tooling-channel-migration-contract.md)
 * [Client Devtools](../../devtools/client/!INDEX.md)
 * [Server Devtools](../../devtools/server/!INDEX.md)
 * [API Server Devtools](../../devtools/api-server/!INDEX.md)

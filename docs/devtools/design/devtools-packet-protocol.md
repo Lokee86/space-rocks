@@ -12,9 +12,9 @@ It covers debug command requests, server-emitted debug readouts, source-of-truth
 
 See also: [Game Control Devtools Adapter](../server/game-control-devtools-adapter.md)
 
-The devtools packet protocol is a debug-only extension of the normal realtime WebSocket protocol. It is not a separate transport, not a developer console protocol, and not a parallel gameplay authority layer.
+The devtools packet protocol currently spans two transports: runtime measurement uses the dedicated `sr.tooling` WebRTC DataChannel, while legacy runtime debug commands and readouts still use the normal WebSocket path pending migration. It is not a developer console protocol and not a parallel gameplay authority layer.
 
-Current high-level flow:
+Current legacy debug-command flow:
 
 ```text
 client devtools input or window control
@@ -38,17 +38,33 @@ client devtools input or window control
 -> devtools readmodels, overlays, or window presentation
 ```
 
-The client may request debug behavior. The server owns whether the request is valid and what gameplay state changes. Client-side devtools packet construction does not confirm success by itself.
-
-Devtools packets currently fall into three broad groups:
+Current measurement flow:
 
 ```text
-client -> server debug command packets
-server -> client debug status packets
-server -> client debug shape catalog packets
+client measurement coordinator
+-> generated tooling packet with request_id
+-> ClientConnectionService.send_tooling_packet(...)
+-> RealtimeTransportSession
+-> sr.tooling
+-> server tooling router
+-> measurement controller
+-> correlated measurement response or tooling_error
+-> client tooling packet router
+-> measurement coordinator and devtools presentation
 ```
 
-The world telemetry overlay also uses `telemetry_ping` and `telemetry_pong`, but those packets are normal gameplay telemetry packets from `shared/packets/gameplay.toml`, not devtools packet schemas from `shared/packets/debug.toml`.
+The client may request debug behavior. The server owns whether the request is valid and what gameplay state changes. Client-side devtools packet construction does not confirm success by itself.
+
+Devtools packets currently fall into four broad groups:
+
+```text
+client -> server runtime measurement and telemetry packets on sr.tooling
+server -> client runtime measurement and telemetry packets on sr.tooling
+client -> server legacy debug command packets on WebSocket
+server -> client legacy debug status and shape catalog packets on WebSocket
+```
+
+Measurement and telemetry packet schemas are defined in `shared/packets/tooling.toml`. Runtime debug command and readout schemas remain in `shared/packets/debug.toml` until their migration slice moves physical routing and schema ownership. The authoritative migration inventory is [Tooling Channel Migration Contract](./tooling-channel-migration-contract.md).
 
 ## Debug-only scope
 
@@ -106,7 +122,7 @@ Client networking owns encode/send/decode/dispatch behavior.
 
 The shared packet schema pipeline owns packet type strings, generated constants, generated Go structs, and generated GDScript packet builders.
 
-Game-server networking owns WebSocket envelope decode, routing order, and outbound debug packet writing.
+Game-server networking owns the `sr.tooling` router and channel send boundary, plus the temporary WebSocket envelope classification and outbound debug writing used by legacy runtime devtools.
 
 Game-server devtools own command dispatch, debug status projection, shape catalog projection, and devtools-specific runtime state such as continuous bullet stream runtime.
 
@@ -140,7 +156,7 @@ debug_clear_asteroids
 
 The server decides whether those commands have an effect.
 
-The server command route requires a current room and a current game player ID before decoding and applying a devtools command. If either is missing, the packet is consumed and no gameplay command is applied.
+The current legacy WebSocket command route requires a current room and a current game player ID before decoding and applying a devtools command. If either is missing, the packet is consumed and no gameplay command is applied. This is a migration limitation, not the final authorization contract: the `sr.tooling` route will authorize by session capability and room attachment without requiring gameplay participation.
 
 The server emits:
 
@@ -153,10 +169,14 @@ The client consumes those outputs as diagnostic presentation data. They do not r
 
 ## Source-of-truth files
 
-Devtools packet schemas are defined in:
+Current packet schemas are split by transport ownership:
 
 ```text
+shared/packets/tooling.toml
+-> active sr.tooling measurement and telemetry packets
+
 shared/packets/debug.toml
+-> legacy runtime debug commands and readouts pending migration
 ```
 
 Packet output routing is defined in:
@@ -169,6 +189,7 @@ Current generated devtools-related outputs are:
 
 ```text
 client/scripts/generated/networking/packets/packets.gd
+services/game-server/internal/protocol/tooling/packets_generated.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
@@ -729,12 +750,12 @@ shared/packets/ owns packet shape, not runtime command semantics.
 
 ## Notes
 
-The `sr.tooling` transport foundation is implemented as the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the eight gameplay channels. Tooling receive routing is separated before normal gameplay dispatch. Current devtools commands and admin traffic still use the normal WebSocket packet path; no tooling packet messages or consumers exist yet, and future migration is planned in [Devtools And Telemetry](../../planning/devtools/devtools-and-telemetry.md).
+The `sr.tooling` transport foundation is implemented as the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the eight gameplay channels. Tooling receive routing is separated before normal gameplay dispatch. Runtime measurement is active end to end on this channel. Telemetry packet routing exists, but the production telemetry provider and the legacy overlay ping migration remain incomplete. Runtime debug commands, `debug_status`, and `debug_shape_catalog` still use WebSocket pending the migration defined in [Tooling Channel Migration Contract](./tooling-channel-migration-contract.md).
 
 Unexpected required-channel closure preserves the WebSocket/session/room/game context while replacing only the WebRTC peer. Recovery uses a 10-second deadline; success preserves the active match and requests fresh world, overlay, and session baselines, while failure disables only single-player replay.
 
 `debug_status` and `debug_shape_catalog` are devtools readout packets. They help the client render debug controls and overlays, but they do not replace normal lane-native realtime packets.
 
-World telemetry overlay packet timing uses `telemetry_ping` and `telemetry_pong`, which belong to the gameplay packet schema. The overlay is devtools presentation, but the packet pair is not defined in `debug.toml`.
+Measurement and telemetry packet schemas belong to `shared/packets/tooling.toml`. Legacy runtime debug commands and readouts remain in `shared/packets/debug.toml` until their route and schema ownership migrate together.
 
 `target_player_id` remains a devtools compatibility field for player-only debug commands. New gameplay targeting should continue to use canonical target kind/id fields instead of extending `target_player_id` further.
