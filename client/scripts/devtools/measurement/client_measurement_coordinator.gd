@@ -12,6 +12,7 @@ signal state_changed(state: Dictionary)
 
 var connection_service
 var measurement_context
+var report_writer
 var _report_state := ReportStateScript.new()
 
 var request_ids: Dictionary:
@@ -34,6 +35,7 @@ var latest_client_report: Dictionary:
 var latest_combined_report: Dictionary:
 	get:
 		return _report_state.latest_combined_report
+var latest_export_result: Dictionary = {}
 var last_tooling_error: Dictionary:
 	get:
 		return _report_state.last_tooling_error
@@ -43,18 +45,27 @@ var _pending_scenario_label := ""
 var _active_metadata: Dictionary = {}
 
 
-func _init(connection_service_ref = null, measurement_context_ref = null) -> void:
-	if connection_service_ref != null or measurement_context_ref != null:
-		configure(connection_service_ref, measurement_context_ref)
+func _init(connection_service_ref = null, measurement_context_ref = null, report_writer_ref = null) -> void:
+	if connection_service_ref != null or measurement_context_ref != null or report_writer_ref != null:
+		configure(connection_service_ref, measurement_context_ref, report_writer_ref)
 
 
-func configure(connection_service_ref, measurement_context_ref = null) -> void:
+func configure(connection_service_ref, measurement_context_ref = null, report_writer_ref = null) -> void:
 	connection_service = connection_service_ref
 	measurement_context = measurement_context_ref
+	if report_writer_ref != null:
+		configure_report_writer(report_writer_ref)
 	_connect_connection_signal("measurement_started_received", Callable(self, "_on_measurement_started_received"))
 	_connect_connection_signal("measurement_snapshot_received", Callable(self, "_on_measurement_snapshot_received"))
 	_connect_connection_signal("measurement_stopped_received", Callable(self, "_on_measurement_stopped_received"))
 	_connect_connection_signal("tooling_error_received", Callable(self, "_on_tooling_error_received"))
+
+
+func configure_report_writer(report_writer_ref) -> void:
+	report_writer = report_writer_ref
+	var finalized_handler := Callable(self, "_on_finalized_report")
+	if report_writer != null and !finalized.is_connected(finalized_handler):
+		finalized.connect(finalized_handler)
 
 func start(scenario_label: String = "", metadata: Dictionary = {}) -> String:
 	if active_run_id != "" or pending_request_ids.has("start"):
@@ -143,8 +154,25 @@ func get_latest_combined_report() -> Dictionary:
 	return _report_state.latest_combined_report.duplicate(true)
 
 
+func get_latest_export_result() -> Dictionary:
+	return latest_export_result.duplicate(true)
+
+
 func get_state() -> Dictionary:
-	return _report_state.get_state(active_run_id, recording)
+	var state := _report_state.get_state(active_run_id, recording)
+	state["latest_export_result"] = latest_export_result.duplicate(true)
+	return state
+
+
+func reset_local_state() -> void:
+	active_run_id = ""
+	recording = false
+	_pending_start_metadata.clear()
+	_pending_scenario_label = ""
+	_active_metadata.clear()
+	_report_state.clear_pending_requests()
+	_reset_client_context()
+	_emit_state_changed()
 
 
 func _on_measurement_started_received(packet: Dictionary) -> void:
@@ -158,6 +186,7 @@ func _on_measurement_started_received(packet: Dictionary) -> void:
 	_report_state.remove_pending("start")
 	active_run_id = run_id
 	recording = true
+	latest_export_result.clear()
 	_active_metadata = _pending_start_metadata.duplicate(true)
 	_active_metadata["scenario_label"] = _pending_scenario_label
 	_pending_start_metadata.clear()
@@ -200,6 +229,18 @@ func _on_measurement_stopped_received(packet: Dictionary) -> void:
 	var combined_report := _report_state.build_combined_report(run_id)
 	finalized.emit(combined_report)
 	_emit_state_changed()
+
+
+func _on_finalized_report(report: Dictionary) -> void:
+	if report_writer == null or !report_writer.has_method("write"):
+		latest_export_result = {
+			"success": false,
+			"path": "",
+			"error": "measurement report writer is not configured",
+		}
+		return
+	var result = report_writer.write(report, str(report.get("run_id", "")))
+	latest_export_result = result.duplicate(true) if result is Dictionary else {}
 
 
 func _on_tooling_error_received(packet: Dictionary) -> void:
