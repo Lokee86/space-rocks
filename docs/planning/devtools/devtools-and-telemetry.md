@@ -667,7 +667,7 @@ exact devtools action audit schema
 exact source-tag vocabulary shared by devtools, admin, progression, and commerce
 exact developer live-server access policy
 exact scenario runner format
-exact role-to-capability grant source and environment policy for `tooling.read`, `tooling.control`, and `admin.control`
+exact persisted account-flag name and account-management workflow for the eventual `tooling.read` and `tooling.control` grant source; current migration policy grants both capabilities to every connected session
 exact room attachment admission/transition mechanics and taint propagation
 exact command-specific `tooling_command_result` payloads beyond the common terminal-result contract
 which current server devtools become production admin tools

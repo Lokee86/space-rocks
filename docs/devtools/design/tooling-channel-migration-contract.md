@@ -81,6 +81,24 @@ Roles grant capabilities; packet handlers authorize capabilities. Code must not 
 
 Runtime measurement and the public-safe telemetry subset are an explicit exception. They require an eligible connected session and any packet-specific room attachment, but they do not require `dev` or `admin` clearance.
 
+## Capability grant source
+
+The capability-checking seam is implemented independently from the source that grants capabilities.
+
+Current migration policy preserves existing devtools access:
+
+```text
+every connected session receives tooling.read
+every connected session receives tooling.control
+admin.control is not granted automatically
+```
+
+This temporary all-connections grant applies equally to authenticated accounts and guest/local connections. Packet handlers must still check the packet policy through the capability seam; they must not bypass authorization merely because the current grant provider allows everyone.
+
+The eventual production grant source is an account flag or account-backed entitlement. Authentication will project that account flag into the session's tooling capabilities. Accounts without the flag, and guest connections without an equivalent explicit grant, will not receive privileged tooling capabilities. The exact persisted field name and account-management workflow are deferred until the account/admin implementation slice.
+
+Changing from the temporary grant provider to the account-backed provider must not require changing packet policies or command handlers.
+
 ## Authorization order
 
 Every client-to-server tooling packet follows this order:
@@ -322,7 +340,7 @@ The remaining implementation order is fixed:
    -> repair transport metrics against final per-lane sources
 
 5. authorization and attachment
-   -> session capability grants
+   -> replace the temporary all-connections tooling grant with an account-flag grant source
    -> observer/ghost/active-operator room attachment
    -> audit and tooling-affected propagation
 ```
@@ -367,7 +385,7 @@ client/scripts/devtools/
 ## Core invariants
 
 ```text
-sr.tooling transport availability never implies privileged authorization.
+sr.tooling transport availability is not itself the authorization source; the temporary grant provider currently grants tooling.read and tooling.control to every connected session.
 Runtime measurement and public-safe telemetry remain available without dev/admin clearance.
 Privileged readouts require tooling.read.
 Runtime developer mutations require tooling.control.
