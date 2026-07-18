@@ -70,6 +70,12 @@ func configure_remote_player_nodes_provider(provider: Callable) -> void:
 		overlay_context.configure_remote_player_nodes_provider(provider)
 
 
+func get_world_telemetry_context():
+	if overlay_context == null or not overlay_context.has_method("get_world_telemetry_context"):
+		return null
+	return overlay_context.get_world_telemetry_context()
+
+
 func reset() -> void:
 	if debug_flow != null:
 		debug_flow.reset()

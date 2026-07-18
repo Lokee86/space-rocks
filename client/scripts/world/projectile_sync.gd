@@ -24,10 +24,15 @@ var target_projectile_positions := {}
 var target_projectile_rotations := {}
 var deleted_projectile_ids := {}
 var _deleted_projectile_id_order := []
+var _measurement_observer: Callable
 
 
 func configure(layer: Node2D) -> void:
 	bullets_layer = layer
+
+
+func set_measurement_observer(observer: Callable) -> void:
+	_measurement_observer = observer
 
 
 func has_projectile(bullet_id: String) -> bool:
@@ -122,6 +127,7 @@ func _acquire_projectile_node(bullet_id: String, projectile_type: String) -> Nod
 			(pooled_presentation as BulletPresentation).reset_from_pool()
 		projectile_nodes[bullet_id] = pooled_presentation
 		projectile_node_types[bullet_id] = projectile_type
+		_record_lifecycle("created")
 		return pooled_presentation
 
 	if bullets_layer == null:
@@ -152,6 +158,7 @@ func _acquire_projectile_node(bullet_id: String, projectile_type: String) -> Nod
 	bullets_layer.add_child(presentation_node)
 	projectile_nodes[bullet_id] = presentation_node
 	projectile_node_types[bullet_id] = projectile_type
+	_record_lifecycle("created")
 
 	return presentation_node
 
@@ -179,6 +186,7 @@ func apply_projectile(
 	var bullet_node: Node2D = get_projectile_node(bullet_id, state)
 	if bullet_node == null:
 		return
+	_record_lifecycle("updated")
 	var server_position := ProjectileSyncState.server_position(state)
 	var visual_position := local_visual_position + WorldWrapScript.shortest_delta(
 		local_server_position,
@@ -233,6 +241,7 @@ func _release_projectile_node(bullet_id: String) -> void:
 	else:
 		(bullet_node as BulletPresentation).reset_for_pool()
 	_pool_for_type(projectile_type).append(bullet_node)
+	_record_lifecycle("removed")
 
 func remove_missing(server_bullets: Dictionary) -> void:
 	for bullet_id in projectile_nodes.keys():
@@ -240,6 +249,11 @@ func remove_missing(server_bullets: Dictionary) -> void:
 			continue
 
 		remove_projectile(bullet_id)
+
+
+func _record_lifecycle(operation: String) -> void:
+	if _measurement_observer.is_valid():
+		_measurement_observer.call("bullets", operation, 1)
 
 func reset() -> void:
 	for projectile_node in projectile_nodes.values():

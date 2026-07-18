@@ -5,20 +5,24 @@ var runtime_context
 var server_hitbox_overlay_flow
 var runtime_tick_flow
 var devtools_context
+var measurement_context
 var input_context
 var spectate_context
 
 
-func configure(runtime_context_ref, server_hitbox_overlay_flow_ref, runtime_tick_flow_ref, devtools_context_ref, input_context_ref, spectate_context_ref) -> void:
+func configure(runtime_context_ref, server_hitbox_overlay_flow_ref, runtime_tick_flow_ref, devtools_context_ref, input_context_ref, spectate_context_ref, measurement_context_ref = null) -> void:
 	runtime_context = runtime_context_ref
 	server_hitbox_overlay_flow = server_hitbox_overlay_flow_ref
 	runtime_tick_flow = runtime_tick_flow_ref
 	devtools_context = devtools_context_ref
+	measurement_context = measurement_context_ref
 	input_context = input_context_ref
 	spectate_context = spectate_context_ref
 
 
 func process(delta: float, required_lane_baselines_synced: bool) -> void:
+	if measurement_context != null:
+		measurement_context.process_frame(delta)
 	if runtime_context != null:
 		runtime_context.process(delta)
 	if server_hitbox_overlay_flow != null:
@@ -31,4 +35,3 @@ func process(delta: float, required_lane_baselines_synced: bool) -> void:
 		input_context.process(required_lane_baselines_synced)
 	if spectate_context != null:
 		spectate_context.process()
-

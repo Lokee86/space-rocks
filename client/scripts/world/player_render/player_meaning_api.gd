@@ -16,6 +16,11 @@ func configure(game_owner: Node2D, player: Player, pause_state_tracker = null) -
 	legacy_player_sync.configure(game_owner, player, pause_state_tracker)
 
 
+func set_measurement_observer(observer: Callable) -> void:
+	if legacy_player_sync != null and legacy_player_sync.has_method("set_measurement_observer"):
+		legacy_player_sync.set_measurement_observer(observer)
+
+
 func reset() -> void:
 	legacy_player_sync.reset()
 

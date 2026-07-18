@@ -20,6 +20,7 @@ var _recovery_match_ids := {}
 var _recovery_match_order: Array[String] = []
 var _recovery_uncertain := false
 var _clock: Callable
+var _measurement_observer: Callable
 
 func _init(clock: Callable = Callable(Time, "get_ticks_msec")) -> void:
 	_clock = clock
@@ -189,10 +190,33 @@ func _on_resync_request_required(lane, baseline_id, sequence, reason) -> void:
 func get_presentation_state() -> RealtimePresentationState:
 	return _presentation_state
 
+
+func set_measurement_observer(observer: Callable) -> void:
+	_measurement_observer = observer
+
 func _apply_lane_packet(packet: Dictionary) -> void:
+	var started_usec := Time.get_ticks_usec()
 	_router.route_lane_packet(packet)
 	_presentation_state.update_from_router(_router)
 	gameplay_packet_applied.emit(packet)
+	if _measurement_observer.is_valid():
+		_measurement_observer.call(_measurement_lane(packet), float(Time.get_ticks_usec() - started_usec) / 1000.0)
+
+
+func _measurement_lane(packet: Dictionary) -> String:
+	var explicit_lane := str(packet.get("lane", ""))
+	if not explicit_lane.is_empty():
+		return explicit_lane
+	var packet_type := str(packet.get("type", "unknown"))
+	if packet_type.begins_with("world") or packet_type.contains("asteroid") or packet_type.contains("bullet"):
+		return "world"
+	if packet_type.begins_with("overlay"):
+		return "overlay"
+	if packet_type.begins_with("session"):
+		return "session"
+	if packet_type.begins_with("event"):
+		return "event"
+	return packet_type
 
 func apply_world_full(packet: Dictionary) -> void:
 	apply_packet(packet)

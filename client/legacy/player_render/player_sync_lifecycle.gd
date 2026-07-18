@@ -10,6 +10,7 @@ var player_nodes := {}
 var initialized_players := {}
 var apply_local_player_hue_callback: Callable
 var apply_remote_player_hue_callback: Callable
+var measurement_observer: Callable
 
 
 func configure(
@@ -23,6 +24,10 @@ func configure(
 	apply_local_player_hue_callback = local_hue_callback
 	apply_remote_player_hue_callback = remote_hue_callback
 	local_player.z_index = Constants.LOCAL_PLAYER_Z_INDEX
+
+
+func set_measurement_observer(observer: Callable) -> void:
+	measurement_observer = observer
 
 
 func reset() -> void:
@@ -47,6 +52,7 @@ func get_or_create_player_node(self_id: String, player_id: String) -> Player:
 		if apply_local_player_hue_callback.is_valid():
 			apply_local_player_hue_callback.call(local_player)
 		player_nodes[player_id] = local_player
+		_record_lifecycle("created")
 		return local_player
 
 	var remote_player := PLAYER_SCENE.instantiate() as Player
@@ -55,6 +61,7 @@ func get_or_create_player_node(self_id: String, player_id: String) -> Player:
 		apply_remote_player_hue_callback.call(player_id, remote_player)
 	owner_node.add_child(remote_player)
 	player_nodes[player_id] = remote_player
+	_record_lifecycle("created")
 
 	return remote_player
 
@@ -128,5 +135,10 @@ func remove_player_node(self_id: String, player_id: String) -> bool:
 		player_node.queue_free()
 
 	erase_player(player_id)
+	_record_lifecycle("removed")
 	return true
 
+
+func _record_lifecycle(operation: String) -> void:
+	if measurement_observer.is_valid():
+		measurement_observer.call("players", operation, 1)

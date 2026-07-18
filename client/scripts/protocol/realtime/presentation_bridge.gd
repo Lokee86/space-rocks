@@ -20,6 +20,7 @@ var _logged_first_fanout := false
 var _logged_event_lifecycle_flow_ready := false
 var _logged_debug_shape_catalog_received := false
 var _pending_event_lifecycle_flow = null
+var _measurement_observer: Callable
 
 
 func configure(pipeline_ref: RealtimePacketPipelineScript, presentation_adapter_ref: PresentationAdapterScript, gameplay_composition_ref: GameplayCompositionScript, logger_callable: Callable) -> void:
@@ -28,6 +29,10 @@ func configure(pipeline_ref: RealtimePacketPipelineScript, presentation_adapter_
 	gameplay_composition = gameplay_composition_ref
 	world_sync = gameplay_composition.get_world_sync()
 	logger = logger_callable
+
+
+func set_measurement_observer(observer: Callable) -> void:
+	_measurement_observer = observer
 
 
 func activate() -> void:
@@ -84,6 +89,7 @@ func flush_pending() -> bool:
 	if !_logged_first_fanout:
 		_log("Gameplay presentation fanout started")
 		_logged_first_fanout = true
+	var started_usec := Time.get_ticks_usec()
 	var event_lifecycle_flow = _pending_event_lifecycle_flow
 	_pending_event_lifecycle_flow = null
 	var local_lifecycle_flow = gameplay_composition.get_local_lifecycle_flow()
@@ -94,6 +100,8 @@ func flush_pending() -> bool:
 	gameplay_composition.apply_devtools_gameplay_state(devtools_state)
 	_presentation_pending = false
 	_lane_presentation_fanned_out = true
+	if _measurement_observer.is_valid():
+		_measurement_observer.call(float(Time.get_ticks_usec() - started_usec) / 1000.0)
 	return true
 
 

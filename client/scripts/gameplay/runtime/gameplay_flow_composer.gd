@@ -6,6 +6,7 @@ const GameplayLocalLifecycleFlowScript = preload("res://scripts/gameplay/lifecyc
 const GameplayTargetingContextScript = preload("res://scripts/gameplay/targeting/gameplay_targeting_context.gd")
 const ServerHitboxOverlayFlowScript = preload("res://scripts/gameplay/debug/server_hitbox_overlay_flow.gd")
 const GameplayProcessFlowScript = preload("res://scripts/gameplay/runtime/gameplay_process_flow.gd")
+const ClientMeasurementContextScript = preload("res://scripts/devtools/measurement/client_measurement_context.gd")
 
 var event_lifecycle_flow
 var local_lifecycle_flow
@@ -18,6 +19,7 @@ var spectate_context
 var gameplay_process_flow
 var server_hitbox_overlay_flow
 var match_end_flow
+var client_measurement_context
 
 
 func configure(
@@ -74,6 +76,16 @@ func configure(
 	if devtools_context == null:
 		devtools_context = GameplayDevtoolsContext.new()
 		devtools_context.configure(connection_service_ref)
+	client_measurement_context = ClientMeasurementContextScript.new()
+	var realtime_packet_pipeline = null
+	if connection_service_ref != null and connection_service_ref.has_method("get_realtime_packet_pipeline"):
+		realtime_packet_pipeline = connection_service_ref.get_realtime_packet_pipeline()
+	var telemetry_context = null
+	if devtools_context != null and devtools_context.has_method("get_world_telemetry_context"):
+		telemetry_context = devtools_context.get_world_telemetry_context()
+	client_measurement_context.configure(connection_service_ref, realtime_packet_pipeline, world_sync_ref, telemetry_context)
+	if world_sync_ref != null and world_sync_ref.has_method("configure_measurement_observer"):
+		world_sync_ref.configure_measurement_observer(Callable(client_measurement_context, "record_lifecycle"))
 	if runtime_context_ref != null and runtime_context_ref.respawn_flow != null and runtime_context_ref.respawn_flow.has_method("mark_awaiting_confirmation") and devtools_context != null and devtools_context.has_method("configure_local_respawn_confirmation_marker"):
 		devtools_context.configure_local_respawn_confirmation_marker(Callable(runtime_context_ref.respawn_flow, "mark_awaiting_confirmation"))
 
@@ -116,7 +128,8 @@ func configure(
 			runtime_tick_flow,
 			devtools_context,
 			input_context,
-			spectate_context
+		spectate_context,
+			client_measurement_context
 		)
 
 
@@ -126,6 +139,10 @@ func get_event_lifecycle_flow():
 
 func get_local_lifecycle_flow():
 	return local_lifecycle_flow
+
+
+func get_client_measurement_context():
+	return client_measurement_context
 
 
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
@@ -196,4 +213,5 @@ func reset() -> void:
 		spectate_context.reset()
 	if server_hitbox_overlay_flow != null:
 		server_hitbox_overlay_flow.reset()
-
+	if client_measurement_context != null:
+		client_measurement_context.reset()
