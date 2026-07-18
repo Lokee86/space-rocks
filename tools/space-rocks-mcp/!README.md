@@ -49,7 +49,8 @@ The main shared modules are:
 - `shared/responses.js` for MCP text/JSON response helpers.
 - `shared/paths.js` for workspace and Space Rocks repository root resolution.
 - `shared/text_files.js` for text-file detection, workspace walking, and workspace search helpers.
-- `shared/allowed_commands.js` for the bounded shell command allowlist.
+- `shared/restricted_commands.js` for the guarded workspace command registry, policy, and launcher.
+- `shared/restricted_command_tools.js` for asynchronous restricted workspace command tools.
 - `shared/repo_readonly_tools.js` for workspace read/search tools.
 - `shared/repo_write_tools.js` for compatibility-named configured-workspace write tools.
 - `shared/workspace_writes.js` for transactional text writes and exact replacements within `WORKSPACE_ROOT`.
@@ -76,7 +77,8 @@ npm run start:info
 ## Tool groups
 
 - Workspace read tools: `ping`, `workspace_root`, `repo_root`, `list_repo_tree`, `read_repo_file`, `search_repo_text`. The repo-named tools remain compatibility names and operate on workspace-relative paths after `WORKSPACE_ROOT` is configured; `repo_root` returns the configured workspace root as an alias of `workspace_root`.
-- Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `apply_repo_file_edits`, `list_allowed_commands`, `run_allowed_command`
+- Repo write tools: `ping`, `write_repo_file`, `replace_in_repo_file`, `apply_repo_file_edits`
+- Workspace command tools: `list_workspace_commands`, `command_job_start`
 - EngineForge read tools: bridge info, bridge status, route probing, command probing, project info, scene tree, node properties, editor logs
 - EngineForge write tools: scene open/save/create, node create/delete/duplicate/reparent/property/transform, script create/edit/detach/delete/attach, resource create, material helpers, editor play/stop/pause, console clear, animation play/stop
 - Hermes tools: `hermes_run`, `hermes_ping`, `hermes_help`, `hermes_session_status`, `hermes_sessions_list`, `hermes_session_send`, `hermes_session_send_batch`, `hermes_job_start`, `hermes_terminal_start`, `hermes_terminal_send`, `hermes_terminal_read`, `hermes_terminal_resize`, `hermes_terminal_close`. These tools provide access to the Hermes CLI, asynchronous Hermes session jobs, and persistent Hermes PTY sessions.
@@ -103,6 +105,24 @@ The write server's file mutation tools operate inside the configured `WORKSPACE_
 The full batch is preflighted before any target is mutated. Edits to the same file are applied in input order, each unique file is committed once, and each final file is staged in its target directory and installed through rename. If a later commit fails, the service makes a best-effort rollback to original contents and removes newly created targets.
 
 Paths under `.worktrees/` and `.workingtrees/` are writable when they remain inside `WORKSPACE_ROOT`. `.git` path components, root escapes, unsupported file types, and paths containing existing symlink components are rejected.
+
+## Write MCP command jobs
+
+Write MCP exposes restricted workspace commands as asynchronous jobs:
+
+- `list_workspace_commands` returns the fixed command IDs.
+- `command_job_start` starts one command job and returns its job snapshot immediately.
+- `job_status`, `job_read`, `job_cancel`, and `job_list` provide status, cursor-based stdout/stderr reads, cancellation, and retained-job listing.
+
+The exact command IDs are:
+
+`go`, `gofmt`, `python`, `pytest`, `ruby`, `bundle`, `rails`, `npm`, `node`, `godot`, `rg`, `grep`, `find`, `ls`, `cat`, `sed`, `head`, `tail`, `wc`, `diff`.
+
+Commands launch with `shell: false`; command arguments are passed as arguments and are not shell-expanded. `cwd` defaults to `WORKSPACE_ROOT`, must exist as a directory, and must resolve inside the real workspace root. `.worktrees/` and `.workingtrees/` descendants are valid when they remain inside that root. Output buffering, timeouts, retention, and cancellation come from the shared `ProcessJobManager`.
+
+The blocked command IDs are `git`, `cmd`, `powershell`, `pwsh`, `bash`, `sh`, `wsl`, and `npx`. Argument and environment policy also blocks Node eval/print, Python `-c` and non-`pytest` modules, Ruby `-e`, npm exec/x, Rails runner/console, Go `env -w` and `clean -modcache`, unsafe Bundler modes, NULs, oversized arguments, and protected environment overrides such as `PATH`, `NODE_OPTIONS`, `PYTHONPATH`, `RUBYOPT`, `GEM_HOME`, `GEM_PATH`, `COMSPEC`, `SHELL`, and `GIT_`/`SSH_` variables.
+
+This is a guarded process runner, not an OS filesystem sandbox. A workspace-owned script can still perform whatever its language runtime permits.
 
 ## Hermes CLI Tools
 
@@ -236,7 +256,7 @@ Note:
 - Info MCP intentionally exposes Hermes session tools for continuous context, which can cause code edits and consume model/API usage.
 - Do not expose Info MCP through ngrok while Hermes tools are default-enabled.
 - Treat Info MCP as trusted-local only.
-- Keep the write server local and bounded to repo writes, allowlisted commands, and EngineForge mutations.
+- Keep the write server local and bounded to workspace writes, restricted command jobs, and EngineForge mutations.
 - Do not edit `package.json` or the installed EngineForge plugin from this README workflow.
 - The MCP server does not contain EngineForge itself. It wraps the local Godot bridge by reading `client/.godot/engineforge/bridge.json`.
 - The Godot bridge is provided by the installed plugin at `client/addons/engineforge_bridge/engineforge_bridge.gd`.

@@ -9,7 +9,8 @@
     "start:legacy": "node server.js",
     "start:info-next": "PORT=8789 node server-info-next.js",
     "start:write": "PORT=8788 node server-write.js",
-    "start:info": "PORT=8789 node server-info-next.js"
+    "start:info": "PORT=8789 node server-info-next.js",
+    "start:dev": "PORT=8889 node server-dev.js"
   },
   "keywords": [],
   "author": "",

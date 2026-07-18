@@ -1,4 +1,8 @@
+import dotenv from "dotenv";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { fileURLToPath } from "node:url";
+
+dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
 
 function requireEnv(name) {
   const value = process.env[name];

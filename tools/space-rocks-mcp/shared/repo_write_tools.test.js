@@ -38,9 +38,11 @@ test("registers mutation tools and forwards single writes, replacements, and bat
   const server = createMockServer();
   registerRepoWriteTools(server, { workspaceWriteService });
 
-  for (const name of ["write_repo_file", "replace_in_repo_file", "apply_repo_file_edits", "list_allowed_commands", "run_allowed_command"]) {
+  for (const name of ["write_repo_file", "replace_in_repo_file", "apply_repo_file_edits"]) {
     assert.ok(server.tools.has(name), `${name} should be registered`);
   }
+  assert.equal(server.tools.has("list_allowed_commands"), false);
+  assert.equal(server.tools.has("run_allowed_command"), false);
   assert.match(server.tools.get("write_repo_file").config.description, /configured workspace/);
   assert.match(server.tools.get("replace_in_repo_file").config.description, /configured workspace/);
 

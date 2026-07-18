@@ -17,6 +17,9 @@ def test_info_server_blocks_write_tools_but_allows_hermes_cli() -> None:
     assert "apply_repo_file_edits" not in text
     assert "write_repo_file" not in text
     assert "replace_in_repo_file" not in text
+    assert "restricted_command_tools" not in text
+    assert "command_job_start" not in text
+    assert "list_workspace_commands" not in text
 
     # Hermes CLI tools are explicitly allowed
     assert "hermes_tools" in text
@@ -95,7 +98,42 @@ def test_write_server_imports_write_helpers() -> None:
 
     assert "repo_write_tools" in text
     assert "engineforge_write_tools" in text
-    assert 'version: "0.2.0"' in text
+    assert "restricted_command_tools" in text
+    assert "registerRestrictedCommandTools" in text
+    assert "job_tools" in text
+    assert "registerJobTools" in text
+    assert "defaultProcessJobManager" in text
+    assert 'version: "0.3.0"' in text
+
+
+def test_dev_server_registers_the_consolidated_development_surface() -> None:
+    text = read_text("tools/space-rocks-mcp/server-dev.js")
+    package_text = read_text("tools/space-rocks-mcp/package.json")
+
+    assert 'name: "space-rocks-dev-mcp"' in text
+    assert 'version: "0.1.0"' in text
+    assert "process.env.PORT ?? 8889" in text
+    assert '"start:dev": "PORT=8889 node server-dev.js"' in package_text
+
+    assert "repo_readonly_tools" in text
+    assert "repo_write_tools" in text
+    assert 'if (name === "ping")' in text
+    assert "restricted_command_tools" in text
+    assert "registerRestrictedCommandTools" in text
+    assert "job_tools" in text
+    assert "registerJobTools" in text
+    assert "defaultProcessJobManager" in text
+    assert "registerHermesTools" in text
+    assert "processJobManager: defaultProcessJobManager" in text
+    assert "engineforge_readonly_tools" in text
+    assert "engineforge_write_tools" in text
+    assert "registerEngineForgeReadonlyTools" in text
+    assert "registerEngineForgeWriteTools" in text
+
+    assert "ENABLE_CHROME_DEVTOOLS" in text
+    assert "registerChromeDevtoolsProxyTools" in text
+    assert "registerPlasmicReadTools" in text
+    assert "registerPlasmicWriteTools" in text
 
 
 def test_repo_write_tools_use_workspace_write_service_and_batch_tool() -> None:

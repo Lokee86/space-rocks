@@ -34,12 +34,14 @@ Use this as the first stop when you need to decide which MCP server to connect t
 || Server | Port | Entry file | Consumer | Role |
 ||---|---:|---|---|---|
 || Info MCP | 8789 | server-info-next.js | ChatGPT / planning | Workspace reads/search, read-only Godot diagnostics, optional Chrome/Plasmic tools, default Hermes session tools |
-|| Write MCP | 8788 | server-write.js | Codex / implementation | Bounded repo writes, allowlisted commands, Godot bridge mutations |
+|| Write MCP | 8788 | server-write.js | Codex / implementation | Bounded workspace writes, restricted command jobs, Godot bridge mutations |
 
 ## Shared process-job modules
 
 - `tools/space-rocks-mcp/shared/job_manager.js` owns the in-memory asynchronous process-job lifecycle, process spawning, cancellation, timeouts, bounded output buffers, concurrency, and retention.
 - `tools/space-rocks-mcp/shared/job_tools.js` exposes the read/control MCP surface: `job_status`, `job_read`, `job_cancel`, and `job_list`.
+- `tools/space-rocks-mcp/shared/restricted_commands.js` owns the fixed workspace command registry, policy validation, cwd/environment checks, executable resolution, and job launch seam.
+- `tools/space-rocks-mcp/shared/restricted_command_tools.js` exposes `list_workspace_commands` and `command_job_start` on Write MCP.
 - The Info MCP server uses one shared `defaultProcessJobManager` for `hermes_job_start` and the four process-job tools.
 
 ## Workspace and project roots
@@ -64,6 +66,24 @@ The Write MCP file tools operate inside the configured `WORKSPACE_ROOT`:
 The full batch is preflighted before mutation. Same-file edits are applied in input order, each unique file is committed once, and each final file is staged in its target directory and installed through rename. If a later commit fails, the service makes a best-effort rollback to original contents and removes newly created targets.
 
 Descendants under `.worktrees/` and `.workingtrees/` are writable when they remain inside `WORKSPACE_ROOT`. `.git` components, paths escaping the root, unsupported file types, and paths containing existing symlink components are rejected.
+
+## Write MCP workspace command jobs
+
+Write MCP exposes the restricted workspace command service as asynchronous jobs:
+
+- `list_workspace_commands` returns the fixed command IDs.
+- `command_job_start` starts one restricted command and returns its job snapshot immediately.
+- `job_status`, `job_read`, `job_cancel`, and `job_list` inspect, read, cancel, and list the shared retained jobs.
+
+The exact command IDs are:
+
+`go`, `gofmt`, `python`, `pytest`, `ruby`, `bundle`, `rails`, `npm`, `node`, `godot`, `rg`, `grep`, `find`, `ls`, `cat`, `sed`, `head`, `tail`, `wc`, `diff`.
+
+Commands use `shell: false`; arguments are passed directly and are not shell-expanded. `cwd` must exist as a directory and resolve inside the real `WORKSPACE_ROOT`. `.worktrees/` and `.workingtrees/` descendants are valid when they remain inside the workspace root. Process output buffering, timeout behavior, cancellation, concurrency, and retention come from `ProcessJobManager`, shared with the other asynchronous process jobs.
+
+The blocked command IDs are `git`, `cmd`, `powershell`, `pwsh`, `bash`, `sh`, `wsl`, and `npx`. Key policy restrictions include Node eval/print, Python `-c` and any `-m` target except `pytest`, Ruby `-e`, npm exec/x, Rails runner/console, Go `env ... -w` and `clean ... -modcache`, and unsafe Bundler exec/config modes. Arguments are strings only, capped at 200 arguments and 4096 characters per argument, with NULs rejected. Environment overrides require uppercase/underscore names, are capped at 50 entries and 4096 characters per value, and reject process-path/runtime controls plus `GIT_` and `SSH_` variables.
+
+This is a guarded process runner, not an OS filesystem sandbox. Workspace-owned scripts can still perform whatever their language runtime permits.
 
 ## Hermes CLI Tools
 
@@ -313,7 +333,7 @@ Use Write MCP when you need:
 
 - bounded repo writes
 - transactional workspace file writes and exact replacements
-- allowlisted command execution
+- restricted workspace command jobs
 - scene edits
 - script edits
 - resource creation

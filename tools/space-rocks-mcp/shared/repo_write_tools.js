@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { textResponse } from "./responses.js";
-import { listAllowedCommands, runAllowedCommand } from "./allowed_commands.js";
 import { defaultWorkspaceWriteService } from "./workspace_writes.js";
 
 function changedFilesResponse(result) {
@@ -82,33 +81,6 @@ export function registerRepoWriteTools(server, { workspaceWriteService = default
     async ({ edits }) => {
       const result = await workspaceWriteService.applyBatch(edits);
       return changedFilesResponse(result);
-    }
-  );
-
-  server.registerTool(
-    "list_allowed_commands",
-    {
-      title: "List allowed commands",
-      description: "List allowlisted repo commands available to the write MCP server.",
-      inputSchema: {},
-    },
-    async () => {
-      return textResponse(JSON.stringify(listAllowedCommands(), null, 2));
-    }
-  );
-
-  server.registerTool(
-    "run_allowed_command",
-    {
-      title: "Run allowed command",
-      description: "Run one allowlisted repo command by name.",
-      inputSchema: {
-        name: z.enum(listAllowedCommands()),
-      },
-    },
-    async ({ name }) => {
-      const result = await runAllowedCommand(name);
-      return textResponse(JSON.stringify(result, null, 2));
     }
   );
 }
