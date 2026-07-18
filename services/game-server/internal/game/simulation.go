@@ -42,6 +42,7 @@ func (game *Game) Step(delta float64) {
 			game.awardsRuntime().PruneContributions(game.awardClock, game.awardPolicy.Assists)
 		}
 		game.advanceEncounterLifecycle(delta)
+		game.stepObjectives(delta)
 
 		game.applyPendingPlayerInputsLocked()
 		game.stepPlayerSessions(delta)

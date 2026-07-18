@@ -131,6 +131,7 @@ func (game *Game) applyAwardMutationsLocked(eventID string, mutations []awards.M
 			game.syncProjectedPlayerScoreLocked(change.Owner.ID, change.After)
 		}
 	}
+	game.applyAwardResultToObjectivesLocked(result)
 	for _, observer := range game.awardEventObservers {
 		observer(result)
 	}

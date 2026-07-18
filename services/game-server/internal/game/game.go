@@ -11,6 +11,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterlifecycle"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/participation"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
@@ -66,6 +67,8 @@ type Game struct {
 	simulationStepObservers    []simulationStepObserver
 	simulationStepObserverKeys map[string]struct{}
 	awardEventObservers        []func(awards.EventResult)
+	objectiveRuntime           *objectives.Runtime
+	objectiveEventObservers    []func(objectives.Event)
 	encounterLifecycleRuntime  *encounterlifecycle.Runtime
 	cameraViews                map[string]*runtime.CameraView
 	playerSessions             map[string]*playerSession
@@ -172,6 +175,7 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 		scoringPolicy:              scoring.NewDefaultPolicy(),
 		awardPolicy:                awards.NewStandardPolicy(),
 		awardRuntime:               awards.NewRuntime(),
+		objectiveRuntime:           objectives.NewRuntime(),
 		dropTables:                 drops.GeneratedTables,
 		radialEffects:              radial.NewStore(),
 		entities:                   runtime.NewEntityStore(),

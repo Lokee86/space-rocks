@@ -213,9 +213,37 @@ reset
 
 These actions exercise the foundation's state-machine seam and are validated against definition and instance state. Devtools do not acquire administrative ownership, bypass consumer policy, or become a separate authority for objectives.
 
+## Implementation Status
+
+The first server implementation slice is complete.
+
+Implemented:
+
+```text
+schema-driven immutable objective definitions
+atomic objective instances with independent definition and instance identity
+player, team, match, collection, and definition-specific scopes
+boolean, numeric, set, sequence, maintain-condition, manual, and timer inputs
+supplied fact consumption with one-hit, in-game, and in-encounter attribution filters
+undiscovered, discovered, inactive, active, completed, failed, cancelled, and retired lifecycle states
+success-over-failure resolution at one evaluation boundary
+timer-expiry event ordering and default timer_expired failure
+objective timers that ignore ordinary world freeze and pause with no connected players
+visibility-aware owner/public/discovery snapshots
+multiple active instances of one definition
+unattainable-definition retirement and new-instance blocking
+Single, Multiple, and Meta composition contracts without inheritance
+objective event observers and deterministic snapshots
+award-counter facts feeding matching objective scopes
+state preservation across player removal/disconnection
+force progress, set progress, activate, discover, complete, fail, cancel, retire, and reset devtools actions
+```
+
+The foundation does not register objectives for the Arcade Survival baseline. Activation, scheduling, dependency graphs, branching, repeatability policy, rewards, match-end interpretation, result inclusion, campaign sequencing, persistence, packet schemas, and presentation remain consumer-owned future work around this seam.
+
 ## Implementation Direction
 
-The first implementation slice should proceed from definitions and supplied facts into local objective state:
+The implemented first slice proceeds from definitions and supplied facts into local objective state:
 
 ```text
 1. Define the schema/definition contract for condition, progress, timer, lifecycle, failure, discovery, visibility, and association behavior.
