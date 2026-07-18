@@ -93,6 +93,27 @@ func TestRunFinalizationIsIdempotentAndIgnoresLaterObservations(t *testing.T) {
 	}
 }
 
+func TestRunFinalizationCapturesLatestShortRunState(t *testing.T) {
+	clock := &testClock{now: time.Unix(100, 0)}
+	process := NewProcessSamplerWithReader(time.Hour, func() ProcessSample {
+		return ProcessSample{HeapAllocatedBytes: 42}
+	})
+	run := NewRun(RunContext{}, WithClock(clock.Now), WithSampleInterval(time.Second), WithProcessSampler(process))
+	clock.Advance(100 * time.Millisecond)
+	run.ObserveSimulation(time.Millisecond, EntityCounts{Players: 3, Asteroids: 5})
+
+	report := run.Finalize(StopReasonComplete)
+	if len(report.Samples) != 1 {
+		t.Fatalf("expected final report to include one latest sample, got %#v", report.Samples)
+	}
+	if report.Samples[0].Entities.Players != 3 || report.Samples[0].Entities.Asteroids != 5 {
+		t.Fatalf("final sample lost latest entity state: %#v", report.Samples[0])
+	}
+	if report.Samples[0].Process.HeapAllocatedBytes != 42 {
+		t.Fatalf("final sample lost process state: %#v", report.Samples[0].Process)
+	}
+}
+
 func TestReportWriterPublishesVersionedJSON(t *testing.T) {
 	directory, err := os.MkdirTemp(".", ".measurement-test-")
 	if err != nil {
