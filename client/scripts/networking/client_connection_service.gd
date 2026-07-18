@@ -4,8 +4,10 @@ class_name ClientConnectionService
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const ClientInboundCoordinator := preload("res://scripts/networking/inbound/client_inbound_coordinator.gd")
+const ToolingPacketRouter := preload("res://scripts/networking/inbound/tooling_packet_router.gd")
 const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
+const TelemetryClientPackets := preload("res://scripts/networking/outbound/telemetry_client_packets.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
@@ -26,6 +28,11 @@ signal telemetry_pong_received(packet: Dictionary)
 signal realtime_transport_ready
 signal unknown_packet_received(packet: Dictionary)
 signal tooling_packet_received(packet: Dictionary)
+signal telemetry_snapshot_received(packet: Dictionary)
+signal measurement_started_received(packet: Dictionary)
+signal measurement_snapshot_received(packet: Dictionary)
+signal measurement_stopped_received(packet: Dictionary)
+signal tooling_error_received(packet: Dictionary)
 signal recovery_started(lane: String)
 signal recovery_succeeded()
 signal recovery_failed()
@@ -38,6 +45,7 @@ var client_packet_sender: ClientPacketSender:
 		_missing_client_packet_sender_reported = false
 var server_packet_dispatcher: ServerPacketDispatcher
 var client_inbound_coordinator: ClientInboundCoordinator
+var tooling_packet_router: ToolingPacketRouter
 var realtime_packet_pipeline: RealtimePacketPipeline
 var realtime_transport_session: RealtimeTransportSession
 var webrtc_transport_factory: Callable
@@ -80,6 +88,8 @@ func _ready() -> void:
 		realtime_packet_pipeline = RealtimePacketPipeline.new()
 	if client_inbound_coordinator == null:
 		client_inbound_coordinator = ClientInboundCoordinator.new()
+	if tooling_packet_router == null:
+		tooling_packet_router = ToolingPacketRouter.new()
 	client_inbound_coordinator.configure(server_packet_dispatcher, realtime_packet_pipeline, realtime_transport_session)
 	_bind_resync_request_signal()
 	_connect_coordinator_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
@@ -91,6 +101,12 @@ func _ready() -> void:
 	_connect_coordinator_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
 	_connect_coordinator_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
 	_connect_coordinator_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
+	_connect_tooling_router_signal("telemetry_pong_received", Callable(self, "_on_tooling_telemetry_pong_received"))
+	_connect_tooling_router_signal("telemetry_snapshot_received", Callable(self, "_on_telemetry_snapshot_received"))
+	_connect_tooling_router_signal("measurement_started_received", Callable(self, "_on_measurement_started_received"))
+	_connect_tooling_router_signal("measurement_snapshot_received", Callable(self, "_on_measurement_snapshot_received"))
+	_connect_tooling_router_signal("measurement_stopped_received", Callable(self, "_on_measurement_stopped_received"))
+	_connect_tooling_router_signal("tooling_error_received", Callable(self, "_on_tooling_error_received"))
 	var ready_handler := Callable(self, "_on_realtime_transport_ready")
 	if !client_inbound_coordinator.is_connected("realtime_transport_ready", ready_handler):
 		client_inbound_coordinator.connect("realtime_transport_ready", ready_handler)
@@ -281,8 +297,8 @@ func send_pause_request() -> void:
 
 
 func send_telemetry_ping(sequence: int, client_sent_msec: int) -> void:
-	if _can_send_outbound():
-		client_packet_sender.send_telemetry_ping(sequence, client_sent_msec)
+	if realtime_transport_session != null and _can_send_outbound():
+		send_tooling_packet(TelemetryClientPackets.telemetry_ping_packet(sequence, client_sent_msec))
 
 
 func send_debug_kill_player_request(target_scope: String = "", target_player_id: String = "") -> void:
@@ -446,6 +462,39 @@ func _on_realtime_transport_ready() -> void:
 
 func _on_tooling_packet_received(packet: Dictionary) -> void:
 	tooling_packet_received.emit(packet)
+	if tooling_packet_router != null:
+		tooling_packet_router.dispatch(packet)
+
+
+func _connect_tooling_router_signal(signal_name: String, callable: Callable) -> void:
+	if tooling_packet_router == null or not tooling_packet_router.has_signal(signal_name):
+		return
+	if not tooling_packet_router.is_connected(signal_name, callable):
+		tooling_packet_router.connect(signal_name, callable)
+
+
+func _on_tooling_telemetry_pong_received(packet: Dictionary) -> void:
+	telemetry_pong_received.emit(packet)
+
+
+func _on_telemetry_snapshot_received(packet: Dictionary) -> void:
+	telemetry_snapshot_received.emit(packet)
+
+
+func _on_measurement_started_received(packet: Dictionary) -> void:
+	measurement_started_received.emit(packet)
+
+
+func _on_measurement_snapshot_received(packet: Dictionary) -> void:
+	measurement_snapshot_received.emit(packet)
+
+
+func _on_measurement_stopped_received(packet: Dictionary) -> void:
+	measurement_stopped_received.emit(packet)
+
+
+func _on_tooling_error_received(packet: Dictionary) -> void:
+	tooling_error_received.emit(packet)
 
 
 func _on_recovery_started(lane: String) -> void:

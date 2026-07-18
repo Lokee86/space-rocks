@@ -50,6 +50,7 @@ func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifie
 }
 
 func handleConnection(session *webSocketSession, remoteAddr string) {
+	defer session.closeTooling()
 	defer session.clearWebRTCTransport()
 	defer session.conn.Close()
 	defer session.leaveDisconnectedRoom()

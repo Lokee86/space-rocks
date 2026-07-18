@@ -38,6 +38,7 @@ func writeServerMessages(session *webSocketSession, remoteAddr string, readErr <
 				return
 			}
 		case <-ticker.C:
+			session.writeToolingProtocolMessage()
 			if !writeGameplayLaneProtocolMessage(session, remoteAddr) {
 				return
 			}

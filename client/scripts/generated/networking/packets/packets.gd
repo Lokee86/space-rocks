@@ -8,8 +8,6 @@ const TYPE_SHIP_DEATH := "ship_death"
 const TYPE_RESPAWN := "respawn"
 const TYPE_PAUSE_REQUEST := "pause_request"
 const TYPE_PLAYER_PAUSE_STATE := "player_pause_state"
-const TYPE_TELEMETRY_PING := "telemetry_ping"
-const TYPE_TELEMETRY_PONG := "telemetry_pong"
 const TYPE_SET_TARGET_PLAYER_REQUEST := "set_target_player_request"
 const TYPE_SELECT_TARGET_AT_POSITION_REQUEST := "select_target_at_position_request"
 const TYPE_CLEAR_TARGET_REQUEST := "clear_target_request"
@@ -32,6 +30,19 @@ const TYPE_WEBRTC_ICE_CANDIDATE := "webrtc_ice_candidate"
 const TYPE_WEBRTC_READY := "webrtc_ready"
 const TYPE_WEBRTC_SMOKE := "webrtc_smoke"
 const TYPE_WEBRTC_FAILED := "webrtc_failed"
+const TYPE_TELEMETRY_SUBSCRIBE := "telemetry_subscribe"
+const TYPE_TELEMETRY_UNSUBSCRIBE := "telemetry_unsubscribe"
+const TYPE_TELEMETRY_PING := "telemetry_ping"
+const TYPE_MEASUREMENT_START := "measurement_start"
+const TYPE_MEASUREMENT_STOP := "measurement_stop"
+const TYPE_MEASUREMENT_RESET := "measurement_reset"
+const TYPE_MEASUREMENT_SNAPSHOT_REQUEST := "measurement_snapshot_request"
+const TYPE_TELEMETRY_SNAPSHOT := "telemetry_snapshot"
+const TYPE_TELEMETRY_PONG := "telemetry_pong"
+const TYPE_MEASUREMENT_STARTED := "measurement_started"
+const TYPE_MEASUREMENT_SNAPSHOT := "measurement_snapshot"
+const TYPE_MEASUREMENT_STOPPED := "measurement_stopped"
+const TYPE_TOOLING_ERROR := "tooling_error"
 const TYPE_TOGGLE_DEBUG_INVINCIBLE := "toggle_debug_invincible"
 const TYPE_TOGGLE_DEBUG_INFINITE_LIVES := "toggle_debug_infinite_lives"
 const TYPE_TOGGLE_DEBUG_FREEZE_WORLD := "toggle_debug_freeze_world"
@@ -75,6 +86,7 @@ const FIELD_CHANNEL_ID := "channel_id"
 const FIELD_CHANNEL_LABEL := "channel_label"
 const FIELD_CLIENT_SENT_MSEC := "client_sent_msec"
 const FIELD_COLLISIONS_FROZEN := "collisions_frozen"
+const FIELD_COMPLETE := "complete"
 const FIELD_CONFIG := "config"
 const FIELD_CONNECTED := "connected"
 const FIELD_CONTEXT := "context"
@@ -121,10 +133,12 @@ const FIELD_MEDIA := "media"
 const FIELD_MEMBER_NAME := "member_name"
 const FIELD_MEMBERS := "members"
 const FIELD_MESSAGE := "message"
+const FIELD_METRICS := "metrics"
 const FIELD_MODE := "mode"
 const FIELD_NAME := "name"
 const FIELD_ORIGIN := "origin"
 const FIELD_OWNER_ID := "owner_id"
+const FIELD_PARTIAL := "partial"
 const FIELD_PAUSED := "paused"
 const FIELD_PICKUP_CLASS := "pickup_class"
 const FIELD_PICKUP_ID := "pickup_id"
@@ -142,6 +156,8 @@ const FIELD_PRIMARY_WEAPON_ID := "primary_weapon_id"
 const FIELD_PROJECTILE_TYPE := "projectile_type"
 const FIELD_READY := "ready"
 const FIELD_REASON := "reason"
+const FIELD_REPORT := "report"
+const FIELD_REQUEST_ID := "request_id"
 const FIELD_RESPAWN_COOLDOWN := "respawn_cooldown"
 const FIELD_RESPAWN_DELAY := "respawn_delay"
 const FIELD_RESULT_ID := "result_id"
@@ -149,7 +165,9 @@ const FIELD_RIGHT := "right"
 const FIELD_ROOM_CODE := "room_code"
 const FIELD_ROOM_STATE := "room_state"
 const FIELD_ROTATION := "rotation"
+const FIELD_RUN_ID := "run_id"
 const FIELD_SCALE := "scale"
+const FIELD_SCENARIO_LABEL := "scenario_label"
 const FIELD_SCORE := "score"
 const FIELD_SDP := "sdp"
 const FIELD_SECONDARY_AMMO_POLICY := "secondary_ammo_policy"
@@ -179,6 +197,7 @@ const FIELD_TARGET_KIND := "target_kind"
 const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TARGET_SCOPE := "target_scope"
 const FIELD_THRUSTING := "thrusting"
+const FIELD_TIMESTAMP_MSEC := "timestamp_msec"
 const FIELD_TOKEN := "token"
 const FIELD_TOTAL_SCORE := "total_score"
 const FIELD_TRACE_ID := "trace_id"
@@ -276,6 +295,54 @@ static func webrtc_failed_packet(error_code, message) -> Dictionary:
 	packet[FIELD_TYPE] = "webrtc_failed"
 	packet[FIELD_ERROR_CODE] = error_code
 	packet[FIELD_MESSAGE] = message
+	return packet
+
+static func telemetry_subscribe_packet(request_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "telemetry_subscribe"
+	packet[FIELD_REQUEST_ID] = request_id
+	return packet
+
+static func telemetry_unsubscribe_packet(request_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "telemetry_unsubscribe"
+	packet[FIELD_REQUEST_ID] = request_id
+	return packet
+
+static func telemetry_ping_packet(request_id, sequence, client_sent_msec) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "telemetry_ping"
+	packet[FIELD_REQUEST_ID] = request_id
+	packet[FIELD_SEQUENCE] = sequence
+	packet[FIELD_CLIENT_SENT_MSEC] = client_sent_msec
+	return packet
+
+static func measurement_start_packet(request_id, scenario_label) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "measurement_start"
+	packet[FIELD_REQUEST_ID] = request_id
+	packet[FIELD_SCENARIO_LABEL] = scenario_label
+	return packet
+
+static func measurement_stop_packet(request_id, run_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "measurement_stop"
+	packet[FIELD_REQUEST_ID] = request_id
+	packet[FIELD_RUN_ID] = run_id
+	return packet
+
+static func measurement_reset_packet(request_id, run_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "measurement_reset"
+	packet[FIELD_REQUEST_ID] = request_id
+	packet[FIELD_RUN_ID] = run_id
+	return packet
+
+static func measurement_snapshot_request_packet(request_id, run_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "measurement_snapshot_request"
+	packet[FIELD_REQUEST_ID] = request_id
+	packet[FIELD_RUN_ID] = run_id
 	return packet
 
 static func toggle_debug_invincible_packet() -> Dictionary:

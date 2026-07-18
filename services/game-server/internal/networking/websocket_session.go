@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	toolingrouter "github.com/Lokee86/space-rocks/services/game-server/internal/networking/tooling"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -37,6 +38,7 @@ type webSocketSession struct {
 	firstInputPacketLogged      bool
 	firstRespawnPacketLogged    bool
 	webrtcTransport             *WebRTCTransport
+	toolingRouter               *toolingrouter.Router
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
@@ -55,6 +57,7 @@ func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, a
 		identity:            NewGuestSessionIdentity(),
 		authVerifier:        authVerifier,
 		matchResultReporter: reporter,
+		toolingRouter:       toolingrouter.NewRouter(nil, nil),
 	}
 }
 
@@ -152,11 +155,15 @@ func (session *webSocketSession) ensureWebRTCTransport() *WebRTCTransport {
 		},
 		OnPacketReceived: func(packet map[string]any, _lane string) {
 			if _lane == "tooling" {
+				session.handleToolingPacket(packet)
 				return
 			}
 			session.handleWebRTCPacket(packet)
 		},
 		OnChannelClosed: func(_lane string) {
+			if _lane == "tooling" {
+				session.closeTooling()
+			}
 			session.clearWebRTCTransport()
 		},
 	})
@@ -336,4 +343,32 @@ func (session *webSocketSession) handleWebRTCPacket(packet map[string]any) {
 
 func (session *webSocketSession) HandleWebRTCFailed(_ string, _ string) {
 	session.clearWebRTCTransport()
+}
+
+func (session *webSocketSession) handleToolingPacket(packet map[string]any) {
+	router := session.toolingRouter
+	transport := session.webRTCTransportSnapshot()
+	if router == nil || transport == nil {
+		return
+	}
+	context := session.sessionContext()
+	router.Handle(toolingrouter.Context{SessionID: session.sessionID, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID}, transport, packet)
+}
+
+func (session *webSocketSession) writeToolingProtocolMessage() {
+	router := session.toolingRouter
+	transport := session.webRTCTransportSnapshot()
+	if router == nil || transport == nil {
+		return
+	}
+	context := session.sessionContext()
+	router.Tick(toolingrouter.Context{SessionID: session.sessionID, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID}, transport)
+}
+
+func (session *webSocketSession) closeTooling() {
+	if session.toolingRouter == nil {
+		return
+	}
+	context := session.sessionContext()
+	session.toolingRouter.Close(toolingrouter.Context{SessionID: session.sessionID, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID})
 }

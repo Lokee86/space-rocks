@@ -48,9 +48,6 @@ func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte
 		HandleAuth: func(packet game.ClientPacket) bool {
 			return inbound.HandleAuthPacket(adapter, packet)
 		},
-		HandleTelemetry: func(packet game.ClientPacket) bool {
-			return inbound.HandleTelemetryPacket(adapter, remoteAddr, packet)
-		},
 		HandleLobby: func(packet game.ClientPacket) bool {
 			return inbound.HandleLobbyPacket(adapter, packet)
 		},

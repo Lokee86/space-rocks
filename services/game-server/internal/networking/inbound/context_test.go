@@ -44,8 +44,4 @@ func TestHandlersCaptureSessionContextOnce(t *testing.T) {
 	if !HandleSimpleDevtoolsPacket(s, "remote", []byte("bad"), ClientPacketEnvelope{Type: "debug_set_score"}) || s.calls != 1 {
 		t.Fatalf("devtools context calls=%d", s.calls)
 	}
-	s.calls = 0
-	if !HandleTelemetryPacket(s, "remote", game.ClientPacket{Type: game.PacketTypeTelemetryPing}) || s.calls != 1 {
-		t.Fatalf("telemetry context calls=%d", s.calls)
-	}
 }
