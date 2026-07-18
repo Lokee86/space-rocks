@@ -24,19 +24,14 @@ function makeFakePty({ onWrite, onKill } = {}) {
   };
 }
 
-test("registerHermesTools exposes the new PTY tools", () => {
+test("registerHermesTools exposes PTY tools without the async job by default", () => {
   const server = createMockServer();
-  registerHermesTools(server, { manager: new HermesTerminalManager({ spawnPty: () => { throw new Error("not used"); } }) });
-  for (const name of ["hermes_terminal_start", "hermes_terminal_send", "hermes_terminal_read", "hermes_terminal_resize", "hermes_terminal_close", "hermes_job_start"]) assert.ok(server.tools.has(name), `${name} should be registered`);
+  registerHermesTools(server);
+  for (const name of ["hermes_terminal_start", "hermes_terminal_send", "hermes_terminal_read", "hermes_terminal_resize", "hermes_terminal_close"]) assert.ok(server.tools.has(name), `${name} should be registered`);
+  assert.equal(server.tools.has("hermes_job_start"), false);
   const sendSchema = server.tools.get("hermes_terminal_send").config.inputSchema;
   assert.equal(sendSchema.session_id.format, "regex");
   assert.equal(sendSchema.append_enter.def.defaultValue, true);
-  const jobTimeoutSchema = server.tools.get("hermes_job_start").config.inputSchema.timeout_ms;
-  assert.equal(jobTimeoutSchema.def.defaultValue, 300000);
-  assert.equal(jobTimeoutSchema.safeParse(999).success, false);
-  assert.equal(jobTimeoutSchema.safeParse(1000).success, true);
-  assert.equal(jobTimeoutSchema.safeParse(3600000).success, true);
-  assert.equal(jobTimeoutSchema.safeParse(3600001).success, false);
 });
 
 test("HermesTerminalManager starts, queues sends, reads, resizes, and closes sessions", async () => {
@@ -159,6 +154,7 @@ test("hermes_job_start registers, starts immediately, and redacts the prompt", a
   const processJobManager = makeFakeProcessJobManager();
   const server = createMockServer();
   registerHermesTools(server, { processJobManager });
+  assert.equal(server.tools.has("hermes_job_start"), true);
 
   const response = await server.tools.get("hermes_job_start").handler({
     prompt: "private prompt",

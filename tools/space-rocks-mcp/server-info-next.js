@@ -8,8 +8,6 @@ import { registerEngineForgeReadonlyTools } from "./shared/engineforge_readonly_
 import { registerChromeDevtoolsProxyTools } from "./shared/chrome_devtools_proxy_tools.js";
 import { registerPlasmicReadTools, registerPlasmicWriteTools } from "./shared/plasmic_tools.js";
 import { registerHermesTools } from "./shared/hermes_tools.js";
-import { registerJobTools } from "./shared/job_tools.js";
-import { defaultProcessJobManager } from "./shared/job_manager.js";
 
 const port = Number(process.env.PORT ?? 8789);
 const chromeDevtoolsEnabled = process.env.ENABLE_CHROME_DEVTOOLS === "1";
@@ -17,13 +15,12 @@ const chromeDevtoolsEnabled = process.env.ENABLE_CHROME_DEVTOOLS === "1";
 function createMcpServer() {
   const server = new McpServer({
     name: "space-rocks-info-mcp",
-    version: "0.4.0",
+    version: "0.3.0",
   });
 
   registerRepoReadonlyTools(server);
   registerEngineForgeReadonlyTools(server);
-  registerHermesTools(server, { processJobManager: defaultProcessJobManager });
-  registerJobTools(server, { manager: defaultProcessJobManager });
+  registerHermesTools(server);
   if (chromeDevtoolsEnabled) {
     registerChromeDevtoolsProxyTools(server);
     registerPlasmicReadTools(server);
