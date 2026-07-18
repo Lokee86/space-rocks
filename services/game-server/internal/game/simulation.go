@@ -42,6 +42,7 @@ func (game *Game) Step(delta float64) {
 		game.applyPendingPlayerInputsLocked()
 		game.stepPlayerSessions(delta)
 		if game.isMatchOverLocked() {
+			game.encounterSpawn().Stop()
 			game.stepPlayers(delta, bounds)
 			game.removeReadyPlayers()
 			game.stepAsteroids(delta, bounds)

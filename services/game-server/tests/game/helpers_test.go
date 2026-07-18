@@ -7,6 +7,7 @@ import (
 
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
@@ -350,16 +351,14 @@ func (scenario *scenario) advanceRespawnTimer(playerID string, delta float64) {
 	scenario.game.Step(delta)
 }
 
-func (scenario *scenario) setAsteroidSpawnElapsed(elapsed float64) {
-	scenario.t.Helper()
-
-	scenario.gameField("asteroidSpawnElapsed").SetFloat(elapsed)
-}
-
 func (scenario *scenario) asteroidSpawnElapsed() float64 {
 	scenario.t.Helper()
 
-	return scenario.gameField("asteroidSpawnElapsed").Float()
+	snapshot, ok := scenario.game.EncounterSpawnProfileSnapshot(encounterspawn.ProfilePlayercentricAsteroidsV1)
+	if !ok {
+		scenario.t.Fatal("expected baseline encounter spawn profile")
+	}
+	return snapshot.ElapsedSeconds
 }
 
 func (scenario *scenario) pendingEventCount(playerID string) int {

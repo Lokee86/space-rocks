@@ -13,7 +13,28 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc is the authoritative P4 planning owner for non-player encounter spawn profile selection, scheduling, population policy, targeting, safety, and lifecycle handoffs.
 
-It defines how modes select one or more encounter spawn profiles, how validated profile configuration becomes runtime scheduling policy, and how encounter requests become authoritative spawn outcomes. It defines planning boundaries without claiming that the implementation already exists.
+It defines how modes select one or more encounter spawn profiles, how validated profile configuration becomes runtime scheduling policy, and how encounter requests become authoritative spawn outcomes.
+
+## Current Implementation Status
+
+Implemented:
+
+- `encounterspawn` contract and runtime, including profile validation and runtime state.
+- Baseline `playercentric_asteroids_v1` continuous scheduling.
+- Profile activation, deactivation, stop, and resume, including simulation-pause behavior.
+- Deterministic priority/profile ordering and camera ordering.
+- Shared, profile, and spawn-type weighted admission.
+- Bounded safety retries.
+- Lifecycle origin handoff and fragment origin preservation.
+- Match-over scheduling stop.
+
+Contract-only or future:
+
+- Actual wave, event, objective, and scripted schedule execution.
+- Additional Encounter Spawn Profile implementations.
+- Richer scaling and targeting behavior.
+- External spawn requests.
+- Spawn-failure telemetry and logging.
 
 ## Ownership Boundary
 
@@ -274,7 +295,7 @@ Match-end, cutscene, and campaign-transition owners stop profile scheduling thro
 
 ## Implementation Direction
 
-The first implementation slice should establish the Encounter Spawn Profile seam while preserving the baseline existing behavior:
+The implementation direction for the remaining slices is:
 
 ```text
 1. Define the Encounter Spawn Profile identifier and playercentric_asteroids_v1 contract.
@@ -292,7 +313,7 @@ The first implementation slice should establish the Encounter Spawn Profile seam
 13. Preserve asteroid fragmentation as asteroid behavior rather than scheduler behavior.
 ```
 
-Implementation should keep encounter policy in this focused owner. Modes, lifecycle, objectives, campaign content, devtools, runtime entities, and presentation should provide facts or consume outcomes rather than becoming alternate encounter-spawn authorities. This document describes planning direction only; it does not claim that these steps are implemented.
+Implementation should keep encounter policy in this focused owner. Modes, lifecycle, objectives, campaign content, devtools, runtime entities, and presentation should provide facts or consume outcomes rather than becoming alternate encounter-spawn authorities.
 
 ## Testing Direction
 

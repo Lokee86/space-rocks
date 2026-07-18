@@ -7,18 +7,19 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/visibility"
 )
 
-func (game *Game) randomAsteroidSpawnPosition(targetView *runtime.CameraView) physics.Vector2 {
+func (game *Game) randomAsteroidSpawnPosition(targetView *runtime.CameraView, retryCap int) (physics.Vector2, bool) {
 	margin := constants.AsteroidSpawnMargin
-	for attempts := 0; ; attempts++ {
+	for attempt := 0; attempt <= retryCap; attempt++ {
 		spawn := game.randomOffscreenPosition(targetView, margin)
 		if !game.isInsideAsteroidSpawnClearanceForAnyCamera(spawn) {
-			return spawn
+			return spawn, true
 		}
-
-		if attempts > 0 && attempts%16 == 0 {
+		}
+		if attempt > 0 && attempt%16 == 0 {
 			margin += constants.AsteroidSpawnMargin
 		}
 	}
+	return physics.Vector2{}, false
 }
 
 func (game *Game) randomOffscreenPosition(view *runtime.CameraView, margin float64) physics.Vector2 {

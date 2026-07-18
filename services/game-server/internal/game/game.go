@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterlifecycle"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/participation"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
@@ -44,6 +45,7 @@ type Game struct {
 	scoringPolicy              scoring.Policy
 	dropTables                 drops.Tables
 	radialEffects              radial.Store
+	encounterSpawnRuntime      *encounterspawn.Runtime
 	asteroidSpawnElapsed       float64
 	worldSimulationOptions     WorldSimulationOptions
 	collisionShapes            physics.CollisionShapeCatalog
@@ -131,6 +133,10 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 	if err != nil {
 		return nil, err
 	}
+	encounterSpawnRuntime, err := newEncounterSpawnRuntime()
+	if err != nil {
+		return nil, err
+	}
 
 	game := &Game{
 		rngSource:                  source,
@@ -150,6 +156,7 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 		presentationDerived:        make(map[string][]presentationDerivedEntry),
 		runtimeMeasurements:        make(map[uint64]measurement.SimulationObserver),
 		spawner:                    spawning.New(source),
+		encounterSpawnRuntime:      encounterSpawnRuntime,
 		encounterLifecycleRuntime:  encounterlifecycle.NewRuntime(),
 		scoringPolicy:              scoring.NewDefaultPolicy(),
 		dropTables:                 drops.GeneratedTables,

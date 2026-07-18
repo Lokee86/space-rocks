@@ -6,25 +6,30 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterlifecycle"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
 
 const (
-	baselineAsteroidProfileID         encounterlifecycle.ProfileID         = "baseline_asteroids"
+	baselineAsteroidProfileID         encounterlifecycle.ProfileID         = encounterlifecycle.ProfileID(encounterspawn.ProfilePlayercentricAsteroidsV1)
 	baselineAsteroidSpawnType         encounterlifecycle.SpawnType         = "asteroid"
 	baselineAsteroidLifecyclePolicyID encounterlifecycle.LifecyclePolicyID = "baseline_asteroid"
 	baselineAsteroidPriority          encounterlifecycle.Priority          = 0
 )
 
 func baselineAsteroidLifecycleRegistration(asteroid *runtime.Asteroid) encounterlifecycle.Registration {
+	return baselineAsteroidLifecycleRegistrationForProfile(asteroid, encounterspawn.ProfilePlayercentricAsteroidsV1)
+}
+
+func baselineAsteroidLifecycleRegistrationForProfile(asteroid *runtime.Asteroid, profileID encounterspawn.ProfileID) encounterlifecycle.Registration {
 	populationCost := asteroid.Size
 	if populationCost < 1 {
 		populationCost = 1
 	}
 	return encounterlifecycle.Registration{
 		Origin: encounterlifecycle.OriginMetadata{
-			ProfileID:              baselineAsteroidProfileID,
+			ProfileID:              encounterlifecycle.ProfileID(profileID),
 			SpawnType:              baselineAsteroidSpawnType,
 			LifecyclePolicyID:      baselineAsteroidLifecyclePolicyID,
 			Priority:               baselineAsteroidPriority,
@@ -51,7 +56,11 @@ func (game *Game) encounterLifecycle() *encounterlifecycle.Runtime {
 }
 
 func (game *Game) registerAsteroidLifecycle(asteroid *runtime.Asteroid) {
-	if err := game.encounterLifecycle().Register(asteroid.ID, baselineAsteroidLifecycleRegistration(asteroid)); err != nil {
+	game.registerAsteroidLifecycleForProfile(asteroid, encounterspawn.ProfilePlayercentricAsteroidsV1)
+}
+
+func (game *Game) registerAsteroidLifecycleForProfile(asteroid *runtime.Asteroid, profileID encounterspawn.ProfileID) {
+	if err := game.encounterLifecycle().Register(asteroid.ID, baselineAsteroidLifecycleRegistrationForProfile(asteroid, profileID)); err != nil {
 		panic(fmt.Errorf("failed to register asteroid %q with encounter lifecycle: %w", asteroid.ID, err))
 	}
 }

@@ -1,22 +1,34 @@
 package game
 
 import (
-	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"fmt"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
 
 func (game *Game) stepAsteroidSpawning(delta float64) {
-	if game.worldSimulationOptions.CanSpawnAsteroids() && game.hasCameraViews() {
-		game.asteroidSpawnElapsed += delta
-		if game.asteroidSpawnElapsed >= constants.AsteroidSpawnInterval {
-			game.asteroidSpawnElapsed = 0
-			for _, cameraView := range game.cameraViews {
-				game.spawnAsteroidBatch(cameraView)
-			}
+	runtime := game.encounterSpawn()
+	if !game.hasCameraViews() {
+		if err := runtime.ResetProgress(encounterspawn.ProfilePlayercentricAsteroidsV1); err != nil {
+			panic(fmt.Errorf("failed to reset baseline encounter spawn progress: %w", err))
 		}
-	} else if !game.hasCameraViews() {
-		game.asteroidSpawnElapsed = 0
+		return
+	}
+
+	opportunities, err := runtime.Step(delta, !game.worldSimulationOptions.CanSpawnAsteroids())
+	if err != nil {
+		panic(fmt.Errorf("failed to step encounter spawn profiles: %w", err))
+	}
+	for _, opportunity := range opportunities {
+		if opportunity.ProfileID != encounterspawn.ProfilePlayercentricAsteroidsV1 {
+			panic(fmt.Errorf("unsupported encounter spawn profile %q", opportunity.ProfileID))
+		}
+		snapshot, _ := runtime.Snapshot(opportunity.ProfileID)
+		for _, cameraView := range game.sortedCameraViews() {
+			game.spawnAsteroidBatchForProfile(cameraView, opportunity.ProfileID, opportunity.BatchSize, snapshot.Config.RetryCap)
+		}
 	}
 }
 

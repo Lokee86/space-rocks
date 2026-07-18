@@ -556,7 +556,8 @@ func TestDebugFrozenWorldDoesNotSpawnBullets(t *testing.T) {
 func TestDebugFrozenWorldDoesNotSpawnAsteroids(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
-	scenario.setAsteroidSpawnElapsed(constants.AsteroidSpawnInterval)
+	scenario.step(1)
+	elapsedBeforeFreeze := scenario.asteroidSpawnElapsed()
 
 	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type: devtools.PacketTypeToggleDebugFreezeWorld,
@@ -566,15 +567,16 @@ func TestDebugFrozenWorldDoesNotSpawnAsteroids(t *testing.T) {
 	if asteroids := scenario.presentationSnapshot(playerID).Asteroids; len(asteroids) != 0 {
 		t.Fatalf("expected frozen world not to spawn asteroids, got %d", len(asteroids))
 	}
-	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != constants.AsteroidSpawnInterval {
-		t.Fatalf("expected frozen spawn timer not to advance, got %v", elapsed)
+	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != elapsedBeforeFreeze {
+		t.Fatalf("expected frozen spawn timer to stay %v, got %v", elapsedBeforeFreeze, elapsed)
 	}
 }
 
 func TestDebugFreezeSpawningOnlyStopsAsteroidSpawning(t *testing.T) {
 	scenario := newScenario(t)
 	playerID := scenario.addPlayer()
-	scenario.setAsteroidSpawnElapsed(constants.AsteroidSpawnInterval)
+	scenario.step(1)
+	elapsedBeforeFreeze := scenario.asteroidSpawnElapsed()
 
 	devtools.HandleCommand(scenario.control, playerID, devtools.DebugCommand{
 		Type:         devtools.PacketTypeToggleDebugFreezeWorld,
@@ -585,8 +587,8 @@ func TestDebugFreezeSpawningOnlyStopsAsteroidSpawning(t *testing.T) {
 	if asteroids := scenario.presentationSnapshot(playerID).Asteroids; len(asteroids) != 0 {
 		t.Fatalf("expected spawning-only freeze not to spawn asteroids, got %d", len(asteroids))
 	}
-	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != constants.AsteroidSpawnInterval {
-		t.Fatalf("expected spawning-only freeze not to advance/reset spawn timer, got %v", elapsed)
+	if elapsed := scenario.asteroidSpawnElapsed(); elapsed != elapsedBeforeFreeze {
+		t.Fatalf("expected spawning-only freeze timer to stay %v, got %v", elapsedBeforeFreeze, elapsed)
 	}
 	if scenario.worldFrozen() {
 		t.Fatal("expected spawning-only freeze not to mark world fully frozen")
