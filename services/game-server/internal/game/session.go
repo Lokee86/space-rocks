@@ -4,31 +4,36 @@ import (
 	"math"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
-	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
 type playerSession struct {
-	ID              string
-	TeamID          teams.ID
-	ShipTypeID      string
-	Stats           runtime.ShipStats
-	SpawnPosition   physics.Vector2
-	Config          runtime.ClientConfig
-	Targeting       PlayerTargeting
-	Score           int
-	Lives           int
-	ShipDeaths      int
-	RespawnCooldown float64
-	Suspension      runtime.SuspensionState
-	DamageOptions   runtime.DamageOptions
-	LifeOptions     runtime.LifeOptions
-	PlayerArmory    weapons.PlayerArmory
+	ID            string
+	TeamID        teams.ID
+	ShipTypeID    string
+	Stats         runtime.ShipStats
+	SpawnPosition physics.Vector2
+	Config        runtime.ClientConfig
+	Targeting     PlayerTargeting
+	Score         int
+	Suspension    runtime.SuspensionState
+	DamageOptions runtime.DamageOptions
+	PlayerArmory  weapons.PlayerArmory
+	betweenLife   *betweenLifeState
+}
+
+type betweenLifeState struct {
+	HealthValue     int
+	ShieldValue     int
+	WeaponState     weapons.State
+	DamageModifiers []damage.DamageModifier
 }
 
 func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
@@ -39,19 +44,8 @@ func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
 		SpawnPosition: spawnPosition,
 		Config:        runtime.DefaultCameraConfig(),
 		Targeting:     EmptyPlayerTargeting(),
-		Lives:         constants.PlayerStartingLives,
 		PlayerArmory:  weapons.DefaultPlayerArmory(),
 	}
-}
-
-func (session *playerSession) Step(delta float64) {
-	if session.RespawnCooldown > 0 {
-		session.RespawnCooldown = max(0, session.RespawnCooldown-delta)
-	}
-}
-
-func (session *playerSession) CanRespawn() bool {
-	return session.Lives > 0 && session.RespawnCooldown == 0
 }
 
 func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
@@ -71,70 +65,84 @@ func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
 	return ship
 }
 
-func (game *Game) respawnPlayer(playerID string) {
-	session, ok := game.playerSessions[playerID]
-	if !ok {
-		if game.matchID != "" && game.matchTraceID != "" {
-			logging.Emit(observability.Request{
-				Event: observability.EventNameRespawnBlocked,
-				Context: observability.Context{
-					TraceID:  game.matchTraceID,
-					MatchID:  game.matchID,
-					PlayerID: playerID,
-				},
-				Fields: observability.Fields{"reason_code": "session_missing"},
-			})
-		}
+func (session *playerSession) CaptureBetweenLifeState(ship *runtime.Ship) {
+	if ship == nil {
 		return
 	}
-	if !session.CanRespawn() {
-		if game.matchID != "" && game.matchTraceID != "" {
-			logging.Emit(observability.Request{
-				Event: observability.EventNameRespawnBlocked,
-				Context: observability.Context{
-					TraceID:  game.matchTraceID,
-					MatchID:  game.matchID,
-					PlayerID: playerID,
-				},
-				Fields: observability.Fields{
-					"reason_code":      "respawn_cooldown_or_lives_exhausted",
-					"lives":            session.Lives,
-					"respawn_cooldown": session.RespawnCooldown,
-				},
-			})
-		}
-		return
+	session.betweenLife = &betweenLifeState{
+		HealthValue:     ship.Health,
+		ShieldValue:     ship.Shields,
+		WeaponState:     ship.WeaponState,
+		DamageModifiers: append([]damage.DamageModifier(nil), ship.DamageModifiers...),
 	}
-	if _, ok := game.entities.Players[playerID]; ok {
-		if game.matchID != "" && game.matchTraceID != "" {
-			logging.Emit(observability.Request{
-				Event: observability.EventNameRespawnBlocked,
-				Context: observability.Context{
-					TraceID:  game.matchTraceID,
-					MatchID:  game.matchID,
-					PlayerID: playerID,
-				},
-				Fields: observability.Fields{"reason_code": "already_active"},
-			})
-		}
-		return
-	}
+}
 
-	spawnPlan := game.planPlayerRespawn(session)
-	spawnPosition := spawnPlan.Position
-	player := session.NewShip(spawnPosition)
-	game.entities.Players[playerID] = player
-	game.setPlayerCameraViewLocked(playerID, player)
+func (session *playerSession) NewRespawnShip(position physics.Vector2, policy lives.RestorationPolicy) *runtime.Ship {
+	if policy.Loadout == lives.LoadoutReset {
+		session.PlayerArmory = weapons.DefaultPlayerArmory()
+	}
+	armory := session.PlayerArmory
+	ship := session.NewShip(position)
+	ship.ShipWeapons.Primary = armory.Primary
+	ship.ShipWeapons.Secondary = armory.Secondary
+	if policy.Shields == lives.RestorationFull {
+		ship.Shields = min(session.Stats.MaxShields, session.Stats.MaxShields)
+	} else if session.betweenLife != nil {
+		ship.Shields = min(session.Stats.MaxShields, session.betweenLife.ShieldValue)
+	}
+	if session.betweenLife != nil {
+		if policy.Loadout == lives.LoadoutPersist {
+			ship.WeaponState = restoreWeaponState(session.betweenLife.WeaponState, ship.ShipWeapons, policy.ShortCooldownThreshold)
+		}
+		ship.DamageModifiers = restoreDamageModifiers(session.betweenLife.DamageModifiers, policy.TemporaryEffects)
+	}
+	if policy.Health == lives.RestorationFull {
+		ship.Health = session.Stats.MaxHealth
+	} else if session.betweenLife != nil {
+		ship.Health = session.betweenLife.HealthValue
+	} else {
+		ship.Health = 0
+	}
+	session.betweenLife = nil
+	return ship
+}
+
+func restoreWeaponState(state weapons.State, armory weapons.ShipWeapons, threshold float64) weapons.State {
+	state.Primary = restoreWeaponSlot(state.Primary, armory.Primary, threshold)
+	state.Secondary = restoreWeaponSlot(state.Secondary, armory.Secondary, threshold)
+	return state
+}
+
+func restoreWeaponSlot(state weapons.SlotState, equipped weapons.Equipped, threshold float64) weapons.SlotState {
+	profile, ok := weapons.Lookup(equipped.ID)
+	if ok && profile.CooldownSeconds < threshold {
+		state.CooldownRemaining = 0
+	}
+	return state
+}
+
+func restoreDamageModifiers(modifiers []damage.DamageModifier, policy lives.TemporaryEffectsPolicy) []damage.DamageModifier {
+	if policy == lives.TemporaryEffectsPersist {
+		return append([]damage.DamageModifier(nil), modifiers...)
+	}
+	filtered := make([]damage.DamageModifier, 0, len(modifiers))
+	for _, modifier := range modifiers {
+		if modifier.PersistsThroughDeath {
+			filtered = append(filtered, modifier)
+		}
+	}
+	return filtered
 }
 
 func (game *Game) planInitialPlayerSpawn(playerIndex int, playerID string) PlayerSpawnPlan {
 	shapeID := runtime.ResolveShipStats(runtime.DefaultShipTypeID).CollisionShapeID
-	return PlayerSpawnPlan{
-		EntityType: SpawnEntityTypePlayer,
-		Reason:     SpawnReasonInitialPlayer,
-		PlayerID:   playerID,
-		Position:   game.safePlayerSpawnPosition(preferredInitialSpawnPosition(playerIndex), playerID, shapeID),
-	}
+	return game.planPlayerSpawn(playerspawn.Request{
+		ProfileID:        game.lifeRuntime.Policy().SpawnProfileID,
+		PlayerID:         playerID,
+		SpawnReason:      string(SpawnReasonInitialPlayer),
+		PreferredOrigin:  preferredInitialSpawnPosition(playerIndex),
+		CollisionShapeID: shapeID,
+	}, SpawnReasonInitialPlayer)
 }
 
 func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
@@ -145,52 +153,28 @@ func preferredInitialSpawnPosition(playerIndex int) physics.Vector2 {
 }
 
 func (game *Game) safeRespawnPosition(session *playerSession) physics.Vector2 {
-	return game.safePlayerSpawnPosition(session.SpawnPosition, session.ID, session.Stats.CollisionShapeID)
+	return game.planPlayerRespawn(session).Position
 }
 
 func (game *Game) planPlayerRespawn(session *playerSession) PlayerSpawnPlan {
-	return PlayerSpawnPlan{
-		EntityType: SpawnEntityTypePlayer,
-		Reason:     SpawnReasonPlayerRespawn,
-		PlayerID:   session.ID,
-		Position:   game.safeRespawnPosition(session),
-	}
+	return game.planPlayerSpawn(playerspawn.Request{
+		ProfileID:        game.lifeRuntime.Policy().SpawnProfileID,
+		PlayerID:         session.ID,
+		SpawnReason:      string(SpawnReasonPlayerRespawn),
+		PreferredOrigin:  session.SpawnPosition,
+		CollisionShapeID: session.Stats.CollisionShapeID,
+	}, SpawnReasonPlayerRespawn)
 }
 
-func (game *Game) safePlayerSpawnPosition(origin physics.Vector2, ignorePlayerID string, collisionShapeID string) physics.Vector2 {
-	if game.isSafeRespawnPosition(origin, ignorePlayerID, collisionShapeID) {
-		return origin
+func (game *Game) planPlayerSpawn(request playerspawn.Request, reason SpawnReason) PlayerSpawnPlan {
+	plan, err := playerspawn.PlanBasicSafeSpawnV1(request, game)
+	if err != nil {
+		panic(err)
 	}
-
-	spacing := respawnSearchSpacing()
-	for ring := 1; ; ring++ {
-		for x := -ring; x <= ring; x++ {
-			top := origin.Add(physics.Vector2{X: float64(x) * spacing, Y: -float64(ring) * spacing})
-			if game.isSafeRespawnPosition(top, ignorePlayerID, collisionShapeID) {
-				return top
-			}
-
-			bottom := origin.Add(physics.Vector2{X: float64(x) * spacing, Y: float64(ring) * spacing})
-			if game.isSafeRespawnPosition(bottom, ignorePlayerID, collisionShapeID) {
-				return bottom
-			}
-		}
-
-		for y := -ring + 1; y <= ring-1; y++ {
-			left := origin.Add(physics.Vector2{X: -float64(ring) * spacing, Y: float64(y) * spacing})
-			if game.isSafeRespawnPosition(left, ignorePlayerID, collisionShapeID) {
-				return left
-			}
-
-			right := origin.Add(physics.Vector2{X: float64(ring) * spacing, Y: float64(y) * spacing})
-			if game.isSafeRespawnPosition(right, ignorePlayerID, collisionShapeID) {
-				return right
-			}
-		}
-	}
+	return PlayerSpawnPlan{EntityType: SpawnEntityTypePlayer, Reason: reason, PlayerID: request.PlayerID, Position: plan.Position}
 }
 
-func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID string, collisionShapeID string) bool {
+func (game *Game) IsSafeSpawn(position physics.Vector2, ignorePlayerID string, collisionShapeID string) bool {
 	shape, err := game.collisionShapes.ShipShapeByID(collisionShapeID)
 	if err != nil {
 		return true
@@ -229,10 +213,6 @@ func (game *Game) isSafeRespawnPosition(position physics.Vector2, ignorePlayerID
 	}
 
 	return true
-}
-
-func respawnSearchSpacing() float64 {
-	return max(64, constants.PlayerRespawnBuffer)
 }
 
 func hasRespawnClearance(shipBody physics.CollisionBody, asteroidBody physics.CollisionBody, buffer float64) bool {

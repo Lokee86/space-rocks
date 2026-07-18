@@ -3,6 +3,7 @@ package gametests
 import (
 	"testing"
 
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
 
@@ -22,10 +23,10 @@ func TestGameMatchDecisionReportsPlayerParticipation(t *testing.T) {
 	}
 
 	statuses := decisionByID(decision)
-	wantStatuses := map[string]rules.PlayerParticipationStatus{
-		activePlayerID:     rules.PlayerActive,
-		pendingPlayerID:    rules.PlayerPendingRespawn,
-		eliminatedPlayerID: rules.PlayerEliminated,
+	wantStatuses := map[string]playerstate.Status{
+		activePlayerID:     playerstate.StatusActive,
+		pendingPlayerID:    playerstate.StatusPendingRespawn,
+		eliminatedPlayerID: playerstate.StatusEliminated,
 	}
 	if len(statuses) != len(wantStatuses) {
 		t.Fatalf("expected %d player decisions, got %d", len(wantStatuses), len(statuses))
@@ -49,13 +50,13 @@ func TestGameMatchDecisionReportsEliminatedMatchOver(t *testing.T) {
 	}
 
 	statuses := decisionByID(decision)
-	if gotStatus := statuses[playerID]; gotStatus != rules.PlayerEliminated {
-		t.Fatalf("expected %q status %q, got %q", playerID, rules.PlayerEliminated, gotStatus)
+	if gotStatus := statuses[playerID]; gotStatus != playerstate.StatusEliminated {
+		t.Fatalf("expected %q status %q, got %q", playerID, playerstate.StatusEliminated, gotStatus)
 	}
 }
 
-func decisionByID(decision rules.MatchDecision) map[string]rules.PlayerParticipationStatus {
-	statuses := make(map[string]rules.PlayerParticipationStatus, len(decision.Players))
+func decisionByID(decision rules.MatchDecision) map[string]playerstate.Status {
+	statuses := make(map[string]playerstate.Status, len(decision.Players))
 	for _, player := range decision.Players {
 		statuses[player.ID] = player.Status
 	}

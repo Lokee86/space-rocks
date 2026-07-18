@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
@@ -34,6 +35,7 @@ func TestSessionCreatedShipsCopySessionShipTypeID(t *testing.T) {
 	const testShipTypeID = "test_ship"
 	scenario.sessionField(playerID, "ShipTypeID").SetString(testShipTypeID)
 	scenario.removePlayerEntity(playerID)
+	scenario.step(constants.PlayerRespawnDelay)
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
 

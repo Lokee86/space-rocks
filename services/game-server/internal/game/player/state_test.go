@@ -8,18 +8,19 @@ import (
 
 func TestBuildWorldState_StatusAndCapabilities(t *testing.T) {
 	tests := []struct {
-		name               string
-		input              BuildWorldStateInput
-		wantStatus         Status
-		wantHasActiveShip  bool
-		wantTargetable     bool
-		wantDamageable     bool
-		wantCollidable     bool
+		name              string
+		input             BuildWorldStateInput
+		wantStatus        Status
+		wantHasActiveShip bool
+		wantTargetable    bool
+		wantDamageable    bool
+		wantCollidable    bool
 	}{
 		{
 			name: "active",
 			input: BuildWorldStateInput{
 				ID:              "Player-1",
+				Status:          StatusActive,
 				HasActiveShip:   true,
 				X:               10,
 				Y:               20,
@@ -36,6 +37,7 @@ func TestBuildWorldState_StatusAndCapabilities(t *testing.T) {
 			name: "pending respawn",
 			input: BuildWorldStateInput{
 				ID:              "Player-2",
+				Status:          StatusPendingRespawn,
 				HasActiveShip:   false,
 				X:               30,
 				Y:               40,
@@ -52,6 +54,7 @@ func TestBuildWorldState_StatusAndCapabilities(t *testing.T) {
 			name: "eliminated",
 			input: BuildWorldStateInput{
 				ID:              "Player-3",
+				Status:          StatusEliminated,
 				HasActiveShip:   false,
 				X:               50,
 				Y:               60,
@@ -119,5 +122,21 @@ func TestWorldStateJSONUsesSnakeCaseFields(t *testing.T) {
 	}
 	if strings.Contains(jsonText, "\"RespawnCooldown\"") {
 		t.Fatalf("expected JSON not to contain %q, got %s", "\"RespawnCooldown\"", jsonText)
+	}
+}
+
+func TestBuildWorldStateUsesAuthoritativeStatusForCapabilities(t *testing.T) {
+	state := BuildWorldState(BuildWorldStateInput{
+		ID:            "Player-1",
+		Status:        StatusPendingRespawn,
+		HasActiveShip: true,
+		Lives:         2,
+	})
+
+	if state.Status != StatusPendingRespawn {
+		t.Fatalf("expected status %q, got %q", StatusPendingRespawn, state.Status)
+	}
+	if state.Targetable || state.Damageable || state.Collidable {
+		t.Fatal("expected non-active authoritative status to disable active capabilities")
 	}
 }

@@ -20,6 +20,7 @@ type ShipStats struct {
 	MaxSpeed          float64
 	Damping           float64
 	MaxHealth         int
+	MaxShields        int
 	BulletCooldown    float64
 	BulletDamage      int
 	BulletSpeed       float64
@@ -78,6 +79,7 @@ func resolveShipStats(modifiers ShipStatModifiers) ShipStats {
 		MaxSpeed:          constants.PlayerMaxSpeed * modifiers.MaxSpeed,
 		Damping:           constants.PlayerDamping * modifiers.Damping,
 		MaxHealth:         constants.PlayerMaxHealth,
+		MaxShields:        0,
 		BulletCooldown:    constants.BasicCannonCooldown * modifiers.BulletCooldown,
 		BulletDamage:      constants.BasicCannonDamage,
 		BulletSpeed:       constants.BasicCannonProjectileSpeed * modifiers.BulletSpeed,

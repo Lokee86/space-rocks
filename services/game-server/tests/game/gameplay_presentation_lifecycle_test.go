@@ -3,7 +3,7 @@ package gametests
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 )
 
 func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllPlayers(t *testing.T) {
@@ -20,9 +20,9 @@ func TestGameplayPresentationSnapshotIncludesPlayerLifecycleForAllPlayers(t *tes
 	snapshot := scenario.presentationSnapshot(activePlayerID)
 
 	wantLifecycle := map[string]string{
-		activePlayerID:     string(rules.PlayerActive),
-		pendingPlayerID:    string(rules.PlayerPendingRespawn),
-		eliminatedPlayerID: string(rules.PlayerEliminated),
+		activePlayerID:     string(playerstate.StatusActive),
+		pendingPlayerID:    string(playerstate.StatusPendingRespawn),
+		eliminatedPlayerID: string(playerstate.StatusEliminated),
 	}
 	if len(snapshot.PlayerLifecycle) != len(wantLifecycle) {
 		t.Fatalf("expected %d lifecycle entries, got %d", len(wantLifecycle), len(snapshot.PlayerLifecycle))

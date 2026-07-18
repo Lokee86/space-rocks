@@ -1,6 +1,9 @@
 package game
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+import (
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+)
 
 func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	if packet.Type == PacketTypeInput {
@@ -12,7 +15,9 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	defer game.mu.Unlock()
 
 	if packet.Type == PacketTypeRespawn {
-		game.respawnPlayer(playerID)
+		if respawned := game.respawnPlayer(playerID); respawned {
+			game.participationRuntime.RecordAction(playerID)
+		}
 		return
 	}
 	if packet.Type == PacketTypeClientConfig {
@@ -40,6 +45,11 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		return
 	}
 	if packet.Type == PacketTypePauseRequest {
+		if player, ok := game.entities.Players[playerID]; ok && player != nil {
+			if status, statusOK := game.lifeRuntime.Status(playerID); statusOK && status == playerstate.StatusActive && !player.IsPendingDespawn() {
+				game.participationRuntime.RecordAction(playerID)
+			}
+		}
 		game.togglePlayerPaused(playerID)
 	}
 }
@@ -65,5 +75,6 @@ func (game *Game) applyPendingPlayerInputsLocked() {
 			continue
 		}
 		player.SetInput(input)
+		game.participationRuntime.RecordAction(playerID)
 	}
 }

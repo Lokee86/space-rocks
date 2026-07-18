@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	runtimepkg "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
@@ -573,50 +575,50 @@ func remapLifecycleTickTestPlayerID(t *testing.T, gameInstance *game.Game, oldPl
 
 	value := reflect.ValueOf(gameInstance).Elem()
 	sessions := exportLifecycleTickTestValue(value.FieldByName("playerSessions"))
-	session := sessions.MapIndex(reflect.ValueOf(oldPlayerID))
-	if !session.IsValid() {
+	if !sessions.MapIndex(reflect.ValueOf(oldPlayerID)).IsValid() {
 		t.Fatalf("expected session %q to exist", oldPlayerID)
 	}
-
-	sessions.SetMapIndex(reflect.ValueOf(oldPlayerID), reflect.Value{})
-	sessions.SetMapIndex(reflect.ValueOf(newPlayerID), session)
-	exportLifecycleTickTestValue(session.Elem().FieldByName("ID")).SetString(newPlayerID)
 
 	records := exportLifecycleTickTestValue(value.FieldByName("participantRecords"))
 	record := records.MapIndex(reflect.ValueOf(oldPlayerID))
 	if !record.IsValid() {
 		t.Fatalf("expected participant record %q to exist", oldPlayerID)
 	}
+	control := game.NewControl(gameInstance)
+	if !control.EnsurePlayerSession(newPlayerID, physics.Vector2{}) {
+		t.Fatalf("expected test fixture to register session %q", newPlayerID)
+	}
+	position, ok := control.SafeRespawnPosition(newPlayerID)
+	if !ok || !control.ForceRespawnPlayer(newPlayerID, position, runtimepkg.ClientConfig{}) {
+		t.Fatalf("expected test fixture to activate player %q", newPlayerID)
+	}
+	gameInstance.RemovePlayer(oldPlayerID)
+
 	records.SetMapIndex(reflect.ValueOf(oldPlayerID), reflect.Value{})
 	records.SetMapIndex(reflect.ValueOf(newPlayerID), record)
 	exportLifecycleTickTestValue(record.Elem().FieldByName("ID")).SetString(newPlayerID)
-
-	players := exportLifecycleTickTestValue(value.FieldByName("entities").FieldByName("Players"))
-	player := players.MapIndex(reflect.ValueOf(oldPlayerID))
-	if player.IsValid() {
-		players.SetMapIndex(reflect.ValueOf(oldPlayerID), reflect.Value{})
-		players.SetMapIndex(reflect.ValueOf(newPlayerID), player)
-		exportLifecycleTickTestValue(player.Elem().FieldByName("ID")).SetString(newPlayerID)
-	}
 }
 
 func setLifecycleTickTestShipDeaths(t *testing.T, gameInstance *game.Game, playerID string, shipDeaths int) {
 	t.Helper()
 
-	value := reflect.ValueOf(gameInstance).Elem()
-	sessions := exportLifecycleTickTestValue(value.FieldByName("playerSessions"))
-	session := sessions.MapIndex(reflect.ValueOf(playerID))
-	if !session.IsValid() {
-		t.Fatalf("expected session %q to exist", playerID)
-	}
-	exportLifecycleTickTestValue(session.Elem().FieldByName("ShipDeaths")).SetInt(int64(shipDeaths))
+	control := game.NewControl(gameInstance)
+	for death := 0; death < shipDeaths; death++ {
+		if !control.ApplyPlayerDefeat("test-fixture", playerID) {
+			t.Fatalf("expected test fixture to apply death %d for %q", death+1, playerID)
+		}
+		if death == shipDeaths-1 {
+			continue
+		}
 
-	records := exportLifecycleTickTestValue(value.FieldByName("participantRecords"))
-	record := records.MapIndex(reflect.ValueOf(playerID))
-	if !record.IsValid() {
-		t.Fatalf("expected participant record %q to exist", playerID)
+		position, ok := control.SafeRespawnPosition(playerID)
+		if !ok {
+			t.Fatalf("expected test fixture to find respawn position for %q", playerID)
+		}
+		if !control.ForceRespawnPlayer(playerID, position, runtimepkg.ClientConfig{}) {
+			t.Fatalf("expected test fixture to respawn %q", playerID)
+		}
 	}
-	exportLifecycleTickTestValue(record.Elem().FieldByName("ShipDeaths")).SetInt(int64(shipDeaths))
 }
 
 func pruneLifecycleTickTestPlayers(t *testing.T, gameInstance *game.Game, keepPlayerID string) {
@@ -638,11 +640,14 @@ func markLifecycleTickTestGameOverForAllPlayers(t *testing.T, gameInstance *game
 
 	value := reflect.ValueOf(gameInstance).Elem()
 	sessions := exportLifecycleTickTestValue(value.FieldByName("playerSessions"))
+	control := game.NewControl(gameInstance)
 	for _, key := range sessions.MapKeys() {
 		playerID := key.String()
-		session := sessions.MapIndex(key)
-		exportLifecycleTickTestValue(session.Elem().FieldByName("Lives")).SetInt(0)
-		players := exportLifecycleTickTestValue(value.FieldByName("entities").FieldByName("Players"))
-		players.SetMapIndex(reflect.ValueOf(playerID), reflect.Value{})
+		if !control.SetPlayerLives(playerID, 0) {
+			t.Fatalf("expected test fixture to set lives for %q", playerID)
+		}
+		if !control.ApplyPlayerDefeat("test-fixture", playerID) {
+			t.Fatalf("expected test fixture to apply defeat for %q", playerID)
+		}
 	}
 }

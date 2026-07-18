@@ -14,8 +14,11 @@ func (game *Game) removeReadyPlayers() {
 }
 
 func (game *Game) stepPlayerSessions(delta float64) {
-	for _, session := range game.playerSessions {
-		session.Step(delta)
+	game.lifeRuntime.Step(delta)
+	for _, request := range game.participationRuntime.Step(delta, game.lifeRuntime.Status) {
+		game.lifeRuntime.RemoveParticipant(request.PlayerID, request.ReasonCode)
+		game.participationRuntime.UnregisterParticipant(request.PlayerID)
+		game.removeActivePlayerLocked(request.PlayerID)
 	}
 }
 

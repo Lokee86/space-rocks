@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
 
@@ -13,20 +14,22 @@ type controllerStatusTestTarget struct {
 	targetIDs     []string
 }
 
-func (target *controllerStatusTestTarget) MatchDecision() rules.MatchDecision { return target.matchDecision }
-func (target *controllerStatusTestTarget) TargetPlayerIDs() []string { return target.targetIDs }
-func (target *controllerStatusTestTarget) WorldFrozen() bool { return false }
-func (target *controllerStatusTestTarget) AsteroidsFrozen() bool { return false }
-func (target *controllerStatusTestTarget) BulletsFrozen() bool { return false }
-func (target *controllerStatusTestTarget) SpawningFrozen() bool { return false }
-func (target *controllerStatusTestTarget) CollisionsFrozen() bool { return false }
+func (target *controllerStatusTestTarget) MatchDecision() rules.MatchDecision {
+	return target.matchDecision
+}
+func (target *controllerStatusTestTarget) TargetPlayerIDs() []string            { return target.targetIDs }
+func (target *controllerStatusTestTarget) WorldFrozen() bool                    { return false }
+func (target *controllerStatusTestTarget) AsteroidsFrozen() bool                { return false }
+func (target *controllerStatusTestTarget) BulletsFrozen() bool                  { return false }
+func (target *controllerStatusTestTarget) SpawningFrozen() bool                 { return false }
+func (target *controllerStatusTestTarget) CollisionsFrozen() bool               { return false }
 func (target *controllerStatusTestTarget) PlayerInvincible(string) (bool, bool) { return false, false }
-func (target *controllerStatusTestTarget) InfiniteLives(string) (bool, bool) { return false, false }
-func (target *controllerStatusTestTarget) PlayerFrozen(string) (bool, bool) { return false, false }
+func (target *controllerStatusTestTarget) InfiniteLives(string) (bool, bool)    { return false, false }
+func (target *controllerStatusTestTarget) PlayerFrozen(string) (bool, bool)     { return false, false }
 
 func TestControllerStatusesForAllPlayersUsesMatchDecisionPlayers(t *testing.T) {
 	target := &controllerStatusTestTarget{
-		matchDecision: rules.MatchDecision{Players: []rules.PlayerDecision{{ID: "player-1", Status: rules.PlayerActive}, {ID: "player-2", Status: rules.PlayerEliminated}}},
+		matchDecision: rules.MatchDecision{Players: []rules.PlayerDecision{{ID: "player-1", Status: playerstate.StatusActive}, {ID: "player-2", Status: playerstate.StatusEliminated}}},
 		targetIDs:     []string{"player-1", "player-2", "player-3"},
 	}
 

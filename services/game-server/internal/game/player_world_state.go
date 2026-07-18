@@ -4,6 +4,10 @@ import "github.com/Lokee86/space-rocks/services/game-server/internal/game/player
 
 func (game *Game) playerWorldStateLocked(playerID string) (player.WorldState, bool) {
 	session, ok := game.playerSessions[playerID]
+	if !ok || session == nil {
+		return player.WorldState{}, false
+	}
+	lifecycle, ok := game.lifeRuntime.ParticipantSnapshot(playerID)
 	if !ok {
 		return player.WorldState{}, false
 	}
@@ -25,11 +29,12 @@ func (game *Game) playerWorldStateLocked(playerID string) (player.WorldState, bo
 
 	return player.BuildWorldState(player.BuildWorldStateInput{
 		ID:              playerID,
+		Status:          lifecycle.Status,
 		HasActiveShip:   hasActiveShip,
 		X:               positionX,
 		Y:               positionY,
-		Lives:           session.Lives,
-		RespawnCooldown: session.RespawnCooldown,
+		Lives:           game.projectedPlayerLives(playerID, lifecycle),
+		RespawnCooldown: lifecycle.RespawnCooldown,
 	}), true
 }
 

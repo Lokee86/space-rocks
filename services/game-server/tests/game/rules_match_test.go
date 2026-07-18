@@ -3,6 +3,7 @@ package gametests
 import (
 	"testing"
 
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
 
@@ -30,57 +31,67 @@ func TestEvaluateMatchCurrentGameOverSemantics(t *testing.T) {
 		{
 			name: "active player",
 			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
-				{ID: "player-1", HasActiveShip: true},
+				{ID: "player-1", Status: playerstate.StatusActive, HasActiveShip: true},
 			}},
 			wantOver: false,
 			wantPlayers: []rules.PlayerDecision{
-				{ID: "player-1", Status: rules.PlayerActive},
+				{ID: "player-1", Status: playerstate.StatusActive},
 			},
 		},
 		{
 			name: "pending respawn",
 			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
-				{ID: "player-1", HasRemainingLives: true},
+				{ID: "player-1", Status: playerstate.StatusPendingRespawn, HasRemainingLives: true},
 			}},
 			wantOver: false,
 			wantPlayers: []rules.PlayerDecision{
-				{ID: "player-1", Status: rules.PlayerPendingRespawn},
+				{ID: "player-1", Status: playerstate.StatusPendingRespawn},
 			},
 		},
 		{
 			name: "eliminated player",
 			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
-				{ID: "player-1"},
+				{ID: "player-1", Status: playerstate.StatusEliminated},
 			}},
 			wantOver: true,
 			wantPlayers: []rules.PlayerDecision{
-				{ID: "player-1", Status: rules.PlayerEliminated},
+				{ID: "player-1", Status: playerstate.StatusEliminated},
 			},
 		},
 		{
 			name: "all eliminated",
 			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
-				{ID: "player-1"},
-				{ID: "player-2"},
+				{ID: "player-1", Status: playerstate.StatusEliminated},
+				{ID: "player-2", Status: playerstate.StatusEliminated},
 			}},
 			wantOver: true,
 			wantPlayers: []rules.PlayerDecision{
-				{ID: "player-1", Status: rules.PlayerEliminated},
-				{ID: "player-2", Status: rules.PlayerEliminated},
+				{ID: "player-1", Status: playerstate.StatusEliminated},
+				{ID: "player-2", Status: playerstate.StatusEliminated},
 			},
 		},
 		{
 			name: "mixed participating players preserve order",
 			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
-				{ID: "player-1"},
-				{ID: "player-2", HasRemainingLives: true},
-				{ID: "player-3", HasActiveShip: true},
+				{ID: "player-1", Status: playerstate.StatusEliminated},
+				{ID: "player-2", Status: playerstate.StatusPendingRespawn, HasRemainingLives: true},
+				{ID: "player-3", Status: playerstate.StatusActive, HasActiveShip: true},
 			}},
 			wantOver: false,
 			wantPlayers: []rules.PlayerDecision{
-				{ID: "player-1", Status: rules.PlayerEliminated},
-				{ID: "player-2", Status: rules.PlayerPendingRespawn},
-				{ID: "player-3", Status: rules.PlayerActive},
+				{ID: "player-1", Status: playerstate.StatusEliminated},
+				{ID: "player-2", Status: playerstate.StatusPendingRespawn},
+				{ID: "player-3", Status: playerstate.StatusActive},
+			},
+		},
+		{
+			name: "authoritative status wins over projection booleans",
+			snapshot: rules.MatchSnapshot{Players: []rules.PlayerSnapshot{
+				{ID: "player-1", Status: playerstate.StatusEliminated, HasActiveShip: true, HasRemainingLives: true},
+			}},
+			wantOver: true,
+			wantPlayers: []rules.PlayerDecision{
+				{ID: "player-1", Status: playerstate.StatusEliminated},
 			},
 		},
 	}

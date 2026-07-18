@@ -686,12 +686,13 @@ func markGameOver(t *testing.T, gameInstance *game.Game) {
 	t.Helper()
 
 	playerID := gameInstance.AddPlayer()
-	value := reflect.ValueOf(gameInstance).Elem()
-	session := exportRoomTestValue(value.FieldByName("playerSessions")).
-		MapIndex(reflect.ValueOf(playerID))
-	exportRoomTestValue(session.Elem().FieldByName("Lives")).SetInt(0)
-	players := exportRoomTestValue(value.FieldByName("entities").FieldByName("Players"))
-	players.SetMapIndex(reflect.ValueOf(playerID), reflect.Value{})
+	control := game.NewControl(gameInstance)
+	if !control.SetPlayerLives(playerID, 0) {
+		t.Fatal("expected test fixture to set player lives")
+	}
+	if !control.ApplyPlayerDefeat("test-fixture", playerID) {
+		t.Fatal("expected test fixture to apply player defeat")
+	}
 }
 
 func exportRoomTestValue(value reflect.Value) reflect.Value {

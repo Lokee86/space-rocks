@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
@@ -28,6 +30,15 @@ func (game *Game) addPlayerLocked(teamID teams.ID) string {
 	playerID := fmt.Sprintf("player-%d", game.nextID)
 	spawnPlan := game.planInitialPlayerSpawn(playerIndex, playerID)
 	spawnPosition := spawnPlan.Position
+	if err := game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: playerID, TeamID: teamID}); err != nil {
+		game.nextID--
+		return ""
+	}
+	if err := game.participationRuntime.RegisterParticipant(playerID); err != nil {
+		game.lifeRuntime.RollbackParticipant(playerID)
+		game.nextID--
+		return ""
+	}
 	session := newPlayerSession(playerID, spawnPosition)
 	session.TeamID = teamID
 	player := session.NewShip(spawnPosition)
@@ -79,6 +90,8 @@ func (game *Game) RemovePlayer(playerID string) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	game.lifeRuntime.RemoveParticipant(playerID, "player_removed")
+	game.participationRuntime.UnregisterParticipant(playerID)
 	game.removeActivePlayerLocked(playerID)
 }
 
@@ -93,6 +106,8 @@ func (game *Game) DiscardPlayer(playerID string) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	game.lifeRuntime.RollbackParticipant(playerID)
+	game.participationRuntime.UnregisterParticipant(playerID)
 	game.removeActivePlayerLocked(playerID)
 	delete(game.participantRecords, playerID)
 }
@@ -111,8 +126,8 @@ func (game *Game) removeActivePlayerLocked(playerID string) {
 }
 
 func (game *Game) playerLives(playerID string) int {
-	if session, ok := game.playerSessions[playerID]; ok {
-		return session.Lives
+	if state, ok := game.lifeRuntime.ParticipantSnapshot(playerID); ok {
+		return game.projectedPlayerLives(playerID, state)
 	}
 
 	return 0

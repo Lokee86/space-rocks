@@ -1,6 +1,9 @@
 package game
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
+import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+)
 
 func (target *Control) SetWorldFrozen(enabled bool) {
 	target.game.mu.Lock()
@@ -78,22 +81,13 @@ func (target *Control) SetPlayerInvincible(playerID string, enabled bool) bool {
 func (target *Control) InfiniteLives(playerID string) (bool, bool) {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
-	session, ok := target.game.playerSessions[playerID]
-	if !ok {
-		return false, false
-	}
-	return session.LifeOptions.InfiniteLives, true
+	return target.game.lifeRuntime.InfiniteOverride(playerID)
 }
 
 func (target *Control) SetInfiniteLives(playerID string, enabled bool) bool {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
-	session, ok := target.game.playerSessions[playerID]
-	if !ok {
-		return false
-	}
-	session.LifeOptions.InfiniteLives = enabled
-	return true
+	return target.game.lifeRuntime.SetInfiniteOverride(playerID, enabled)
 }
 
 func (target *Control) PlayerFrozen(playerID string) (bool, bool) {
@@ -151,7 +145,19 @@ func (target *Control) ApplyPlayerDefeat(sourcePlayerID string, targetPlayerID s
 	targetPlayer.Health = damageResult.RemainingHealth
 	targetPlayer.Shields = damageResult.RemainingShield
 	if damageResult.Fatal {
-		target.game.applyFatalPlayerDamage(targetPlayerID, targetPlayer, "devtools")
+		attribution := lives.AttributionUnattributed
+		if sourcePlayerID == targetPlayerID {
+			attribution = lives.AttributionSelfDestruction
+		} else if sourcePlayerID != "" {
+			if _, ok := target.game.playerSessions[sourcePlayerID]; ok {
+				attribution = lives.AttributionPlayerCaused
+			}
+		}
+		input := lives.DeathInput{CauseCode: "devtools", Attribution: attribution}
+		if attribution == lives.AttributionPlayerCaused {
+			input.KillerPlayerID = sourcePlayerID
+		}
+		target.game.applyFatalPlayerDamageWithInput(targetPlayerID, targetPlayer, input)
 	}
 	target.game.publishPresentationFrameLocked()
 	return true

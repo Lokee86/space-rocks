@@ -23,6 +23,7 @@ type WorldState struct {
 
 type BuildWorldStateInput struct {
 	ID              string
+	Status          Status
 	HasActiveShip   bool
 	X               float64
 	Y               float64
@@ -31,18 +32,11 @@ type BuildWorldStateInput struct {
 }
 
 func BuildWorldState(input BuildWorldStateInput) WorldState {
-	status := StatusEliminated
-	if input.HasActiveShip {
-		status = StatusActive
-	} else if input.Lives > 0 {
-		status = StatusPendingRespawn
-	}
-
-	isActive := status == StatusActive
+	isActive := input.Status == StatusActive
 
 	return WorldState{
 		ID:              input.ID,
-		Status:          status,
+		Status:          input.Status,
 		HasActiveShip:   input.HasActiveShip,
 		Targetable:      isActive,
 		Damageable:      isActive,

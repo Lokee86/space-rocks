@@ -13,7 +13,15 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc is the authoritative P4 planning owner for lives, death, elimination, and respawn semantics.
 
-It defines how a resolved mode tracks available ships, records death and attribution facts, decides whether and when a player may return, and hands lifecycle facts to spawning, match rules, results, and player experience. It defines policy boundaries without claiming that the implementation already exists.
+It defines how a resolved mode tracks available ships, records death and attribution facts, decides whether and when a player may return, and hands lifecycle facts to spawning, match rules, results, and player experience. It defines policy boundaries and records the implemented first slice below.
+
+## Implemented First Slice
+
+The current implementation supports optional finite personal, finite shared-team, and infinite-life policies. A shared-team death consumes exactly one pool life; when the pool reaches zero, active teammates remain active while pending-respawn teammates become death-exhausted eliminated. Ordinary personal or targeted shared-pool life grants restore only the targeted death-exhausted participant to pending respawn.
+
+Death transitions use normalized death input and retain authoritative history, including player, ship, team, match, cause, attribution, killer, assists, and lifecycle results after participant removal. Respawn uses explicit restoration policy: full health, full shields up to the ship maximum, short-cooldown reset, temporary-effect filtering, and loadout persistence/reset. Placement is routed through `basic_safe_spawn_v1`, with the existing deterministic safety search and no baseline spawn protection.
+
+Manual-respawn AFK timeout is participation-owned, defaults to 35 seconds, is tunable, spans active and pending-respawn continuously, and expires as forfeiture/removal while retaining historical facts. Life transfer, richer recovery, non-manual respawn triggers, spawn protection, and scoring/award consumption remain deferred.
 
 ## Ownership Boundary
 
@@ -167,7 +175,7 @@ Recovery and re-entry must be authoritative, mode-approved transitions. They mus
 
 For modes using shared team life pools, the team system supplies authoritative membership and normalized team participation facts. The lives owner applies the resolved pool policy and exposes the remaining shared availability without duplicating team assignment or team elimination authority.
 
-A shared pool may consume one life per team ship death, per participant death, or according to another explicit mode rule. The selected rule must be resolved before match start and must be applied consistently to simultaneous or near-simultaneous deaths where the mode cares about ordering.
+The current first slice uses one fixed shared-pool rule: every participant death consumes exactly one team-pool life. Future modes may introduce alternative consumption policies, but those policies are not currently implemented and must be added as explicit resolved rules.
 
 A team can be eliminated even when individual participants have remaining personal lives if the mode defines the shared pool or another team condition as decisive. Conversely, a team need not be eliminated merely because one member reaches zero personal lives.
 
@@ -266,21 +274,16 @@ Outcome rules consume normalized active, eliminated, recovery, team-pool, and fi
 
 Client presentation displays authoritative life, death, respawn, elimination, spectate, and re-entry states. It may collect manual-respawn input and present delay or protection feedback, but it cannot advance lives, grant respawn, or decide elimination locally.
 
-## Implementation Direction
+## Deferred Follow-up Direction
 
-The first implementation slice should proceed from resolved mode policy into authoritative lifecycle facts:
+The first implementation slice above is complete. Deferred follow-up work is limited to richer mode policy and result integration:
 
 ```text
-1. Define normalized life models for finite per-player, shared-team, and infinite lives.
-2. Define starting_lives as total ships including the current active ship.
-3. Record authoritative death causes and killer/assist attribution categories.
-4. Apply mode-defined life consumption, penalties, and respawn eligibility.
-5. Apply mode-defined trigger, configurable delay, and manual-respawn AFK removal.
-6. Route default restoration and explicit mode overrides through runtime state owners.
-7. Hand placement and spawn protection to the selected player-spawn profile.
-8. Expose active, pending, eliminated, recovery, re-entry, and removed facts.
-9. Feed locked outcome and mode-defined result requirements without reconstructing facts.
-10. Preserve seams for life transfer and richer recovery without implementing them.
+- Add non-manual respawn triggers after they are implemented and validated.
+- Add richer killer/assist eligibility, penalties, recovery, and re-entry policy.
+- Add life transfer only as an explicit future mode capability.
+- Add spawn protection and scoring/award consumption in their owning systems.
+- Extend result projections without reconstructing facts from entities or logs.
 ```
 
 Implementation should keep life/death/respawn policy in a focused gameplay owner. Modes, lifecycle, combat, runtime ship, equipment, spawning, outcome, and presentation code should route facts or execute their own policy rather than becoming alternate authorities.
@@ -336,22 +339,15 @@ result facts are emitted strictly according to mode requirements
 ## Remaining Implementation-Level Decisions
 
 - Exact life-state, death-event, attribution, respawn-request, and elimination type/field names.
-- Exact ownership and storage location for per-player life state and shared team pools.
-- Exact point at which a death consumes a life for each supported life model.
 - Exact killer eligibility, assist window, source expiry, and attribution tie rules.
 - Exact death-penalty contract and mode override representation.
-- Exact respawn-trigger and manual-confirmation event flow.
-- Exact allowed respawn-delay range, game-creation option shape, and validation errors.
-- Exact cooldown threshold value and classification of cooldowns shorter than the threshold.
-- Exact temporary-effect persistence markers and restoration override shape.
-- Exact loadout persistence and between-life change-window handoff.
+- Exact non-manual respawn-trigger event flow after those triggers are implemented.
+- Exact allowed respawn-delay range and game-creation option shape for future modes.
 - Exact player-spawn profile contract for protection and its tuning/removal controls.
 - Exact recoverable and re-entry lifecycle states.
-- Exact team-pool consumption and simultaneous-death ordering rules.
-- Exact AFK timer defaults, reset events, and removal behavior.
 - Exact reconnect preservation and grace-period contract.
 - Exact post-elimination timing and simultaneous-final-death decision contracts.
-- Exact result field names, historical retention, and presentation projection.
+- Exact result field names and presentation projection beyond the retained death-history projection.
 - Exact package boundaries and packet/storage shapes chosen at implementation time.
 
 There are no remaining product-level lives, death, elimination, or respawn decisions blocking P4 system planning.

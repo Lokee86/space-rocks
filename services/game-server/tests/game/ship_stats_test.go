@@ -7,10 +7,10 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	servergame "github.com/Lokee86/space-rocks/services/game-server/internal/game"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/motion"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
 
 func TestDefaultShipTypeResolvesBaselineEffectiveStats(t *testing.T) {
@@ -116,6 +116,7 @@ func TestSessionCreatedShipsCopySessionStats(t *testing.T) {
 	customStats.MaxSpeed = 1234
 	scenario.sessionField(playerID, "Stats").Set(reflect.ValueOf(customStats))
 	scenario.removePlayerEntity(playerID)
+	scenario.step(constants.PlayerRespawnDelay)
 
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
 

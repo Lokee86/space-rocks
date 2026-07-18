@@ -4,7 +4,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	runtimepkg "github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
@@ -12,6 +14,9 @@ func (target *Control) EnsurePlayerSession(playerID string, spawnPosition physic
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
 	if playerID == "" {
+		return false
+	}
+	if err := target.game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: playerID}); err != nil {
 		return false
 	}
 	target.game.playerSessions[playerID] = newPlayerSession(playerID, spawnPosition)
@@ -26,7 +31,10 @@ func (target *Control) SpawnPlayerShip(playerID string, spawnPosition physics.Ve
 	if !ok || session == nil {
 		return false
 	}
-	session.RespawnCooldown = 0
+	status, registered := target.game.lifeRuntime.Status(playerID)
+	if !registered || status != playerstate.StatusActive {
+		return false
+	}
 	player := session.NewShip(spawnPosition)
 	target.game.entities.Players[playerID] = player
 	cameraView := target.game.cameraViews[playerID]

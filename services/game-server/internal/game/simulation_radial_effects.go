@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
@@ -85,6 +86,18 @@ func (game *Game) applyRadialHitToPlayer(hit radial.Hit, player *runtime.Ship) {
 		game.recordDomainEvent(event)
 	}
 	if damageResult.Fatal {
-		game.applyFatalPlayerDamage(player.ID, player, "radial_effect")
+		attribution := lives.AttributionUnattributed
+		if hit.SourcePlayerID == player.ID {
+			attribution = lives.AttributionSelfDestruction
+		} else if hit.SourcePlayerID != "" {
+			if _, ok := game.playerSessions[hit.SourcePlayerID]; ok {
+				attribution = lives.AttributionPlayerCaused
+			}
+		}
+		input := lives.DeathInput{CauseCode: "radial_effect", Attribution: attribution}
+		if attribution == lives.AttributionPlayerCaused {
+			input.KillerPlayerID = hit.SourcePlayerID
+		}
+		game.applyFatalPlayerDamageWithInput(player.ID, player, input)
 	}
 }

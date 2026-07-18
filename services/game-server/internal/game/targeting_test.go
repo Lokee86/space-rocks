@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
@@ -415,6 +416,7 @@ func TestTargetLookupStatusLocked_PlayerPendingRespawn(t *testing.T) {
 
 	game.mu.Lock()
 	delete(game.entities.Players, playerID)
+	game.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: playerID})
 	status := game.targetLookupStatusLocked(targetpolicy.TargetRef{
 		Kind: targetpolicy.TargetKindPlayer,
 		ID:   playerID,
@@ -513,9 +515,9 @@ func TestSelectTargetAtPosition_DeadPlayerStoresTargetingAndRespawnMirrorsTarget
 		t.Fatal("expected initial SelectTargetAtPosition to succeed")
 	}
 
-	game.mu.Lock()
+	game.applyFatalPlayerDamage(requesterID, game.entities.Players[requesterID])
 	delete(game.entities.Players, requesterID)
-	game.mu.Unlock()
+	game.lifeRuntime.Step(game.lifeRuntime.Policy().RespawnDelay)
 
 	func() {
 		defer func() {
@@ -564,9 +566,9 @@ func TestClearTarget_DeadPlayerClearsSessionTargetWithoutPanic(t *testing.T) {
 		t.Fatal("expected setup SetPlayerTarget to succeed")
 	}
 
-	game.mu.Lock()
+	game.applyFatalPlayerDamage(requesterID, game.entities.Players[requesterID])
 	delete(game.entities.Players, requesterID)
-	game.mu.Unlock()
+	game.lifeRuntime.Step(game.lifeRuntime.Policy().RespawnDelay)
 
 	func() {
 		defer func() {

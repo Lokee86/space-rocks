@@ -13,7 +13,11 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc is the authoritative P4 planning owner for player-spawn profile selection, placement, safety, and spawn presentation handoffs.
 
-It defines how a selected profile chooses a preferred location for a player-spawn reason, applies reusable safety search, incorporates team and world context, and returns an authoritative spawn outcome. It defines planning boundaries without claiming that the implementation already exists.
+It defines how a selected profile chooses a preferred location for a player-spawn reason, applies reusable safety search, incorporates team and world context, and returns an authoritative spawn outcome. It defines planning boundaries and records the implemented first slice below.
+
+## Implemented First Slice
+
+`basic_safe_spawn_v1` now owns initial and respawn placement through a concrete profile request, safety-evaluator seam, and deterministic origin-based outward search. Ships spawn stationary with immediate controls. The baseline has no spawn protection; richer profiles, reservations, wrap-aware expansion, team-aware preferences, and placement telemetry remain deferred.
 
 ## Ownership Boundary
 
@@ -202,25 +206,17 @@ Objective or campaign systems may provide objective-adjacent or checkpoint/scrip
 
 Runtime ship owns the live avatar state and receives the final stationary spawn state. Player experience renders shared spawn indicators and later presentation feedback, but it does not choose, validate, reserve, or commit the position.
 
-## Implementation Direction
+## Deferred Follow-up Direction
 
-The first implementation slice should preserve existing placement behavior while establishing the profile seam:
+The first implementation slice above is complete. Deferred follow-up work is limited to additional profile capabilities:
 
 ```text
-1. Define the player-spawn profile identifier and basic_safe_spawn_v1 contract.
-2. Preserve the origin-area grid baseline and current outward safety search.
-3. Separate reason-specific preferred-location selection from reusable safety search.
-4. Pass initial-spawn, respawn, mid-match-join, recovery, checkpoint, and admin/devtool reasons explicitly.
-5. Apply wrap-aware regions and safety checks.
-6. Add team-aware preferred placement using authoritative team facts.
-7. Reserve simultaneous positions without making assignment order gameplay-significant.
-8. Retry from the preferred origin/current anchor while re-evaluating world state until successful.
-9. Return stationary spawn state with immediate control availability.
-10. Preserve the optional profile-owned spawn-protection seam without enabling baseline protection.
-11. Emit the baseline placement telemetry fields.
+- Add explicit policy for mid-match join, recovery, checkpoint, and admin/devtool reasons.
+- Add wrap-aware regions, team-aware preferences, and simultaneous reservations.
+- Add retry telemetry, spawn indicators, and profile-owned spawn protection when selected.
 ```
 
-Implementation should keep profile policy in a focused player-spawning owner. Modes, lives, teams, lifecycle, encounter, campaign, runtime, devtools, and presentation should route facts or execute their own policy rather than becoming alternate player-spawn authorities. This document describes the planning direction only; it does not claim that any of these steps are implemented.
+Implementation should keep profile policy in a focused player-spawning owner. Modes, lives, teams, lifecycle, encounter, campaign, runtime, devtools, and presentation should route facts or execute their own policy rather than becoming alternate player-spawn authorities. The remaining items below are deferred follow-up work.
 
 ## Testing Direction
 
@@ -271,10 +267,8 @@ telemetry records profile, reason, preferred position, final position, safety mo
 
 ## Remaining Implementation-Level Decisions
 
-- Exact profile type, field, and package names.
 - Exact profile registry and resolved-rule representation for `player_spawn_profile_id`.
 - Exact preferred-location source ordering and weighting for each spawn reason.
-- Exact origin-area grid dimensions, spacing, and current outward-search tuning.
 - Exact dangerous-object categories and per-category safety constraints.
 - Exact other-player overlap and separation contract for each profile.
 - Exact team grouping and opponent-separation distance rules.

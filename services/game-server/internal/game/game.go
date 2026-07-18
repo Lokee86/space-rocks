@@ -6,6 +6,8 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/participation"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
@@ -35,6 +37,7 @@ type Game struct {
 	nextPresentationEventID    int
 	matchID                    string
 	matchTraceID               string
+	modeID                     string
 	teamStructure              teams.Structure
 	spawner                    *spawning.Spawner
 	scoringPolicy              scoring.Policy
@@ -54,6 +57,8 @@ type Game struct {
 	cameraViews                map[string]*runtime.CameraView
 	playerSessions             map[string]*playerSession
 	botControllers             map[string]*bots.Controller
+	lifeRuntime                *lives.Runtime
+	participationRuntime       *participation.Runtime
 	participantRecords         map[string]*participantRecord
 	pendingPresentationEvents  map[string][]PendingPresentationEvent
 	presentationFrame          *gameplayPresentationFrame
@@ -65,20 +70,64 @@ type Game struct {
 }
 
 func New() *Game {
-	return newGame(rng.NewProduction())
+	game, err := NewWithPolicies(lives.NewBaselinePolicy(), participation.NewDefaultAFKPolicy())
+	if err != nil {
+		panic(err)
+	}
+	return game
 }
 
 func NewWithSeed(seed int64) *Game {
-	return newGame(rng.New(seed))
+	game, err := NewWithSeedAndPolicies(seed, lives.NewBaselinePolicy(), participation.NewDefaultAFKPolicy())
+	if err != nil {
+		panic(err)
+	}
+	return game
 }
 
 func newGame(source *rng.Source) *Game {
+	game, err := newGameWithPolicies(source, lives.NewBaselinePolicy(), participation.NewDefaultAFKPolicy())
+	if err != nil {
+		panic(err)
+	}
+	return game
+}
+
+func NewWithPolicy(policy lives.Policy) (*Game, error) {
+	return NewWithPolicies(policy, participation.NewDefaultAFKPolicy())
+}
+
+func NewWithSeedAndPolicy(seed int64, policy lives.Policy) (*Game, error) {
+	return NewWithSeedAndPolicies(seed, policy, participation.NewDefaultAFKPolicy())
+}
+
+func newGameWithPolicy(source *rng.Source, policy lives.Policy) (*Game, error) {
+	return newGameWithPolicies(source, policy, participation.NewDefaultAFKPolicy())
+}
+
+func NewWithPolicies(policy lives.Policy, afkPolicy participation.AFKPolicy) (*Game, error) {
+	return newGameWithPolicies(rng.NewProduction(), policy, afkPolicy)
+}
+
+func NewWithSeedAndPolicies(seed int64, policy lives.Policy, afkPolicy participation.AFKPolicy) (*Game, error) {
+	return newGameWithPolicies(rng.New(seed), policy, afkPolicy)
+}
+
+func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy participation.AFKPolicy) (*Game, error) {
 	collisionShapes, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
 		logging.Emit(observability.Request{
 			Event:  observability.EventNameCollisionShapeMissing,
 			Fields: observability.Fields{"failure_mode": "collision_shape_catalog_unavailable"},
 		})
+	}
+	lifeRuntime, err := lives.NewRuntime(policy)
+	if err != nil {
+		return nil, err
+	}
+	participationRuntime, err := participation.NewRuntime(afkPolicy)
+	if err != nil {
+		return nil, err
 	}
 
 	game := &Game{
@@ -90,6 +139,9 @@ func newGame(source *rng.Source) *Game {
 		cameraViews:                make(map[string]*runtime.CameraView),
 		playerSessions:             make(map[string]*playerSession),
 		botControllers:             make(map[string]*bots.Controller),
+		lifeRuntime:                lifeRuntime,
+		participationRuntime:       participationRuntime,
+		modeID:                     "baseline",
 		participantRecords:         make(map[string]*participantRecord),
 		teamStructure:              teams.StructureFFA,
 		pendingPresentationEvents:  make(map[string][]PendingPresentationEvent),
@@ -103,7 +155,7 @@ func newGame(source *rng.Source) *Game {
 		spatialIndex:               grid.New(space.DefaultBounds(), defaultSpatialCellSize),
 	}
 	game.publishPresentationFrameLocked()
-	return game
+	return game, nil
 }
 
 func (game *Game) SimulationSeed() int64 {
@@ -115,6 +167,12 @@ func (game *Game) SetMatchContext(matchID string, traceID string) {
 	defer game.mu.Unlock()
 	game.matchID = matchID
 	game.matchTraceID = traceID
+}
+
+func (game *Game) SetModeContext(modeID string) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+	game.modeID = modeID
 }
 
 func (game *Game) Start() {

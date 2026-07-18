@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 )
 
@@ -40,6 +41,7 @@ func TestPlayerWorldStateLocked_PendingRespawnWithoutActiveShip(t *testing.T) {
 
 	game.mu.Lock()
 	delete(game.entities.Players, playerID)
+	game.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: playerID})
 	state, ok := game.playerWorldStateLocked(playerID)
 	game.mu.Unlock()
 
@@ -69,7 +71,8 @@ func TestPlayerWorldStateLocked_EliminatedWithoutActiveShip(t *testing.T) {
 
 	game.mu.Lock()
 	delete(game.entities.Players, playerID)
-	game.playerSessions[playerID].Lives = 0
+	game.lifeRuntime.SetLives(playerID, 0)
+	game.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: playerID})
 	state, ok := game.playerWorldStateLocked(playerID)
 	game.mu.Unlock()
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
@@ -14,6 +15,10 @@ import (
 )
 
 func spatialTestGame() *Game {
+	lifeRuntime, err := lives.NewRuntime(lives.NewBaselinePolicy())
+	if err != nil {
+		panic(err)
+	}
 	return &Game{
 		rngSource: rng.New(1),
 		collisionShapes: physics.CollisionShapeCatalog{
@@ -23,6 +28,7 @@ func spatialTestGame() *Game {
 			},
 		},
 		entities:     runtime.NewEntityStore(),
+		lifeRuntime:  lifeRuntime,
 		spatialIndex: grid.New(space.DefaultBounds(), defaultSpatialCellSize),
 	}
 }

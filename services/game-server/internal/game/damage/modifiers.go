@@ -3,10 +3,10 @@ package damage
 type DamageModifierCategory string
 
 const (
-	DamageModifierCategoryOutgoing     DamageModifierCategory = "outgoing"
-	DamageModifierCategoryResistance   DamageModifierCategory = "resistance"
+	DamageModifierCategoryOutgoing      DamageModifierCategory = "outgoing"
+	DamageModifierCategoryResistance    DamageModifierCategory = "resistance"
 	DamageModifierCategoryVulnerability DamageModifierCategory = "vulnerability"
-	DamageModifierCategoryGeneric      DamageModifierCategory = "generic"
+	DamageModifierCategoryGeneric       DamageModifierCategory = "generic"
 )
 
 type DamageModifierOperation string
@@ -18,10 +18,11 @@ const (
 )
 
 type DamageModifier struct {
-	Type      DamageType
-	Category  DamageModifierCategory
-	Operation DamageModifierOperation
-	Value     float64
+	Type                 DamageType
+	Category             DamageModifierCategory
+	Operation            DamageModifierOperation
+	Value                float64
+	PersistsThroughDeath bool
 }
 
 type AppliedDamageModifier struct {

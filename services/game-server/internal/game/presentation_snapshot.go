@@ -137,8 +137,8 @@ func (game *Game) GameplayPresentationSnapshotMeasured(playerID string) (Gamepla
 	game.mu.Unlock()
 
 	lives := 0
-	if session, ok := frame.playerSessions[playerID]; ok {
-		lives = session.Lives
+	if playerSessionState, ok := frame.playerSessions[playerID]; ok {
+		lives = playerSessionState.Lives
 	}
 
 	snapshot := GameplayPresentationSnapshot{

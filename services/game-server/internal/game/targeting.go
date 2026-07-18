@@ -1,8 +1,8 @@
 package game
 
 import (
-	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
 	targetpolicy "github.com/Lokee86/space-rocks/services/game-server/internal/game/targeting"
 )
 
@@ -111,7 +111,7 @@ func (game *Game) PlayerTarget(playerID string) string {
 }
 
 func (game *Game) playerExistsLocked(playerID string) bool {
-	_, exists := game.playerSessions[playerID]
+	_, exists := game.lifeRuntime.ParticipantSnapshot(playerID)
 	return exists
 }
 

@@ -3,6 +3,8 @@ package game
 import (
 	"reflect"
 	"testing"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 )
 
 func TestPlayerMatchFactsIncludesNewPlayer(t *testing.T) {
@@ -16,13 +18,44 @@ func TestPlayerMatchFactsIncludesNewPlayer(t *testing.T) {
 	}
 }
 
+func TestMatchDeathFactsPreserveNormalizedAttributionAndRemovedPlayers(t *testing.T) {
+	game := New()
+	game.SetMatchContext("match-1", "trace-1")
+	game.SetModeContext("mode-1")
+	playerID := game.AddPlayer()
+	game.lifeRuntime.ApplyDeath(lives.DeathInput{
+		PlayerID:        playerID,
+		DestroyedShipID: "ship-1",
+		MatchID:         "match-1",
+		ModeID:          game.modeID,
+		CauseCode:       "projectile",
+		Attribution:     lives.AttributionPlayerCaused,
+		KillerPlayerID:  "player-2",
+	})
+	game.RemovePlayer(playerID)
+	facts := game.MatchDeathFacts()
+	if len(facts) != 1 || facts[0].Input.Attribution != lives.AttributionPlayerCaused || facts[0].Input.ModeID != "mode-1" {
+		t.Fatalf("unexpected match death facts: %+v", facts)
+	}
+	facts[0].Input.KillerPlayerID = "mutated"
+	if game.MatchDeathFacts()[0].Input.KillerPlayerID != "player-2" {
+		t.Fatal("match death facts were not defensively copied")
+	}
+}
+
 func TestPlayerMatchFactsReturnsOneFactWithScoreAndShipDeaths(t *testing.T) {
 	game := New()
 	playerID := game.AddPlayer()
 
 	game.AddPlayerScore(playerID, 150)
-	for range 3 {
+	for death := 0; death < 3; death++ {
 		game.applyFatalPlayerDamage(playerID, game.entities.Players[playerID])
+		if death < 2 {
+			game.lifeRuntime.Step(game.lifeRuntime.Policy().RespawnDelay)
+			game.lifeRuntime.CommitRespawn(playerID)
+			session := game.playerSessions[playerID]
+			game.entities.Players[playerID] = session.NewShip(session.SpawnPosition)
+		}
 	}
 
 	facts := game.PlayerMatchFacts()
@@ -50,8 +83,14 @@ func TestPlayerMatchFactsReturnsTwoFacts(t *testing.T) {
 	game.AddPlayerScore(playerID1, 100)
 	game.AddPlayerScore(playerID2, 250)
 	game.applyFatalPlayerDamage(playerID1, game.entities.Players[playerID1])
-	for range 2 {
+	for death := 0; death < 2; death++ {
 		game.applyFatalPlayerDamage(playerID2, game.entities.Players[playerID2])
+		if death == 0 {
+			game.lifeRuntime.Step(game.lifeRuntime.Policy().RespawnDelay)
+			game.lifeRuntime.CommitRespawn(playerID2)
+			session := game.playerSessions[playerID2]
+			game.entities.Players[playerID2] = session.NewShip(session.SpawnPosition)
+		}
 	}
 
 	facts := game.PlayerMatchFacts()
@@ -92,6 +131,7 @@ func TestRemovePlayerPreservesFactsAndStopsActiveParticipation(t *testing.T) {
 	game.AddPlayerScore(remainingPlayerID, 75)
 
 	game.SetPlayerLives(remainingPlayerID, 0)
+	game.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: remainingPlayerID})
 	delete(game.entities.Players, remainingPlayerID)
 
 	game.RemovePlayer(removedPlayerID)
@@ -119,8 +159,8 @@ func TestRemovePlayerPreservesFactsAndStopsActiveParticipation(t *testing.T) {
 	if fact := factsByID[removedPlayerID]; fact.Score != 150 || fact.ShipDeaths != 1 {
 		t.Fatalf("removed player fact = %+v, want score 150 and one death", fact)
 	}
-	if fact := factsByID[remainingPlayerID]; fact.Score != 75 || fact.ShipDeaths != 0 {
-		t.Fatalf("remaining player fact = %+v, want unchanged score 75 and zero deaths", fact)
+	if fact := factsByID[remainingPlayerID]; fact.Score != 75 || fact.ShipDeaths != 1 {
+		t.Fatalf("remaining player fact = %+v, want score 75 and one death", fact)
 	}
 }
 

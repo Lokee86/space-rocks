@@ -4,6 +4,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -171,7 +172,10 @@ func (game *Game) handleShipAsteroidCollisions() {
 }
 
 func (game *Game) applyPlayerFatalAsteroidHit(playerID string, player *runtime.Ship) {
-	game.applyFatalPlayerDamage(playerID, player, "collision")
+	game.applyFatalPlayerDamageWithInput(playerID, player, lives.DeathInput{
+		CauseCode:   "collision",
+		Attribution: lives.AttributionEnvironmental,
+	})
 }
 
 func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, reasons ...string) {
@@ -179,7 +183,33 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, 
 	if len(reasons) > 0 && reasons[0] != "" {
 		reason = reasons[0]
 	}
+	game.applyFatalPlayerDamageWithInput(playerID, player, lives.DeathInput{CauseCode: reason, Attribution: lives.AttributionUnattributed})
+}
+
+func (game *Game) applyFatalPlayerDamageWithInput(playerID string, player *runtime.Ship, input lives.DeathInput) {
 	position := player.Position()
+	input.PlayerID = playerID
+	input.DestroyedShipID = player.ID
+	input.MatchID = game.matchID
+	input.ModeID = game.modeID
+	if session, ok := game.playerSessions[playerID]; ok {
+		input.TeamID = session.TeamID
+	}
+	lives := 0
+	respawnDelay := 0.0
+	if _, ok := game.playerSessions[playerID]; ok {
+		if session := game.playerSessions[playerID]; session != nil {
+			session.CaptureBetweenLifeState(player)
+		}
+		deathFact := game.lifeRuntime.ApplyDeath(input)
+		if !deathFact.Accepted {
+			return
+		}
+		if state, ok := game.lifeRuntime.ParticipantSnapshot(playerID); ok {
+			lives = game.projectedPlayerLives(playerID, state)
+		}
+		respawnDelay = deathFact.RespawnDelay
+	}
 	if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
 		cameraView.X = position.X
 		cameraView.Y = position.Y
@@ -191,22 +221,6 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, 
 		}
 	}
 	player.MarkPendingDespawn(constants.CollisionDespawnDelay)
-	lives := 0
-	respawnDelay := 0.0
-	if session, ok := game.playerSessions[playerID]; ok {
-		session.ShipDeaths++
-		if record, ok := game.participantRecords[playerID]; ok && record != nil {
-			record.ShipDeaths++
-		}
-		if session.LifeOptions.CanLoseLives() && session.Lives > 0 {
-			game.addPlayerLivesLocked(playerID, -1)
-		}
-		if session.Lives > 0 {
-			session.RespawnCooldown = constants.PlayerRespawnDelay
-		}
-		lives = session.Lives
-		respawnDelay = session.RespawnCooldown
-	}
 	if lives > 0 && game.matchID != "" && game.matchTraceID != "" {
 		logging.Emit(observability.Request{
 			Event: observability.EventNamePlayerDied,
@@ -216,7 +230,7 @@ func (game *Game) applyFatalPlayerDamage(playerID string, player *runtime.Ship, 
 				PlayerID: playerID,
 			},
 			Fields: observability.Fields{
-				"reason_code":   reason,
+				"reason_code":   input.CauseCode,
 				"lives":         lives,
 				"respawn_delay": respawnDelay,
 				"x":             position.X,

@@ -313,6 +313,9 @@ func (scenario *scenario) playerHealth(playerID string) int {
 func (scenario *scenario) removePlayerEntity(playerID string) {
 	scenario.t.Helper()
 
+	if !scenario.control.ApplyPlayerDefeat("test-helper", playerID) {
+		scenario.t.Fatalf("expected helper defeat to apply to player %q", playerID)
+	}
 	scenario.players().SetMapIndex(reflect.ValueOf(playerID), reflect.Value{})
 }
 
@@ -344,8 +347,7 @@ func (scenario *scenario) sessionSpawnPosition(playerID string) physics.Vector2 
 func (scenario *scenario) advanceRespawnTimer(playerID string, delta float64) {
 	scenario.t.Helper()
 
-	cooldown := scenario.sessionField(playerID, "RespawnCooldown")
-	cooldown.SetFloat(max(0, cooldown.Float()-delta))
+	scenario.game.Step(delta)
 }
 
 func (scenario *scenario) setAsteroidSpawnElapsed(elapsed float64) {
@@ -459,7 +461,11 @@ func (scenario *scenario) playerInvincible(playerID string) bool {
 func (scenario *scenario) playerInfiniteLives(playerID string) bool {
 	scenario.t.Helper()
 
-	return scenario.sessionField(playerID, "LifeOptions").FieldByName("InfiniteLives").Bool()
+	enabled, ok := scenario.control.InfiniteLives(playerID)
+	if !ok {
+		scenario.t.Fatalf("expected lives runtime participant %q", playerID)
+	}
+	return enabled
 }
 
 func (scenario *scenario) worldFrozen() bool {

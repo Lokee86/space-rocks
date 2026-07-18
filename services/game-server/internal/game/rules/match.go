@@ -1,7 +1,10 @@
 package rules
 
+import playerstate "github.com/Lokee86/space-rocks/services/game-server/internal/game/player"
+
 type PlayerSnapshot struct {
 	ID                string
+	Status            playerstate.Status
 	HasActiveShip     bool
 	HasRemainingLives bool
 }
@@ -11,17 +14,9 @@ type MatchSnapshot struct {
 	HadParticipants bool
 }
 
-type PlayerParticipationStatus string
-
-const (
-	PlayerActive         PlayerParticipationStatus = "active"
-	PlayerPendingRespawn PlayerParticipationStatus = "pending_respawn"
-	PlayerEliminated     PlayerParticipationStatus = "eliminated"
-)
-
 type PlayerDecision struct {
 	ID     string
-	Status PlayerParticipationStatus
+	Status playerstate.Status
 }
 
 type MatchDecision struct {
@@ -41,19 +36,13 @@ func EvaluateMatch(snapshot MatchSnapshot) MatchDecision {
 			Status: classifyPlayer(player),
 		}
 		players = append(players, decision)
-		if decision.Status != PlayerEliminated {
+		if decision.Status != playerstate.StatusEliminated {
 			isOver = false
 		}
 	}
 	return MatchDecision{IsOver: isOver, Players: players}
 }
 
-func classifyPlayer(player PlayerSnapshot) PlayerParticipationStatus {
-	if player.HasActiveShip {
-		return PlayerActive
-	}
-	if player.HasRemainingLives {
-		return PlayerPendingRespawn
-	}
-	return PlayerEliminated
+func classifyPlayer(player PlayerSnapshot) playerstate.Status {
+	return player.Status
 }

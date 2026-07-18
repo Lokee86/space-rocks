@@ -13,7 +13,11 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc is the authoritative P4 planning owner for match participation and joining semantics.
 
-It defines participation states, joining, leaving, AFK removal, spectating, reconnect, capacity, team assignment, participant counts, and result eligibility, plus the handoffs to lifecycle, modes, teams, lives, spawning, encounters, objectives, and results. It defines policy boundaries without claiming that implementation exists.
+It defines participation states, joining, leaving, AFK removal, spectating, reconnect, capacity, team assignment, participant counts, and result eligibility, plus the handoffs to lifecycle, modes, teams, lives, spawning, encounters, objectives, and results. It defines policy boundaries and records the implemented first slice below.
+
+## Implemented First Slice
+
+Active and pending-respawn participants share one participation-owned, tunable AFK timer with a 35-second default. Accepted gameplay input, pause requests, and successful manual respawn actions reset it; lifecycle transitions alone do not. Lobby and spectator states do not run the timer. Expiry is forfeiture plus removal from active evaluation, while participant records and authoritative lives/death history remain available for results.
 
 ## Ownership Boundary
 
@@ -156,20 +160,16 @@ Outcomes lock the decision. Results consume historical participation, forfeiture
 
 The client may display joining, all seven participation states, AFK warnings, and result eligibility and collect relevant input. It cannot admit players, change authoritative participation, reset AFK without a recognized action, grant re-entry, or decide eligibility.
 
-## Implementation Direction
+## Deferred Follow-up Direction
 
-The first P4 slice keeps joining lobby-only while establishing this policy seam:
+The first slice above establishes the participation-owned AFK seam. Deferred follow-up work covers broader admission and lifecycle policy:
 
 ```text
-1. Define shared participation-state identifiers and normalized facts.
-2. Validate lobby admission against mode, room, capacity, and team rules.
-3. Separate occupancy, active participation, and result eligibility.
-4. Apply voluntary leave and AFK removal as forfeiting active removal.
-5. Route eliminated players to spectating without losing history.
-6. Feed participant-count policy to objectives and encounters.
-7. Preserve the immutable match-over lock and locked eligibility.
-8. Reserve V2 seams for spectator-first joining, re-entry, state-restoring reconnect, and reconnect capacity.
-9. Keep lifecycle execution, mode policy, and gameplay facts on their owning sides.
+- Lobby admission, occupancy, capacity, and team-validation handoffs.
+- Spectator routing, late joining, reconnect reservations, and state restoration.
+- Participant-count handoffs to objectives and encounters.
+- V2 lifecycle execution and locked result eligibility.
+- Ownership routing across lifecycle, mode policy, and gameplay facts.
 ```
 
 Lifecycle V2 adds new/reconnect admission, spectator admission within `player_capacity`, invite/restricted-room validation, reconnect reservations, and mode-approved spectator-to-active activation. Late-join starting state and reservation details remain V2 implementation decisions, not P4 product gaps. No product-level participation/joining decisions block P4 planning.
@@ -213,7 +213,7 @@ invite/restricted admission still receives final authoritative validation
 - Exact participation-state type, transition, event, snapshot, and storage fields.
 - Exact separation/storage of occupancy, active participation, and result eligibility.
 - Exact lobby admission and final-validation handoff shape.
-- Exact AFK action vocabulary, duration, warnings, persistence, and timeout behavior.
+- AFK warnings and broader participation presentation remain deferred; the first-slice timer and reset actions are implemented above.
 - Exact pending-spawn behavior before first active spawn.
 - Exact spectator admission/accounting and reservation release order within `player_capacity`.
 - Exact V2 reconnect reservation capacity, lifetime, ownership, and expiry.
@@ -222,7 +222,7 @@ invite/restricted admission still receives final authoritative validation
 - Exact team-assignment request and rejection event shape.
 - Exact participant-count handoff to objectives, targets, and encounters.
 - Exact mode override for minimum participation and result/reward eligibility.
-- Exact historical retention/result projection for leave, AFK removal, disconnect, and re-entry.
+- Result projections beyond the retained AFK/removal and lives/death history remain deferred.
 - Exact match-over lock event, persistence, and post-lock cleanup handoff.
 - Exact package, packet, and storage boundaries at implementation time.
 

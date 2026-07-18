@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -25,7 +26,10 @@ func TestPlayerDiedObservabilityRecord(t *testing.T) {
 	game.SetMatchContext(gameObservabilityMatchID, gameObservabilityTraceID)
 
 	session := newPlayerSession(gameObservabilityPlayerID, physics.Vector2{X: 123.5, Y: 456.75})
-	session.Lives = 2
+	if err := game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: session.ID}); err != nil {
+		t.Fatal(err)
+	}
+	game.lifeRuntime.SetLives(session.ID, 2)
 	game.playerSessions[session.ID] = session
 	game.entities.Players[session.ID] = session.NewShip(session.SpawnPosition)
 
@@ -57,7 +61,10 @@ func TestPlayerDiedObservabilityRecordUsesDevtoolsReason(t *testing.T) {
 	game.SetMatchContext(gameObservabilityMatchID, gameObservabilityTraceID)
 
 	session := newPlayerSession(gameObservabilityPlayerID, physics.Vector2{X: 30, Y: 40})
-	session.Lives = 2
+	if err := game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: session.ID}); err != nil {
+		t.Fatal(err)
+	}
+	game.lifeRuntime.SetLives(session.ID, 2)
 	game.playerSessions[session.ID] = session
 	game.entities.Players[session.ID] = session.NewShip(session.SpawnPosition)
 
@@ -100,10 +107,16 @@ func TestRespawnBlockedObservabilityRecords(t *testing.T) {
 			switch test.reason {
 			case "session_missing":
 			case "respawn_cooldown_or_lives_exhausted":
-				session.Lives = 2
-				session.RespawnCooldown = 1.25
+				if err := game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: session.ID}); err != nil {
+					t.Fatal(err)
+				}
+				game.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: session.ID})
+				game.lifeRuntime.Step(game.lifeRuntime.Policy().RespawnDelay - 1.25)
 				game.playerSessions[session.ID] = session
 			case "already_active":
+				if err := game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: session.ID}); err != nil {
+					t.Fatal(err)
+				}
 				game.playerSessions[session.ID] = session
 				game.entities.Players[session.ID] = session.NewShip(session.SpawnPosition)
 			}

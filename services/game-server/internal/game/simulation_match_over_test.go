@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
@@ -74,7 +75,11 @@ func TestStepDoesNotPanicAfterMatchOverWithCleanupSafeEntities(t *testing.T) {
 func newMatchOverTestGame() *Game {
 	game := New()
 	session := newPlayerSession("player-1", physics.Vector2{X: 100, Y: 200})
-	session.Lives = 0
+	if err := game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: session.ID}); err != nil {
+		panic(err)
+	}
+	game.lifeRuntime.SetLives(session.ID, 0)
+	game.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: session.ID})
 	game.playerSessions[session.ID] = session
 
 	if !game.MatchDecision().IsOver {
