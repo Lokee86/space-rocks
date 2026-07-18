@@ -135,7 +135,7 @@ test("resolves platform-specific executables", async (t) => {
   const defaultGodotManager = makeManager();
   const defaultGodotService = new RestrictedCommandService({ root, platform: "win32", processJobManager: defaultGodotManager, processEnvironment: {} });
   await defaultGodotService.start({ command: "godot" });
-  assert.equal(defaultGodotManager.starts[0].command, "C:\\Godot_v4.6.3-stable_win64.exe");
+  assert.equal(defaultGodotManager.starts[0].command, "C:\\Godot.exe");
 });
 
 test("runs node version through the real process job manager", async (t) => {

@@ -13,7 +13,7 @@ const SENSITIVE_FLAG_PARTS = ["token", "password", "secret", "api-key", "apikey"
 const BLOCKED_ENV_NAMES = new Set([
   "PATH", "PATHEXT", "NODE_OPTIONS", "PYTHONPATH", "RUBYOPT", "BUNDLE_GEMFILE", "GEM_HOME", "GEM_PATH", "COMSPEC", "SHELL",
 ]);
-const WINDOWS_GODOT_EXECUTABLE = "C:\\Godot_v4.6.3-stable_win64.exe";
+const WINDOWS_GODOT_EXECUTABLE = "C:\\Godot.exe";
 
 export const RESTRICTED_COMMAND_REGISTRY = Object.freeze({
   go: "go", gofmt: "gofmt", python: "python", pytest: "pytest", ruby: "ruby", bundle: "bundle", rails: "rails",
