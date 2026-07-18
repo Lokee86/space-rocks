@@ -14,6 +14,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spatial/grid"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
@@ -46,6 +47,9 @@ type Game struct {
 	playerSessions            map[string]*playerSession
 	pendingPresentationEvents map[string][]PendingPresentationEvent
 	presentationFrame         *gameplayPresentationFrame
+	runtimeMeasurementMu      sync.RWMutex
+	runtimeMeasurements       map[uint64]measurement.SimulationObserver
+	nextMeasurementObserverID uint64
 }
 
 func New() *Game {
@@ -72,6 +76,7 @@ func newGame(source *rng.Source) *Game {
 		cameraViews:               make(map[string]*runtime.CameraView),
 		playerSessions:            make(map[string]*playerSession),
 		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
+		runtimeMeasurements:       make(map[uint64]measurement.SimulationObserver),
 		spawner:                   spawning.New(source),
 		scoringPolicy:             scoring.NewDefaultPolicy(),
 		dropTables:                drops.GeneratedTables,

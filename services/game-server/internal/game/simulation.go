@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
 
@@ -23,35 +24,50 @@ func (game *Game) runSimulation() {
 }
 
 func (game *Game) Step(delta float64) {
-	game.mu.Lock()
-	defer game.mu.Unlock()
-	defer game.publishPresentationFrameLocked()
-
-	bounds := space.DefaultBounds()
-
-	game.stepPlayerSessions(delta)
-	if game.isMatchOverLocked() {
-		game.stepAsteroids(delta, bounds)
-		game.stepBullets(delta, bounds)
-		game.stepPickups(delta)
-		game.stepRadialEffects(delta)
-		for _, observer := range game.simulationStepObservers {
-			observer(delta)
-		}
-		return
+	measure := game.HasRuntimeMeasurements()
+	started := time.Time{}
+	if measure {
+		started = time.Now()
 	}
 
-	game.stepPlayerWeapons(delta)
-	game.stepPlayers(delta, bounds)
-	game.removeReadyPlayers()
-	game.stepAsteroidSpawning(delta)
-	game.stepAsteroids(delta, bounds)
-	game.stepBullets(delta, bounds)
-	game.stepPickups(delta)
-	game.stepCollisions()
-	game.stepRadialEffects(delta)
-	for _, observer := range game.simulationStepObservers {
-		observer(delta)
+	var entities measurement.EntityCounts
+	game.mu.Lock()
+	func() {
+		defer game.mu.Unlock()
+		defer game.publishPresentationFrameLocked()
+
+		bounds := space.DefaultBounds()
+
+		game.stepPlayerSessions(delta)
+		if game.isMatchOverLocked() {
+			game.stepAsteroids(delta, bounds)
+			game.stepBullets(delta, bounds)
+			game.stepPickups(delta)
+			game.stepRadialEffects(delta)
+			for _, observer := range game.simulationStepObservers {
+				observer(delta)
+			}
+		} else {
+			game.stepPlayerWeapons(delta)
+			game.stepPlayers(delta, bounds)
+			game.removeReadyPlayers()
+			game.stepAsteroidSpawning(delta)
+			game.stepAsteroids(delta, bounds)
+			game.stepBullets(delta, bounds)
+			game.stepPickups(delta)
+			game.stepCollisions()
+			game.stepRadialEffects(delta)
+			for _, observer := range game.simulationStepObservers {
+				observer(delta)
+			}
+		}
+		if measure {
+			entities = game.runtimeMeasurementEntityCountsLocked()
+		}
+	}()
+
+	if measure {
+		game.observeRuntimeMeasurement(time.Since(started), entities)
 	}
 }
 
