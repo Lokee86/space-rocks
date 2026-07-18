@@ -150,7 +150,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			})
 			continue
 		}
-		channelLabel, ok := webRTCGameplayChannelLabelForLane(string(candidate.Lane()))
+		channelLabel, ok := webRTCChannelLabelForLane(string(candidate.Lane()))
 		if !ok {
 			logging.Emit(observability.Request{
 				Event: observability.EventNamePacketRouteFailed,

@@ -70,7 +70,7 @@ func TestHandleLobbyPacketStartSinglePlayerStoresLocalProfileID(t *testing.T) {
 		outbound:  make(chan []byte, 4),
 		webrtcTransport: &WebRTCTransport{
 			channels: map[string]webRTCDataChannel{
-				webRTCGameplayChannelLaneWorld: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
+				webRTCChannelLaneWorld: &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen},
 			},
 			ready: true,
 		},

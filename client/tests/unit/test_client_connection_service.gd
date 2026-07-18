@@ -3,6 +3,7 @@ extends GutTest
 const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
+const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
 const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -36,6 +37,7 @@ class FakeTransportPeer:
 	extends WebRTCTransport
 
 	var close_calls := 0
+	var tooling_packets: Array = []
 
 	func start() -> void:
 		pass
@@ -45,6 +47,18 @@ class FakeTransportPeer:
 
 	func close() -> void:
 		close_calls += 1
+
+	func send_tooling_json(packet: Dictionary) -> void:
+		tooling_packets.append(packet)
+
+
+class FakeRealtimePacketPipeline:
+	extends RealtimePacketPipeline
+
+	var recovery_calls := 0
+
+	func recover_active_match_baseline() -> void:
+		recovery_calls += 1
 
 
 func _make_fake_transport_peer(fake_peer: FakeTransportPeer) -> WebRTCTransport:
@@ -144,6 +158,73 @@ func test_protocol_match_begin_end_preserves_transport_without_close() -> void:
 	assert_true(service.realtime_transport_session == retained)
 	assert_true(service.realtime_transport_session.transport == peer)
 	assert_eq(peer.close_calls, 0)
+
+
+func test_realtime_transport_signals_forward_and_recovery_calls_pipeline() -> void:
+	var service := ClientConnectionService.new()
+	var pipeline := FakeRealtimePacketPipeline.new()
+	var forwarded_tooling: Array = []
+	var started_lanes: Array = []
+	service.realtime_packet_pipeline = pipeline
+	service._ensure_realtime_transport_session()
+	service.tooling_packet_received.connect(func(packet: Dictionary) -> void:
+		forwarded_tooling.append(packet)
+	)
+	service.recovery_started.connect(func(lane: String) -> void:
+		started_lanes.append(lane)
+	)
+	assert_true(service.realtime_transport_session.has_signal("recovery_succeeded"))
+	assert_true(service.realtime_transport_session.is_connected("recovery_succeeded", Callable(service, "_on_recovery_succeeded")))
+	assert_true(service.realtime_transport_session.is_connected("recovery_failed", Callable(service, "_on_recovery_failed")))
+
+	service.realtime_transport_session.tooling_packet_received.emit({"type": "tooling_packet"})
+	service.realtime_transport_session.recovery_started.emit("world")
+	service._on_recovery_succeeded()
+	service._on_recovery_failed()
+
+	assert_eq(forwarded_tooling, [{"type": "tooling_packet"}])
+	assert_eq(started_lanes, ["world"])
+	assert_eq(pipeline.recovery_calls, 1)
+
+
+func test_recovery_failure_marks_replay_unavailable_once() -> void:
+	var service := ClientConnectionService.new()
+	var availability_changes: Array = []
+	service.realtime_replay_availability_changed.connect(func(available: bool) -> void:
+		availability_changes.append(available)
+	)
+
+	service._on_recovery_failed()
+	service._on_recovery_failed()
+
+	assert_false(service.is_realtime_replay_available())
+	assert_eq(availability_changes, [false])
+
+
+func test_new_connection_attempt_restores_replay_availability() -> void:
+	var service := ClientConnectionService.new()
+	var network_client := FakeNetworkClient.new()
+	var availability_changes: Array = []
+	service.network_client = network_client
+	service.realtime_replay_availability_changed.connect(func(available: bool) -> void:
+		availability_changes.append(available)
+	)
+	service._on_recovery_failed()
+
+	assert_eq(service.connect_to_server("ws://example"), OK)
+	assert_true(service.is_realtime_replay_available())
+	assert_eq(availability_changes, [false, true])
+
+
+func test_send_tooling_packet_routes_through_realtime_transport() -> void:
+	var service := ClientConnectionService.new()
+	var peer := FakeTransportPeer.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+	service.send_tooling_packet({"type": "tooling_packet", "value": 1})
+
+	assert_eq(peer.tooling_packets, [{"type": "tooling_packet", "value": 1}])
 
 
 func test_resync_required_uses_active_match_and_suppresses_when_inactive() -> void:
@@ -248,7 +329,7 @@ func test_websocket_and_webrtc_gameplay_packets_share_pipeline_application_path(
 		"match_id": "match-1",
 		"baseline_id": "world-baseline-1",
 		"sequence": 2,
-	})
+	}, "world")
 
 	assert_eq(callback_state.pipeline_packet_count, 2)
 	

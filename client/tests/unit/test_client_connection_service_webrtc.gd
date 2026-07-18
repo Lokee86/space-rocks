@@ -78,7 +78,7 @@ func test_connection_service_starts_and_wires_webrtc_transport() -> void:
 		{"lane": "asteroids", "channel_label": "sr.asteroids", "channel_id": 5},
 		{"lane": "bullets", "channel_label": "sr.bullets", "channel_id": 6},
 	])
-	service.realtime_transport_session.transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "server-smoke", "origin": "server"})
+	service.realtime_transport_session.transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "server-smoke", "origin": "server"}, "world")
 	service.realtime_transport_session.transport.failed.emit("peer_error", "boom")
 	service._process(0.0)
 	service._on_closed()
@@ -135,8 +135,8 @@ func test_webrtc_transport_replacement_packets_reach_dispatcher_and_gameplay() -
 	service._on_connected()
 	service._on_closed()
 	service._on_connected()
-	service.realtime_transport_session.transport.packet_received.emit({"type": "resync_request", "lane": "world"})
-	service.realtime_transport_session.transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "smoke-1", "origin": "server"})
+	service.realtime_transport_session.transport.packet_received.emit({"type": "resync_request", "lane": "world"}, "world")
+	service.realtime_transport_session.transport.packet_received.emit({"type": "webrtc_smoke", "smoke_id": "smoke-1", "origin": "server"}, "world")
 
 	assert_eq(first_peer.started, 1)
 	assert_eq(first_peer.closed, 1)

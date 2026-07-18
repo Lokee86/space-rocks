@@ -62,6 +62,22 @@ func test_quit_button_emits_quit_requested() -> void:
 	assert_signal_emitted(window, "quit_requested")
 
 
+func test_single_player_replay_button_disables_when_unavailable() -> void:
+	var window := await _create_window()
+	window.configure_for_mode("single_player")
+	window.set_replay_available(false)
+
+	assert_true((window.get_node("%LobbyReplayButton") as BaseButton).disabled)
+
+
+func test_multiplayer_replay_button_remains_enabled_when_unavailable() -> void:
+	var window := await _create_window()
+	window.configure_for_mode("multiplayer")
+	window.set_replay_available(false)
+
+	assert_false((window.get_node("%LobbyReplayButton") as BaseButton).disabled)
+
+
 func _create_window() -> Control:
 	var window := MatchResultWindowScene.instantiate()
 	add_child_autofree(window)

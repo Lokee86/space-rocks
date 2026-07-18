@@ -80,6 +80,57 @@ func test_event_batch_and_resync_packets_route_through_explicit_pipeline_handler
 	assert_eq(pipeline.get_presentation_state().event_batch_applier.get_applied_events().size(), 1)
 
 
+func test_recover_active_match_baseline_preserves_match_resets_readiness_and_requests_required_lanes() -> void:
+	var pipeline := RealtimePacketPipeline.new()
+	pipeline.begin_match("match-1")
+	pipeline.apply_packet({
+		"type": "world_full",
+		"match_id": "match-1",
+		"baseline_id": "world-baseline-1",
+		"sequence": 1,
+		"snapshot_id": "world-snapshot-1",
+		"is_final_chunk": true,
+		"ships": [],
+		"bullets": [],
+		"asteroids": [],
+		"pickups": [],
+	})
+	pipeline.apply_packet({
+		"type": "overlay_full",
+		"match_id": "match-1",
+		"baseline_id": "overlay-baseline-1",
+		"sequence": 1,
+		"snapshot_id": "overlay-snapshot-1",
+		"is_final_chunk": true,
+	})
+	pipeline.apply_packet({
+		"type": "session_full",
+		"match_id": "match-1",
+		"baseline_id": "session-baseline-1",
+		"sequence": 1,
+		"snapshot_id": "session-snapshot-1",
+		"is_final_chunk": true,
+		"players": [],
+		"player_lifecycle": [],
+		"total_asteroids": 0,
+	})
+	assert_true(pipeline.is_gameplay_ready())
+
+	var requests: Array = []
+	pipeline.resync_request_required.connect(func(lane, _baseline_id, _sequence, reason):
+		requests.append([lane, reason])
+	)
+	pipeline.recover_active_match_baseline()
+
+	assert_eq(pipeline.active_match_id(), "match-1")
+	assert_false(pipeline.is_gameplay_ready())
+	assert_eq(requests, [
+		["world", "active_match_baseline_recovery"],
+		["overlay", "active_match_baseline_recovery"],
+		["session", "active_match_baseline_recovery"],
+	])
+
+
 func test_reset_clears_lifecycle_pending_state_before_matching_baseline_arrives() -> void:
 	var pipeline := RealtimePacketPipeline.new()
 	pipeline.begin_match("match-1")

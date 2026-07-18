@@ -9,6 +9,8 @@ signal lobby_replay_requested
 signal menu_requested
 signal quit_requested
 
+var _is_multiplayer := false
+var _replay_available := true
 
 func _ready() -> void:
 	_connect_button("LobbyReplayButton", "_on_lobby_replay_pressed")
@@ -17,9 +19,15 @@ func _ready() -> void:
 
 
 func configure_for_mode(session_mode: String) -> void:
-	var is_multiplayer := str(session_mode) == "multiplayer"
-	(%LobbyLabel as Control).visible = is_multiplayer
-	(%ReplayLabel as Control).visible = !is_multiplayer
+	_is_multiplayer = str(session_mode) == "multiplayer"
+	(%LobbyLabel as Control).visible = _is_multiplayer
+	(%ReplayLabel as Control).visible = !_is_multiplayer
+	_apply_replay_availability()
+
+
+func set_replay_available(available: bool) -> void:
+	_replay_available = available
+	_apply_replay_availability()
 
 
 func clear_rows() -> void:
@@ -72,3 +80,9 @@ func _connect_button(node_name: String, method_name: String) -> void:
 	var button := find_child(node_name, true, false) as BaseButton
 	if button != null && !button.pressed.is_connected(Callable(self, method_name)):
 		button.pressed.connect(Callable(self, method_name))
+
+
+func _apply_replay_availability() -> void:
+	var replay_button := find_child("LobbyReplayButton", true, false) as BaseButton
+	if replay_button != null:
+		replay_button.disabled = !_is_multiplayer and !_replay_available

@@ -43,17 +43,17 @@ func newReadyGameplayWebRTCTransportForTests() (*WebRTCTransport, map[string]*fa
 	sessionChannel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	event := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	channels := map[string]*fakeWebRTCDataChannel{
-		webRTCGameplayChannelLaneWorld: world,
-		"overlay":                      overlay,
-		"session":                      sessionChannel,
-		"event":                        event,
+		webRTCChannelLaneWorld: world,
+		"overlay":              overlay,
+		"session":              sessionChannel,
+		"event":                event,
 	}
 	transport := &WebRTCTransport{
 		channels: map[string]webRTCDataChannel{
-			webRTCGameplayChannelLaneWorld: world,
-			"overlay":                      overlay,
-			"session":                      sessionChannel,
-			"event":                        event,
+			webRTCChannelLaneWorld: world,
+			"overlay":              overlay,
+			"session":              sessionChannel,
+			"event":                event,
 		},
 		ready: true,
 	}
@@ -559,7 +559,7 @@ func assertPhysicalGameplayChannelWrites(t *testing.T, channels map[string]*fake
 	t.Helper()
 
 	total := 0
-	for _, lane := range []string{webRTCGameplayChannelLaneWorld, "overlay", "session"} {
+	for _, lane := range []string{webRTCChannelLaneWorld, "overlay", "session"} {
 		texts := channels[lane].sentTexts
 		if len(texts) == 0 {
 			continue
@@ -600,7 +600,7 @@ func assertPhysicalLanePacketText(t *testing.T, lane string, raw string) {
 		packetType, _ = payload["t"].(string)
 	}
 	switch lane {
-	case webRTCGameplayChannelLaneWorld:
+	case webRTCChannelLaneWorld:
 		if !strings.HasPrefix(packetType, "world_") && packetType != "wf" && packetType != "wd" {
 			t.Fatalf("expected world packet on world channel, got %v", packetType)
 		}

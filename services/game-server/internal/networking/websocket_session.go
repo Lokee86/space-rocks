@@ -101,7 +101,7 @@ func (session *webSocketSession) resetFirstPacketLoggingLocked(matchID string) {
 	session.firstRespawnPacketLogged = false
 }
 
-func (session *webSocketSession) hasReadyWebRTCGameplayTransport() bool {
+func (session *webSocketSession) hasReadyWebRTCTransport() bool {
 	transport := session.webRTCTransportSnapshot()
 	return transport != nil && transport.Ready()
 }
@@ -150,8 +150,14 @@ func (session *webSocketSession) ensureWebRTCTransport() *WebRTCTransport {
 				_ = transport.SendSmoke("server-ready", "server smoke peer ready")
 			}
 		},
-		OnPacketReceived: func(packet map[string]any) {
+		OnPacketReceived: func(packet map[string]any, _lane string) {
+			if _lane == "tooling" {
+				return
+			}
 			session.handleWebRTCPacket(packet)
+		},
+		OnChannelClosed: func(_lane string) {
+			session.clearWebRTCTransport()
 		},
 	})
 	session.mu.Lock()
@@ -195,8 +201,8 @@ func (session *webSocketSession) enqueueWebRTCICECandidate(media string, index i
 }
 
 func (session *webSocketSession) enqueueWebRTCReady() {
-	channels := make([]map[string]any, 0, len(webRTCGameplayChannelSpecs()))
-	for _, spec := range webRTCGameplayChannelSpecs() {
+	channels := make([]map[string]any, 0, len(webRTCChannelSpecs()))
+	for _, spec := range webRTCChannelSpecs() {
 		channels = append(channels, map[string]any{
 			"lane":          spec.Lane,
 			"channel_label": spec.Label,
@@ -242,6 +248,9 @@ func (session *webSocketSession) enqueuePacket(packet map[string]any) {
 }
 
 func (session *webSocketSession) HandleWebRTCOffer(descriptionType string, sdp string) {
+	if session.webRTCTransportSnapshot() != nil {
+		session.clearWebRTCTransport()
+	}
 	peer := session.ensureWebRTCTransport()
 	answer, err := peer.HandleOffer(descriptionType, sdp)
 	if err != nil {

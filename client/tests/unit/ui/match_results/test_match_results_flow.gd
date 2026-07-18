@@ -53,6 +53,32 @@ func test_multiplayer_lobby_replay_emits_return_to_lobby_requested() -> void:
 	assert_signal_not_emitted(flow, "replay_requested")
 
 
+func test_replay_availability_applies_to_current_and_new_single_player_windows() -> void:
+	var mount_parent := Control.new()
+	var flow := MatchResultsFlow.new()
+	add_child_autofree(mount_parent)
+	flow.configure(mount_parent)
+	flow.set_replay_available(false)
+
+	var first_window := flow.show_results("single_player", [])
+	await get_tree().process_frame
+	assert_true((first_window.get_node("%LobbyReplayButton") as BaseButton).disabled)
+
+	flow.set_replay_available(true)
+	assert_false((first_window.get_node("%LobbyReplayButton") as BaseButton).disabled)
+
+	var second_window := flow.show_results("single_player", [])
+	await get_tree().process_frame
+	assert_false((second_window.get_node("%LobbyReplayButton") as BaseButton).disabled)
+
+
+func test_replay_availability_does_not_disable_multiplayer_lobby_return() -> void:
+	var flow := await _create_flow("multiplayer")
+	flow.set_replay_available(false)
+
+	assert_false((flow.window.get_node("%LobbyReplayButton") as BaseButton).disabled)
+
+
 func test_menu_emits_return_to_pregame_requested() -> void:
 	var flow := await _create_flow("single_player")
 

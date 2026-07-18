@@ -25,6 +25,11 @@ signal player_pause_state_received(packet: Dictionary)
 signal telemetry_pong_received(packet: Dictionary)
 signal realtime_transport_ready
 signal unknown_packet_received(packet: Dictionary)
+signal tooling_packet_received(packet: Dictionary)
+signal recovery_started(lane: String)
+signal recovery_succeeded()
+signal recovery_failed()
+signal realtime_replay_availability_changed(available: bool)
 
 var network_client: NetworkClient
 var client_packet_sender: ClientPacketSender:
@@ -37,6 +42,7 @@ var realtime_packet_pipeline: RealtimePacketPipeline
 var realtime_transport_session: RealtimeTransportSession
 var webrtc_transport_factory: Callable
 var server_clock_offset_ms := -1
+var _realtime_replay_available := true
 
 var has_started_connection := false
 var auth_session_controller: AuthSessionController
@@ -105,6 +111,7 @@ func _process(_delta: float) -> void:
 func connect_to_server(url: String) -> Error:
 
 	_connection_attempt_epoch += 1
+	_set_realtime_replay_available(true)
 	_connection_trace = ClientOperationTrace.create("connect_to_server", _operation_trace_factory)
 	_closed_event_attempt_epoch = -1
 	_has_close_result = false
@@ -212,6 +219,15 @@ func send_start_game_request() -> void:
 func send_input_packet(packet: Dictionary) -> void:
 	if _can_send_outbound():
 		client_packet_sender.send_input_packet(packet)
+
+
+func send_tooling_packet(packet: Dictionary) -> void:
+	if realtime_transport_session != null:
+		realtime_transport_session.send_tooling_packet(packet)
+
+
+func is_realtime_replay_available() -> bool:
+	return _realtime_replay_available
 
 func _bind_resync_request_signal() -> void:
 	if _resync_signal_bound or realtime_packet_pipeline == null:
@@ -428,6 +444,25 @@ func _on_realtime_transport_ready() -> void:
 	realtime_transport_ready.emit()
 
 
+func _on_tooling_packet_received(packet: Dictionary) -> void:
+	tooling_packet_received.emit(packet)
+
+
+func _on_recovery_started(lane: String) -> void:
+	recovery_started.emit(lane)
+
+
+func _on_recovery_succeeded() -> void:
+	if realtime_packet_pipeline != null:
+		realtime_packet_pipeline.recover_active_match_baseline()
+	recovery_succeeded.emit()
+
+
+func _on_recovery_failed() -> void:
+	_set_realtime_replay_available(false)
+	recovery_failed.emit()
+
+
 func _on_unknown_packet_received(packet: Dictionary) -> void:
 	var trace_id := current_connection_trace_id()
 	if !trace_id.is_empty():
@@ -453,6 +488,10 @@ func _ensure_realtime_transport_session() -> void:
 	realtime_transport_session.send_offer = Callable(self, "send_webrtc_offer")
 	realtime_transport_session.send_ice_candidate = Callable(self, "send_webrtc_ice_candidate")
 	realtime_transport_session.send_failed = Callable(self, "send_webrtc_failed")
+	_connect_realtime_transport_signal("tooling_packet_received", Callable(self, "_on_tooling_packet_received"))
+	_connect_realtime_transport_signal("recovery_started", Callable(self, "_on_recovery_started"))
+	_connect_realtime_transport_signal("recovery_succeeded", Callable(self, "_on_recovery_succeeded"))
+	_connect_realtime_transport_signal("recovery_failed", Callable(self, "_on_recovery_failed"))
 	if client_inbound_coordinator != null:
 		client_inbound_coordinator.set_realtime_transport_session(realtime_transport_session)
 
@@ -463,6 +502,18 @@ func _clear_realtime_transport_session() -> void:
 		realtime_transport_session = null
 	if client_inbound_coordinator != null:
 		client_inbound_coordinator.set_realtime_transport_session(null)
+
+
+func _connect_realtime_transport_signal(signal_name: StringName, handler: Callable) -> void:
+	if realtime_transport_session != null and realtime_transport_session.has_signal(signal_name) and !realtime_transport_session.is_connected(signal_name, handler):
+		realtime_transport_session.connect(signal_name, handler)
+
+
+func _set_realtime_replay_available(available: bool) -> void:
+	if _realtime_replay_available == available:
+		return
+	_realtime_replay_available = available
+	realtime_replay_availability_changed.emit(available)
 
 
 func _send_authenticate_request_if_token_exists() -> void:

@@ -58,6 +58,7 @@ func configure(connection_service_ref, scene_root_ref: Node, player_ref, view_an
 	if match_results_mount_parent == null:
 		match_results_mount_parent = hud
 	match_results_flow.configure(match_results_mount_parent)
+	_configure_realtime_replay_availability()
 	match_end_flow.configure_match_results_flow(match_results_flow)
 	var spectate_menu_state = SpectateMenuState.new()
 	spectate_session_flow = SpectateSessionFlow.new()
@@ -202,6 +203,24 @@ func _connect_match_end_signal(signal_name: StringName, handler: Callable) -> vo
 		return
 	if match_end_flow.has_signal(signal_name) and not match_end_flow.is_connected(signal_name, handler):
 		match_end_flow.connect(signal_name, handler)
+
+
+func _configure_realtime_replay_availability() -> void:
+	if connection_service == null or match_results_flow == null:
+		return
+	if connection_service.has_method("is_realtime_replay_available"):
+		match_results_flow.set_replay_available(connection_service.is_realtime_replay_available())
+	_connect_connection_signal("realtime_replay_availability_changed", Callable(self, "_on_realtime_replay_availability_changed"))
+
+
+func _connect_connection_signal(signal_name: StringName, handler: Callable) -> void:
+	if connection_service.has_signal(signal_name) and not connection_service.is_connected(signal_name, handler):
+		connection_service.connect(signal_name, handler)
+
+
+func _on_realtime_replay_availability_changed(available: bool) -> void:
+	if match_results_flow != null:
+		match_results_flow.set_replay_available(available)
 
 func _current_room_max_players() -> int:
 	if room_max_players_provider.is_valid():

@@ -13,11 +13,13 @@ type fakeWebRTCDataChannel struct {
 	sentTexts  []string
 	sendErr    error
 	onOpen     func()
+	onClose    func()
 	onMessage  func(webrtc.DataChannelMessage)
 	closed     bool
 }
 
 func (c *fakeWebRTCDataChannel) OnOpen(f func())                             { c.onOpen = f }
+func (c *fakeWebRTCDataChannel) OnClose(f func())                            { c.onClose = f }
 func (c *fakeWebRTCDataChannel) OnMessage(f func(webrtc.DataChannelMessage)) { c.onMessage = f }
 func (c *fakeWebRTCDataChannel) ReadyState() webrtc.DataChannelState         { return c.readyState }
 func (c *fakeWebRTCDataChannel) SendText(s string) error {
@@ -195,8 +197,8 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 	if fakePeer.localDesc.Type != webrtc.SDPTypeAnswer || fakePeer.localDesc.SDP != "answer-sdp" {
 		t.Fatalf("local description not set: %#v", fakePeer.localDesc)
 	}
-	if len(fakePeer.created) != 8 {
-		t.Fatalf("expected 8 data channels to be created, got %d", len(fakePeer.created))
+	if len(fakePeer.created) != 9 {
+		t.Fatalf("expected 9 data channels to be created, got %d", len(fakePeer.created))
 	}
 	expected := map[string]fakeWebRTCDataChannelCreateSpec{
 		"sr.world":               {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1, MaxRetransmits: nil},
@@ -207,6 +209,7 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 		"sr.bullets":             {Label: "sr.bullets", Ordered: false, Negotiated: true, ID: 6, MaxRetransmits: uint16Ptr(0)},
 		"sr.asteroids.lifecycle": {Label: "sr.asteroids.lifecycle", Ordered: true, Negotiated: true, ID: 7, MaxRetransmits: nil},
 		"sr.bullets.lifecycle":   {Label: "sr.bullets.lifecycle", Ordered: true, Negotiated: true, ID: 8, MaxRetransmits: nil},
+		"sr.tooling":             {Label: "sr.tooling", Ordered: true, Negotiated: true, ID: 9, MaxRetransmits: nil},
 	}
 	for _, created := range fakePeer.created {
 		want, ok := expected[created.Label]
@@ -265,7 +268,7 @@ func TestWebRTCTransportSendJSONRequiresOpenChannel(t *testing.T) {
 
 	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	peer.channels = map[string]webRTCDataChannel{
-		webRTCGameplayChannelLaneWorld: channel,
+		webRTCChannelLaneWorld: channel,
 	}
 	if err := peer.SendJSON(map[string]any{"type": "custom", "value": "hello"}); err != nil {
 		t.Fatalf("SendJSON returned error: %v", err)
@@ -284,7 +287,7 @@ func TestWebRTCTransportSendEncodedJSONRequiresOpenChannel(t *testing.T) {
 
 	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateClosed}
 	peer.channels = map[string]webRTCDataChannel{
-		webRTCGameplayChannelLaneWorld: channel,
+		webRTCChannelLaneWorld: channel,
 	}
 	if err := peer.SendEncodedJSON([]byte(`{"type":"custom"}`)); err == nil {
 		t.Fatal("expected error for closed channel")
@@ -310,13 +313,13 @@ func TestWebRTCTransportSendEncodedLaneJSONRoutesToMatchingChannel(t *testing.T)
 	sessionChannel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	event := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	peer.channels = map[string]webRTCDataChannel{
-		webRTCGameplayChannelLaneWorld: world,
-		"overlay":                      overlay,
-		"session":                      sessionChannel,
-		"event":                        event,
+		webRTCChannelLaneWorld: world,
+		"overlay":              overlay,
+		"session":              sessionChannel,
+		"event":                event,
 	}
 
-	if err := peer.SendEncodedLaneJSON(webRTCGameplayChannelLaneWorld, []byte("world")); err != nil {
+	if err := peer.SendEncodedLaneJSON(webRTCChannelLaneWorld, []byte("world")); err != nil {
 		t.Fatalf("SendEncodedLaneJSON(world) returned error: %v", err)
 	}
 	if err := peer.SendEncodedLaneJSON("overlay", []byte("overlay")); err != nil {
@@ -346,7 +349,31 @@ func TestWebRTCTransportSendEncodedLaneJSONRoutesToMatchingChannel(t *testing.T)
 	}
 }
 
-func TestWebRTCTransportReadyTracksAllGameplayChannels(t *testing.T) {
+func TestWebRTCTransportSendToolingJSONUsesDedicatedChannel(t *testing.T) {
+	peer := NewWebRTCTransport(WebRTCSignalHooks{})
+	tooling := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
+	peer.channels = map[string]webRTCDataChannel{
+		"tooling": tooling,
+	}
+
+	if err := peer.SendToolingJSON(map[string]any{"type": "tooling_packet"}); err != nil {
+		t.Fatalf("SendToolingJSON returned error: %v", err)
+	}
+	if err := peer.SendEncodedToolingJSON([]byte(`{"type":"tooling_encoded"}`)); err != nil {
+		t.Fatalf("SendEncodedToolingJSON returned error: %v", err)
+	}
+	if len(tooling.sentTexts) != 2 {
+		t.Fatalf("expected 2 tooling payloads, got %d", len(tooling.sentTexts))
+	}
+	assertSentJSONField(t, tooling.sentTexts[0], "type", "tooling_packet")
+	assertSentJSONField(t, tooling.sentTexts[1], "type", "tooling_encoded")
+
+	if err := peer.SendEncodedLaneJSON("tooling", []byte("gameplay-api")); err == nil {
+		t.Fatal("expected gameplay lane API to reject tooling lane")
+	}
+}
+
+func TestWebRTCTransportReadyTracksAllRequiredChannels(t *testing.T) {
 	oldFactory := newWebRTCPeerConnection
 	defer func() { newWebRTCPeerConnection = oldFactory }()
 
@@ -384,8 +411,42 @@ func TestWebRTCTransportReadyTracksAllGameplayChannels(t *testing.T) {
 	fakePeer.channels["sr.asteroids.lifecycle"].onOpen()
 	fakePeer.channels["sr.bullets.lifecycle"].readyState = webrtc.DataChannelStateOpen
 	fakePeer.channels["sr.bullets.lifecycle"].onOpen()
+	fakePeer.channels["sr.tooling"].readyState = webrtc.DataChannelStateOpen
+	fakePeer.channels["sr.tooling"].onOpen()
 	if !peer.Ready() {
 		t.Fatal("expected Ready to become true after all channels are open")
+	}
+}
+
+func TestWebRTCTransportUnexpectedChannelCloseCallsHookOnceWithLane(t *testing.T) {
+	oldFactory := newWebRTCPeerConnection
+	defer func() { newWebRTCPeerConnection = oldFactory }()
+
+	fakePeer := &fakeWebRTCPeer{
+		answer:   webrtc.SessionDescription{Type: webrtc.SDPTypeAnswer, SDP: "answer-sdp"},
+		channels: make(map[string]*fakeWebRTCDataChannel),
+	}
+	newWebRTCPeerConnection = func() (webRTCPeer, error) { return fakePeer, nil }
+
+	var closedLanes []string
+	peer := NewWebRTCTransport(WebRTCSignalHooks{
+		OnChannelClosed: func(lane string) { closedLanes = append(closedLanes, lane) },
+	})
+	if _, err := peer.HandleOffer("offer", "offer-sdp"); err != nil {
+		t.Fatalf("HandleOffer returned error: %v", err)
+	}
+
+	tooling := fakePeer.channels["sr.tooling"]
+	tooling.readyState = webrtc.DataChannelStateOpen
+	tooling.onOpen()
+	tooling.onClose()
+	tooling.onClose()
+
+	if !reflect.DeepEqual(closedLanes, []string{"tooling"}) {
+		t.Fatalf("expected one tooling close callback, got %#v", closedLanes)
+	}
+	if peer.Ready() {
+		t.Fatal("expected transport to become not ready after channel close")
 	}
 }
 
@@ -397,7 +458,7 @@ func TestWebRTCTransportSendSmokeRequiresOpenChannel(t *testing.T) {
 
 	channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
 	peer.channels = map[string]webRTCDataChannel{
-		webRTCGameplayChannelLaneWorld: channel,
+		webRTCChannelLaneWorld: channel,
 	}
 	if err := peer.SendSmoke("smoke-1", "hello"); err != nil {
 		t.Fatalf("SendSmoke returned error: %v", err)
@@ -413,33 +474,43 @@ func TestWebRTCTransportSendSmokeRequiresOpenChannel(t *testing.T) {
 
 func TestWebRTCTransportHandleChannelMessageRoutesPacketsAndInvalidJSON(t *testing.T) {
 	var packets []map[string]any
+	var packetLanes []string
 	var smokePackets []map[string]any
 	peer := NewWebRTCTransport(WebRTCSignalHooks{
-		OnPacketReceived: func(packet map[string]any) { packets = append(packets, packet) },
-		OnSmokeReceived:  func(packet map[string]any) { smokePackets = append(smokePackets, packet) },
+		OnPacketReceived: func(packet map[string]any, lane string) {
+			packets = append(packets, packet)
+			packetLanes = append(packetLanes, lane)
+		},
+		OnSmokeReceived: func(packet map[string]any) { smokePackets = append(smokePackets, packet) },
 	})
 
-	if err := peer.handleChannelMessage([]byte(`{"type":"custom_packet","value":42}`)); err != nil {
+	if err := peer.handleChannelMessage("overlay", []byte(`{"type":"custom_packet","value":42}`)); err != nil {
 		t.Fatalf("handleChannelMessage returned error: %v", err)
 	}
 	if len(packets) != 1 {
 		t.Fatalf("expected generic packet callback, got %d", len(packets))
 	}
+	if packetLanes[0] != "overlay" {
+		t.Fatalf("expected overlay packet lane, got %q", packetLanes[0])
+	}
 	if len(smokePackets) != 0 {
 		t.Fatalf("expected no smoke callback, got %d", len(smokePackets))
 	}
 
-	if err := peer.handleChannelMessage([]byte(`{"type":"webrtc_smoke","smoke_id":"smoke-1","message":"hello"}`)); err != nil {
+	if err := peer.handleChannelMessage("tooling", []byte(`{"type":"webrtc_smoke","smoke_id":"smoke-1","message":"hello"}`)); err != nil {
 		t.Fatalf("handleChannelMessage returned error: %v", err)
 	}
 	if len(packets) != 2 {
 		t.Fatalf("expected generic packet callback for smoke packet too, got %d", len(packets))
 	}
+	if packetLanes[1] != "tooling" {
+		t.Fatalf("expected tooling packet lane, got %q", packetLanes[1])
+	}
 	if len(smokePackets) != 1 {
 		t.Fatalf("expected smoke packet callback, got %d", len(smokePackets))
 	}
 
-	if err := peer.handleChannelMessage([]byte("{invalid json")); err == nil {
+	if err := peer.handleChannelMessage("overlay", []byte("{invalid json")); err == nil {
 		t.Fatal("expected invalid json error")
 	}
 }
@@ -464,6 +535,7 @@ func TestWebRTCTransportClose(t *testing.T) {
 		"sr.bullets":             &fakeWebRTCDataChannel{},
 		"sr.asteroids.lifecycle": &fakeWebRTCDataChannel{},
 		"sr.bullets.lifecycle":   &fakeWebRTCDataChannel{},
+		"sr.tooling":             &fakeWebRTCDataChannel{},
 	}
 	if err := peer.Close(); err != nil {
 		t.Fatalf("Close returned error: %v", err)

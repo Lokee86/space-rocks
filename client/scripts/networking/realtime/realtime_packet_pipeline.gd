@@ -115,14 +115,20 @@ func reset() -> void:
 	_recovery_uncertain = false
 	_reset_protocol_state()
 
+func recover_active_match_baseline() -> void:
+	if _active_match_id.is_empty():
+		return
+	_reset_protocol_state()
+	_request_recovery_resync("active_match_baseline_recovery")
+
 func _reset_protocol_state() -> void:
 	_router = RealtimeRouter.new()
 	_bind_router(_router)
 	_presentation_state.update_from_router(_router)
 
-func _request_recovery_resync() -> void:
+func _request_recovery_resync(reason: String = "pending_bucket_discarded") -> void:
 	for lane in ["world", "overlay", "session"]:
-		_router.baseline_tracker.request_resync_for_lane(lane, "pending_bucket_discarded")
+		_router.baseline_tracker.request_resync_for_lane(lane, reason)
 
 func _now_msec() -> int:
 	return int(_clock.call())

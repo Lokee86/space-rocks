@@ -104,7 +104,7 @@ func test_start_configures_channels_and_emits_offer() -> void:
 	assert_eq(fake_peer.initialize_args.size(), 1)
 	assert_true(fake_peer.initialize_args[0].is_empty())
 
-	assert_eq(fake_peer.create_data_channel_args.size(), 8)
+	assert_eq(fake_peer.create_data_channel_args.size(), 9)
 	assert_eq(fake_peer.create_data_channel_args[0]["label"], "sr.world")
 	assert_eq(fake_peer.create_data_channel_args[0]["options"]["id"], 1)
 	assert_eq(fake_peer.create_data_channel_args[0]["options"]["negotiated"], true)
@@ -145,11 +145,16 @@ func test_start_configures_channels_and_emits_offer() -> void:
 	assert_eq(fake_peer.create_data_channel_args[7]["options"]["negotiated"], true)
 	assert_eq(fake_peer.create_data_channel_args[7]["options"]["ordered"], true)
 	assert_false(fake_peer.create_data_channel_args[7]["options"].has("maxRetransmits"))
+	assert_eq(fake_peer.create_data_channel_args[8]["label"], "sr.tooling")
+	assert_eq(fake_peer.create_data_channel_args[8]["options"]["id"], 9)
+	assert_eq(fake_peer.create_data_channel_args[8]["options"]["negotiated"], true)
+	assert_eq(fake_peer.create_data_channel_args[8]["options"]["ordered"], true)
+	assert_false(fake_peer.create_data_channel_args[8]["options"].has("maxRetransmits"))
 	assert_eq(fake_peer.create_offer_called, 1)
 	assert_eq(offer_values.size(), 2)
 	assert_eq(offer_values[0], "offer")
 	assert_eq(offer_values[1], "sdp-text")
-	assert_eq(ready_values.size(), 8)
+	assert_eq(ready_values.size(), 9)
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[0]["channel_id"], 1)
@@ -174,6 +179,9 @@ func test_start_configures_channels_and_emits_offer() -> void:
 	assert_eq(ready_values[7]["lane"], "bullets_lifecycle")
 	assert_eq(ready_values[7]["channel_label"], "sr.bullets.lifecycle")
 	assert_eq(ready_values[7]["channel_id"], 8)
+	assert_eq(ready_values[8]["lane"], "tooling")
+	assert_eq(ready_values[8]["channel_label"], "sr.tooling")
+	assert_eq(ready_values[8]["channel_id"], 9)
 
 func test_start_passes_configured_ice_servers_to_initialize() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -202,6 +210,7 @@ func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
 		"bullets": FakeChannel.new(),
 		"asteroids_lifecycle": FakeChannel.new(),
 		"bullets_lifecycle": FakeChannel.new(),
+		"tooling": FakeChannel.new(),
 	})
 
 	peer.handle_answer("answer", "remote-sdp")
@@ -225,6 +234,7 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 		"bullets": FakeChannel.new(),
 		"asteroids_lifecycle": FakeChannel.new(),
 		"bullets_lifecycle": FakeChannel.new(),
+		"tooling": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	channels["world"].ready_state = WebRTCDataChannel.STATE_OPEN
@@ -246,10 +256,11 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 	channels["bullets"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["asteroids_lifecycle"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["bullets_lifecycle"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["tooling"].ready_state = WebRTCDataChannel.STATE_OPEN
 	peer.poll()
 
 	assert_eq(fake_peer.poll_called, 2)
-	assert_eq(ready_values.size(), 8)
+	assert_eq(ready_values.size(), 9)
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[0]["channel_id"], 1)
@@ -274,6 +285,9 @@ func test_poll_emits_ready_only_after_all_channels_open() -> void:
 	assert_eq(ready_values[7]["lane"], "bullets_lifecycle")
 	assert_eq(ready_values[7]["channel_label"], "sr.bullets.lifecycle")
 	assert_eq(ready_values[7]["channel_id"], 8)
+	assert_eq(ready_values[8]["lane"], "tooling")
+	assert_eq(ready_values[8]["channel_label"], "sr.tooling")
+	assert_eq(ready_values[8]["channel_id"], 9)
 
 func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -287,6 +301,7 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 		"bullets": FakeChannel.new(),
 		"asteroids_lifecycle": FakeChannel.new(),
 		"bullets_lifecycle": FakeChannel.new(),
+		"tooling": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	channels["world"].ready_state = WebRTCDataChannel.STATE_OPEN
@@ -297,6 +312,7 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	channels["bullets"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["asteroids_lifecycle"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["bullets_lifecycle"].ready_state = WebRTCDataChannel.STATE_OPEN
+	channels["tooling"].ready_state = WebRTCDataChannel.STATE_OPEN
 	channels["world"].packets.append(JSON.stringify({
 		"type": "webrtc_smoke",
 		"smoke_id": "smoke-1",
@@ -326,17 +342,22 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 			{"id": "bullet-1", "x": 10, "y": 20},
 		],
 	}).to_utf8_buffer())
+	channels["tooling"].packets.append(JSON.stringify({
+		"type": "tooling_delta",
+	}).to_utf8_buffer())
 
 	var ready_values: Array = []
 	var received_packets: Array = []
+	var received_lanes: Array = []
 	var smoke_packets: Array = []
 	var failed_packets: Array = []
 	peer.ready.connect(func(payload: Array) -> void:
 		ready_values.clear()
 		ready_values.append_array(payload)
 	)
-	peer.packet_received.connect(func(packet: Dictionary) -> void:
+	peer.packet_received.connect(func(packet: Dictionary, lane: String) -> void:
 		received_packets.append(packet)
+		received_lanes.append(lane)
 	)
 	peer.smoke_received.connect(func(packet: Dictionary) -> void:
 		smoke_packets.append(packet)
@@ -350,7 +371,7 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	peer.poll()
 
 	assert_eq(fake_peer.poll_called, 1)
-	assert_eq(ready_values.size(), 8)
+	assert_eq(ready_values.size(), 9)
 	# Assert all expected lanes are present in ready metadata
 	var lanes := {}
 	for channel in ready_values:
@@ -363,11 +384,12 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	assert_true(lanes.has("bullets"))
 	assert_true(lanes.has("asteroids_lifecycle"))
 	assert_true(lanes.has("bullets_lifecycle"))
+	assert_true(lanes.has("tooling"))
 	# Positional checks for specific channels
 	assert_eq(ready_values[0]["lane"], "world")
 	assert_eq(ready_values[0]["channel_label"], "sr.world")
 	assert_eq(ready_values[0]["channel_id"], 1)
-	assert_eq(received_packets.size(), 5)
+	assert_eq(received_packets.size(), 6)
 	assert_eq(received_packets[0]["type"], "overlay_delta")
 	assert_eq(received_packets[0]["lane"], "overlay")
 	assert_eq(received_packets[1]["type"], "session_delta")
@@ -378,8 +400,33 @@ func test_poll_emits_ready_packet_received_and_smoke_received() -> void:
 	assert_eq(received_packets[3]["lane"], "asteroids")
 	assert_eq(received_packets[4]["type"], "bullet_delta")
 	assert_eq(received_packets[4]["lane"], "bullets")
+	assert_eq(received_packets[5]["type"], "tooling_delta")
+	assert_eq(received_lanes, ["overlay", "session", "event", "asteroids", "bullets", "tooling"])
 	assert_eq(smoke_packets.size(), 1)
 	assert_true(failed_packets.is_empty())
+
+
+func test_poll_emits_channel_closed_once_with_lane_after_unexpected_close() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels := {}
+	for lane in ["world", "overlay", "session", "event", "asteroids", "bullets", "asteroids_lifecycle", "bullets_lifecycle", "tooling"]:
+		channels[lane] = FakeChannel.new()
+	peer.set_peer_for_tests(fake_peer, channels)
+	for channel in channels.values():
+		channel.ready_state = WebRTCDataChannel.STATE_OPEN
+
+	var closed_lanes: Array = []
+	peer.channel_closed.connect(func(lane: String) -> void:
+		closed_lanes.append(lane)
+	)
+	peer.poll()
+
+	channels["tooling"].ready_state = WebRTCDataChannel.STATE_CLOSED
+	peer.poll()
+	peer.poll()
+
+	assert_eq(closed_lanes, ["tooling"])
 
 
 func test_poll_bounded_receive_drain_per_lane() -> void:
@@ -394,6 +441,7 @@ func test_poll_bounded_receive_drain_per_lane() -> void:
 		"bullets": FakeChannel.new(),
 		"asteroids_lifecycle": FakeChannel.new(),
 		"bullets_lifecycle": FakeChannel.new(),
+		"tooling": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	for channel in channels.values():
@@ -406,7 +454,7 @@ func test_poll_bounded_receive_drain_per_lane() -> void:
 		}).to_utf8_buffer())
 
 	var received_packets: Array = []
-	peer.packet_received.connect(func(packet: Dictionary) -> void:
+	peer.packet_received.connect(func(packet: Dictionary, _lane: String) -> void:
 		received_packets.append(packet)
 	)
 
@@ -430,6 +478,7 @@ func test_poll_tracks_bullet_delta_receive_metrics() -> void:
 		"bullets": FakeChannel.new(),
 		"asteroids_lifecycle": FakeChannel.new(),
 		"bullets_lifecycle": FakeChannel.new(),
+		"tooling": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	for channel in channels.values():
@@ -463,6 +512,7 @@ func test_poll_tracks_bullet_delta_missing_server_time() -> void:
 		"bullets": FakeChannel.new(),
 		"asteroids_lifecycle": FakeChannel.new(),
 		"bullets_lifecycle": FakeChannel.new(),
+		"tooling": FakeChannel.new(),
 	}
 	peer.set_peer_for_tests(fake_peer, channels)
 	for channel in channels.values():
@@ -528,6 +578,29 @@ func test_send_json_writes_text_packet_when_open() -> void:
 	assert_eq(parsed["type"], "custom_packet")
 	assert_eq(parsed["value"], "hello")
 
+
+func test_send_tooling_json_writes_to_tooling_lane_when_open() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	var channels := {
+		"tooling": FakeChannel.new(),
+	}
+	peer.set_peer_for_tests(fake_peer, channels)
+	channels["tooling"].ready_state = WebRTCDataChannel.STATE_OPEN
+
+	peer.send_tooling_json({
+		"type": "tooling_packet",
+		"value": "hello",
+	})
+
+	var tooling_channel: FakeChannel = channels["tooling"]
+	assert_eq(tooling_channel.sent_packets.size(), 1)
+	var text: String = tooling_channel.sent_packets[0].get_string_from_utf8()
+	var parsed = JSON.parse_string(text)
+	assert_eq(parsed["type"], "tooling_packet")
+	assert_eq(parsed["value"], "hello")
+
+
 func test_send_smoke_writes_smoke_packet_when_open() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
@@ -552,7 +625,7 @@ func test_poll_round_robin_fairly_serves_all_backlogged_lanes() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()
 	var channels := {}
-	for lane in ["world", "overlay", "session", "event", "asteroids", "bullets", "asteroids_lifecycle", "bullets_lifecycle"]:
+	for lane in ["world", "overlay", "session", "event", "asteroids", "bullets", "asteroids_lifecycle", "bullets_lifecycle", "tooling"]:
 		channels[lane] = FakeChannel.new()
 	peer.set_peer_for_tests(fake_peer, channels)
 	for lane in channels:
@@ -560,19 +633,19 @@ func test_poll_round_robin_fairly_serves_all_backlogged_lanes() -> void:
 		for i in range(WebRTCTransportScript.MAX_PACKETS_PER_POLL):
 			channels[lane].packets.append(JSON.stringify({"type": "overlay_delta", "lane": "overlay", "source": lane}).to_utf8_buffer())
 	var received_lanes: Array = []
-	peer.packet_received.connect(func(packet: Dictionary) -> void:
+	peer.packet_received.connect(func(packet: Dictionary, _lane: String) -> void:
 		received_lanes.append(packet["source"])
 	)
 	peer.poll()
 	assert_eq(received_lanes.size(), WebRTCTransportScript.MAX_PACKETS_PER_POLL)
 	for lane in channels:
-		assert_eq(received_lanes.count(lane), 6)
+		assert_gte(received_lanes.count(lane), 5)
 	var drained := 0
 	for lane in channels:
 		drained += WebRTCTransportScript.MAX_PACKETS_PER_POLL - channels[lane].packets.size()
 	assert_eq(drained, WebRTCTransportScript.MAX_PACKETS_PER_POLL)
 	for lane in channels:
-		assert_eq(channels[lane].packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_POLL - 6)
+		assert_eq(channels[lane].packets.size(), WebRTCTransportScript.MAX_PACKETS_PER_POLL - received_lanes.count(lane))
 
 func test_poll_services_lifecycle_before_hot_lanes() -> void:
 	var peer := WebRTCTransportScript.new()
@@ -585,7 +658,7 @@ func test_poll_services_lifecycle_before_hot_lanes() -> void:
 		channels[lane].ready_state = WebRTCDataChannel.STATE_OPEN
 		channels[lane].packets.append(JSON.stringify({"type": "overlay_delta", "lane": "overlay", "source": lane}).to_utf8_buffer())
 	var received_lanes: Array = []
-	peer.packet_received.connect(func(packet: Dictionary) -> void:
+	peer.packet_received.connect(func(packet: Dictionary, _lane: String) -> void:
 		received_lanes.append(packet["source"])
 	)
 	peer.poll()

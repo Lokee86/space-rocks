@@ -1,7 +1,7 @@
 class_name WebRTCTransport
 extends RefCounted
 
-const GAMEPLAY_CHANNEL_SPECS := [
+const CHANNEL_SPECS := [
 	{"lane": "world", "label": "sr.world", "id": 1, "ordered": true},
 	{"lane": "overlay", "label": "sr.overlay", "id": 2, "ordered": true},
 	{"lane": "session", "label": "sr.session", "id": 3, "ordered": true},
@@ -10,6 +10,7 @@ const GAMEPLAY_CHANNEL_SPECS := [
 	{"lane": "bullets", "label": "sr.bullets", "id": 6, "ordered": false, "max_retransmits": 0},
 	{"lane": "asteroids_lifecycle", "label": "sr.asteroids.lifecycle", "id": 7, "ordered": true},
 	{"lane": "bullets_lifecycle", "label": "sr.bullets.lifecycle", "id": 8, "ordered": true},
+	{"lane": "tooling", "label": "sr.tooling", "id": 9, "ordered": true},
 ]
 const MAX_PACKETS_PER_POLL := 48
 const MAX_PACKETS_PER_LANE_PER_POLL := 12
@@ -20,8 +21,9 @@ const ClientConstants := preload("res://scripts/generated/constants/constants.gd
 signal offer_created(description_type: String, sdp: String)
 signal ice_candidate_created(media: String, index: int, name: String)
 signal ready(channels: Array)
-signal packet_received(packet: Dictionary)
+signal packet_received(packet: Dictionary, lane: String)
 signal smoke_received(packet: Dictionary)
+signal channel_closed(lane: String)
 signal failed(error_code: String, message: String)
 
 var peer_factory: Callable
@@ -37,11 +39,12 @@ var _peer: Variant
 var _channels: Dictionary = {}
 var _ready_channels: Dictionary = {}
 var _ready_emitted := false
+var _channel_close_reported: Dictionary = {}
 var _lifecycle_start_cursor := 0
 var _general_start_cursor := 0
 
 const LIFECYCLE_LANES := ["asteroids_lifecycle", "bullets_lifecycle"]
-const GENERAL_LANES := ["world", "overlay", "session", "event", "asteroids", "bullets"]
+const GENERAL_LANES := ["world", "overlay", "session", "event", "asteroids", "bullets", "tooling"]
 
 
 func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
@@ -53,6 +56,7 @@ func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
 		_channels["world"] = channels
 	_ready_channels = {}
 	_ready_emitted = false
+	_channel_close_reported = {}
 	_lifecycle_start_cursor = 0
 	_general_start_cursor = 0
 
@@ -80,7 +84,8 @@ func start() -> void:
 	_peer.ice_candidate_created.connect(_on_ice_candidate_created)
 	_channels = {}
 	_ready_channels = {}
-	for spec in GAMEPLAY_CHANNEL_SPECS:
+	_channel_close_reported = {}
+	for spec in CHANNEL_SPECS:
 		var lane: String = str(spec.get("lane", ""))
 		var label: String = str(spec.get("label", ""))
 		var channel_id: int = int(spec.get("id", 0))
@@ -134,18 +139,21 @@ func poll() -> void:
 	if _channels.is_empty():
 		return
 	var all_ready: bool = true
-	for spec in GAMEPLAY_CHANNEL_SPECS:
+	for spec in CHANNEL_SPECS:
 		var lane: String = str(spec.get("lane", ""))
 		var channel: Variant = _channels.get(lane)
+		var channel_ready: bool = channel != null and channel.get_ready_state() == WebRTCDataChannel.STATE_OPEN
+		if _ready_channels.get(lane, false) and !channel_ready and !_channel_close_reported.get(lane, false):
+			_channel_close_reported[lane] = true
+			channel_closed.emit(lane)
 		if channel == null:
 			all_ready = false
 			continue
-		var channel_ready: bool = channel.get_ready_state() == WebRTCDataChannel.STATE_OPEN
 		_ready_channels[lane] = channel_ready
 		all_ready = all_ready and channel_ready
 	if !_ready_emitted and all_ready:
 		_ready_emitted = true
-		ready.emit(_gameplay_channel_ready_payload())
+		ready.emit(_channel_ready_payload())
 	var total_drained := 0
 	var drained_by_lane := {}
 	while total_drained < MAX_PACKETS_PER_POLL:
@@ -165,7 +173,7 @@ func poll() -> void:
 					continue
 				var raw_packet: PackedByteArray = channel.get_packet()
 				if raw_packet is PackedByteArray:
-					_handle_channel_packet(raw_packet)
+					_handle_channel_packet(raw_packet, lane)
 					drained_by_lane[lane] = lane_drained + 1
 					total_drained += 1
 					drained_this_pass += 1
@@ -176,6 +184,10 @@ func poll() -> void:
 
 func send_json(packet: Dictionary) -> void:
 	_send_json_to_lane("world", packet)
+
+
+func send_tooling_json(packet: Dictionary) -> void:
+	_send_json_to_lane("tooling", packet)
 
 
 func send_smoke(smoke_id: String, message: String) -> void:
@@ -198,6 +210,7 @@ func close() -> void:
 	_channels = {}
 	_ready_channels = {}
 	_ready_emitted = false
+	_channel_close_reported = {}
 	_lifecycle_start_cursor = 0
 	_general_start_cursor = 0
 
@@ -212,16 +225,16 @@ func _on_ice_candidate_created(media: String, index: int, name: String) -> void:
 	ice_candidate_created.emit(media, index, name)
 
 
-func _handle_channel_packet(packet: PackedByteArray) -> void:
+func _handle_channel_packet(packet: PackedByteArray, lane: String = "") -> void:
 	var text: String = packet.get_string_from_utf8()
 	var decode_result: Variant = PacketCodec.decode(text)
 	if !decode_result.ok:
 		failed.emit("invalid_json", decode_result.error)
 		return
-	_handle_decoded_packet(decode_result.packet)
+	_handle_decoded_packet(decode_result.packet, lane)
 
 
-func _handle_decoded_packet(data: Dictionary) -> void:
+func _handle_decoded_packet(data: Dictionary, lane: String = "") -> void:
 	if str(data.get("type", "")) == "bullet_delta":
 		bullet_delta_received_count += 1
 		var server_sent_msec = data.get("server_sent_msec", null)
@@ -240,7 +253,7 @@ func _handle_decoded_packet(data: Dictionary) -> void:
 	if str(data.get("type", "")) == "webrtc_smoke":
 		smoke_received.emit(data)
 		return
-	packet_received.emit(data)
+	packet_received.emit(data, lane)
 
 
 func _send_json_to_lane(lane: String, packet: Dictionary) -> void:
@@ -261,15 +274,15 @@ func receive_metrics_snapshot() -> Dictionary:
 	}
 
 
-func _gameplay_channel_spec_for_lane(lane: String) -> Variant:
-	for spec in GAMEPLAY_CHANNEL_SPECS:
+func _channel_spec_for_lane(lane: String) -> Variant:
+	for spec in CHANNEL_SPECS:
 		if str(spec.get("lane", "")) == lane:
 			return spec
 	return null
 
-func _gameplay_channel_ready_payload() -> Array:
+func _channel_ready_payload() -> Array:
 	var channels: Array = []
-	for spec in GAMEPLAY_CHANNEL_SPECS:
+	for spec in CHANNEL_SPECS:
 		channels.append({
 			"lane": str(spec.get("lane", "")),
 			"channel_label": str(spec.get("label", "")),

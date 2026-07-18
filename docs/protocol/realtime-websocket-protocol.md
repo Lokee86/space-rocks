@@ -6,13 +6,13 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document describes the current realtime WebSocket protocol between the Godot client and the Go game server.
 
-The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-lane-specific WebRTC DataChannels for active realtime gameplay packets: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable, while `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes.
+The protocol is JSON-over-WebSocket for auth, room, lobby, telemetry, signaling, and other non-gameplay server packets, and JSON-over-lane-specific WebRTC DataChannels for active realtime gameplay packets: `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable, `sr.asteroids` and `sr.bullets` are unordered/unreliable hot-update lanes, and the mandatory `sr.tooling` transport lane is reliable/ordered/bidirectional with negotiated id 9.
 
 It covers the transport route, JSON packet framing, connection lifecycle, packet-family routing, lane policy, gameplay packet families, session-state requirements, delivery semantics, source-of-truth files, generated outputs, service responsibilities, compatibility expectations, and implementation code paths.
 
 ## Overview
 
-The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and lane-specific WebRTC physical DataChannels for active realtime gameplay packets, with ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, and unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`.
+The realtime protocol currently uses JSON text messages over a WebSocket connection for signaling and queued one-off packets, and lane-specific WebRTC physical DataChannels for active realtime gameplay packets, with ordered/reliable lanes for `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, unordered/unreliable hot-update lanes for `sr.asteroids` and `sr.bullets`, and a mandatory reliable/ordered/bidirectional `sr.tooling` transport lane at negotiated id 9.
 
 The game server exposes one realtime route:
 
@@ -22,7 +22,7 @@ GET /ws
 
 The Godot client selects a WebSocket URL from the requested session mode, opens the connection, optionally sends an auth packet, sends room or gameplay request packets, and receives authoritative server packets. /ws is the signaling, session, and control route, not the active gameplay state transport.
 
-WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC physical DataChannels own active realtime gameplay packets. Current physical gameplay DataChannels are `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`. `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`; there is no generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
+WebSocket owns auth, room, lobby, telemetry, signaling, and queued one-off packets. WebRTC physical DataChannels own active realtime gameplay packets and the mandatory transport-only tooling lane. Current physical gameplay DataChannels are `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`; `sr.tooling` is the ninth required channel. `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`; there is no generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation. The WebSocket URL may point at the normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment must allow the advertised WebRTC ICE address to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry WebRTC DataChannel traffic.
 
 The route path does not define play mode. Local single-player and multiplayer currently use the same local WebSocket route during development. Single-player versus multiplayer behavior is expressed through packets, session identity, room state, admission policy, and player-data routing.
 
@@ -53,6 +53,8 @@ event
 asteroids.lifecycle
 bullets.lifecycle
 ```
+
+`sr.tooling` is not an active gameplay packet lane. Its negotiated channel is mandatory for readiness, but tooling packets are separated before normal gameplay routing. No tooling packet messages or consumers are implemented yet; existing devtools and admin traffic remain WebSocket-owned.
 
 `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`. There is no separate generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation.
 
@@ -88,7 +90,11 @@ The server accepts only world, overlay, and session requests when the session ha
 
 The next normal planner pass emits a full only for the invalidated lane at previous sequence plus one, with a new sequence-backed baseline ID. That full is a normal required world, overlay, or session candidate sent on the existing ordered/reliable WebRTC lane. Changed-baseline full chunks are accepted only while recovery is pending, with stable baseline ID, sequence, and chunk count, contiguous indices, and correct finality. Readiness remains false until the final chunk; the final accepted full clears tracker and `ResyncState` pending state and restores lane/gameplay readiness when all required lanes are synced.
 
-WebSocket acknowledgment and WebRTC recovery full have no shared delivery order. `resync_required` is acknowledgment-only: it updates reason state only while the lane remains pending and is ignored after recovery, preventing delayed acknowledgment regression. Inbound `resync_request` remains a compatibility client route; the current server sends `resync_required`, not `resync_request`. Recovery covers only world, overlay, and session baselines, not hot asteroid/bullet or lifecycle lanes, and does not add resend, retry, reconnect recovery, session resume, durable queues, or outbound client queueing.
+WebSocket acknowledgment and WebRTC recovery full have no shared delivery order. `resync_required` is acknowledgment-only: it updates reason state only while the lane remains pending and is ignored after recovery, preventing delayed acknowledgment regression. Inbound `resync_request` remains a compatibility client route; the current server sends `resync_required`, not `resync_request`. Baseline recovery covers only world, overlay, and session baselines, not hot asteroid/bullet or lifecycle lanes, and does not add resend, retry, session resume, durable queues, or outbound client queueing.
+
+## WebRTC transport recovery
+
+The WebRTC transport foundation is implemented. An unexpected close of a previously-open required channel preserves the WebSocket connection, session, room membership, and game context. The client replaces only the WebRTC peer, negotiates a fresh offer, and uses a 10-second recovery deadline. Successful replacement readiness preserves the active match ID and requests fresh world, overlay, and session baselines through the existing recovery path. Recovery failure or timeout disables only single-player realtime replay; it does not reset multiplayer/session state. Tooling protocol messages and consumers remain future work.
 
 ## Participating systems
 

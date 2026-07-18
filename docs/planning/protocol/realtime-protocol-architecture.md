@@ -45,11 +45,11 @@ Planning outputs for the remaining protocol work:
 - decision points for representation, compatibility, and versioning changes
 - follow-up implementation tasks that move from planning into current docs when shipped
 
-## Future Tooling Transport
+## Tooling Transport Foundation And Future Consumers
 
-`sr.tooling` is a planned mandatory DataChannel for every gameplay connection. It must be reliable, ordered, bidirectional, included in connection readiness, and long-lived for the room/game session. It carries capability-authorized developer, admin, and measurement traffic; WebSocket retains auth, signaling, lobby, and session/control setup.
+The `sr.tooling` transport foundation is implemented as the ninth mandatory negotiated DataChannel for every gameplay connection. It uses id 9, is reliable, ordered, bidirectional, and must be ready with the eight gameplay channels for the room/game session. It is transport-only: no tooling packet messages or consumers exist yet, and WebSocket retains auth, signaling, lobby, session/control setup, and existing devtools/admin traffic.
 
-Runtime measurement is the first planned `sr.tooling` consumer. Existing WebSocket devtools traffic migrates later. Consumer policy, attachment modes, permissions, and migration sequencing belong in [Devtools And Telemetry](../devtools/devtools-and-telemetry.md).
+Runtime measurement is the first planned `sr.tooling` consumer. Existing WebSocket devtools traffic migrates later. Consumer policy, attachment modes, permissions, and migration sequencing remain planning work in [Devtools And Telemetry](../devtools/devtools-and-telemetry.md).
 
 ## Related Docs
 
@@ -106,6 +106,8 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Known event tuple packing is implemented for compact `event_batch` records.
 - Sparse delta serialization is implemented for active realtime gameplay delta lanes; empty delta sections are omitted from emitted delta wire maps.
 - Client lifecycle application validates explicit world-baseline dependencies, queues future or not-yet-active lifecycle packets, drains them after matching `world_full` activation, and enforces strict independent lifecycle sequences.
+- The `sr.tooling` transport foundation is implemented at negotiated id 9 with reliable, ordered, bidirectional delivery and mandatory readiness alongside the eight gameplay channels. Lane-aware receive routing separates tooling before normal gameplay dispatch; tooling protocol messages and consumers remain future work.
+- Unexpected required-channel close recovery preserves the WebSocket/session/room/game context, replaces only the WebRTC peer, and uses a 10-second deadline. Successful recovery preserves the active match and requests fresh world, overlay, and session baselines; failure disables only single-player replay.
 
 Current implementation details live in:
 
@@ -126,7 +128,7 @@ Future planning here remains focused on bit packing, protobuf or custom binary r
 Delta decides what changed. The current candidate-level send plan uses the estimated packet budget as an advisory candidate-selection target; it does not imply that every included hot chunk collectively fits under one per-tick budget. The hot-lane chunker separately enforces the per-message hard-size threshold before scheduling, and aggregate same-tick output is not currently capped. Focused hot-lane chunking is implemented for asteroid and bullet movement lists. General record/entity-level prioritization, interest filtering, and deeper budget policy remain future work.
 
 Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, focused asteroid/bullet hot-lane chunking, and chunker-owned hot-lane hard-size guarding. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy. Scheduler and active encoding do not own a second hard-size rejection step for already-chunked hot movement packets.
-Current WebRTC physical gameplay channels are split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`). Client-side hot-lane guards accept distinct valid chunks for each `asteroid_delta` or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the two lanes track independently.
+Current WebRTC physical gameplay channels are split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`); the mandatory reliable/ordered/bidirectional `sr.tooling` transport lane is negotiated at id 9. Client-side hot-lane guards accept distinct valid chunks for each `asteroid_delta` or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the two lanes track independently.
 
 Reliability and ordering remain per DataChannel; they do not establish cross-channel `sr.world`/lifecycle ordering. The implemented client lifecycle gate handles that arrival race by waiting for the referenced active world baseline.
 

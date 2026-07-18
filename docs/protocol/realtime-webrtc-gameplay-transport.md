@@ -6,7 +6,7 @@ Parent index: [Protocol](./!INDEX.md)
 
 This document defines the current transport boundary between gameplay data delivery and signaling/control.
 
-It is the canonical protocol doc for physical gameplay DataChannels, lane-to-channel mapping, active gameplay readiness, server send routing, client receive routing, and the current mixed WebRTC gameplay channel policy.
+It is the canonical protocol doc for physical realtime DataChannels, lane-to-channel mapping, active gameplay readiness, server send routing, lane-aware client receive routing, transport recovery, and the current mixed WebRTC gameplay channel policy.
 
 ## Ownership
 
@@ -61,6 +61,8 @@ WebRTC owns active gameplay data packets:
 active realtime gameplay output packets
 ```
 
+The mandatory `sr.tooling` DataChannel is part of the same WebRTC transport foundation. It is a negotiated, reliable, ordered, bidirectional lane that is ready alongside the eight gameplay channels. Existing devtools commands remain WebSocket-owned; no tooling packet protocol or tooling consumer is defined by this transport foundation.
+
 Active realtime gameplay output is not WebSocket-owned. There is no WebSocket fallback for active gameplay output packets.
 
 ## Physical Gameplay Channels
@@ -77,13 +79,15 @@ asteroids    | sr.asteroids     | 5             | asteroid_delta
 bullets      | sr.bullets       | 6             | bullet_delta
 asteroids.lifecycle | sr.asteroids.lifecycle | 7 | asteroids_lifecycle
 bullets.lifecycle   | sr.bullets.lifecycle   | 8 | bullets_lifecycle
+tooling             | sr.tooling             | 9 | reserved tooling transport lane
 ```
 
 The current channel policy is:
 
 ```text
-sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle are negotiated ordered/reliable channels.
+sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, sr.bullets.lifecycle, and sr.tooling are negotiated ordered/reliable channels.
 sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
+sr.tooling is reliable, ordered, bidirectional, and has no tooling packet schema or consumer yet.
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
 Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
@@ -109,6 +113,8 @@ a ready WebRTC transport
 the selected candidate lane mapped to an open gameplay DataChannel
 ```
 
+The readiness set is exactly the eight gameplay channels (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`) plus `sr.tooling`. Channel IDs are 1 through 9, with `sr.tooling` at id 9. All nine channels must be open before the transport is ready.
+
 ## Server Send Boundary
 
 The server active gameplay path builds lane candidates, encodes each selected candidate, and writes each encoded packet to the matching WebRTC active gameplay channel.
@@ -133,19 +139,20 @@ The client active gameplay receive path is:
 ```text
 WebRTCTransport receives DataChannel text
 -> PacketCodec.decode(packet_text)
--> WebRTCTransport.packet_received(packet)
--> RealtimeTransportSession._on_packet_received(packet)
--> RealtimeTransportSession dispatch callback(packet)
--> ServerPacketDispatcher.dispatch(packet)
--> typed dispatcher signal
--> ClientInboundCoordinator
--> matching typed RealtimePacketPipeline.apply_* method
--> RealtimeRouter.route_lane_packet(packet)
--> lifecycle packet: LifecycleLaneGate apply / queue / reject / resync on capacity loss
--> lifecycle apply: WorldLaneApplier validates and mutates WorldLaneState
--> RealtimePresentationState refreshed
--> RealtimePacketPipeline.gameplay_packet_applied(packet)
--> PresentationBridge.handle_gameplay_packet(packet)
+-> WebRTCTransport.packet_received(packet, receiving_lane)
+-> RealtimeTransportSession._on_packet_received(packet, receiving_lane)
+   -> tooling lane: dedicated tooling receive signal; stop before gameplay dispatch
+   -> gameplay lane: RealtimeTransportSession dispatch callback(packet)
+      -> ServerPacketDispatcher.dispatch(packet)
+      -> typed dispatcher signal
+      -> ClientInboundCoordinator
+      -> matching typed RealtimePacketPipeline.apply_* method
+      -> RealtimeRouter.route_lane_packet(packet)
+      -> lifecycle packet: LifecycleLaneGate apply / queue / reject / resync on capacity loss
+      -> lifecycle apply: WorldLaneApplier validates and mutates WorldLaneState
+      -> RealtimePresentationState refreshed
+      -> RealtimePacketPipeline.gameplay_packet_applied(packet)
+      -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
 The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`. Lifecycle routing submits explicit lane, sequence, and world-baseline metadata to `LifecycleLaneGate`; a completed matching `world_full` records the active world baseline and drains pending packets for that baseline, sorted within each lifecycle lane.
@@ -165,7 +172,7 @@ WebSocket packet
 -> RealtimeTransportSession
 ```
 
-The WebSocket signaling/control route does not pass through the gameplay pipeline. `ClientInboundCoordinator` forwards answer, remote ICE, ready, smoke, and failure handling to `RealtimeTransportSession` or its coordinator-owned diagnostic/readiness handlers.
+The WebSocket signaling/control route does not pass through the gameplay pipeline. `ClientInboundCoordinator` forwards answer, remote ICE, ready, smoke, and failure handling to `RealtimeTransportSession` or its coordinator-owned diagnostic/readiness handlers. WebRTC receive routing preserves the lane out of band; `sr.tooling` is separated before normal gameplay dispatch and does not enter `ServerPacketDispatcher`.
 
 Inbound control ownership is:
 
@@ -228,7 +235,7 @@ Tests or alternate composition paths that need normal startup must provide trans
 
 Connection teardown closes the previous session transport. A later connection uses transport_factory to create a fresh WebRTCTransport, rewires its signals, and starts it. Packets emitted by the replacement transport re-enter the same dispatcher and gameplay application path as packets from the original transport.
 
-Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset. `RealtimePacketPipeline.reset()` replaces the router and clears lifecycle pending packets, pending duplicate tracking, and latest applied lifecycle sequences. Lifecycle queue capacity loss uses the existing world-lane resync path; transport replacement itself does not provide reconnect recovery.
+Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset. An unexpected required-channel close preserves the WebSocket session, room membership, and game context, clears only the WebRTC transport, replaces the WebRTC peer, and starts a fresh offer with a 10-second recovery deadline. On replacement readiness, the active-match pipeline preserves the match ID while resetting protocol/baseline/presentation state and requesting fresh world, overlay, and session baselines. If recovery fails or times out, the transport closes and single-player replay becomes unavailable; multiplayer/session state is not reset.
 
 ## Hot Movement Split
 

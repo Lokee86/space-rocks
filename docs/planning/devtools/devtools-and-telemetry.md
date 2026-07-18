@@ -60,7 +60,7 @@ The devtools ownership extraction is implemented as current state. The live runt
 
 Current runtime devtools are implemented around the Godot client, Go game-server `Controller`/`Target`/`Control` architecture, and generated debug packets.
 
-The dedicated tooling channel described below is planned, not implemented. Current devtools still use WebSocket.
+The `sr.tooling` transport foundation is implemented as a mandatory reliable, ordered, bidirectional negotiated channel with id 9, ready alongside the eight gameplay channels. Current devtools commands and admin traffic still use WebSocket; tooling protocol messages and consumers are not implemented.
 
 Implemented references:
 
@@ -76,15 +76,17 @@ admin and developer gates are not separated
 full telemetry needs a dedicated window instead of only an overlay
 scenario/load-test tooling is not established
 taint/integrity propagation is not implemented
-the planned `sr.tooling` transport and room attachment modes are not implemented
+runtime measurement consumer and migration of existing WebSocket devtools/admin traffic remain future work
 normal-event simulation for rewards and commerce is not implemented
 inbound server devtools commands are not yet protected by a production-ready authorization/disablement boundary
 the package-level `nodevtools` helper is not currently enough by itself
 ```
 
-## Planned tooling transport
+## Tooling transport foundation and migration
 
-Future gameplay connections must create an `sr.tooling` channel for every connection. The channel is mandatory, reliable, ordered, bidirectional, included in gameplay readiness, and available for the room/game lifetime. Channel existence is mandatory; commands and data remain capability-authorized server-side.
+Every gameplay connection now creates an `sr.tooling` channel at negotiated id 9. The channel is mandatory, reliable, ordered, bidirectional, and included in readiness with the eight gameplay channels for the room/game lifetime. Channel existence is implemented; commands and data remain future capability-authorized consumers rather than part of this transport foundation.
+
+Unexpected required-channel close recovery preserves the WebSocket/session/room/game context and replaces only the WebRTC peer with a 10-second deadline. Successful recovery preserves the active match and requests fresh world, overlay, and session baselines. Failure disables only single-player replay.
 
 WebSocket remains responsible for auth, signaling, lobby, and session/control setup. The migration is staged:
 
@@ -99,7 +101,7 @@ admin tooling
 -> migrate after existing devtools
 ```
 
-The channel and its packet-lane mechanics remain owned by realtime protocol planning; this document only records the tooling transport decision and its consumers.
+The channel and its packet-lane mechanics remain owned by realtime protocol planning; this document records the implemented transport foundation and the future consumer/migration work. Existing devtools commands and readouts remain WebSocket-owned until a later migration.
 
 ## Planned room attachment modes
 

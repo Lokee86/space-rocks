@@ -729,7 +729,9 @@ shared/packets/ owns packet shape, not runtime command semantics.
 
 ## Notes
 
-Current devtools use the normal WebSocket packet path; `sr.tooling` is not implemented. Any future developer console must preserve server authority and route actions through the owning gameplay/devtools seams; future transport migration is planned in [Devtools And Telemetry](../../planning/devtools/devtools-and-telemetry.md).
+The `sr.tooling` transport foundation is implemented as the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the eight gameplay channels. Tooling receive routing is separated before normal gameplay dispatch. Current devtools commands and admin traffic still use the normal WebSocket packet path; no tooling packet messages or consumers exist yet, and future migration is planned in [Devtools And Telemetry](../../planning/devtools/devtools-and-telemetry.md).
+
+Unexpected required-channel closure preserves the WebSocket/session/room/game context while replacing only the WebRTC peer. Recovery uses a 10-second deadline; success preserves the active match and requests fresh world, overlay, and session baselines, while failure disables only single-player replay.
 
 `debug_status` and `debug_shape_catalog` are devtools readout packets. They help the client render debug controls and overlays, but they do not replace normal lane-native realtime packets.
 

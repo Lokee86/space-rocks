@@ -13,10 +13,17 @@ signal quit_to_main_menu_requested
 var mount_parent: Node = null
 var window: MatchResultWindow = null
 var current_session_mode := ""
+var _replay_available := true
 
 
 func configure(mount_parent_ref: Node) -> void:
 	mount_parent = mount_parent_ref
+
+
+func set_replay_available(available: bool) -> void:
+	_replay_available = available
+	if is_instance_valid(window):
+		window.set_replay_available(available)
 
 
 func show_results(session_mode: String, rows: Array = []) -> Control:
@@ -52,6 +59,7 @@ func show_results(session_mode: String, rows: Array = []) -> Control:
 	if !window.quit_requested.is_connected(quit_callable):
 		window.quit_requested.connect(quit_callable)
 	window.configure_for_mode(session_mode)
+	window.set_replay_available(_replay_available)
 	window.apply_rows(rows)
 	current_session_mode = session_mode
 	return window
