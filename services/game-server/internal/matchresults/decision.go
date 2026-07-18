@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
 
 func ResolveDecision(input BuildInput) (MatchDecision, error) {
@@ -33,12 +33,53 @@ func ResolveDecision(input BuildInput) (MatchDecision, error) {
 	}
 
 	decision := MatchDecision{TerminalStatus: TerminalCompleted, EndReason: input.EndReason, Participants: results}
+	if input.LockedDecision.TerminalStatus != "" {
+		decision.TerminalStatus = TerminalStatus(input.LockedDecision.TerminalStatus)
+	}
+	if input.LockedDecision.EndReason != "" {
+		decision.EndReason = input.LockedDecision.EndReason
+	}
 	if decision.EndReason == "" {
 		decision.EndReason = "simulation_complete"
 	}
-	resolveParticipantOutcomes(input.Session, &decision)
-	decision.Teams, decision.WinningTeamRefs = resolveTeamOutcomes(input.TeamStructure, participants)
+
+	lockedResults := applyLockedParticipantDecision(&decision, input.LockedDecision)
+	if !lockedResults {
+		resolveParticipantOutcomes(input.Session, &decision)
+	}
+	if lockedResults {
+		decision.Teams, decision.WinningTeamRefs = resolveLockedTeamOutcomes(input.TeamStructure, decision.Participants)
+	} else {
+		decision.Teams, decision.WinningTeamRefs = resolveTeamOutcomes(input.TeamStructure, participants)
+	}
 	return decision, nil
+}
+
+func applyLockedParticipantDecision(decision *MatchDecision, locked rules.MatchDecision) bool {
+	byID := make(map[string]int, len(decision.Participants))
+	for index, participant := range decision.Participants {
+		byID[participant.PlayerRef.GamePlayerID] = index
+	}
+	applied := false
+	for _, player := range locked.Players {
+		index, ok := byID[player.ID]
+		if !ok {
+			continue
+		}
+		if player.Outcome != "" {
+			decision.Participants[index].Outcome = Outcome(player.Outcome)
+			applied = true
+		}
+		decision.Participants[index].Placement = player.Placement
+		decision.Participants[index].CompletionTime = player.CompletionTime
+		decision.Participants[index].TargetValue = player.TargetValue
+	}
+	for _, playerID := range locked.WinningPlayerIDs {
+		if index, ok := byID[playerID]; ok {
+			decision.WinningPlayerRefs = append(decision.WinningPlayerRefs, decision.Participants[index].PlayerRef)
+		}
+	}
+	return applied
 }
 
 func resolveParticipantOutcomes(session SessionContext, decision *MatchDecision) {
@@ -74,58 +115,6 @@ func resolveParticipantOutcomes(session SessionContext, decision *MatchDecision)
 	}
 }
 
-func resolveTeamOutcomes(structure teams.Structure, participants []ParticipantFact) ([]TeamResult, []teams.ID) {
-	if structure == teams.StructureFFA || len(participants) == 0 {
-		return nil, nil
-	}
-	totals := make(map[teams.ID]int)
-	for _, participant := range participants {
-		if participant.TeamID != teams.NoTeam {
-			totals[participant.TeamID] += participant.Score
-		}
-	}
-	if len(totals) == 0 {
-		return nil, nil
-	}
-	ids := make([]teams.ID, 0, len(totals))
-	for id := range totals {
-		ids = append(ids, id)
-	}
-	sort.Slice(ids, func(left, right int) bool {
-		if totals[ids[left]] != totals[ids[right]] {
-			return totals[ids[left]] > totals[ids[right]]
-		}
-		return ids[left] < ids[right]
-	})
-	results := make([]TeamResult, len(ids))
-	if structure == teams.StructureCoOp {
-		for index, id := range ids {
-			results[index] = TeamResult{TeamID: id, Outcome: OutcomeCompleted, Placement: 1, FinalScore: totals[id]}
-		}
-		return results, append([]teams.ID(nil), ids...)
-	}
-	maxScore := totals[ids[0]]
-	maxCount := 0
-	for _, id := range ids {
-		if totals[id] == maxScore {
-			maxCount++
-		}
-	}
-	placements := teamPlacements(ids, totals)
-	winners := make([]teams.ID, 0, 1)
-	for index, id := range ids {
-		outcome := OutcomeLost
-		if maxCount != 1 {
-			outcome = OutcomeDraw
-		} else if totals[id] == maxScore {
-			outcome = OutcomeWon
-			winners = append(winners, id)
-		}
-		results[index] = TeamResult{TeamID: id, Outcome: outcome, Placement: placements[index], FinalScore: totals[id]}
-	}
-	return results, winners
-}
-
 func scorePlacements(participants []ParticipantFact) []int {
 	placements := make([]int, len(participants))
 	placement := 0
@@ -134,20 +123,6 @@ func scorePlacements(participants []ParticipantFact) []int {
 		if index == 0 || participant.Score != lastScore {
 			placement = index + 1
 			lastScore = participant.Score
-		}
-		placements[index] = placement
-	}
-	return placements
-}
-
-func teamPlacements(ids []teams.ID, totals map[teams.ID]int) []int {
-	placements := make([]int, len(ids))
-	placement := 0
-	lastScore := 0
-	for index, id := range ids {
-		if index == 0 || totals[id] != lastScore {
-			placement = index + 1
-			lastScore = totals[id]
 		}
 		placements[index] = placement
 	}

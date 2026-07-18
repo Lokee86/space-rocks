@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
@@ -20,6 +21,7 @@ type FinalMatchState struct {
 	TraceID       string
 	ModeID        string
 	TeamStructure teams.Structure
+	ResolvedRules modes.ResolvedMatchRules
 	Decision      rules.MatchDecision
 	Players       []PlayerMatchFact
 	Awards        GameplayAwardSnapshot
@@ -36,7 +38,9 @@ type participantRecord struct {
 
 func cloneFinalMatchState(source FinalMatchState) FinalMatchState {
 	clone := source
+	clone.ResolvedRules = modes.CloneResolvedMatchRules(source.ResolvedRules)
 	clone.Decision.Players = append([]rules.PlayerDecision(nil), source.Decision.Players...)
+	clone.Decision.WinningPlayerIDs = append([]string(nil), source.Decision.WinningPlayerIDs...)
 	clone.Players = append([]PlayerMatchFact(nil), source.Players...)
 	clone.Awards.Counters = append(clone.Awards.Counters[:0:0], source.Awards.Counters...)
 	clone.Awards.TeamTotals = append(clone.Awards.TeamTotals[:0:0], source.Awards.TeamTotals...)

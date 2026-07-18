@@ -3,16 +3,19 @@ package rooms
 import (
 	"fmt"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
 type RoomCreationConfig struct {
+	ModeConfig modes.RoomModeConfig
 	TeamConfig teams.Config
 	MaxPlayers int
 }
 
 func DefaultRoomCreationConfig() RoomCreationConfig {
 	return RoomCreationConfig{
+		ModeConfig: modes.DefaultRoomModeConfig(),
 		TeamConfig: defaultTeamConfig(),
 		MaxPlayers: MaxPlayersPerRoom,
 	}
@@ -20,6 +23,7 @@ func DefaultRoomCreationConfig() RoomCreationConfig {
 
 func normalizeRoomCreationConfig(config RoomCreationConfig) RoomCreationConfig {
 	defaults := DefaultRoomCreationConfig()
+	config.ModeConfig = modes.NormalizeRoomModeConfig(config.ModeConfig)
 	if config.TeamConfig.Structure == "" {
 		config.TeamConfig = defaults.TeamConfig
 	}
@@ -30,6 +34,9 @@ func normalizeRoomCreationConfig(config RoomCreationConfig) RoomCreationConfig {
 }
 
 func validateRoomCreationConfig(config RoomCreationConfig) error {
+	if err := modes.ValidateRoomModeConfig(config.ModeConfig); err != nil {
+		return fmt.Errorf("invalid mode configuration: %w", err)
+	}
 	if err := teams.ValidateConfig(config.TeamConfig); err != nil {
 		return fmt.Errorf("invalid team configuration: %w", err)
 	}

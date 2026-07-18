@@ -1,6 +1,9 @@
 package matchresults
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
+import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
+)
 
 type SessionContext string
 
@@ -102,16 +105,17 @@ type ChallengeResolutionAggregate struct {
 }
 
 type BuildInput struct {
-	MatchID       string
-	TraceID       string
-	ModeID        string
-	Session       SessionContext
-	TeamStructure teams.Structure
-	EndReason     string
-	Participants  []ParticipantFact
-	Objectives    []ObjectiveResolution
-	Missions      []MissionResolution
-	Challenges    []ChallengeResolutionAggregate
+	MatchID        string
+	TraceID        string
+	ModeID         string
+	Session        SessionContext
+	TeamStructure  teams.Structure
+	LockedDecision rules.MatchDecision
+	EndReason      string
+	Participants   []ParticipantFact
+	Objectives     []ObjectiveResolution
+	Missions       []MissionResolution
+	Challenges     []ChallengeResolutionAggregate
 }
 
 type MatchDecision struct {

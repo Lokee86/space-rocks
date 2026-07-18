@@ -11,6 +11,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterlifecycle"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/encounterspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/participation"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
@@ -45,6 +46,11 @@ type Game struct {
 	matchID                    string
 	matchTraceID               string
 	modeID                     string
+	resolvedMatchRules         modes.ResolvedMatchRules
+	matchElapsed               float64
+	scoreCompletionTimes       map[string]float64
+	scoreSuccessOrders         map[string]int
+	nextScoreSuccessOrder      int
 	teamStructure              teams.Structure
 	spawner                    *spawning.Spawner
 	damagePolicy               damage.Policy
@@ -150,6 +156,11 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 	if err != nil {
 		return nil, err
 	}
+	resolvedRules, err := modes.Resolve(modes.DefaultRoomModeConfig(), teams.Config{Structure: teams.StructureFFA})
+	if err != nil {
+		return nil, err
+	}
+	resolvedRules.LivesPolicy = policy
 
 	game := &Game{
 		rngSource:                  source,
@@ -162,9 +173,12 @@ func newGameWithPolicies(source *rng.Source, policy lives.Policy, afkPolicy part
 		botControllers:             make(map[string]*bots.Controller),
 		lifeRuntime:                lifeRuntime,
 		participationRuntime:       participationRuntime,
-		modeID:                     "baseline",
+		modeID:                     string(resolvedRules.ModeID),
+		resolvedMatchRules:         modes.CloneResolvedMatchRules(resolvedRules),
+		scoreCompletionTimes:       make(map[string]float64),
+		scoreSuccessOrders:         make(map[string]int),
 		participantRecords:         make(map[string]*participantRecord),
-		teamStructure:              teams.StructureFFA,
+		teamStructure:              resolvedRules.TeamConfig.Structure,
 		pendingPresentationEvents:  make(map[string][]PendingPresentationEvent),
 		presentationDerived:        make(map[string][]presentationDerivedEntry),
 		runtimeMeasurements:        make(map[uint64]measurement.SimulationObserver),

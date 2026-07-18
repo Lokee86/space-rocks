@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
@@ -39,7 +40,7 @@ func (game *Game) isMatchOverLocked() bool {
 	if game.lockedFinalMatchState != nil {
 		return true
 	}
-	decision := rules.EvaluateMatch(game.matchSnapshot())
+	decision := game.evaluateMatchDecisionLocked()
 	if !decision.IsOver {
 		return false
 	}
@@ -85,14 +86,14 @@ func (game *Game) matchDecisionLocked() rules.MatchDecision {
 	if game.lockedFinalMatchState != nil {
 		return game.lockedFinalMatchState.Decision
 	}
-	return rules.EvaluateMatch(game.matchSnapshot())
+	return game.evaluateMatchDecisionLocked()
 }
 
 func (game *Game) lockFinalMatchStateLocked() (FinalMatchState, bool) {
 	if game.lockedFinalMatchState != nil {
 		return cloneFinalMatchState(*game.lockedFinalMatchState), true
 	}
-	decision := rules.EvaluateMatch(game.matchSnapshot())
+	decision := game.evaluateMatchDecisionLocked()
 	if !decision.IsOver {
 		return FinalMatchState{}, false
 	}
@@ -108,6 +109,7 @@ func (game *Game) lockFinalMatchStateForDecisionLocked(decision rules.MatchDecis
 		TraceID:       game.matchTraceID,
 		ModeID:        game.modeID,
 		TeamStructure: game.teamStructure,
+		ResolvedRules: modes.CloneResolvedMatchRules(game.resolvedMatchRules),
 		Decision:      cloneMatchDecision(decision),
 		Players:       game.playerMatchFactsLocked(),
 		Awards:        game.gameplayAwardSnapshotLocked(),
@@ -169,5 +171,6 @@ func (game *Game) matchSnapshot() rules.MatchSnapshot {
 func cloneMatchDecision(source rules.MatchDecision) rules.MatchDecision {
 	clone := source
 	clone.Players = append([]rules.PlayerDecision(nil), source.Players...)
+	clone.WinningPlayerIDs = append([]string(nil), source.WinningPlayerIDs...)
 	return clone
 }

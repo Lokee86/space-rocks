@@ -52,6 +52,10 @@ type ClientPacket struct {
 	TeamAssignmentMode string               `json:"team_assignment_mode"`
 	TeamCount          int                  `json:"team_count"`
 	MaxPlayers         int                  `json:"max_players"`
+	PresetID           string               `json:"preset_id"`
+	StartingLives      int                  `json:"starting_lives"`
+	InfiniteLives      bool                 `json:"infinite_lives"`
+	TargetScore        int                  `json:"target_score"`
 	TargetPlayerID     string               `json:"target_player_id"`
 	ViewTargetPlayerID string               `json:"view_target_player_id"`
 	TeamID             string               `json:"team_id"`
@@ -85,6 +89,10 @@ type CreateRoomRequest struct {
 	TeamAssignmentMode string `json:"team_assignment_mode"`
 	TeamCount          int    `json:"team_count"`
 	MaxPlayers         int    `json:"max_players"`
+	PresetID           string `json:"preset_id"`
+	StartingLives      int    `json:"starting_lives"`
+	InfiniteLives      bool   `json:"infinite_lives"`
+	TargetScore        int    `json:"target_score"`
 }
 
 type JoinRoomRequest struct {
@@ -178,6 +186,12 @@ type RoomSnapshot struct {
 	LocalPlayerID         string                 `json:"local_player_id"`
 	OwnerID               string                 `json:"owner_id"`
 	MaxPlayers            int                    `json:"max_players"`
+	PresetID              string                 `json:"preset_id"`
+	ModeID                string                 `json:"mode_id"`
+	ModeLocked            bool                   `json:"mode_locked"`
+	StartingLives         int                    `json:"starting_lives"`
+	InfiniteLives         bool                   `json:"infinite_lives"`
+	TargetScore           int                    `json:"target_score"`
 	TeamStructure         string                 `json:"team_structure"`
 	TeamAssignmentMode    string                 `json:"team_assignment_mode"`
 	TeamCount             int                    `json:"team_count"`

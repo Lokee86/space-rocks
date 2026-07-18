@@ -1,13 +1,14 @@
 package networking
 
 import (
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
-func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int) {
+func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int) {
 	if !requireAuthenticatedAccount(session, traceID) {
 		return
 	}
@@ -19,6 +20,10 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStr
 	}
 
 	room, err := session.rooms.CreateLobbyRoomWithConfig(rooms.RoomCreationConfig{
+		ModeConfig: modes.RoomModeConfig{
+			PresetID: modes.PresetID(presetID), StartingLives: startingLives,
+			InfiniteLives: infiniteLives, TargetScore: targetScore,
+		},
 		TeamConfig: teams.Config{
 			Structure:      teams.Structure(teamStructure),
 			AssignmentMode: teams.AssignmentMode(teamAssignmentMode),

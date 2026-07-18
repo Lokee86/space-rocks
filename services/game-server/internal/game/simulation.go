@@ -46,6 +46,7 @@ func (game *Game) Step(delta float64) {
 		}
 		if delta > 0 && !game.worldSimulationOptions.IsWorldFrozen() {
 			game.awardClock += delta
+			game.matchElapsed += delta
 			game.awardsRuntime().PruneContributions(game.awardClock, game.awardPolicy.Assists)
 		}
 		game.advanceEncounterLifecycle(delta)

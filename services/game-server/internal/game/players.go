@@ -48,6 +48,14 @@ func (game *Game) addPlayerLocked(teamID teams.ID) string {
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session
 	game.participantRecords[playerID] = &participantRecord{ID: playerID, TeamID: teamID}
+	if err := game.registerModeObjectivesForPlayerLocked(playerID); err != nil {
+		delete(game.playerSessions, playerID)
+		delete(game.participantRecords, playerID)
+		game.participationRuntime.UnregisterParticipant(playerID)
+		game.lifeRuntime.RollbackParticipant(playerID)
+		game.nextID--
+		return ""
+	}
 	game.entities.Players[playerID] = player
 	game.setPlayerCameraViewLocked(playerID, player)
 	game.pendingPresentationEvents[playerID] = nil

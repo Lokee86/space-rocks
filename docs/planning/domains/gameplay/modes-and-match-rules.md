@@ -15,6 +15,30 @@ This doc plans the match-rule seam for turning a selected mode into a resolved s
 
 It preserves the current gameplay direction while making the room-mode boundary explicit enough for `ModePreset`, `RoomModeConfig`, and `ResolvedMatchRules` to stay separate.
 
+## Current Implementation Status
+
+The P4 foundation is implemented.
+
+```text
+ModePreset / RoomModeConfig / ResolvedMatchRules are separate contracts.
+Room creation validates and stores preset-approved mode options.
+Room mode configuration locks and resolves once at match start.
+Gameplay consumes ResolvedMatchRules rather than raw room options.
+Arcade Survival is the explicit baseline mode.
+Score Attack is a real second mode with a per-player target-score objective.
+Score Attack locks immediately on the first valid target success.
+Completion time, not score, is the Score Attack ranking input.
+Target-score success takes precedence over no-active-participant failure.
+Finite and infinite lives resolve through the lives owner.
+Team configuration composes independently through the team owner.
+Player and encounter spawn profile selections remain separate.
+Locked mode decisions carry terminal status, outcomes, placement, completion time, and target value into MatchSummary.
+Create-room packets and room snapshots expose the selected mode configuration and match-start lock state.
+Existing single-player and multiplayer flows default to Arcade Survival.
+```
+
+Current client presentation remains compatibility-oriented. The packet/config seam exists, but a full preset-selection UI is future work. Additional presets, mode-specific post-end continuation, in-game joining, progression evaluation, and richer result presentation remain future consumers of the implemented foundation.
+
 ## Ownership Boundary
 
 This doc owns planning for `ModePreset`, `RoomModeConfig`, `ResolvedMatchRules`, and the policy pieces they compose.

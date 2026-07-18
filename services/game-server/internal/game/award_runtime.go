@@ -138,6 +138,9 @@ func (game *Game) applyAwardMutationsLocked(eventID string, mutations []awards.M
 		}
 	}
 	game.applyAwardResultToObjectivesLocked(result)
+	if decision := game.evaluateMatchDecisionLocked(); decision.IsOver {
+		_, _ = game.lockFinalMatchStateForDecisionLocked(decision)
+	}
 	for _, observer := range game.awardEventObservers {
 		observer(result)
 	}
@@ -154,6 +157,7 @@ func (game *Game) syncProjectedPlayerScoreLocked(playerID string, value float64)
 	}
 	if record, ok := game.participantRecords[playerID]; ok && record != nil {
 		record.Score = score
+		game.recordScoreAttackSuccessLocked(playerID, score)
 	}
 }
 

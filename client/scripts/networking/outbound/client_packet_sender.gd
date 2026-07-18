@@ -120,7 +120,11 @@ func send_create_room_request(
 		team_structure := "ffa",
 		team_assignment_mode := "",
 		team_count := 0,
-		max_players := 0
+		max_players := 0,
+		preset_id := "arcade_survival",
+		starting_lives := 0,
+		infinite_lives := false,
+		target_score := 0
 ) -> void:
 	send_packet(LobbyClientPackets.create_room_request_packet(
 		trace_id,
@@ -128,7 +132,11 @@ func send_create_room_request(
 		team_structure,
 		team_assignment_mode,
 		team_count,
-		max_players
+		max_players,
+		preset_id,
+		starting_lives,
+		infinite_lives,
+		target_score
 	))
 
 

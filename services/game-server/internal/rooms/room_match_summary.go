@@ -14,7 +14,7 @@ func buildEndOfMatchInput(capture gameOverCapture, state game.FinalMatchState, e
 	}
 	modeID := state.ModeID
 	if modeID == "" {
-		modeID = "baseline"
+		modeID = "arcade_survival"
 	}
 	structure := state.TeamStructure
 	if structure == "" {
@@ -44,13 +44,14 @@ func buildEndOfMatchInput(capture gameOverCapture, state game.FinalMatchState, e
 	}
 	return matchresults.BuildInput{
 		MatchID: capture.MatchID, TraceID: capture.TraceID, ModeID: modeID, Session: session,
-		TeamStructure: structure, EndReason: endReason, Participants: participants, Objectives: objectiveResolutions,
+		TeamStructure: structure, LockedDecision: state.Decision, EndReason: endReason,
+		Participants: participants, Objectives: objectiveResolutions,
 	}
 }
 
 // buildMatchResultSummary preserves the legacy helper through the new summary/dispatcher path.
 func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFact) playerdata.MatchResultSummary {
-	input := buildEndOfMatchInput(capture, game.FinalMatchState{ModeID: "baseline", TeamStructure: teams.StructureFFA, Players: facts}, "simulation_complete")
+	input := buildEndOfMatchInput(capture, game.FinalMatchState{ModeID: "arcade_survival", TeamStructure: teams.StructureFFA, Players: facts}, "simulation_complete")
 	flow := matchresults.NewEndOfMatchFlow()
 	summary, _, err := flow.Run(input)
 	if err != nil {
