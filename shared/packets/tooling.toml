@@ -1,0 +1,474 @@
+[[structs]]
+id = "TelemetrySubscribe"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs]]
+id = "TelemetryUnsubscribe"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs]]
+id = "TelemetryPing"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "sequence"
+json = "sequence"
+type = "int"
+
+[[structs.fields]]
+name = "client_sent_msec"
+go_name = "ClientSentMsec"
+json = "client_sent_msec"
+type = "int"
+
+[[structs]]
+id = "MeasurementStart"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "scenario_label"
+go_name = "ScenarioLabel"
+json = "scenario_label"
+type = "string"
+
+[[structs]]
+id = "MeasurementStop"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs]]
+id = "MeasurementReset"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs]]
+id = "MeasurementSnapshotRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs]]
+id = "TelemetrySnapshot"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "timestamp_msec"
+go_name = "TimestampMsec"
+json = "timestamp_msec"
+type = "int"
+
+[[structs.fields]]
+name = "sequence"
+json = "sequence"
+type = "int"
+
+[[structs.fields]]
+name = "metrics"
+json = "metrics"
+type = "map"
+key_type = "string"
+value_type = "string"
+go_value_type = "any"
+
+[[structs]]
+id = "TelemetryPong"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "sequence"
+json = "sequence"
+type = "int"
+
+[[structs.fields]]
+name = "client_sent_msec"
+go_name = "ClientSentMsec"
+json = "client_sent_msec"
+type = "int"
+
+[[structs.fields]]
+name = "server_received_msec"
+go_name = "ServerReceivedMsec"
+json = "server_received_msec"
+type = "int"
+
+[[structs.fields]]
+name = "server_sent_msec"
+go_name = "ServerSentMsec"
+json = "server_sent_msec"
+type = "int"
+
+[[structs]]
+id = "MeasurementStarted"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs.fields]]
+name = "timestamp_msec"
+go_name = "TimestampMsec"
+json = "timestamp_msec"
+type = "int"
+
+[[structs.fields]]
+name = "scenario_label"
+go_name = "ScenarioLabel"
+json = "scenario_label"
+type = "string"
+
+[[structs]]
+id = "MeasurementSnapshot"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs.fields]]
+name = "timestamp_msec"
+go_name = "TimestampMsec"
+json = "timestamp_msec"
+type = "int"
+
+[[structs.fields]]
+name = "sequence"
+json = "sequence"
+type = "int"
+
+[[structs.fields]]
+name = "partial"
+json = "partial"
+type = "bool"
+
+[[structs.fields]]
+name = "complete"
+json = "complete"
+type = "bool"
+
+[[structs.fields]]
+name = "metrics"
+json = "metrics"
+type = "map"
+key_type = "string"
+value_type = "string"
+go_value_type = "any"
+
+[[structs.fields]]
+name = "report"
+json = "report"
+type = "map"
+key_type = "string"
+value_type = "string"
+go_value_type = "any"
+
+[[structs]]
+id = "MeasurementStopped"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs.fields]]
+name = "timestamp_msec"
+go_name = "TimestampMsec"
+json = "timestamp_msec"
+type = "int"
+
+[[structs.fields]]
+name = "partial"
+json = "partial"
+type = "bool"
+
+[[structs.fields]]
+name = "complete"
+json = "complete"
+type = "bool"
+
+[[structs.fields]]
+name = "report"
+json = "report"
+type = "map"
+key_type = "string"
+value_type = "string"
+go_value_type = "any"
+
+[[structs]]
+id = "ToolingError"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "run_id"
+go_name = "RunID"
+json = "run_id"
+type = "string"
+
+[[structs.fields]]
+name = "error_code"
+go_name = "ErrorCode"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[packet_types]]
+id = "telemetry_subscribe"
+value = "telemetry_subscribe"
+
+[[packet_types]]
+id = "telemetry_unsubscribe"
+value = "telemetry_unsubscribe"
+
+[[packet_types]]
+id = "telemetry_ping"
+value = "telemetry_ping"
+
+[[packet_types]]
+id = "measurement_start"
+value = "measurement_start"
+
+[[packet_types]]
+id = "measurement_stop"
+value = "measurement_stop"
+
+[[packet_types]]
+id = "measurement_reset"
+value = "measurement_reset"
+
+[[packet_types]]
+id = "measurement_snapshot_request"
+value = "measurement_snapshot_request"
+
+[[packet_types]]
+id = "telemetry_snapshot"
+value = "telemetry_snapshot"
+
+[[packet_types]]
+id = "telemetry_pong"
+value = "telemetry_pong"
+
+[[packet_types]]
+id = "measurement_started"
+value = "measurement_started"
+
+[[packet_types]]
+id = "measurement_snapshot"
+value = "measurement_snapshot"
+
+[[packet_types]]
+id = "measurement_stopped"
+value = "measurement_stopped"
+
+[[packet_types]]
+id = "tooling_error"
+value = "tooling_error"
+
+[[builders]]
+id = "telemetry_subscribe_packet"
+args = ["request_id"]
+
+[builders.body]
+type = "telemetry_subscribe"
+request_id = "$request_id"
+
+[[builders]]
+id = "telemetry_unsubscribe_packet"
+args = ["request_id"]
+
+[builders.body]
+type = "telemetry_unsubscribe"
+request_id = "$request_id"
+
+[[builders]]
+id = "telemetry_ping_packet"
+args = ["request_id", "sequence", "client_sent_msec"]
+
+[builders.body]
+type = "telemetry_ping"
+request_id = "$request_id"
+sequence = "$sequence"
+client_sent_msec = "$client_sent_msec"
+
+[[builders]]
+id = "measurement_start_packet"
+args = ["request_id", "scenario_label"]
+
+[builders.body]
+type = "measurement_start"
+request_id = "$request_id"
+scenario_label = "$scenario_label"
+
+[[builders]]
+id = "measurement_stop_packet"
+args = ["request_id", "run_id"]
+
+[builders.body]
+type = "measurement_stop"
+request_id = "$request_id"
+run_id = "$run_id"
+
+[[builders]]
+id = "measurement_reset_packet"
+args = ["request_id", "run_id"]
+
+[builders.body]
+type = "measurement_reset"
+request_id = "$request_id"
+run_id = "$run_id"
+
+[[builders]]
+id = "measurement_snapshot_request_packet"
+args = ["request_id", "run_id"]
+
+[builders.body]
+type = "measurement_snapshot_request"
+request_id = "$request_id"
+run_id = "$run_id"

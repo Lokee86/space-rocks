@@ -11,8 +11,6 @@ const (
 	PacketTypeRespawn                       = "respawn"
 	PacketTypePauseRequest                  = "pause_request"
 	PacketTypePlayerPauseState              = "player_pause_state"
-	PacketTypeTelemetryPing                 = "telemetry_ping"
-	PacketTypeTelemetryPong                 = "telemetry_pong"
 	PacketTypeSetTargetPlayerRequest        = "set_target_player_request"
 	PacketTypeSelectTargetAtPositionRequest = "select_target_at_position_request"
 	PacketTypeClearTargetRequest            = "clear_target_request"
@@ -38,26 +36,23 @@ const (
 )
 
 type ClientPacket struct {
-	Type               string               `json:"type"`
-	TraceID            string               `json:"trace_id"`
-	MatchID            string               `json:"match_id"`
-	Input              runtime.InputState   `json:"input"`
-	Config             runtime.ClientConfig `json:"config"`
-	RoomCode           string               `json:"room_code"`
-	LocalProfileID     string               `json:"local_profile_id"`
-	Ready              bool                 `json:"ready"`
-	X                  float64              `json:"x"`
-	Y                  float64              `json:"y"`
-	TargetKind         string               `json:"target_kind"`
-	TargetID           string               `json:"target_id"`
-	Token              string               `json:"token"`
-	Sequence           int                  `json:"sequence"`
-	Lane               string               `json:"lane"`
-	BaselineID         string               `json:"baseline_id"`
-	Reason             string               `json:"reason"`
-	ClientSentMsec     int                  `json:"client_sent_msec"`
-	ServerReceivedMsec int                  `json:"server_received_msec"`
-	ServerSentMsec     int                  `json:"server_sent_msec"`
+	Type           string               `json:"type"`
+	TraceID        string               `json:"trace_id"`
+	MatchID        string               `json:"match_id"`
+	Input          runtime.InputState   `json:"input"`
+	Config         runtime.ClientConfig `json:"config"`
+	RoomCode       string               `json:"room_code"`
+	LocalProfileID string               `json:"local_profile_id"`
+	Ready          bool                 `json:"ready"`
+	X              float64              `json:"x"`
+	Y              float64              `json:"y"`
+	TargetKind     string               `json:"target_kind"`
+	TargetID       string               `json:"target_id"`
+	Token          string               `json:"token"`
+	Sequence       int                  `json:"sequence"`
+	Lane           string               `json:"lane"`
+	BaselineID     string               `json:"baseline_id"`
+	Reason         string               `json:"reason"`
 }
 
 type CreateRoomRequest struct {

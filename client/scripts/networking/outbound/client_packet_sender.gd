@@ -3,7 +3,6 @@ extends RefCounted
 const LobbyClientPackets = preload("res://scripts/networking/outbound/lobby_client_packets.gd")
 const GameplayClientPackets = preload("res://scripts/networking/outbound/gameplay_client_packets.gd")
 const DevtoolsClientPackets = preload("res://scripts/networking/outbound/devtools_client_packets.gd")
-const TelemetryClientPackets = preload("res://scripts/networking/outbound/telemetry_client_packets.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -202,8 +201,3 @@ func send_start_single_player_request(local_profile_id := "", trace_id := "") ->
 
 func send_return_to_lobby_request() -> void:
 	send_packet(LobbyClientPackets.return_to_lobby_request_packet())
-
-
-# Telemetry
-func send_telemetry_ping(sequence: int, client_sent_msec: int) -> void:
-	send_packet(TelemetryClientPackets.telemetry_ping_packet(sequence, client_sent_msec))
