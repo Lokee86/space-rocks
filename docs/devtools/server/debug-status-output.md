@@ -4,29 +4,70 @@ Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server debug status output surface.
+This document describes the game-server `debug_status` readout: its authoritative source, `sr.tooling` subscription lifecycle, eligibility gates, packet shape, and client presentation boundary.
 
-It covers how the server builds and emits `debug_status` packets for devtools clients, what state the packet exposes, which runtime gates control emission, and which code owns the server-side projection.
+## Current route
 
-## Overview
-
-Debug status output is a server-authored devtools telemetry packet.
-
-It reports the current state of server-owned debug controls so the client devtools window can display accurate toggle status and per-player feature state. It does not mutate gameplay, does not replace realtime lane packets, and does not act as a command response.
-
-The server builds debug status from the authoritative game instance and encodes it through the shared packet codec. `debug_status` is a WebSocket devtools readout packet when delivery is active, but this document must not claim periodic write-loop delivery unless the active write loop calls the debug status builder.
-
-Current output shape:
+`debug_status` is a privileged developer readout delivered exclusively through the reliable ordered `sr.tooling` WebRTC DataChannel.
 
 ```text
-type: debug_status
-debug_status: DebugStatus
-debug_statuses: map[player_id]DebugStatus
+client enters an active room and sr.tooling becomes ready
+-> debug_status_subscribe(request_id)
+-> tooling packet policy preflight
+-> tooling.read capability and room attachment checks
+-> connection-local subscription state
+-> tooling router Tick
+-> outbound.BuildDebugStatusPacket(...)
+-> debug_status over sr.tooling
+-> ToolingPacketRouter
+-> ClientConnectionService.debug_status_received
+-> existing gameplay/devtools presentation owners
 ```
 
-`debug_status` is the status view for the receiving player. `debug_statuses` is a per-player map used by client devtools target selectors and feature-state labels.
+The legacy WebSocket write-loop route is removed. `ServerPacketRouter`, `ServerPacketDispatcher`, and `ClientInboundCoordinator` do not classify or forward `debug_status`.
 
-Current `DebugStatus` fields:
+The client automatically subscribes once for each active room after both conditions are true:
+
+```text
+sr.tooling is ready
+room state is in_game or game_over
+```
+
+Returning to a non-game room state clears the client’s per-room request marker. Replacing the realtime transport also clears the marker, so a recovered `sr.tooling` channel re-establishes the subscription for the still-active room. Entering a later active room sends a new subscription request.
+
+## Subscription lifecycle
+
+The request packets are defined in `shared/packets/tooling.toml`:
+
+```text
+debug_status_subscribe
+debug_status_unsubscribe
+```
+
+Both carry a non-empty `request_id`, require an attached room, and require `tooling.read`.
+
+Subscription state belongs to the connection-local tooling router. The first router tick after subscribing is eligible to emit a status packet. Later packets are sampled every eight tooling-router ticks, preserving the former bounded debug-status cadence without using the WebSocket writer.
+
+The emitted `debug_status.request_id` echoes the active subscription request ID as stable stream correlation. It is not a unique event ID.
+
+Unsubscribe clears the connection-local status subscription immediately. Closing the tooling router also discards the subscription.
+
+## Server authority
+
+The server owns every status value.
+
+```text
+outbound.BuildDebugStatusPacket(room, playerID, requestID)
+-> game.NewControl(room game instance)
+-> devtools.NewController(...)
+-> controller.StatusFor(playerID)
+-> controller.StatusesForAllPlayers()
+-> devtools.DebugStatusPacket
+```
+
+The devtools package owns the debug-facing projection. The game package owns the underlying simulation and player/session state.
+
+Current `DebugStatus` fields are:
 
 ```text
 invincible
@@ -39,92 +80,13 @@ collisions_frozen
 player_frozen
 ```
 
-The packet is devtools-only diagnostic output. It is separate from:
+`debug_status` is the receiving gameplay identity’s status when one exists. `debug_statuses` is the authoritative per-player map used by target selectors and status labels.
 
-```text
-realtime lane packets
-debug shape catalog packets
-collision-body telemetry
-client-only overlays
-player-facing HUD
-```
+Room-global readout delivery does not require the tooling session to have a `GamePlayerID`. An observer-capable session may subscribe when attached to the room and authorized. An empty receiving player ID produces the room/global projection plus the available per-player map.
 
-## Debug-only scope
+## Eligibility
 
-Debug status output exists only to support development and debugging.
-
-It exposes debug-control state that helps inspect and operate the current room:
-
-```text
-player damage override state
-player life override state
-player suspension state
-global or partial world-freeze state
-```
-
-It does not expose production gameplay policy and should not be used as player-facing UI state.
-
-The status packet should stay focused on the status of devtools controls. Richer world, collision, shape, and entity inspection belongs in separate devtools telemetry surfaces.
-
-## Server authority
-
-The server owns all debug status values.
-
-`services/game-server/internal/devtools/status.go` builds outward-facing `DebugStatus` values from the current outbound Control/Controller projection:
-
-```text
-game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> controller.StatusFor(playerID)
--> devtools.DebugStatus
-```
-
-`controller.StatusFor(playerID)` reads authoritative values through Control capability methods:
-
-```text
-worldSimulationOptions
--> world_frozen
--> asteroids_frozen
--> bullets_frozen
--> spawning_frozen
--> collisions_frozen
-
-player session damage/life/suspension state
--> invincible
--> infinite_lives
--> player_frozen
-
-live player entity damage state
--> invincible
-```
-
-The devtools package does not own the underlying gameplay state. It owns the debug-facing projection and packet shape. The game package owns the actual simulation, player session state, player entity state, and world simulation options.
-
-`controller.StatusesForAllPlayers()` builds the `debug_statuses` map by iterating session-backed match membership from `MatchDecision().Players` and projecting each player through `controller.StatusFor(playerID)`.
-
-`Control.TargetPlayerIDs()` is for command fanout and may also contain ship-only IDs. Command fanout membership is separate from debug-status membership.
-
-## Output lifecycle
-
-Current code has the debug status builder and eligibility check, but periodic write-loop delivery must not be documented as active unless the active write loop calls it.
-
-Current builder path:
-
-outbound.CanSendDebugStatus
--> outbound.BuildDebugStatusResponse
--> game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> controller.StatusFor(playerID)
--> controller.StatusesForAllPlayers()
--> packetcodec.Encode
-
-`debug_status` should remain a WebSocket devtools readout packet when delivery is active. It must not be documented as an active WebRTC gameplay lane packet.
-
-## Send eligibility
-
-`CanSendDebugStatus` controls whether outbound debug status is eligible.
-
-Current requirements:
+`CanSendDebugStatus` requires:
 
 ```text
 room is not nil
@@ -133,290 +95,114 @@ devtools.Enabled() is true
 room state is InGame or GameOver
 ```
 
-The WebSocket writer also requires:
+The tooling preflight additionally requires:
 
 ```text
-session.currentGamePlayerID is not empty
+client-to-server packet direction
+attached room
+tooling.read capability
+valid request_id
+valid packet payload
 ```
 
-Debug status is not sent for lobby-only sessions, sessions without a current game player id, rooms without a game instance, or `nodevtools` builds.
+When the room is temporarily ineligible, the router skips that sampled push and keeps the subscription. `GameOver` remains eligible so the final debug-control state can still be displayed.
 
-`GameOver` remains eligible so devtools can continue showing final debug state while the room is in its resolved end-of-match state.
+`nodevtools` builds make status output unavailable through `devtools.Enabled() == false`.
 
 ## Packet shape
 
-The status packet source shape is defined in the shared packet schema.
-
-Source:
-
-```text
-shared/packets/debug.toml
-```
-
-Generated server output:
-
-```text
-services/game-server/internal/devtools/packets_generated.go
-```
-
-Generated packet structs:
+The readout packet remains defined in `shared/packets/debug.toml` and is generated into `internal/devtools`:
 
 ```go
-type DebugStatus struct {
-	Invincible       bool `json:"invincible"`
-	InfiniteLives    bool `json:"infinite_lives"`
-	WorldFrozen      bool `json:"world_frozen"`
-	AsteroidsFrozen  bool `json:"asteroids_frozen"`
-	BulletsFrozen    bool `json:"bullets_frozen"`
-	SpawningFrozen   bool `json:"spawning_frozen"`
-	CollisionsFrozen bool `json:"collisions_frozen"`
-	PlayerFrozen     bool `json:"player_frozen"`
-}
-
 type DebugStatusPacket struct {
-	Type          string                 `json:"type"`
-	DebugStatus   DebugStatus            `json:"debug_status"`
-	DebugStatuses map[string]DebugStatus `json:"debug_statuses"`
+    Type          string                 `json:"type"`
+    RequestID     string                 `json:"request_id"`
+    DebugStatus   DebugStatus            `json:"debug_status"`
+    DebugStatuses map[string]DebugStatus `json:"debug_statuses"`
 }
 ```
 
-The server sets `Type` to:
+The tooling request structs and packet type constants are generated from `shared/packets/tooling.toml` into:
 
 ```text
-debug_status
+services/game-server/internal/protocol/tooling/packets_generated.go
+client/scripts/generated/networking/packets/packets.gd
 ```
 
-The packet should remain a compact status projection. It should not absorb collision bodies, shape catalogs, raw gameplay state, or command acknowledgement payloads.
+The outbound presentation owner returns a typed packet. Tooling transport serialization is owned by the router/sender boundary; the presentation builder no longer encodes a WebSocket byte response.
 
-## Client presentation
+## Client presentation boundary
 
-The server does not own client presentation.
-
-The client consumes `debug_status` packets through the devtools readmodel path and uses the result to refresh:
+The transport migration preserves the existing public client signals and application owners:
 
 ```text
-world freeze status labels
-per-player invincible selector labels
-per-player infinite-lives selector labels
-per-player freeze selector labels
-devtools window status display
+ToolingPacketRouter.debug_status_received
+-> ClientConnectionService._on_debug_status_received
+-> ClientConnectionService.debug_status_received
+-> SessionNetworkController
+-> GameplaySessionController
+-> GameplayComposition
+-> GameplayDevtoolsContext
+-> debug status readmodel and window refresh
 ```
 
-Client presentation treats `debug_status` as telemetry. It does not apply gameplay effects locally.
+The client consumes the packet as diagnostic presentation data. It does not apply gameplay mutations locally.
 
-`debug_statuses` is used for per-player selector rows. Missing or malformed per-player status data should degrade as inactive or empty on the client side rather than creating alternate authority.
+`DebugStatusPacketReader` treats malformed `debug_status` or `debug_statuses` values as empty dictionaries. Missing player rows degrade to inactive/empty presentation rather than becoming alternate authority.
 
-## Commands or controls
+## Relationship to commands
 
-Debug status output has no direct request command.
+Debug commands and status readouts are separate protocol interactions.
 
-The client does not ask the server for an immediate status snapshot. When a write-loop delivery path is active, the server emits status snapshots on its own outbound cadence when eligible.
+Commands travel through `sr.tooling`, require `tooling.control`, and return `tooling_command_result` or `tooling_error`. A later `debug_status` push reports the resulting authoritative state through the independent `tooling.read` subscription.
 
-Client controls can change later status output by sending normal devtools command packets, such as:
-
-```text
-toggle_debug_invincible
-toggle_debug_infinite_lives
-toggle_debug_freeze_world
-toggle_debug_freeze_player
-```
-
-Those commands route through server devtools command handling and mutate only through game-owned seams. A later `debug_status` packet reports the resulting authoritative state.
-
-The status output must not become a command transport, command acknowledgement format, or client-side mutation shortcut.
-
-## Telemetry behavior
-
-Debug status is live diagnostic telemetry, not analytics.
-
-The packet reports current server state. It is transient and is not persisted.
-
-Encoding failures are emitted through the canonical networking owner with room, player, and remote-address context. When encoding fails, the server skips that status write and keeps the session alive.
-
-Current encode path:
-
-```text
-BuildDebugStatusResponse
--> packetcodec.Encode
--> canonical packet-encode failure event through the networking owner
-```
-
-Debug status encode failures are logged by the builder path. Routine successful writes should stay quiet when a write-loop delivery path is active.
-
-## Build/runtime gates
-
-Server devtools are enabled in default builds and disabled by the `nodevtools` build tag.
-
-Default build:
-
-```text
-services/game-server/internal/devtools/enabled_default.go
--> Enabled() == true
-```
-
-`nodevtools` build:
-
-```text
-services/game-server/internal/devtools/enabled_nodevtools.go
--> Enabled() == false
-```
-
-Command routing uses:
-
-```text
-services/game-server/internal/devtools/disabled.go
--> ShouldHandleCommand(packetType)
-```
-
-Outbound status uses `devtools.Enabled()` directly through `CanSendDebugStatus`.
-
-When `nodevtools` is active:
-
-```text
-debug commands are not handled
-debug status packets are not eligible to send
-```
-
-This keeps both mutation and server-authored status output behind the same server-side devtools gate.
-
-## Relationship to gameplay implementation
-
-Debug status output observes real gameplay-owned state.
-
-It must not introduce duplicate debug-only gameplay state. The devtools package may project and serialize status, but gameplay state remains in the owning game/runtime structures:
-
-```text
-DamageOptions
-LifeOptions
-Suspension
-WorldSimulationOptions
-MatchDecision player list
-```
-
-World-freeze fields are derived from `WorldSimulationOptions` capability methods rather than from independent devtools booleans.
-
-Player freeze is derived from the player/session suspension state. It remains separate from normal pause, even though both contribute to player suspension behavior.
-
-Invincibility is read from session/player damage options. The live player entity can override the session-derived value in the projection when present, matching the authoritative runtime state used by simulation.
+The status packet is not a command acknowledgement and must not become a second gameplay-state protocol.
 
 ## Code map
 
-Primary server status files:
-
 ```text
-services/game-server/internal/devtools/status.go
+shared/packets/tooling.toml
+shared/packets/debug.toml
+shared/packets/outputs.toml
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/packet_contract.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
-services/game-server/internal/networking/websocket_write.go
-services/game-server/internal/devtools/controller_status_test.go
+services/game-server/internal/devtools/status.go
+services/game-server/internal/devtools/packets_generated.go
+client/scripts/networking/inbound/tooling_packet_router.gd
+client/scripts/networking/client_connection_service.gd
+client/scripts/devtools/debug_status_packet_reader.gd
 ```
 
-Game-owned status source files:
+Authoritative gameplay sources remain under:
 
 ```text
 services/game-server/internal/game/control_status.go
-services/game-server/internal/game/control_match.go
 services/game-server/internal/game/world_simulation_options.go
 services/game-server/internal/game/runtime/damage_options.go
 services/game-server/internal/game/runtime/life_options.go
 services/game-server/internal/game/runtime/suspension.go
 ```
 
-Generated packet files:
+## Verification
 
-```text
-shared/packets/debug.toml
-services/game-server/internal/devtools/packets_generated.go
-client/scripts/generated/networking/packets/packets.gd
-```
-
-Build-gate files:
-
-```text
-services/game-server/internal/devtools/enabled_default.go
-services/game-server/internal/devtools/enabled_nodevtools.go
-services/game-server/internal/devtools/disabled.go
-```
-
-Related command files that can affect later status output:
-
-```text
-services/game-server/internal/devtools/handler.go
-services/game-server/internal/devtools/toggles.go
-services/game-server/internal/networking/inbound/router.go
-```
-
-Relevant tests:
+Relevant coverage includes:
 
 ```text
 services/game-server/internal/networking/outbound/debug_status_presentation_test.go
+services/game-server/internal/networking/tooling/router_test.go
 services/game-server/internal/devtools/controller_status_test.go
-services/game-server/internal/devtools/enabled_default_test.go
-services/game-server/internal/devtools/disabled_test.go
-services/game-server/internal/devtools/toggles_test.go
+client/tests/unit/networking/test_tooling_packet_router.gd
+client/tests/unit/test_client_connection_service.gd
+client/tests/unit/devtools/debug_status_packet_reader_test.gd
 ```
 
-Important non-ownership boundaries:
-
-```text
-services/game-server/internal/devtools/
--> owns debug command/status projection and generated debug packet structs
-
-services/game-server/internal/game/
--> owns authoritative simulation and player/session state
-
-services/game-server/internal/networking/
--> owns websocket read/write routing, cadence, and packet emission
-
-client/scripts/devtools/
--> owns client devtools presentation and readmodels
-```
-
-## Tests and verification
-
-`debug_status_presentation_test.go` verifies that the outbound response:
-
-```text
-encodes as JSON
-uses type debug_status
-includes debug_status
-includes debug_statuses
-does not include debug_collision_bodies
-rejects nil room input
-rejects rooms without a game instance
-```
-
-`enabled_default_test.go` verifies that default builds enable devtools and allow devtools command handling.
-
-`disabled_test.go` verifies that `nodevtools` builds disable devtools and reject devtools command handling.
-
-`toggles_test.go` verifies several command paths that affect status fields, including all-player behavior for invincibility, infinite lives, and player freeze.
-
-Run server tests after changing:
-
-```text
-debug status packet shape
-debug status send eligibility
-debug status cadence
-DebugStatus field projection
-nodevtools gate behavior
-toggle command effects that feed status output
-```
+Tests verify typed packet construction, request correlation, immediate subscribed delivery, unsubscribe behavior, tooling-router client dispatch, preservation of the existing client signal, eligibility guards, and status projection.
 
 ## Related docs
 
 * [Server Devtools](./!INDEX.md)
-* [Devtools](../!INDEX.md)
-* [Devtools Design](../design/!INDEX.md)
+* [Tooling Channel Migration Contract](../design/tooling-channel-migration-contract.md)
+* [Devtools Packet Protocol](../design/devtools-packet-protocol.md)
 * [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
-* [Game Server](../../services/game-server/!INDEX.md)
-* [Packet Schemas](../../data/packet-schemas.md)
-* [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
-* [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) - Realtime websocket protocol documentation.
-
-## Notes
-
-Debug status output and debug shape catalog output are separate outbound surfaces. Shape catalog output is sent once per room. Debug status should remain a WebSocket devtools readout when its delivery path is active.
-
-The legacy devtools notes correctly treated debug status as server-authored diagnostic state, not client authority. That rule still applies.
-
-The status packet should remain small. New debug inspection data should be added to a separate telemetry surface when it is not directly a control-status boolean.
+* [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)

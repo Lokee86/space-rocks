@@ -6,13 +6,13 @@ Parent index: [Game Server Networking](./!INDEX.md)
 
 This document describes the current game-server inbound packet routing path.
 
-It covers how raw WebSocket messages are decoded, classified, and routed from a `webSocketSession` into auth, signaling, telemetry, lobby/session, and remaining gameplay control handlers. Runtime devtools commands use the separate `sr.tooling` route.
+It covers how raw WebSocket messages are decoded, classified, and routed from a `webSocketSession` into auth, signaling, telemetry, lobby/session, and remaining gameplay control handlers. Runtime devtools commands and developer-readout requests use the separate `sr.tooling` route.
 
 ## Overview
 
 Inbound packet routing begins after the WebSocket connection has already been upgraded and a `webSocketSession` exists.
 
-The read loop receives raw WebSocket messages, decodes only the packet envelope first, then routes the message through the inbound packet router. WebSocket routing covers auth, signaling, telemetry, lobby/session, and remaining gameplay control packets. Runtime devtools commands enter through `sr.tooling` and `services/game-server/internal/networking/tooling` instead.
+The read loop receives raw WebSocket messages, decodes only the packet envelope first, then routes the message through the inbound packet router. WebSocket routing covers auth, signaling, telemetry, lobby/session, and remaining gameplay control packets. Runtime devtools commands and developer-readout requests enter through `sr.tooling` and `services/game-server/internal/networking/tooling` instead.
 
 Current flow:
 
@@ -43,7 +43,7 @@ services/game-server/internal/networking/inbound/
 - Decode the minimal packet envelope before full packet routing.
 - Log and skip messages whose envelope cannot be decoded.
 - Construct an inbound session adapter around `webSocketSession`.
-- Keep runtime devtools commands outside the WebSocket inbound packet route.
+- Keep runtime devtools commands and developer-readout requests outside the WebSocket inbound packet route.
 - Decode normal client packets through the server packet codec.
 - Route authenticate packets to session auth handling.
 - Route telemetry ping packets to same-session telemetry pong handling.
@@ -142,7 +142,7 @@ lobby packets
 remaining gameplay control packets
 ```
 
-Runtime devtools commands do not participate in this WebSocket route. They enter through `sr.tooling`, where `services/game-server/internal/networking/tooling` applies policy, room, and capability preflight before decoding `devtools.DebugCommand` and dispatching to the existing devtools controller.
+Runtime devtools commands and developer-readout requests do not participate in this WebSocket route. They enter through `sr.tooling`, where `services/game-server/internal/networking/tooling` applies policy, room, and capability preflight before decoding `devtools.DebugCommand` and dispatching to the existing devtools controller.
 
 Normal packets are decoded into:
 
@@ -152,9 +152,9 @@ game.ClientPacket
 
 after the message has been identified as a normal WebSocket packet.
 
-### Runtime devtools command boundary
+### Runtime tooling boundary
 
-Runtime devtools commands enter through `sr.tooling`, not the WebSocket inbound router:
+Runtime devtools commands and developer-readout requests enter through `sr.tooling`, not the WebSocket inbound router:
 
 ```text
 client command payload with request_id and trace_id
@@ -304,7 +304,7 @@ and the packet is not routed further.
 
 The inbound routing surface is the server-side handling path for client-originated WebSocket messages.
 
-The caller is the WebSocket read loop. The consumers are auth, signaling, telemetry, room/session handlers, and remaining game simulation handlers. Runtime devtools commands use the separate tooling route. The game server owns authority behind all accepted room, gameplay, and devtools consequences.
+The caller is the WebSocket read loop. The consumers are auth, signaling, telemetry, room/session handlers, and remaining game simulation handlers. Runtime devtools commands and developer-readout requests use the separate tooling route. The game server owns authority behind all accepted room, gameplay, and devtools consequences.
 
 Data crossing this surface is raw WebSocket text, then a minimal decoded envelope, then a generated `game.ClientPacket`. Runtime tooling data crosses the separate `sr.tooling` boundary as a tooling command payload.
 
@@ -403,7 +403,7 @@ requires websocket session only
 lobby packets
 require whatever the delegated room/session handler requires
 
-runtime devtools commands
+runtime devtools commands and developer-readout requests
 use `sr.tooling`; require room attachment and tooling capability, but not `GamePlayerID` merely for room-global or explicit-target dispatch
 
 input, respawn, client_config
@@ -557,4 +557,4 @@ Direct unit coverage for `inbound.RouteClientPacket` ordering is currently thin.
 
 The current router silently drops valid-envelope packets that are decoded but not handled by any packet family. That is current behavior, not a protocol guarantee.
 
-Runtime devtools commands use the separate `sr.tooling` route and `services/game-server/internal/networking/tooling`; they do not participate in normal WebSocket `game.ClientPacket` routing.
+Runtime devtools commands and developer-readout requests use the separate `sr.tooling` route and `services/game-server/internal/networking/tooling`; they do not participate in normal WebSocket `game.ClientPacket` routing.

@@ -7,8 +7,6 @@ signal authenticate_result_received(packet: Dictionary)
 signal room_snapshot_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
-signal debug_shape_catalog_received(packet: Dictionary)
-signal debug_status_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
 signal telemetry_pong_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
@@ -26,8 +24,6 @@ func configure(dispatcher, pipeline, transport_session = null) -> void:
 	_connect_dispatcher_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
 	_connect_dispatcher_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
-	_connect_dispatcher_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
-	_connect_dispatcher_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_dispatcher_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
 	_connect_dispatcher_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
 	_connect_dispatcher_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
@@ -70,13 +66,6 @@ func _on_room_state_changed(packet: Dictionary) -> void:
 func _on_room_error_received(packet: Dictionary) -> void:
 	room_error_received.emit(packet)
 
-
-func _on_debug_shape_catalog_received(packet: Dictionary) -> void:
-	debug_shape_catalog_received.emit(packet)
-
-
-func _on_debug_status_received(packet: Dictionary) -> void:
-	debug_status_received.emit(packet)
 
 
 func _on_player_pause_state_received(packet: Dictionary) -> void:

@@ -53,7 +53,6 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string) {
 	})
 	addSessionMember(room, session.sessionID, session)
 	session.bindRoom(room)
-	session.resetDebugShapeCatalogSent()
 	session.EnqueueRoomSnapshot(room)
 }
 
@@ -79,7 +78,6 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string, traceID 
 		room.SetMemberAccountIDForSession(session.sessionID, accountID)
 	}
 	session.bindRoom(room)
-	session.resetDebugShapeCatalogSent()
 	BroadcastRoomSnapshot(room)
 }
 
@@ -116,7 +114,6 @@ func (session *webSocketSession) handleStartGameRequest() {
 		return
 	}
 
-	session.resetDebugShapeCatalogSent()
 	activateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)
 }
@@ -166,7 +163,6 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 	})
 	attachRoomSession(room, session.sessionID, session)
 	session.bindRoom(room)
-	session.resetDebugShapeCatalogSent()
 	if localProfileID != "" {
 		room.SetMemberLocalProfileIDForSession(session.sessionID, localProfileID)
 	}
@@ -188,7 +184,6 @@ func (session *webSocketSession) handleReturnToLobbyRequest() {
 		return
 	}
 
-	session.resetDebugShapeCatalogSent()
 	deactivateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)
 }

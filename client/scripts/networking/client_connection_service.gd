@@ -71,6 +71,10 @@ var _pending_close_code := 0
 var _pending_close_expected := false
 var _has_close_result := false
 var _connection_ever_connected := false
+var _tooling_ready := false
+var _active_room_code := ""
+var _active_room_state := ""
+var _tooling_readout_room_code := ""
 
 
 func _init(operation_trace_factory: Callable = Callable()) -> void:
@@ -97,8 +101,6 @@ func _ready() -> void:
 	_connect_coordinator_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
 	_connect_coordinator_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_coordinator_signal("room_error_received", Callable(self, "_on_room_error_received"))
-	_connect_coordinator_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
-	_connect_coordinator_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
 	_connect_coordinator_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
 	_connect_coordinator_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
 	_connect_coordinator_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
@@ -109,6 +111,8 @@ func _ready() -> void:
 	_connect_tooling_router_signal("measurement_stopped_received", Callable(self, "_on_measurement_stopped_received"))
 	_connect_tooling_router_signal("tooling_command_result_received", Callable(self, "_on_tooling_command_result_received"))
 	_connect_tooling_router_signal("tooling_error_received", Callable(self, "_on_tooling_error_received"))
+	_connect_tooling_router_signal("debug_status_received", Callable(self, "_on_debug_status_received"))
+	_connect_tooling_router_signal("debug_shape_catalog_received", Callable(self, "_on_debug_shape_catalog_received"))
 	var ready_handler := Callable(self, "_on_realtime_transport_ready")
 	if !client_inbound_coordinator.is_connected("realtime_transport_ready", ready_handler):
 		client_inbound_coordinator.connect("realtime_transport_ready", ready_handler)
@@ -374,6 +378,10 @@ func _finalize_connection_close(emit_closed_signal: bool) -> void:
 		if !ever_connected:
 			fields["error_code"] = "socket_closed_before_connected"
 		ClientLogger.emit_canonical(event_name, "", {"trace_id": trace_id}, fields)
+	_tooling_ready = false
+	_active_room_code = ""
+	_active_room_state = ""
+	_tooling_readout_room_code = ""
 	reset_realtime_session()
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
@@ -394,6 +402,11 @@ func _on_packet_received(packet: Dictionary) -> void:
 
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:
+	_active_room_code = str(packet.get(Packets.FIELD_ROOM_CODE, ""))
+	_active_room_state = str(packet.get(Packets.FIELD_ROOM_STATE, ""))
+	if _active_room_state != "in_game" and _active_room_state != "game_over":
+		_tooling_readout_room_code = ""
+	_request_tooling_readouts_if_ready()
 	room_snapshot_received.emit(packet)
 
 
@@ -419,6 +432,11 @@ func _on_authenticate_result_received(packet: Dictionary) -> void:
 	websocket_auth_result_received.emit(packet)
 
 func _on_room_state_changed(packet: Dictionary) -> void:
+	_active_room_code = str(packet.get(Packets.FIELD_ROOM_CODE, _active_room_code))
+	_active_room_state = str(packet.get(Packets.FIELD_ROOM_STATE, _active_room_state))
+	if _active_room_state != "in_game" and _active_room_state != "game_over":
+		_tooling_readout_room_code = ""
+	_request_tooling_readouts_if_ready()
 	room_state_changed.emit(packet)
 
 
@@ -449,7 +467,23 @@ func set_server_clock_offset_ms(offset_ms: int) -> void:
 
 
 func _on_realtime_transport_ready() -> void:
+	_tooling_ready = true
+	_request_tooling_readouts_if_ready()
 	realtime_transport_ready.emit()
+
+
+func _request_tooling_readouts_if_ready() -> void:
+	if not _tooling_ready or _active_room_code.is_empty():
+		return
+	if _active_room_state != "in_game" and _active_room_state != "game_over":
+		return
+	if _tooling_readout_room_code == _active_room_code:
+		return
+	var status_request_id := ClientOperationTrace.create("devtools.debug_status_subscribe", _operation_trace_factory).trace_id()
+	var catalog_request_id := ClientOperationTrace.create("devtools.debug_shape_catalog", _operation_trace_factory).trace_id()
+	send_tooling_packet(Packets.debug_status_subscribe_packet(status_request_id))
+	send_tooling_packet(Packets.debug_shape_catalog_request_packet(catalog_request_id))
+	_tooling_readout_room_code = _active_room_code
 
 
 func _on_tooling_packet_received(packet: Dictionary) -> void:
@@ -542,6 +576,8 @@ func _ensure_realtime_transport_session() -> void:
 
 
 func _clear_realtime_transport_session() -> void:
+	_tooling_ready = false
+	_tooling_readout_room_code = ""
 	if realtime_transport_session != null:
 		realtime_transport_session.close()
 		realtime_transport_session = null

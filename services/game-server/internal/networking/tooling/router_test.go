@@ -4,7 +4,10 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	protocol "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/tooling"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type testSender struct {
@@ -301,6 +304,82 @@ func TestRouterTelemetrySubscriptionIsPerConnection(t *testing.T) {
 	}
 	if len(senderB.packets) != 0 {
 		t.Fatalf("unexpected snapshot for unsubscribed connection: %#v", senderB.packets)
+	}
+}
+
+func TestRouterDebugShapeCatalogRequestSendsCorrelatedResponse(t *testing.T) {
+	if !devtools.Enabled() {
+		t.Skip("debug readouts are disabled by this build")
+	}
+	router := NewRouter(nil, nil)
+	sender := &testSender{}
+	room := rooms.NewRoom("room-a", rooms.RoomStateInGame, game.New())
+
+	router.Handle(Context{
+		RoomID:       room.ID,
+		Room:         room,
+		Capabilities: NewTemporaryCapabilitySet(),
+	}, sender, map[string]any{
+		"type":       protocol.PacketTypeDebugShapeCatalogRequest,
+		"request_id": "catalog-request",
+	})
+
+	if len(sender.packets) != 1 {
+		t.Fatalf("expected one catalog response, got %#v", sender.packets)
+	}
+	response := sender.packets[0]
+	if response["type"] != devtools.PacketTypeDebugShapeCatalog || response["request_id"] != "catalog-request" {
+		t.Fatalf("unexpected catalog response: %#v", response)
+	}
+	shapes, ok := response["shapes"].(map[string]any)
+	if !ok || len(shapes) == 0 {
+		t.Fatalf("expected non-empty shape catalog, got %#v", response["shapes"])
+	}
+}
+
+func TestRouterDebugStatusSubscriptionPushesAndUnsubscribes(t *testing.T) {
+	if !devtools.Enabled() {
+		t.Skip("debug readouts are disabled by this build")
+	}
+	gameInstance := game.New()
+	control := game.NewControl(gameInstance)
+	const playerID = "player-a"
+	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected player session")
+	}
+	room := rooms.NewRoom("room-a", rooms.RoomStateInGame, gameInstance)
+	context := Context{
+		SessionID:    "session-a",
+		RoomID:       room.ID,
+		GamePlayerID: playerID,
+		Room:         room,
+		Capabilities: NewTemporaryCapabilitySet(),
+	}
+	router := NewRouter(nil, nil)
+	sender := &testSender{}
+
+	router.Handle(context, sender, map[string]any{
+		"type":       protocol.PacketTypeDebugStatusSubscribe,
+		"request_id": "status-subscription",
+	})
+	router.Tick(context, sender)
+	if len(sender.packets) != 1 {
+		t.Fatalf("expected immediate status push, got %#v", sender.packets)
+	}
+	response := sender.packets[0]
+	if response["type"] != devtools.PacketTypeDebugStatus || response["request_id"] != "status-subscription" {
+		t.Fatalf("unexpected status response: %#v", response)
+	}
+
+	router.Handle(context, sender, map[string]any{
+		"type":       protocol.PacketTypeDebugStatusUnsubscribe,
+		"request_id": "status-unsubscribe",
+	})
+	for range debugStatusIntervalTicks + 1 {
+		router.Tick(context, sender)
+	}
+	if len(sender.packets) != 1 {
+		t.Fatalf("unexpected status push after unsubscribe: %#v", sender.packets)
 	}
 }
 

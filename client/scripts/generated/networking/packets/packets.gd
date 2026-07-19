@@ -37,6 +37,9 @@ const TYPE_MEASUREMENT_START := "measurement_start"
 const TYPE_MEASUREMENT_STOP := "measurement_stop"
 const TYPE_MEASUREMENT_RESET := "measurement_reset"
 const TYPE_MEASUREMENT_SNAPSHOT_REQUEST := "measurement_snapshot_request"
+const TYPE_DEBUG_STATUS_SUBSCRIBE := "debug_status_subscribe"
+const TYPE_DEBUG_STATUS_UNSUBSCRIBE := "debug_status_unsubscribe"
+const TYPE_DEBUG_SHAPE_CATALOG_REQUEST := "debug_shape_catalog_request"
 const TYPE_TELEMETRY_SNAPSHOT := "telemetry_snapshot"
 const TYPE_TELEMETRY_PONG := "telemetry_pong"
 const TYPE_MEASUREMENT_STARTED := "measurement_started"
@@ -346,6 +349,24 @@ static func measurement_snapshot_request_packet(request_id, run_id) -> Dictionar
 	packet[FIELD_TYPE] = "measurement_snapshot_request"
 	packet[FIELD_REQUEST_ID] = request_id
 	packet[FIELD_RUN_ID] = run_id
+	return packet
+
+static func debug_status_subscribe_packet(request_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_status_subscribe"
+	packet[FIELD_REQUEST_ID] = request_id
+	return packet
+
+static func debug_status_unsubscribe_packet(request_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_status_unsubscribe"
+	packet[FIELD_REQUEST_ID] = request_id
+	return packet
+
+static func debug_shape_catalog_request_packet(request_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "debug_shape_catalog_request"
+	packet[FIELD_REQUEST_ID] = request_id
 	return packet
 
 static func toggle_debug_invincible_packet() -> Dictionary:

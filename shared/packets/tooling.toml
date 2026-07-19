@@ -132,6 +132,48 @@ json = "run_id"
 type = "string"
 
 [[structs]]
+id = "DebugStatusSubscribe"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs]]
+id = "DebugStatusUnsubscribe"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs]]
+id = "DebugShapeCatalogRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs]]
 id = "TelemetrySnapshot"
 
 [[structs.fields]]
@@ -414,6 +456,18 @@ id = "measurement_snapshot_request"
 value = "measurement_snapshot_request"
 
 [[packet_types]]
+id = "debug_status_subscribe"
+value = "debug_status_subscribe"
+
+[[packet_types]]
+id = "debug_status_unsubscribe"
+value = "debug_status_unsubscribe"
+
+[[packet_types]]
+id = "debug_shape_catalog_request"
+value = "debug_shape_catalog_request"
+
+[[packet_types]]
 id = "telemetry_snapshot"
 value = "telemetry_snapshot"
 
@@ -455,6 +509,30 @@ args = ["request_id"]
 
 [builders.body]
 type = "telemetry_unsubscribe"
+request_id = "$request_id"
+
+[[builders]]
+id = "debug_status_subscribe_packet"
+args = ["request_id"]
+
+[builders.body]
+type = "debug_status_subscribe"
+request_id = "$request_id"
+
+[[builders]]
+id = "debug_status_unsubscribe_packet"
+args = ["request_id"]
+
+[builders.body]
+type = "debug_status_unsubscribe"
+request_id = "$request_id"
+
+[[builders]]
+id = "debug_shape_catalog_request_packet"
+args = ["request_id"]
+
+[builders.body]
+type = "debug_shape_catalog_request"
 request_id = "$request_id"
 
 [[builders]]

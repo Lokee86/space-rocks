@@ -64,12 +64,14 @@ type DebugShapeDefinition struct {
 }
 
 type DebugShapeCatalogPacket struct {
-	Type   string                          `json:"type"`
-	Shapes map[string]DebugShapeDefinition `json:"shapes"`
+	Type      string                          `json:"type"`
+	RequestID string                          `json:"request_id"`
+	Shapes    map[string]DebugShapeDefinition `json:"shapes"`
 }
 
 type DebugStatusPacket struct {
 	Type          string                 `json:"type"`
+	RequestID     string                 `json:"request_id"`
 	DebugStatus   DebugStatus            `json:"debug_status"`
 	DebugStatuses map[string]DebugStatus `json:"debug_statuses"`
 }

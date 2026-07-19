@@ -67,7 +67,7 @@ Debug status and target readmodels must not become alternate gameplay state. The
 
 The server owns debug status.
 
-The server emits `debug_status` packets from the WebSocket write loop when debug status output is eligible. Current eligibility requires:
+The client subscribes to `debug_status` through `sr.tooling` once the tooling channel and active room are ready. The server emits bounded-cadence status pushes while output is eligible. Current eligibility requires:
 
 ```text
 room exists
@@ -77,7 +77,7 @@ room state is InGame or GameOver
 session has a current game player id
 ```
 
-The client consumes `debug_status` as a WebSocket devtools readout when the server delivery path is active. Current docs must not claim periodic server delivery unless the active write loop calls the debug status builder.
+The client consumes `debug_status` through `ToolingPacketRouter`, then preserves the existing `ClientConnectionService.debug_status_received` and downstream readmodel/application ownership.
 
 The server packet contains:
 

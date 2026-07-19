@@ -11,11 +11,6 @@ import (
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
-const debugStatusWriteIntervalTicks = 8
-
-var canSendDebugShapeCatalog = outbound.CanSendDebugShapeCatalog
-var buildDebugShapeCatalogResponse = outbound.BuildDebugShapeCatalogResponse
-
 func writeServerMessages(session *webSocketSession, remoteAddr string, readErr <-chan error) {
 	ticker := time.NewTicker(time.Second / time.Duration(constants.ServerTickRate))
 	defer ticker.Stop()
@@ -56,10 +51,6 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		return true
 	}
 	resetRealtimeStateForContext(session, context, gameplayContext.MatchID)
-
-	if !maybeWriteDebugShapeCatalog(session, context, remoteAddr) {
-		return false
-	}
 
 	result, err := realtime.BuildActiveRealtimeResultForGame(gameplayContext.Game, context.GamePlayerID, session.realtimeState)
 	if err != nil {
@@ -229,24 +220,4 @@ func drainActiveEventBatchAfterWrite(gameInstance *game.Game, playerID string, e
 		return nil
 	}
 	return gameInstance.DrainPendingPresentationEvents(playerID, eventIDs...)
-}
-
-func maybeWriteDebugShapeCatalog(session *webSocketSession, context SessionContext, remoteAddr string) bool {
-	if session == nil || context.Room == nil {
-		return true
-	}
-	if session.debugShapeCatalogSentFor(context.RoomID) || !canSendDebugShapeCatalog(context.Room) {
-		return true
-	}
-	response, ok := buildDebugShapeCatalogResponse(context.Room, context.RoomID)
-	if !ok || !session.sessionContextMatches(context) {
-		return true
-	}
-	if !outbound.WriteServerMessage(session.conn, response, func(err error) {
-		logWebSocketWriteClose(err, session.connectionTraceID, session.sessionID, context.RoomID, context.GamePlayerID)
-	}) {
-		return false
-	}
-	session.markDebugShapeCatalogSent(context)
-	return true
 }

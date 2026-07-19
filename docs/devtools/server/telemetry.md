@@ -190,9 +190,9 @@ state.server_sent_msec
 
 Debug commands can change facts later reported by telemetry, but telemetry is not the command path. For example, toggling invincibility changes server runtime state through the devtools command handler; a later `debug_status` packet reports the new `invincible` value.
 
-`debug_status` is a WebSocket devtools readout packet when the server delivery path is active. Current docs must not claim periodic server delivery unless the active write loop calls the debug status builder.
+`debug_status` is an `sr.tooling` subscription stream. The first eligible tooling-router tick emits immediately and later pushes are sampled every eight tooling-router ticks.
 
-`debug_shape_catalog` is sent once per room ID for a session after gameplay presentation begins. The write loop tracks the last room ID used for shape catalog output and does not resend the catalog for the same room unless the tracked room changes.
+`debug_shape_catalog` is a one-shot correlated `sr.tooling` response. The client requests it once per active room and retains the existing catalog presentation/store ownership.
 
 ## Telemetry surfaces
 

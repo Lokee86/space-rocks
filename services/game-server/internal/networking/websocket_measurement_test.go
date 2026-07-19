@@ -73,9 +73,6 @@ func TestNewWebSocketSessionWithToolingInjectsOptionalDependencies(t *testing.T)
 }
 
 func TestWriteGameplayLaneProtocolMessageObservesOnlySuccessfulWrites(t *testing.T) {
-	originalCanSend := canSendDebugShapeCatalog
-	canSendDebugShapeCatalog = func(*rooms.Room) bool { return false }
-	t.Cleanup(func() { canSendDebugShapeCatalog = originalCanSend })
 
 	gameInstance := game.New()
 	control := game.NewControl(gameInstance)

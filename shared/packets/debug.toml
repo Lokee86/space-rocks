@@ -95,6 +95,12 @@ json = "type"
 type = "string"
 
 [[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
 name = "debug_status"
 go_name = "DebugStatus"
 json = "debug_status"
@@ -114,6 +120,12 @@ id = "DebugShapeCatalogPacket"
 [[structs.fields]]
 name = "type"
 json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
 type = "string"
 
 [[structs.fields]]

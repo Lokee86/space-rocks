@@ -315,7 +315,7 @@ and emitted as:
 debug_status
 ```
 
-The current code has the debug status builder and eligibility checks, but this document must not claim periodic write-loop delivery unless the active write loop calls the debug status builder. `debug_status` remains a WebSocket devtools readout packet when delivery is active.
+`debug_status` is delivered through the `sr.tooling` subscription route. The first eligible tooling-router tick emits immediately and later pushes are sampled every eight tooling-router ticks.
 
 Debug status output is gated by:
 

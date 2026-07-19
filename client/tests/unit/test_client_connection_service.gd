@@ -246,6 +246,71 @@ func test_tooling_command_result_is_forwarded_from_tooling_router() -> void:
 	assert_eq(received, [packet])
 
 
+func test_debug_readouts_are_forwarded_from_tooling_router() -> void:
+	var service := ClientConnectionService.new()
+	add_child_autofree(service)
+	var statuses: Array = []
+	var catalogs: Array = []
+	service.debug_status_received.connect(func(packet: Dictionary) -> void:
+		statuses.append(packet)
+	)
+	service.debug_shape_catalog_received.connect(func(packet: Dictionary) -> void:
+		catalogs.append(packet)
+	)
+	var status_packet := {"type": "debug_status", "request_id": "status-1"}
+	var catalog_packet := {"type": "debug_shape_catalog", "request_id": "catalog-1", "shapes": {}}
+
+	service._on_tooling_packet_received(status_packet)
+	service._on_tooling_packet_received(catalog_packet)
+
+	assert_eq(statuses, [status_packet])
+	assert_eq(catalogs, [catalog_packet])
+
+
+func test_tooling_ready_requests_room_debug_readouts_once() -> void:
+	var trace_ids := [
+		"00000000-0000-4000-8000-000000000091",
+		"00000000-0000-4000-8000-000000000092",
+		"00000000-0000-4000-8000-000000000093",
+		"00000000-0000-4000-8000-000000000094",
+	]
+	var trace_state := {"index": 0}
+	var service := ClientConnectionService.new()
+	var peer := FakeTransportPeer.new()
+	service._operation_trace_factory = func(operation_name: String):
+		var trace_id: String = trace_ids[trace_state["index"]]
+		trace_state["index"] += 1
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	add_child_autofree(service)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+
+	service._on_room_snapshot_received({"room_code": "ROOM1", "room_state": "in_game"})
+	assert_eq(peer.tooling_packets.size(), 0)
+	service._on_realtime_transport_ready()
+	service._on_room_snapshot_received({"room_code": "ROOM1", "room_state": "in_game"})
+
+	assert_eq(peer.tooling_packets.size(), 2)
+	assert_eq(peer.tooling_packets[0]["type"], "debug_status_subscribe")
+	assert_eq(peer.tooling_packets[0]["request_id"], trace_ids[0])
+	assert_eq(peer.tooling_packets[1]["type"], "debug_shape_catalog_request")
+	assert_eq(peer.tooling_packets[1]["request_id"], trace_ids[1])
+
+	var replacement_peer := FakeTransportPeer.new()
+	service.reset_realtime_session()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(replacement_peer)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+	service._on_realtime_transport_ready()
+
+	assert_eq(replacement_peer.tooling_packets.size(), 2)
+	assert_eq(replacement_peer.tooling_packets[0]["type"], "debug_status_subscribe")
+	assert_eq(replacement_peer.tooling_packets[0]["request_id"], trace_ids[2])
+	assert_eq(replacement_peer.tooling_packets[1]["type"], "debug_shape_catalog_request")
+	assert_eq(replacement_peer.tooling_packets[1]["request_id"], trace_ids[3])
+
+
 func test_resync_required_uses_active_match_and_suppresses_when_inactive() -> void:
 	var service := ClientConnectionService.new()
 	add_child_autofree(service)

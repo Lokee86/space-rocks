@@ -40,7 +40,6 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 		if _, ok := session.rooms.Find(roomID); !ok {
 			detachRoomSession(room, session.sessionID)
 			session.clearRoomContextIfMatch(context)
-			session.resetDebugShapeCatalogSent()
 			return
 		}
 	}
@@ -54,7 +53,6 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 		if !enqueueRoomError && roomErr.Code == rooms.RoomErrorRoomNotFound {
 			detachRoomSession(room, session.sessionID)
 			session.clearRoomContextIfMatch(context)
-			session.resetDebugShapeCatalogSent()
 			return
 		}
 		if enqueueRoomError {
@@ -83,7 +81,6 @@ func (session *webSocketSession) leaveRoom(reason string, enqueueRoomError bool)
 
 	detachRoomSession(room, session.sessionID)
 	session.clearRoomContextIfMatch(context)
-	session.resetDebugShapeCatalogSent()
 
 	if leaveResult != nil && leaveResult.ShouldBroadcastSnapshot && leaveResult.Room != nil {
 		BroadcastRoomSnapshot(leaveResult.Room)

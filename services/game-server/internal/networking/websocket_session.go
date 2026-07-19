@@ -34,15 +34,14 @@ type webSocketSession struct {
 	authVerifier         TokenVerifier
 	matchResultReporter  rooms.MatchResultReporter
 	// realtimeState is owned exclusively by the write loop and intentionally not guarded by mu.
-	realtimeState               realtime.RealtimeSessionState
-	debugShapeCatalogSentRoomID string
-	firstPacketMatchID          string
-	firstInputPacketLogged      bool
-	firstRespawnPacketLogged    bool
-	webrtcTransport             *WebRTCTransport
-	packetObserver              packetObserver
-	toolingRouter               *toolingrouter.Router
-	toolingCapabilities         toolingrouter.CapabilitySet
+	realtimeState            realtime.RealtimeSessionState
+	firstPacketMatchID       string
+	firstInputPacketLogged   bool
+	firstRespawnPacketLogged bool
+	webrtcTransport          *WebRTCTransport
+	packetObserver           packetObserver
+	toolingRouter            *toolingrouter.Router
+	toolingCapabilities      toolingrouter.CapabilitySet
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
@@ -123,28 +122,6 @@ func (session *webSocketSession) webRTCTransportSnapshot() *WebRTCTransport {
 	session.mu.RLock()
 	defer session.mu.RUnlock()
 	return session.webrtcTransport
-}
-
-func (session *webSocketSession) resetDebugShapeCatalogSent() {
-	session.mu.Lock()
-	session.debugShapeCatalogSentRoomID = ""
-	session.mu.Unlock()
-}
-
-func (session *webSocketSession) debugShapeCatalogSentFor(roomID string) bool {
-	session.mu.RLock()
-	defer session.mu.RUnlock()
-	return session.debugShapeCatalogSentRoomID == roomID
-}
-
-func (session *webSocketSession) markDebugShapeCatalogSent(context SessionContext) bool {
-	session.mu.Lock()
-	defer session.mu.Unlock()
-	if session.context != context {
-		return false
-	}
-	session.debugShapeCatalogSentRoomID = context.RoomID
-	return true
 }
 
 func (session *webSocketSession) ensureWebRTCTransport() *WebRTCTransport {
@@ -386,6 +363,7 @@ func (session *webSocketSession) toolingContext() toolingrouter.Context {
 		SessionID:    session.sessionID,
 		RoomID:       context.RoomID,
 		GamePlayerID: context.GamePlayerID,
+		Room:         context.Room,
 		Capabilities: session.toolingCapabilities,
 	}
 	if context.Room == nil {

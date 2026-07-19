@@ -9,6 +9,9 @@ const (
 	PacketTypeMeasurementStop            = "measurement_stop"
 	PacketTypeMeasurementReset           = "measurement_reset"
 	PacketTypeMeasurementSnapshotRequest = "measurement_snapshot_request"
+	PacketTypeDebugStatusSubscribe       = "debug_status_subscribe"
+	PacketTypeDebugStatusUnsubscribe     = "debug_status_unsubscribe"
+	PacketTypeDebugShapeCatalogRequest   = "debug_shape_catalog_request"
 	PacketTypeTelemetrySnapshot          = "telemetry_snapshot"
 	PacketTypeTelemetryPong              = "telemetry_pong"
 	PacketTypeMeasurementStarted         = "measurement_started"
@@ -57,6 +60,21 @@ type MeasurementSnapshotRequest struct {
 	Type      string `json:"type"`
 	RequestID string `json:"request_id"`
 	RunID     string `json:"run_id"`
+}
+
+type DebugStatusSubscribe struct {
+	Type      string `json:"type"`
+	RequestID string `json:"request_id"`
+}
+
+type DebugStatusUnsubscribe struct {
+	Type      string `json:"type"`
+	RequestID string `json:"request_id"`
+}
+
+type DebugShapeCatalogRequest struct {
+	Type      string `json:"type"`
+	RequestID string `json:"request_id"`
 }
 
 type TelemetrySnapshot struct {

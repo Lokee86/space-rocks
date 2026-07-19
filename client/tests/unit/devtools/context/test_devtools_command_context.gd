@@ -11,11 +11,12 @@ const PresentationEventCapture := preload("res://tests/unit/logging/presentation
 
 class FakeConnectionService:
 	var sent_packets: Array = []
-	var sent_trace_ids: Array = []
 
-	func send_packet(packet, trace_id: String = "") -> void:
+	func send_packet(packet: Dictionary, _trace_id: String = "") -> void:
 		sent_packets.append(packet)
-		sent_trace_ids.append(trace_id)
+
+	func send_tooling_packet(packet: Dictionary) -> void:
+		sent_packets.append(packet)
 
 
 class FakeDebugFlow:
@@ -238,7 +239,7 @@ func test_valid_counter_commands_reuse_one_context_trace_for_event_and_packet() 
 	assert_eq(connection.sent_packets.size(), trace_ids.size())
 	assert_eq(writer.written_lines.size(), trace_ids.size())
 	for index in range(trace_ids.size()):
-		assert_eq(connection.sent_trace_ids[index], trace_ids[index])
+		assert_eq(connection.sent_packets[index]["request_id"], trace_ids[index])
 		assert_eq(connection.sent_packets[index]["trace_id"], trace_ids[index])
 		var record: Dictionary = JSON.parse_string(writer.written_lines[index])
 		assert_eq(record["event"], "devtools_command_requested")

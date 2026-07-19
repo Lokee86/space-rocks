@@ -239,7 +239,7 @@ The overlay is presentation-only. It does not send a server packet when toggled 
 
 There is no server command that requests, refreshes, or toggles the shape catalog.
 
-The server sends the `debug_shape_catalog` packet automatically from the WebSocket write loop when all gates pass.
+The client requests `debug_shape_catalog` once per active room through `sr.tooling`; the server returns a correlated response after tooling policy, room, capability, and runtime gates pass.
 
 The visible overlay is controlled on the client through the devtools window checkbox:
 
@@ -270,7 +270,7 @@ For a given WebSocket write-loop context, the catalog is sent at most once per r
 The outbound helper:
 
 ```text
-BuildDebugShapeCatalogResponse(...)
+BuildDebugShapeCatalogPacket(...)
 ```
 
 loads the shared collision-shape catalog, builds the devtools shape catalog, encodes it through `packetcodec`, and returns the encoded WebSocket payload.

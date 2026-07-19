@@ -89,10 +89,10 @@ func test_disabled_session_does_not_accumulate_measurements() -> void:
 
 func test_sampling_occurs_once_per_second_and_does_not_store_raw_frames() -> void:
 	var session := ClientMeasurementSession.new()
-	var sample_count := 0
+	var sample_state := {"count": 0}
 	session.set_periodic_sample_provider(func() -> Dictionary:
-		sample_count += 1
-		return {"second": sample_count, "network_metrics": {"rtt_ms": 12}}
+		sample_state["count"] += 1
+		return {"second": sample_state["count"], "network_metrics": {"rtt_ms": 12}}
 	)
 	session.start()
 	session.process_frame(0.4)
@@ -102,7 +102,7 @@ func test_sampling_occurs_once_per_second_and_does_not_store_raw_frames() -> voi
 
 	var result := session.stop()
 
-	assert_eq(sample_count, 1)
+	assert_eq(sample_state["count"], 1)
 	assert_eq(result["resource_samples"]["count"], 1)
 	assert_eq(result["network_metrics"]["rtt_ms"], 12)
 	assert_eq(result["frame_timing"]["count"], 4)

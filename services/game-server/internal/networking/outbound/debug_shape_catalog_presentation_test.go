@@ -1,51 +1,31 @@
 package outbound
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
-func TestBuildDebugShapeCatalogResponseIncludesShapeCatalogPayload(t *testing.T) {
+func TestBuildDebugShapeCatalogPacketIncludesCorrelatedShapeCatalog(t *testing.T) {
+	if !devtools.Enabled() {
+		t.Skip("debug shape catalog output is disabled by this build")
+	}
+	const requestID = "request-1"
 	room := rooms.NewRoom("room-1", rooms.RoomStateInGame, game.New())
 
-	response, ok := BuildDebugShapeCatalogResponse(room, "room-1")
+	packet, ok := BuildDebugShapeCatalogPacket(room, "room-1", requestID)
 	if !ok {
-		t.Fatal("expected debug shape catalog response to build")
+		t.Fatal("expected debug shape catalog packet to build")
 	}
-
-	var payload map[string]any
-	if err := json.Unmarshal(response, &payload); err != nil {
-		t.Fatalf("expected response to decode as json: %v", err)
+	if packet.Type != devtools.PacketTypeDebugShapeCatalog {
+		t.Fatalf("type = %q, want %q", packet.Type, devtools.PacketTypeDebugShapeCatalog)
 	}
-
-	if got := payload["type"]; got != "debug_shape_catalog" {
-		t.Fatalf("expected packet type %q, got %v", "debug_shape_catalog", got)
+	if packet.RequestID != requestID {
+		t.Fatalf("request_id = %q, want %q", packet.RequestID, requestID)
 	}
-
-	shapes, ok := payload["shapes"].(map[string]any)
-	if !ok {
-		t.Fatal("expected shapes to exist as an object")
-	}
-	if len(shapes) == 0 {
+	if len(packet.Shapes) == 0 {
 		t.Fatal("expected shapes to be non-empty")
-	}
-
-	if _, ok := payload["debug_collision_bodies"]; ok {
-		t.Fatal("expected debug_collision_bodies to be absent")
-	}
-	if _, ok := payload["players"]; ok {
-		t.Fatal("expected players to be absent")
-	}
-	if _, ok := payload["asteroids"]; ok {
-		t.Fatal("expected asteroids to be absent")
-	}
-	if _, ok := payload["bullets"]; ok {
-		t.Fatal("expected bullets to be absent")
-	}
-	if _, ok := payload["pickups"]; ok {
-		t.Fatal("expected pickups to be absent")
 	}
 }

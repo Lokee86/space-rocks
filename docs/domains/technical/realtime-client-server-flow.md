@@ -220,38 +220,43 @@ During live gameplay, the client sends intent through generated realtime packets
 Current client-to-server packet families include:
 
 ```text
-auth
-telemetry
-room and lobby requests
-gameplay input
-respawn
-pause
-target selection
-target clearing
-viewport configuration
-devtools commands
+WebSocket:
+  auth
+  legacy telemetry ping
+  room and lobby requests
+  gameplay input
+  respawn
+  pause
+  target selection
+  target clearing
+  viewport configuration
+
+sr.tooling:
+  runtime measurement
+  runtime developer commands
+  developer-readout subscriptions and requests
+  tooling telemetry requests
 ```
 
-Gameplay packets require a current room and active game player before the server applies them. Auth and telemetry packets require only the WebSocket session. Lobby packets route to room/session handlers, which apply their own room and admission rules.
+Gameplay packets require a current room and active game player before the server applies them. Auth and legacy telemetry ping require only the WebSocket session. Lobby packets route to room/session handlers, which apply their own room and admission rules.
 
-Devtools command packets use the same WebSocket transport but are routed through the server devtools boundary before normal gameplay packet handling. They are debug-only requests, not a second gameplay authority layer.
+Runtime developer commands and developer-readout requests use `sr.tooling`. The tooling router applies packet policy, room attachment, capability checks, and request correlation before dispatching to devtools or readout owners. They are debug-only interactions, not a second gameplay authority layer.
 
-### 6. Server routes inbound packets by family
+### 6. Server routes inbound packets by transport and family
 
-The server inbound route order is:
+The WebSocket inbound route order is:
 
 ```text
-devtools packet families
-normal packet decode
+normal packet envelope decode
 auth packets
-telemetry packets
+legacy telemetry packets
 lobby packets
-gameplay packets
+gameplay/control packets
 ```
 
-Devtools routes first because devtools command packets are generated into a separate server devtools packet family.
+The separate `sr.tooling` route handles measurement, runtime developer commands, developer-readout subscriptions/requests, and tooling telemetry packets before they can reach any owning controller or provider.
 
-Normal packets decode into the generated client packet shape before auth, telemetry, lobby, and gameplay handlers are tried.
+Normal WebSocket packets decode into the generated client packet shape before auth, telemetry, lobby, and gameplay handlers are tried.
 
 If a packet cannot be decoded, it is logged and ignored. Decode failure does not by itself close the WebSocket.
 

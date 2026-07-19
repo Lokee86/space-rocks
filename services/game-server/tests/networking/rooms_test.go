@@ -1639,7 +1639,6 @@ func TestBootstrapPacketFamilyRecognizesRuntimeFullPacketShapes(t *testing.T) {
 		{name: "compact world full", packet: map[string]any{"t": "wf"}, want: "world_full"},
 		{name: "compact overlay full", packet: map[string]any{"t": "of"}, want: "overlay_full"},
 		{name: "compact session full", packet: map[string]any{"t": "sf"}, want: "session_full"},
-		{name: "unrelated readable packet", packet: map[string]any{"type": "debug_shape_catalog"}, want: ""},
 		{name: "unrelated compact packet", packet: map[string]any{"t": "wd"}, want: ""},
 	}
 
@@ -1658,9 +1657,6 @@ func bootstrapPacketFamily(packet map[string]any) string {
 	}
 
 	packetType, _ := packet["type"].(string)
-	if packetType == "debug_status" || packetType == "debug_shape_catalog" {
-		return ""
-	}
 	if packetType != "" {
 		switch packetType {
 		case "world_full", "overlay_full", "session_full":
@@ -1766,11 +1762,6 @@ func readJSON(t *testing.T, conn *websocket.Conn, value any) {
 
 		if err := conn.SetReadDeadline(time.Time{}); err != nil {
 			t.Fatalf("clear websocket read deadline: %v", err)
-		}
-
-		packetType, _ := raw["type"].(string)
-		if packetType == "debug_status" || packetType == "debug_shape_catalog" {
-			continue
 		}
 
 		encoded, err := json.Marshal(raw)

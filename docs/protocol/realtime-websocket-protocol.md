@@ -54,7 +54,7 @@ asteroids.lifecycle
 bullets.lifecycle
 ```
 
-`sr.tooling` is not an active gameplay packet lane. Its negotiated channel is mandatory for readiness, and tooling packets are separated before normal gameplay routing. Runtime measurement request/response traffic and runtime devtools command requests are implemented on this channel. Devtools command payloads carry `request_id` and `trace_id`; `services/game-server/internal/networking/tooling` applies packet-policy, room, and capability preflight, decodes `DebugCommand`, dispatches through the existing devtools controller, and returns correlated `tooling_command_result` or `tooling_error` packets. Telemetry routing exists but remains partially wired; developer readouts and legacy telemetry readouts remain on their existing paths.
+`sr.tooling` is not an active gameplay packet lane. Its negotiated channel is mandatory for readiness, and tooling packets are separated before normal gameplay routing. Runtime measurement request/response traffic and runtime devtools command requests are implemented on this channel. Devtools command payloads carry `request_id` and `trace_id`; `services/game-server/internal/networking/tooling` applies packet-policy, room, and capability preflight, decodes `DebugCommand`, dispatches through the existing devtools controller, and returns correlated `tooling_command_result` or `tooling_error` packets. Telemetry routing exists but remains partially wired. Developer readouts now use `sr.tooling`; the legacy continuous telemetry/ping path remains to migrate.
 
 `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`. There is no separate generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation.
 
@@ -979,11 +979,11 @@ session_delta
 event_batch
 resync_request
 resync_required
-debug_shape_catalog
-debug_status
 player_pause_state
 telemetry_pong
 ```
+
+Developer readouts are recognized separately by `ToolingPacketRouter` after arrival on `sr.tooling`; they are not part of the normal WebSocket dispatcher list.
 
 Unrecognized packets with a valid envelope emit:
 
@@ -1033,8 +1033,8 @@ require current room and active game player to apply
 target and pause packets
 require current room and active game player to route
 
-runtime devtools command packets
-use `sr.tooling`; require room attachment and tooling capability, but not `GamePlayerID` merely for room-global or explicit-target dispatch
+runtime devtools command and developer-readout request packets
+use `sr.tooling`; require packet-specific room attachment and tooling capability, but not `GamePlayerID` merely for room-global or explicit-target dispatch
 
 lane gameplay output
 requires current room, active game player, and eligible room game state
@@ -1349,7 +1349,7 @@ match-over policy integration
 
 Devtools own debug command behavior after `networking/tooling` applies policy, room, and capability preflight and decodes a `DebugCommand`.
 
-Devtools commands use `sr.tooling`, dispatch through the existing devtools controller, and return correlated `tooling_command_result` or `tooling_error` packets. Developer readouts and legacy telemetry readouts remain on their existing paths. Devtools must not bypass real server-owned gameplay seams.
+Devtools commands and developer-readout requests use `sr.tooling`. Commands dispatch through the existing devtools controller and return correlated `tooling_command_result` or `tooling_error`; readouts preserve their existing application ownership after `ToolingPacketRouter`. Legacy continuous telemetry/ping remains on its existing path. Devtools must not bypass real server-owned gameplay seams.
 
 ### Packet schema pipeline
 

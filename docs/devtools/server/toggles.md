@@ -23,7 +23,7 @@ toggle_debug_freeze_player
 
 `GameplayDebugFlow` and `DevConnectionService` build these command payloads with `request_id` and `trace_id`; `ClientConnectionService.send_tooling_packet()` sends them through `sr.tooling`; and server networking/tooling applies policy, room, and capability preflight before decoding into `devtools.DebugCommand`, routing through `Controller.HandleCommand`, and applying the result through narrow game-owned Control capabilities.
 
-The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Correlated command results/errors return through `ToolingPacketRouter`; debug status and other readouts remain on their existing paths.
+The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Correlated command results/errors and developer readouts return through `ToolingPacketRouter`; downstream presentation ownership remains unchanged.
 
 The toggle system has three kinds of server-owned state:
 

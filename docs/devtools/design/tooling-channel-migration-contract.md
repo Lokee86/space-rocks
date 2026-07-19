@@ -10,7 +10,7 @@ It fixes the transport boundary, packet ownership, capability requirements, atta
 
 ## Status
 
-Phase 1 of the devtools transport migration and migration slice 2, runtime developer commands, are complete.
+The transport foundation, runtime developer command migration, and developer readout migration are complete.
 
 Implemented foundations:
 
@@ -25,14 +25,15 @@ partial telemetry subscription router
 runtime developer command migration through `sr.tooling`
 temporary capability checks and devtools-controller dispatch
 correlated terminal command results and errors
-removal of WebSocket runtime-devtools classification
+debug-status subscription on `sr.tooling`
+debug shape catalog request/response on `sr.tooling`
+preservation of existing client readout presentation ownership
+removal of WebSocket runtime-devtools command and readout routing
 ```
 
 Not yet migrated:
 
 ```text
-debug status subscription and delivery
-debug shape catalog request and delivery
 legacy world-overlay telemetry ping path
 production telemetry snapshot provider
 account-backed authorization
@@ -230,11 +231,11 @@ All migrated commands must carry a non-empty `request_id`. Existing fields such 
 
 | Packet | Current behavior | Final behavior | Capability | Attachment |
 | --- | --- | --- | --- | --- |
-| `debug_status_subscribe` | Not implemented | Start change-driven debug-status delivery | `tooling.read` | Room |
-| `debug_status_unsubscribe` | Not implemented | Stop debug-status delivery | `tooling.read` | Room |
-| `debug_status` | Built by WebSocket write-loop path | Change-driven `sr.tooling` server push while subscribed | `tooling.read` | Room |
-| `debug_shape_catalog_request` | Not implemented | One-shot request for current room catalog | `tooling.read` | Room |
-| `debug_shape_catalog` | Pushed once per room by WebSocket write loop | One-shot `sr.tooling` response; client caches by catalog/version | `tooling.read` | Room |
+| `debug_status_subscribe` | Implemented on `sr.tooling` | Start connection-local bounded-cadence debug-status delivery | `tooling.read` | Room |
+| `debug_status_unsubscribe` | Implemented on `sr.tooling` | Stop debug-status delivery | `tooling.read` | Room |
+| `debug_status` | `sr.tooling` server push while subscribed | First eligible tick, then every eight tooling-router ticks | `tooling.read` | Room |
+| `debug_shape_catalog_request` | Implemented on `sr.tooling` | One-shot request for the current room catalog | `tooling.read` | Room |
+| `debug_shape_catalog` | Correlated one-shot `sr.tooling` response | Client requests once per active room and keeps existing catalog presentation ownership | `tooling.read` | Room |
 | `tooling_command_result` | Implemented by the tooling router | Terminal success response for every migrated mutation command | Inherits `tooling.control` request | Room |
 
 The status stream is subscription-owned, not participation-owned. It may include room-global status and authorized player status maps without requiring the receiving session to control a player.
@@ -252,7 +253,7 @@ request_id is unique within the connection lifetime
 responses echo request_id
 one request receives at most one terminal success response
 rejections and execution failures return tooling_error
-server-pushed subscription data does not reuse the subscription request_id as an event id
+debug-status pushes echo the subscription request_id as stable stream correlation, not as a unique event id
 unknown or late responses are ignored client-side and recorded diagnostically
 ```
 
@@ -333,10 +334,11 @@ The remaining implementation order is fixed after the completed slices:
    -> terminal command results/errors are correlated by request_id
    -> WebSocket runtime-devtools classification removed
 
-3. developer readouts
-   -> debug-status subscribe/unsubscribe
-   -> debug shape catalog request/response
-   -> remove WebSocket write-loop debug output
+3. developer readouts (complete)
+   -> debug-status subscribe/unsubscribe on sr.tooling
+   -> debug shape catalog request/response on sr.tooling
+   -> WebSocket write-loop debug output and client routing removed
+   -> existing devtools display/application ownership preserved
 
 4. continuous telemetry
    -> move legacy overlay ping fully onto sr.tooling
@@ -349,7 +351,7 @@ The remaining implementation order is fixed after the completed slices:
    -> audit and tooling-affected propagation
 ```
 
-Readout migration may proceed after the request/result and policy foundation and completed command migration remain in place.
+The next slice is continuous telemetry and ping migration. After that, telemetry-panel and measurement repairs can target the final transport.
 
 ## Exit criteria
 
@@ -365,7 +367,7 @@ room attachment is not coupled to gameplay participation
 a machine-readable server packet-policy registry covers the inventory
 ```
 
-The overall migration is complete only when no runtime devtools readout uses the WebSocket gameplay packet path and tests prove unauthorized sessions cannot invoke privileged routes.
+No runtime devtools command or developer readout now uses the WebSocket gameplay packet path. The overall migration remains incomplete until continuous telemetry/ping and the final account-backed authorization source are addressed.
 
 ## Code map
 

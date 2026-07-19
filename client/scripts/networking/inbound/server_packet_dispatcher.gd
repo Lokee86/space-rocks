@@ -19,8 +19,6 @@ signal session_delta_received(packet: Dictionary)
 signal event_batch_received(packet: Dictionary)
 signal resync_request_received(packet: Dictionary)
 signal resync_required_received(packet: Dictionary)
-signal debug_shape_catalog_received(packet: Dictionary)
-signal debug_status_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
 signal telemetry_pong_received(packet: Dictionary)
 signal webrtc_answer_received(packet: Dictionary)
@@ -76,10 +74,6 @@ func dispatch(packet: Dictionary) -> void:
 		webrtc_smoke_received.emit(packet)
 	elif ServerPacketRouter.is_webrtc_failed(packet):
 		webrtc_failed_received.emit(packet)
-	elif ServerPacketRouter.is_debug_shape_catalog(packet):
-		debug_shape_catalog_received.emit(packet)
-	elif ServerPacketRouter.is_debug_status(packet):
-		debug_status_received.emit(packet)
 	elif ServerPacketRouter.is_player_pause_state(packet):
 		player_pause_state_received.emit(packet)
 	elif ServerPacketRouter.is_telemetry_pong(packet):

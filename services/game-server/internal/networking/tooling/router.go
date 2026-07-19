@@ -6,15 +6,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/outbound"
 	protocol "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/tooling"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 const telemetryInterval = 250 * time.Millisecond
+const debugStatusIntervalTicks = 8
 
 type Context struct {
 	SessionID         string
 	RoomID            string
 	GamePlayerID      string
+	Room              *rooms.Room
 	Capabilities      CapabilitySet
 	CommandController CommandController
 }
@@ -36,13 +40,16 @@ type TelemetryProvider interface {
 }
 
 type Router struct {
-	mu            sync.Mutex
-	measurement   MeasurementController
-	telemetry     TelemetryProvider
-	subscribed    bool
-	activeRunID   string
-	lastTelemetry time.Time
-	closed        bool
+	mu                    sync.Mutex
+	measurement           MeasurementController
+	telemetry             TelemetryProvider
+	subscribed            bool
+	activeRunID           string
+	lastTelemetry         time.Time
+	debugStatusSubscribed bool
+	debugStatusRequestID  string
+	debugStatusTicks      int
+	closed                bool
 }
 
 func NewRouter(measurement MeasurementController, telemetry TelemetryProvider) *Router {
@@ -59,6 +66,40 @@ func (router *Router) Handle(context Context, sender Sender, packet map[string]a
 	}
 
 	switch packetType {
+	case protocol.PacketTypeDebugStatusSubscribe:
+		var request protocol.DebugStatusSubscribe
+		if !router.decode(packet, &request, sender, packetType) {
+			return true
+		}
+		router.mu.Lock()
+		router.debugStatusSubscribed = true
+		router.debugStatusRequestID = request.RequestID
+		router.debugStatusTicks = 0
+		router.mu.Unlock()
+		return true
+	case protocol.PacketTypeDebugStatusUnsubscribe:
+		var request protocol.DebugStatusUnsubscribe
+		if !router.decode(packet, &request, sender, packetType) {
+			return true
+		}
+		router.mu.Lock()
+		router.debugStatusSubscribed = false
+		router.debugStatusRequestID = ""
+		router.debugStatusTicks = 0
+		router.mu.Unlock()
+		return true
+	case protocol.PacketTypeDebugShapeCatalogRequest:
+		var request protocol.DebugShapeCatalogRequest
+		if !router.decode(packet, &request, sender, packetType) {
+			return true
+		}
+		response, available := outbound.BuildDebugShapeCatalogPacket(context.Room, context.RoomID, request.RequestID)
+		if !available {
+			router.sendError(sender, request.RequestID, "", "debug_shape_catalog_unavailable", "debug shape catalog is not available for this room")
+			return true
+		}
+		router.send(sender, response)
+		return true
 	case protocol.PacketTypeTelemetrySubscribe:
 		var request protocol.TelemetrySubscribe
 		if !router.decode(packet, &request, sender, packetType) {
@@ -125,14 +166,28 @@ func (router *Router) Handle(context Context, sender Sender, packet map[string]a
 
 func (router *Router) Tick(context Context, sender Sender) {
 	router.mu.Lock()
-	if !router.subscribed || router.telemetry == nil || time.Since(router.lastTelemetry) < telemetryInterval {
-		router.mu.Unlock()
-		return
+	debugStatusDue := false
+	debugStatusRequestID := ""
+	if router.debugStatusSubscribed {
+		debugStatusDue = router.debugStatusTicks == 0
+		debugStatusRequestID = router.debugStatusRequestID
+		router.debugStatusTicks = (router.debugStatusTicks + 1) % debugStatusIntervalTicks
 	}
-	router.lastTelemetry = time.Now()
+	telemetryDue := router.subscribed && router.telemetry != nil && time.Since(router.lastTelemetry) >= telemetryInterval
 	provider := router.telemetry
+	if telemetryDue {
+		router.lastTelemetry = time.Now()
+	}
 	router.mu.Unlock()
 
+	if debugStatusDue {
+		if status, available := outbound.BuildDebugStatusPacket(context.Room, context.GamePlayerID, debugStatusRequestID); available {
+			router.send(sender, status)
+		}
+	}
+	if !telemetryDue {
+		return
+	}
 	snapshot, err := provider.TelemetrySnapshot(context)
 	if err != nil {
 		return
@@ -145,15 +200,22 @@ func (router *Router) Tick(context Context, sender Sender) {
 
 func (router *Router) Close(context Context) {
 	router.mu.Lock()
-	if router.closed || router.activeRunID == "" || router.measurement == nil {
-		router.closed = true
+	if router.closed {
 		router.mu.Unlock()
 		return
 	}
 	router.closed = true
+	router.subscribed = false
+	router.debugStatusSubscribed = false
+	router.debugStatusRequestID = ""
+	router.debugStatusTicks = 0
+	runID := router.activeRunID
+	router.activeRunID = ""
 	controller := router.measurement
 	router.mu.Unlock()
-	_ = controller.FinalizePartial(context, "connection_closed")
+	if runID != "" && controller != nil {
+		_ = controller.FinalizePartial(context, "connection_closed")
+	}
 }
 
 func (router *Router) start(context Context, sender Sender, request protocol.MeasurementStart) bool {

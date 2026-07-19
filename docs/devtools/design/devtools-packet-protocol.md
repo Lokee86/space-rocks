@@ -12,54 +12,40 @@ It covers debug command requests, server-emitted debug readouts, source-of-truth
 
 See also: [Game Control Devtools Adapter](../server/game-control-devtools-adapter.md)
 
-The devtools packet protocol currently spans two transports: runtime measurement and runtime debug commands use the dedicated `sr.tooling` WebRTC DataChannel, while developer readouts and legacy telemetry readouts still use their existing normal networking paths pending migration. It is not a developer console protocol and not a parallel gameplay authority layer.
+Runtime measurement, runtime debug commands, and developer readouts use the dedicated reliable ordered `sr.tooling` WebRTC DataChannel. Continuous telemetry/ping is the remaining legacy transport slice. The devtools protocol is not a parallel gameplay authority layer.
 
-Current runtime debug-command flow:
+Current command flow:
 
 ```text
-client devtools input or window control
--> GameplayDebugFlow or DevConnectionService builds request_id/trace_id payload
+client devtools action
+-> generated/request payload with request_id and trace_id
 -> ClientConnectionService.send_tooling_packet(...)
 -> sr.tooling
--> server networking/tooling capability check
--> decode into devtools.DebugCommand
+-> server tooling policy, room, and capability preflight
 -> existing devtools Controller.HandleCommand
--> capability-specific handler
--> game.Control
--> normal authoritative game state mutation
--> correlated tooling_command_result or tooling_error
+-> game-owned Control seam
+-> tooling_command_result or tooling_error
 -> ToolingPacketRouter
--> command consumer
 ```
 
-Current measurement flow:
+Current developer-readout flow:
 
 ```text
-client measurement coordinator
--> generated tooling packet with request_id
--> ClientConnectionService.send_tooling_packet(...)
--> RealtimeTransportSession
--> sr.tooling
--> server tooling router
--> measurement controller
--> correlated measurement response or tooling_error
--> client tooling packet router
--> measurement coordinator and devtools presentation
+active room + ready sr.tooling
+-> debug_status_subscribe(request_id)
+-> bounded-cadence debug_status pushes
+
+active room + ready sr.tooling
+-> debug_shape_catalog_request(request_id)
+-> correlated debug_shape_catalog response or tooling_error
+
+server readout packet
+-> ToolingPacketRouter
+-> ClientConnectionService keeps the existing public readout signal
+-> existing gameplay/devtools presentation owner
 ```
 
-The client may request debug behavior. The server owns whether the request is valid and what gameplay state changes. Client-side devtools packet construction does not confirm success by itself.
-
-Devtools packets currently fall into four broad groups:
-
-```text
-client -> server runtime measurement packets on sr.tooling
-server -> client correlated measurement responses on sr.tooling
-client -> server runtime debug command packets on sr.tooling
-server -> client correlated tooling command results/errors on sr.tooling
-client/server developer readouts and telemetry on existing paths
-```
-
-Measurement and telemetry packet schemas are defined in `shared/packets/tooling.toml`. Runtime debug command schemas remain in `shared/packets/debug.toml` while developer readout schemas remain on their existing paths. The authoritative migration inventory is [Tooling Channel Migration Contract](./tooling-channel-migration-contract.md).
+Measurement, telemetry, and readout request schemas are defined in `shared/packets/tooling.toml`. Runtime debug commands and readout response structs remain in `shared/packets/debug.toml`; their physical route is `sr.tooling`. The authoritative migration inventory is [Tooling Channel Migration Contract](./tooling-channel-migration-contract.md).
 
 ## Debug-only scope
 
@@ -117,7 +103,7 @@ Client networking owns encode/send/decode/dispatch behavior.
 
 The shared packet schema pipeline owns packet type strings, generated constants, generated Go structs, and generated GDScript packet builders.
 
-Game-server networking owns the `sr.tooling` router and channel send boundary, plus the existing WebSocket read/write paths used by developer readouts and legacy telemetry readouts.
+Game-server networking owns the `sr.tooling` router, capability/attachment preflight, readout subscription/request state, and channel send boundary. WebSocket remains responsible for auth, signaling, room/session setup, and the legacy continuous-telemetry path.
 
 Game-server devtools own command dispatch, debug status projection, shape catalog projection, and devtools-specific runtime state such as continuous bullet stream runtime.
 
@@ -168,10 +154,10 @@ Current packet schemas are split by transport ownership:
 
 ```text
 shared/packets/tooling.toml
--> sr.tooling measurement schemas and tooling transport definitions; telemetry migration remains separate
+-> sr.tooling measurement, telemetry, debug-status subscription, and shape-catalog request schemas
 
 shared/packets/debug.toml
--> runtime debug commands and developer readouts; command requests use sr.tooling while readouts retain their existing paths
+-> runtime debug commands and developer readout response structs; commands and readouts use sr.tooling
 ```
 
 Packet output routing is defined in:
@@ -387,127 +373,78 @@ Devtools commands do not route through normal `Game.HandlePacket` gameplay packe
 
 ### Debug status
 
-`debug_status` reports current debug-control state. It is a WebSocket devtools readout packet when its write-loop delivery path is active.
-
-Current packet shape:
+`debug_status` reports authoritative debug-control state through a connection-local `sr.tooling` subscription.
 
 ```text
-type = "debug_status"
-debug_status = status for the receiving/current player
-debug_statuses = map of every match player id to that player's debug status
+debug_status_subscribe(request_id)
+-> first eligible tooling-router tick emits immediately
+-> later pushes occur every eight tooling-router ticks
+-> debug_status.request_id echoes the subscription request ID
+
+debug_status_unsubscribe(request_id)
+-> clears the subscription
 ```
 
-Current debug status fields are:
+Eligibility requires an attached room, `tooling.read`, an active game instance, devtools enabled, and room state `InGame` or `GameOver`. A `GamePlayerID` is not required merely to receive room-global state and the per-player status map.
+
+The packet contains:
 
 ```text
-invincible
-infinite_lives
-world_frozen
-asteroids_frozen
-bullets_frozen
-spawning_frozen
-collisions_frozen
-player_frozen
+type = debug_status
+request_id = active subscription correlation
+debug_status = receiving gameplay identity status when available
+debug_statuses = map of match player IDs to authoritative debug status
 ```
-
-The server can send debug status when:
-
-```text
-room exists
-room has a game instance
-devtools are enabled
-room state is InGame or GameOver
-session has a current game player id
-```
-
-The session write loop triggers normal gameplay presentation output every server write tick; active gameplay lane bytes are delivered over lane-specific WebRTC gameplay DataChannels using the current protocol channel policy. `debug_status` is a WebSocket devtools readout packet when its write-loop delivery path is active. Current docs must not claim periodic `debug_status` delivery unless the active write loop calls the debug status builder.
-
-The client uses `debug_status` for receiver/global status labels and `debug_statuses` for per-player target/status rows.
 
 ### Debug shape catalog
 
-`debug_shape_catalog` reports shape definitions used by server hitbox overlay presentation.
-
-Current packet shape:
+`debug_shape_catalog` is a one-shot correlated `sr.tooling` response.
 
 ```text
-type = "debug_shape_catalog"
-shapes = map of shape id to debug shape definition
+debug_shape_catalog_request(request_id)
+-> tooling.read and room checks
+-> BuildDebugShapeCatalogPacket
+-> debug_shape_catalog with matching request_id
+-> or tooling_error(debug_shape_catalog_unavailable)
 ```
 
-Each shape definition contains:
-
-```text
-id
-kind
-shape_type
-points
-```
-
-The server builds this output from the collision shape catalog and converts it through the devtools shape catalog builder.
-
-The shape catalog is sent from the server write loop when eligible and when the current room ID differs from the last room ID that received a catalog on that connection. It is diagnostic shape metadata, not gameplay authority.
+The client requests it once per active room. The packet contains reusable shape definitions, not live entity state or collision authority. The WebSocket send-once state and write-loop push are removed.
 
 ## Client inbound routing
 
-Client inbound routing uses the normal packet receive path:
+Developer readouts use the tooling receive path:
 
 ```text
-NetworkClient.poll()
--> PacketCodec.decode(text)
--> NetworkClient.packet_received(packet)
--> ClientConnectionService._on_packet_received(packet)
--> ServerPacketDispatcher.dispatch(packet)
--> ServerPacketRouter
+sr.tooling
+-> RealtimeTransportSession.tooling_packet_received
+-> ClientConnectionService._on_tooling_packet_received
+-> ToolingPacketRouter.dispatch
 -> typed signal
--> devtools consumer
+-> existing devtools consumer
 ```
 
-Devtools-related inbound routes currently include:
+Current readout routes are:
 
 ```text
 debug_status
--> NetworkClient.packet_received(packet)
--> ClientConnectionService._on_packet_received(packet)
--> ServerPacketDispatcher.dispatch(packet)
--> ServerPacketRouter classifies debug_status
--> ClientInboundCoordinator.debug_status_received(packet)
--> ClientConnectionService._on_debug_status_received(packet)
--> ClientConnectionService.debug_status_received(packet)
+-> ToolingPacketRouter.debug_status_received
+-> ClientConnectionService.debug_status_received
 -> SessionNetworkController
--> GameplaySessionController.handle_debug_status_packet
--> GameplayComposition.apply_devtools_debug_status_packet
--> GameplayDevtoolsContext.apply_debug_status_packet
--> devtools readmodel refresh built from lane-applied state
+-> GameplaySessionController
+-> GameplayComposition
+-> GameplayDevtoolsContext
+-> debug status readmodel/window refresh
 
 debug_shape_catalog
--> NetworkClient.packet_received(packet)
--> ClientConnectionService._on_packet_received(packet)
--> ServerPacketDispatcher.dispatch(packet)
--> ServerPacketRouter classifies debug_shape_catalog
--> ClientInboundCoordinator.debug_shape_catalog_received(packet)
--> ClientConnectionService._on_debug_shape_catalog_received(packet)
--> ClientConnectionService.debug_shape_catalog_received(packet)
+-> ToolingPacketRouter.debug_shape_catalog_received
+-> ClientConnectionService.debug_shape_catalog_received
 -> SessionNetworkController
--> GameplaySessionController.handle_debug_shape_catalog_packet
--> GameplayComposition.apply_devtools_debug_shape_catalog_packet
--> server hitbox overlay catalog state
-
-telemetry_pong
--> ClientConnectionService.telemetry_pong_received
--> WorldTelemetryContext
--> NetworkTelemetryMetrics
+-> GameplaySessionController
+-> GameplayComposition
+-> server hitbox catalog/overlay flow
 ```
 
-`telemetry_pong` is included here because devtools telemetry consumes it, but it remains a normal gameplay telemetry packet.
-
-Runtime command results and errors use the tooling receive path:
-
-```text
-tooling_command_result or tooling_error
--> ToolingPacketRouter
--> correlated command consumer
-```
+The normal WebSocket `ServerPacketRouter`, `ServerPacketDispatcher`, and `ClientInboundCoordinator` no longer classify these readouts. `telemetry_pong` still follows its existing path until continuous telemetry/ping migration.
 
 ## Client outbound routing
 
@@ -521,7 +458,7 @@ devtools hotkey or window action
 -> sr.tooling
 ```
 
-The server networking/tooling route capability-checks and dispatches the decoded command to the existing devtools controller. `ToolingPacketRouter` receives the correlated `tooling_command_result` or `tooling_error`. Developer readouts and telemetry are not described as migrated by this command route.
+The server networking/tooling route capability-checks commands and readout requests. `ToolingPacketRouter` receives correlated command results/errors plus `debug_status` and `debug_shape_catalog`. Continuous telemetry/ping remains the next migration slice.
 
 ## Build and runtime gates
 
@@ -701,7 +638,7 @@ Server debug output:
 ```text
 services/game-server/internal/devtools/status.go
 services/game-server/internal/devtools/shape_catalog.go
-services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/tooling/router.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 ```
@@ -749,12 +686,12 @@ shared/packets/ owns packet shape, not runtime command semantics.
 
 ## Notes
 
-The `sr.tooling` transport foundation is implemented as the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the eight gameplay channels. Tooling receive routing is separated before normal gameplay dispatch. Runtime measurement and runtime debug commands are active end to end on this channel. Telemetry packet routing exists, but the production telemetry provider and the legacy overlay ping migration remain incomplete. `debug_status` and `debug_shape_catalog` still use their existing WebSocket readout paths pending the migration defined in [Tooling Channel Migration Contract](./tooling-channel-migration-contract.md).
+The `sr.tooling` transport foundation is the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the eight gameplay channels. Runtime measurement, runtime debug commands, debug-status subscription, and shape-catalog request/response are active end to end on this channel. The production telemetry provider and legacy overlay ping migration remain incomplete.
 
 Unexpected required-channel closure preserves the WebSocket/session/room/game context while replacing only the WebRTC peer. Recovery uses a 10-second deadline; success preserves the active match and requests fresh world, overlay, and session baselines, while failure disables only single-player replay.
 
 `debug_status` and `debug_shape_catalog` are devtools readout packets. They help the client render debug controls and overlays, but they do not replace normal lane-native realtime packets.
 
-Measurement and telemetry packet schemas belong to `shared/packets/tooling.toml`. Runtime debug command and readout schemas remain in `shared/packets/debug.toml`; command transport has migrated to `sr.tooling`, while readout transport and any later schema-ownership move remain separate work.
+Measurement, telemetry, and readout request schemas belong to `shared/packets/tooling.toml`. Runtime debug command and readout response schemas remain in `shared/packets/debug.toml`. Their wire transport is `sr.tooling`; later schema consolidation is separate work.
 
 `target_player_id` remains a devtools compatibility field for player-only debug commands. New gameplay targeting should continue to use canonical target kind/id fields instead of extending `target_player_id` further.

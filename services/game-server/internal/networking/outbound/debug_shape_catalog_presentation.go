@@ -4,10 +4,8 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
-	"github.com/google/uuid"
 )
 
 func CanSendDebugShapeCatalog(room *rooms.Room) bool {
@@ -15,13 +13,15 @@ func CanSendDebugShapeCatalog(room *rooms.Room) bool {
 		return false
 	}
 	context := room.GameplayContext()
-	return room != nil &&
-		context.Game != nil &&
+	return context.Game != nil &&
 		devtools.Enabled() &&
 		(context.State == rooms.RoomStateInGame || context.State == rooms.RoomStateGameOver)
 }
 
-func BuildDebugShapeCatalogResponse(room *rooms.Room, roomID string) ([]byte, bool) {
+func BuildDebugShapeCatalogPacket(room *rooms.Room, roomID string, requestID string) (devtools.DebugShapeCatalogPacket, bool) {
+	if !CanSendDebugShapeCatalog(room) {
+		return devtools.DebugShapeCatalogPacket{}, false
+	}
 	catalog, err := physics.LoadCollisionShapeCatalog()
 	if err != nil {
 		logging.Emit(observability.Request{
@@ -32,30 +32,12 @@ func BuildDebugShapeCatalogResponse(room *rooms.Room, roomID string) ([]byte, bo
 				"failure_mode": "collision_shape_catalog_load_failed",
 			},
 		})
-		return nil, false
+		return devtools.DebugShapeCatalogPacket{}, false
 	}
 
-	responsePacket := devtools.DebugShapeCatalogPacket{
-		Type:   "debug_shape_catalog",
-		Shapes: devtools.BuildShapeCatalog(catalog),
-	}
-
-	response, err := packetcodec.Encode(responsePacket)
-	if err != nil {
-		logging.Emit(observability.Request{
-			Event: observability.EventNameOutboundPacketEncodeFailed,
-			Context: observability.Context{
-				TraceID:    uuid.NewString(),
-				RoomID:     roomID,
-				PacketType: "debug_shape_catalog",
-			},
-			Fields: observability.Fields{
-				"error_code":   "debug_shape_catalog_encode_failed",
-				"failure_mode": "debug_shape_catalog_encode_failed",
-			},
-		})
-		return nil, false
-	}
-
-	return response, true
+	return devtools.DebugShapeCatalogPacket{
+		Type:      devtools.PacketTypeDebugShapeCatalog,
+		RequestID: requestID,
+		Shapes:    devtools.BuildShapeCatalog(catalog),
+	}, true
 }

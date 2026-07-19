@@ -1,18 +1,22 @@
 package outbound
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
-func TestBuildDebugStatusResponseIncludesDebugStatusPayload(t *testing.T) {
+func TestBuildDebugStatusPacketIncludesCorrelatedStatusPayload(t *testing.T) {
+	if !devtools.Enabled() {
+		t.Skip("debug status output is disabled by this build")
+	}
 	const (
-		roomID   = "room-1"
-		playerID = "player-1"
+		roomID    = "room-1"
+		playerID  = "player-1"
+		requestID = "request-1"
 	)
 
 	gameInstance := game.New()
@@ -22,31 +26,18 @@ func TestBuildDebugStatusResponseIncludesDebugStatusPayload(t *testing.T) {
 	}
 
 	room := rooms.NewRoom(roomID, rooms.RoomStateInGame, gameInstance)
-
-	response, ok := BuildDebugStatusResponse(room, playerID, roomID)
+	packet, ok := BuildDebugStatusPacket(room, playerID, requestID)
 	if !ok {
-		t.Fatal("expected debug status response to build")
+		t.Fatal("expected debug status packet to build")
 	}
-
-	var payload map[string]any
-	if err := json.Unmarshal(response, &payload); err != nil {
-		t.Fatalf("expected response to decode as json: %v", err)
+	if packet.Type != devtools.PacketTypeDebugStatus {
+		t.Fatalf("type = %q, want %q", packet.Type, devtools.PacketTypeDebugStatus)
 	}
-
-	if got := payload["type"]; got != "debug_status" {
-		t.Fatalf("expected packet type %q, got %v", "debug_status", got)
+	if packet.RequestID != requestID {
+		t.Fatalf("request_id = %q, want %q", packet.RequestID, requestID)
 	}
-
-	if _, ok := payload["debug_status"]; !ok {
-		t.Fatal("expected debug_status to exist")
-	}
-
-	if _, ok := payload["debug_statuses"]; !ok {
-		t.Fatal("expected debug_statuses to exist")
-	}
-
-	if _, ok := payload["debug_collision_bodies"]; ok {
-		t.Fatal("expected debug_collision_bodies to be absent")
+	if len(packet.DebugStatuses) == 0 {
+		t.Fatal("expected debug statuses to be populated")
 	}
 }
 

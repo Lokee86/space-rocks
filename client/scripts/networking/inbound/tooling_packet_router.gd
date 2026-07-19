@@ -10,6 +10,8 @@ signal measurement_snapshot_received(packet: Dictionary)
 signal measurement_stopped_received(packet: Dictionary)
 signal tooling_command_result_received(packet: Dictionary)
 signal tooling_error_received(packet: Dictionary)
+signal debug_status_received(packet: Dictionary)
+signal debug_shape_catalog_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
 
 
@@ -29,5 +31,9 @@ func dispatch(packet: Dictionary) -> void:
 			tooling_command_result_received.emit(packet)
 		Packets.TYPE_TOOLING_ERROR:
 			tooling_error_received.emit(packet)
+		Packets.TYPE_DEBUG_STATUS:
+			debug_status_received.emit(packet)
+		Packets.TYPE_DEBUG_SHAPE_CATALOG:
+			debug_shape_catalog_received.emit(packet)
 		_:
 			unknown_packet_received.emit(packet)
