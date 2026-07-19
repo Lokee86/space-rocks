@@ -366,7 +366,7 @@ That helper combines command-type classification with `Enabled()`.
 
 Outbound debug status and debug shape catalog presentation check `devtools.Enabled()` before sending debug output.
 
-Inbound command routing is implemented through the networking inbound devtools handlers. Those handlers classify debug packet types before normal gameplay packet decode, require an active room and current game player ID, decode the packet into `DebugCommand`, and call `Controller.HandleCommand`.
+Runtime command routing is implemented through `services/game-server/internal/networking/tooling`. The tooling router resolves packet policy, requires room attachment and `tooling.control`, decodes the packet into `DebugCommand`, and calls the existing `Controller.HandleCommand` seam. The current `GamePlayerID` is passed through when present but is not required for explicit-target or room-global dispatch.
 
 Runtime command gates include:
 
@@ -412,7 +412,6 @@ Networking command routing:
 ```text
 services/game-server/internal/networking/client_packet_router.go
 services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/protocol/packetcodec/
 ```
 

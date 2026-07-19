@@ -12,7 +12,7 @@ It covers the debug command surface that spawns players, asteroids, bullets, and
 
 Spawn tools are development-only mutation commands routed through the game server devtools surface.
 
-The server receives devtools packets from the client, decodes them as `devtools.DebugCommand`, constructs `game.NewControl(room.GameInstance())`, wraps it with `devtools.NewController(...)`, and applies the requested spawn through the Control adapter. The client may request a position, direction, entity type, pickup type, or target player id, but the server owns the actual mutation and the resulting authoritative state.
+`GameplayDebugFlow` and `DevConnectionService` build spawn command payloads with `request_id` and `trace_id`; `ClientConnectionService.send_tooling_packet()` sends them through `sr.tooling`; and server networking/tooling applies policy, room, and capability preflight before decoding them as `devtools.DebugCommand` and dispatching to the existing devtools controller. The client may request a position, direction, entity type, pickup type, or target player id, but the server owns the actual mutation and the resulting authoritative state.
 
 The current spawn packet surface is:
 
@@ -81,7 +81,8 @@ The server decides:
 
 * whether the packet type is a spawn command
 * whether the command can be decoded
-* whether the session has an active room and game player id
+* whether the session has an active room and required tooling capability
+* the current `GamePlayerID` value, when present, for command-specific owner or fallback behavior
 * which spawn helper handles the requested entity type
 * whether a requested target player id is valid
 * whether a new debug player id can be allocated
@@ -97,7 +98,7 @@ The spawn command path does not give the client direct write access to server en
 
 The client owns spawn UI and placement input, not spawn authority.
 
-Client-side devtools can start placement actions from hotkeys or the devtools window. The client converts mouse placement into server coordinates and sends the appropriate debug packet.
+Client-side devtools can start placement actions from hotkeys or the devtools window. The client converts mouse placement into server coordinates, adds `request_id` and `trace_id`, and sends the appropriate command through `ClientConnectionService.send_tooling_packet()` over `sr.tooling`.
 
 Current client placement actions include:
 
@@ -124,30 +125,30 @@ event_batch where applicable
 
 ## Command routing
 
-Spawn packets are routed through the inbound devtools packet path before normal gameplay packet handling.
+Spawn commands use the tooling route before normal gameplay packet handling.
 
 The current high-level route is:
 
 ```text
-websocket message
--> inbound classifier
+client command payload with request_id and trace_id
+-> sr.tooling
+-> networking/tooling policy, room, and capability preflight
 -> packet decode into devtools.DebugCommand
--> game.NewControl
--> devtools.NewController
--> Controller.HandleCommand
+-> existing devtools Controller.HandleCommand
 -> capability-specific handler
 -> game.Control
+-> correlated tooling_command_result or tooling_error
 -> lane-native realtime projection
 ```
 
-`HandlePlacementDevtoolsPacket` recognizes:
+The tooling command policy recognizes:
 
 ```text
 debug_spawn_entity
 debug_spawn_pickup
 ```
 
-The handler ignores placement devtools packets when the session has no current room or no current game player id. Decode failures are logged through network logging and stop command execution.
+The route rejects commands without a current room or required capability. A missing `GamePlayerID` does not block room-global or explicit-target command dispatch; command-specific owner or fallback requirements are enforced by the handler. Decode failures return `tooling_error` and stop command execution.
 
 `Controller.HandleCommand` dispatches spawn commands to:
 
@@ -172,6 +173,8 @@ The shared debug command struct contains the spawn fields used by both generic e
 
 ```text
 type
+request_id
+trace_id
 target_player_id
 entity_type
 pickup_type
@@ -445,9 +448,7 @@ has_direction
 has_target_player_id
 ```
 
-Inbound decode failures are logged through network logging as websocket devtools command decode failures.
-
-There is no separate spawn telemetry packet. Spawn outcomes are confirmed by normal logs and by authoritative state readback.
+Tooling decode failures are reported as correlated `tooling_error` responses. There is no separate spawn telemetry packet; spawn outcomes are confirmed by normal logs and authoritative state readback.
 
 ## Build/runtime gates
 
@@ -477,10 +478,11 @@ Spawn command files do not own this gate directly. They are implementation handl
 
 Runtime gates also apply:
 
-* inbound routing requires a recognized spawn packet type
+* tooling policy requires a recognized spawn packet type
+* the session must have the `tooling.control` capability
 * command decode must succeed
 * the session must have a current room
-* the session must have a current game player id
+* `GamePlayerID` is passed through when present but is not required merely to dispatch a room-global or explicit-target command
 * generic entity spawn must name a supported entity type
 * player spawn must resolve or allocate a valid player id
 * bullet spawn must have a nonempty owner id and nonzero direction
@@ -536,13 +538,12 @@ services/game-server/internal/devtools/enabled_default.go
 services/game-server/internal/devtools/enabled_nodevtools.go
 ```
 
-Inbound routing files:
+Tooling command routing files:
 
 ```text
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
-services/game-server/internal/networking/inbound/client_packet_envelope.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 ```
 
 Game-owned spawn seams:

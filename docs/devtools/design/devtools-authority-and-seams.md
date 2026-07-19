@@ -21,18 +21,18 @@ Current authority flow:
 ```text
 client devtools input or window action
 -> client devtools context
--> generated or hand-built debug packet
--> normal client networking send path
--> game-server inbound packet classification
+-> GameplayDebugFlow or DevConnectionService builds request_id/trace_id command payload
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> server networking/tooling capability preflight
 -> packet decode into devtools.DebugCommand
--> game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> Controller.HandleCommand
+-> existing devtools Controller.HandleCommand
 -> capability-specific handler
 -> game.Control
 -> owning gameplay state, simulation option, spawn, damage, counter, respawn, or clear-entity path
--> outbound gameplay/debug presentation packets
--> client devtools readmodels and overlays
+-> correlated tooling_command_result or tooling_error
+-> ToolingPacketRouter
+-> client devtools command consumer
 ```
 
 The devtools seam is allowed to request and display debug-only behavior. It is not allowed to duplicate gameplay rules, mutate client gameplay state as authority, or reach into core gameplay internals without a named game-owned Control adapter and capability interface.
@@ -81,8 +81,8 @@ The server decides:
 
 ```text
 whether a session has a current room
-whether a session has a current game player id
-whether a command packet is a devtools command
+whether a session has the required tooling capability
+whether a command packet is a tooling command
 how target scopes resolve
 whether a target player exists
 whether a spawn, respawn, counter, freeze, clear, or kill operation applies
@@ -137,7 +137,7 @@ mutate synced gameplay entities as a substitute for server state
 turn a non-player canonical target into a player-only command target
 ```
 
-Client confirmation comes from later server output: gameplay state, debug status, shape catalog data, entity presence/absence, or other server-owned presentation packets.
+Command confirmation comes from the correlated `tooling_command_result` or `tooling_error`. Authoritative readouts still come from later server output such as gameplay state, debug status, shape catalog data, entity presence/absence, or other server-owned presentation packets.
 
 ## Packet and command boundary
 
@@ -148,14 +148,12 @@ The game server decodes the packet envelope first. Devtools packet families rout
 Current server command route:
 
 ```text
-raw websocket message
--> inbound.DecodeClientPacketEnvelope
--> inbound.RouteClientPacket
--> inbound.HandleSimpleDevtoolsPacket / HandlePlacementDevtoolsPacket / HandleRemainingDevtoolsPacket
--> packetcodec.Decode(raw message, devtools.DebugCommand)
--> game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> Controller.HandleCommand
+GameplayDebugFlow or DevConnectionService
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> networking/tooling preflight and capability check
+-> decode into devtools.DebugCommand
+-> existing devtools Controller.HandleCommand
 ```
 
 Devtools commands do not route through `Game.HandlePacket`.
@@ -377,7 +375,7 @@ public-build input-map removal for DevToggle0 through DevToggle9
 gameplay-state-required checks before command sends
 connection-service-required checks before packet sends
 placement-route-required checks before placement tools
-open-websocket checks before raw packet sending
+available sr.tooling channel checks before runtime command sending
 ```
 
 Server-side gates are the authority gates.
@@ -385,9 +383,9 @@ Server-side gates are the authority gates.
 Current server-side gates include:
 
 ```text
-devtools packet classification in inbound networking
+tooling packet policy and capability checks in networking/tooling
 current room required before command application
-current game player id required before command application
+current game player id passed through when present, but not required for dispatch
 command handlers deciding whether targets and payloads apply
 devtools.Enabled() build-tag switch for debug presentation output
 ```
@@ -410,7 +408,7 @@ services/game-server/internal/devtools/
 -> owns debug command handling, debug status projection, and devtools runtime helpers
 
 services/game-server/internal/networking/
--> owns WebSocket read/write loops and packet-family routing
+-> owns WebSocket read/write loops, sr.tooling routing, and channel-family routing
 
 client/scripts/devtools/
 -> owns client devtools presentation, input coordination, overlays, readmodels, and packet requests
@@ -444,10 +442,10 @@ services/game-server/internal/devtools/packets_generated.go
 ### Server command routing
 
 ```text
-services/game-server/internal/networking/websocket_read.go
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/websocket_session.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 services/game-server/internal/devtools/command_types.go
 services/game-server/internal/devtools/handler.go
 ```
@@ -535,9 +533,11 @@ client/scripts/networking/client_connection_service.gd
 client/scripts/networking/network_client.gd
 client/scripts/networking/packets/packet_codec.gd
 client/scripts/networking/outbound/client_packet_sender.gd
-client/scripts/networking/outbound/devtools_client_packets.gd
 client/scripts/networking/inbound/server_packet_router.gd
 client/scripts/networking/inbound/server_packet_dispatcher.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
+client/scripts/devtools/gameplay_debug_flow.gd
+client/scripts/devtools/dev_connection_service.gd
 ```
 
 ## Tests and verification

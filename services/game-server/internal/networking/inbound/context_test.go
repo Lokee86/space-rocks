@@ -40,8 +40,4 @@ func TestHandlersCaptureSessionContextOnce(t *testing.T) {
 	if !HandleGameplayPacket(s, game.ClientPacket{Type: game.PacketTypeClientConfig, Config: runtime.ClientConfig{VisibleWorldWidth: 10, VisibleWorldHeight: 10}}) || s.calls != 1 {
 		t.Fatalf("gameplay context calls=%d", s.calls)
 	}
-	s.calls = 0
-	if !HandleSimpleDevtoolsPacket(s, "remote", []byte("bad"), ClientPacketEnvelope{Type: "debug_set_score"}) || s.calls != 1 {
-		t.Fatalf("devtools context calls=%d", s.calls)
-	}
 }

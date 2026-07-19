@@ -32,6 +32,7 @@ signal telemetry_snapshot_received(packet: Dictionary)
 signal measurement_started_received(packet: Dictionary)
 signal measurement_snapshot_received(packet: Dictionary)
 signal measurement_stopped_received(packet: Dictionary)
+signal tooling_command_result_received(packet: Dictionary)
 signal tooling_error_received(packet: Dictionary)
 signal recovery_started(lane: String)
 signal recovery_succeeded()
@@ -106,6 +107,7 @@ func _ready() -> void:
 	_connect_tooling_router_signal("measurement_started_received", Callable(self, "_on_measurement_started_received"))
 	_connect_tooling_router_signal("measurement_snapshot_received", Callable(self, "_on_measurement_snapshot_received"))
 	_connect_tooling_router_signal("measurement_stopped_received", Callable(self, "_on_measurement_stopped_received"))
+	_connect_tooling_router_signal("tooling_command_result_received", Callable(self, "_on_tooling_command_result_received"))
 	_connect_tooling_router_signal("tooling_error_received", Callable(self, "_on_tooling_error_received"))
 	var ready_handler := Callable(self, "_on_realtime_transport_ready")
 	if !client_inbound_coordinator.is_connected("realtime_transport_ready", ready_handler):
@@ -301,16 +303,6 @@ func send_telemetry_ping(sequence: int, client_sent_msec: int) -> void:
 		send_tooling_packet(TelemetryClientPackets.telemetry_ping_packet(sequence, client_sent_msec))
 
 
-func send_debug_kill_player_request(target_scope: String = "", target_player_id: String = "") -> void:
-	if _can_send_outbound():
-		client_packet_sender.send_debug_kill_player_request(target_scope, target_player_id)
-
-
-func send_debug_kill_target_player_request(target_player_id: String, target_scope: String = "") -> void:
-	if _can_send_outbound():
-		client_packet_sender.send_debug_kill_target_player_request(target_player_id, target_scope)
-
-
 func send_leave_room_request() -> void:
 	if _can_send_outbound():
 		client_packet_sender.send_leave_room_request()
@@ -491,6 +483,10 @@ func _on_measurement_snapshot_received(packet: Dictionary) -> void:
 
 func _on_measurement_stopped_received(packet: Dictionary) -> void:
 	measurement_stopped_received.emit(packet)
+
+
+func _on_tooling_command_result_received(packet: Dictionary) -> void:
+	tooling_command_result_received.emit(packet)
 
 
 func _on_tooling_error_received(packet: Dictionary) -> void:

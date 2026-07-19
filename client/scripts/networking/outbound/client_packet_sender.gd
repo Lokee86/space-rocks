@@ -2,7 +2,6 @@ extends RefCounted
 
 const LobbyClientPackets = preload("res://scripts/networking/outbound/lobby_client_packets.gd")
 const GameplayClientPackets = preload("res://scripts/networking/outbound/gameplay_client_packets.gd")
-const DevtoolsClientPackets = preload("res://scripts/networking/outbound/devtools_client_packets.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
@@ -112,66 +111,6 @@ func send_select_target_at_position_request(x, y, target_kind, target_id) -> voi
 
 func send_clear_target_request() -> void:
 	send_packet(GameplayClientPackets.clear_target_request_packet())
-
-
-# Devtools
-func send_debug_kill_player_request(target_scope: String = "", target_player_id: String = "") -> void:
-	send_packet(DevtoolsClientPackets.debug_kill_player_packet(target_scope, target_player_id))
-
-
-func send_debug_kill_target_player_request(target_player_id: String, target_scope: String = "") -> void:
-	send_packet(DevtoolsClientPackets.debug_kill_target_player_packet(target_player_id, target_scope))
-
-
-func send_toggle_debug_invincible_request() -> void:
-	send_packet(DevtoolsClientPackets.toggle_debug_invincible_packet())
-
-
-func send_toggle_debug_invincible_target_player_request(target_player_id: String) -> void:
-	send_packet(DevtoolsClientPackets.toggle_debug_invincible_target_player_packet(target_player_id))
-
-
-func send_toggle_debug_infinite_lives_request() -> void:
-	send_packet(DevtoolsClientPackets.toggle_debug_infinite_lives_packet())
-
-
-func send_toggle_debug_infinite_lives_target_player_request(target_player_id: String) -> void:
-	send_packet(DevtoolsClientPackets.toggle_debug_infinite_lives_target_player_packet(target_player_id))
-
-
-func send_toggle_debug_freeze_world_request(freeze_target: String = "") -> void:
-	send_packet(DevtoolsClientPackets.toggle_debug_freeze_world_target_packet(freeze_target))
-
-
-func send_toggle_debug_freeze_player_request(target_scope: String = "", target_player_id: String = "") -> void:
-	if target_scope == "" && target_player_id == "":
-		send_packet(DevtoolsClientPackets.toggle_debug_freeze_player_packet())
-	else:
-		send_packet(DevtoolsClientPackets.toggle_debug_freeze_player_target_player_packet(target_player_id))
-
-
-func send_debug_set_score_request(_target_scope: String, target_player_id: String, score: int) -> void:
-	send_packet(DevtoolsClientPackets.debug_set_score_packet(target_player_id, score))
-
-
-func send_debug_add_score_request(_target_scope: String, target_player_id: String, amount: int) -> void:
-	send_packet(DevtoolsClientPackets.debug_add_score_packet(target_player_id, amount))
-
-
-func send_debug_set_lives_request(_target_scope: String, target_player_id: String, lives: int) -> void:
-	send_packet(DevtoolsClientPackets.debug_set_lives_packet(target_player_id, lives))
-
-
-func send_debug_add_lives_request(_target_scope: String, target_player_id: String, amount: int) -> void:
-	send_packet(DevtoolsClientPackets.debug_add_lives_packet(target_player_id, amount))
-
-
-func send_debug_clear_bullets_request() -> void:
-	send_packet(DevtoolsClientPackets.debug_clear_bullets_packet())
-
-
-func send_debug_clear_asteroids_request() -> void:
-	send_packet(DevtoolsClientPackets.debug_clear_asteroids_packet())
 
 
 # Lobby

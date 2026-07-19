@@ -227,6 +227,25 @@ func test_send_tooling_packet_routes_through_realtime_transport() -> void:
 	assert_eq(peer.tooling_packets, [{"type": "tooling_packet", "value": 1}])
 
 
+func test_tooling_command_result_is_forwarded_from_tooling_router() -> void:
+	var service := ClientConnectionService.new()
+	add_child_autofree(service)
+	var received: Array = []
+	service.tooling_command_result_received.connect(func(packet: Dictionary) -> void:
+		received.append(packet)
+	)
+	var packet := {
+		"type": "tooling_command_result",
+		"request_id": "request-1",
+		"command_type": "debug_clear_bullets",
+		"applied": true,
+	}
+
+	service._on_tooling_packet_received(packet)
+
+	assert_eq(received, [packet])
+
+
 func test_resync_required_uses_active_match_and_suppresses_when_inactive() -> void:
 	var service := ClientConnectionService.new()
 	add_child_autofree(service)

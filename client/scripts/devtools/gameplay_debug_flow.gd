@@ -58,7 +58,7 @@ func toggle_invincible(
 	target_player_id: String = ""
 ) -> void:
 	var operation_trace := create_operation_trace("devtools.toggle_invincible")
-	if connection_service == null || !connection_service.has_method("send_packet"):
+	if connection_service == null || !connection_service.has_method("send_tooling_packet"):
 		_emit_dependency_unavailable()
 		return
 	debug_invincible_enabled = !debug_invincible_enabled
@@ -153,9 +153,10 @@ func clear_asteroids() -> void:
 
 func _send_command(packet: Dictionary, operation_trace: ClientOperationTrace) -> void:
 	var trace_id := operation_trace.trace_id()
+	packet[Packets.FIELD_REQUEST_ID] = trace_id
 	packet[Packets.FIELD_TRACE_ID] = trace_id
 	var command_type := str(packet.get(Packets.FIELD_TYPE, ""))
-	if connection_service == null || !connection_service.has_method("send_packet"):
+	if connection_service == null || !connection_service.has_method("send_tooling_packet"):
 		_emit_dependency_unavailable()
 		return
 	ClientLogger.emit_canonical(
@@ -164,7 +165,7 @@ func _send_command(packet: Dictionary, operation_trace: ClientOperationTrace) ->
 		{"trace_id": trace_id},
 		{"command_type": command_type}
 	)
-	connection_service.send_packet(packet, trace_id)
+	connection_service.send_tooling_packet(packet)
 
 
 func _emit_dependency_unavailable() -> void:

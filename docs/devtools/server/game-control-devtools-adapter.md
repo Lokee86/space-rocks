@@ -85,7 +85,7 @@ The server command path is:
 networking read loop
 -> DecodeClientPacketEnvelope
 -> inbound.RouteClientPacket
--> inbound devtools packet classifier
+-> sr.tooling packet policy, room, and capability preflight
 -> packetcodec.Decode into devtools.DebugCommand
 -> Controller.HandleCommand
 -> command-specific handler
@@ -285,7 +285,6 @@ That helper combines command-type classification with `devtools.Enabled()` and h
 The current inbound router classifies devtools packets in:
 
 ```text
-services/game-server/internal/networking/inbound/devtools.go
 ```
 
 It uses route-local packet-type classifiers for simple commands, placement commands, and remaining devtools commands before decoding normal gameplay packets. That route also requires a current room and a non-empty current game player ID before dispatching a command to `Controller.HandleCommand`.
@@ -295,7 +294,7 @@ When changing devtools gates, keep these surfaces aligned:
 ```text
 devtools.Enabled
 devtools.ShouldHandleCommand
-networking inbound devtools classification
+networking/tooling policy and capability preflight
 networking outbound debug status/catalog sending
 ```
 
@@ -304,7 +303,7 @@ Runtime gates include:
 ```text
 current room must exist
 current game player ID must exist
-command type must be recognized by the inbound devtools route
+command type must be recognized by the tooling packet-policy registry
 command payload must decode into devtools.DebugCommand
 handler-specific target and payload checks must pass
 Control capability or public game method must accept the operation

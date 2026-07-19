@@ -328,14 +328,13 @@ safe respawn position must resolve
 force respawn must succeed
 ```
 
-If the current session has no room or no current game player ID, inbound devtools routing consumes the packet without applying a command. This prevents debug command packets from falling through into normal gameplay packet routing.
+The tooling route rejects the command when room attachment or `tooling.control` is missing. A missing `GamePlayerID` does not block an explicit-target or `all_players` respawn command; command-specific target resolution decides whether the request applies. Rejections return a correlated `tooling_error` and never fall through into normal gameplay routing.
 
 ## Code map
 
 Primary server implementation:
 
 ```text
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/devtools/handler.go
 services/game-server/internal/devtools/command_types.go
 services/game-server/internal/devtools/respawn_handler.go

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	toolingrouter "github.com/Lokee86/space-rocks/services/game-server/internal/networking/tooling"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
@@ -40,6 +42,7 @@ type webSocketSession struct {
 	webrtcTransport             *WebRTCTransport
 	packetObserver              packetObserver
 	toolingRouter               *toolingrouter.Router
+	toolingCapabilities         toolingrouter.CapabilitySet
 }
 
 func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
@@ -64,6 +67,7 @@ func newWebSocketSessionWithTooling(conn *websocket.Conn, roomManager *rooms.Roo
 		matchResultReporter: reporter,
 		packetObserver:      packetObserverFor(measurementController),
 		toolingRouter:       toolingrouter.NewRouter(measurementController, telemetryProvider),
+		toolingCapabilities: toolingrouter.NewTemporaryCapabilitySet(),
 	}
 }
 
@@ -357,8 +361,7 @@ func (session *webSocketSession) handleToolingPacket(packet map[string]any) {
 	if router == nil || transport == nil {
 		return
 	}
-	context := session.sessionContext()
-	router.Handle(toolingrouter.Context{SessionID: session.sessionID, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID}, transport, packet)
+	router.Handle(session.toolingContext(), transport, packet)
 }
 
 func (session *webSocketSession) writeToolingProtocolMessage() {
@@ -367,14 +370,32 @@ func (session *webSocketSession) writeToolingProtocolMessage() {
 	if router == nil || transport == nil {
 		return
 	}
-	context := session.sessionContext()
-	router.Tick(toolingrouter.Context{SessionID: session.sessionID, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID}, transport)
+	router.Tick(session.toolingContext(), transport)
 }
 
 func (session *webSocketSession) closeTooling() {
 	if session.toolingRouter == nil {
 		return
 	}
+	session.toolingRouter.Close(session.toolingContext())
+}
+
+func (session *webSocketSession) toolingContext() toolingrouter.Context {
 	context := session.sessionContext()
-	session.toolingRouter.Close(toolingrouter.Context{SessionID: session.sessionID, RoomID: context.RoomID, GamePlayerID: context.GamePlayerID})
+	toolingContext := toolingrouter.Context{
+		SessionID:    session.sessionID,
+		RoomID:       context.RoomID,
+		GamePlayerID: context.GamePlayerID,
+		Capabilities: session.toolingCapabilities,
+	}
+	if context.Room == nil {
+		return toolingContext
+	}
+	gameplayContext := context.Room.GameplayContext()
+	if gameplayContext.Game == nil {
+		return toolingContext
+	}
+	control := game.NewControl(gameplayContext.Game)
+	toolingContext.CommandController = devtools.NewController(devtools.Dependencies{Target: control})
+	return toolingContext
 }

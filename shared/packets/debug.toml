@@ -132,6 +132,12 @@ json = "type"
 type = "string"
 
 [[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
 name = "trace_id"
 go_name = "TraceID"
 json = "trace_id"

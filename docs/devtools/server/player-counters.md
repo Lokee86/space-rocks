@@ -72,18 +72,17 @@ The server owns all player counter consequences.
 The command path is:
 
 ```text
-client debug packet
--> WebSocket read loop
--> inbound packet envelope decode
--> inbound devtools packet classification
--> packetcodec.Decode(..., devtools.DebugCommand)
--> game.NewControl(room.GameInstance())
--> devtools.NewController(devtools.Dependencies{Target: control})
--> Controller.HandleCommand(currentGamePlayerID, command)
+GameplayDebugFlow or DevConnectionService builds request_id/trace_id command payload
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> server networking/tooling capability check and room attachment check
+-> devtools.Controller.HandleCommand(passedGamePlayerID, command)
 -> counter handler
 -> target resolution
 -> Control.SetPlayerScore / Control.AddPlayerScore / Control.SetPlayerLives / Control.AddPlayerLives
 -> playerSession.Score or playerSession.Lives
+-> tooling_command_result or tooling_error
+-> ToolingPacketRouter
 ```
 
 The devtools package owns command policy and controller wiring. It does not own authoritative counter storage.
@@ -124,13 +123,13 @@ target_player_id if present
 else requesting player ID
 ```
 
-The requesting player ID comes from the current WebSocket session’s active game player ID.
+The requesting player ID is the current `GamePlayerID` value passed through the tooling context. It may be empty; command dispatch does not require gameplay participation, but single-player fallback cannot resolve a target without a player ID.
 
-A valid devtools packet requires a current room and a current active game player before command handling is reached. If either is missing, inbound devtools routing consumes the packet and applies no command.
+A valid counter command requires a room attachment and the `tooling.control` capability. An active game player is not required before command dispatch is reached.
 
 ## Client presentation
 
-The client presents player counter controls in the devtools window and sends command packets through the normal networking path.
+The client presents player counter controls in the devtools window. `GameplayDebugFlow` and `DevConnectionService` build each command with `request_id` and `trace_id`, and `ClientConnectionService.send_tooling_packet()` sends it through `sr.tooling`.
 
 The server-side player counter doc does not own the client UI, but the server expects these client-originated packet shapes:
 
@@ -206,7 +205,7 @@ Each command iterates all resolved target player IDs and applies the requested c
 
 The handler returns `true` when at least one target player session is found and mutated. It returns `false` when the game instance is nil or no resolved player ID maps to an existing player session.
 
-There is no dedicated success or failure response packet for these commands. Confirmation is observed through subsequent authoritative lane packet readback.
+Successful application returns a correlated `tooling_command_result` with `applied=true`; unavailable or unapplied commands return a correlated `tooling_error`. Subsequent authoritative lane packet readback confirms the resulting counter state.
 
 ## Telemetry
 
@@ -257,7 +256,7 @@ command type matches a devtools counter packet
 resolved target player session exists
 ```
 
-If the current room or active game player ID is missing, inbound devtools routing consumes the packet and applies no mutation.
+If room attachment or `tooling.control` is missing, the tooling route rejects the command with a correlated `tooling_error`. A missing `GamePlayerID` does not block an explicit-target counter command.
 
 If packet decode fails, networking logs the decode failure and applies no mutation.
 
@@ -313,9 +312,9 @@ Inbound routing:
 ```text
 services/game-server/internal/networking/websocket_read.go
 services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
-services/game-server/internal/protocol/packetcodec/codec.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 ```
 
 Build gates:
@@ -339,12 +338,13 @@ Client presentation and send path references:
 
 ```text
 client/scripts/devtools/gameplay_debug_flow.gd
+client/scripts/devtools/dev_connection_service.gd
 client/scripts/devtools/context/devtools_command_context.gd
 client/scripts/devtools/devtools_target_resolver.gd
 client/scripts/devtools/devtools_window.gd
 client/scripts/devtools/devtools_window_controller.gd
-client/scripts/networking/outbound/devtools_client_packets.gd
-client/scripts/networking/outbound/client_packet_sender.gd
+client/scripts/networking/client_connection_service.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
 ```
 
 Related tests:

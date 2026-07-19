@@ -15,6 +15,7 @@ const (
 	PacketTypeMeasurementSnapshot        = "measurement_snapshot"
 	PacketTypeMeasurementStopped         = "measurement_stopped"
 	PacketTypeToolingError               = "tooling_error"
+	PacketTypeToolingCommandResult       = "tooling_command_result"
 )
 
 type TelemetrySubscribe struct {
@@ -110,4 +111,11 @@ type ToolingError struct {
 	RunID     string `json:"run_id"`
 	ErrorCode string `json:"error_code"`
 	Message   string `json:"message"`
+}
+
+type ToolingCommandResult struct {
+	Type        string `json:"type"`
+	RequestID   string `json:"request_id"`
+	CommandType string `json:"command_type"`
+	Applied     bool   `json:"applied"`
 }

@@ -380,7 +380,6 @@ Inbound routing:
 ```text
 services/game-server/internal/networking/client_packet_router.go
 services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
 ```
 
 Game-owned control boundary:

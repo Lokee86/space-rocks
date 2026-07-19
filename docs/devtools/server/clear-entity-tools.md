@@ -19,7 +19,7 @@ debug_clear_bullets
 debug_clear_asteroids
 ```
 
-Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. The requesting client sends a generated debug packet, networking routes it through the devtools command path, and the server mutates the authoritative `Game` entity store through `Control.ClearBullets` and `Control.ClearAsteroids`.
+Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. `GameplayDebugFlow` or `DevConnectionService` builds the command payload with `request_id` and `trace_id`; `ClientConnectionService.send_tooling_packet()` sends it through `sr.tooling`; and server networking/tooling capability-checks and dispatches it to the existing devtools controller before the authoritative `Game` entity store is mutated through `Control.ClearBullets` and `Control.ClearAsteroids`.
 
 Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
 
@@ -71,7 +71,7 @@ bullets   -> game.entities.Projectiles
 asteroids -> game.entities.Asteroids
 ```
 
-The returned count is currently an internal helper result. The clear command handlers do not send an acknowledgement packet with the count.
+The returned count is currently an internal helper result. Successful clear commands return a correlated `tooling_command_result` without the count; rejected or unapplied commands return a correlated `tooling_error`.
 
 Asteroid clears produce asteroid lifecycle deletes on the authoritative server. The next client hot movement updates cannot recreate deleted asteroids.
 
@@ -94,10 +94,13 @@ This keeps clear tools aligned with the normal server-authoritative presentation
 
 ```text
 client button
--> generated debug packet
--> websocket send path
--> server devtools command route
+-> GameplayDebugFlow or DevConnectionService builds request_id/trace_id command payload
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> server networking/tooling capability check and devtools controller dispatch
 -> game-owned entity store mutation
+-> tooling_command_result or tooling_error
+-> ToolingPacketRouter
 -> next authoritative family-specific realtime readback
 -> client world sync removes missing entities
 ```
@@ -127,23 +130,21 @@ The generated `DebugCommand` type contains shared fields used by other devtools 
 
 ## Routing behavior
 
-Clear commands are classified as simple devtools packets by the inbound networking route.
-
 The route is:
 
 ```text
-networking.handleClientPacket
--> inbound.RouteClientPacket
--> inbound.HandleSimpleDevtoolsPacket
--> inbound.handleDevtoolsCommandPacket
+GameplayDebugFlow or DevConnectionService
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> networking/tooling preflight
 -> Controller.HandleCommand
 -> handleDebugClearBullets / handleDebugClearAsteroids
 -> Control.ClearBullets / Control.ClearAsteroids
 ```
 
-If the websocket session has no current room or no current game player ID, the devtools packet is consumed and no mutation is applied.
+The tooling route requires the room attachment and `tooling.control` capability. A current game player ID is not required merely to dispatch a room/global clear command.
 
-If the command cannot decode into `devtools.DebugCommand`, networking logs a devtools command decode warning and consumes the packet.
+If the command cannot decode into `devtools.DebugCommand`, the tooling route returns `tooling_error` and does not mutate state.
 
 If `Controller.HandleCommand` receives a nil game target, the clear handler returns `false` and performs no mutation.
 
@@ -173,7 +174,7 @@ nodevtools     -> devtools.Enabled() == false
 
 `devtools.ShouldHandleCommand(packetType)` combines command-type recognition with the build gate and is covered by devtools tests.
 
-Clear-entity packet classification and dispatch are part of the general inbound devtools command routing. Command-routing documentation owns the cross-command gate policy; this document only covers the clear-entity command behavior itself.
+Clear-entity packet policy and dispatch are part of the general `sr.tooling` command route. Command-routing documentation owns the cross-command room and capability gates; this document only covers the clear-entity command behavior itself.
 
 ## Code map
 
@@ -191,9 +192,9 @@ Command dispatch and packet classification:
 services/game-server/internal/devtools/handler.go
 services/game-server/internal/devtools/command_types.go
 services/game-server/internal/devtools/packets_generated.go
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 ```
 
 Entity storage:
@@ -214,12 +215,13 @@ Client request path:
 
 ```text
 client/scripts/devtools/gameplay_debug_flow.gd
+client/scripts/devtools/dev_connection_service.gd
 client/scripts/devtools/context/devtools_command_context.gd
 client/scripts/devtools/context/devtools_window_action_context.gd
 client/scripts/devtools/devtools_window_controller.gd
 client/scripts/devtools/devtools_window.gd
-client/scripts/networking/outbound/devtools_client_packets.gd
-client/scripts/networking/outbound/client_packet_sender.gd
+client/scripts/networking/client_connection_service.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
 ```
 
 Related runtime state outside the clear handler:

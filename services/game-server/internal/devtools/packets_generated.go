@@ -23,6 +23,7 @@ const (
 
 type DebugCommand struct {
 	Type           string  `json:"type"`
+	RequestID      string  `json:"request_id"`
 	TraceID        string  `json:"trace_id"`
 	TargetPlayerID string  `json:"target_player_id"`
 	TargetScope    string  `json:"target_scope"`

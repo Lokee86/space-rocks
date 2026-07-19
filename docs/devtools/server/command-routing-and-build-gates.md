@@ -6,28 +6,24 @@ Parent index: [Server](./!INDEX.md)
 
 This document describes how server devtools command packets are routed, dispatched, and gated in the game server.
 
-It covers the WebSocket inbound route, devtools command classification, command dispatch, server-owned mutation seams, runtime/session gates, compile-time build gates, outbound debug packet gates, telemetry, tests, and implementation boundaries.
+It covers the `sr.tooling` command route, devtools command policy and dispatch, server-owned mutation seams, runtime/session gates, compile-time build gates, outbound debug packet gates, telemetry, tests, and implementation boundaries.
 
 ## Overview
 
-Server devtools commands are client-requested, server-authoritative debug actions. The client sends generated debug packets over the normal WebSocket connection. The game server classifies those packets before normal gameplay packet decoding, decodes them into the devtools command shape, and dispatches them through `services/game-server/internal/devtools`.
+Server devtools commands are client-requested, server-authoritative debug actions. `GameplayDebugFlow` and `DevConnectionService` build command payloads with `request_id` and `trace_id`; `ClientConnectionService.send_tooling_packet()` sends them through `sr.tooling`; and server networking/tooling capability-checks, decodes, and dispatches them through `services/game-server/internal/devtools`.
 
 Current high-level command flow:
 
 ```text
-client debug packet
--> WebSocket read loop
--> minimal packet envelope decode
--> inbound packet router
--> devtools packet group classifier
+client command payload with request_id and trace_id
+-> sr.tooling
+-> networking/tooling policy, room, and capability preflight
 -> devtools.DebugCommand decode
--> game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> Controller.HandleCommand
+-> existing devtools Controller.HandleCommand
 -> capability-specific handler
 -> game.Control
 -> authoritative game state mutation
--> lane-native gameplay readback or debug output back to client
+-> correlated tooling_command_result or tooling_error
 ```
 
 Devtools commands intentionally do not route through `Game.HandlePacket`. They are not normal gameplay packets, even when they affect gameplay state. Their command packet structs and packet constants are generated under the devtools package, while normal gameplay/lobby/auth/telemetry packet structs are generated under the game package.
@@ -67,9 +63,9 @@ It must not:
 
 The game server owns all gameplay-affecting devtools consequences.
 
-`services/game-server/internal/networking` owns WebSocket read/write loops and packet-family routing. It decides whether a raw message belongs to devtools routing and supplies the current session context.
+`services/game-server/internal/networking` owns the `sr.tooling` route, WebSocket read/write loops for other packet families, and channel-family routing.
 
-`services/game-server/internal/networking/inbound` owns the devtools command handoff. It checks the packet envelope, groups recognized devtools packet types, decodes the raw message into `devtools.DebugCommand`, constructs `game.NewControl(room.GameInstance())`, wraps it in `devtools.NewController(...)`, and calls `Controller.HandleCommand`.
+`services/game-server/internal/networking/tooling` owns tooling policy, room, and capability preflight, decodes the command into `devtools.DebugCommand`, and dispatches it through the existing devtools controller seam.
 
 `services/game-server/internal/devtools` owns command dispatch and command-specific debug behavior. It interprets `DebugCommand` fields, resolves player target scopes, validates command-specific payload needs, logs command outcomes, and calls the narrow game-owned APIs needed for real mutation.
 
@@ -105,7 +101,7 @@ The authority rule is: devtools may request and coordinate debug behavior, but g
 
 The client is presentation and request-side only for server devtools commands.
 
-Client devtools hotkeys, placement tools, and window buttons build debug packets and send them over the normal networking path. The client does not apply authoritative score, lives, death, respawn, spawn, freeze, clear, or damage effects locally.
+Client devtools hotkeys, placement tools, and window buttons build command payloads with `request_id` and `trace_id` and send them through `ClientConnectionService.send_tooling_packet()` over `sr.tooling`. The client does not apply authoritative score, lives, death, respawn, spawn, freeze, clear, or damage effects locally.
 
 Server confirmation reaches the client through normal server-owned outputs:
 
@@ -118,6 +114,8 @@ player lifecycle/session state
 telemetry readouts
 server logs during development
 ```
+
+Terminal command results and errors return through the tooling route with their original `request_id`; `ToolingPacketRouter` receives the correlated `tooling_command_result` or `tooling_error`. The readout and telemetry paths listed above remain separate.
 
 The server also produces outbound debug presentation packets only when its own runtime gates pass. Client-side input gates and public-build input stripping are useful presentation controls, but they are not the authority boundary for gameplay-affecting commands.
 
@@ -141,6 +139,8 @@ It includes fields used across multiple command families:
 
 ```text
 type
+request_id
+trace_id
 target_player_id
 target_scope
 entity_type
@@ -187,49 +187,9 @@ debug_spawn_entity
 entity_type = "player"
 ```
 
-### Routing groups
+### Shared command route
 
-Inbound devtools routing groups recognized command packet types before normal `game.ClientPacket` decode.
-
-Current groups are:
-
-```text
-simple devtools packets
-placement devtools packets
-remaining devtools packets
-```
-
-Simple devtools packets include:
-
-```text
-toggle_debug_invincible
-toggle_debug_infinite_lives
-toggle_debug_freeze_world
-toggle_debug_freeze_player
-debug_kill_player
-debug_set_score
-debug_add_score
-debug_set_lives
-debug_add_lives
-debug_clear_bullets
-debug_clear_asteroids
-```
-
-Placement devtools packets include:
-
-```text
-debug_spawn_entity
-debug_spawn_pickup
-```
-
-Remaining devtools packets include:
-
-```text
-debug_begin_continuous_bullet_stream
-debug_respawn_player
-```
-
-All groups delegate to the same internal command decode and dispatch path.
+The tooling route applies packet policy before normal `game.ClientPacket` decode. Every recognized runtime command uses the same preflight, `DebugCommand` decode, controller dispatch, and terminal result/error path. Placement, targeting, and counter fields remain command-specific payload concerns; they are no longer separate networking route groups.
 
 ### Dispatch table
 
@@ -312,17 +272,9 @@ This applies to invincibility, infinite lives, and player freeze.
 
 Server devtools command routing produces development telemetry through logs and debug presentation packets.
 
-### Command decode logging
+### Command decode failure
 
-If a recognized devtools command packet cannot decode into `devtools.DebugCommand`, inbound routing logs:
-
-```text
-websocket devtools command decode failed
-```
-
-The log includes error, room ID, player ID, session ID, and remote address fields.
-
-The failed packet is consumed and does not fall through into normal gameplay routing.
+If a recognized devtools command packet cannot decode into `devtools.DebugCommand`, the tooling route returns a correlated `tooling_error` with `error_code = "malformed_packet"`. The command is not dispatched and does not fall through into normal gameplay routing. Successful applications emit the canonical `devtools_command_applied` event.
 
 ### Command outcome logging
 
@@ -446,23 +398,20 @@ func ShouldHandleCommand(packetType string) bool {
 
 Tests verify that `Enabled()` and `ShouldHandleCommand(...)` return true in default builds and false for devtools packets in `nodevtools` builds.
 
-### Current inbound command gate
+### Current tooling command gate
 
-The current inbound command routing path applies these runtime gates before command dispatch:
+The current tooling command route applies these runtime gates before command dispatch:
 
 ```text
-packet envelope must decode
-packet type must match one of the inbound devtools packet group switches
+tooling packet policy must match a recognized command type
 current room must exist
-current game player ID must exist
+tooling capability must be present
 raw packet must decode into devtools.DebugCommand
 ```
 
-If the current room or current game player ID is missing, the recognized devtools packet is consumed and no command is applied. This prevents devtools command packets from falling through into normal gameplay routing.
+If the current room or tooling capability is missing, the command is rejected with `tooling_error`. A missing `GamePlayerID` does not block room-global or explicit-target command dispatch.
 
-If command decode fails, the packet is logged and consumed.
-
-The current inbound router uses local packet-type switches in `inbound/devtools.go` for command grouping. The build-gated `ShouldHandleCommand` helper exists and is tested, but the inspected inbound routing implementation does not currently use that helper as the classifier. New routing edits should converge command availability through the single build-gated classifier instead of duplicating packet-type lists.
+If command decode fails, the tooling route returns `tooling_error` and does not dispatch the command.
 
 ### Handler-level gates
 
@@ -518,14 +467,14 @@ services/game-server/internal/devtools/enabled_nodevtools.go
 services/game-server/internal/devtools/packets_generated.go
 ```
 
-### Inbound routing
+### Tooling routing
 
 ```text
-services/game-server/internal/networking/websocket_read.go
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/client_packet_envelope.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/websocket_session.go
+services/game-server/internal/networking/tooling/packet_contract.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
+services/game-server/internal/networking/tooling/router.go
 ```
 
 ### Command dispatch and handlers
@@ -568,10 +517,12 @@ services/game-server/internal/networking/outbound/debug_shape_catalog_presentati
 services/game-server/internal/networking/websocket_write.go
 ```
 
-### Game-owned devtools seams
+### Tooling command route and game-owned devtools seams
 
 ```text
-services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 services/game-server/internal/networking/websocket.go
@@ -609,7 +560,7 @@ client/scripts/generated/networking/packets/packets.gd
 services/game-server/internal/networking
 ```
 
-owns WebSocket sessions, read/write loops, inbound routing, and outbound message writing. It does not own command effects.
+owns `sr.tooling` routing, WebSocket sessions/read-write loops for other packet families, and outbound channel writing. It does not own command effects.
 
 ```text
 services/game-server/internal/game
@@ -668,7 +619,7 @@ Current focused coverage verifies:
 * Current game Control adapter player spawn, respawn, stream, and collision coverage.
 * Outbound debug status and debug shape catalog gates.
 
-The inbound packet-family router itself has thinner direct route-order coverage than the command handlers and outbound gate helpers. Existing routing documentation should therefore distinguish handler/gate coverage from direct inbound router coverage.
+The tooling router and command handlers separately own preflight, dispatch, and gameplay effects. Existing routing documentation should distinguish tooling preflight/dispatch coverage from readout and telemetry coverage.
 
 ## Related docs
 
@@ -689,6 +640,4 @@ The inbound packet-family router itself has thinner direct route-order coverage 
 
 Legacy docs correctly described the intended boundary: devtools command handling is separate from normal gameplay packet routing, and debug mutations must flow through server-owned gameplay seams.
 
-The current implementation has both a generated devtools command type set and separate inbound devtools packet group switches. Keep those lists synchronized when adding command packets. Prefer a single build-gated command classifier for future routing cleanup.
-
-Do not treat outbound debug status or debug shape catalog packets as proof that a command succeeded. They are diagnostic outputs. Command confirmation should be inferred from authoritative game state, debug status state, entity sync, lifecycle/session read-models, or server logs during development.
+Do not treat outbound debug status or debug shape catalog packets as proof that a command succeeded. They are diagnostic outputs. Command confirmation uses the correlated tooling result/error; readouts, telemetry, entity sync, lifecycle/session read-models, and server logs remain diagnostic or authoritative follow-up paths.

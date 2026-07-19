@@ -347,7 +347,6 @@ services/game-server/internal/devtools/streamruntime/continuous_bullet_streams.g
 Command routing and build gates:
 
 ```text
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/devtools/handler.go
 services/game-server/internal/devtools/command_types.go
 services/game-server/internal/devtools/disabled.go

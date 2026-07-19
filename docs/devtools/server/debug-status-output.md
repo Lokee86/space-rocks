@@ -342,7 +342,6 @@ Related command files that can affect later status output:
 ```text
 services/game-server/internal/devtools/handler.go
 services/game-server/internal/devtools/toggles.go
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/networking/inbound/router.go
 ```
 

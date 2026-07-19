@@ -12,7 +12,8 @@ The devtools window is a client-side development tool, not player-facing HUD. It
 
 The window owns presentation and control collection only. It does not apply gameplay mutations locally. Button presses, selectors, telemetry source changes, and checkbox changes emit signals. Those signals are routed through the client devtools context stack into either:
 
-* generated debug packets sent over the normal client networking path
+* generated non-command packet dictionaries sent over their owning client networking path
+* runtime debug command payloads built by `GameplayDebugFlow` or `DevConnectionService` and sent through `ClientConnectionService.send_tooling_packet()` over `sr.tooling`
 * placement flows that collect a server-space position or direction before sending a debug spawn packet
 * client-only overlay toggles such as server hitbox drawing
 * normal target-selection packets when setting or clearing the canonical game target
@@ -54,7 +55,9 @@ Server-owned gameplay mutations include:
 * clear bullets
 * clear asteroids
 
-The window sends generated packets or packet dictionaries through the normal network client path. It does not directly edit `WorldSync`, player nodes, asteroid nodes, bullet nodes, score values, lives values, or lane-applied server-state read models.
+The window delegates runtime debug command payload construction to `GameplayDebugFlow` or `DevConnectionService`, which include `request_id` and `trace_id` before sending through `ClientConnectionService.send_tooling_packet()` over `sr.tooling`. It does not directly edit `WorldSync`, player nodes, asteroid nodes, bullet nodes, score values, lives values, or lane-applied server-state read models.
+
+Tooling command results and errors return through `ToolingPacketRouter`. Developer readouts continue to use their existing routes.
 
 The server remains authoritative for pickup spawn validity. The pickup selector is populated from the client pickup presentation catalog so available debug choices match presentation data, but the selector does not make the client authoritative over pickup types.
 
@@ -231,6 +234,7 @@ devtools_window.gd signal
 -> DevtoolsWindowActionContext
 -> DevtoolsCommandContext / DevtoolsPlacementContext / DevtoolsOverlayContext
 -> GameplayDebugFlow / DevConnectionService / overlay implementation
+-> command payload with request_id and trace_id -> ClientConnectionService.send_tooling_packet() over sr.tooling
 -> generated packet or client-only overlay update
 ```
 
@@ -262,6 +266,7 @@ window spawn control
 -> GameplayDevtoolsContext.handle_placement_result()
 -> DevConnectionService
 -> debug spawn packet
+-> ClientConnectionService.send_tooling_packet() over sr.tooling
 ```
 
 ## Build and runtime gates
@@ -331,9 +336,10 @@ Packet and network helpers:
 
 ```text
 client/scripts/generated/networking/packets/packets.gd
-client/scripts/networking/outbound/devtools_client_packets.gd
 client/scripts/networking/outbound/client_packet_sender.gd
 client/scripts/networking/client_connection_service.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
+client/scripts/devtools/gameplay_debug_flow.gd
 client/scripts/devtools/dev_connection_service.gd
 client/scripts/devtools/dev_spawn_packet_builder.gd
 client/scripts/devtools/dev_respawn_packet_builder.gd

@@ -125,3 +125,59 @@ func TestWriteGameplayLaneProtocolMessageObservesOnlySuccessfulWrites(t *testing
 		t.Fatalf("failed write produced packet observations: %#v", failedController.writes)
 	}
 }
+
+func TestNewWebSocketSessionUsesTemporaryToolingCapabilities(t *testing.T) {
+	roomManager := rooms.NewRoomManager()
+	t.Cleanup(roomManager.StopAll)
+	session := newWebSocketSession(nil, roomManager, nil, nil)
+
+	if !session.toolingCapabilities.Has(toolingrouter.CapabilityToolingRead) {
+		t.Fatal("expected temporary policy to grant tooling.read")
+	}
+	if !session.toolingCapabilities.Has(toolingrouter.CapabilityToolingControl) {
+		t.Fatal("expected temporary policy to grant tooling.control")
+	}
+	if session.toolingCapabilities.Has(toolingrouter.CapabilityAdminControl) {
+		t.Fatal("temporary policy must not grant admin.control")
+	}
+}
+
+func TestToolingContextAttachesCurrentRoomControllerWithoutParticipation(t *testing.T) {
+	room := rooms.NewRoom("room-a", rooms.RoomStateInGame, game.New())
+	session := &webSocketSession{
+		sessionID:           "session-a",
+		context:             SessionContext{Room: room, RoomID: room.ID},
+		toolingCapabilities: toolingrouter.NewTemporaryCapabilitySet(),
+	}
+
+	context := session.toolingContext()
+	if context.SessionID != "session-a" || context.RoomID != room.ID {
+		t.Fatalf("unexpected tooling context: %#v", context)
+	}
+	if context.GamePlayerID != "" {
+		t.Fatalf("expected observer context without participant ID, got %q", context.GamePlayerID)
+	}
+	if context.CommandController == nil {
+		t.Fatal("expected current room game to provide a command controller")
+	}
+	if !context.Capabilities.Has(toolingrouter.CapabilityToolingControl) {
+		t.Fatal("expected session capabilities to be preserved")
+	}
+}
+
+func TestToolingContextWithoutActiveGameHasNoCommandController(t *testing.T) {
+	room := rooms.NewRoom("room-a", rooms.RoomStateLobby, nil)
+	session := &webSocketSession{
+		sessionID:           "session-a",
+		context:             SessionContext{Room: room, RoomID: room.ID, GamePlayerID: "player-a"},
+		toolingCapabilities: toolingrouter.NewTemporaryCapabilitySet(),
+	}
+
+	context := session.toolingContext()
+	if context.CommandController != nil {
+		t.Fatal("expected no command controller without an active game")
+	}
+	if context.GamePlayerID != "player-a" {
+		t.Fatalf("expected participant identity to be preserved, got %q", context.GamePlayerID)
+	}
+}

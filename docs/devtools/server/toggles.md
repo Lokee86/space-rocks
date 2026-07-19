@@ -21,9 +21,9 @@ toggle_debug_freeze_world
 toggle_debug_freeze_player
 ```
 
-The server receives these commands as generated debug packets, decodes them into `devtools.DebugCommand`, routes them through `Controller.HandleCommand`, and applies the result through narrow game-owned Control capabilities.
+`GameplayDebugFlow` and `DevConnectionService` build these command payloads with `request_id` and `trace_id`; `ClientConnectionService.send_tooling_packet()` sends them through `sr.tooling`; and server networking/tooling applies policy, room, and capability preflight before decoding into `devtools.DebugCommand`, routing through `Controller.HandleCommand`, and applying the result through narrow game-owned Control capabilities.
 
-The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Confirmation comes back through lane-native gameplay readback, debug status packets, visible entity behavior, or both.
+The client may request a toggle from a hotkey or devtools window control, but the client does not apply toggle effects locally. Correlated command results/errors return through `ToolingPacketRouter`; debug status and other readouts remain on their existing paths.
 
 The toggle system has three kinds of server-owned state:
 
@@ -79,19 +79,20 @@ Current command flow:
 
 ```text
 client debug packet
--> game-server networking inbound devtools route
--> packetcodec.Decode into devtools.DebugCommand
--> Controller.HandleCommand
+-> sr.tooling
+-> networking/tooling policy, room, and capability preflight
+-> decode into devtools.DebugCommand
+-> existing devtools Controller.HandleCommand
 -> toggle-specific handler in internal/devtools/toggles.go
 -> Control methods in internal/game/control_toggles.go
 -> Control.TargetPlayerIDs() for all-player fanout
 -> Controller.StatusFor(...) for status projection
 -> Control.ApplyPlayerDefeat for debug defeat entry points
 -> normal game runtime state
--> lane-native gameplay readback or debug status output
+-> correlated tooling_command_result or tooling_error
 ```
 
-If the current WebSocket session has no room or no current game player ID, the inbound devtools route consumes the packet without applying a command. If packet decode fails, the command is not applied and a network warning is logged.
+If the tooling session has no room or required capability, the command returns `tooling_error`. A missing `GamePlayerID` does not block room-global or explicit-target command dispatch. If packet decode fails, the command is not applied and the tooling route returns `tooling_error`.
 
 Toggle mutation happens behind the game aggregate:
 
@@ -380,7 +381,7 @@ collision freeze
 player freeze
 ```
 
-Those controls send generated debug packets through the normal client networking path. The server applies the command, then later status/state output lets the client update labels, rows, and diagnostic readouts.
+Those controls send generated command payloads through `ClientConnectionService.send_tooling_packet()` over `sr.tooling`. The server applies the command and returns a correlated result/error; later status/state output remains available for labels, rows, and diagnostic readouts.
 
 The client must not locally infer that a command succeeded just because a button was pressed. Server state remains the authority.
 
@@ -471,7 +472,8 @@ Inbound command handling has additional runtime gates:
 
 ```text
 current room must exist
-current game player ID must be non-empty
+`tooling.control` capability must be present
+`GamePlayerID` is passed through when present but is not required for room-global or explicit-target dispatch
 debug packet must decode into DebugCommand
 HandleCommand must recognize the command type
 Control adapter methods must accept the requested mutation
@@ -564,8 +566,9 @@ services/game-server/internal/devtools/disabled.go
 Networking ingress and debug status output:
 
 ```text
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 ```

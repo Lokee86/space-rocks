@@ -9,11 +9,9 @@ const PresentationEventCapture := preload("res://tests/unit/logging/presentation
 
 class FakeConnectionService:
 	var sent_packets: Array = []
-	var sent_trace_ids: Array = []
 
-	func send_packet(packet, trace_id: String = "") -> void:
+	func send_tooling_packet(packet: Dictionary) -> void:
 		sent_packets.append(packet)
-		sent_trace_ids.append(trace_id)
 
 
 func before_each() -> void:
@@ -37,7 +35,7 @@ func test_direct_command_carries_one_trace_and_emits_one_request_event_before_se
 	debug_flow.clear_bullets()
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
-	assert_eq(fake_connection.sent_trace_ids[0], trace_id)
+	assert_eq(fake_connection.sent_packets[0]["request_id"], trace_id)
 	assert_eq(fake_connection.sent_packets[0]["trace_id"], trace_id)
 	assert_eq(writer.written_lines.size(), 1)
 	var record: Dictionary = JSON.parse_string(writer.written_lines[0])
@@ -62,7 +60,7 @@ func test_kill_player_uses_debug_packet_trace_and_request_event() -> void:
 	assert_eq(fake_connection.sent_packets[0]["trace_id"], trace_id)
 	assert_eq(fake_connection.sent_packets[0]["target_scope"], "single_player")
 	assert_eq(fake_connection.sent_packets[0]["target_player_id"], "player-2")
-	assert_eq(fake_connection.sent_trace_ids[0], trace_id)
+	assert_eq(fake_connection.sent_packets[0]["request_id"], trace_id)
 	assert_eq(writer.written_lines.size(), 1)
 	var record: Dictionary = JSON.parse_string(writer.written_lines[0])
 	assert_eq(record["event"], "devtools_command_requested")

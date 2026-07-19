@@ -359,6 +359,32 @@ name = "message"
 json = "message"
 type = "string"
 
+[[structs]]
+id = "ToolingCommandResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "request_id"
+go_name = "RequestID"
+json = "request_id"
+type = "string"
+
+[[structs.fields]]
+name = "command_type"
+go_name = "CommandType"
+json = "command_type"
+type = "string"
+
+[[structs.fields]]
+name = "applied"
+go_name = "Applied"
+json = "applied"
+type = "bool"
+
 [[packet_types]]
 id = "telemetry_subscribe"
 value = "telemetry_subscribe"
@@ -410,6 +436,10 @@ value = "measurement_stopped"
 [[packet_types]]
 id = "tooling_error"
 value = "tooling_error"
+
+[[packet_types]]
+id = "tooling_command_result"
+value = "tooling_command_result"
 
 [[builders]]
 id = "telemetry_subscribe_packet"

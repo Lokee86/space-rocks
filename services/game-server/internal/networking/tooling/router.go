@@ -12,9 +12,11 @@ import (
 const telemetryInterval = 250 * time.Millisecond
 
 type Context struct {
-	SessionID    string
-	RoomID       string
-	GamePlayerID string
+	SessionID         string
+	RoomID            string
+	GamePlayerID      string
+	Capabilities      CapabilitySet
+	CommandController CommandController
 }
 
 type Sender interface {
@@ -48,10 +50,12 @@ func NewRouter(measurement MeasurementController, telemetry TelemetryProvider) *
 }
 
 func (router *Router) Handle(context Context, sender Sender, packet map[string]any) bool {
-	packetType, ok := packet["type"].(string)
-	if !ok || packetType == "" {
-		router.sendError(sender, "", "", "invalid_packet", "tooling packet type is required")
+	packetType, policy, ok := router.preflight(context, sender, packet)
+	if !ok {
 		return true
+	}
+	if policy.Capability == CapabilityToolingControl && policy.Interaction == InteractionCommand {
+		return router.handleCommand(context, sender, packet, packetType)
 	}
 
 	switch packetType {

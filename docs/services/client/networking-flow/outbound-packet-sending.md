@@ -6,7 +6,7 @@ Parent index: [Networking Flow](./!INDEX.md)
 
 This document describes how the Godot client sends outbound realtime packets to the game server.
 
-It covers the client service implementation path from local intent to WebSocket text send. It does not define packet schema authority, server validation, or authoritative gameplay results.
+It covers the client service implementation path from local intent to WebSocket text sends and `sr.tooling` command sends. It does not define packet schema authority, server validation, or authoritative gameplay results.
 
 ## Overview
 
@@ -25,7 +25,7 @@ client caller
 -> realtime server
 ```
 
-`ClientConnectionService` is the service-facing outbound facade used by session boot, lobby, gameplay, devtools, telemetry, and general client flows. `ClientPacketSender` owns focused outbound wrapper methods and delegates raw packet sending to `NetworkClient`. `NetworkClient` owns the final connection-state guard, JSON encoding, and WebSocket text send.
+`ClientConnectionService` is the service-facing outbound facade used by session boot, lobby, gameplay, telemetry, and general client flows. Runtime devtools command flows use its `send_tooling_packet(packet)` seam for `sr.tooling`; they do not use the deleted WebSocket devtools wrapper. `ClientPacketSender` owns focused outbound wrapper methods and delegates raw packet sending to `NetworkClient`. `NetworkClient` owns the final connection-state guard, JSON encoding, and WebSocket text send.
 
 Client logging mechanics are owned by [Client Logging](../client-logging.md). This doc only notes the current outbound diagnostic call sites on the packet-sending path.
 
@@ -60,7 +60,8 @@ The client outbound packet sending flow owns:
 * Keeping caller code away from raw `WebSocketPeer` usage.
 * Creating generated packet dictionaries through focused packet-family wrappers.
 * Passing already-built packet dictionaries from callers that own context-specific packet construction.
-* Sending gameplay input, respawn, pause, target, lobby, room-entry, devtools, telemetry, viewport config, and auth packets through a common raw send path.
+* Sending gameplay input, respawn, pause, target, lobby, room-entry, telemetry, viewport config, and auth packets through a common raw send path.
+* Sending runtime devtools command payloads through `ClientConnectionService.send_tooling_packet(packet)` over `sr.tooling`.
 * Reporting missing `ClientPacketSender` and `NetworkClient` dependencies through the owning outbound seams.
 * Letting `NetworkClient` guard sends when the WebSocket is not open.
 * Encoding outbound packet dictionaries as JSON text.
@@ -114,11 +115,10 @@ send_set_ready_request(is_ready)
 send_start_game_request()
 send_input_packet(packet)
 send_packet(packet)
+send_tooling_packet(packet)
 send_respawn_request()
 send_pause_request()
 send_telemetry_ping(sequence, client_sent_msec)
-send_debug_kill_player_request(target_scope, target_player_id)
-send_debug_kill_target_player_request(target_player_id, target_scope)
 send_leave_room_request()
 send_return_to_lobby_request()
 ```
@@ -193,8 +193,8 @@ GameplayClientPackets
 LobbyClientPackets
 = room-entry, lobby, ready, start, single-player start, leave, and return-to-lobby packet helpers
 
-DevtoolsClientPackets
-= debug command packet helpers and devtools-only target fields
+GameplayDebugFlow / DevConnectionService
+= runtime debug command payloads, including devtools-only target fields
 
 TelemetryClientPackets
 = telemetry ping packet helper
@@ -599,14 +599,13 @@ Current devtools command path is generally:
 
 ```text
 devtools hotkey or window action
--> devtools command context / connection-service send method
--> ClientPacketSender devtools method
--> DevtoolsClientPackets
--> generated Packets helper
--> NetworkClient.send_raw_packet(packet)
+-> GameplayDebugFlow or DevConnectionService builds the command payload
+-> request_id and trace_id are included
+-> ClientConnectionService.send_tooling_packet(packet)
+-> sr.tooling
 ```
 
-Devtools requests mutate gameplay only when the server accepts and applies the debug command through server-owned devtools and gameplay seams.
+Tooling command results and errors return through `ToolingPacketRouter`. Devtools requests mutate gameplay only when the server accepts and applies the debug command through server-owned devtools and gameplay seams.
 
 ### Telemetry ping
 
@@ -670,8 +669,10 @@ client/scripts/networking/network_client.gd
 client/scripts/networking/outbound/client_packet_sender.gd
 client/scripts/networking/outbound/gameplay_client_packets.gd
 client/scripts/networking/outbound/lobby_client_packets.gd
-client/scripts/networking/outbound/devtools_client_packets.gd
 client/scripts/networking/outbound/telemetry_client_packets.gd
+client/scripts/devtools/gameplay_debug_flow.gd
+client/scripts/devtools/dev_connection_service.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
 client/scripts/networking/packets/packet_codec.gd
 ```
 

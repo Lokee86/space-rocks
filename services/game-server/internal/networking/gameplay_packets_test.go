@@ -5,6 +5,7 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
@@ -170,4 +171,27 @@ func clientConfigFieldValue(t *testing.T, value reflect.Value) runtime.ClientCon
 	}
 	field := value.FieldByName("Config")
 	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface().(runtime.ClientConfig)
+}
+
+func TestLegacyWebSocketDevtoolsCommandIsNotApplied(t *testing.T) {
+	gameInstance := game.New()
+	control := game.NewControl(gameInstance)
+	if !control.EnsurePlayerSession("player-1", physics.Vector2{}) {
+		t.Fatal("create player")
+	}
+	room := rooms.NewRoom("room-a", rooms.RoomStateInGame, gameInstance)
+	session := &webSocketSession{
+		sessionID:         "session-a",
+		connectionTraceID: "00000000-0000-4000-8000-000000000901",
+		context: SessionContext{
+			Room: room, RoomID: room.ID, GamePlayerID: "player-1",
+		},
+	}
+	message := []byte(`{"type":"debug_set_score","request_id":"legacy-request","trace_id":"00000000-0000-4000-8000-000000000902","target_scope":"single_player","target_player_id":"player-1","score":17}`)
+
+	handleClientPacket(session, "remote", message, inbound.ClientPacketEnvelope{Type: devtools.PacketTypeDebugSetScore})
+
+	if score := gameInstance.GameplayPresentationSnapshot("player-1").PlayerSessions["player-1"].Score; score != 0 {
+		t.Fatalf("legacy WebSocket command changed score to %d", score)
+	}
 }

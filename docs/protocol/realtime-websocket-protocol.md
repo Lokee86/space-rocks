@@ -54,7 +54,7 @@ asteroids.lifecycle
 bullets.lifecycle
 ```
 
-`sr.tooling` is not an active gameplay packet lane. Its negotiated channel is mandatory for readiness, and tooling packets are separated before normal gameplay routing. Runtime measurement request/response traffic is implemented on this channel; telemetry routing exists but remains partially wired. Legacy runtime debug commands and readouts remain WebSocket-owned until the migration defined in [Tooling Channel Migration Contract](../devtools/design/tooling-channel-migration-contract.md).
+`sr.tooling` is not an active gameplay packet lane. Its negotiated channel is mandatory for readiness, and tooling packets are separated before normal gameplay routing. Runtime measurement request/response traffic and runtime devtools command requests are implemented on this channel. Devtools command payloads carry `request_id` and `trace_id`; `services/game-server/internal/networking/tooling` applies packet-policy, room, and capability preflight, decodes `DebugCommand`, dispatches through the existing devtools controller, and returns correlated `tooling_command_result` or `tooling_error` packets. Telemetry routing exists but remains partially wired; developer readouts and legacy telemetry readouts remain on their existing paths.
 
 `control` is a logical recovery category, not a current physical WebRTC gameplay DataChannel. The current generated recovery packet families are `resync_request` and `resync_required`. There is no separate generated packet family named `control`, and there is no physical `sr.control` channel in the current implementation.
 
@@ -856,14 +856,11 @@ Current runtime does not emit `realtime lane metric` logs or scheduler, budget, 
 
 Byte estimates in planning and scheduling remain advisory and are not codec-accurate, but current candidate-level send-plan selection uses them for include/defer decisions against the target budget. Record/entity-level prioritization remains future work, and the active path still does not split state-lane deltas into selected record or field sub-packets. Current runtime debug logs do not emit scheduler, budget, deferred, superseded, or record-level counter fields as active protocol log output.
 
-## Server inbound routing order
+## Server WebSocket inbound routing order
 
-The server inbound routing order is:
+Runtime devtools commands do not participate in the WebSocket envelope route. The remaining WebSocket inbound routing order is:
 
 ```text
-simple devtools packets
-placement devtools packets
-remaining devtools packets
 normal game.ClientPacket decode
 auth packets
 telemetry packets
@@ -871,7 +868,7 @@ lobby packets
 gameplay packets
 ```
 
-Devtools packets route before normal packet decode because generated devtools command structs live under the server devtools package, not the normal generated game packet family.
+Runtime devtools commands use the separate `sr.tooling` route and do not route before normal `game.ClientPacket` decode.
 
 Normal packets decode into:
 
@@ -1036,8 +1033,8 @@ require current room and active game player to apply
 target and pause packets
 require current room and active game player to route
 
-devtools command packets
-require current room and active game player to apply
+runtime devtools command packets
+use `sr.tooling`; require room attachment and tooling capability, but not `GamePlayerID` merely for room-global or explicit-target dispatch
 
 lane gameplay output
 requires current room, active game player, and eligible room game state
@@ -1350,9 +1347,9 @@ match-over policy integration
 
 ### Devtools
 
-Devtools own debug command behavior after networking identifies a devtools packet.
+Devtools own debug command behavior after `networking/tooling` applies policy, room, and capability preflight and decodes a `DebugCommand`.
 
-Devtools use the normal WebSocket transport but must not bypass real server-owned gameplay seams.
+Devtools commands use `sr.tooling`, dispatch through the existing devtools controller, and return correlated `tooling_command_result` or `tooling_error` packets. Developer readouts and legacy telemetry readouts remain on their existing paths. Devtools must not bypass real server-owned gameplay seams.
 
 ### Packet schema pipeline
 
@@ -1476,6 +1473,9 @@ services/game-server/internal/networking/websocket.go
 services/game-server/internal/networking/websocket_read.go
 services/game-server/internal/networking/websocket_session.go
 services/game-server/internal/networking/webrtc_transport.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 services/game-server/cmd/game-server/webrtc_config.go
 ```
 

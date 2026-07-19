@@ -8,6 +8,7 @@ signal telemetry_pong_received(packet: Dictionary)
 signal measurement_started_received(packet: Dictionary)
 signal measurement_snapshot_received(packet: Dictionary)
 signal measurement_stopped_received(packet: Dictionary)
+signal tooling_command_result_received(packet: Dictionary)
 signal tooling_error_received(packet: Dictionary)
 signal unknown_packet_received(packet: Dictionary)
 
@@ -24,6 +25,8 @@ func dispatch(packet: Dictionary) -> void:
 			measurement_snapshot_received.emit(packet)
 		Packets.TYPE_MEASUREMENT_STOPPED:
 			measurement_stopped_received.emit(packet)
+		Packets.TYPE_TOOLING_COMMAND_RESULT:
+			tooling_command_result_received.emit(packet)
 		Packets.TYPE_TOOLING_ERROR:
 			tooling_error_received.emit(packet)
 		_:

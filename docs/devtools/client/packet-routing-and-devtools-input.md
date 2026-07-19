@@ -18,12 +18,12 @@ Current high-level flow:
 DevToggle hotkey or devtools window action
 -> client devtools context
 -> command, placement, overlay, or telemetry route
--> ClientConnectionService
--> NetworkClient
--> WebSocket
--> server devtools command handling
--> normal server state/debug output
--> client inbound routing
+-> runtime command: GameplayDebugFlow or DevConnectionService
+-> ClientConnectionService.send_tooling_packet(packet)
+-> sr.tooling
+-> server tooling router
+-> ToolingPacketRouter for command result/error
+-> readout or telemetry route: existing client/server packet path
 -> devtools window, overlays, labels, or hitbox presentation
 ```
 
@@ -55,7 +55,7 @@ They must not:
 * Treat a client request as confirmed before server state or debug status reflects it.
 * Move debug presentation into player-facing HUD ownership.
 * Make `target_player_id` the normal gameplay targeting model.
-* Bypass the shared packet encode/send path for WebSocket commands.
+* Bypass the shared `sr.tooling` command send path.
 
 `target_player_id` remains a devtools/player-only compatibility field for player-targeted debug commands. Normal gameplay targeting uses canonical `target_kind` and `target_id`.
 
@@ -85,13 +85,13 @@ debug_clear_bullets
 debug_clear_asteroids
 ```
 
-The server networking inbound router classifies devtools command packets before normal gameplay packet decoding. Devtools command packets route through inbound packet classification, packet decode, `game.NewControl(room.GameInstance())`, `devtools.NewController(...)`, and `Controller.HandleCommand`.
+The client sends runtime devtools command payloads through `sr.tooling`. The server tooling router resolves the packet policy, checks the required capability and room attachment, decodes the command, and dispatches it to the existing devtools `Controller.HandleCommand` seam.
 
 Devtools commands do not route through normal client-side authority and should not be documented as gameplay packet ownership. The client only requests a command. The server decides whether the current session, room, player, target scope, and command payload are valid.
 
-Server-side mutation remains behind server-owned handlers and current Control/Controller adapter seams. Client confirmation comes back through lane-applied read models, debug status packets, entity sync, or visible absence/presence of entities after the server applies the command.
+Server-side mutation remains behind server-owned handlers and current Control/Controller adapter seams. The command result or error returns through `ToolingPacketRouter` and is correlated by `request_id`; authoritative readouts remain separate client/server work.
 
-If the current websocket session has no room or no current game player ID, the server devtools command route consumes the packet without applying a command. This keeps client devtools input from becoming authority when no server gameplay context exists.
+`GamePlayerID` is passed through to the controller when present, but it is not required merely to dispatch a room-global or explicit-target command.
 
 The server devtools package has build-tag gates for enabled and `nodevtools` builds. Client-side gates are not sufficient security or authority controls; server command availability remains the final boundary.
 
@@ -201,23 +201,12 @@ Most command sends converge on the same raw networking path:
 devtools hotkey or window action
 -> devtools command/placement context
 -> GameplayDebugFlow or DevConnectionService
--> ClientConnectionService.send_packet(packet)
--> ClientPacketSender.send_packet(packet)
--> NetworkClient.send_raw_packet(packet)
--> PacketCodec.encode(packet)
--> WebSocketPeer.send_text(wire_message)
+-> command payload with request_id and trace_id
+-> ClientConnectionService.send_tooling_packet(packet)
+-> sr.tooling
 ```
 
-Some debug send methods use `ClientConnectionService` wrapper methods such as:
-
-```text
-send_debug_kill_player_request
-send_debug_kill_target_player_request
-```
-
-Those wrapper methods route through `ClientPacketSender` and `DevtoolsClientPackets`.
-
-Other debug commands build dictionaries closer to their owning devtools flow and then call the generic `send_packet(packet)` route. This is current behavior for several window/hotkey commands, placement spawn results, continuous bullet stream creation, and devtools respawn.
+`GameplayDebugFlow` and `DevConnectionService` build the runtime command payloads. Runtime command results and errors return through `ToolingPacketRouter`; developer readouts continue to use their existing routes.
 
 ### Placement flow
 
@@ -235,7 +224,7 @@ DevToggle6 or devtools window placement button
 -> placement result emitted
 -> DevConnectionService
 -> debug spawn packet
--> ClientConnectionService.send_packet(packet)
+-> ClientConnectionService.send_tooling_packet(packet)
 ```
 
 Click placement starts on the configured spawn mouse action press and completes on release. If the drag distance is greater than the placement direction threshold, the placement result includes direction data.
@@ -291,6 +280,14 @@ telemetry_pong
 -> NetworkTelemetryMetrics.apply_pong
 ```
 
+Runtime command results and errors use the tooling route:
+
+```text
+tooling_command_result or tooling_error
+-> ToolingPacketRouter
+-> command result/error consumers
+```
+
 `debug_status` and `debug_shape_catalog` are diagnostic/devtools packets. They are not gameplay-state authority.
 
 ## Telemetry
@@ -334,8 +331,7 @@ DevToggle7 local respawn requires gameplay state and a cached local player ID.
 Window command requests require gameplay state before packet sends.
 Single-player target commands with no effective target player ID are ignored client-side.
 Placement result sends require a non-empty result, action name, configured dev connection service, and non-empty built packet.
-NetworkClient.send_raw_packet requires an open WebSocket.
-PacketCodec.encode must succeed before WebSocket text send.
+ClientConnectionService.send_tooling_packet requires an available `sr.tooling` channel.
 ```
 
 Presentation-only controls have lighter gates:
@@ -415,9 +411,11 @@ client/scripts/networking/client_connection_service.gd
 client/scripts/networking/network_client.gd
 client/scripts/networking/packets/packet_codec.gd
 client/scripts/networking/outbound/client_packet_sender.gd
-client/scripts/networking/outbound/devtools_client_packets.gd
 client/scripts/networking/inbound/server_packet_router.gd
 client/scripts/networking/inbound/server_packet_dispatcher.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
+client/scripts/devtools/gameplay_debug_flow.gd
+client/scripts/devtools/dev_connection_service.gd
 client/scripts/generated/networking/packets/packets.gd
 ```
 
@@ -450,7 +448,6 @@ client/scripts/devtools/dev_tools_build_flags.gd
 ```text
 services/game-server/internal/networking/client_packet_router.go
 services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/devtools/controller.go
 services/game-server/internal/devtools/target.go
 services/game-server/internal/devtools/enabled_default.go
@@ -536,7 +533,7 @@ Those server tests verify command classification, build gates, command effects, 
 
 This document intentionally covers the client devtools routing and input side. Server command effects, server build gates, and the server Control adapter belong in server devtools documentation.
 
-The client currently has both specific debug wrapper sends and generic `send_packet(packet)` sends for already-built devtools dictionaries. Both converge on `NetworkClient.send_raw_packet()` and the normal packet codec path.
+Runtime devtools command payloads are built by `GameplayDebugFlow` and `DevConnectionService`, include `request_id` and `trace_id`, and use `ClientConnectionService.send_tooling_packet()` over `sr.tooling`. Command results and errors return through `ToolingPacketRouter`. Developer readouts are not described as migrated here.
 
 Devtools input priority applies to active devtools placement flows. When no devtools placement flow consumes an input event, normal HUD gating and gameplay input continue to own the event path.
 

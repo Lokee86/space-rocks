@@ -10,7 +10,7 @@ It fixes the transport boundary, packet ownership, capability requirements, atta
 
 ## Status
 
-Phase 1 of the devtools transport migration is complete.
+Phase 1 of the devtools transport migration and migration slice 2, runtime developer commands, are complete.
 
 Implemented foundations:
 
@@ -22,17 +22,20 @@ lane-aware client and server routing
 measurement request/response consumer
 measurement report lifecycle
 partial telemetry subscription router
+runtime developer command migration through `sr.tooling`
+temporary capability checks and devtools-controller dispatch
+correlated terminal command results and errors
+removal of WebSocket runtime-devtools classification
 ```
 
 Not yet migrated:
 
 ```text
-runtime debug mutation commands
 debug status subscription and delivery
 debug shape catalog request and delivery
 legacy world-overlay telemetry ping path
 production telemetry snapshot provider
-privileged capability enforcement
+account-backed authorization
 observer/ghost/active-operator attachment mechanics
 ```
 
@@ -197,7 +200,7 @@ These packets already belong to `shared/packets/tooling.toml`.
 
 ## Runtime developer command migration inventory
 
-All commands below currently travel as JSON text over the gameplay WebSocket and are classified before normal `game.ClientPacket` decoding. Their final physical route is `sr.tooling`. Their packet type names remain unchanged.
+All commands below now travel as JSON over `sr.tooling`. The server tooling router capability-checks each command, decodes it, and dispatches it to the existing devtools controller. Terminal command results and errors echo the originating `request_id`. Their packet type names remain unchanged.
 
 Every command requires `tooling.control`, an attached room, and no gameplay participant slot.
 
@@ -232,7 +235,7 @@ All migrated commands must carry a non-empty `request_id`. Existing fields such 
 | `debug_status` | Built by WebSocket write-loop path | Change-driven `sr.tooling` server push while subscribed | `tooling.read` | Room |
 | `debug_shape_catalog_request` | Not implemented | One-shot request for current room catalog | `tooling.read` | Room |
 | `debug_shape_catalog` | Pushed once per room by WebSocket write loop | One-shot `sr.tooling` response; client caches by catalog/version | `tooling.read` | Room |
-| `tooling_command_result` | Not implemented | Terminal success response for every migrated mutation command | Inherits `tooling.control` request | Room |
+| `tooling_command_result` | Implemented by the tooling router | Terminal success response for every migrated mutation command | Inherits `tooling.control` request | Room |
 
 The status stream is subscription-owned, not participation-owned. It may include room-global status and authorized player status maps without requiring the receiving session to control a player.
 
@@ -316,7 +319,7 @@ Admin packet types do not exist yet. Future admin packets use `sr.tooling`, requ
 
 ## Migration slices
 
-The remaining implementation order is fixed:
+The remaining implementation order is fixed after the completed slices:
 
 ```text
 1. request/response foundation
@@ -324,10 +327,11 @@ The remaining implementation order is fixed:
    -> tooling_command_result
    -> capability policy enforcement seam
 
-2. runtime developer commands
-   -> client sends commands through sr.tooling
-   -> server tooling router dispatches to existing devtools controller
-   -> remove WebSocket command classification after equivalence coverage
+2. runtime developer commands (complete)
+   -> clients send commands through sr.tooling
+   -> server tooling router capability-checks and dispatches to existing devtools controller
+   -> terminal command results/errors are correlated by request_id
+   -> WebSocket runtime-devtools classification removed
 
 3. developer readouts
    -> debug-status subscribe/unsubscribe
@@ -345,7 +349,7 @@ The remaining implementation order is fixed:
    -> audit and tooling-affected propagation
 ```
 
-Command migration and readout migration may be implemented in parallel only after the request/result and policy foundation is merged.
+Readout migration may proceed after the request/result and policy foundation and completed command migration remain in place.
 
 ## Exit criteria
 
@@ -361,7 +365,7 @@ room attachment is not coupled to gameplay participation
 a machine-readable server packet-policy registry covers the inventory
 ```
 
-The overall migration is complete only when no runtime devtools command or readout uses the WebSocket gameplay packet path and tests prove unauthorized sessions cannot invoke privileged routes.
+The overall migration is complete only when no runtime devtools readout uses the WebSocket gameplay packet path and tests prove unauthorized sessions cannot invoke privileged routes.
 
 ## Code map
 
@@ -371,11 +375,9 @@ shared/packets/debug.toml
 shared/packets/outputs.toml
 services/game-server/internal/networking/tooling/packet_contract.go
 services/game-server/internal/networking/tooling/router.go
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 services/game-server/internal/devtools/
-client/scripts/networking/outbound/devtools_client_packets.gd
 client/scripts/networking/outbound/client_packet_sender.gd
 client/scripts/networking/client_connection_service.gd
 client/scripts/networking/inbound/tooling_packet_router.gd

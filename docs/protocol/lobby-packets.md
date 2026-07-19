@@ -163,7 +163,6 @@ The game-server WebSocket read loop first decodes a minimal packet envelope with
 After envelope handling, the server inbound router applies this family order:
 
 ```text
-devtools envelope-routed packet families
 full generated ClientPacket decode
 auth packets
 telemetry packets
@@ -172,6 +171,8 @@ gameplay packets
 ```
 
 Lobby packet handling runs after auth and telemetry handling. This lets an authenticated connection establish websocket account identity before multiplayer room create or join requests are sent.
+
+Runtime devtools commands do not participate in this WebSocket envelope route. Their payloads carry `request_id` and `trace_id` and use `sr.tooling`, where networking/tooling performs packet-policy, room, and capability preflight, decodes `DebugCommand`, dispatches through the existing devtools controller, and returns correlated `tooling_command_result` or `tooling_error` packets. Developer readouts and legacy telemetry readouts remain on their existing paths.
 
 The client inbound dispatcher classifies server packets by generated type constants and emits signals for:
 

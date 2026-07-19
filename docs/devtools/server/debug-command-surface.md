@@ -16,18 +16,16 @@ Current command flow:
 
 ```text
 client devtools hotkey or window action
--> generated or devtools-built debug packet
--> websocket read path
--> inbound packet envelope decode
--> devtools packet-family routing
+-> GameplayDebugFlow or DevConnectionService builds request_id/trace_id payload
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> networking/tooling policy, room, and capability preflight
 -> devtools.DebugCommand decode
--> game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> Controller.HandleCommand
+-> existing devtools Controller.HandleCommand
 -> capability-specific handler
 -> game.Control
 -> authoritative game state mutation
--> lane-native gameplay readback or debug output packet
+-> correlated tooling_command_result or tooling_error
 ```
 
 The command surface is not a normal gameplay packet path. Devtools command packets are detected before normal `game.ClientPacket` decoding and do not route through `Game.HandlePacket`.
@@ -85,7 +83,7 @@ The package-level `devtools.HandleCommand(Target, ...)` remains a thin default-c
 
 The server command surface is authoritative at three levels.
 
-First, networking decides whether the packet is a devtools command before normal packet handling. The inbound router checks devtools packet families before auth, telemetry, lobby, or gameplay packet handlers.
+First, networking/tooling applies command policy, room, and capability preflight on `sr.tooling` before normal packet handling.
 
 Second, the devtools package decodes the packet into `DebugCommand` and dispatches by command type through `HandleCommand`.
 
@@ -106,9 +104,9 @@ ClearBullets
 ClearAsteroids
 ```
 
-The client does not receive a command-specific acknowledgement packet. Confirmation is observed through lane-native readback, debug status output, entity sync, or visible absence/presence of entities after the server applies the change.
+The client receives a correlated `tooling_command_result` or `tooling_error` through `ToolingPacketRouter`. Developer readouts and telemetry remain separate follow-up paths; lane-native readback, debug status output, entity sync, or visible absence/presence still describe resulting server state.
 
-If a websocket session has no current room or no current game player ID, the inbound devtools command path consumes the packet and applies no command. This prevents debug command packets from falling through into normal gameplay handling when there is no active game context.
+The tooling command route requires room attachment and the required capability. A missing `GamePlayerID` does not block room-global or explicit-target commands.
 
 ## Client presentation
 
@@ -131,39 +129,25 @@ target_scope
 
 ## Command routing
 
-### Inbound router order
+### Tooling command route
 
-The websocket read path first decodes the packet envelope:
-
-```text
-services/game-server/internal/networking/websocket_read.go
--> inbound.DecodeClientPacketEnvelope
-```
-
-Then `handleClientPacket` builds an inbound session adapter and calls:
+Runtime command payloads enter through `sr.tooling`:
 
 ```text
-inbound.RouteClientPacket
+client command payload with request_id and trace_id
+-> ClientConnectionService.send_tooling_packet()
+-> sr.tooling
+-> networking/tooling preflight
+-> devtools.DebugCommand
+-> existing devtools Controller.HandleCommand
+-> tooling_command_result or tooling_error
 ```
 
-The router attempts devtools families before normal packet decode:
-
-```text
-HandleSimpleDevtools
-HandlePlacementDevtools
-HandleRemainingDevtools
-DecodePacket
-HandleAuth
-HandleTelemetry
-HandleLobby
-HandleGameplay
-```
-
-This order keeps debug command packets out of normal `game.ClientPacket` handling.
+This route keeps debug command packets out of normal `game.ClientPacket` handling.
 
 ### Devtools packet families
 
-`services/game-server/internal/networking/inbound/devtools.go` splits command detection into three inbound families.
+The tooling route groups recognized command types into the existing simple, placement, and remaining command policies.
 
 Simple devtools commands:
 
@@ -204,6 +188,8 @@ All routed mutation commands decode into:
 ```go
 type DebugCommand struct {
     Type           string  `json:"type"`
+    RequestID      string  `json:"request_id"`
+    TraceID        string  `json:"trace_id"`
     TargetPlayerID string  `json:"target_player_id"`
     TargetScope    string  `json:"target_scope"`
     EntityType     string  `json:"entity_type"`
@@ -222,7 +208,7 @@ type DebugCommand struct {
 
 `Controller.HandleCommand` switches on `command.Type` and delegates to focused handlers.
 
-Unknown command types return `false` from `HandleCommand`. The inbound networking path does not serialize that boolean to the client.
+Unknown command types return `false` from `HandleCommand`, and the tooling route returns a correlated `tooling_error`.
 
 ## Command surface
 
@@ -417,7 +403,7 @@ Clear commands mutate authoritative server entity storage directly through game-
 | `debug_clear_bullets`   | Removes all current projectiles through Control clear methods. |
 | `debug_clear_asteroids` | Removes all current asteroids through Control clear methods.     |
 
-Clients observe the result through lane-native state/world sync readback. There is no separate clear acknowledgement packet.
+Clients receive a correlated `tooling_command_result` or `tooling_error`; lane-native state/world sync readback remains the authoritative follow-up for the resulting clear.
 
 ## Telemetry and output
 
@@ -511,7 +497,6 @@ shared/packets/debug.toml
 shared/packets/outputs.toml
 services/game-server/internal/devtools/packets_generated.go
 services/game-server/internal/devtools/command_types.go
-services/game-server/internal/networking/inbound/devtools.go
 services/game-server/internal/devtools/handler.go
 client/scripts/generated/networking/packets/packets.gd
 client devtools packet builders or generated packet builders
@@ -532,11 +517,9 @@ client/scripts/generated/networking/packets/packets.gd
 ### Networking route
 
 ```text
-services/game-server/internal/networking/websocket_read.go
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/client_packet_envelope.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/devtools.go
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/networking/tooling/commands.go
 services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
@@ -698,7 +681,7 @@ The command surface deliberately keeps interpretation in `internal/devtools` and
 
 `target_player_id` is valid only for devtools/player-only compatibility commands. New gameplay targeting should use canonical target identity instead.
 
-`debug_status` is status projection, not command acknowledgement. Command results should be inferred from lane-native readback or debug status changes.
+`debug_status` is status projection, not command acknowledgement. Command results arrive through the correlated tooling result/error path; lane-native readback or debug status changes remain follow-up state observation.
 
 `debug_respawn_player` currently receives position fields but applies a server-selected safe respawn position. Do not document the payload position as authoritative respawn placement unless the implementation changes.
 

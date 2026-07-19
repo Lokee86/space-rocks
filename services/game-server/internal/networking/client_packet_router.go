@@ -11,15 +11,6 @@ import (
 func handleClientPacket(session *webSocketSession, remoteAddr string, msg []byte, envelope inbound.ClientPacketEnvelope) {
 	adapter := newInboundSessionAdapter(session)
 	inbound.RouteClientPacket(inbound.ClientPacketRouter{
-		HandleSimpleDevtools: func() bool {
-			return inbound.HandleSimpleDevtoolsPacket(adapter, remoteAddr, msg, envelope)
-		},
-		HandlePlacementDevtools: func() bool {
-			return inbound.HandlePlacementDevtoolsPacket(adapter, remoteAddr, msg, envelope)
-		},
-		HandleRemainingDevtools: func() bool {
-			return inbound.HandleRemainingDevtoolsPacket(adapter, remoteAddr, msg, envelope)
-		},
 		HandleWebRTCSignaling: func() bool {
 			return inbound.HandleWebRTCSignalingPacket(adapter, remoteAddr, msg, envelope)
 		},
