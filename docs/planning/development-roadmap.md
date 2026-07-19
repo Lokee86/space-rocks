@@ -349,7 +349,7 @@ implementation follows the documented observability flows and call-site inventor
 
 Define what a match is, how rules are resolved, how results are finalized, and how player builds enter a match.
 
-Stage 1 product decisions are complete. P4 implementation has started. Team/participant work is currently branch work pending consolidation; P4 is not all implemented.
+The isolated `codex/p4-team-contracts` branch now contains the server-side P4 owner-system foundation through inventory, builds, and loadouts. It is not yet integrated into `main`; P3 should stabilize before the branch is reconciled and merged. See [P4 Team Contracts Worktree Status](p4-team-contracts-worktree-status.md) for the exact branch state, integration sequence, and remaining client-facing work.
 
 ### Priority Order
 
