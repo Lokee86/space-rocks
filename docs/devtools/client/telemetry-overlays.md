@@ -106,17 +106,17 @@ client/scenes/devtools/world_telemetry_overlay.tscn
 
 The scene is a `CanvasLayer` with a bottom-right `PanelContainer` and a single label. The panel ignores mouse input so it does not become a gameplay or menu input target.
 
-The overlay renders three groups.
+The overlay renders World, Client, Network, Server, and Server Network groups. While a measurement run is active or starting, it also renders a compact Measurement group.
 
-World metrics:
+World metrics prefer the authoritative live server snapshot and fall back to the applied client readmodel before the first server snapshot arrives:
 
 ```text
 players
 enemies
 asteroids
 pickups
-total_asteroids
-bullets
+projectiles
+asteroids_spawned
 ```
 
 Client metrics:
@@ -126,21 +126,11 @@ fps
 frame_ms
 ```
 
-Network metrics:
+Network metrics include timing plus combined WebSocket/WebRTC packet, byte, packet-size, and failure counters. `packet_age_ms` uses the latest synchronized bullet-delta receive age when the older gameplay-readmodel timestamp path is unavailable.
 
-```text
-rtt_ms
-packet_interval_ms
-jitter_ms
-packet_staleness_ms
-packet_age_ms
-```
+Server metrics include room/match facts, authoritative entity counts, Go process memory and goroutine counters, aggregate server write totals, and per-lane packet/byte/max-size summaries.
 
-Unavailable values render as:
-
-```text
-unavailable
-```
+Unavailable values render as an em dash.
 
 Counts come from server dictionaries after the devtools gameplay readmodel is built from lane-applied world/session/overlay state. Timing values use `-1` internally for unavailable state and render as unavailable in the label.
 
@@ -189,7 +179,7 @@ server_sent_msec
 
 The second source is combined transport accounting from the WebSocket control connection and each WebRTC lane. `ClientConnectionService` merges aggregate packet/byte/failure totals while preserving nested `websocket` and `webrtc_lanes` detail so lane-specific diagnostics remain available.
 
-The third source is server telemetry snapshots plus network ping/pong data:
+The third source is server telemetry snapshots plus network ping/pong data. `WorldTelemetryContext` merges the server snapshot, combined connection transport snapshot, and ping-derived RTT/clock-offset values before passing them to the visible overlay:
 
 ```text
 rtt_ms
@@ -225,7 +215,7 @@ packet_age_ms
 
 `packet_staleness_ms` can be available without a server clock offset. `packet_age_ms` requires both `server_sent_msec` and an estimated server clock offset. The offset is propagated from `WorldTelemetryContext` through `ClientConnectionService` and `RealtimeTransportSession` into `WebRTCTransport`, where the server Unix timestamp is converted into the client's monotonic-clock domain before age calculation.
 
-The low-level receive-age counters currently cover `bullet_delta` packets, not every packet family. Missing or zero server timestamps remain unavailable. A positive timestamp received before clock synchronization is counted as unsynchronized and remains unavailable; converted future timestamps clamp age to zero and increment the clock-skew counter. Last/max age values remain `-1` until a valid synchronized timestamp is observed.
+The low-level receive-age counters currently cover `bullet_delta` packets, not every packet family. Missing or zero server timestamps remain unavailable. A positive timestamp received before clock synchronization is counted as unsynchronized and remains unavailable; converted future timestamps clamp age to zero and increment the clock-skew counter. Last/max age values remain `-1` until a valid synchronized timestamp is observed. The visible `packet_age_ms` field now falls back to `bullet_delta_last_age_msec`, so it uses the transport counter that is actually populated by live realtime traffic.
 
 ## Build/runtime gates
 

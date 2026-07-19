@@ -25,6 +25,7 @@ This folder owns docs for client-side development and debug tooling.
 - [long-match-store-diagnostics.md](long-match-store-diagnostics.md) - Client bounded long-match store diagnostics.
 - [packet-routing-and-devtools-input.md](packet-routing-and-devtools-input.md) - Client packet routing and devtools input documentation.
 - [player-dev-labels.md](player-dev-labels.md) - Client player dev labels documentation.
+- [runtime-measurement.md](runtime-measurement.md) - Client/server runtime measurement capture and report lifecycle.
 - [target-and-placement-debugging.md](target-and-placement-debugging.md) - Client target and placement debugging documentation.
 - [telemetry-overlays.md](telemetry-overlays.md) - Client telemetry overlays documentation.
 <!-- doc-ledger:files:end -->

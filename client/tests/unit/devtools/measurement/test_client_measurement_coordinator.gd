@@ -11,9 +11,13 @@ class FakeConnection extends RefCounted:
 	signal tooling_error_received(packet: Dictionary)
 
 	var sent_packets: Array = []
+	var tooling_ready := true
 
 	func send_tooling_packet(packet: Dictionary) -> void:
 		sent_packets.append(packet.duplicate(true))
+
+	func is_tooling_ready() -> bool:
+		return tooling_ready
 
 
 class FakeMeasurementContext extends RefCounted:
@@ -35,6 +39,16 @@ class FakeMeasurementContext extends RefCounted:
 	func reset() -> Dictionary:
 		reset_calls += 1
 		return {"status": "partial", "partial_reason": "reset"}
+
+
+func test_start_rejects_when_tooling_channel_is_not_ready() -> void:
+	var connection := FakeConnection.new()
+	connection.tooling_ready = false
+	var coordinator := ClientMeasurementCoordinator.new(connection, FakeMeasurementContext.new())
+
+	assert_eq(coordinator.start("not-ready"), "")
+	assert_true(connection.sent_packets.is_empty())
+	assert_false(coordinator.pending_request_ids.has("start"))
 
 
 func test_start_snapshot_stop_tracks_state_and_combines_bounded_reports() -> void:

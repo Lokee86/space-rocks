@@ -104,6 +104,10 @@ func _refresh_overlay() -> void:
 	var merged_metrics: Dictionary = metrics.snapshot()
 	for key in network_metrics.keys():
 		merged_metrics[key] = network_metrics[key]
+	var packet_age = merged_metrics.get("packet_age_ms", -1)
+	var bullet_packet_age = merged_metrics.get("bullet_delta_last_age_msec", -1)
+	if (not (packet_age is int or packet_age is float) or packet_age < 0) and (bullet_packet_age is int or bullet_packet_age is float) and bullet_packet_age >= 0:
+		merged_metrics["packet_age_ms"] = bullet_packet_age
 	for key in measurement_metrics.keys():
 		merged_metrics[key] = measurement_metrics[key]
 	var fps: float = Engine.get_frames_per_second()

@@ -3,12 +3,26 @@ class_name ClientMeasurementContext
 
 const ClientMeasurementSessionScript := preload("res://scripts/devtools/measurement/client_measurement_session.gd")
 const LongMatchStoreMetrics := preload("res://scripts/devtools/telemetry/long_match_store_metrics.gd")
+const CUMULATIVE_NETWORK_KEYS := [
+	"packets_in",
+	"packets_out",
+	"bytes_in",
+	"bytes_out",
+	"decode_failures",
+	"encode_failures",
+	"send_failures",
+	"bullet_delta_received_count",
+	"bullet_delta_missing_server_time_count",
+	"bullet_delta_unsynchronized_server_time_count",
+	"bullet_delta_clock_skew_count",
+]
 
 var session: ClientMeasurementSessionScript
 var connection_service
 var realtime_packet_pipeline
 var world_sync
 var telemetry_context
+var _network_metrics_baseline: Dictionary = {}
 
 signal finalized(result: Dictionary)
 
@@ -27,15 +41,23 @@ func configure(connection_service_ref, realtime_packet_pipeline_ref = null, worl
 
 
 func start(metadata: Dictionary = {}) -> void:
+	_network_metrics_baseline = _connection_network_metrics()
 	session.start(metadata)
+	session.record_periodic_sample(_build_periodic_sample())
 
 
 func stop(reason: String = "") -> Dictionary:
-	return session.stop(reason)
+	if session.is_recording():
+		session.record_periodic_sample(_build_periodic_sample())
+	var result := session.stop(reason)
+	_network_metrics_baseline.clear()
+	return result
 
 
 func reset() -> Dictionary:
-	return session.reset()
+	var result := session.reset()
+	_network_metrics_baseline.clear()
+	return result
 
 
 func is_recording() -> bool:
@@ -66,6 +88,36 @@ func _on_session_finalized(result: Dictionary) -> void:
 	finalized.emit(result.duplicate(true))
 
 
+func _connection_network_metrics() -> Dictionary:
+	if connection_service != null and connection_service.has_method("network_metrics_snapshot"):
+		var result = connection_service.network_metrics_snapshot()
+		if result is Dictionary:
+			return result.duplicate(true)
+	return {}
+
+
+func _run_relative_network_metrics(current: Dictionary, baseline: Dictionary) -> Dictionary:
+	var relative := current.duplicate(true)
+	for key in CUMULATIVE_NETWORK_KEYS:
+		var current_value = current.get(key, null)
+		if !(current_value is int or current_value is float):
+			continue
+		var baseline_value = baseline.get(key, 0)
+		if !(baseline_value is int or baseline_value is float):
+			baseline_value = 0
+		relative[key] = maxi(int(current_value) - int(baseline_value), 0)
+	for key in current.keys():
+		var current_child = current[key]
+		if !(current_child is Dictionary):
+			continue
+		var baseline_child = baseline.get(key, {})
+		relative[key] = _run_relative_network_metrics(
+			current_child,
+			baseline_child if baseline_child is Dictionary else {}
+		)
+	return relative
+
+
 func _build_periodic_sample() -> Dictionary:
 	var missing_metrics: Array = []
 	var entity_counts := {}
@@ -80,9 +132,10 @@ func _build_periodic_sample() -> Dictionary:
 	else:
 		missing_metrics.append("telemetry")
 	if connection_service != null and connection_service.has_method("network_metrics_snapshot"):
-		var connection_network_metrics: Dictionary = connection_service.network_metrics_snapshot()
+		var connection_network_metrics := _connection_network_metrics()
 		for key in connection_network_metrics.keys():
 			network_metrics[key] = connection_network_metrics[key]
+		network_metrics = _run_relative_network_metrics(network_metrics, _network_metrics_baseline)
 	else:
 		missing_metrics.append("network_metrics")
 

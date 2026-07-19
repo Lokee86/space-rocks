@@ -15,12 +15,12 @@ func refresh_metrics(metrics: Dictionary) -> void:
 
 	var lines := PackedStringArray([
 		"World",
-		"players: %s" % _count_value(metrics, "players"),
-		"enemies: %s" % _count_value(metrics, "enemies"),
-		"asteroids: %s" % _count_value(metrics, "asteroids"),
-		"pickups: %s" % _count_value(metrics, "pickups"),
-		"total_asteroids: %s" % _count_value(metrics, "total_asteroids"),
-		"bullets: %s" % _count_value(metrics, "bullets"),
+		"players: %s" % _preferred_count_value(metrics, "server_players", "players"),
+		"enemies: %s" % _preferred_count_value(metrics, "server_enemies", "enemies"),
+		"asteroids: %s" % _preferred_count_value(metrics, "server_asteroids", "asteroids"),
+		"pickups: %s" % _preferred_count_value(metrics, "server_pickups", "pickups"),
+		"projectiles: %s" % _preferred_count_value(metrics, "server_projectiles", "bullets"),
+		"asteroids_spawned: %s" % _preferred_count_value(metrics, "server_total_asteroids_spawned", "total_asteroids"),
 		"",
 		"Client",
 		"fps: %s" % _timing_or_network_value(metrics, "fps"),
@@ -44,8 +44,55 @@ func refresh_metrics(metrics: Dictionary) -> void:
 		"encode_failures: %s" % _timing_or_network_value(metrics, "encode_failures"),
 		"send_failures: %s" % _timing_or_network_value(metrics, "send_failures"),
 	])
+	_append_server_lines(lines, metrics)
 	_append_measurement_lines(lines, metrics)
 	metrics_label.text = "\n".join(lines)
+
+
+func _append_server_lines(lines: PackedStringArray, metrics: Dictionary) -> void:
+	if !metrics.has("server_room_count") and !metrics.has("server_match_id"):
+		return
+	lines.append("")
+	lines.append("Server")
+	lines.append("match: %s" % _text_value(metrics, "server_match_id"))
+	lines.append("rooms: %s" % _count_value(metrics, "server_room_count"))
+	lines.append("player_sessions: %s" % _count_value(metrics, "server_player_sessions"))
+	lines.append("radial_effects: %s" % _count_value(metrics, "server_radial_effects"))
+	lines.append("heap_allocated_bytes: %s" % _count_value(metrics, "server_heap_allocated_bytes"))
+	lines.append("heap_in_use_bytes: %s" % _count_value(metrics, "server_heap_in_use_bytes"))
+	lines.append("system_bytes: %s" % _count_value(metrics, "server_system_bytes"))
+	lines.append("goroutines: %s" % _count_value(metrics, "server_goroutines"))
+	lines.append("gc_cycles: %s" % _count_value(metrics, "server_gc_cycles"))
+	lines.append("")
+	lines.append("Server Network")
+	lines.append("packets_out: %s" % _count_value(metrics, "server_packets_out"))
+	lines.append("bytes_out: %s" % _count_value(metrics, "server_bytes_out"))
+	lines.append("max_packet_bytes: %s" % _count_value(metrics, "server_max_packet_bytes"))
+	_append_server_lane_lines(lines, metrics.get("server_lane_metrics", {}))
+
+
+func _append_server_lane_lines(lines: PackedStringArray, lane_metrics_value) -> void:
+	if !(lane_metrics_value is Dictionary) or lane_metrics_value.is_empty():
+		return
+	var lane_names: Array = lane_metrics_value.keys()
+	lane_names.sort()
+	for lane_name in lane_names:
+		var lane_metrics = lane_metrics_value[lane_name]
+		if !(lane_metrics is Dictionary):
+			continue
+		lines.append("%s p/b/max: %s/%s/%s" % [
+			str(lane_name),
+			_count_value(lane_metrics, "packet_count"),
+			_count_value(lane_metrics, "encoded_bytes_total"),
+			_count_value(lane_metrics, "maximum_encoded_bytes"),
+		])
+
+
+func _preferred_count_value(metrics: Dictionary, preferred_key: String, fallback_key: String) -> String:
+	var preferred := _count_value(metrics, preferred_key)
+	if preferred != UNAVAILABLE:
+		return preferred
+	return _count_value(metrics, fallback_key)
 
 
 func _append_measurement_lines(lines: PackedStringArray, metrics: Dictionary) -> void:

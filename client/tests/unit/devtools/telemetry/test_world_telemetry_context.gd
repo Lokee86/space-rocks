@@ -43,6 +43,7 @@ class FakeConnectionService:
 			"last_in_packet_bytes": 70,
 			"last_out_packet_bytes": 80,
 			"decode_failures": 2,
+			"bullet_delta_last_age_msec": 17,
 		}
 
 
@@ -94,6 +95,32 @@ func test_pong_forwards_offset_and_reset_clears_it() -> void:
 	assert_true(fake_connection.server_clock_offset_ms > -1)
 	telemetry_context.reset()
 	assert_eq(fake_connection.server_clock_offset_ms, -1)
+
+
+func test_server_snapshot_and_transport_age_reach_visible_overlay() -> void:
+	var fake_connection := FakeConnectionService.new()
+	var telemetry_context := WorldTelemetryContext.new()
+	telemetry_context.configure(fake_connection)
+	telemetry_context.toggle_overlay()
+	fake_connection.telemetry_snapshot_received.emit({
+		Packets.FIELD_METRICS: {
+			"server_room_count": 1,
+			"server_match_id": "match-visible",
+			"server_players": 3,
+			"server_projectiles": 4,
+		}
+	})
+	telemetry_context.overlay_flow.last_refresh_msec = -1
+	telemetry_context.process(true)
+
+	var label := telemetry_context.overlay_flow.overlay.find_child("MetricsLabel", true, false) as Label
+	assert_not_null(label)
+	assert_true(label.text.contains("players: 3"))
+	assert_true(label.text.contains("projectiles: 4"))
+	assert_true(label.text.contains("match: match-visible"))
+	assert_true(label.text.contains("packet_age_ms: 17"))
+
+	telemetry_context.reset()
 
 
 func test_apply_gameplay_state_updates_lane_counts_and_merges_connection_network_metrics() -> void:

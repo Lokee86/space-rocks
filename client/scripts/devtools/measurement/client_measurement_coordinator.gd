@@ -263,7 +263,11 @@ func _send(packet: Dictionary) -> void:
 
 
 func _can_send_tooling() -> bool:
-	return connection_service != null and connection_service.has_method("send_tooling_packet")
+	if connection_service == null or !connection_service.has_method("send_tooling_packet"):
+		return false
+	if connection_service.has_method("is_tooling_ready"):
+		return bool(connection_service.is_tooling_ready())
+	return true
 
 
 func _connect_connection_signal(signal_name: StringName, handler: Callable) -> void:

@@ -52,16 +52,28 @@ func apply_gameplay_state(state: Dictionary) -> void:
 
 
 func process(required_lane_baselines_synced: bool, delta: float = 0.0) -> void:
-	if overlay_flow != null:
-		if network_metrics != null:
-			overlay_flow.set_network_metrics(network_metrics.snapshot())
-			_process_ping()
-		if overlay_flow.is_visible() and measurement_snapshot_provider.is_valid():
-			var measurement_snapshot = measurement_snapshot_provider.call()
-			overlay_flow.set_measurement_metrics(
-				measurement_snapshot if measurement_snapshot is Dictionary else {}
-			)
-		overlay_flow.process(required_lane_baselines_synced, delta)
+	if overlay_flow == null:
+		return
+
+	var live_metrics := server_metrics.duplicate(true)
+	if connection_service != null and connection_service.has_method("network_metrics_snapshot"):
+		var transport_snapshot = connection_service.network_metrics_snapshot()
+		if transport_snapshot is Dictionary:
+			for key in transport_snapshot.keys():
+				live_metrics[key] = transport_snapshot[key]
+	if network_metrics != null:
+		var network_snapshot: Dictionary = network_metrics.snapshot()
+		for key in network_snapshot.keys():
+			live_metrics[key] = network_snapshot[key]
+		_process_ping()
+	overlay_flow.set_network_metrics(live_metrics)
+
+	if overlay_flow.is_visible() and measurement_snapshot_provider.is_valid():
+		var measurement_snapshot = measurement_snapshot_provider.call()
+		overlay_flow.set_measurement_metrics(
+			measurement_snapshot if measurement_snapshot is Dictionary else {}
+		)
+	overlay_flow.process(required_lane_baselines_synced, delta)
 
 
 func toggle_overlay() -> void:

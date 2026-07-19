@@ -3,6 +3,51 @@ extends GutTest
 const WorldTelemetryOverlayScene := preload("res://scenes/devtools/world_telemetry_overlay.tscn")
 
 
+func test_renders_authoritative_server_and_transport_metrics() -> void:
+	var overlay := WorldTelemetryOverlayScene.instantiate()
+	add_child_autofree(overlay)
+	overlay.refresh_metrics({
+		"players": 1,
+		"asteroids": 2,
+		"bullets": 3,
+		"server_players": 4,
+		"server_enemies": 5,
+		"server_asteroids": 6,
+		"server_pickups": 7,
+		"server_projectiles": 8,
+		"server_total_asteroids_spawned": 9,
+		"server_room_count": 2,
+		"server_match_id": "match-4",
+		"server_player_sessions": 4,
+		"server_radial_effects": 1,
+		"server_heap_allocated_bytes": 1000,
+		"server_heap_in_use_bytes": 900,
+		"server_system_bytes": 2000,
+		"server_goroutines": 12,
+		"server_gc_cycles": 3,
+		"server_packets_out": 30,
+		"server_bytes_out": 4000,
+		"server_max_packet_bytes": 700,
+		"server_lane_metrics": {
+			"tooling": {
+				"packet_count": 2,
+				"encoded_bytes_total": 300,
+				"maximum_encoded_bytes": 200,
+			},
+		},
+	})
+
+	var label := overlay.find_child("MetricsLabel", true, false) as Label
+	assert_not_null(label)
+	assert_true(label.text.contains("players: 4"))
+	assert_true(label.text.contains("enemies: 5"))
+	assert_true(label.text.contains("projectiles: 8"))
+	assert_true(label.text.contains("asteroids_spawned: 9"))
+	assert_true(label.text.contains("match: match-4"))
+	assert_true(label.text.contains("packets_out: 30"))
+	assert_true(label.text.contains("tooling p/b/max: 2/300/200"))
+
+
 func test_renders_compact_measurement_section() -> void:
 	var overlay := WorldTelemetryOverlayScene.instantiate()
 	add_child_autofree(overlay)
