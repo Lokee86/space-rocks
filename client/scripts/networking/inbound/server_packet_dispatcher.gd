@@ -20,7 +20,6 @@ signal event_batch_received(packet: Dictionary)
 signal resync_request_received(packet: Dictionary)
 signal resync_required_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
-signal telemetry_pong_received(packet: Dictionary)
 signal webrtc_answer_received(packet: Dictionary)
 signal webrtc_ice_candidate_received(packet: Dictionary)
 signal webrtc_ready_received(packet: Dictionary)
@@ -76,8 +75,6 @@ func dispatch(packet: Dictionary) -> void:
 		webrtc_failed_received.emit(packet)
 	elif ServerPacketRouter.is_player_pause_state(packet):
 		player_pause_state_received.emit(packet)
-	elif ServerPacketRouter.is_telemetry_pong(packet):
-		telemetry_pong_received.emit(packet)
 	else:
 		unknown_packet_received.emit(packet)
 

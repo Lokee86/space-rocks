@@ -11,9 +11,9 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 ## Overview
 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
-WebSocket remains the client route for session, control, room, lobby, auth, telemetry, WebRTC signaling/control, and queued non-gameplay packets. In particular, `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_ready`, `webrtc_smoke`, and `webrtc_failed` are signaling/control packets received through WebSocket ingress. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets: `world`, `overlay`, `session`, `event`, asteroid lifecycle, and bullet lifecycle packets use the `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` ordered/reliable lifecycle channels, while asteroid and bullet delta packets use the `sr.asteroids` and `sr.bullets` unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
+WebSocket remains the client route for session, control, room, lobby, auth, WebRTC signaling/control, and queued non-tooling packets. Runtime telemetry and developer readouts use the dedicated reliable `sr.tooling` WebRTC DataChannel. In particular, `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_ready`, `webrtc_smoke`, and `webrtc_failed` are signaling/control packets received through WebSocket ingress. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets: `world`, `overlay`, `session`, `event`, asteroid lifecycle, and bullet lifecycle packets use the `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` ordered/reliable lifecycle channels, while asteroid and bullet delta packets use the `sr.asteroids` and `sr.bullets` unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
-`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `RealtimeTransportSession` owns the WebRTC transport-session lifecycle and dispatch callback. Both ingress branches enter `ServerPacketDispatcher`, which emits typed packet signals. `ClientConnectionService` owns the application-facing non-realtime dispatcher bindings and public facade. `ClientInboundCoordinator` owns only the WebRTC control bindings for `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings and typed gameplay entry points.
+`NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `RealtimeTransportSession` owns the WebRTC transport-session lifecycle and lane-aware dispatch callback. WebSocket packets and gameplay-lane WebRTC packets enter `ServerPacketDispatcher`; `sr.tooling` packets enter `ToolingPacketRouter` directly. `ClientConnectionService` owns the application-facing non-realtime dispatcher bindings, tooling-router signal bridge, and public facade. `ClientInboundCoordinator` owns only the WebRTC control bindings for `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings and typed gameplay entry points.
 
 Compact `event_batch` packets are expanded by the client compact packet expansion layer before event appliers receive them, so downstream gameplay code sees readable long-key event dictionaries rather than compact aliases. Nested `ev` or `events` entries are expanded as part of that same transport step, and event dedupe still keys off `event_id` after expansion. Runtime wire packets keep compact aliases on the wire; domain logs may still show raw x/y before projection.
 
@@ -42,6 +42,13 @@ WebRTCTransport receives DataChannel text
 -> accepted lifecycle packet: WorldLaneApplier validates and mutates WorldLaneState
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
+
+WebRTCTransport receives sr.tooling text
+-> PacketCodec.decode validates the tooling envelope
+-> RealtimeTransportSession dispatch callback(packet, tooling)
+-> ClientConnectionService._on_tooling_packet_received(packet)
+-> ToolingPacketRouter.dispatch(packet)
+-> telemetry, measurement, debug-readout, command-result, or tooling-error signal
 ```
 
 The routing path is signal-based and lane-aware. It does not mutate server authority, does not parse payload-specific gameplay data, and does not apply presentation state directly. Its job is to classify packet family by generated packet type constants, forward lane packets through the realtime router, and hand the dictionary to the owning client subsystem. Inbound realtime lane packets may already contain quantized numeric wire values. The client routes them by lane and packet family, does not own authoritative quantization decisions, and uses `client/scripts/protocol/realtime/realtime_quantize.gd` when it needs to decode quantized realtime lane values. Lifecycle packets enter `LifecycleLaneGate`: they apply immediately only when their explicit world baseline matches the active synced world baseline, otherwise they queue or reject. `WorldLaneApplier` validates and mutates lifecycle state only after gate acceptance. Hot lanes update known entities only, but a lifecycle notification does not prove that an entity was created or deleted. Hot asteroid and bullet packets are routed on unordered/unreliable lanes. Their sequence values must be finite, non-negative, integer-valued numerics; missing, fractional, negative, non-finite, string, and boolean values are rejected before hot-lane state mutation. The client accepts distinct valid chunk indices with consistent `chunk_count` values for each hot lane sequence. Duplicate indices, inconsistent or malformed chunk metadata, and lower sequences are rejected; sequence gaps remain valid, and asteroid and bullet tracking are independent.
@@ -53,10 +60,10 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 
 ## Responsibilities
 
-* Bind application-facing non-realtime `ServerPacketDispatcher` signals to `ClientConnectionService` and gameplay lane signals to `RealtimePacketPipeline`.
-* Re-emit stable application-facing coordinator signals from `ClientConnectionService`.
+* Bind application-facing non-realtime `ServerPacketDispatcher` signals to `ClientConnectionService`, gameplay lane signals to `RealtimePacketPipeline`, and tooling packet signals to `ToolingPacketRouter`.
+* Re-emit stable application-facing dispatcher and tooling-router signals from `ClientConnectionService`.
 * Track websocket auth result state from `authenticate_result` packets.
-* Preserve the auth-state, room, debug, player-pause, telemetry, and unknown-packet facade signals.
+* Preserve the auth-state, room, debug, player-pause, telemetry, and unknown-packet facade signals while keeping their physical transports explicit.
 * Keep packet-family routing separate from raw WebSocket transport and payload-specific packet readers.
 
 ## Does not own
@@ -88,7 +95,7 @@ The routing path is signal-based and lane-aware. It does not mutate server autho
 
 `NetworkClient` receives raw WebSocket text and hands it to `PacketCodec.decode`. `PacketCodec.decode` accepts compact realtime aliases by expanding them to readable long-key dictionaries before envelope validation and dispatch; see [Realtime Compact Wire Mapping](../../game-server/networking/realtime-compact-wire-mapping.md). Legacy long-key packets remain accepted, and packets with neither `type` nor compact `t` still fail envelope validation. For `event_batch`, that expansion happens before `event_batch_applier.gd` or gameplay event appliers see the packet payload, and compact event aliases stay a transport detail rather than leaking into gameplay presentation code.
 
-`WebRTCTransport` receives DataChannel text, calls `PacketCodec.decode`, and emits `packet_received`. `RealtimeTransportSession._on_packet_received(packet)` forwards active gameplay packets to `ServerPacketDispatcher.dispatch(packet)`. `ClientInboundCoordinator` does not consume WebRTC gameplay DataChannel packets and does not treat them as signaling; it consumes WebSocket-produced dispatcher signals for `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_ready`, `webrtc_smoke`, and `webrtc_failed`.
+`WebRTCTransport` receives DataChannel text, calls `PacketCodec.decode`, and emits `packet_received` with its lane. `RealtimeTransportSession` forwards active gameplay lanes to `ServerPacketDispatcher.dispatch(packet)` and forwards the tooling lane to `ClientConnectionService._on_tooling_packet_received(packet)`, which delegates to `ToolingPacketRouter`. `ClientInboundCoordinator` does not consume WebRTC gameplay or tooling packets and does not treat them as signaling; it consumes WebSocket-produced dispatcher signals for `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_ready`, `webrtc_smoke`, and `webrtc_failed`.
 
 `ClientConnectionService._on_packet_received(packet)` receives the WebSocket dictionary and delegates to `ServerPacketDispatcher.dispatch(packet)`.
 
@@ -143,10 +150,7 @@ session_delta
 event_batch
 resync_request
 resync_required
-debug_shape_catalog
-debug_status
 player_pause_state
-telemetry_pong
 ```
 
 ### Dispatcher signal fanout
@@ -178,10 +182,7 @@ session_delta_received(packet)
 event_batch_received(packet)
 resync_request_received(packet)
 resync_required_received(packet)
-debug_shape_catalog_received(packet)
-debug_status_received(packet)
 player_pause_state_received(packet)
-telemetry_pong_received(packet)
 unknown_packet_received(packet)
 ```
 
@@ -195,7 +196,7 @@ Inbound `resync_request` remains a compatibility route. It may mark the supplied
 
 ### Connection-service signal bridge
 
-`ClientConnectionService` owns the public connection facade, collaborator composition, polling, reset coordination, outbound API, and stable application-facing signal relay, including application-facing non-realtime dispatcher bindings. It also owns a typed `AuthSessionController` reference for the websocket authentication handoff. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings: `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings plus realtime expansion, validation, application, readiness, reset, presentation-state refresh, and applied notification. Raw WebRTC control packets and realtime gameplay packets are not re-emitted through `ClientConnectionService`.
+`ClientConnectionService` owns the public connection facade, collaborator composition, polling, reset coordination, outbound API, and stable application-facing signal relay, including application-facing non-realtime dispatcher bindings and `ToolingPacketRouter` bindings. It also owns a typed `AuthSessionController` reference for the websocket authentication handoff. `ClientInboundCoordinator` owns only the five WebRTC control dispatcher bindings: `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings plus realtime expansion, validation, application, readiness, reset, presentation-state refresh, and applied notification. Raw WebRTC control packets and realtime gameplay packets are not re-emitted through `ClientConnectionService`.
 
 RealtimePacketPipeline emits a structured network diagnostic event when a lane packet is routed for the first time by packet type:
 
@@ -329,16 +330,18 @@ Gameplay packet application continues through gameplay runtime documentation aft
 
 ### Debug packet handoff
 
-Debug shape catalog and debug status packets route through the same gameplay session controller because current devtools presentation is composed inside gameplay session context.
+Debug shape catalog and debug status packets arrive through `sr.tooling` and `ToolingPacketRouter`, then route through the same gameplay session controller because current devtools presentation is composed inside gameplay session context.
 
 Current handoff:
 
 ```text
-debug_shape_catalog_received
+ToolingPacketRouter.debug_shape_catalog_received
+-> ClientConnectionService.debug_shape_catalog_received
 -> SessionNetworkController._on_debug_shape_catalog_received
 -> GameplaySessionController.handle_debug_shape_catalog_packet
 
-debug_status_received
+ToolingPacketRouter.debug_status_received
+-> ClientConnectionService.debug_status_received
 -> SessionNetworkController._on_debug_status_received
 -> GameplaySessionController.handle_debug_status_packet
 ```
@@ -359,7 +362,7 @@ player_pause_state_received
 
 ### Telemetry packet handoff
 
-`telemetry_pong` packets are routed by the dispatcher and re-emitted by the connection service.
+`telemetry_snapshot` and `telemetry_pong` packets arrive through `sr.tooling`, are classified by `ToolingPacketRouter`, and are re-emitted by the connection service.
 
 `WorldTelemetryContext` connects directly to:
 
@@ -367,9 +370,9 @@ player_pause_state_received
 ClientConnectionService.telemetry_pong_received
 ```
 
-and applies the pong packet to network telemetry metrics.
+and applies the pong packet to network telemetry metrics. The same context consumes `ClientConnectionService.telemetry_snapshot_received` and merges authoritative server runtime fields into the visible telemetry snapshot.
 
-Telemetry pong handling is diagnostic. It does not require room membership, does not mutate gameplay state, and does not route through normal gameplay packet application.
+Telemetry handling is diagnostic. It does not require room membership, does not mutate gameplay state, and does not route through normal gameplay packet application.
 
 ### Unknown packet fallback
 
@@ -429,14 +432,24 @@ WebSocket service and control ingress:
 WebRTC active gameplay ingress:
 
 ```
-  WebRTCTransport.packet_received(packet)
-  -> RealtimeTransportSession._on_packet_received(packet)
+  WebRTCTransport.packet_received(packet, gameplay_lane)
+  -> RealtimeTransportSession gameplay dispatch
   -> ServerPacketDispatcher.dispatch(packet)
   -> ServerPacketRouter checks packet type
--> RealtimePacketPipeline typed entry point for the packet family
+  -> RealtimePacketPipeline typed entry point for the packet family
   -> RealtimeRouter.route_lane_packet(packet)
   -> RealtimePacketPipeline.gameplay_packet_applied(packet)
   -> PresentationBridge.handle_gameplay_packet(packet)
+```
+
+WebRTC tooling ingress:
+
+```
+  WebRTCTransport.packet_received(packet, tooling)
+  -> RealtimeTransportSession tooling dispatch
+  -> ClientConnectionService._on_tooling_packet_received(packet)
+  -> ToolingPacketRouter.dispatch(packet)
+  -> stable ClientConnectionService tooling signal
 ```
 
 Packet parse failures do not enter either routing path. They are emitted separately as:
@@ -571,19 +584,27 @@ resync_required
 -> GameplayComposition / runtime presentation flows
 
 debug_shape_catalog
--> debug_shape_catalog_received
+-> ToolingPacketRouter.debug_shape_catalog_received
+-> ClientConnectionService.debug_shape_catalog_received
 -> GameplaySessionController.handle_debug_shape_catalog_packet
 
 debug_status
--> debug_status_received
+-> ToolingPacketRouter.debug_status_received
+-> ClientConnectionService.debug_status_received
 -> GameplaySessionController.handle_debug_status_packet
 
 player_pause_state
 -> player_pause_state_received
 -> GameplaySessionController.handle_player_pause_state
 
+telemetry_snapshot
+-> ToolingPacketRouter.telemetry_snapshot_received
+-> ClientConnectionService.telemetry_snapshot_received
+-> WorldTelemetryContext._on_telemetry_snapshot_received
+
 telemetry_pong
--> telemetry_pong_received
+-> ToolingPacketRouter.telemetry_pong_received
+-> ClientConnectionService.telemetry_pong_received
 -> WorldTelemetryContext._on_telemetry_pong_received
 
 unmatched packet type

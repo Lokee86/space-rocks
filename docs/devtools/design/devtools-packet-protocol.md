@@ -444,7 +444,7 @@ debug_shape_catalog
 -> server hitbox catalog/overlay flow
 ```
 
-The normal WebSocket `ServerPacketRouter`, `ServerPacketDispatcher`, and `ClientInboundCoordinator` no longer classify these readouts. `telemetry_pong` still follows its existing path until continuous telemetry/ping migration.
+The normal WebSocket `ServerPacketRouter`, `ServerPacketDispatcher`, and `ClientInboundCoordinator` no longer classify developer readouts or telemetry packets. `telemetry_snapshot` and `telemetry_pong` are classified only by the `sr.tooling` router.
 
 ## Client outbound routing
 

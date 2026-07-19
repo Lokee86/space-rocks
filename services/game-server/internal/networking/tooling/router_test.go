@@ -296,14 +296,33 @@ func TestRouterTelemetrySubscriptionIsPerConnection(t *testing.T) {
 		"type":       protocol.PacketTypeTelemetrySubscribe,
 		"request_id": "subscribe-a",
 	})
-	routerA.Tick(Context{SessionID: "session-a"}, senderA)
-	routerB.Tick(Context{SessionID: "session-b"}, senderB)
+	routerA.Tick(Context{SessionID: "session-a", RoomID: "room-a"}, senderA)
+	routerB.Tick(Context{SessionID: "session-b", RoomID: "room-a"}, senderB)
 
 	if len(senderA.packets) != 1 || senderA.packets[0]["type"] != protocol.PacketTypeTelemetrySnapshot {
 		t.Fatalf("expected one subscribed snapshot, got %#v", senderA.packets)
 	}
 	if len(senderB.packets) != 0 {
 		t.Fatalf("unexpected snapshot for unsubscribed connection: %#v", senderB.packets)
+	}
+}
+
+func TestRouterTelemetrySubscriptionClearsWhenRoomAttachmentChanges(t *testing.T) {
+	provider := testTelemetryProvider{}
+	router := NewRouter(nil, provider)
+	sender := &testSender{}
+
+	router.Handle(Context{SessionID: "session-a", RoomID: "room-a"}, sender, map[string]any{
+		"type":       protocol.PacketTypeTelemetrySubscribe,
+		"request_id": "subscribe-a",
+	})
+	router.Tick(Context{SessionID: "session-a", RoomID: "room-b"}, sender)
+
+	if len(sender.packets) != 0 {
+		t.Fatalf("unexpected snapshot after room attachment changed: %#v", sender.packets)
+	}
+	if router.subscribed || router.telemetryRoomID != "" {
+		t.Fatalf("telemetry subscription was not cleared: subscribed=%v room=%q", router.subscribed, router.telemetryRoomID)
 	}
 }
 

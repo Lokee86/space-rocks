@@ -2,6 +2,7 @@ extends RefCounted
 
 const WorldTelemetryOverlayFlow = preload("res://scripts/devtools/telemetry/world_telemetry_overlay_flow.gd")
 const NetworkTelemetryMetrics = preload("res://scripts/devtools/telemetry/network_telemetry_metrics.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const PING_INTERVAL_MSEC := 1000
 
 var overlay_flow = null
@@ -9,6 +10,7 @@ var network_metrics = null
 var connection_service = null
 var measurement_snapshot_provider: Callable
 var last_ping_msec: int = -1
+var server_metrics: Dictionary = {}
 
 
 func configure(connection_service_ref) -> void:
@@ -21,6 +23,10 @@ func configure(connection_service_ref) -> void:
 		var apply_pong_callable := Callable(self, "_on_telemetry_pong_received")
 		if not connection_service_ref.is_connected("telemetry_pong_received", apply_pong_callable):
 			connection_service_ref.connect("telemetry_pong_received", apply_pong_callable)
+	if connection_service_ref != null and connection_service_ref.has_signal("telemetry_snapshot_received"):
+		var apply_snapshot_callable := Callable(self, "_on_telemetry_snapshot_received")
+		if not connection_service_ref.is_connected("telemetry_snapshot_received", apply_snapshot_callable):
+			connection_service_ref.connect("telemetry_snapshot_received", apply_snapshot_callable)
 
 
 func configure_measurement_snapshot_provider(provider: Callable) -> void:
@@ -29,6 +35,9 @@ func configure_measurement_snapshot_provider(provider: Callable) -> void:
 
 func reset() -> void:
 	last_ping_msec = -1
+	server_metrics.clear()
+	if connection_service != null and connection_service.has_method("set_telemetry_subscription_enabled"):
+		connection_service.set_telemetry_subscription_enabled(false)
 	if network_metrics != null:
 		network_metrics.reset()
 	if overlay_flow != null:
@@ -56,8 +65,11 @@ func process(required_lane_baselines_synced: bool, delta: float = 0.0) -> void:
 
 
 func toggle_overlay() -> void:
-	if overlay_flow != null:
-		overlay_flow.toggle_overlay()
+	if overlay_flow == null:
+		return
+	overlay_flow.toggle_overlay()
+	if connection_service != null and connection_service.has_method("set_telemetry_subscription_enabled"):
+		connection_service.set_telemetry_subscription_enabled(overlay_flow.is_visible())
 
 
 func telemetry_snapshot() -> Dictionary:
@@ -74,7 +86,14 @@ func telemetry_snapshot() -> Dictionary:
 		var connection_network_snapshot = connection_service.network_metrics_snapshot()
 		for key in connection_network_snapshot.keys():
 			snapshot[key] = connection_network_snapshot[key]
+	for key in server_metrics.keys():
+		snapshot[key] = server_metrics[key]
 	return snapshot
+
+
+func _on_telemetry_snapshot_received(packet: Dictionary) -> void:
+	var metrics_value = packet.get(Packets.FIELD_METRICS, {})
+	server_metrics = metrics_value.duplicate(true) if metrics_value is Dictionary else {}
 
 
 func _on_telemetry_pong_received(packet: Dictionary) -> void:
@@ -92,10 +111,16 @@ func _process_ping() -> void:
 		return
 	if connection_service.has_method("is_server_connected") and not connection_service.is_server_connected():
 		return
+	if connection_service.has_method("is_tooling_ready") and not connection_service.is_tooling_ready():
+		return
 
 	var now_msec := Time.get_ticks_msec()
 	if last_ping_msec >= 0 and now_msec - last_ping_msec < PING_INTERVAL_MSEC:
 		return
 
-	connection_service.send_packet(network_metrics.next_ping_packet())
-	last_ping_msec = now_msec
+	var ping: Dictionary = network_metrics.next_ping_packet()
+	if connection_service.has_method("send_telemetry_ping") and connection_service.send_telemetry_ping(
+		int(ping.get(Packets.FIELD_SEQUENCE, -1)),
+		int(ping.get(Packets.FIELD_CLIENT_SENT_MSEC, -1))
+	):
+		last_ping_msec = now_msec

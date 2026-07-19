@@ -20,7 +20,7 @@ The current client telemetry overlay is the world telemetry overlay. It is a `Ca
 * raw devtools-window lane readouts
 * server-authoritative devtools commands
 
-The overlay observes applied world-lane state after the client has routed authoritative lane packets. It counts server-owned entity dictionaries, adds local client frame timing, and optionally sends diagnostic `telemetry_ping` packets while visible so the server can respond with `telemetry_pong`.
+The overlay observes applied world-lane state after the client has routed authoritative lane packets. It counts server-owned entity dictionaries, adds local client frame timing, subscribes to bounded server telemetry snapshots while visible, and sends correlated diagnostic `telemetry_ping` packets over `sr.tooling` so the server can respond with `telemetry_pong`.
 
 Packet-age interpretation is still a server-timestamp plus client-clock-offset calculation. If low-level wire logs show omitted runtime metadata as `nil`, that is a raw wire-map artifact, not a sign that packet age is unavailable.
 
@@ -37,11 +37,13 @@ lane packets
 -> WorldTelemetryOverlay label
 
 overlay visible
--> WorldTelemetryContext sends telemetry_ping
--> game server replies telemetry_pong
--> ClientConnectionService emits telemetry_pong_received
+-> ClientConnectionService sends telemetry_subscribe over sr.tooling
+-> server pushes room-scoped telemetry_snapshot packets
+-> WorldTelemetryContext merges authoritative server metrics
+-> WorldTelemetryContext sends correlated telemetry_ping over sr.tooling
+-> game server replies telemetry_pong over sr.tooling
 -> NetworkTelemetryMetrics updates RTT and server clock offset
--> overlay displays network timing fields
+-> overlay displays local, transport, and server runtime fields
 ```
 
 The overlay does not mutate gameplay. All gameplay facts shown in the overlay come from server-owned state or client-observed packet timing.
@@ -80,9 +82,9 @@ World counts derive from the applied world-lane state. The client does not decid
 
 The server also participates in packet timing diagnostics through `telemetry_ping` and `telemetry_pong`.
 
-`telemetry_ping` is a client-originated diagnostic packet. The server receives it through the normal WebSocket packet route, builds a `telemetry_pong`, and sends the response back through the same connected session. The response preserves the ping sequence and client send timestamp, and adds server receive/send timestamps.
+`telemetry_ping` is a client-originated diagnostic request carried only by the reliable `sr.tooling` channel. Every ping carries a connection-lifetime `request_id`; the server echoes it in `telemetry_pong`, preserves the ping sequence and client send timestamp, and adds server receive/send timestamps. The packet pair does not require room membership and does not mutate gameplay state.
 
-This packet pair does not require room membership and does not mutate gameplay state.
+`telemetry_subscribe` is room-scoped. While subscribed, the production telemetry provider emits bounded-cadence `telemetry_snapshot` packets containing authoritative entity counts, process counters, and per-lane server write totals. Room changes, channel closure, and session closure clear the server subscription; successful WebRTC recovery causes the visible overlay to resubscribe.
 
 The game captures gameplay `server_sent_msec` as the server's Unix-millisecond wall-clock time when it publishes an immutable presentation frame. All lane packets projected from that frame carry the same timestamp. The client uses it together with the estimated server clock offset from `telemetry_pong` packets to calculate receive age in local monotonic-clock space. Runtime metadata inference removes redundant envelope fields for some gameplay lanes, but it does not remove or sample `server_sent_msec`. The separate `telemetry_pong.server_sent_msec` remains the timestamp captured by the ping/pong response path immediately before encoding the pong.
 
@@ -162,11 +164,11 @@ When the overlay is shown, `WorldTelemetryOverlayFlow` instantiates the overlay 
 
 When the overlay is hidden, the node remains available but is not visible. `reset()` clears timing state and frees the overlay node when the devtools context is reset.
 
-While the overlay is visible and the connection service reports an active server connection, `WorldTelemetryContext` sends one `telemetry_ping` packet every 1000 ms. No ping is sent while the overlay is hidden.
+While the overlay is visible, attached to an active gameplay room, and `sr.tooling` is ready, `WorldTelemetryContext` keeps one room-scoped telemetry subscription active and sends one `telemetry_ping` every 1000 ms. Hiding or resetting the overlay unsubscribes. No ping is sent while the overlay is hidden or while the tooling channel is unavailable.
 
 ## Telemetry
 
-World telemetry uses two metric sources.
+World telemetry uses three metric sources.
 
 The first source is a transient devtools gameplay readmodel built from lane-applied world/session/overlay state:
 
@@ -185,7 +187,9 @@ server_sent_msec
 
 `server_enemies` is preferred when present. If it is not present, the metrics collector falls back to `enemies`.
 
-The second source is network ping/pong data:
+The second source is combined transport accounting from the WebSocket control connection and each WebRTC lane. `ClientConnectionService` merges aggregate packet/byte/failure totals while preserving nested `websocket` and `webrtc_lanes` detail so lane-specific diagnostics remain available.
+
+The third source is server telemetry snapshots plus network ping/pong data:
 
 ```text
 rtt_ms
@@ -196,6 +200,7 @@ server_clock_offset_ms
 
 ```text
 type = telemetry_ping
+request_id
 sequence
 client_sent_msec
 ```
@@ -238,8 +243,10 @@ Telemetry overlay runtime behavior is also gated by visibility and connection st
 * telemetry ping packets are only sent while the overlay is visible
 * ping packets are not sent when the connection service is absent
 * ping packets are not sent when the connection service reports no server connection
+* ping packets and subscriptions are not sent until `sr.tooling` is ready
+* room changes and WebRTC recovery clear the local active-subscription marker so the client resubscribes explicitly
 
-The server-side telemetry ping route is not a gameplay mutation path. It is handled by networking telemetry routing and returns a diagnostic response through the same session.
+The server-side telemetry route is not a gameplay mutation path. The tooling router owns subscription, ping/pong correlation, room-scope cleanup, and delivery through the same reliable tooling channel.
 
 ## Code map
 
@@ -273,25 +280,24 @@ client/scripts/gameplay/gameplay_composition.gd
 client/scripts/devtools/context/devtools_gameplay_state_context.gd
 ```
 
-Client networking path for telemetry pong:
+Client networking path for telemetry snapshots and ping/pong:
 
 ```text
 client/scripts/networking/client_connection_service.gd
 client/scripts/networking/webrtc/realtime_transport_session.gd
 client/scripts/networking/webrtc/webrtc_transport.gd
-client/scripts/networking/inbound/server_packet_dispatcher.gd
-client/scripts/networking/inbound/server_packet_router.gd
+client/scripts/networking/inbound/tooling_packet_router.gd
 client/scripts/generated/networking/packets/packets.gd
 ```
 
 Server telemetry packet path:
 
 ```text
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/telemetry.go
-services/game-server/internal/networking/outbound/gameplay_presentation.go
-services/game-server/internal/protocol/packetcodec/
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/tooling/telemetry.go
+services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/webrtc_transport.go
+services/game-server/internal/protocol/tooling/
 ```
 
 Packet source and generated contract boundary:
@@ -352,7 +358,7 @@ client/tests/unit/test_packet_codec.gd
 
 The telemetry metrics tests cover world counts, enemy fallback behavior, invalid source handling, packet interval timing, jitter availability, reset behavior, `server_sent_msec`, missing timestamp behavior, ping packet shape, RTT updates, unknown pong handling, reset clearing, and server clock offset calculation. The connection and transport tests cover offset propagation/reset, WebRTC bullet-delta conversion, unavailable timestamps, unsynchronized positive timestamps, future-clock skew clamping, and last/max age initialization.
 
-The telemetry context test verifies that showing the overlay allows processing to send a `telemetry_ping`, and that a matching `telemetry_pong` updates RTT metrics.
+The telemetry context test verifies that showing the overlay requests a telemetry subscription, sends `telemetry_ping` through the tooling transport, merges `telemetry_snapshot` server fields, and updates RTT metrics from a matching `telemetry_pong`.
 
 ## Related docs
 

@@ -25,7 +25,7 @@ client caller
 -> realtime server
 ```
 
-`ClientConnectionService` is the service-facing outbound facade used by session boot, lobby, gameplay, telemetry, and general client flows. Runtime devtools command flows use its `send_tooling_packet(packet)` seam for `sr.tooling`; they do not use the deleted WebSocket devtools wrapper. `ClientPacketSender` owns focused outbound wrapper methods and delegates raw packet sending to `NetworkClient`. `NetworkClient` owns the final connection-state guard, JSON encoding, and WebSocket text send.
+`ClientConnectionService` is the service-facing outbound facade used by session boot, lobby, gameplay, telemetry, and general client flows. Runtime devtools and telemetry flows use its `send_tooling_packet(packet)` seam for `sr.tooling`; they do not use the WebSocket packet sender. `ClientPacketSender` owns focused outbound wrapper methods and delegates raw packet sending to `NetworkClient`. `NetworkClient` owns the final connection-state guard, JSON encoding, and WebSocket text send.
 
 Client logging mechanics are owned by [Client Logging](../client-logging.md). This doc only notes the current outbound diagnostic call sites on the packet-sending path.
 
@@ -60,8 +60,8 @@ The client outbound packet sending flow owns:
 * Keeping caller code away from raw `WebSocketPeer` usage.
 * Creating generated packet dictionaries through focused packet-family wrappers.
 * Passing already-built packet dictionaries from callers that own context-specific packet construction.
-* Sending gameplay input, respawn, pause, target, lobby, room-entry, telemetry, viewport config, and auth packets through a common raw send path.
-* Sending runtime devtools command payloads through `ClientConnectionService.send_tooling_packet(packet)` over `sr.tooling`.
+* Sending gameplay input, respawn, pause, target, lobby, room-entry, viewport config, and auth packets through the WebSocket raw send path.
+* Sending runtime devtools and telemetry payloads through `ClientConnectionService.send_tooling_packet(packet)` over `sr.tooling`.
 * Reporting missing `ClientPacketSender` and `NetworkClient` dependencies through the owning outbound seams.
 * Letting `NetworkClient` guard sends when the WebSocket is not open.
 * Encoding outbound packet dictionaries as JSON text.
@@ -196,8 +196,8 @@ LobbyClientPackets
 GameplayDebugFlow / DevConnectionService
 = runtime debug command payloads, including devtools-only target fields
 
-TelemetryClientPackets
-= telemetry ping packet helper
+Generated Packets tooling builders
+= telemetry subscribe, unsubscribe, and correlated ping packets
 ```
 
 Gameplay, lobby, and devtools helpers mostly wrap generated packet builders from:
@@ -206,7 +206,7 @@ Gameplay, lobby, and devtools helpers mostly wrap generated packet builders from
 client/scripts/generated/networking/packets/packets.gd
 ```
 
-Telemetry currently builds its ping packet directly from generated field and type constants.
+Telemetry uses generated `Packets` builders directly so every request includes the required `request_id`.
 
 ### Raw transport sender
 
@@ -438,11 +438,12 @@ telemetry_ping
 The current telemetry ping packet carries:
 
 ```text
+request_id
 sequence
 client_sent_msec
 ```
 
-The server responds through inbound telemetry pong routing.
+The server responds through `sr.tooling`; telemetry snapshots use separate room-scoped subscribe and unsubscribe requests.
 
 ### Auth packets
 
@@ -612,14 +613,15 @@ Tooling command results and errors return through `ToolingPacketRouter`. Devtool
 Current telemetry ping path:
 
 ```text
-telemetry caller
+WorldTelemetryContext
 -> ClientConnectionService.send_telemetry_ping(sequence, client_sent_msec)
--> ClientPacketSender.send_telemetry_ping(sequence, client_sent_msec)
--> TelemetryClientPackets.telemetry_ping_packet(...)
--> NetworkClient.send_raw_packet(packet)
+-> generated Packets.telemetry_ping_packet(request_id, ...)
+-> RealtimeTransportSession.send_tooling_packet(packet)
+-> WebRTCTransport.send_tooling_json(packet)
+-> sr.tooling
 ```
 
-The outbound telemetry packet is an observation request. The corresponding server response is routed through inbound telemetry pong handling.
+The outbound telemetry packet is an observation request. The corresponding server response is routed by `ToolingPacketRouter`, never the WebSocket dispatcher.
 
 ### WebSocket auth request
 
@@ -669,7 +671,8 @@ client/scripts/networking/network_client.gd
 client/scripts/networking/outbound/client_packet_sender.gd
 client/scripts/networking/outbound/gameplay_client_packets.gd
 client/scripts/networking/outbound/lobby_client_packets.gd
-client/scripts/networking/outbound/telemetry_client_packets.gd
+client/scripts/networking/webrtc/realtime_transport_session.gd
+client/scripts/networking/webrtc/webrtc_transport.gd
 client/scripts/devtools/gameplay_debug_flow.gd
 client/scripts/devtools/dev_connection_service.gd
 client/scripts/networking/inbound/tooling_packet_router.gd

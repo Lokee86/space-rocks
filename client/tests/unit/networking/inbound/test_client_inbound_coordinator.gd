@@ -55,13 +55,12 @@ func test_application_events_relay_original_packets() -> void:
 	var coordinator := _configured_coordinator(dispatcher, FakeRealtimePipeline.new())
 	var received := {}
 	add_child_autofree(dispatcher)
-	for signal_name in ["authenticate_result_received", "room_snapshot_received", "telemetry_pong_received", "unknown_packet_received"]:
+	for signal_name in ["authenticate_result_received", "room_snapshot_received", "unknown_packet_received"]:
 		coordinator.connect(signal_name, func(packet: Dictionary) -> void: received[signal_name] = packet)
 
 	var packets := {
 		"authenticate_result_received": {"type": "authenticate_result", "authenticated": true},
 		"room_snapshot_received": {"type": "room_snapshot", "room_code": "ABCD"},
-		"telemetry_pong_received": {"type": "telemetry_pong", "sequence": 7},
 		"unknown_packet_received": {"type": "not_registered", "value": 9},
 	}
 	for signal_name in packets:

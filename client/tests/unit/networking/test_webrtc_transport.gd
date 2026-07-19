@@ -599,6 +599,12 @@ func test_send_tooling_json_writes_to_tooling_lane_when_open() -> void:
 	var parsed = JSON.parse_string(text)
 	assert_eq(parsed["type"], "tooling_packet")
 	assert_eq(parsed["value"], "hello")
+	var metrics := peer.network_metrics_snapshot()
+	assert_eq(metrics["packets_out"], 1)
+	assert_gt(metrics["bytes_out"], 0)
+	assert_eq(metrics["last_packet_type_out"], "tooling_packet")
+	assert_eq(metrics["lanes"]["tooling"]["packets_out"], 1)
+	assert_eq(metrics["lanes"]["tooling"]["last_packet_type_out"], "tooling_packet")
 
 
 func test_send_smoke_writes_smoke_packet_when_open() -> void:

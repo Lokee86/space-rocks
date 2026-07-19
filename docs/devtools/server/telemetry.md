@@ -4,262 +4,194 @@ Parent index: [Server](./!INDEX.md)
 
 ## Purpose
 
-This document describes server-side devtools telemetry for Space Rocks.
-
-It covers the diagnostic packet surfaces the game server emits or answers, the server-owned runtime facts those packets expose, how devtools telemetry stays separate from gameplay mutation, and which implementation paths own the current behavior.
+This document describes the game-server runtime telemetry and developer readout surfaces delivered through the dedicated reliable `sr.tooling` WebRTC DataChannel.
 
 ## Overview
 
-Server devtools telemetry means live diagnostic visibility, not analytics, tracing, or durable metrics storage.
+Server telemetry is transient diagnostic visibility. It is not analytics, durable observability storage, or gameplay authority.
 
-The server currently participates in four telemetry-facing surfaces:
+Current surfaces are:
 
 ```text
-debug_status
-  server devtools status readout when delivery is active
+telemetry_subscribe / telemetry_unsubscribe
+  room-scoped live runtime telemetry stream
 
-debug_shape_catalog
-  room-scoped diagnostic collision shape catalog snapshot
+telemetry_snapshot
+  authoritative entity, process, and per-lane transport counters
 
 telemetry_ping / telemetry_pong
-  client/server timing diagnostic packet pair
+  connection-scoped RTT and clock-offset diagnostic pair
+
+debug_status_subscribe / debug_status_unsubscribe
+  privileged room debug-status stream
+
+debug_status
+  room and per-player debug state
+
+debug_shape_catalog_request / debug_shape_catalog
+  privileged one-shot room collision-shape catalog
 
 state.server_sent_msec
-  server timestamp on normal realtime gameplay lane packets
+  authoritative timestamp on normal gameplay lane packets
 ```
 
-These surfaces use the normal realtime packet codec and WebSocket writer path. They do not create a separate debug transport.
+All request-like tooling packets carry a non-empty `request_id`. Responses echo the originating request ID. None of these packet families use the normal WebSocket gameplay packet route.
 
-The high-level server flow is:
+## Transport and ownership
+
+The high-level flow is:
 
 ```text
-game/runtime state
--> Control adapter or lane-native packet projection
--> devtools/outbound networking packet builder
--> packetcodec.Encode
--> websocket writer
--> client devtools consumer
+client tooling request
+-> sr.tooling
+-> per-connection tooling router
+-> attachment and capability checks
+-> telemetry provider or developer readout owner
+-> correlated response or bounded server push
+-> sr.tooling
 ```
 
-For ping/pong timing diagnostics, the flow is inbound first:
+Ownership remains split:
 
 ```text
-client telemetry_ping
--> websocket packet decode
--> inbound telemetry route
--> telemetry_pong packet
--> same session outbound channel
+networking/tooling router
+  packet policy, request correlation, subscription lifecycle, cadence, and errors
+
+tooling Controller
+  live telemetry provider and measurement integration
+
+devtools Controller
+  debug-status and shape-catalog projection over authoritative game seams
+
+game and rooms
+  authoritative simulation, room, entity, and match facts
+
+client
+  overlay visibility, labels, formatting, and presentation
 ```
 
-Server telemetry observes runtime state, exposes diagnostic packets, and responds to timing probes. It does not own client overlay rendering, devtools-window layout, HUD behavior, durable player data, or analytics storage.
+The transport layer does not duplicate simulation or mutation logic.
 
-## Debug-only scope
+## Authorization
 
-Server devtools telemetry is development tooling.
-
-It is allowed to expose:
-
-```text
-debug toggle state
-per-player debug status maps
-world-freeze sub-state flags
-collision shape catalog definitions
-server receive/send timestamps for timing probes
-gameplay state send timestamps
-```
-
-It is not allowed to:
-
-```text
-replace gameplay state authority
-store telemetry history
-publish analytics
-mutate gameplay by being observed
-create a parallel debug simulation path
-bypass the realtime packet codec
-bypass normal WebSocket session routing
-```
-
-The server may expose facts that client devtools present as labels, overlays, or raw readouts. The server does not own those presentation surfaces.
-
-## Server authority
-
-The server owns the facts emitted by server devtools telemetry.
-
-`debug_status` comes from server runtime state through the Control adapter and Controller projection:
-
-```text
-game.NewControl(room.GameInstance())
--> devtools.NewController(...)
--> Controller.StatusFor
--> DebugStatus
-```
-
-The status snapshot reads:
-
-```text
-invincible
-infinite_lives
-world_frozen
-asteroids_frozen
-bullets_frozen
-spawning_frozen
-collisions_frozen
-player_frozen
-```
-
-The player-specific flags are read from the server-owned player session or active player instance. World and subsystem freeze flags are read from `worldSimulationOptions`.
-
-`debug_statuses` is a map keyed by match player ID. It is built from the current match decision player list and calls the same status projection for each player.
-
-`debug_shape_catalog` comes from the server collision-shape catalog. The server loads imported collision shape definitions, converts them to collision bodies, derives outline points, and emits shape definitions keyed by stable devtools shape IDs.
-
-Shape catalog entries include:
-
-```text
-id
-kind
-shape_type
-points
-```
-
-Current shape kinds include:
-
-```text
-player
-asteroid
-bullet
-pickup
-```
-
-`telemetry_ping` and `telemetry_pong` are timing diagnostics only. The server preserves the client ping sequence and client send timestamp, then adds server receive and server send timestamps. The client uses the pong midpoint to estimate the offset between the server's Unix-millisecond wall clock and the client's monotonic clock. The packet pair does not mutate room, player, or simulation state.
-
-Normal gameplay lane packets carry `server_sent_msec` from the authoritative immutable presentation frame. The game captures the server's Unix-millisecond wall-clock time when it publishes that frame, so all lane packets projected from the frame share the timestamp. Client telemetry maps that server clock into client monotonic time using the ping/pong-derived offset to calculate packet age. The newer runtime envelope inference for world/overlay/session packets removes redundant metadata fields, not this timestamp. This gameplay-frame timestamp is distinct from `telemetry_pong.server_sent_msec`, which is captured by the ping/pong response path immediately before encoding the pong.
-
-When observability reads raw wire maps, omitted runtime metadata can appear as `nil` until inference or normalization fills it in. Packet-size interpretation should prefer the lane candidate/kind fields and inferred lane context over expecting a literal `wire_lane` field for `event_batch` packets.
-
-## Client presentation
-
-The client consumes server telemetry, but the server does not own presentation.
-
-Current client consumers include:
-
-```text
-world telemetry overlay
-network player labels
-devtools window debug status labels
-devtools window target selectors
-raw local player telemetry
-raw target telemetry
-server hitbox or shape debug presentation
-```
-
-The server-facing distinction is:
-
-```text
-server owns emitted diagnostic facts
-client owns rendering, layout, hotkeys, labels, and readout formatting
-```
-
-The world telemetry overlay consumes `telemetry_pong` and gameplay state timing data. It also counts server-owned state dictionaries after the client normalizes gameplay state.
-
-The devtools window consumes `debug_status` and `debug_statuses` for current debug toggle status and per-player selector labels.
-
-The shape and hitbox debug surfaces consume server-owned shape or collision-body facts. Shape catalog output is a separate packet from gameplay state and debug status, and collision-body telemetry remains a separate adapter path rather than a standalone packet.
-
-## Commands or controls
-
-Telemetry output itself is mostly passive.
-
-The current controls and triggers are:
+Public-safe telemetry packets require an eligible connected session and packet-specific room attachment, but not `tooling.read` or `tooling.control`:
 
 ```text
 telemetry_ping
-  client sends while the world telemetry overlay is visible;
-  server responds with telemetry_pong to the same session
-
-debug_status
-  server devtools readout when the delivery path is active
-
-debug_shape_catalog
-  server sends once per room session when eligible
-
-state.server_sent_msec
-  snapshot-time server Unix-millisecond timestamp carried by every outgoing realtime gameplay lane packet
+telemetry_subscribe
+telemetry_unsubscribe
 ```
 
-Debug commands can change facts later reported by telemetry, but telemetry is not the command path. For example, toggling invincibility changes server runtime state through the devtools command handler; a later `debug_status` packet reports the new `invincible` value.
-
-`debug_status` is an `sr.tooling` subscription stream. The first eligible tooling-router tick emits immediately and later pushes are sampled every eight tooling-router ticks.
-
-`debug_shape_catalog` is a one-shot correlated `sr.tooling` response. The client requests it once per active room and retains the existing catalog presentation/store ownership.
-
-## Telemetry surfaces
-
-### Gameplay state timestamp
-
-Gameplay presentation state is not a devtools packet, but it carries timing data used by devtools telemetry.
-
-The game publishes an immutable presentation frame with:
+Privileged readouts require `tooling.read`:
 
 ```text
-server_sent_msec
+debug_status_subscribe
+debug_status_unsubscribe
+debug_shape_catalog_request
 ```
 
-The frame timestamp is shared by all receiver snapshots and lane packets projected from that frame. The outbound networking path preserves and delivers it; networking does not generate the gameplay timestamp.
+The temporary capability grant currently gives every connected session `tooling.read` and `tooling.control`. The packet router still enforces policy so the later account-backed grant source can replace the temporary source without changing packet handlers.
 
-The outgoing lane packets also contain world data that client telemetry can count:
+Readout authorization is attached-room based, not participant-slot based. An authorized observer can receive room-global status or catalog data without a `GamePlayerID`.
+
+## Live telemetry snapshots
+
+`services/game-server/internal/tooling/Controller` implements the production telemetry-provider seam independently from bounded measurement runs.
+
+A `telemetry_snapshot` includes:
 
 ```text
-entity-family realtime lanes ship records
-session lane player records
-session lane lifecycle records
-`world_lane_state` bullet/projectile records
-entity-family realtime lanes asteroid records
-entity-family realtime lanes pickup records
-session lane total_asteroids
-event_batch
+server_room_count
+server_match_id
+server_players
+server_player_sessions
+server_enemies
+server_asteroids
+server_projectiles
+server_pickups
+server_radial_effects
+server_total_asteroids_spawned
+server_heap_allocated_bytes
+server_heap_in_use_bytes
+server_system_bytes
+server_goroutines
+server_gc_cycles
+server_packets_out
+server_bytes_out
+server_max_packet_bytes
+server_lane_metrics
 ```
 
-Client overlays may count these lane records, but the server treats them as normal gameplay lane projection, not a separate telemetry packet.
+`server_lane_metrics` is keyed by physical realtime lane. Each entry contains:
 
-### Telemetry ping and pong
+```text
+packet_count
+encoded_bytes_total
+last_encoded_bytes
+maximum_encoded_bytes
+last_packet_family
+```
 
-`telemetry_ping` is decoded as a normal client packet after the early devtools envelope routes and auth route.
+Entity counts come from the authoritative game aggregate through the same concrete count seam used by runtime measurement. Process counters use the shared bounded process sampler. Packet counters are observed after successful encoded WebRTC lane writes.
 
-The server handles only packets with:
+Live counters are connection-local and room-scoped. Moving the same connection to another room resets its live telemetry sequence and packet totals rather than leaking the earlier room's traffic into the new room.
+
+## Subscription lifecycle
+
+Telemetry and debug-status subscriptions are independent.
+
+```text
+telemetry_subscribe
+-> router records the current room attachment
+-> first eligible tooling tick emits telemetry_snapshot
+-> later snapshots emit at bounded cadence
+
+telemetry_unsubscribe
+-> router stops telemetry snapshots
+
+room attachment changes
+-> room-scoped subscription is invalidated
+
+tooling channel closes
+-> all subscriptions and live telemetry state are cleared
+
+successful WebRTC recovery
+-> client explicitly resubscribes after sr.tooling becomes ready
+```
+
+UI visibility may cause a client to subscribe or unsubscribe, but visibility is not server authority.
+
+## Telemetry ping and pong
+
+`telemetry_ping` is a connection-scoped tooling request with:
 
 ```text
 type = telemetry_ping
+request_id
+sequence
+client_sent_msec
 ```
 
-The response uses:
+The router responds on `sr.tooling` with:
 
 ```text
 type = telemetry_pong
+request_id
 sequence
 client_sent_msec
 server_received_msec
 server_sent_msec
 ```
 
-`sequence` and `client_sent_msec` are copied from the ping. `server_received_msec` is captured when the server begins handling the ping. `server_sent_msec` is captured immediately before encoding the pong; this pong timestamp is separate from the gameplay presentation-frame timestamp.
+The response preserves request correlation and client timing fields. It adds the server receive and send wall-clock timestamps used by the client to calculate RTT and estimate the offset between server Unix time and client monotonic time.
 
-The response is written to the same WebSocket session outbound channel. It is not broadcast to the room.
+Ping/pong does not require room membership and does not mutate gameplay state.
 
-### Debug status
+## Debug status
 
-`debug_status` is an outbound devtools packet.
+`debug_status_subscribe` starts a connection-local bounded-cadence status stream for the attached room. `debug_status_unsubscribe` stops it.
 
-The packet shape is:
-
-```text
-type = debug_status
-debug_status = DebugStatus for the receiving/current player
-debug_statuses = map[player_id]DebugStatus for all match players
-```
-
-The status fields are:
+`debug_status` may contain room-global flags and authorized player-status maps, including:
 
 ```text
 invincible
@@ -272,30 +204,13 @@ collisions_frozen
 player_frozen
 ```
 
-Eligibility requires:
+The tooling router owns subscription and delivery. The devtools controller reads facts from authoritative game control seams. The readout does not grant mutation authority and does not require the receiving session to occupy a gameplay participant slot.
 
-```text
-room exists
-room has a game instance
-server devtools are enabled
-room state is InGame or GameOver
-session has a current game player ID
-```
+## Debug shape catalog
 
-The packet does not include entity maps, collision bodies, gameplay state, or shape catalog data.
+`debug_shape_catalog_request` is a one-shot correlated request for the current room's imported collision-shape definitions.
 
-### Debug shape catalog
-
-`debug_shape_catalog` is an outbound devtools packet.
-
-The packet shape is:
-
-```text
-type = debug_shape_catalog
-shapes = map[shape_id]DebugShapeDefinition
-```
-
-Each shape definition contains:
+The response contains shape definitions keyed by stable IDs. Each definition contains:
 
 ```text
 id
@@ -304,246 +219,84 @@ shape_type
 points
 ```
 
-The server builds the catalog from the imported collision shape catalog. Shape IDs are constructed by server devtools helpers:
+Current kinds include player, asteroid, bullet, and pickup. The catalog is static metadata for the room/runtime contract and is not pushed every write tick.
+
+Live collision-body instances remain a separate authoritative observation seam; they are not hidden inside the catalog or normal gameplay packets.
+
+## Gameplay timestamps
+
+Normal gameplay lane packets carry `server_sent_msec` from the immutable authoritative presentation frame. All packets projected from the same frame share that timestamp.
+
+The client combines `server_sent_msec` with the ping/pong-derived server clock offset to calculate packet age. This frame timestamp is separate from `telemetry_pong.server_sent_msec`, which is captured immediately before the pong is sent.
+
+Compact runtime metadata inference may omit redundant envelope fields on the wire. It does not remove `server_sent_msec` from the gameplay timing contract.
+
+## Build and runtime gates
+
+The `nodevtools` build tag disables privileged developer command and readout implementations. Public-safe telemetry and runtime measurement remain networking/tooling capabilities and continue to compile and operate through their own seams.
+
+Runtime requirements are:
 
 ```text
-player:<ship_type>
-asteroid:<variant>
-bullet
-pickup:<pickup_type>
+telemetry_ping
+  connected tooling session
+
+telemetry_subscribe
+  attached room with an active game runtime
+
+debug_status_subscribe
+  attached room, tooling.read, and available devtools status owner
+
+debug_shape_catalog_request
+  attached room, tooling.read, and available catalog owner
 ```
 
-Eligibility requires:
-
-```text
-room exists
-room has a game instance
-server devtools are enabled
-room state is InGame or GameOver
-```
-
-The packet is catalog data only. It does not include live players, asteroids, bullets, pickups, or collision-body instances.
-
-### Collision body telemetry seam
-
-The game aggregate exposes a devtools collision body snapshot seam:
-
-```text
-Control.CollisionBodiesByKind() -> devtools.CollisionBodies(...)
-```
-
-That method reads the authoritative entity store under the game lock and derives collision body outline points for:
-
-```text
-players
-asteroids
-bullets
-pickups
-```
-
-Each body contains:
-
-```text
-kind
-id
-shape
-points
-```
-
-This is a server-owned observation seam over real collision bodies. It should remain tied to gameplay collision data and should not become a parallel client-only shape model.
-
-Current outbound tests assert that `debug_status`, `debug_shape_catalog`, and normal gameplay presentation state do not inline `debug_collision_bodies`. Collision bodies are a distinct diagnostic seam, not hidden payload inside unrelated packets.
-
-### Player counters and status readout
-
-Score and lives counter changes are command behavior, not telemetry behavior.
-
-When devtools commands set or add score/lives, the server mutates the authoritative player session through Control counter methods. The resulting facts are visible through normal gameplay state and related client readmodels.
-
-There is no separate server telemetry packet dedicated only to score/lives counter output.
-
-## Build/runtime gates
-
-Server devtools are enabled in default builds and disabled with the `nodevtools` build tag.
-
-Current build-gate files are:
-
-```text
-services/game-server/internal/devtools/enabled_default.go
-services/game-server/internal/devtools/enabled_nodevtools.go
-services/game-server/internal/devtools/disabled.go
-```
-
-Default build behavior:
-
-```text
-devtools.Enabled() == true
-```
-
-`nodevtools` behavior:
-
-```text
-devtools.Enabled() == false
-```
-
-Outbound `debug_status` and `debug_shape_catalog` eligibility checks require `devtools.Enabled()`.
-
-`telemetry_ping` and `telemetry_pong` are networking timing diagnostics, not devtools command packets. Their server route is handled under inbound networking telemetry, not under the devtools command handler.
-
-Runtime gates also apply:
-
-```text
-debug_status requires a current game player id
-debug_status requires InGame or GameOver room state
-debug_shape_catalog requires InGame or GameOver room state
-debug_shape_catalog requires a game instance
-telemetry_pong requires only a valid telemetry_ping packet on a connected session
-```
+Rejected requests return `tooling_error`; they do not silently mutate or fall back to WebSocket.
 
 ## Code map
 
-Primary server devtools telemetry files:
-
 ```text
+shared/packets/tooling.toml
+shared/packets/debug.toml
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/tooling/controller.go
+services/game-server/internal/tooling/telemetry.go
+services/game-server/internal/game/runtime_measurement.go
 services/game-server/internal/devtools/status.go
 services/game-server/internal/devtools/shape_catalog.go
-services/game-server/internal/devtools/shape_ids.go
-services/game-server/internal/devtools/packets_generated.go
-services/game-server/internal/devtools/enabled_default.go
-services/game-server/internal/devtools/enabled_nodevtools.go
-services/game-server/internal/devtools/disabled.go
-```
-
-Game-owned authoritative methods used by telemetry:
-
-```text
-services/game-server/internal/game/control_status.go
-services/game-server/internal/game/control_collision_telemetry.go
-services/game-server/internal/protocol/realtime/records.go
-services/game-server/internal/game/world_simulation_options.go
-services/game-server/internal/game/player_counters.go
-services/game-server/internal/game/control_counters.go
-```
-
-Networking inbound telemetry path:
-
-```text
-services/game-server/internal/networking/client_packet_router.go
-services/game-server/internal/networking/inbound/router.go
-services/game-server/internal/networking/inbound/telemetry.go
-services/game-server/internal/networking/inbound/client_packet_envelope.go
-```
-
-Networking outbound telemetry path:
-
-```text
 services/game-server/internal/networking/websocket_write.go
-services/game-server/internal/networking/outbound/realtime_gameplay_presentation.go
-services/game-server/internal/networking/outbound/debug_status_presentation.go
-services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
+services/game-server/internal/networking/webrtc_transport.go
+services/game-server/internal/protocol/tooling/
 ```
 
-Shared packet sources and generated output:
-
-```text
-shared/packets/debug.toml
-shared/packets/gameplay.toml
-shared/packets/outputs.toml
-services/game-server/internal/devtools/packets_generated.go
-services/game-server/internal/game/packets.go
-```
-
-Collision shape sources:
-
-```text
-services/game-server/internal/game/physics/collision_shapes.go
-services/game-server/internal/game/physics/collision_outline.go
-services/game-server/internal/game/physics/collision.go
-```
-
-Important non-ownership boundaries:
-
-```text
-client/scripts/devtools/
-  owns client presentation, overlay flow, labels, and raw readout formatting
-
-services/game-server/internal/networking/
-  owns WebSocket decode, routing, timestamped responses, and writes
-
-services/game-server/internal/game/
-  owns authoritative simulation state and game-owned authoritative methods
-
-services/player-data/
-  does not own server devtools telemetry
-
-docs/services/game-server/networking/
-  owns broader realtime packet-routing documentation
-
-docs/data/
-  owns packet source-of-truth and generated output documentation
-```
+The historical connection-loop file name `websocket_write.go` still owns the session write loop. Diagnostic payload delivery itself uses `SendToolingJSON` on `sr.tooling`.
 
 ## Tests and verification
 
-Focused server tests include:
+Focused coverage includes:
 
 ```text
-services/game-server/internal/networking/outbound/debug_status_presentation_test.go
-services/game-server/internal/networking/outbound/debug_shape_catalog_presentation_test.go
+services/game-server/internal/networking/tooling/router_test.go
+services/game-server/internal/tooling/controller_test.go
+services/game-server/internal/networking/websocket_measurement_test.go
 services/game-server/internal/devtools/shape_catalog_test.go
 services/game-server/internal/devtools/shape_ids_test.go
-services/game-server/internal/devtools/player_counters_test.go
-services/game-server/internal/devtools/command_types_test.go
-services/game-server/internal/devtools/enabled_default_test.go
-services/game-server/internal/devtools/disabled_test.go
-services/game-server/internal/game/control_collision_telemetry_test.go
+client/tests/unit/devtools/telemetry/test_world_telemetry_context.gd
+client/tests/unit/networking/test_webrtc_transport.gd
+client/tests/unit/test_client_connection_service.gd
 ```
 
-Related networking integration tests include:
-
-```text
-services/game-server/tests/networking/rooms_test.go
-```
-
-Relevant verification areas:
-
-```text
-debug_status packet includes status payloads
-debug_status packet excludes collision-body payloads
-debug_shape_catalog packet includes only shape catalog payload
-debug_shape_catalog packet excludes live entity payloads
-shape catalog generation produces usable outline points
-server devtools build gates enable or disable debug command/status behavior
-collision body telemetry uses server collision bodies
-gameplay presentation state remains separate from devtools packets
-```
-
-Run game-server tests after changing telemetry packet shapes, Controller status projection, shape catalog generation, WebSocket write cadence, inbound telemetry routing, build gates, or game-owned authoritative methods used by devtools.
-
-Run packet generation checks after changing `shared/packets/debug.toml` or `shared/packets/gameplay.toml`.
+Tests cover request correlation, room-scoped subscription cleanup, production snapshot fields, per-lane packet accounting, room-change counter reset, recovery resubscription, ping/pong delivery, and privileged readout routing.
 
 ## Related docs
 
-* [Server Devtools](./!INDEX.md)
-* [Devtools](../!INDEX.md)
+* [Tooling Channel Migration Contract](../design/tooling-channel-migration-contract.md)
 * [Client Telemetry Overlays](../client/telemetry-overlays.md)
-* [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
-* [Client Hitbox Overlays](../client/hitbox-overlays.md)
 * [Game Server Telemetry And Packet Routing](../../services/game-server/networking/telemetry-packet-routing.md)
-* [Game Server Outbound Message Flow](../../services/game-server/networking/outbound-message-flow.md)
-* [Game Server Inbound Packet Routing](../../services/game-server/networking/inbound-packet-routing.md)
-* [Realtime Websocket Protocol](../../protocol/realtime-websocket-protocol.md)
-* [Game Server Collision Shapes](../../services/game-server/simulation/world/collision-shapes.md)
-* [Packet Schemas](../../data/packet-schemas.md)
-* [Data Sync And SSoT Pipeline](../../data/data-sync-and-ssot-pipeline.md)
-* [Realtime Protocol](../../protocol/realtime-websocket-protocol.md)
+* [Realtime WebRTC Gameplay Transport](../../protocol/realtime-webrtc-gameplay-transport.md)
+* [Runtime Measurement](../../services/game-server/observability/!INDEX.md)
 
 ## Notes
 
-Telemetry in this document means live debug and diagnostic readouts. It does not mean production analytics.
-
-`debug_status`, `debug_shape_catalog`, and gameplay `state` are intentionally separate packet surfaces. Tests should preserve that separation unless the packet contract is deliberately changed.
-
-`packet_staleness_ms` and `packet_age_ms` are client-side calculations. The server supplies timestamps and lane packets; the client owns the derived timing readout.
-
-The server collision body telemetry seam observes real collision bodies. It should stay connected to the authoritative physics/collision implementation rather than duplicating shape facts in client-only debug logic.
+Telemetry in this document means live runtime diagnostics. Durable measurements, structured logs, and trace events remain separate systems with separate ownership.

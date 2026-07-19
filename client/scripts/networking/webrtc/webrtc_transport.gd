@@ -16,6 +16,7 @@ const MAX_PACKETS_PER_POLL := 48
 const MAX_PACKETS_PER_LANE_PER_POLL := 12
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
+const NetworkRuntimeMetrics := preload("res://scripts/networking/network_runtime_metrics.gd")
 const ClientConstants := preload("res://scripts/generated/constants/constants.gd")
 
 signal offer_created(description_type: String, sdp: String)
@@ -42,6 +43,8 @@ var _ready_emitted := false
 var _channel_close_reported: Dictionary = {}
 var _lifecycle_start_cursor := 0
 var _general_start_cursor := 0
+var _runtime_metrics = NetworkRuntimeMetrics.new()
+var _lane_metrics: Dictionary = {}
 
 const LIFECYCLE_LANES := ["asteroids_lifecycle", "bullets_lifecycle"]
 const GENERAL_LANES := ["world", "overlay", "session", "event", "asteroids", "bullets", "tooling"]
@@ -59,6 +62,7 @@ func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
 	_channel_close_reported = {}
 	_lifecycle_start_cursor = 0
 	_general_start_cursor = 0
+	_reset_runtime_metrics()
 
 
 func configure_ice_servers(servers: Array) -> void:
@@ -85,6 +89,7 @@ func start() -> void:
 	_channels = {}
 	_ready_channels = {}
 	_channel_close_reported = {}
+	_reset_runtime_metrics()
 	for spec in CHANNEL_SPECS:
 		var lane: String = str(spec.get("lane", ""))
 		var label: String = str(spec.get("label", ""))
@@ -213,6 +218,7 @@ func close() -> void:
 	_channel_close_reported = {}
 	_lifecycle_start_cursor = 0
 	_general_start_cursor = 0
+	_reset_runtime_metrics()
 
 
 func _on_session_description_created(description_type: String, sdp: String) -> void:
@@ -226,11 +232,17 @@ func _on_ice_candidate_created(media: String, index: int, name: String) -> void:
 
 
 func _handle_channel_packet(packet: PackedByteArray, lane: String = "") -> void:
+	var raw_bytes := packet.size()
 	var text: String = packet.get_string_from_utf8()
 	var decode_result: Variant = PacketCodec.decode(text)
 	if !decode_result.ok:
+		_runtime_metrics.observe_decode_failure(raw_bytes)
+		_metrics_for_lane(lane).observe_decode_failure(raw_bytes)
 		failed.emit("invalid_json", decode_result.error)
 		return
+	var packet_type := _packet_type(decode_result.packet)
+	_runtime_metrics.observe_inbound(raw_bytes, packet_type)
+	_metrics_for_lane(lane).observe_inbound(raw_bytes, packet_type)
 	_handle_decoded_packet(decode_result.packet, lane)
 
 
@@ -260,18 +272,55 @@ func _send_json_to_lane(lane: String, packet: Dictionary) -> void:
 	var channel: Variant = _channels.get(lane)
 	if channel == null or channel.get_ready_state() != WebRTCDataChannel.STATE_OPEN:
 		return
-	channel.put_packet(JSON.stringify(packet).to_utf8_buffer())
+	var encoded := JSON.stringify(packet).to_utf8_buffer()
+	var packet_type := _packet_type(packet)
+	var result: int = int(channel.put_packet(encoded))
+	if result != OK:
+		_runtime_metrics.observe_send_failure(encoded.size(), packet_type)
+		_metrics_for_lane(lane).observe_send_failure(encoded.size(), packet_type)
+		return
+	_runtime_metrics.observe_outbound(encoded.size(), packet_type)
+	_metrics_for_lane(lane).observe_outbound(encoded.size(), packet_type)
+
+
+func network_metrics_snapshot() -> Dictionary:
+	var snapshot: Dictionary = _runtime_metrics.snapshot()
+	var lanes := {}
+	for lane in _lane_metrics.keys():
+		lanes[lane] = _lane_metrics[lane].snapshot()
+	snapshot["lanes"] = lanes
+	snapshot["bullet_delta_received_count"] = bullet_delta_received_count
+	snapshot["bullet_delta_last_age_msec"] = bullet_delta_last_age_msec
+	snapshot["bullet_delta_max_age_msec"] = bullet_delta_max_age_msec
+	snapshot["bullet_delta_missing_server_time_count"] = bullet_delta_missing_server_time_count
+	snapshot["bullet_delta_unsynchronized_server_time_count"] = bullet_delta_unsynchronized_server_time_count
+	snapshot["bullet_delta_clock_skew_count"] = bullet_delta_clock_skew_count
+	return snapshot
 
 
 func receive_metrics_snapshot() -> Dictionary:
-	return {
-		"bullet_delta_received_count": bullet_delta_received_count,
-		"bullet_delta_last_age_msec": bullet_delta_last_age_msec,
-		"bullet_delta_max_age_msec": bullet_delta_max_age_msec,
-		"bullet_delta_missing_server_time_count": bullet_delta_missing_server_time_count,
-		"bullet_delta_unsynchronized_server_time_count": bullet_delta_unsynchronized_server_time_count,
-		"bullet_delta_clock_skew_count": bullet_delta_clock_skew_count,
-	}
+	return network_metrics_snapshot()
+
+
+func _reset_runtime_metrics() -> void:
+	_runtime_metrics = NetworkRuntimeMetrics.new()
+	_runtime_metrics.transport = "webrtc"
+	_lane_metrics.clear()
+
+
+func _metrics_for_lane(lane: String):
+	if not _lane_metrics.has(lane):
+		var metrics = NetworkRuntimeMetrics.new()
+		metrics.transport = "webrtc:%s" % lane
+		_lane_metrics[lane] = metrics
+	return _lane_metrics[lane]
+
+
+func _packet_type(packet: Dictionary) -> String:
+	var packet_type := str(packet.get("type", ""))
+	if not packet_type.is_empty():
+		return packet_type
+	return str(packet.get("t", ""))
 
 
 func _channel_spec_for_lane(lane: String) -> Variant:

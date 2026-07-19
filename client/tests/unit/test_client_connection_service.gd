@@ -16,6 +16,7 @@ class FakeNetworkClient:
 
 	var sent_packets: Array = []
 	var connect_error: Error = OK
+	var network_snapshot: Dictionary = {}
 
 	func send_raw_packet(packet: Dictionary, _trace_id: String = "") -> void:
 		sent_packets.append(packet)
@@ -25,6 +26,9 @@ class FakeNetworkClient:
 
 	func connect_to_server(_url: String) -> Error:
 		return connect_error
+
+	func network_metrics_snapshot() -> Dictionary:
+		return network_snapshot.duplicate(true)
 
 	func begin_graceful_close() -> bool:
 		return true
@@ -38,6 +42,7 @@ class FakeTransportPeer:
 
 	var close_calls := 0
 	var tooling_packets: Array = []
+	var network_snapshot: Dictionary = {}
 
 	func start() -> void:
 		pass
@@ -50,6 +55,9 @@ class FakeTransportPeer:
 
 	func send_tooling_json(packet: Dictionary) -> void:
 		tooling_packets.append(packet)
+
+	func network_metrics_snapshot() -> Dictionary:
+		return network_snapshot.duplicate(true)
 
 
 class FakeRealtimePacketPipeline:
@@ -225,6 +233,97 @@ func test_send_tooling_packet_routes_through_realtime_transport() -> void:
 	service.send_tooling_packet({"type": "tooling_packet", "value": 1})
 
 	assert_eq(peer.tooling_packets, [{"type": "tooling_packet", "value": 1}])
+
+
+func test_telemetry_ping_uses_tooling_transport_and_request_correlation() -> void:
+	var trace_id := "00000000-0000-4000-8000-000000000095"
+	var service := ClientConnectionService.new()
+	var peer := FakeTransportPeer.new()
+	service._operation_trace_factory = func(operation_name: String):
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+	service._tooling_ready = true
+
+	assert_true(service.send_telemetry_ping(7, 1234))
+	assert_eq(peer.tooling_packets.size(), 1)
+	assert_eq(peer.tooling_packets[0]["type"], "telemetry_ping")
+	assert_eq(peer.tooling_packets[0]["request_id"], trace_id)
+	assert_eq(peer.tooling_packets[0]["sequence"], 7)
+	assert_eq(peer.tooling_packets[0]["client_sent_msec"], 1234)
+
+
+func test_telemetry_subscription_follows_visibility_room_and_recovery() -> void:
+	var trace_index := {"value": 0}
+	var service := ClientConnectionService.new()
+	var peer := FakeTransportPeer.new()
+	service._operation_trace_factory = func(operation_name: String):
+		trace_index["value"] += 1
+		var trace_id := "00000000-0000-4000-8000-%012d" % trace_index["value"]
+		return ClientOperationTrace.new(operation_name, func() -> String: return trace_id)
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+	service._active_room_code = "ROOM1"
+	service._active_room_state = "in_game"
+	service._tooling_ready = true
+
+	service.set_telemetry_subscription_enabled(true)
+	service.set_telemetry_subscription_enabled(true)
+	assert_eq(peer.tooling_packets.filter(func(packet): return packet["type"] == "telemetry_subscribe").size(), 1)
+
+	service._on_recovery_started("tooling")
+	service._on_realtime_transport_ready()
+	assert_eq(peer.tooling_packets.filter(func(packet): return packet["type"] == "telemetry_subscribe").size(), 2)
+
+	service.set_telemetry_subscription_enabled(false)
+	assert_eq(peer.tooling_packets.filter(func(packet): return packet["type"] == "telemetry_unsubscribe").size(), 1)
+
+
+func test_telemetry_subscription_clears_locally_after_room_detach() -> void:
+	var service := ClientConnectionService.new()
+	var peer := FakeTransportPeer.new()
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+	service._active_room_code = "ROOM1"
+	service._active_room_state = "in_game"
+	service._tooling_ready = true
+	service.set_telemetry_subscription_enabled(true)
+
+	service._active_room_code = ""
+	service._active_room_state = ""
+	service._sync_telemetry_subscription()
+
+	assert_eq(peer.tooling_packets.filter(func(packet): return packet["type"] == "telemetry_subscribe").size(), 1)
+	assert_eq(peer.tooling_packets.filter(func(packet): return packet["type"] == "telemetry_unsubscribe").size(), 0)
+	assert_eq(service._telemetry_subscription_room_code, "")
+
+
+func test_network_metrics_merge_websocket_and_webrtc_lane_sources() -> void:
+	var service := ClientConnectionService.new()
+	var network := FakeNetworkClient.new()
+	var peer := FakeTransportPeer.new()
+	network.network_snapshot = {"packets_in": 2, "packets_out": 3, "bytes_in": 20, "bytes_out": 30}
+	peer.network_snapshot = {
+		"packets_in": 5,
+		"packets_out": 7,
+		"bytes_in": 50,
+		"bytes_out": 70,
+		"lanes": {"tooling": {"packets_in": 2}},
+	}
+	service.network_client = network
+	service.webrtc_transport_factory = Callable(self, "_make_fake_transport_peer").bind(peer)
+	service._ensure_realtime_transport_session()
+	service.realtime_transport_session.start()
+
+	var snapshot := service.network_metrics_snapshot()
+	assert_eq(snapshot["packets_in"], 7)
+	assert_eq(snapshot["packets_out"], 10)
+	assert_eq(snapshot["bytes_in"], 70)
+	assert_eq(snapshot["bytes_out"], 100)
+	assert_eq(snapshot["webrtc_lanes"]["tooling"]["packets_in"], 2)
 
 
 func test_tooling_command_result_is_forwarded_from_tooling_router() -> void:

@@ -36,6 +36,14 @@ func (game *Game) HasRuntimeMeasurements() bool {
 	return len(game.runtimeMeasurements) > 0
 }
 
+// RuntimeEntityCounts returns the current authoritative entity counts used by
+// live telemetry and bounded measurement observers.
+func (game *Game) RuntimeEntityCounts() measurement.EntityCounts {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+	return game.runtimeMeasurementEntityCountsLocked()
+}
+
 func (game *Game) observeRuntimeMeasurement(duration time.Duration, entities measurement.EntityCounts) {
 	game.runtimeMeasurementMu.RLock()
 	observers := make([]measurement.SimulationObserver, 0, len(game.runtimeMeasurements))

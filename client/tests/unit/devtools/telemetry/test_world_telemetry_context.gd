@@ -8,15 +8,28 @@ class FakeConnectionService:
 	extends RefCounted
 
 	signal telemetry_pong_received(packet: Dictionary)
+	signal telemetry_snapshot_received(packet: Dictionary)
 
 	var sent_packets: Array[Dictionary] = []
+	var subscription_states: Array[bool] = []
 	var server_clock_offset_ms := -1
 
 	func set_server_clock_offset_ms(offset_ms: int) -> void:
 		server_clock_offset_ms = offset_ms
 
-	func send_packet(packet: Dictionary) -> void:
-		sent_packets.append(packet)
+	func send_telemetry_ping(sequence: int, client_sent_msec: int) -> bool:
+		sent_packets.append({
+			Packets.FIELD_TYPE: Packets.TYPE_TELEMETRY_PING,
+			Packets.FIELD_SEQUENCE: sequence,
+			Packets.FIELD_CLIENT_SENT_MSEC: client_sent_msec,
+		})
+		return true
+
+	func set_telemetry_subscription_enabled(enabled: bool) -> void:
+		subscription_states.append(enabled)
+
+	func is_tooling_ready() -> bool:
+		return true
 
 	func is_server_connected() -> bool:
 		return true
@@ -38,6 +51,7 @@ func test_process_sends_ping_and_pong_updates_rtt_metrics() -> void:
 	var telemetry_context := WorldTelemetryContext.new()
 	telemetry_context.configure(fake_connection)
 	telemetry_context.toggle_overlay()
+	assert_eq(fake_connection.subscription_states, [true])
 
 	telemetry_context.process(true)
 
@@ -119,3 +133,13 @@ func test_apply_gameplay_state_updates_lane_counts_and_merges_connection_network
 	assert_eq(snapshot["last_in_packet_bytes"], 70)
 	assert_eq(snapshot["last_out_packet_bytes"], 80)
 	assert_eq(snapshot["decode_failures"], 2)
+
+	fake_connection.telemetry_snapshot_received.emit({
+		Packets.FIELD_METRICS: {
+			"server_players": 3,
+			"server_packets_out": 12,
+		}
+	})
+	var server_snapshot: Dictionary = telemetry_context.telemetry_snapshot()
+	assert_eq(server_snapshot["server_players"], 3)
+	assert_eq(server_snapshot["server_packets_out"], 12)

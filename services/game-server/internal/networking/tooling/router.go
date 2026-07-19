@@ -44,6 +44,7 @@ type Router struct {
 	measurement           MeasurementController
 	telemetry             TelemetryProvider
 	subscribed            bool
+	telemetryRoomID       string
 	activeRunID           string
 	lastTelemetry         time.Time
 	debugStatusSubscribed bool
@@ -107,6 +108,8 @@ func (router *Router) Handle(context Context, sender Sender, packet map[string]a
 		}
 		router.mu.Lock()
 		router.subscribed = true
+		router.telemetryRoomID = context.RoomID
+		router.lastTelemetry = time.Time{}
 		router.mu.Unlock()
 		return true
 	case protocol.PacketTypeTelemetryUnsubscribe:
@@ -116,6 +119,7 @@ func (router *Router) Handle(context Context, sender Sender, packet map[string]a
 		}
 		router.mu.Lock()
 		router.subscribed = false
+		router.telemetryRoomID = ""
 		router.mu.Unlock()
 		return true
 	case protocol.PacketTypeTelemetryPing:
@@ -173,6 +177,10 @@ func (router *Router) Tick(context Context, sender Sender) {
 		debugStatusRequestID = router.debugStatusRequestID
 		router.debugStatusTicks = (router.debugStatusTicks + 1) % debugStatusIntervalTicks
 	}
+	if router.subscribed && router.telemetryRoomID != context.RoomID {
+		router.subscribed = false
+		router.telemetryRoomID = ""
+	}
 	telemetryDue := router.subscribed && router.telemetry != nil && time.Since(router.lastTelemetry) >= telemetryInterval
 	provider := router.telemetry
 	if telemetryDue {
@@ -206,6 +214,7 @@ func (router *Router) Close(context Context) {
 	}
 	router.closed = true
 	router.subscribed = false
+	router.telemetryRoomID = ""
 	router.debugStatusSubscribed = false
 	router.debugStatusRequestID = ""
 	router.debugStatusTicks = 0
@@ -215,6 +224,9 @@ func (router *Router) Close(context Context) {
 	router.mu.Unlock()
 	if runID != "" && controller != nil {
 		_ = controller.FinalizePartial(context, "connection_closed")
+	}
+	if closer, ok := router.telemetry.(interface{ CloseTelemetry(Context) }); ok {
+		closer.CloseTelemetry(context)
 	}
 }
 

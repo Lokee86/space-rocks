@@ -144,6 +144,66 @@ func TestControllerObservesPacketWritesForActiveSession(t *testing.T) {
 	}
 }
 
+func TestControllerBuildsLiveTelemetryWithoutActiveMeasurement(t *testing.T) {
+	manager, _, room := measurementTestRoom(t)
+	controller := NewController(Dependencies{Rooms: manager})
+	context := networkingtooling.Context{SessionID: "session-telemetry", RoomID: room.ID}
+
+	controller.ObservePacketWrite(context, "world", "world_full", 42)
+	controller.ObservePacketWrite(context, "bullets", "bullet_delta", 18)
+	first, err := controller.TelemetrySnapshot(context)
+	if err != nil {
+		t.Fatalf("telemetry snapshot: %v", err)
+	}
+	if first.Type != protocol.PacketTypeTelemetrySnapshot || first.Sequence != 1 || first.TimestampMsec <= 0 {
+		t.Fatalf("unexpected telemetry envelope: %#v", first)
+	}
+	if first.Metrics["server_room_count"] != 1 || first.Metrics["server_packets_out"] != uint64(2) || first.Metrics["server_bytes_out"] != uint64(60) || first.Metrics["server_max_packet_bytes"] != 42 {
+		t.Fatalf("unexpected telemetry totals: %#v", first.Metrics)
+	}
+	if _, ok := first.Metrics["server_players"]; !ok {
+		t.Fatalf("authoritative entity counts are missing: %#v", first.Metrics)
+	}
+	lanes, ok := first.Metrics["server_lane_metrics"].(map[string]any)
+	if !ok || len(lanes) != 2 {
+		t.Fatalf("unexpected lane metrics: %#v", first.Metrics["server_lane_metrics"])
+	}
+	world, ok := lanes["world"].(map[string]any)
+	if !ok || world["packet_count"] != uint64(1) || world["encoded_bytes_total"] != uint64(42) || world["last_packet_family"] != "world_full" {
+		t.Fatalf("unexpected world lane metrics: %#v", lanes["world"])
+	}
+
+	second, err := controller.TelemetrySnapshot(context)
+	if err != nil || second.Sequence != 2 {
+		t.Fatalf("telemetry sequence did not advance: packet=%#v err=%v", second, err)
+	}
+
+	laterRoom, err := manager.CreateLobbyRoom()
+	if err != nil {
+		t.Fatalf("create later telemetry room: %v", err)
+	}
+	laterRoom.SetGameInstance(game.NewWithSeed(8))
+	laterRoom.State = rooms.RoomStateInGame
+	context.RoomID = laterRoom.ID
+	controller.ObservePacketWrite(context, "overlay", "overlay_full", 11)
+	later, err := controller.TelemetrySnapshot(context)
+	if err != nil {
+		t.Fatalf("telemetry snapshot in later room: %v", err)
+	}
+	if later.Sequence != 1 || later.Metrics["server_packets_out"] != uint64(1) || later.Metrics["server_bytes_out"] != uint64(11) {
+		t.Fatalf("telemetry counters leaked across rooms: %#v", later)
+	}
+
+	controller.CloseTelemetry(context)
+	reset, err := controller.TelemetrySnapshot(context)
+	if err != nil {
+		t.Fatalf("telemetry snapshot after close: %v", err)
+	}
+	if reset.Sequence != 1 || reset.Metrics["server_packets_out"] != uint64(0) {
+		t.Fatalf("telemetry state was not cleared: %#v", reset)
+	}
+}
+
 func TestControllerPersistsStoppedReportAndReturnsExportResult(t *testing.T) {
 	manager, gameInstance, room := measurementTestRoom(t)
 	writer := &measurementReportWriterStub{path: "measurement-results/game-server/report.json"}

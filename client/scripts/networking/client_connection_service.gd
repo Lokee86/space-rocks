@@ -7,7 +7,6 @@ const ClientInboundCoordinator := preload("res://scripts/networking/inbound/clie
 const ToolingPacketRouter := preload("res://scripts/networking/inbound/tooling_packet_router.gd")
 const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
 const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
-const TelemetryClientPackets := preload("res://scripts/networking/outbound/telemetry_client_packets.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
@@ -75,6 +74,8 @@ var _tooling_ready := false
 var _active_room_code := ""
 var _active_room_state := ""
 var _tooling_readout_room_code := ""
+var _telemetry_subscription_desired := false
+var _telemetry_subscription_room_code := ""
 
 
 func _init(operation_trace_factory: Callable = Callable()) -> void:
@@ -102,7 +103,6 @@ func _ready() -> void:
 	_connect_coordinator_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_coordinator_signal("room_error_received", Callable(self, "_on_room_error_received"))
 	_connect_coordinator_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
-	_connect_coordinator_signal("telemetry_pong_received", Callable(self, "_on_telemetry_pong_received"))
 	_connect_coordinator_signal("unknown_packet_received", Callable(self, "_on_unknown_packet_received"))
 	_connect_tooling_router_signal("telemetry_pong_received", Callable(self, "_on_tooling_telemetry_pong_received"))
 	_connect_tooling_router_signal("telemetry_snapshot_received", Callable(self, "_on_telemetry_snapshot_received"))
@@ -302,9 +302,21 @@ func send_pause_request() -> void:
 		client_packet_sender.send_pause_request()
 
 
-func send_telemetry_ping(sequence: int, client_sent_msec: int) -> void:
-	if realtime_transport_session != null and _can_send_outbound():
-		send_tooling_packet(TelemetryClientPackets.telemetry_ping_packet(sequence, client_sent_msec))
+func send_telemetry_ping(sequence: int, client_sent_msec: int) -> bool:
+	if realtime_transport_session == null or not _tooling_ready:
+		return false
+	var request_id := ClientOperationTrace.create("telemetry.ping", _operation_trace_factory).trace_id()
+	send_tooling_packet(Packets.telemetry_ping_packet(request_id, sequence, client_sent_msec))
+	return true
+
+
+func set_telemetry_subscription_enabled(enabled: bool) -> void:
+	_telemetry_subscription_desired = enabled
+	_sync_telemetry_subscription()
+
+
+func is_tooling_ready() -> bool:
+	return _tooling_ready
 
 
 func send_leave_room_request() -> void:
@@ -318,9 +330,13 @@ func send_return_to_lobby_request() -> void:
 
 
 func network_metrics_snapshot() -> Dictionary:
+	var websocket_metrics := {}
 	if network_client != null and network_client.has_method("network_metrics_snapshot"):
-		return network_client.network_metrics_snapshot()
-	return {}
+		websocket_metrics = network_client.network_metrics_snapshot()
+	var realtime_metrics := {}
+	if realtime_transport_session != null and realtime_transport_session.has_method("network_metrics_snapshot"):
+		realtime_metrics = realtime_transport_session.network_metrics_snapshot()
+	return _merge_network_metrics(websocket_metrics, realtime_metrics)
 
 
 func _connect_network_client_signals() -> void:
@@ -382,6 +398,7 @@ func _finalize_connection_close(emit_closed_signal: bool) -> void:
 	_active_room_code = ""
 	_active_room_state = ""
 	_tooling_readout_room_code = ""
+	_telemetry_subscription_room_code = ""
 	reset_realtime_session()
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
@@ -407,6 +424,7 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 	if _active_room_state != "in_game" and _active_room_state != "game_over":
 		_tooling_readout_room_code = ""
 	_request_tooling_readouts_if_ready()
+	_sync_telemetry_subscription()
 	room_snapshot_received.emit(packet)
 
 
@@ -437,6 +455,7 @@ func _on_room_state_changed(packet: Dictionary) -> void:
 	if _active_room_state != "in_game" and _active_room_state != "game_over":
 		_tooling_readout_room_code = ""
 	_request_tooling_readouts_if_ready()
+	_sync_telemetry_subscription()
 	room_state_changed.emit(packet)
 
 
@@ -456,10 +475,6 @@ func _on_player_pause_state_received(packet: Dictionary) -> void:
 	player_pause_state_received.emit(packet)
 
 
-func _on_telemetry_pong_received(packet: Dictionary) -> void:
-	telemetry_pong_received.emit(packet)
-
-
 func set_server_clock_offset_ms(offset_ms: int) -> void:
 	server_clock_offset_ms = offset_ms
 	if realtime_transport_session != null:
@@ -469,6 +484,7 @@ func set_server_clock_offset_ms(offset_ms: int) -> void:
 func _on_realtime_transport_ready() -> void:
 	_tooling_ready = true
 	_request_tooling_readouts_if_ready()
+	_sync_telemetry_subscription()
 	realtime_transport_ready.emit()
 
 
@@ -528,6 +544,9 @@ func _on_tooling_error_received(packet: Dictionary) -> void:
 
 
 func _on_recovery_started(lane: String) -> void:
+	_tooling_ready = false
+	_tooling_readout_room_code = ""
+	_telemetry_subscription_room_code = ""
 	recovery_started.emit(lane)
 
 
@@ -578,6 +597,7 @@ func _ensure_realtime_transport_session() -> void:
 func _clear_realtime_transport_session() -> void:
 	_tooling_ready = false
 	_tooling_readout_room_code = ""
+	_telemetry_subscription_room_code = ""
 	if realtime_transport_session != null:
 		realtime_transport_session.close()
 		realtime_transport_session = null
@@ -588,6 +608,54 @@ func _clear_realtime_transport_session() -> void:
 func _connect_realtime_transport_signal(signal_name: StringName, handler: Callable) -> void:
 	if realtime_transport_session != null and realtime_transport_session.has_signal(signal_name) and !realtime_transport_session.is_connected(signal_name, handler):
 		realtime_transport_session.connect(signal_name, handler)
+
+
+func _sync_telemetry_subscription() -> void:
+	var eligible := (
+		_tooling_ready
+		and not _active_room_code.is_empty()
+		and (_active_room_state == "in_game" or _active_room_state == "game_over")
+	)
+	if _telemetry_subscription_desired and eligible:
+		if _telemetry_subscription_room_code == _active_room_code:
+			return
+		var subscribe_request_id := ClientOperationTrace.create("telemetry.subscribe", _operation_trace_factory).trace_id()
+		send_tooling_packet(Packets.telemetry_subscribe_packet(subscribe_request_id))
+		_telemetry_subscription_room_code = _active_room_code
+		return
+	if _telemetry_subscription_room_code.is_empty():
+		return
+	if _tooling_ready and not _active_room_code.is_empty():
+		var unsubscribe_request_id := ClientOperationTrace.create("telemetry.unsubscribe", _operation_trace_factory).trace_id()
+		send_tooling_packet(Packets.telemetry_unsubscribe_packet(unsubscribe_request_id))
+	_telemetry_subscription_room_code = ""
+
+
+func _merge_network_metrics(websocket_metrics: Dictionary, realtime_metrics: Dictionary) -> Dictionary:
+	var lane_value = realtime_metrics.get("lanes", {})
+	var realtime_packets_in := int(realtime_metrics.get("packets_in", 0))
+	var realtime_packets_out := int(realtime_metrics.get("packets_out", 0))
+	var merged := {
+		"transport": "websocket+webrtc",
+		"packets_in": int(websocket_metrics.get("packets_in", 0)) + realtime_packets_in,
+		"packets_out": int(websocket_metrics.get("packets_out", 0)) + realtime_packets_out,
+		"bytes_in": int(websocket_metrics.get("bytes_in", 0)) + int(realtime_metrics.get("bytes_in", 0)),
+		"bytes_out": int(websocket_metrics.get("bytes_out", 0)) + int(realtime_metrics.get("bytes_out", 0)),
+		"last_in_packet_bytes": int(realtime_metrics.get("last_in_packet_bytes", 0)) if realtime_packets_in > 0 else int(websocket_metrics.get("last_in_packet_bytes", 0)),
+		"last_out_packet_bytes": int(realtime_metrics.get("last_out_packet_bytes", 0)) if realtime_packets_out > 0 else int(websocket_metrics.get("last_out_packet_bytes", 0)),
+		"max_in_packet_bytes": maxi(int(websocket_metrics.get("max_in_packet_bytes", 0)), int(realtime_metrics.get("max_in_packet_bytes", 0))),
+		"max_out_packet_bytes": maxi(int(websocket_metrics.get("max_out_packet_bytes", 0)), int(realtime_metrics.get("max_out_packet_bytes", 0))),
+		"decode_failures": int(websocket_metrics.get("decode_failures", 0)) + int(realtime_metrics.get("decode_failures", 0)),
+		"encode_failures": int(websocket_metrics.get("encode_failures", 0)) + int(realtime_metrics.get("encode_failures", 0)),
+		"send_failures": int(websocket_metrics.get("send_failures", 0)) + int(realtime_metrics.get("send_failures", 0)),
+		"websocket": websocket_metrics.duplicate(true),
+		"webrtc_lanes": lane_value.duplicate(true) if lane_value is Dictionary else {},
+	}
+	for key in realtime_metrics.keys():
+		if key == "lanes" or merged.has(key):
+			continue
+		merged[key] = realtime_metrics[key]
+	return merged
 
 
 func _set_realtime_replay_available(available: bool) -> void:

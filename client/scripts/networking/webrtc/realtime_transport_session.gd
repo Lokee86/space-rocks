@@ -122,6 +122,11 @@ func send_tooling_packet(packet: Dictionary) -> void:
 	if transport != null:
 		transport.send_tooling_json(packet)
 
+func network_metrics_snapshot() -> Dictionary:
+	if transport != null and transport.has_method("network_metrics_snapshot"):
+		return transport.network_metrics_snapshot()
+	return {}
+
 func _fail_recovery() -> void:
 	if !_recovery_active:
 		return

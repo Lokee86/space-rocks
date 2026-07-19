@@ -430,7 +430,7 @@ realtime_transport_ready
 unknown_packet_received(packet: Dictionary)
 ```
 
-`ClientConnectionService` forwards `packet_parse_failed` from `NetworkClient`, emits `connected` after the transport opens and its realtime/auth handoffs run, emits `closed` after close handling resets cached websocket auth identity and realtime protocol state, and exposes application-facing non-realtime packet-specific public facade signals through its own dispatcher bindings. The semantic `realtime_transport_ready` facade signal is preserved by the coordinator's WebRTC-ready handling. Connection-level `NetworkClient` signals remain separate from packet-specific coordinator signals.
+`ClientConnectionService` forwards `packet_parse_failed` from `NetworkClient`, emits `connected` after the transport opens and its realtime/auth handoffs run, emits `closed` after close handling resets cached websocket auth identity and realtime protocol state, and exposes application-facing packet-specific public facade signals through its WebSocket dispatcher and `ToolingPacketRouter` bindings. The semantic `realtime_transport_ready` facade signal is preserved by the coordinator's WebRTC-ready handling. Connection-level `NetworkClient` signals remain separate from packet-specific dispatcher and tooling-router signals.
 
 ## Does not own
 

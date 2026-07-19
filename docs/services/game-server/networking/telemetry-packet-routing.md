@@ -4,226 +4,153 @@ Parent index: [Game Server Networking](./!INDEX.md)
 
 ## Purpose
 
-This document describes the game-server networking boundary for telemetry-facing realtime packets.
-
-It explains how telemetry and diagnostic packet requests enter the game server, how responses leave the server, what runtime state may be exposed, and what this boundary does not own.
+This document describes the game-server boundary for live telemetry packets carried by the dedicated reliable `sr.tooling` WebRTC DataChannel.
 
 ## Overview
 
-Telemetry packet routing is a narrow realtime surface on the game server.
+Live telemetry is runtime diagnostic traffic, not durable observability storage and not gameplay authority.
 
-The current implementation does not send telemetry to a durable external telemetry backend. Instead, telemetry-facing packets are routed through the same WebSocket packet path used by normal client/server communication. The server decodes inbound packets, routes telemetry or diagnostic requests to the appropriate runtime handler, and writes structured response packets back to the connected client or devtool consumer.
-
-This boundary exists so liveness, latency, and development diagnostics can use the real packet codec and outbound writer path without becoming gameplay authority or a separate debug-only transport.
-
-The networking-facing behavior is:
+The current route is:
 
 ```text
-client or devtool
--> WebSocket packet
--> networking decode
--> packet router
--> telemetry or diagnostic handler
--> outbound server packet
--> client or devtool consumer
+client telemetry UI
+-> telemetry_subscribe or telemetry_ping
+-> sr.tooling
+-> per-connection tooling router
+-> production telemetry provider or ping handler
+-> telemetry_snapshot or telemetry_pong
+-> sr.tooling
+-> client tooling packet router
 ```
 
-## Code root
-
-```text
-services/game-server/
-```
+WebSocket remains responsible for authentication, WebRTC signaling, lobby/room control, and pre-readiness session control. It no longer carries telemetry subscriptions, snapshots, or ping/pong packets.
 
 ## Responsibilities
 
-Telemetry packet routing owns the game-server side of:
+The tooling telemetry boundary owns:
 
-* Accepting telemetry-facing packet requests after the networking layer decodes them.
-* Routing telemetry and diagnostic packet types to the correct server-side handler.
-* Writing telemetry responses through the normal outbound packet writer.
-* Keeping telemetry responses structured as normal server packets.
-* Reporting only runtime facts the server owns or can observe.
-* Preserving the same codec and transport assumptions used by normal gameplay packets.
-* Keeping diagnostic packet behavior separate from simulation authority.
+* Validating generated telemetry packet contracts and non-empty request IDs.
+* Enforcing required connection or room attachment before decoding payloads.
+* Keeping subscriptions connection-local and bound to the attached room.
+* Sending bounded-cadence `telemetry_snapshot` packets only while subscribed.
+* Sending correlated `telemetry_pong` responses for `telemetry_ping` requests.
+* Clearing telemetry state on unsubscribe, room change, tooling-channel close, or session close.
+* Reading authoritative runtime facts through existing room, game, measurement, and networking seams.
 
-## Does not own
-
-Telemetry packet routing does not own:
-
-* WebSocket connection lifecycle.
-* General inbound packet dispatch.
-* General outbound packet fanout.
-* Room lifecycle, membership, or ownership rules.
-* Gameplay simulation state mutation.
-* Match result reporting.
-* Player-data persistence.
-* Auth token verification.
-* Client UI presentation of telemetry or diagnostics.
-* A durable metrics, tracing, or observability backend.
+It does not own gameplay mutation, room membership policy, client presentation, durable metrics storage, or external analytics.
 
 ## Packet surface
 
-The telemetry-facing packet surface currently uses realtime packets, not HTTP.
-
-Relevant packet families include:
+Client to server:
 
 ```text
+telemetry_subscribe
+telemetry_unsubscribe
 telemetry_ping
-telemetry_pong
-debug_status
-debug_shape_catalog
 ```
 
-`telemetry_ping` is a client-originated liveness or latency probe. The server response is `telemetry_pong`.
-
-`debug_status` exposes server-side runtime status for development consumers.
-
-`debug_shape_catalog` exposes diagnostic shape/catalog data used by debug tooling.
-
-These packet families should remain read-only from the perspective of gameplay authority. They may observe server state, but they should not create a second path for simulation mutation.
-
-## Routing flow
-
-Inbound telemetry routing follows the normal packet path:
+Server to client:
 
 ```text
-WebSocket receives bytes
--> packet codec decodes client message
--> networking packet router identifies packet type
--> telemetry or debug handler builds response
--> outbound writer serializes server message
--> WebSocket sends bytes
+telemetry_snapshot
+telemetry_pong
+tooling_error
 ```
 
-The important ownership rule is that telemetry does not bypass networking. Even when a packet is diagnostic, it still uses the production codec and outbound writer.
+Every client-originated telemetry packet carries a non-empty `request_id`.
 
-## Data ownership
+`telemetry_ping` is connection-scoped and does not require room membership. `telemetry_pong` echoes `request_id`, sequence, and client send time, then adds server receive and send timestamps.
 
-Telemetry packet routing does not own durable data.
+`telemetry_subscribe` and `telemetry_unsubscribe` are room-scoped. The subscription is valid only while the connection remains attached to the same room.
 
-It may read:
+## Production telemetry provider
 
-* connection/session state known by the networking layer
-* room or server runtime state exposed through existing service seams
-* generated packet definitions shared with the client
-* debug/devtool catalog data prepared by server-side tooling
+`services/game-server/internal/tooling/Controller` implements both measurement and live telemetry provider contracts.
 
-It must not persist:
+A live snapshot includes:
 
-* player profile state
-* match result state
-* gameplay progression state
-* long-term telemetry history
+```text
+authoritative entity counts
+active room and match identity
+process heap/system/goroutine/GC counters
+aggregate server packet and byte totals for the connection
+per-lane packet count, byte total, last/max packet size, and last packet family
+```
 
-If durable telemetry storage is added later, that should be documented as a separate integration boundary rather than folded into packet routing.
+The provider reuses the authoritative runtime entity-count seam used by measurement. Packet write counters are observed at the successful WebRTC lane-write boundary, so they reflect encoded packets actually handed to the transport.
+
+Live telemetry state is independent from a bounded measurement run. A connection can receive telemetry snapshots without starting a measurement session.
+
+## Subscription lifecycle
+
+```text
+visible eligible client panel
+-> telemetry_subscribe
+-> router stores current room id
+-> first eligible tooling tick emits telemetry_snapshot
+-> later snapshots emit at bounded cadence
+
+panel hidden
+-> telemetry_unsubscribe
+-> router stops snapshots
+
+room attachment changes
+-> router invalidates subscription
+
+WebRTC tooling recovery
+-> old router closes and clears state
+-> client explicitly resubscribes after readiness
+
+session close
+-> router clears telemetry state and finalizes any active measurement run
+```
+
+UI visibility decides whether the client requests a subscription. It is not server authority; the server still validates attachment and packet policy.
 
 ## Trust and validation
 
-The server should treat telemetry requests as client input.
+The server trusts generated packet structure and server-owned runtime state. It rejects malformed packets, missing request IDs, missing room attachment for subscription packets, client-submitted server packet types, and unavailable runtime ownership with `tooling_error`.
 
-Telemetry packet routing should trust only:
-
-* decoded packet structure after codec validation
-* server-owned runtime state
-* room/session state owned by existing game-server seams
-* generated packet contracts
-
-Telemetry packet routing should reject or ignore:
-
-* malformed packets
-* unknown telemetry packet types
-* requests that require unavailable runtime state
-* client-submitted telemetry values that claim authoritative game facts
-* diagnostic requests that are not enabled for the current runtime mode
-
-Telemetry packets must not become a way for clients to mutate authoritative state outside normal gameplay or devtool command rules.
-
-## Runtime boundaries
-
-Telemetry packet routing sits between three runtime boundaries:
-
-```text
-networking
-  owns WebSocket session state, packet decode, packet dispatch, and packet writes
-
-telemetry/debug handlers
-  own response construction for diagnostic packet families
-
-rooms/simulation/devtools
-  own the authoritative runtime state being observed
-```
-
-Telemetry routing should stay thin. If a response needs game state, the routing layer should ask the owning game-server seam for that state instead of duplicating ownership.
-
-## Tests and verification
-
-Relevant verification should cover:
-
-* telemetry request decode and route selection
-* telemetry response packet construction
-* outbound write behavior for telemetry responses
-* rejection or no-op behavior for unknown packet types
-* debug packet behavior when devtool state is unavailable
-* packet codec compatibility with generated client/server packet definitions
-
-Useful test areas include:
-
-```text
-services/game-server/internal/networking/
-services/game-server/internal/protocol/packetcodec/
-services/game-server/internal/devtools/
-services/game-server/internal/rooms/
-```
+Telemetry packets never accept client claims about authoritative entity counts or server process state.
 
 ## Code map
 
-Primary implementation folders:
-
 ```text
-services/game-server/internal/networking/
-services/game-server/internal/networking/outbound/
-services/game-server/internal/protocol/packetcodec/
-services/game-server/internal/devtools/
-services/game-server/internal/rooms/
+shared/packets/tooling.toml
+services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/networking/tooling/preflight.go
+services/game-server/internal/tooling/controller.go
+services/game-server/internal/tooling/telemetry.go
+services/game-server/internal/game/runtime_measurement.go
+services/game-server/internal/networking/websocket_write.go
+services/game-server/internal/networking/webrtc_transport.go
+services/game-server/internal/protocol/tooling/
 ```
 
-Related generated or shared packet contract paths:
+The historical file names `websocket_write.go` and `websocket_session.go` still own the connection/session write loop, but telemetry payload delivery itself uses `SendToolingJSON` on `sr.tooling`.
+
+## Tests and verification
+
+Relevant coverage includes:
 
 ```text
-shared/packets/
+services/game-server/internal/networking/tooling/router_test.go
+services/game-server/internal/tooling/controller_test.go
+services/game-server/internal/networking/websocket_measurement_test.go
+client/tests/unit/devtools/telemetry/test_world_telemetry_context.gd
+client/tests/unit/networking/test_webrtc_transport.gd
+client/tests/unit/test_client_connection_service.gd
 ```
 
-Important non-ownership boundaries:
-
-```text
-services/player-data/
-client/
-docs/services/game-server/networking/
-docs/devtools/
-```
-
-`services/player-data/` is not part of telemetry packet routing unless a future durable telemetry sink is added.
-
-`client/` consumes telemetry responses but does not own game-server routing behavior.
-
-`docs/services/game-server/networking/` owns the broader inbound and outbound packet routing documentation.
-
-`docs/devtools/` owns debug-tool behavior that consumes or presents diagnostic packet output.
+Tests cover request correlation, connection-local subscription ownership, room-change cleanup, authoritative snapshot content, independent live packet counters, client recovery resubscription, and WebSocket/WebRTC metric aggregation.
 
 ## Related docs
 
-* [Game Server Integrations](../integrations/!INDEX.md)
-* [Game Server](../!INDEX.md)
+* [Tooling Channel Migration Contract](../../../devtools/design/tooling-channel-migration-contract.md)
+* [Telemetry Overlays](../../../devtools/client/telemetry-overlays.md)
 * [Game Server Networking](./!INDEX.md)
-* [Inbound Packet Routing](./inbound-packet-routing.md)
-* [Outbound Packet Routing](./outbound-message-flow.md)
-* [Room Network Adapter](./room-network-adapter.md)
-* [Game Server Observability](../observability/!INDEX.md)
-* [Protocol](../../../protocol/!INDEX.md)
-* [Devtools](../../../devtools/!INDEX.md)
+* [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 
 ## Notes
 
-The word telemetry in this document means realtime diagnostic packet traffic, not a full observability pipeline.
-
-If Space Rocks later adds metrics export, tracing, structured log aggregation, or a durable telemetry service, that should become a separate integration document. This document should remain focused on packets that enter and leave the game server through the realtime protocol.
+Live telemetry remains transient and shallow. Durable measurements are produced by the separate runtime measurement lifecycle; logs and traces remain owned by the observability system.

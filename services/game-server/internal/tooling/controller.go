@@ -14,6 +14,7 @@ import (
 )
 
 var _ networkingtooling.MeasurementController = (*Controller)(nil)
+var _ networkingtooling.TelemetryProvider = (*Controller)(nil)
 
 type ServerReportWriter interface {
 	Write(measurement.ServerReport) (string, error)
@@ -27,12 +28,14 @@ type Dependencies struct {
 }
 
 type Controller struct {
-	mu           sync.Mutex
-	rooms        *rooms.RoomManager
-	buildVersion string
-	runs         map[string]*ownedRun
-	runOptions   []measurement.RunOption
-	reportWriter ServerReportWriter
+	mu             sync.Mutex
+	rooms          *rooms.RoomManager
+	buildVersion   string
+	runs           map[string]*ownedRun
+	telemetry      map[string]*liveTelemetryState
+	processSampler *measurement.ProcessSampler
+	runOptions     []measurement.RunOption
+	reportWriter   ServerReportWriter
 }
 
 type ownedRun struct {
@@ -44,11 +47,13 @@ type ownedRun struct {
 
 func NewController(deps Dependencies) *Controller {
 	return &Controller{
-		rooms:        deps.Rooms,
-		buildVersion: deps.BuildVersion,
-		runs:         make(map[string]*ownedRun),
-		runOptions:   append([]measurement.RunOption(nil), deps.RunOptions...),
-		reportWriter: deps.ReportWriter,
+		rooms:          deps.Rooms,
+		buildVersion:   deps.BuildVersion,
+		runs:           make(map[string]*ownedRun),
+		telemetry:      make(map[string]*liveTelemetryState),
+		processSampler: measurement.NewProcessSampler(),
+		runOptions:     append([]measurement.RunOption(nil), deps.RunOptions...),
+		reportWriter:   deps.ReportWriter,
 	}
 }
 
@@ -177,6 +182,7 @@ func (controller *Controller) ObservePacketWrite(context networkingtooling.Conte
 	if context.SessionID == "" {
 		return
 	}
+	controller.observeTelemetryPacket(context.SessionID, context.RoomID, lane, packetFamily, encodedBytes)
 	controller.mu.Lock()
 	state := controller.runs[context.SessionID]
 	controller.mu.Unlock()

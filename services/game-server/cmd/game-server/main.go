@@ -158,7 +158,7 @@ func runWithContext(ctx context.Context) int {
 	authVerifier := buildAuthVerifierFromEnv(startupTraceID)
 
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporterAndTooling(rooms, authVerifier, reporter, measurementController, nil))
+	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporterAndTooling(rooms, authVerifier, reporter, measurementController, measurementController))
 
 	playerDataProfileHandler := newPlayerDataProfileHTTPHandler(playerDataRuntime, authVerifier)
 	playerDataLocalProfilesHandler := newPlayerDataLocalProfilesHTTPHandler(playerDataRuntime)

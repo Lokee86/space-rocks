@@ -10,7 +10,7 @@ It fixes the transport boundary, packet ownership, capability requirements, atta
 
 ## Status
 
-The transport foundation, runtime developer command migration, and developer readout migration are complete.
+The transport foundation, runtime developer command migration, developer readout migration, and continuous telemetry migration are complete.
 
 Implemented foundations:
 
@@ -21,7 +21,9 @@ reliable, ordered, bidirectional delivery
 lane-aware client and server routing
 measurement request/response consumer
 measurement report lifecycle
-partial telemetry subscription router
+production telemetry subscription and snapshot provider
+correlated telemetry ping/pong on `sr.tooling`
+per-lane WebRTC transport counters merged with WebSocket control counters
 runtime developer command migration through `sr.tooling`
 temporary capability checks and devtools-controller dispatch
 correlated terminal command results and errors
@@ -34,8 +36,6 @@ removal of WebSocket runtime-devtools command and readout routing
 Not yet migrated:
 
 ```text
-legacy world-overlay telemetry ping path
-production telemetry snapshot provider
 account-backed authorization
 observer/ghost/active-operator attachment mechanics
 ```
@@ -180,9 +180,9 @@ These packets already belong to `shared/packets/tooling.toml`.
 
 | Packet | Class | Current route | Final route | Capability | Attachment | Owner |
 | --- | --- | --- | --- | --- | --- | --- |
-| `telemetry_subscribe` | Subscription | `sr.tooling` router exists; production provider not wired | `sr.tooling` | Public-safe | Room | Tooling router + telemetry provider |
-| `telemetry_unsubscribe` | Subscription | `sr.tooling` router exists | `sr.tooling` | Public-safe | Room | Tooling router |
-| `telemetry_ping` | Request | Tooling route exists; legacy overlay still sends a WebSocket copy | `sr.tooling` only | Public-safe | Connection | Tooling router |
+| `telemetry_subscribe` | Subscription | `sr.tooling`; production provider wired | `sr.tooling` | Public-safe | Room | Tooling router + telemetry provider |
+| `telemetry_unsubscribe` | Subscription | `sr.tooling` | `sr.tooling` | Public-safe | Room | Tooling router |
+| `telemetry_ping` | Request | `sr.tooling` only | `sr.tooling` only | Public-safe | Connection | Tooling router |
 | `measurement_start` | Command | `sr.tooling` | `sr.tooling` | Public-safe | Room | Measurement controller |
 | `measurement_stop` | Command | `sr.tooling` | `sr.tooling` | Public-safe | Room | Measurement controller |
 | `measurement_reset` | Command | `sr.tooling` | `sr.tooling` | Public-safe | Room | Measurement controller |
@@ -340,10 +340,11 @@ The remaining implementation order is fixed after the completed slices:
    -> WebSocket write-loop debug output and client routing removed
    -> existing devtools display/application ownership preserved
 
-4. continuous telemetry
-   -> move legacy overlay ping fully onto sr.tooling
-   -> wire production telemetry provider
-   -> repair transport metrics against final per-lane sources
+4. continuous telemetry (complete)
+   -> legacy overlay ping moved fully onto sr.tooling with request correlation
+   -> production room telemetry provider wired
+   -> room-scoped subscription recovery and cleanup implemented
+   -> WebSocket and per-lane WebRTC transport metrics merged at the client boundary
 
 5. authorization and attachment
    -> replace the temporary all-connections tooling grant with an account-flag grant source
@@ -351,7 +352,7 @@ The remaining implementation order is fixed after the completed slices:
    -> audit and tooling-affected propagation
 ```
 
-The next slice is continuous telemetry and ping migration. After that, telemetry-panel and measurement repairs can target the final transport.
+The next slice is authorization and attachment. Telemetry-panel and measurement repairs can now target the final transport.
 
 ## Exit criteria
 
@@ -367,7 +368,7 @@ room attachment is not coupled to gameplay participation
 a machine-readable server packet-policy registry covers the inventory
 ```
 
-No runtime devtools command or developer readout now uses the WebSocket gameplay packet path. The overall migration remains incomplete until continuous telemetry/ping and the final account-backed authorization source are addressed.
+No runtime devtools command, developer readout, telemetry subscription, snapshot, or ping/pong path uses the WebSocket gameplay packet route. The overall program remains incomplete only for the final account-backed authorization and operator-attachment work.
 
 ## Code map
 
@@ -377,6 +378,7 @@ shared/packets/debug.toml
 shared/packets/outputs.toml
 services/game-server/internal/networking/tooling/packet_contract.go
 services/game-server/internal/networking/tooling/router.go
+services/game-server/internal/tooling/telemetry.go
 services/game-server/internal/networking/outbound/debug_status_presentation.go
 services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go
 services/game-server/internal/devtools/
