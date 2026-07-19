@@ -1,8 +1,8 @@
 extends RefCounted
 
 const OverlayLaneState = preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
-const SessionLaneState = preload("res://scripts/protocol/realtime/session_lane_state.gd")
-const RealtimeWireGenerated = preload("res://scripts/generated/networking/realtime_wire_generated.gd")
+
+
 
 const POLICY_FLOAT_GENERIC = "float_generic"
 const POLICY_RATIO_0_1 = "ratio_0_1"

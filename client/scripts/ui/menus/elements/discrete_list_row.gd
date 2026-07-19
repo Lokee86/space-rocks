@@ -1,6 +1,7 @@
 class_name DiscreteListRow
 extends Control
 
+@warning_ignore("unused_signal")
 signal selected(item: Dictionary)
 
 

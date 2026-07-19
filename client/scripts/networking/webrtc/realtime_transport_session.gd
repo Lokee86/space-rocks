@@ -1,7 +1,7 @@
 class_name RealtimeTransportSession
 extends RefCounted
 
-const WebRTCTransport := preload("res://scripts/networking/webrtc/webrtc_transport.gd")
+
 
 const RECOVERY_TIMEOUT_MSEC := 10000
 

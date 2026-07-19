@@ -3,9 +3,9 @@ class_name RealtimePacketPipeline
 
 const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 const DescriptorIndex := preload("res://scripts/protocol/realtime/compact_wire_descriptor_index.gd")
-const RealtimeRouter := preload("res://scripts/protocol/realtime/realtime_router.gd")
-const RealtimePresentationState := preload("res://scripts/networking/realtime/realtime_presentation_state.gd")
-const RealtimeReceiveLimits := preload("res://scripts/protocol/realtime/realtime_receive_limits.gd")
+
+
+
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 

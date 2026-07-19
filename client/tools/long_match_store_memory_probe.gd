@@ -1,9 +1,9 @@
 extends SceneTree
 
-const EventBatchApplier := preload("res://scripts/protocol/realtime/event_batch_applier.gd")
-const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
-const ProjectileSync := preload("res://scripts/world/projectile_sync.gd")
-const AsteroidSync := preload("res://scripts/world/asteroid_sync.gd")
+
+
+
+
 const THRESHOLDS := [1000, 5000, 10000, 25000, 50000, 100000, 250000]
 
 var event_batch_applier := EventBatchApplier.new()

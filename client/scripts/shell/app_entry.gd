@@ -2,9 +2,9 @@ extends Node2D
 
 const SessionBootController := preload("res://scripts/boot/session_boot_controller.gd")
 const MainMenuSessionController := preload("res://scripts/main_menu/main_menu_session_controller.gd")
-const SessionNetworkController := preload("res://scripts/session/session_network_controller.gd")
+
 const RoomSessionController := preload("res://scripts/session/room_session_controller.gd")
-const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
+
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
 const AuthSessionControllerScript := preload("res://scripts/auth/auth_session_controller.gd")

@@ -2,19 +2,19 @@ extends RefCounted
 class_name RealtimeRouter
 
 const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
-const WorldLaneState = preload("res://scripts/protocol/realtime/world_lane_state.gd")
+
 const WorldLaneApplier = preload("res://scripts/protocol/realtime/world_lane_applier.gd")
 const OverlayLaneState = preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
 const OverlayLaneApplier = preload("res://scripts/protocol/realtime/overlay_lane_applier.gd")
-const SessionLaneState = preload("res://scripts/protocol/realtime/session_lane_state.gd")
+
 const SessionLaneApplier = preload("res://scripts/protocol/realtime/session_lane_applier.gd")
-const EventBatchApplier = preload("res://scripts/protocol/realtime/event_batch_applier.gd")
+
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
-const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
+
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
 const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
-const LifecycleLaneGate = preload("res://scripts/protocol/realtime/lifecycle_lane_gate.gd")
-const LifecycleChunkAssembler = preload("res://scripts/protocol/realtime/lifecycle_chunk_assembler.gd")
+
+
 
 var world_lane_state := WorldLaneState.new()
 var overlay_lane_state := OverlayLaneState.new()

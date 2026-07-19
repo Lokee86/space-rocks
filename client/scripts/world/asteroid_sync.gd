@@ -5,7 +5,7 @@ const AsteroidSyncState = preload("res://scripts/world/asteroid_sync_state.gd")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
-const AsteroidPresentation = preload("res://scripts/entities/asteroid.gd")
+
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
 const DELETED_ASTEROID_ID_CAP := 2048

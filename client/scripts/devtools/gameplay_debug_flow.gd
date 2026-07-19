@@ -5,7 +5,7 @@ const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const DevtoolsTargetResolverScript = preload("res://scripts/devtools/devtools_target_resolver.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 
 var connection_service
 var debug_invincible_enabled := false

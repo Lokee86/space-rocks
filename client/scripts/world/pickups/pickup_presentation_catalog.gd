@@ -6,7 +6,7 @@ const PICKUP_CLASS_WEAPON := "weapon"
 
 const POWERUP_PICKUP_SCENE := preload("res://scenes/pickups/powerup_pickup.tscn")
 const WEAPON_PICKUP_SCENE := preload("res://scenes/pickups/weapon_pickup.tscn")
-const PickupPresentation = preload("res://scripts/entities/pickup.gd")
+
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
@@ -23,8 +23,8 @@ static func scene_for_class(pickup_class: String) -> PackedScene:
 static func available_pickup_types() -> Array[String]:
 	var pickup_types: Array[String] = []
 
-	_collect_pickup_types_from_scene(POWERUP_PICKUP_SCENE, PICKUP_CLASS_POWERUP, pickup_types)
-	_collect_pickup_types_from_scene(WEAPON_PICKUP_SCENE, PICKUP_CLASS_WEAPON, pickup_types)
+	_collect_pickup_types_from_scene(POWERUP_PICKUP_SCENE, pickup_types)
+	_collect_pickup_types_from_scene(WEAPON_PICKUP_SCENE, pickup_types)
 
 	pickup_types.sort()
 	return pickup_types
@@ -32,7 +32,7 @@ static func available_pickup_types() -> Array[String]:
 
 static func _collect_pickup_types_from_scene(
 	scene: PackedScene,
-	pickup_class: String,
+
 	pickup_types: Array[String]
 ) -> void:
 	if scene == null:

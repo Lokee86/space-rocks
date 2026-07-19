@@ -1,9 +1,9 @@
 extends RefCounted
 
 const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
-const WorldLaneState = preload("res://scripts/protocol/realtime/world_lane_state.gd")
+
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
-const WorldFullChunkAssembler = preload("res://scripts/protocol/realtime/world_full_chunk_assembler.gd")
+
 
 var _full_assembler := WorldFullChunkAssembler.new()
 
@@ -48,7 +48,7 @@ func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: Basel
 	return true
 
 
-func apply_asteroid_delta(world_lane_state: WorldLaneState, lane: String, asteroid_packet: Dictionary) -> void:
+func apply_asteroid_delta(world_lane_state: WorldLaneState, _lane: String, asteroid_packet: Dictionary) -> void:
 	if not world_lane_state.accept_asteroid_delta_sequence(asteroid_packet.get("sequence"), asteroid_packet.get("chunk_index", 0), asteroid_packet.get("chunk_count", 1)):
 		return
 	_apply_entity_deltas(world_lane_state, [], _array_field(asteroid_packet, "asteroid_updates"), [], "asteroid")
@@ -59,7 +59,7 @@ func apply_asteroids_lifecycle(world_lane_state: WorldLaneState, packet: Diction
 	_apply_entity_deltas(world_lane_state, _array_field(packet, "asteroid_creates"), [], _array_field(packet, "asteroid_deletes"), "asteroid")
 	return true
 
-func apply_bullet_delta(world_lane_state: WorldLaneState, lane: String, bullet_packet: Dictionary) -> void:
+func apply_bullet_delta(world_lane_state: WorldLaneState, _lane: String, bullet_packet: Dictionary) -> void:
 	if not world_lane_state.accept_bullet_delta_sequence(bullet_packet.get("sequence"), bullet_packet.get("chunk_index", 0), bullet_packet.get("chunk_count", 1)):
 		return
 	_apply_entity_deltas(world_lane_state, [], _array_field(bullet_packet, "bullet_updates"), [], "bullet")

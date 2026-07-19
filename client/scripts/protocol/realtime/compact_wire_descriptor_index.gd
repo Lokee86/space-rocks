@@ -1,7 +1,7 @@
 class_name CompactWireDescriptorIndex
 extends RefCounted
 
-const RealtimeWireGenerated := preload("res://scripts/generated/networking/realtime_wire_generated.gd")
+
 
 static var _initialized := false
 static var _records_by_id: Dictionary = {}
@@ -91,14 +91,14 @@ static func event_by_compact_type(event_type: String) -> Dictionary:
 	_ensure_initialized()
 	return _events_by_compact.get(event_type, {})
 
-static func readable_key(compact_key: String) -> String:
-	return RealtimeWireGenerated.KEY_READABLE_BY_COMPACT.get("wire." + compact_key, compact_key)
+static func readable_key(compact_key_value: String) -> String:
+	return RealtimeWireGenerated.KEY_READABLE_BY_COMPACT.get("wire." + compact_key_value, compact_key_value)
 
 static func compact_key(readable_key_value: String) -> String:
 	return RealtimeWireGenerated.KEY_COMPACT_BY_READABLE.get("wire." + readable_key_value, readable_key_value)
 
-static func readable_value(domain: String, compact_value: String) -> String:
-	return RealtimeWireGenerated.VALUE_READABLE_BY_COMPACT.get(domain, {}).get(compact_value, compact_value)
+static func readable_value(domain: String, compact_value_value: String) -> String:
+	return RealtimeWireGenerated.VALUE_READABLE_BY_COMPACT.get(domain, {}).get(compact_value_value, compact_value_value)
 
 static func compact_value(domain: String, readable_value_value: String) -> String:
 	return RealtimeWireGenerated.VALUE_COMPACT_BY_READABLE.get(domain, {}).get(readable_value_value, readable_value_value)
@@ -115,8 +115,8 @@ static func readable_event_type(compact_type: String) -> String:
 static func compact_event_type(readable_type: String) -> String:
 	return compact_value("event_type", readable_type)
 
-static func readable_lane(compact_lane: String) -> String:
-	return readable_value("lane", compact_lane)
+static func readable_lane(compact_lane_value: String) -> String:
+	return readable_value("lane", compact_lane_value)
 
 static func compact_lane(readable_lane_value: String) -> String:
 	return compact_value("lane", readable_lane_value)

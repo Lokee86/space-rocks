@@ -3,7 +3,7 @@ extends RefCounted
 const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
 const LaneSyncState = preload("res://scripts/protocol/realtime/lane_sync_state.gd")
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
-const GameplayReadiness = preload("res://scripts/protocol/realtime/gameplay_readiness.gd")
+
 
 const LANES := [LaneMetadata.LANE_WORLD, LaneMetadata.LANE_OVERLAY, LaneMetadata.LANE_SESSION]
 

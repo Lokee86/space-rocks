@@ -7,7 +7,7 @@ signal auth_error(message: String)
 const AuthSessionScript := preload("res://scripts/auth/auth_session.gd")
 const AuthTokenStoreScript := preload("res://scripts/auth/auth_token_store.gd")
 const AuthApiClientScript := preload("res://scripts/auth/auth_api_client.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const DISCORD_POLL_INTERVAL_SECONDS := 1.0

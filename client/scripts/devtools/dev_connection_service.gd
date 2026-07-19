@@ -2,7 +2,7 @@ extends RefCounted
 
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 
 var connection_service

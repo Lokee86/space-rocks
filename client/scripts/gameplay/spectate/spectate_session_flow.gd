@@ -1,7 +1,7 @@
 extends RefCounted
 class_name SpectateSessionFlow
 
-const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
+
 
 var gameplay_menu_flow
 var gameplay_shell_flow

@@ -4,7 +4,7 @@ const LobbyFlow := preload("res://scripts/lobby/lobby_flow.gd")
 const LobbyNetworkActions := preload("res://scripts/lobby/lobby_network_actions.gd")
 const LobbyReturnFlow := preload("res://scripts/lobby/lobby_return_flow.gd")
 const LobbyShellFlow := preload("res://scripts/lobby/lobby_shell_flow.gd")
-const MultiplayerLobbyPresenter := preload("res://scripts/lobby/multiplayer_lobby_presenter.gd")
+
 const MultiplayerDialogStatusPresenter := preload("res://scripts/lobby/multiplayer_dialog_status_presenter.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")

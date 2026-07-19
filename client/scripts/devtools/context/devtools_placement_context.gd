@@ -2,9 +2,9 @@ extends RefCounted
 class_name DevtoolsPlacementContext
 
 const ClientLogger := preload("res://scripts/logging/logger.gd")
-const DevSpawnPacketBuilder := preload("res://scripts/devtools/dev_spawn_packet_builder.gd")
+
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 
 var state_context
 var dev_connection_service

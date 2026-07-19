@@ -6,10 +6,10 @@ const DevConnectionService := preload("res://scripts/devtools/dev_connection_ser
 const DebugMouseWorldPosition := preload("res://scripts/gameplay/devtools/debug_mouse_world_position.gd")
 const DebugClickPlacementFlow := preload("res://scripts/gameplay/devtools/debug_click_placement_flow.gd")
 const DebugContinuousBulletSpawnFlow := preload("res://scripts/gameplay/devtools/debug_continuous_bullet_spawn_flow.gd")
-const DevSpawnPacketBuilder := preload("res://scripts/devtools/dev_spawn_packet_builder.gd")
+
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 
 var connection_service
 var scene_root: Node
@@ -121,11 +121,11 @@ func _on_debug_click_placement_completed(result: Dictionary) -> void:
 		gameplay_shell_flow.handle_devtools_placement_result(result)
 
 
-func _on_debug_click_placement_cancelled(action_name: StringName) -> void:
+func _on_debug_click_placement_cancelled(_action_name: StringName) -> void:
 	return
 
 
-func _on_debug_continuous_bullet_spawn_cancelled(action_name: StringName) -> void:
+func _on_debug_continuous_bullet_spawn_cancelled(_action_name: StringName) -> void:
 	return
 
 

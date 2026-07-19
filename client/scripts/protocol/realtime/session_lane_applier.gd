@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SessionLaneState = preload("res://scripts/protocol/realtime/session_lane_state.gd")
+
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
 
 func apply_session_full(session_lane_state: SessionLaneState, baseline_tracker: BaselineTracker, lane: String, session_packet: Dictionary) -> bool:

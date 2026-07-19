@@ -1,10 +1,10 @@
 extends Window
 
-const DevtoolsWindowTelemetry := preload("res://scripts/devtools/devtools_window_telemetry.gd")
-const DevtoolsWindowTargetSelectors := preload("res://scripts/devtools/devtools_window_target_selectors.gd")
-const DevtoolsWindowSpawnControls := preload("res://scripts/devtools/devtools_window_spawn_controls.gd")
-const DevtoolsWindowCounterControls := preload("res://scripts/devtools/devtools_window_counter_controls.gd")
-const DevtoolsWindowMeasurement := preload("res://scripts/devtools/devtools_window_measurement.gd")
+
+
+
+
+
 
 signal toggle_invincible_requested(target_player_id: String)
 signal toggle_infinite_lives_requested(target_player_id: String)

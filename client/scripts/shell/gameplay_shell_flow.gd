@@ -4,6 +4,7 @@ class_name GameplayShellFlow
 const GameplayPauseStateFlowScript = preload("res://scripts/gameplay/state/gameplay_pause_state_flow.gd")
 const GameplayFlowComposerScript = preload("res://scripts/gameplay/runtime/gameplay_flow_composer.gd")
 
+@warning_ignore("unused_signal")
 signal gameplay_started
 signal quit_to_main_menu_requested
 signal return_to_pregame_requested(session_mode: String)

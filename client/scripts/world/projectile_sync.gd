@@ -7,8 +7,8 @@ const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const WorldSyncLogger = preload("res://scripts/logging/logger.gd")
 const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
-const BulletPresentation = preload("res://scripts/entities/bullet.gd")
-const TorpedoPresentation = preload("res://scripts/entities/torpedo.gd")
+
+
 const DELETED_PROJECTILE_ID_CAP := 4096
 
 var audio_flow := GameplayAudioFlow.new()

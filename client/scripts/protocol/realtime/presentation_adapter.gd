@@ -1,10 +1,10 @@
 extends RefCounted
 class_name PresentationAdapter
 
-const WorldPresentationAdapter = preload("res://scripts/protocol/realtime/world_presentation_adapter.gd")
-const OverlayPresentationAdapter = preload("res://scripts/protocol/realtime/overlay_presentation_adapter.gd")
-const SessionPresentationAdapter = preload("res://scripts/protocol/realtime/session_presentation_adapter.gd")
-const EventPresentationAdapter = preload("res://scripts/protocol/realtime/event_presentation_adapter.gd")
+
+
+
+
 const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
 
 var world_adapter := WorldPresentationAdapter.new()

@@ -2,8 +2,8 @@ extends Node
 class_name GameplaySessionController
 
 const DevtoolsDisplayRefreshFlow := preload("res://scripts/devtools/devtools_display_refresh_flow.gd")
-const PresentationBridge := preload("res://scripts/protocol/realtime/presentation_bridge.gd")
-const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+
+
 
 var connection_service: ClientConnectionService
 var hud: Control

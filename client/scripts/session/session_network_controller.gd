@@ -2,8 +2,8 @@ extends RefCounted
 class_name SessionNetworkController
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
-const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
-const GameplaySessionController := preload("res://scripts/session/gameplay_session_controller.gd")
+
+
 
 var connection_service: ClientConnectionService
 var shell_boot_flow

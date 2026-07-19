@@ -1,7 +1,7 @@
 extends RefCounted
 
 const LobbyPacketReader := preload("res://scripts/lobby/lobby_packet_reader.gd")
-const LobbySessionState := preload("res://scripts/lobby/lobby_session_state.gd")
+
 
 var lobby_state: LobbySessionState = LobbySessionState.new()
 

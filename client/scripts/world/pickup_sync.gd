@@ -7,7 +7,7 @@ const PICKUP_CLASS_WEAPON := "weapon"
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
-const PickupPresentation = preload("res://scripts/entities/pickup.gd")
+
 
 var pickups_layer: Node2D
 var audio_flow := GameplayAudioFlow.new()
@@ -66,7 +66,7 @@ func _scene_for_class(pickup_class: String) -> PackedScene:
 	return null
 
 
-func _contract_violation(pickup_class: String, pickup_node: Node) -> void:
+func _contract_violation(pickup_node: Node) -> void:
 	var actual_script: Script = pickup_node.get_script()
 	var actual_script_path := ""
 	if actual_script is Script:
@@ -106,11 +106,11 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 				}
 			)
 			return null
-		var pickup_node := stored_node as PickupPresentation
-		if pickup_node == null:
-			_contract_violation(pickup_class, stored_node)
+		var stored_pickup_node := stored_node as PickupPresentation
+		if stored_pickup_node == null:
+			_contract_violation(stored_node)
 			return null
-		return pickup_node
+		return stored_pickup_node
 
 	if pickups_layer == null:
 		ClientLogger.emit_canonical(
@@ -135,7 +135,7 @@ func get_pickup_node(pickup_id: String, pickup_type: String, pickup_class: Strin
 	var scene_root: Node = pickup_scene.instantiate()
 	var pickup_node := scene_root as PickupPresentation
 	if pickup_node == null:
-		_contract_violation(pickup_class, scene_root)
+		_contract_violation(scene_root)
 		scene_root.queue_free()
 		return null
 	pickups_layer.add_child(pickup_node)

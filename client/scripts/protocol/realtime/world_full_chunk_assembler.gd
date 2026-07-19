@@ -2,7 +2,7 @@ extends RefCounted
 class_name WorldFullChunkAssembler
 
 const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd")
-const RealtimeReceiveLimits := preload("res://scripts/protocol/realtime/realtime_receive_limits.gd")
+
 
 const INCOMPLETE := "incomplete"
 const COMPLETE := "complete"

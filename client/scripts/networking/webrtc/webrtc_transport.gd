@@ -16,7 +16,7 @@ const MAX_PACKETS_PER_POLL := 48
 const MAX_PACKETS_PER_LANE_PER_POLL := 12
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
-const NetworkRuntimeMetrics := preload("res://scripts/networking/network_runtime_metrics.gd")
+
 const ClientConstants := preload("res://scripts/generated/constants/constants.gd")
 
 signal offer_created(description_type: String, sdp: String)

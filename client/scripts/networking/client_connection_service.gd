@@ -3,15 +3,15 @@ class_name ClientConnectionService
 
 const ClientPacketSender := preload("res://scripts/networking/outbound/client_packet_sender.gd")
 const ServerPacketDispatcher := preload("res://scripts/networking/inbound/server_packet_dispatcher.gd")
-const ClientInboundCoordinator := preload("res://scripts/networking/inbound/client_inbound_coordinator.gd")
-const ToolingPacketRouter := preload("res://scripts/networking/inbound/tooling_packet_router.gd")
-const RealtimePacketPipeline := preload("res://scripts/networking/realtime/realtime_packet_pipeline.gd")
-const RealtimeTransportSession := preload("res://scripts/networking/webrtc/realtime_transport_session.gd")
+
+
+
+
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 
 signal connected
 signal closed
@@ -277,9 +277,9 @@ func send_webrtc_offer(description_type: String, sdp: String) -> void:
 		client_packet_sender.send_webrtc_offer(description_type, sdp)
 
 
-func send_webrtc_ice_candidate(media: String, index: int, name: String) -> void:
+func send_webrtc_ice_candidate(media: String, index: int, candidate: String) -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_webrtc_ice_candidate(media, index, name)
+		client_packet_sender.send_webrtc_ice_candidate(media, index, candidate)
 
 
 func send_webrtc_smoke(smoke_id: String, origin: String, message: String) -> void:

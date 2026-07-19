@@ -26,7 +26,6 @@ static func _readable_packet_type(packet: Dictionary) -> String:
 static func _normalize_metadata(packet: Dictionary, descriptor: Dictionary) -> void:
 	if descriptor.is_empty() or not descriptor.get("runtime", false):
 		return
-	var packet_type := str(packet.get("type", ""))
 	var lane = packet.get("lane")
 	if lane == null and descriptor.get("infer_lane", false):
 		lane = str(descriptor.get("lane", ""))

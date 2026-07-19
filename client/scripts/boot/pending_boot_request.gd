@@ -1,7 +1,7 @@
 extends RefCounted
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
-const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
+
 
 var request_type := Constants.BOOT_REQUEST_NONE
 var join_room_code := ""

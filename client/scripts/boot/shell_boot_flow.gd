@@ -51,7 +51,7 @@ func pending_request_is_multiplayer() -> bool:
 	return pending_boot_request.is_multiplayer_request()
 
 
-func connect_to_game_server(reason: String) -> String:
+func connect_to_game_server(_reason: String) -> String:
 	if connection_service.is_server_connected():
 		send_pending_boot_request()
 		return Constants.CONNECT_RESULT_ALREADY_CONNECTED

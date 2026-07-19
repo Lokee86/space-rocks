@@ -4,7 +4,7 @@ class_name NetworkClient
 const Constants = preload("res://scripts/generated/constants/constants.gd")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
-const NetworkRuntimeMetrics = preload("res://scripts/networking/network_runtime_metrics.gd")
+
 
 signal connected_to_server
 signal connection_closed

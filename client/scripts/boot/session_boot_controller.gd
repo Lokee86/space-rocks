@@ -1,9 +1,9 @@
 extends Node
 
-const ClientConnectionService := preload("res://scripts/networking/client_connection_service.gd")
+
 const ShellBootFlow := preload("res://scripts/boot/shell_boot_flow.gd")
 const SessionNetworkTargetScript := preload("res://scripts/boot/session_network_target.gd")
-const ClientSessionContext := preload("res://scripts/session/client_session_context.gd")
+
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var connection_service

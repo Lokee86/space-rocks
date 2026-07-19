@@ -1,7 +1,7 @@
 extends RefCounted
 class_name GameplayComposition
 
-const SpectateMenuState := preload("res://scripts/gameplay/spectate/spectate_menu_state.gd")
+
 const MatchResultsFlowScript := preload("res://scripts/ui/match_results/match_results_flow.gd")
 const GameplayShellFlowScript := preload("res://scripts/shell/gameplay_shell_flow.gd")
 
