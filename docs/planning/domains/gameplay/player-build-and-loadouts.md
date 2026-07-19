@@ -11,7 +11,35 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 ## Purpose
 
-This doc plans the player-build seam for ship variants, weapon-point rules, module slots, loadout selection, and match-start build resolution.
+This doc is the authoritative P4 planning owner for the player-build seam: ship variants, weapon-point rules, module slots, authoritative eligibility, loadout selection, and immutable match-start build resolution.
+
+## Implementation Status
+
+The P4 owner-system foundation is implemented in the game server.
+
+Implemented flow:
+
+```text
+HangarInventory
++ resolved build rules
++ ship / weapon / module catalog
+-> BuildEligibility
+-> EligibleBuildOptions
+-> LoadoutSelection validation
+-> ResolvedPlayerBuild
+-> player session / RuntimeEquipmentState
+```
+
+The current real catalog baseline is deliberately small:
+
+```text
+ship: v_wing
+primary weapon catalog ref: pulse
+runtime weapon: basic_cannon
+modules: contract supported; default catalog currently empty
+```
+
+The implementation includes machine-readable blocked reasons, owned-instance validation, required `primary_1`, hardpoint/module-slot compatibility, starting-ammo compilation, passive and active module declarations, hardwired allowed/disabled/normalized policy, shield compilation, immutable clone boundaries, inventory loading through the player-data inventory client, pre-match game application, and rejection of mid-match build changes.
 
 ## Ownership Boundary
 
@@ -49,11 +77,22 @@ ResolvedPlayerBuild compiles match-start setup.
 
 ## Core Model
 
-`ShipVariant + LoadoutSelection -> ResolvedPlayerBuild -> runtime ship/session setup`
+```text
+ShipVariant + LoadoutSelection
+-> ResolvedPlayerBuild
+-> runtime ship/session setup
+```
 
 Core build flow:
 
-`ModeRules + HangarInventory + Progression/Unlocks -> BuildEligibility -> EligibleBuildOptions -> LoadoutSelection -> ResolvedPlayerBuild -> RuntimeShip / RuntimeEquipmentState`
+```text
+Resolved build rules + HangarInventory + catalogs
+-> BuildEligibility
+-> EligibleBuildOptions
+-> LoadoutSelection
+-> ResolvedPlayerBuild
+-> RuntimeShip / RuntimeEquipmentState
+```
 
 Core rule:
 
@@ -153,7 +192,7 @@ Responsibilities:
 - provide selectable options to the client
 - validate submitted `LoadoutSelection` server-side
 
-`BuildEligibility` is the planned source of selectable build options.
+`BuildEligibility` is the authoritative source of selectable build options.
 It does not make the client authoritative.
 It does not move eligibility discovery into `ResolvedPlayerBuild`.
 
@@ -296,13 +335,14 @@ Respawn restores from `ResolvedPlayerBuild` and mode/runtime rules.
 - Mode rules can allow, disable, or normalize hardwired effects.
 - `ResolvedPlayerBuild` applies hardwired effects only after owned ships exist and only if mode rules allow them.
 
-## Shield Support Planning
+## Shield Support
 
-- Full shield support belongs in the player-build implementation slice.
-- Damage resolution already supports shield absorption.
-- Player-build work should define max shield through resolved build data.
-- Respawn should restore shield from resolved build data.
-- HUD/state presentation should expose shield as part of the completed build support.
+- Damage resolution supports shield absorption.
+- `ResolvedPlayerBuild` owns compiled maximum shields and the match-start shield policy.
+- Initial spawn starts with the resolved maximum shields.
+- Respawn restores shields from resolved build data according to the life-restoration policy.
+- The default `v_wing` has no shields until ship or module content grants them.
+- Richer shield regeneration and presentation remain later content/client work.
 
 ## Ship Variant Implementation Planning
 
@@ -339,13 +379,14 @@ Selection planning rule:
 - [Modes And Match Rules](modes-and-match-rules.md)
 - [Progression And Rewards](progression-and-rewards.md)
 
-## Open Gametime Decisions
+## Remaining Expansion Decisions
 
-- Exact ship-variant catalog shape.
-- Exact build-option field names for future UI.
-- Exact owned-ship selection shape when inventory-backed ship selection lands.
-- Exact shield stat and shield-regen policy placement.
-- Exact cleanup ordering for old ship-side weapon fields.
+- Exact shared-data source and generator shape for larger ship, weapon, and module catalogs.
+- Exact client build-option and saved-loadout presentation.
+- Exact persistence model for named saved loadouts.
+- Exact shield regeneration content policy.
+- Exact cleanup ordering for remaining ship-side weapon fields.
+- Exact mode-specific restriction presets once modes need restrictions beyond the broad baseline.
 
 ## Core Invariants
 
@@ -357,3 +398,20 @@ Selection planning rule:
 - Hardwired modules stay separate from pre-match loadout selection.
 - `weight_class` stays a loadout-compatibility classification, not physics mass.
 - `primary_1` remains required at match start.
+- Build application is pre-match only; active matches cannot change loadouts.
+- The player session resets loadout state from its immutable `ResolvedPlayerBuild`.
+
+## Code Map
+
+```text
+services/game-server/internal/game/playerbuild/
+services/game-server/internal/game/player_builds.go
+services/game-server/internal/game/session.go
+```
+
+Primary tests live beside `internal/game/playerbuild` and in:
+
+```text
+services/game-server/internal/game/player_build_integration_test.go
+services/game-server/internal/game/player_builds_test.go
+```

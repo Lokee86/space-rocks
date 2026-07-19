@@ -1,12 +1,14 @@
 package game
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerspawn"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
@@ -26,6 +28,7 @@ type playerSession struct {
 	Suspension    runtime.SuspensionState
 	DamageOptions runtime.DamageOptions
 	PlayerArmory  weapons.PlayerArmory
+	ResolvedBuild playerbuild.ResolvedPlayerBuild
 	betweenLife   *betweenLifeState
 }
 
@@ -37,15 +40,33 @@ type betweenLifeState struct {
 }
 
 func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
+	build := playerbuild.DefaultResolvedBuild(id)
 	return &playerSession{
 		ID:            id,
-		ShipTypeID:    runtime.DefaultShipTypeID,
-		Stats:         runtime.ResolveShipStats(runtime.DefaultShipTypeID),
+		ShipTypeID:    build.ShipID,
+		Stats:         build.ShipStats,
 		SpawnPosition: spawnPosition,
 		Config:        runtime.DefaultCameraConfig(),
 		Targeting:     EmptyPlayerTargeting(),
-		PlayerArmory:  weapons.DefaultPlayerArmory(),
+		PlayerArmory:  build.PlayerArmory,
+		ResolvedBuild: build,
 	}
+}
+
+func (session *playerSession) ApplyResolvedBuild(build playerbuild.ResolvedPlayerBuild) error {
+	if err := playerbuild.ValidateResolvedBuild(build); err != nil {
+		return err
+	}
+	if build.PlayerID != session.ID {
+		return fmt.Errorf("resolved build player %q does not match session %q", build.PlayerID, session.ID)
+	}
+	build = build.Clone()
+	session.ResolvedBuild = build
+	session.ShipTypeID = build.ShipID
+	session.Stats = build.ShipStats
+	session.PlayerArmory = build.PlayerArmory
+	session.betweenLife = nil
+	return nil
 }
 
 func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
@@ -57,7 +78,9 @@ func (session *playerSession) NewShip(position physics.Vector2) *runtime.Ship {
 		Y:             position.Y,
 		Config:        session.Config,
 		Health:        session.Stats.MaxHealth,
+		Shields:       session.Stats.MaxShields,
 		DamageOptions: session.DamageOptions,
+		WeaponState:   playerbuild.NewRuntimeEquipmentState(session.ResolvedBuild),
 	}
 	ship.ShipWeapons.Primary = session.PlayerArmory.Primary
 	ship.ShipWeapons.Secondary = session.PlayerArmory.Secondary
@@ -79,7 +102,7 @@ func (session *playerSession) CaptureBetweenLifeState(ship *runtime.Ship) {
 
 func (session *playerSession) NewRespawnShip(position physics.Vector2, policy lives.RestorationPolicy) *runtime.Ship {
 	if policy.Loadout == lives.LoadoutReset {
-		session.PlayerArmory = weapons.DefaultPlayerArmory()
+		session.PlayerArmory = session.ResolvedBuild.PlayerArmory
 	}
 	armory := session.PlayerArmory
 	ship := session.NewShip(position)

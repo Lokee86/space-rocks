@@ -34,6 +34,7 @@ This folder owns simulation-local player session state, active player avatar sta
 - [player-input-routing.md](player-input-routing.md) - Player input routing documentation.
 - [player-lifecycle-overview.md](player-lifecycle-overview.md) - Player lifecycle overview documentation.
 - [player-pause-and-suspension.md](player-pause-and-suspension.md) - Player pause and suspension documentation.
+- [player-builds-and-loadouts.md](player-builds-and-loadouts.md) - Authoritative build eligibility, loadout validation, and match-start build resolution.
 - [player-respawn.md](player-respawn.md) - Player respawn documentation.
 - [player-session-state.md](player-session-state.md) - Player session state documentation.
 <!-- doc-ledger:files:end -->

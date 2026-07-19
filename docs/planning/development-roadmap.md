@@ -354,6 +354,10 @@ implementation follows the documented observability flows and call-site inventor
 
 ## Phase P4 - Player Experience Foundation
 
+### Status
+
+The server-side P4 owner-system foundation is implemented through Player Builds And Loadouts and Inventory And Hangar. Remaining P4 work is player-facing presentation and broader content/catalog expansion rather than a missing authoritative owner seam.
+
 ### Goal
 
 Define what a match is, how rules are resolved, how results are finalized, and how player builds enter a match.

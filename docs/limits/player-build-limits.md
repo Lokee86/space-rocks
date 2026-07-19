@@ -28,26 +28,27 @@ It serves as the current-limits companion for player-build work. The entries bel
 
 ### Loadouts
 
-- There is no full pre-match `LoadoutSelection` system yet.
-- There is no `ResolvedPlayerBuild` path yet.
-- Hardpoints and softpoints are planning concepts, not implemented loadout validation.
-- Module slot selection is not implemented.
-- Starting ammunition is not yet owned by a loadout model.
+- The authoritative server-side `BuildEligibility`, `EligibleBuildOptions`, `LoadoutSelection`, and `ResolvedPlayerBuild` paths are implemented.
+- The client does not yet provide a full pregame loadout editor or saved-loadout selector.
+- Hardpoint and module-slot validation is implemented, but the current real catalog exposes only the baseline `v_wing` and `pulse` content.
+- Softpoints remain runtime pickup capacity rather than pre-match selection points.
+- Starting ammunition is compiled into `ResolvedPlayerBuild`; current baseline `pulse` uses infinite ammunition.
+- Named saved-loadout persistence is not implemented.
 
 ### Weapons And Ship Stats
 
-- The current weapon equip model is only Primary and Secondary.
-- Full hardpoint/softpoint loadout validation is not implemented.
-- Full weapon classification fields are not implemented.
+- The runtime weapon bridge remains Primary and Secondary even though the build contract models `primary_1`, `primary_2`, `secondary_1`, and `secondary_2`.
+- The current `v_wing` exposes `primary_1` and `secondary_1` hardpoints; the second points are unavailable.
+- The build catalog supports weapon size, delivery class, targeting policy, effect flags, ammo policy, and mode restriction filters.
+- Only `pulse` is present in the default owned-equipment catalog; other weapons remain runtime/pickup content until deliberately added.
 - Any remaining ship-side bullet cooldown, speed, lifetime, spawn-offset, or damage fields are legacy ownership drift against the weapon-profile model.
 
 ### Shields
 
 - Damage resolution supports shield absorption.
-- Full player-build shield ownership through ship variants or loadouts is not implemented.
-- Ship-variant max-shield setup is not implemented as part of the player-build model.
-- Loadout-driven shield modules are not implemented.
-- Treat current shield support as damage/runtime support, not a complete player-build system.
+- `ResolvedPlayerBuild` now carries maximum shields and starting shield policy into spawn and respawn.
+- The current default catalog contains no shield module and `v_wing` resolves to zero shields.
+- Shield module contracts and stat adjustments exist, but real shield equipment content, regeneration policy, and client presentation remain unimplemented.
 
 ### Client Presentation
 
