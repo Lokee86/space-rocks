@@ -1,4 +1,4 @@
-## Space Rocks MCP Write Server and Godot Bridge
+## Workspace MCP Write Server and Godot Bridge
 
 Use this skill when implementing Space Rocks changes through the local write MCP server, especially changes that touch the Godot editor, scenes, nodes, scripts, resources, or bounded repo writes.
 
@@ -12,10 +12,10 @@ Do not expose the write MCP server through ngrok or any remote tunnel.
 
 ## Server split
 
-Space Rocks has two local MCP servers under:
+The two local MCP servers live in the sibling repository:
 
 ```text
-tools/space-rocks-mcp/
+D:\!bin\workspace-mcp
 ```
 
 Info MCP:
@@ -62,7 +62,7 @@ Use it for:
 Run from:
 
 ```text
-tools/space-rocks-mcp/
+D:\!bin\workspace-mcp
 ```
 
 WSL/Linux:
