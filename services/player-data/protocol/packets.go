@@ -2,10 +2,14 @@
 package protocol
 
 const (
-	PacketTypePlayerDataRecordMatchResult       = "player_data_record_match_result"
-	PacketTypePlayerDataRecordMatchResultResult = "player_data_record_match_result_result"
-	PacketTypePlayerDataLoadStats               = "player_data_load_stats"
-	PacketTypePlayerDataLoadStatsResult         = "player_data_load_stats_result"
+	PacketTypePlayerDataRecordMatchResult         = "player_data_record_match_result"
+	PacketTypePlayerDataRecordMatchResultResult   = "player_data_record_match_result_result"
+	PacketTypePlayerDataLoadStats                 = "player_data_load_stats"
+	PacketTypePlayerDataLoadStatsResult           = "player_data_load_stats_result"
+	PacketTypePlayerDataLoadHangarInventory       = "player_data_load_hangar_inventory"
+	PacketTypePlayerDataLoadHangarInventoryResult = "player_data_load_hangar_inventory_result"
+	PacketTypePlayerDataApplyInventoryGrant       = "player_data_apply_inventory_grant"
+	PacketTypePlayerDataApplyInventoryGrantResult = "player_data_apply_inventory_grant_result"
 )
 
 type PlayerDataIdentity struct {
@@ -57,6 +61,100 @@ type PlayerDataLoadStatsResult struct {
 	Type      string          `json:"type"`
 	Found     bool            `json:"found"`
 	Stats     PlayerDataStats `json:"stats"`
+	ErrorCode string          `json:"error_code"`
+	Message   string          `json:"message"`
+}
+
+type HardwiredEquipment struct {
+	HardwiredID        string   `json:"hardwired_id"`
+	SourceEquipmentRef string   `json:"source_equipment_ref"`
+	EquipmentID        string   `json:"equipment_id"`
+	HardwiredSlot      string   `json:"hardwired_slot"`
+	InstalledAt        string   `json:"installed_at"`
+	AcquisitionRef     string   `json:"acquisition_ref"`
+	ModifierRefs       []string `json:"modifier_refs"`
+	BehaviorRefs       []string `json:"behavior_refs"`
+	State              string   `json:"state"`
+}
+
+type OwnedShip struct {
+	OwnedShipID        string               `json:"owned_ship_id"`
+	ShipID             string               `json:"ship_id"`
+	AcquiredAt         string               `json:"acquired_at"`
+	AcquisitionRef     string               `json:"acquisition_ref"`
+	HardwiredEquipment []HardwiredEquipment `json:"hardwired_equipment"`
+	State              string               `json:"state"`
+}
+
+type OwnedWeapon struct {
+	OwnedWeaponID  string `json:"owned_weapon_id"`
+	WeaponID       string `json:"weapon_id"`
+	AcquiredAt     string `json:"acquired_at"`
+	AcquisitionRef string `json:"acquisition_ref"`
+	State          string `json:"state"`
+}
+
+type OwnedModule struct {
+	OwnedModuleID  string `json:"owned_module_id"`
+	ModuleID       string `json:"module_id"`
+	AcquiredAt     string `json:"acquired_at"`
+	AcquisitionRef string `json:"acquisition_ref"`
+	State          string `json:"state"`
+}
+
+type StackableInventoryItem struct {
+	ItemRef   string `json:"item_ref"`
+	Quantity  int    `json:"quantity"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type HangarInventory struct {
+	SchemaVersion      int                      `json:"schema_version"`
+	InventoryVersion   int                      `json:"inventory_version"`
+	PlayerRef          string                   `json:"player_ref"`
+	OwnedShips         []OwnedShip              `json:"owned_ships"`
+	OwnedWeapons       []OwnedWeapon            `json:"owned_weapons"`
+	OwnedModules       []OwnedModule            `json:"owned_modules"`
+	UnlockedContent    []string                 `json:"unlocked_content"`
+	StackableItems     []StackableInventoryItem `json:"stackable_items"`
+	DefaultOwnedShipID string                   `json:"default_owned_ship_id"`
+	AppliedGrantIds    []string                 `json:"applied_grant_ids"`
+}
+
+type PlayerDataLoadHangarInventory struct {
+	Type     string                   `json:"type"`
+	Identity PlayerDataIdentity       `json:"identity"`
+	Context  PlayerDataRequestContext `json:"context"`
+}
+
+type PlayerDataLoadHangarInventoryResult struct {
+	Type                string          `json:"type"`
+	Found               bool            `json:"found"`
+	Persisted           bool            `json:"persisted"`
+	SynthesizedFallback bool            `json:"synthesized_fallback"`
+	RepairAttempted     bool            `json:"repair_attempted"`
+	Inventory           HangarInventory `json:"inventory"`
+	ErrorCode           string          `json:"error_code"`
+	Message             string          `json:"message"`
+}
+
+type PlayerDataApplyInventoryGrant struct {
+	Type                  string                   `json:"type"`
+	GrantID               string                   `json:"grant_id"`
+	Identity              PlayerDataIdentity       `json:"identity"`
+	Context               PlayerDataRequestContext `json:"context"`
+	GrantKind             string                   `json:"grant_kind"`
+	CatalogRef            string                   `json:"catalog_ref"`
+	Quantity              int                      `json:"quantity"`
+	TargetOwnedInstanceID string                   `json:"target_owned_instance_id"`
+	AcquisitionRef        string                   `json:"acquisition_ref"`
+}
+
+type PlayerDataApplyInventoryGrantResult struct {
+	Type      string          `json:"type"`
+	Accepted  bool            `json:"accepted"`
+	Duplicate bool            `json:"duplicate"`
+	Inventory HangarInventory `json:"inventory"`
 	ErrorCode string          `json:"error_code"`
 	Message   string          `json:"message"`
 }

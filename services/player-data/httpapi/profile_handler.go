@@ -52,10 +52,14 @@ type playerDataProfileResponse struct {
 }
 
 type playerDataProfile struct {
-	Callsign       string                   `json:"callsign"`
-	ActivityStatus string                   `json:"activity_status"`
-	IdentityKind   string                   `json:"identity_kind"`
-	Stats          protocol.PlayerDataStats `json:"stats"`
+	Callsign                     string                   `json:"callsign"`
+	ActivityStatus               string                   `json:"activity_status"`
+	IdentityKind                 string                   `json:"identity_kind"`
+	Stats                        protocol.PlayerDataStats `json:"stats"`
+	Inventory                    protocol.HangarInventory `json:"inventory"`
+	InventoryPersisted           bool                     `json:"inventory_persisted"`
+	InventorySynthesizedFallback bool                     `json:"inventory_synthesized_fallback"`
+	InventoryRepairAttempted     bool                     `json:"inventory_repair_attempted"`
 }
 
 type playerDataErrorResponse struct {
@@ -114,12 +118,23 @@ func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		stats = protocol.PlayerDataStats{}
 	}
 
+	inventoryLoad, err := h.runtime.LoadHangarInventory(identity)
+	if err != nil {
+		logging.Emit(observability.Request{Event: observability.EventNamePlayerDataReadFailed, Context: observability.Context{TraceID: TraceIDFromContext(r.Context()), RequestID: RequestIDFromContext(r.Context())}, Fields: observability.Fields{"operation": "load_profile_inventory", "error_code": "operation_failed"}})
+		writePlayerDataProfileError(w, http.StatusInternalServerError, "profile_unavailable")
+		return
+	}
+
 	writePlayerDataProfileJSON(w, http.StatusOK, playerDataProfileResponse{
 		Profile: playerDataProfile{
-			Callsign:       callsign,
-			ActivityStatus: activityStatus,
-			IdentityKind:   request.IdentityKind,
-			Stats:          stats,
+			Callsign:                     callsign,
+			ActivityStatus:               activityStatus,
+			IdentityKind:                 request.IdentityKind,
+			Stats:                        stats,
+			Inventory:                    inventoryLoad.Inventory,
+			InventoryPersisted:           inventoryLoad.Persisted,
+			InventorySynthesizedFallback: inventoryLoad.SynthesizedFallback,
+			InventoryRepairAttempted:     inventoryLoad.RepairAttempted,
 		},
 	})
 }

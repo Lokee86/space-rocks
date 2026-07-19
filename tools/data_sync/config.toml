@@ -33,6 +33,7 @@ paths = [
 paths = [
   "shared/player_data/stats.toml",
   "shared/player_data/match_result.toml",
+  "shared/player_data/hangar_inventory.toml",
 ]
 
 [sot.observability]

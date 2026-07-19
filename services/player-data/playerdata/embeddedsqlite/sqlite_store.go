@@ -98,6 +98,13 @@ func (s *Store) InitSchema() error {
 			ship_deaths INTEGER NOT NULL DEFAULT 0,
 			created_at TEXT NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS local_hangar_inventories (
+			local_profile_id TEXT PRIMARY KEY,
+			inventory_version INTEGER NOT NULL,
+			inventory_json TEXT NOT NULL,
+			created_at TEXT NOT NULL,
+			updated_at TEXT NOT NULL
+		)`,
 	}
 
 	for _, statement := range statements {
@@ -453,6 +460,13 @@ func (s *Store) DeleteLocalProfile(localProfileID string) error {
 	}
 	if _, err := tx.Exec(
 		`DELETE FROM local_player_stats
+		 WHERE local_profile_id = ?`,
+		localProfileID,
+	); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(
+		`DELETE FROM local_hangar_inventories
 		 WHERE local_profile_id = ?`,
 		localProfileID,
 	); err != nil {

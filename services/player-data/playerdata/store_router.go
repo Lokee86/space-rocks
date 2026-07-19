@@ -37,6 +37,22 @@ func (r *StoreRouter) RecordMatchResult(command protocol.PlayerDataRecordMatchRe
 	return store.RecordMatchResult(command)
 }
 
+func (r *StoreRouter) LoadHangarInventory(identity protocol.PlayerDataIdentity) (protocol.HangarInventory, bool, error) {
+	store, err := r.inventoryStoreForIdentityKind(identity.IdentityKind)
+	if err != nil {
+		return protocol.HangarInventory{}, false, err
+	}
+	return store.LoadHangarInventory(identity)
+}
+
+func (r *StoreRouter) StoreHangarInventory(identity protocol.PlayerDataIdentity, inventory protocol.HangarInventory, expectedVersion int) (protocol.HangarInventory, error) {
+	store, err := r.inventoryStoreForIdentityKind(identity.IdentityKind)
+	if err != nil {
+		return protocol.HangarInventory{}, err
+	}
+	return store.StoreHangarInventory(identity, inventory, expectedVersion)
+}
+
 func (r *StoreRouter) ListLocalProfiles() ([]LocalProfileSummary, error) {
 	localProfileStore, ok := r.localStore.(LocalProfileStore)
 	if !ok {
@@ -89,6 +105,18 @@ func (r *StoreRouter) SetDefaultLocalProfile(identityKind string, localProfileID
 	}
 
 	return localProfileStore.SetDefaultLocalProfile(identityKind, localProfileID)
+}
+
+func (r *StoreRouter) inventoryStoreForIdentityKind(identityKind string) (InventoryStore, error) {
+	store, err := r.storeForIdentityKind(identityKind)
+	if err != nil {
+		return nil, err
+	}
+	inventoryStore, ok := store.(InventoryStore)
+	if !ok {
+		return nil, errors.New("inventory store is unavailable")
+	}
+	return inventoryStore, nil
 }
 
 func (r *StoreRouter) storeForIdentityKind(identityKind string) (Store, error) {

@@ -194,3 +194,378 @@ type = "string"
 name = "message"
 json = "message"
 type = "string"
+
+[[structs]]
+id = "HardwiredEquipment"
+
+[[structs.fields]]
+name = "hardwired_id"
+json = "hardwired_id"
+type = "string"
+
+[[structs.fields]]
+name = "source_equipment_ref"
+json = "source_equipment_ref"
+type = "string"
+
+[[structs.fields]]
+name = "equipment_id"
+json = "equipment_id"
+type = "string"
+
+[[structs.fields]]
+name = "hardwired_slot"
+json = "hardwired_slot"
+type = "string"
+
+[[structs.fields]]
+name = "installed_at"
+json = "installed_at"
+type = "string"
+
+[[structs.fields]]
+name = "acquisition_ref"
+json = "acquisition_ref"
+type = "string"
+
+[[structs.fields]]
+name = "modifier_refs"
+json = "modifier_refs"
+type = "array"
+item_type = "string"
+
+[[structs.fields]]
+name = "behavior_refs"
+json = "behavior_refs"
+type = "array"
+item_type = "string"
+
+[[structs.fields]]
+name = "state"
+json = "state"
+type = "string"
+
+[[structs]]
+id = "OwnedShip"
+
+[[structs.fields]]
+name = "owned_ship_id"
+json = "owned_ship_id"
+type = "string"
+
+[[structs.fields]]
+name = "ship_id"
+json = "ship_id"
+type = "string"
+
+[[structs.fields]]
+name = "acquired_at"
+json = "acquired_at"
+type = "string"
+
+[[structs.fields]]
+name = "acquisition_ref"
+json = "acquisition_ref"
+type = "string"
+
+[[structs.fields]]
+name = "hardwired_equipment"
+json = "hardwired_equipment"
+type = "array"
+item_type = "HardwiredEquipment"
+
+[[structs.fields]]
+name = "state"
+json = "state"
+type = "string"
+
+[[structs]]
+id = "OwnedWeapon"
+
+[[structs.fields]]
+name = "owned_weapon_id"
+json = "owned_weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "weapon_id"
+json = "weapon_id"
+type = "string"
+
+[[structs.fields]]
+name = "acquired_at"
+json = "acquired_at"
+type = "string"
+
+[[structs.fields]]
+name = "acquisition_ref"
+json = "acquisition_ref"
+type = "string"
+
+[[structs.fields]]
+name = "state"
+json = "state"
+type = "string"
+
+[[structs]]
+id = "OwnedModule"
+
+[[structs.fields]]
+name = "owned_module_id"
+json = "owned_module_id"
+type = "string"
+
+[[structs.fields]]
+name = "module_id"
+json = "module_id"
+type = "string"
+
+[[structs.fields]]
+name = "acquired_at"
+json = "acquired_at"
+type = "string"
+
+[[structs.fields]]
+name = "acquisition_ref"
+json = "acquisition_ref"
+type = "string"
+
+[[structs.fields]]
+name = "state"
+json = "state"
+type = "string"
+
+[[structs]]
+id = "StackableInventoryItem"
+
+[[structs.fields]]
+name = "item_ref"
+json = "item_ref"
+type = "string"
+
+[[structs.fields]]
+name = "quantity"
+json = "quantity"
+type = "int"
+
+[[structs.fields]]
+name = "updated_at"
+json = "updated_at"
+type = "string"
+
+[[structs]]
+id = "HangarInventory"
+
+[[structs.fields]]
+name = "schema_version"
+json = "schema_version"
+type = "int"
+
+[[structs.fields]]
+name = "inventory_version"
+json = "inventory_version"
+type = "int"
+
+[[structs.fields]]
+name = "player_ref"
+json = "player_ref"
+type = "string"
+
+[[structs.fields]]
+name = "owned_ships"
+json = "owned_ships"
+type = "array"
+item_type = "OwnedShip"
+
+[[structs.fields]]
+name = "owned_weapons"
+json = "owned_weapons"
+type = "array"
+item_type = "OwnedWeapon"
+
+[[structs.fields]]
+name = "owned_modules"
+json = "owned_modules"
+type = "array"
+item_type = "OwnedModule"
+
+[[structs.fields]]
+name = "unlocked_content"
+json = "unlocked_content"
+type = "array"
+item_type = "string"
+
+[[structs.fields]]
+name = "stackable_items"
+json = "stackable_items"
+type = "array"
+item_type = "StackableInventoryItem"
+
+[[structs.fields]]
+name = "default_owned_ship_id"
+json = "default_owned_ship_id"
+type = "string"
+
+[[structs.fields]]
+name = "applied_grant_ids"
+json = "applied_grant_ids"
+type = "array"
+item_type = "string"
+
+[[structs]]
+id = "PlayerDataLoadHangarInventory"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "identity"
+json = "identity"
+type = "PlayerDataIdentity"
+
+[[structs.fields]]
+name = "context"
+json = "context"
+type = "PlayerDataRequestContext"
+
+[[structs]]
+id = "PlayerDataLoadHangarInventoryResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "found"
+json = "found"
+type = "bool"
+
+[[structs.fields]]
+name = "persisted"
+json = "persisted"
+type = "bool"
+
+[[structs.fields]]
+name = "synthesized_fallback"
+json = "synthesized_fallback"
+type = "bool"
+
+[[structs.fields]]
+name = "repair_attempted"
+json = "repair_attempted"
+type = "bool"
+
+[[structs.fields]]
+name = "inventory"
+json = "inventory"
+type = "HangarInventory"
+
+[[structs.fields]]
+name = "error_code"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[structs]]
+id = "PlayerDataApplyInventoryGrant"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "grant_id"
+json = "grant_id"
+type = "string"
+
+[[structs.fields]]
+name = "identity"
+json = "identity"
+type = "PlayerDataIdentity"
+
+[[structs.fields]]
+name = "context"
+json = "context"
+type = "PlayerDataRequestContext"
+
+[[structs.fields]]
+name = "grant_kind"
+json = "grant_kind"
+type = "string"
+
+[[structs.fields]]
+name = "catalog_ref"
+json = "catalog_ref"
+type = "string"
+
+[[structs.fields]]
+name = "quantity"
+json = "quantity"
+type = "int"
+
+[[structs.fields]]
+name = "target_owned_instance_id"
+json = "target_owned_instance_id"
+type = "string"
+
+[[structs.fields]]
+name = "acquisition_ref"
+json = "acquisition_ref"
+type = "string"
+
+[[structs]]
+id = "PlayerDataApplyInventoryGrantResult"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "accepted"
+json = "accepted"
+type = "bool"
+
+[[structs.fields]]
+name = "duplicate"
+json = "duplicate"
+type = "bool"
+
+[[structs.fields]]
+name = "inventory"
+json = "inventory"
+type = "HangarInventory"
+
+[[structs.fields]]
+name = "error_code"
+json = "error_code"
+type = "string"
+
+[[structs.fields]]
+name = "message"
+json = "message"
+type = "string"
+
+[[packet_types]]
+id = "player_data_load_hangar_inventory"
+value = "player_data_load_hangar_inventory"
+
+[[packet_types]]
+id = "player_data_load_hangar_inventory_result"
+value = "player_data_load_hangar_inventory_result"
+
+[[packet_types]]
+id = "player_data_apply_inventory_grant"
+value = "player_data_apply_inventory_grant"
+
+[[packet_types]]
+id = "player_data_apply_inventory_grant_result"
+value = "player_data_apply_inventory_grant_result"

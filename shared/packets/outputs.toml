@@ -42,8 +42,8 @@ language = "go"
 path = "services/player-data/protocol/packets.go"
 package = "protocol"
 packet_types = true
-packet_type_ids = ["player_data_record_match_result", "player_data_record_match_result_result", "player_data_load_stats", "player_data_load_stats_result"]
-structs = ["PlayerDataIdentity", "PlayerDataStats", "PlayerDataRequestContext", "PlayerDataRecordMatchResult", "PlayerDataRecordMatchResultResult", "PlayerDataLoadStats", "PlayerDataLoadStatsResult"]
+packet_type_ids = ["player_data_record_match_result", "player_data_record_match_result_result", "player_data_load_stats", "player_data_load_stats_result", "player_data_load_hangar_inventory", "player_data_load_hangar_inventory_result", "player_data_apply_inventory_grant", "player_data_apply_inventory_grant_result"]
+structs = ["PlayerDataIdentity", "PlayerDataStats", "PlayerDataRequestContext", "PlayerDataRecordMatchResult", "PlayerDataRecordMatchResultResult", "PlayerDataLoadStats", "PlayerDataLoadStatsResult", "HardwiredEquipment", "OwnedShip", "OwnedWeapon", "OwnedModule", "StackableInventoryItem", "HangarInventory", "PlayerDataLoadHangarInventory", "PlayerDataLoadHangarInventoryResult", "PlayerDataApplyInventoryGrant", "PlayerDataApplyInventoryGrantResult"]
 
 [[outputs]]
 id = "client_packets"

@@ -2,19 +2,23 @@ package playerdata
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
 
 type MemoryStore struct {
-	statsByIdentityKey map[string]protocol.PlayerDataStats
-	processedResultIDs map[string]string
+	mu                     sync.Mutex
+	statsByIdentityKey     map[string]protocol.PlayerDataStats
+	processedResultIDs     map[string]string
+	inventoryByIdentityKey map[string]protocol.HangarInventory
 }
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		statsByIdentityKey: make(map[string]protocol.PlayerDataStats),
-		processedResultIDs: make(map[string]string),
+		statsByIdentityKey:     make(map[string]protocol.PlayerDataStats),
+		processedResultIDs:     make(map[string]string),
+		inventoryByIdentityKey: make(map[string]protocol.HangarInventory),
 	}
 }
 

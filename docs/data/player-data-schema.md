@@ -25,6 +25,7 @@ The current logical schema sources are:
 ```text
 shared/player_data/stats.toml
 shared/player_data/match_result.toml
+shared/player_data/hangar_inventory.toml
 ```
 
 These files define logical player-data contracts. They do not define raw SQL, Rails migrations, HTTP payloads, or generated runtime packet structs.
@@ -35,6 +36,7 @@ Current logical schema scope:
 Stats
 MatchResultSummary
 PlayerMatchSummary
+HangarInventory envelope
 ```
 
 Current implemented storage routes consume the logical contract differently:
@@ -46,6 +48,29 @@ Current implemented storage routes consume the logical contract differently:
 | Authenticated Account | `authenticated_account` | Rails/API-backed Postgres through the player-data Rails adapter when configured |
 
 The player-data runtime owns identity-based store routing. The game server owns authoritative gameplay facts and reports resolved match results into player-data. The API server owns authenticated-account physical persistence. Embedded SQLite owns local-profile physical persistence.
+
+## Hangar inventory implementation
+
+The implemented V1 inventory contract includes `HangarInventory`, owned ship/weapon/module instances, hardwired-equipment seams, stackable items, unlock/access state, stable owned-instance IDs, and durable idempotency receipts for grants.
+
+Storage routes:
+
+```text
+guest -> transient GuestMemoryStore
+local_profile -> local_hangar_inventories in embedded SQLite
+authenticated_account -> player_inventories JSONB through Rails/Postgres
+```
+
+The starter inventory is one `v_wing`, the current `pulse` primary weapon, no optional modules, and no hardwired equipment. Missing inventory is initialized on first profile load. Corrupt or unavailable inventory returns a playable synthesized fallback; controlled repair is attempted when the failure is safe to overwrite.
+
+The normalized `POST /api/player-data/profile` response includes the hangar inventory and persistence/fallback status. Authenticated-account persistence uses:
+
+```text
+POST /api/internal/player-data/inventory/load
+POST /api/internal/player-data/inventory/store
+```
+
+Persistent ownership changes use the generated inventory-grant packet path. Normal runtime pickups remain outside durable inventory.
 
 ## Source files
 

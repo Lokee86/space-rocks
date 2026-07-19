@@ -2,13 +2,16 @@ package playerdata
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Lokee86/space-rocks/player-data/protocol"
 )
 
 type GuestMemoryStore struct {
+	mu                 sync.Mutex
 	stats              protocol.PlayerDataStats
 	processedResultIDs map[string]struct{}
+	inventory          *protocol.HangarInventory
 }
 
 func NewGuestMemoryStore() *GuestMemoryStore {

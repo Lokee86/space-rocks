@@ -38,6 +38,28 @@ func (r *Runtime) LoadStats(identity protocol.PlayerDataIdentity) (protocol.Play
 	return r.store.LoadStats(identity)
 }
 
+func (r *Runtime) LoadHangarInventory(identity protocol.PlayerDataIdentity) (InventoryLoad, error) {
+	if r == nil || r.store == nil {
+		return InventoryLoad{}, errors.New("player-data runtime is required")
+	}
+	inventoryStore, ok := r.store.(InventoryStore)
+	if !ok {
+		return InventoryLoad{}, errors.New("inventory store is unavailable")
+	}
+	return NewInventoryManager(inventoryStore).Load(identity)
+}
+
+func (r *Runtime) ApplyInventoryGrant(command protocol.PlayerDataApplyInventoryGrant) (protocol.HangarInventory, bool, error) {
+	if r == nil || r.store == nil {
+		return protocol.HangarInventory{}, false, errors.New("player-data runtime is required")
+	}
+	inventoryStore, ok := r.store.(InventoryStore)
+	if !ok {
+		return protocol.HangarInventory{}, false, errors.New("inventory store is unavailable")
+	}
+	return NewInventoryManager(inventoryStore).ApplyGrant(command)
+}
+
 func (r *Runtime) LocalProfileSeedStats(seedFromGuestStats bool) (protocol.PlayerDataStats, error) {
 	if !seedFromGuestStats {
 		return protocol.PlayerDataStats{}, nil

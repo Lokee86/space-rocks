@@ -1,0 +1,18 @@
+schema_name = "hangar_inventory"
+schema_version = "v1.0"
+
+[fields.schema_version]
+type = "integer"
+required = true
+
+[fields.inventory_version]
+type = "integer"
+required = true
+
+[fields.player_ref]
+type = "string"
+required = true
+
+[fields.inventory_document]
+type = "string"
+required = true

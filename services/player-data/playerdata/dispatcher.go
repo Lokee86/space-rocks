@@ -11,11 +11,16 @@ import (
 )
 
 type Dispatcher struct {
-	store Store
+	store            Store
+	inventoryManager *InventoryManager
 }
 
 func NewDispatcher(store Store) *Dispatcher {
-	return &Dispatcher{store: store}
+	dispatcher := &Dispatcher{store: store}
+	if inventoryStore, ok := store.(InventoryStore); ok {
+		dispatcher.inventoryManager = NewInventoryManager(inventoryStore)
+	}
+	return dispatcher
 }
 
 func (d *Dispatcher) Handle(payload []byte) ([]byte, error) {
@@ -74,6 +79,41 @@ func (d *Dispatcher) Handle(payload []byte) ([]byte, error) {
 			emitPacketEvent(observability.EventNameMatchResultReportSucceeded, packetType, packet.Context, packet.Identity, packet.MatchID, packet.ResultID, nil)
 		}
 		return codec.Encode(protocol.PlayerDataRecordMatchResultResult{Type: protocol.PacketTypePlayerDataRecordMatchResultResult, Accepted: true, Duplicate: duplicate, Stats: stats})
+	case protocol.PacketTypePlayerDataLoadHangarInventory:
+		var packet protocol.PlayerDataLoadHangarInventory
+		if err := json.Unmarshal(payload, &packet); err != nil {
+			return nil, err
+		}
+		if err := ValidateModeIdentity(packet.Context.PlayMode, packet.Identity); err != nil {
+			return codec.Encode(protocol.PlayerDataLoadHangarInventoryResult{Type: protocol.PacketTypePlayerDataLoadHangarInventoryResult, ErrorCode: "invalid_mode_identity", Message: err.Error()})
+		}
+		if d.inventoryManager == nil {
+			return codec.Encode(protocol.PlayerDataLoadHangarInventoryResult{Type: protocol.PacketTypePlayerDataLoadHangarInventoryResult, ErrorCode: "inventory_unavailable", Message: "inventory store is unavailable"})
+		}
+		load, loadErr := d.inventoryManager.Load(packet.Identity)
+		if loadErr != nil {
+			return codec.Encode(protocol.PlayerDataLoadHangarInventoryResult{Type: protocol.PacketTypePlayerDataLoadHangarInventoryResult, ErrorCode: "inventory_load_failed", Message: loadErr.Error()})
+		}
+		return codec.Encode(protocol.PlayerDataLoadHangarInventoryResult{
+			Type: protocol.PacketTypePlayerDataLoadHangarInventoryResult, Found: load.Found, Persisted: load.Persisted,
+			SynthesizedFallback: load.SynthesizedFallback, RepairAttempted: load.RepairAttempted, Inventory: load.Inventory, Message: load.Message,
+		})
+	case protocol.PacketTypePlayerDataApplyInventoryGrant:
+		var packet protocol.PlayerDataApplyInventoryGrant
+		if err := json.Unmarshal(payload, &packet); err != nil {
+			return nil, err
+		}
+		if err := ValidateModeIdentity(packet.Context.PlayMode, packet.Identity); err != nil {
+			return codec.Encode(protocol.PlayerDataApplyInventoryGrantResult{Type: protocol.PacketTypePlayerDataApplyInventoryGrantResult, ErrorCode: "invalid_mode_identity", Message: err.Error()})
+		}
+		if d.inventoryManager == nil {
+			return codec.Encode(protocol.PlayerDataApplyInventoryGrantResult{Type: protocol.PacketTypePlayerDataApplyInventoryGrantResult, ErrorCode: "inventory_unavailable", Message: "inventory store is unavailable"})
+		}
+		inventory, duplicate, grantErr := d.inventoryManager.ApplyGrant(packet)
+		if grantErr != nil {
+			return codec.Encode(protocol.PlayerDataApplyInventoryGrantResult{Type: protocol.PacketTypePlayerDataApplyInventoryGrantResult, ErrorCode: "inventory_grant_failed", Message: grantErr.Error()})
+		}
+		return codec.Encode(protocol.PlayerDataApplyInventoryGrantResult{Type: protocol.PacketTypePlayerDataApplyInventoryGrantResult, Accepted: true, Duplicate: duplicate, Inventory: inventory})
 	default:
 		return nil, fmt.Errorf("unknown packet type %q", packetType)
 	}

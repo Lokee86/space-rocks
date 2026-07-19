@@ -21,6 +21,8 @@ Rails.application.routes.draw do
     namespace :internal do
       namespace :player_data, path: "player-data" do
         post "stats", to: "stats#create"
+        post "inventory/load", to: "inventories#load"
+        post "inventory/store", to: "inventories#store"
       end
     end
 

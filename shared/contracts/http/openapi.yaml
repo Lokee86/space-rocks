@@ -232,6 +232,84 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/internal/player-data/inventory/load:
+    post:
+      summary: Load an authenticated account hangar inventory for an internal caller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternalPlayerDataInventoryLoadRequest"
+      responses:
+        "200":
+          description: Inventory lookup completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalPlayerDataInventoryLoadResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Unknown user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/internal/player-data/inventory/store:
+    post:
+      summary: Store an authenticated account hangar inventory for an internal caller
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternalPlayerDataInventoryStoreRequest"
+      responses:
+        "200":
+          description: Inventory stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalPlayerDataInventoryStoreResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Unknown user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Inventory version conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/player-data/profile:
     post:
       summary: Load a normalized player profile
@@ -719,6 +797,205 @@ components:
         account_id:
           type: string
       additionalProperties: false
+    HardwiredEquipment:
+      type: object
+      required:
+        - hardwired_id
+        - source_equipment_ref
+        - equipment_id
+        - hardwired_slot
+        - installed_at
+        - acquisition_ref
+        - modifier_refs
+        - behavior_refs
+        - state
+      properties:
+        hardwired_id:
+          type: string
+        source_equipment_ref:
+          type: string
+        equipment_id:
+          type: string
+        hardwired_slot:
+          type: string
+        installed_at:
+          type: string
+        acquisition_ref:
+          type: string
+        modifier_refs:
+          type: array
+          items:
+            type: string
+        behavior_refs:
+          type: array
+          items:
+            type: string
+        state:
+          type: string
+    OwnedShip:
+      type: object
+      required:
+        - owned_ship_id
+        - ship_id
+        - acquired_at
+        - acquisition_ref
+        - hardwired_equipment
+        - state
+      properties:
+        owned_ship_id:
+          type: string
+        ship_id:
+          type: string
+        acquired_at:
+          type: string
+        acquisition_ref:
+          type: string
+        hardwired_equipment:
+          type: array
+          items:
+            $ref: "#/components/schemas/HardwiredEquipment"
+        state:
+          type: string
+    OwnedWeapon:
+      type: object
+      required:
+        - owned_weapon_id
+        - weapon_id
+        - acquired_at
+        - acquisition_ref
+        - state
+      properties:
+        owned_weapon_id:
+          type: string
+        weapon_id:
+          type: string
+        acquired_at:
+          type: string
+        acquisition_ref:
+          type: string
+        state:
+          type: string
+    OwnedModule:
+      type: object
+      required:
+        - owned_module_id
+        - module_id
+        - acquired_at
+        - acquisition_ref
+        - state
+      properties:
+        owned_module_id:
+          type: string
+        module_id:
+          type: string
+        acquired_at:
+          type: string
+        acquisition_ref:
+          type: string
+        state:
+          type: string
+    StackableInventoryItem:
+      type: object
+      required:
+        - item_ref
+        - quantity
+        - updated_at
+      properties:
+        item_ref:
+          type: string
+        quantity:
+          type: integer
+        updated_at:
+          type: string
+    HangarInventory:
+      type: object
+      required:
+        - schema_version
+        - inventory_version
+        - player_ref
+        - owned_ships
+        - owned_weapons
+        - owned_modules
+        - unlocked_content
+        - stackable_items
+        - default_owned_ship_id
+        - applied_grant_ids
+      properties:
+        schema_version:
+          type: integer
+        inventory_version:
+          type: integer
+        player_ref:
+          type: string
+        owned_ships:
+          type: array
+          items:
+            $ref: "#/components/schemas/OwnedShip"
+        owned_weapons:
+          type: array
+          items:
+            $ref: "#/components/schemas/OwnedWeapon"
+        owned_modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/OwnedModule"
+        unlocked_content:
+          type: array
+          items:
+            type: string
+        stackable_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/StackableInventoryItem"
+        default_owned_ship_id:
+          type: string
+        applied_grant_ids:
+          type: array
+          items:
+            type: string
+    InternalPlayerDataInventoryLoadRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+      additionalProperties: false
+    InternalPlayerDataInventoryLoadResponse:
+      type: object
+      required:
+        - found
+      properties:
+        found:
+          type: boolean
+        inventory:
+          $ref: "#/components/schemas/HangarInventory"
+        inventory_version:
+          type: integer
+    InternalPlayerDataInventoryStoreRequest:
+      type: object
+      required:
+        - account_id
+        - inventory
+      properties:
+        account_id:
+          type: string
+        inventory:
+          $ref: "#/components/schemas/HangarInventory"
+        expected_version:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    InternalPlayerDataInventoryStoreResponse:
+      type: object
+      required:
+        - inventory
+        - inventory_version
+      properties:
+        inventory:
+          $ref: "#/components/schemas/HangarInventory"
+        inventory_version:
+          type: integer
     PlayerDataProfile:
       type: object
       required:
@@ -726,6 +1003,10 @@ components:
         - activity_status
         - identity_kind
         - stats
+        - inventory
+        - inventory_persisted
+        - inventory_synthesized_fallback
+        - inventory_repair_attempted
       properties:
         callsign:
           type: string
@@ -735,6 +1016,14 @@ components:
           $ref: "#/components/schemas/PlayerDataIdentityKind"
         stats:
           $ref: "#/components/schemas/PlayerStats"
+        inventory:
+          $ref: "#/components/schemas/HangarInventory"
+        inventory_persisted:
+          type: boolean
+        inventory_synthesized_fallback:
+          type: boolean
+        inventory_repair_attempted:
+          type: boolean
     PlayerDataProfileResponse:
       type: object
       required:

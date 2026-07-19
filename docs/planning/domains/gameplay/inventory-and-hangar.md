@@ -11,7 +11,9 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 ## Purpose
 
-This doc plans the durable inventory and hangar architecture for player-held ships, weapons, modules, hardwired equipment, unlock/access state, acquisition state, and the handoff into build eligibility.
+This doc owns the durable inventory and hangar architecture for player-held ships, weapons, modules, hardwired equipment, unlock/access state, acquisition state, and the handoff into build eligibility.
+
+Implementation status: the V1 owner system is implemented. Guest inventory uses transient memory, Local Profile inventory uses embedded SQLite, authenticated-account inventory uses Rails/Postgres, and the normalized profile response exposes the same hangar contract across all three routes.
 
 The inventory and hangar layer answers:
 
@@ -480,7 +482,7 @@ no hardwired equipment
 no optional modules unless intentionally granted
 ```
 
-Exact starter inventory contents are a gametime balancing decision.
+The implemented starter inventory is one `v_wing`, the current default `pulse` primary weapon, no optional modules, and no hardwired equipment.
 
 The architecture requirement is that missing, corrupt, incomplete, or unavailable inventory/API data must not make the game unplayable.
 
@@ -551,7 +553,7 @@ Inventory and hangar owns the logical inventory shape and grant application resu
 
 This doc stays at the contract boundary and does not specify physical storage mechanics.
 
-## Planned Player-Data Operations
+## Implemented Player-Data Operations
 
 ```text
 accept routed grants
@@ -573,7 +575,7 @@ It should not silently grant permanent durable ownership unless the selected pla
 
 Safe fallback may be synthesized for runtime use when persistence is unavailable.
 
-Durable repair/initialization behavior is a gametime persistence decision.
+Missing inventory is initialized durably on first load. Invalid stored inventory receives one expected-version repair attempt. Corrupt storage receives one controlled unconditional repair attempt. Temporarily unavailable storage produces a playable synthesized starter snapshot without an unsafe overwrite.
 
 ## Implementation Planning
 
