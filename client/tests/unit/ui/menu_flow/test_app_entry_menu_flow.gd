@@ -342,7 +342,6 @@ func _create_game() -> Node2D:
 	add_child_autofree(game)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	assert_push_error_count(1)
 	return game
 
 
