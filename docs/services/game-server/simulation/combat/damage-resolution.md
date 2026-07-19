@@ -12,28 +12,23 @@ Parent index: [Game Server Simulation Combat](./!INDEX.md)
 
 ## Purpose
 
-This document describes the current game-server damage resolution service boundary.
-
-It covers the pure resolver package in `services/game-server/internal/game/damage/`, the request and result shapes it operates on, the implemented shield and modifier behavior, and the game-owned adapters that build requests and apply results back into runtime state.
+This document describes the current authoritative damage, healing, repair, shield, relationship, modifier, and damage-over-time resolution boundary.
 
 ## Overview
 
-Damage resolution is a pure game-server service boundary.
-
-The resolver package accepts immutable request data, calculates damage outcomes, and returns a result. It does not mutate runtime entities, scoring state, packets, pickups, radial timing, or client presentation. Game-owned combat code builds the request objects, calls the resolver, applies the returned result, and handles any gameplay consequences.
-
-Current service flow:
+The `damage` package resolves immutable request data into a detailed data-only result. Game-owned adapters establish source/target relationships, call the resolver, apply returned health and shield state, emit events, and trigger death, destruction, awards, motion, or presentation consequences.
 
 ```text
-game-owned combat or radial adapter
--> build DamageResolutionRequest
--> damage.ResolveSingle
--> pure DamageResult
--> game-owned result application
--> gameplay consequences
+gameplay source
+-> DamageResolutionRequest
+-> relationship and policy eligibility
+-> modifier resolution
+-> shield / health / restoration resolution
+-> DamageResult
+-> game-owned state application and consequences
 ```
 
-The package also provides helper boundaries for area damage and damage-over-time timing. Those helpers stay inside the same resolver package and use the same pure request/result shapes.
+The standard policy ID is `standard_damage_v1`. Player-versus-player damage is disabled by default. Relationship permissions normally allow enemies, neutrals, and destructibles; area damage may affect self, and authorized debug damage may also affect allies.
 
 ## Code root
 
@@ -41,273 +36,132 @@ The package also provides helper boundaries for area damage and damage-over-time
 services/game-server/internal/game/damage/
 ```
 
-Game-owned adapters and application helpers live in:
-
-```text
-services/game-server/internal/game/combat_damage_requests.go
-services/game-server/internal/game/radial_damage_requests.go
-services/game-server/internal/game/combat_damage_application.go
-```
+Game adapters live in `services/game-server/internal/game/`.
 
 ## Responsibilities
 
-The damage-resolution boundary owns:
+The damage boundary owns:
 
-* Resolving a single damage request through `ResolveSingle`.
-* Resolving area damage through `ResolveArea`.
-* Advancing active damage-over-time effects through `TickDamageOverTime`.
-* Applying modifier filtering and modifier math in the pure resolver.
-* Applying shield absorption when shield bypass is not requested.
-* Producing destroyed and fatal flags from the resolved outcome.
-* Producing ignored results for zero-or-negative modified damage or already-dead targets.
-* Producing created damage-over-time effects when the spec enables DoT.
-* Returning data-only results for the game layer to apply later.
-
-The game-owned adapters own:
-
-* Building projectile, collision, and radial damage requests.
-* Supplying the source, target, spec, and modifier data to the resolver.
-* Applying `DamageResult` back into runtime asteroid, player, and enemy state.
-* Handling the gameplay consequences that follow from a resolved result.
+- source and target vocabulary
+- collision, projectile, debug, area, DoT, hazard, and scripted causes
+- kinetic, explosive, energy, thermal, radioactive, and true-damage types
+- relationship permissions and standard policy
+- invulnerability and authorized dev/admin bypass rules
+- damage, healing, repair, blocked, ineffective, and discarded-lethal results
+- additive and multiplicative modifier application
+- shield bypass and shield overflow policy
+- health and shield restoration destinations
+- destroyed and player-fatal outcomes
+- detailed applied, absorbed, restored, remaining, and reason fields
+- radial falloff inputs after target selection
+- damage-over-time creation, stacking, replacement, refresh, limits, scheduling, and expiry
+- deterministic DoT ordering and pause-aware ticking
 
 ## Does not own
 
-Damage resolution does not own:
+This boundary does not own:
 
-* Runtime entity mutation.
-* Score mutation or score award policy.
-* Packet encoding or outbound packet writes.
-* Pickup spawning or pickup collection rules.
-* Radial effect scheduling or timing ownership.
-* Client rendering, interpolation, audio, or effects.
-* Collision detection.
-* Weapon firing policy.
-* Room, session, or networking lifecycle.
+- collision detection or radial target selection
+- runtime entity storage
+- team assignment
+- player death/lives transitions
+- score, awards, or objectives
+- knockback integration
+- client effects or HUD
+- room lifecycle
 
-Those concerns belong to game-owned combat flow, simulation systems, or client/networking boundaries.
+Those owners consume `DamageResult` and related normalized facts.
 
 ## Domain roles
 
-Damage resolution participates in the authoritative combat domain by converting a source, target, and damage spec into a deterministic outcome.
+`DamageSource` preserves responsible player and team IDs, original instigator, explicit relationship permissions, and invulnerability-bypass authority. This lets delayed, area, or transferred effects retain attribution without reconstructing ownership later.
 
-Its role is to keep the actual math and resolution rules separate from the combat code that observes collisions and from the game code that mutates runtime state afterward.
+`DamageTarget` supplies current and maximum health/shield state plus target modifiers. The resolver never reads live entities directly.
 
-Important boundaries:
+Positive damage normally reaches shield first. A spec can bypass shields. Overflow may pass through to health or be discarded. Restoration uses explicit health, shield, or both destinations and is clamped to target maxima.
 
-* `damage` is a pure resolver package.
-* `Game` code is responsible for building requests and applying results.
-* `DamageResult` is authoritative for the outcome of the resolution step.
-* Gameplay consequences are handled by the game layer, not by the resolver.
+An invulnerable target blocks ordinary damage. Bypass is accepted only for an authorized developer/admin source; a bare bypass flag is insufficient.
+
+DoT effects support stack, replace, refresh, and limited-stack policies. Each accepted effect receives a deterministic runtime ID. Pause stops schedule advancement.
+
+## Protocols and APIs
+
+Important internal APIs include:
+
+```go
+func ResolveSingle(request DamageResolutionRequest) DamageResult
+func ResolveArea(request AreaDamageRequest) AreaDamageResult
+func NewDamageOverTimeRuntime() *DamageOverTimeRuntime
+func (runtime *DamageOverTimeRuntime) Add(effect ActiveDamageOverTime) DamageOverTimeAddOutcome
+func (runtime *DamageOverTimeRuntime) Step(delta float64, paused bool) []DamageOverTimeTick
+func (runtime *DamageOverTimeRuntime) RemoveTarget(targetID string) int
+```
+
+Game integration builds requests for projectile, collision, radial, debug, and DoT sources. It publishes resolved events before handing lethal player outcomes to the lives runtime and destruction outcomes to the relevant entity owner.
 
 ## Data ownership
 
-### Resolver-owned data
+`DamageResolutionRequest` owns one immutable resolution input: source, target, spec, and request modifiers.
 
-The pure resolver package owns these data shapes:
-
-* `DamageSource`
-* `DamageTarget`
-* `DamageSpec`
-* `DamageResolutionRequest`
-* `DamageResult`
-* `DamageModifier`
-* `DamageModifierCategory`
-* `DamageModifierOperation`
-* `AppliedDamageModifier`
-* `ModifiedDamageAmount`
-* `DamageOverTimeSpec`
-* `ActiveDamageOverTime`
-* `DamageOverTimeTickResult`
-* `DamageTargetRef`
-* `AreaDamageRequest`
-* `AreaDamageResult`
-
-### Request ownership
-
-`DamageResolutionRequest` carries:
-
-* `Source`
-* `Target`
-* `Spec`
-* `Modifiers`
-
-`DamageTarget` carries the target's current health, shield, and modifiers into the pure resolver.
-
-`DamageSpec` carries the damage amount, type, cause, shield-bypass flag, and optional DoT spec.
-
-### Result ownership
-
-`DamageResult` carries the pure outcome of resolution, including:
-
-* source and target entity IDs and entity types
-* base and modified amounts
-* damage type and cause
-* applied modifiers
-* health damage applied
-* shield absorbed
-* ignored state
-* destroyed state
-* fatal state
-* remaining health
-* remaining shield
-* created damage-over-time effects
-* optional reason text
-
-The result is data-only until the game layer applies it.
-
-## Protocol and API surfaces
-
-Damage resolution is not a network protocol boundary.
-
-It is an internal Go API boundary used by game-server combat and radial-effect code.
-
-Public resolver entry points currently include:
+`DamageResult` is the complete output for that resolution and includes:
 
 ```text
-ResolveSingle(DamageResolutionRequest) DamageResult
-ResolveArea(AreaDamageRequest) AreaDamageResult
-TickDamageOverTime(ActiveDamageOverTime, DamageTarget, delta) DamageOverTimeTickResult
+result kind
+base and modified amount
+damage type and cause
+applied modifiers
+health damage and shield absorption
+health and shield restoration
+ignored or discarded state
+destroyed and fatal state
+remaining health and shield
+created DoT effects
+machine-readable reason
 ```
 
-The game layer builds requests in:
-
-```text
-combat_damage_requests.go
-radial_damage_requests.go
-```
-
-The game layer applies results in:
-
-```text
-combat_damage_application.go
-```
-
-### Request and result behavior
-
-`ResolveSingle` combines request-level modifiers with target-level modifiers, resolves the modified amount, applies shield handling, and derives the final flags and remaining values.
-
-Current resolution behavior includes:
-
-* merged request and target modifiers
-* filtered and validated modifier handling
-* shield absorption unless `BypassShield` is true
-* remaining health and remaining shield calculation
-* destroyed detection when remaining health reaches zero
-* fatal detection when a player target is destroyed
-* ignored results when modified damage is zero or negative
-* ignored results when the target is already dead
-* optional creation of DoT effects when the spec enables them
-
-### Area helper behavior
-
-`ResolveArea` is a pure helper that runs `ResolveSingle` for each candidate target when the radius is positive.
-
-It returns one `DamageResult` per candidate and does not mutate runtime entities.
-
-### DoT helper behavior
-
-`TickDamageOverTime` advances a single active DoT effect for a delta.
-
-It returns:
-
-* the copied source and target refs
-* tick timing state
-* duration timing state
-* one or more `DamageResult` values when ticks fire
-* an expired flag when the effect has run out
-
-When a tick fires, the helper resolves each tick through `ResolveSingle` with `DamageCauseDot`.
+The game layer owns applying remaining values to the live entity. `DamageOverTimeRuntime` owns scheduled effects between ticks, not the target's health.
 
 ## Code map
 
-### Pure resolver package
-
 ```text
-services/game-server/internal/game/damage/resolve.go
-```
-
-Contains `ResolveSingle`.
-
-```text
-services/game-server/internal/game/damage/area.go
-```
-
-Contains `AreaDamageRequest`, `AreaDamageResult`, and `ResolveArea`.
-
-```text
-services/game-server/internal/game/damage/dot.go
-```
-
-Contains `DamageOverTimeSpec`, `DamageTargetRef`, `ActiveDamageOverTime`, `DamageOverTimeTickResult`, and `TickDamageOverTime`.
-
-```text
+services/game-server/internal/game/damage/types.go
 services/game-server/internal/game/damage/request.go
-```
-
-Contains `DamageSource`, `DamageTarget`, `DamageSpec`, and `DamageResolutionRequest`.
-
-```text
-services/game-server/internal/game/damage/result.go
-```
-
-Contains `DamageResult`.
-
-```text
+services/game-server/internal/game/damage/policy.go
+services/game-server/internal/game/damage/eligibility.go
 services/game-server/internal/game/damage/modifiers.go
-```
-
-Contains modifier categories, operations, filtering, applied-modifier tracking, and modified-amount calculation.
-
-### Game-owned adapters
-
-```text
+services/game-server/internal/game/damage/resolve.go
+services/game-server/internal/game/damage/result.go
+services/game-server/internal/game/damage/dot.go
+services/game-server/internal/game/damage/dot_runtime.go
 services/game-server/internal/game/combat_damage_requests.go
-```
-
-Builds single-target damage requests for projectile and collision combat.
-
-```text
+services/game-server/internal/game/damage_resolution.go
+services/game-server/internal/game/damage_events.go
+services/game-server/internal/game/damage_over_time.go
 services/game-server/internal/game/radial_damage_requests.go
+services/game-server/internal/game/motion/collision_repulsion.go
 ```
 
-Builds single-target damage requests for radial damage application.
+## Tests
 
-```text
-services/game-server/internal/game/combat_damage_application.go
-```
-
-Applies resolved damage results to runtime asteroids, players, and enemies.
-
-## Tests and verification
-
-Current package tests cover:
-
-* single-target resolution
-* shield absorption and bypass behavior
-* modifier filtering and modifier math
-* ignored-result handling
-* destroyed and fatal flags
-* area helper behavior
-* DoT creation and ticking
-
-Relevant test files live under:
+Tests cover relationship eligibility, PvP policy, invulnerability, shield bypass and overflow, healing and repair, modifier order, signed requests, lethal-result handling, DoT policies and timing, radial falloff, collision repulsion, event publication, and game integration.
 
 ```text
 services/game-server/internal/game/damage/*_test.go
+services/game-server/internal/game/damage_rules_integration_test.go
+services/game-server/internal/game/damage_result_events_test.go
+services/game-server/internal/game/effects/radial/falloff_test.go
+services/game-server/internal/game/motion/collision_repulsion_test.go
 ```
-
-This documentation change does not require a generated-file update.
 
 ## Related docs
 
-* [Game Server Simulation Combat](./!INDEX.md)
-* [Collision To Damage Flow](collision-to-damage-flow.md)
-* [Weapons And Projectile Fire](weapons-and-projectile-fire.md)
-* [Radial Effects](radial-effects.md)
-* [Game Server Simulation](../!INDEX.md)
-* [Game Server Simulation Scoring](../scoring/!INDEX.md)
-* [Game Server](../../!INDEX.md)
+- [Game Server Simulation Combat](./!INDEX.md)
+- [Collision To Damage Flow](collision-to-damage-flow.md)
+- [Radial Effects](radial-effects.md)
+- [Lives, Participation, And Spawn](../players/lives-participation-and-spawn.md)
+- [Awards And Counter Runtime](../scoring/awards-and-counter-runtime.md)
+- [Damage And Healing Rules Planning](../../../../planning/domains/gameplay/damage-and-healing-rules.md)
 
 ## Notes
 
-Damage math stays pure and data-only. The game layer owns when a result becomes a health change, a death event, a despawn, or another gameplay consequence.
+The damage package remains data-oriented. Runtime mutation, death, destruction, awards, knockback, and presentation stay downstream so new damage sources do not duplicate consequence logic.

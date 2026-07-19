@@ -27,20 +27,25 @@ This folder owns authoritative game runtime behavior for the game server.
 ## Direct Files
 <!-- doc-ledger:files:start -->
 <!-- doc-ledger:files:end -->
+
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
+
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
 - [combat](combat/!INDEX.md) - Combat documentation.
+- [encounters](encounters/!INDEX.md) - Encounter spawn and lifecycle documentation.
+- [match](match/!INDEX.md) - Modes, objectives, outcomes, and results documentation.
 - [pickups](pickups/!INDEX.md) - Pickups documentation.
 - [players](players/!INDEX.md) - Players documentation.
 - [runtime](runtime/!INDEX.md) - Runtime documentation.
-- [scoring](scoring/!INDEX.md) - Scoring documentation.
+- [scoring](scoring/!INDEX.md) - Scoring and awards documentation.
 - [targeting](targeting/!INDEX.md) - Targeting documentation.
 - [world](world/!INDEX.md) - World documentation.
 <!-- doc-ledger:folders:end -->
+
 ## Related Docs
 
 - [Game Server](../!INDEX.md)
@@ -48,4 +53,4 @@ This folder owns authoritative game runtime behavior for the game server.
 
 ## Notes
 
-This boundary covers the server-owned gameplay runtime and not presentation or client sync concerns.
+This boundary covers server-owned gameplay runtime and not presentation or client synchronization ownership.

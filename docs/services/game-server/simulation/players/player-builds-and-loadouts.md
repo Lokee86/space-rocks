@@ -4,53 +4,81 @@ Parent index: [Game Server Simulation Players](./!INDEX.md)
 
 ## Purpose
 
-This document describes the authoritative game-server boundary that turns a routed player inventory snapshot into selectable build options and one immutable match-start player build.
+This document describes the authoritative game-server boundary that converts a routed hangar inventory snapshot and resolved mode rules into selectable options and one immutable match-start player build.
 
-## Flow
+## Overview
 
 ```text
 player-data HangarInventory
-+ player-build Catalog
-+ resolved build Rules
++ playerbuild Catalog
++ rules derived from ResolvedMatchRules
 -> ComputeEligibility
 -> EligibleBuildOptions
 -> LoadoutSelection
 -> Resolve
 -> ResolvedPlayerBuild
 -> playerSession
--> Runtime Ship + RuntimeEquipmentState
+-> runtime ship and RuntimeEquipmentState
 ```
 
-## Ownership
+The build system validates ownership and mode eligibility before compiling runtime stats, weapons, modules, effects, shields, and starting ammunition. The resolved build is cloned at storage and read boundaries and cannot be changed after match simulation begins.
 
-`internal/game/playerbuild` owns:
+## Code root
 
 ```text
-ship variant definitions
-weapon-point and module-slot vocabulary
-build restriction rules
-owned-option eligibility filtering
-machine-readable blocked reasons
-fallback selection
-server-side loadout validation
-match-start build compilation
-hardwired effect policy
-starting ammunition
-shield build policy
-immutable build cloning
+services/game-server/internal/game/playerbuild/
+services/game-server/internal/game/player_builds.go
 ```
 
-It does not own inventory durability, grant policy, match runtime pickups, current ammo, current cooldowns, UI layout, or room membership.
+Session integration lives in `services/game-server/internal/game/session.go`.
 
-## Current Catalog Baseline
+## Responsibilities
+
+This boundary owns:
+
+- ship-variant, weapon-point, module-slot, module, and hardwired vocabulary
+- catalog validation
+- mode-derived build restrictions
+- owned-instance eligibility filtering
+- stable machine-readable blocked reasons
+- deterministic fallback selection
+- server-side selection validation
+- duplicate-owned-instance prevention within one loadout
+- match-start ship-stat compilation
+- weapon and module resolution
+- passive and active module declarations
+- hardwired allowed, disabled, and normalized behavior
+- maximum shield and starting-ammunition policy
+- immutable resolved-build cloning
+- pre-match application to player sessions and provisional ships
+- respawn restoration from the resolved build
+
+## Does not own
+
+This boundary does not own:
+
+- inventory durability or grants
+- item acquisition
+- current runtime ammo or cooldown mutation
+- pickups
+- client loadout UI
+- named saved-loadout persistence
+- room membership
+- mode selection
+
+It consumes a trusted inventory snapshot and resolved rules from those owners.
+
+## Domain roles
+
+The current production catalog contains one ship and one weapon:
 
 ```text
 v_wing
-- weight class: standard
+- weight: standard
 - primary_1: hardpoint
 - secondary_1: hardpoint
-- primary_2 / secondary_2: unavailable
-- module slots: shield, armor, engine, utility
+- primary_2 and secondary_2: unavailable
+- shield, armor, engine, and utility module slots
 
 pulse
 - runtime mapping: basic_cannon
@@ -58,67 +86,66 @@ pulse
 - size: standard
 - delivery: ballistic
 - targeting: skill_shot
-- effects: direct
+- effect: direct
 - ammunition: infinite
 ```
 
-The module contract is implemented, but the default production catalog does not yet contain module content.
+The module and hardwired contracts are fully modeled, but the default catalog has no selectable modules yet.
 
-## Inventory Handoff
+Eligibility can allow or ban ship IDs, weight classes, weapon IDs, runtime slots, sizes, delivery classes, targeting policies, required effect flags, module IDs/classes/slots, active modules, and hardwired behavior. Options are keyed by owned inventory instance, not only catalog ID.
 
-`playerbuild.Service` accepts an inventory loader interface implemented by the existing game-server player-inventory runtime client. The resulting `LoadedBuildContext` keeps together the exact inventory snapshot, normalized rules, and authoritative eligible options used for resolution.
+Fallback prefers the inventory's eligible default ship and the selected variant's default primary weapon. Otherwise it chooses the first deterministic eligible instance.
 
-Owned ship, weapon, and module instance IDs are validated against that snapshot. Catalog IDs and owned IDs remain separate.
+Selections require `primary_1`, validate every selected point and module slot against the chosen ship, and reject one owned weapon or module being equipped twice in the same build.
 
-## Eligibility
+## Protocols and APIs
 
-Eligibility rejects unavailable or unknown inventory records and applies allow/ban filters for:
+Primary APIs include:
 
-```text
-ship IDs
-ship weight classes
-weapon IDs and slots
-weapon sizes
-delivery classes
-targeting policies
-required effect flags
-module IDs, slots, and classes
-active-module policy
+```go
+func ComputeEligibility(playerID string, inventory protocol.HangarInventory, catalog Catalog, rules Rules) EligibleBuildOptions
+func ValidateSelection(selection LoadoutSelection, inventory protocol.HangarInventory, catalog Catalog, rules Rules, options EligibleBuildOptions) error
+func Resolve(selection LoadoutSelection, inventory protocol.HangarInventory, catalog Catalog, rules Rules) (ResolvedPlayerBuild, error)
+func RulesForMatch(matchRules modes.ResolvedMatchRules) Rules
+
+func (service *Service) LoadOptions(identity protocol.PlayerDataIdentity, context protocol.PlayerDataRequestContext, matchRules modes.ResolvedMatchRules) (LoadedBuildContext, error)
+func (service *Service) ResolveSelection(context LoadedBuildContext, selection LoadoutSelection) (ResolvedPlayerBuild, error)
+
+func (game *Game) ApplyPlayerBuild(playerID string, build ResolvedPlayerBuild) error
+func (game *Game) PlayerResolvedBuild(playerID string) (ResolvedPlayerBuild, bool)
 ```
 
-Blocked options include stable reason codes suitable for future client presentation.
+`ApplyPlayerBuild` is rejected after match time begins or after final match state is locked.
 
-## Resolution
+## Data ownership
 
-Resolution validates the selection again and compiles:
+`LoadedBuildContext` retains the exact inventory load result, normalized build rules, and eligibility options used for later resolution.
+
+`ResolvedPlayerBuild` owns immutable match-start configuration and provenance:
 
 ```text
-selected owned ship
-resolved ship stats
-weapon-point layout
-runtime Primary / Secondary armory bridge
-selected module effects
-hardwired declarations and effects
-maximum shield policy
-starting ammunition
-active module behavior declarations
-inventory version provenance
+player and mode ID
+inventory version
+selected owned ship and ship catalog ID
+weight class and resolved ship stats
+weapon-point layout and equipped weapons
+equipped modules and hardwired declarations
+passive effects and active behavior declarations
+shield policy and starting ammo
+runtime PlayerArmory bridge
 ```
 
-`ResolvedPlayerBuild` is cloned at storage and read boundaries so callers cannot mutate the session-owned match-start configuration.
+The player session owns the applied resolved build. Mutable runtime ammo, cooldowns, health, shields, and pickup changes live on runtime state. Respawn either restores mutable state or resets to the resolved build according to the lives policy.
 
-## Runtime Integration
-
-A newly created player session receives the current fallback `v_wing`/`pulse` build. Before the first simulation step, `Game.ApplyPlayerBuild` may replace that provisional build with a validated player selection.
-
-After match time begins, build changes are rejected.
-
-Initial spawn and respawn use the session's `ResolvedPlayerBuild`. Mutable runtime ammo, cooldowns, pickup overwrites, health, and shields remain on runtime state rather than the loadout object.
-
-## Code Map
+## Code map
 
 ```text
-services/game-server/internal/game/playerbuild/
+services/game-server/internal/game/playerbuild/catalog.go
+services/game-server/internal/game/playerbuild/rules.go
+services/game-server/internal/game/playerbuild/eligibility.go
+services/game-server/internal/game/playerbuild/selection.go
+services/game-server/internal/game/playerbuild/resolve.go
+services/game-server/internal/game/playerbuild/service.go
 services/game-server/internal/game/player_builds.go
 services/game-server/internal/game/session.go
 services/game-server/internal/playerinventory/runtime_client.go
@@ -127,15 +154,24 @@ services/player-data/protocol/packets.go
 
 ## Tests
 
+Tests cover catalog validation, build-rule normalization, every major eligibility restriction, blocked reasons, fallback selection, invalid points and slots, duplicate owned instances, passive/active/hardwired behavior, finite ammunition, clone isolation, inventory-loader handoff, session spawn and respawn, provisional ship replacement, and late-change rejection.
+
 ```text
 services/game-server/internal/game/playerbuild/*_test.go
 services/game-server/internal/game/player_build_integration_test.go
 services/game-server/internal/game/player_builds_test.go
 ```
 
-## Related Docs
+## Related docs
 
-- [Player Build And Loadouts](../../../../planning/domains/gameplay/player-build-and-loadouts.md)
-- [Inventory And Hangar](../../../../planning/domains/gameplay/inventory-and-hangar.md)
-- [Player Session State](player-session-state.md)
-- [Player Respawn](player-respawn.md)
+- [Game Server Simulation Players](./!INDEX.md)
+- [Lives, Participation, And Spawn](lives-participation-and-spawn.md)
+- [Player Inventory Client](../../integrations/player-inventory-client.md)
+- [Hangar Inventory](../../../player-data/hangar-inventory.md)
+- [Inventory And Build Flow](../../../../domains/player-experience/inventory-and-build-flow.md)
+- [Player Build And Loadouts Planning](../../../../planning/domains/gameplay/player-build-and-loadouts.md)
+- [Player Build Limits](../../../../limits/player-build-limits.md)
+
+## Notes
+
+The authoritative owner system is implemented. Remaining work is player-facing selection, saved-loadout persistence, broader catalog content, module content, and richer runtime presentation.

@@ -27,15 +27,19 @@ This folder owns domain docs about player-facing flows that span multiple system
 <!-- doc-ledger:files:start -->
 
 - [gameplay-session-flow.md](gameplay-session-flow.md) - Gameplay session domain flow documentation.
+- [inventory-and-build-flow.md](inventory-and-build-flow.md) - Identity-to-inventory-to-resolved-build authority flow.
 - [local-pilot-profile-flow.md](local-pilot-profile-flow.md) - Local pilot profile domain flow documentation.
-- [match-end-and-results-flow.md](match-end-and-results-flow.md) - Match end and results domain flow documentation.
+- [match-end-and-results-flow.md](match-end-and-results-flow.md) - Match decision, room game-over, presentation, and persistence flow.
 <!-- doc-ledger:files:end -->
+
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
+
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 <!-- doc-ledger:folders:end -->
+
 ## Related Docs
 
 - [Domain index](../!INDEX.md)

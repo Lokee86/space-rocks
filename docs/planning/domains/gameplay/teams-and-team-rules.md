@@ -15,6 +15,14 @@ This doc is the authoritative P4 planning owner for team structure and team-rule
 
 It defines how room team configuration becomes authoritative membership, how team relationships affect participation and damage, and what team facts are handed to spawning, match rules, and results.
 
+## Current Implementation Status
+
+The initial server-side owner system is implemented: configuration validation, canonical rosters, deterministic assignment for all four structures, room-owned membership, simulation relationship queries, snapshot projection, and retained team facts for removed participants.
+
+Current implementation authority: [Team Configuration And Membership](../../../services/game-server/rooms/team-configuration-and-membership.md).
+
+This planning document remains authoritative for deferred product choices and future expansion beyond that implemented foundation.
+
 ## Ownership Boundary
 
 This doc owns planning for:

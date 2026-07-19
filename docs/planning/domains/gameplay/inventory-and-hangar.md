@@ -13,7 +13,17 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc owns the durable inventory and hangar architecture for player-held ships, weapons, modules, hardwired equipment, unlock/access state, acquisition state, and the handoff into build eligibility.
 
-Implementation status: the V1 owner system is implemented. Guest inventory uses transient memory, Local Profile inventory uses embedded SQLite, authenticated-account inventory uses Rails/Postgres, and the normalized profile response exposes the same hangar contract across all three routes.
+## Current Implementation Status
+
+The V1 owner system is implemented. Guest inventory uses transient memory, Local Profile inventory uses embedded SQLite, authenticated-account inventory uses Rails/Postgres, and the normalized profile response exposes the same hangar contract across all three routes.
+
+Current implementation authority:
+
+- [Hangar Inventory](../../../services/player-data/hangar-inventory.md)
+- [Player Inventory Persistence](../../../services/api-server/player-inventory-persistence.md)
+- [Inventory And Build Flow](../../../domains/player-experience/inventory-and-build-flow.md)
+
+This planning document remains authoritative for deferred acquisition, inventory, and hangar expansion.
 
 The inventory and hangar layer answers:
 

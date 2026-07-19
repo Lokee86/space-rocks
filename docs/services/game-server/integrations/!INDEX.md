@@ -31,13 +31,17 @@ This folder owns external-service integration points used by the game server.
 - [diagnostic-aggregator-hosting.md](diagnostic-aggregator-hosting.md) - Temporary game-server process co-hosting and dependency boundaries for diagnostic-aggregator.
 - [match-result-reporting.md](match-result-reporting.md) - Game-server match result reporting documentation.
 - [player-data-http-hosting.md](player-data-http-hosting.md) - Game-server player-data HTTP hosting documentation.
+- [player-inventory-client.md](player-inventory-client.md) - Generated player-data inventory command adapter used by game and build services.
 <!-- doc-ledger:files:end -->
+
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
+
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 <!-- doc-ledger:folders:end -->
+
 ## Related Docs
 
 - [Game Server](../!INDEX.md)
@@ -45,4 +49,4 @@ This folder owns external-service integration points used by the game server.
 
 ## Notes
 
-This boundary only covers how the game server connects outward, not the implementation of the external services themselves.
+This boundary only covers how the game server connects outward, not implementation of the external services themselves.

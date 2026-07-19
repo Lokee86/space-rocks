@@ -14,7 +14,7 @@ API server documentation lives here.
 
 ## Ownership
 
-This folder owns docs for the API service runtime and its implementation responsibility.
+This folder owns docs for the API service runtime, account authority, internal APIs, authenticated persistence, and health behavior.
 
 ## Does Not Belong
 
@@ -29,15 +29,19 @@ This folder owns docs for the API service runtime and its implementation respons
 - [auth-and-oauth.md](auth-and-oauth.md) - API-server auth, OAuth, bearer-token, and internal token-verification responsibilities.
 - [internal-api-surface.md](internal-api-surface.md) - API-server internal service-to-service HTTP surface.
 - [observability-and-logging.md](observability-and-logging.md) - Canonical API request, auth, player-stat, match-result, Puma, and rolling-file observability.
+- [player-inventory-persistence.md](player-inventory-persistence.md) - Authenticated-account hangar inventory persistence and optimistic versioning.
 - [player-stats-and-match-results.md](player-stats-and-match-results.md) - API-server player stats and match results documentation.
 - [runtime-and-health.md](runtime-and-health.md) - API-server runtime, health checks, database config, Puma port, and CI surface documentation.
 <!-- doc-ledger:files:end -->
+
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
 <!-- doc-ledger:stubs:end -->
+
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 <!-- doc-ledger:folders:end -->
+
 ## Related Docs
 
 - [Services index](../!INDEX.md)
