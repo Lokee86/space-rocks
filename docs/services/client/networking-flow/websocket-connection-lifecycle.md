@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-77e5-9853-8a7f7473bd74
+document_type: general
+policy_exempt: false
+summary: This document describes the client-side WebSocket connection lifecycle for Space Rocks.
+---
 # WebSocket Connection Lifecycle
 
 Parent index: [Networking Flow](./!INDEX.md)

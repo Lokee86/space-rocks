@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7599-9232-95f83bdd0994
+document_type: general
+policy_exempt: false
+summary: This document describes the client gameplay menu flow.
+---
 # Gameplay Menu Flow
 
 Parent index: [Gameplay Menu Flow](./!INDEX.md)

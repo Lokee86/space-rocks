@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-72a1-9726-ee88b7e098da
+document_type: general
+policy_exempt: false
+summary: This document describes the Bruno collection used for local diagnostic-aggregator smoke testing.
+---
 # Bruno Smoke Test
 
 Parent index: [Diagnostic Aggregator](./!INDEX.md)

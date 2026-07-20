@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f18-a508-6081f1c64658
+document_type: general
+policy_exempt: false
+summary: This document describes game-server target selection and target status handling.
+---
 ## Target Selection And Status
 
 Parent index: [Game Server Simulation Targeting](./!INDEX.md)

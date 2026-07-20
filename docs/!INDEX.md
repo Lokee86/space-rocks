@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7882-a7aa-0a2539c73b96
+document_type: general
+policy_exempt: false
+summary: This is the top-level documentation index and rulebook for Space Rocks docs.
+---
 # Documentation
 
 This is the top-level documentation index and rulebook for Space Rocks docs.
@@ -20,7 +28,6 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 ## Direct Folders
 <!-- doc-ledger:folders:start -->
 
-- [.obsidian](.obsidian/!INDEX.md) - .obsidian documentation.
 - [Agent](agent/!INDEX.md) - Agent workflow and documentation support notes.
 - [data](data/!INDEX.md) - Data documentation.
 - [devtools](devtools/!INDEX.md) - Devtools documentation.

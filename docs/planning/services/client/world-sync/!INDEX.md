@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7429-8767-2fa55e747b16
+document_type: general
+policy_exempt: false
+summary: This index summarizes the world sync docs.
+---
 # World Sync
 
 This index summarizes the world sync docs.

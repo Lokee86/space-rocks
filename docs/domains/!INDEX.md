@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7075-afb0-e22547b458e4
+document_type: general
+policy_exempt: false
+summary: Domain documentation describes cross-system flows and integration, not implementation ownership.
+---
 # Domains
 
 Parent index: [Documentation](../!INDEX.md)

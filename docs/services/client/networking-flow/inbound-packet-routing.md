@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70aa-8252-7980089bdbb6
+document_type: general
+policy_exempt: false
+summary: This document describes the current client inbound packet routing path.
+---
 # Inbound Packet Routing
 
 Parent index: [Networking Flow](./!INDEX.md)

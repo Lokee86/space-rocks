@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e5d-b0d7-8f8257f8835f
+document_type: general
+policy_exempt: false
+summary: This index summarizes the app shell and session docs.
+---
 # App Shell And Session
 
 This index summarizes the app shell and session docs.

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7802-aa52-a8e3b25940ce
+document_type: general
+policy_exempt: false
+summary: This document plans the multiplayer session and lifecycle domain for Space Rocks.
+---
 # Multiplayer Session And Lifecycle
 
 Parent index: [Platform Planning](./!INDEX.md)

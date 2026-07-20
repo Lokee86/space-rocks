@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7515-b79f-825951135c72
+document_type: general
+policy_exempt: false
+summary: This document is the canonical description of the implemented toroidal spatial-query seam used by the Go game-server simulation.
+---
 # Toroidal Spatial Query Index
 
 Parent index: [Game Server Simulation World](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-741f-8617-0a3cd841a35e
+document_type: general
+policy_exempt: false
+summary: This document is the canonical Cloudflare Pages deployment reference for the Space Rocks devlog static site.
+---
 # Cloudflare Pages Deployment
 
 Parent index: [Web](./!INDEX.md)

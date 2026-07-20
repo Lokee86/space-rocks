@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c74-b210-34c7763a0566
+document_type: general
+policy_exempt: false
+summary: This document describes the server-owned game.Control adapter used by internal/devtools.
+---
 # Game Control Devtools Adapter
 
 Parent index: [Server](./!INDEX.md)

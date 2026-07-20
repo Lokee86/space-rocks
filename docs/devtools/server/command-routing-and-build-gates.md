@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74b6-9865-cd5effc1f4aa
+document_type: general
+policy_exempt: false
+summary: This document describes how server devtools command packets are routed, dispatched, and gated in the game server.
+---
 # Command Routing And Build Gates
 
 Parent index: [Server](./!INDEX.md)

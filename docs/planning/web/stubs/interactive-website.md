@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7684-9543-b8b93e3a95b9
+document_type: general
+policy_exempt: false
+summary: 'Stub note: this document is incomplete and non-canonical. TODO: describe the later larger interactive website documentation home.'
+---
 # Future Interactive Website
 Parent index: [Web](../!INDEX.md)
 

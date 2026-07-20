@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7dad-a282-6f43e38a1c4b
+document_type: general
+policy_exempt: false
+summary: This document captures accepted practical limitations in the current system.
+---
 # Stable Limitations
 
 Parent index: [Current Limits](./!INDEX.md)

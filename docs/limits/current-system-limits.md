@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b51-b93a-d85983ddc23d
+document_type: general
+policy_exempt: false
+summary: This file captures the active, known constraints in the current client and server system.
+---
 # Current System Limits
 Parent index: [Current Limits](./!INDEX.md)
 

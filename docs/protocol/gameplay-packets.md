@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fd0-be25-9116c2d9a612
+document_type: general
+policy_exempt: false
+summary: This document describes the current lane-native gameplay realtime packet protocol between the Godot client and the Go game server.
+---
 ## Gameplay Packets
 
 Parent index: [Protocol](./!INDEX.md)

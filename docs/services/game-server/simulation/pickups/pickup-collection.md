@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79a9-b8c8-5aba5da6b2cc
+document_type: general
+policy_exempt: false
+summary: This document describes game-server pickup collection.
+---
 # Pickup Collection
 
 Parent index: [Game Server Simulation Pickups](./!INDEX.md)

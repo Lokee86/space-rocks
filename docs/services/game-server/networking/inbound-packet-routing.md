@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e5a-add6-83ed72e575d7
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server inbound packet routing path.
+---
 # Inbound Packet Routing
 
 Parent index: [Game Server Networking](./!INDEX.md)

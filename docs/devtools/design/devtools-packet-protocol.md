@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74d4-baa3-63f06e33ba20
+document_type: general
+policy_exempt: false
+summary: This document describes the current devtools packet protocol for Space Rocks.
+---
 # Devtools Packet Protocol
 
 Parent index: [Design](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7666-88a3-5573d334e59f
+document_type: general
+policy_exempt: false
+summary: This document describes the cross-system gameplay session flow for Space Rocks.
+---
 # Gameplay Session Flow
 
 Parent index: [Player Experience](./!INDEX.md)

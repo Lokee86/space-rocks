@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7da6-9fe5-671b7aafe0bf
+document_type: general
+policy_exempt: false
+summary: "\uFEFF\x23\x20\x57\x6F\x72\x6C\x64\x20\x41\x75\x74\x68\x6F\x72\x69\x74\x79"
+---
 ﻿# World Authority
 
 Parent index: [World](./!INDEX.md)

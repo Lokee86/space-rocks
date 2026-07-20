@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-725c-bf5c-b0e185e2eff6
+document_type: general
+policy_exempt: false
+summary: This document describes the high-level client menu flow. It covers how the app enters the menu stack, how top-level routes move between main menu, sign-in, pregame, lobby, gameplay, match results, and shutdown, and which implementation...
+---
 # Client Menu Flow
 
 Parent index: [Client](./!INDEX.md)

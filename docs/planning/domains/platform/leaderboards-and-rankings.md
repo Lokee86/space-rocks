@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70a4-83a5-9a570c13a7e2
+document_type: general
+policy_exempt: false
+summary: This document plans the leaderboard and ranking surface for Space Rocks.
+---
 # Leaderboards And Rankings
 
 Parent index: [Platform Planning](./!INDEX.md)

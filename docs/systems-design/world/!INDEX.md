@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76b7-917a-f722e57b555e
+document_type: general
+policy_exempt: false
+summary: World systems-design documentation lives here.
+---
 # World
 
 Parent index: [Systems Design](../!INDEX.md)

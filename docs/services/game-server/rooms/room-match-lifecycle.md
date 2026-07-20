@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-708c-9e52-0f1b25c9f3f5
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server room match lifecycle boundary.
+---
 # Room Match Lifecycle
 
 Parent index: [Game Server Rooms](./!INDEX.md)

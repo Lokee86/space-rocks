@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7391-9cc4-026cfb71374c
+document_type: general
+policy_exempt: false
+summary: This document describes the cross-system source-of-truth flow for Space Rocks.
+---
 ## Source Of Truth Flow
 
 Parent index: [Technical](./!INDEX.md)

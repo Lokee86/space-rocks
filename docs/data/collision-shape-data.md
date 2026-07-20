@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7bc4-9e44-0a6c998f6166
+document_type: general
+policy_exempt: false
+summary: This document describes the collision-shape data source, export workflow, generated handoff file, consumers, validation commands, and ownership boundaries.
+---
 # Collision Shape Data
 
 Parent index: [Data](./!INDEX.md)

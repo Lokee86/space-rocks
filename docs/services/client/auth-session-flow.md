@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e00-a8af-b0eb4a5c9ba1
+document_type: general
+policy_exempt: false
+summary: This document describes the current client-side auth session and session boot flow implemented under client/.
+---
 # Auth Session Flow
 
 Parent index: [Client](./!INDEX.md)

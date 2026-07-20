@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75aa-ac6c-4f3fb94c812c
+document_type: general
+policy_exempt: false
+summary: This document describes the client-side match-end orchestration flow.
+---
 # Match End Orchestration
 
 Parent index: [Match End Flow](./!INDEX.md)

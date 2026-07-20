@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-709c-8ea5-db3977792fc8
+document_type: general
+policy_exempt: false
+summary: Devtools documentation covers debug and development tooling, separate from production gameplay docs.
+---
 # Devtools
 
 Parent index: [Documentation](../!INDEX.md)
@@ -24,8 +32,8 @@ This folder owns the devtools documentation indexes for current Space Rocks tool
 
 - [api-server](api-server/!INDEX.md) - Api Server documentation.
 - [client](client/!INDEX.md) - Client documentation.
-- [diagnostic-aggregator](diagnostic-aggregator/!INDEX.md) - Diagnostic Aggregator documentation.
 - [design](design/!INDEX.md) - Design documentation.
+- [diagnostic-aggregator](diagnostic-aggregator/!INDEX.md) - Diagnostic Aggregator documentation.
 - [server](server/!INDEX.md) - Server documentation.
 <!-- doc-ledger:folders:end -->
 

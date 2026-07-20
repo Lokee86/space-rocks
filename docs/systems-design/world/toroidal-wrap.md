@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-779a-8298-a2a765799d14
+document_type: general
+policy_exempt: false
+summary: This document defines the conceptual toroidal world-wrap model for Space Rocks.
+---
 # Toroidal Wrap
 
 Parent index: [World](./!INDEX.md)

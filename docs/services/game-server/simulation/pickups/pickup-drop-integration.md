@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70b3-bc53-7d7d995e5805
+document_type: general
+policy_exempt: false
+summary: This document describes how the game server integrates pickup drops into asteroid destruction.
+---
 # Pickup Drop Integration
 
 Parent index: [Game Server Simulation Pickups](./!INDEX.md)

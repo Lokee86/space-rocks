@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74b6-9e09-1aa8e7a6d6f4
+document_type: general
+policy_exempt: false
+summary: This document describes game-server player counter ownership.
+---
 # Player Counters
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

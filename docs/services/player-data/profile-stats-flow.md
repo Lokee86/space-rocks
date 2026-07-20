@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7726-8766-5403fc0b1d53
+document_type: general
+policy_exempt: false
+summary: This document describes how the player-data service loads, normalizes, routes, and mutates profile stats.
+---
 ## Profile Stats Flow
 
 Parent index: [Player Data](./!INDEX.md)

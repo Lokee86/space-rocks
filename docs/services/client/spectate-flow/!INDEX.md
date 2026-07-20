@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-745d-adc1-60e82e8ed806
+document_type: general
+policy_exempt: false
+summary: Client spectate flow documentation lives here.
+---
 # Spectate Flow
 
 Parent index: [Client](../!INDEX.md)

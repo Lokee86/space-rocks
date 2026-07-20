@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a4b-a61c-2bea4c0393ae
+document_type: general
+policy_exempt: false
+summary: This document describes the current client session boot flow, websocket network-target selection, and semantic realtimetransportready readiness gate.
+---
 # Session Boot And Network Target
 
 Parent index: [App Shell And Session](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7996-9bea-1257f2aab40b
+document_type: general
+policy_exempt: false
+summary: This document describes the API-server runtime and health surface for services/api-server/.
+---
 # Runtime And Health
 
 Parent index: [API Server](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d9a-bc85-9d74cf853eaa
+document_type: general
+policy_exempt: false
+summary: "\uFEFF\x23\x20\x50\x6C\x61\x79\x65\x72\x20\x4C\x69\x66\x65\x63\x79\x63\x6C\x65\x20\x4F\x76\x65\x72\x76\x69\x65\x77"
+---
 ﻿# Player Lifecycle Overview
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

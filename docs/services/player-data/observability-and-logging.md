@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-716c-8ec6-87fe5532cd28
+document_type: general
+policy_exempt: false
+summary: Player-data owns canonical HTTP and dispatcher observability while retaining a transitional category compatibility layer for callers that have not completed semantic migration.
+---
 # Player-Data Observability And Logging
 
 Parent index: [Player Data](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d1b-b1a5-2142da0feef7
+document_type: general
+policy_exempt: false
+summary: This document describes the current player-data logical schema sources, the implemented contracts that mirror them, the validation pipeline, and the persistence boundaries that consume them.
+---
 # Player Data Schema
 
 Parent index: [Data](./!INDEX.md)

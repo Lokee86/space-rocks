@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7dff-ae8f-83223d88a2e4
+document_type: general
+policy_exempt: false
+summary: This document describes server-side devtools player targeting and scope resolution.
+---
 ## Player Targeting And Scopes
 
 Parent index: [Server](./!INDEX.md)

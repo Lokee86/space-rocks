@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7431-9508-0d4f72a93b4d
+document_type: general
+policy_exempt: false
+summary: This doc plans the economy and commerce seam for Space Rocks.
+---
 # Shop, Commerce, And Economy
 Parent index: [Gameplay Planning](./!INDEX.md)
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-736b-a46d-7d11abfe6c04
+document_type: general
+policy_exempt: false
+summary: This document describes the current realtime WebSocket protocol between the Godot client and the Go game server.
+---
 ## Realtime WebSocket Protocol
 
 Parent index: [Protocol](./!INDEX.md)

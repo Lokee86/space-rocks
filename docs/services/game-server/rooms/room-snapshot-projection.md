@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e62-a43e-c9ae97651130
+document_type: general
+policy_exempt: false
+summary: "\uFEFF\x23\x20\x52\x6F\x6F\x6D\x20\x53\x6E\x61\x70\x73\x68\x6F\x74\x20\x50\x72\x6F\x6A\x65\x63\x74\x69\x6F\x6E"
+---
 ﻿# Room Snapshot Projection
 
 Parent index: [Game Server Rooms](./!INDEX.md)

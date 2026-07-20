@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7417-9a98-551a19718fb0
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side collision body telemetry support used by devtools.
+---
 ## Collision Body Telemetry
 
 Parent index: [Server](./!INDEX.md)

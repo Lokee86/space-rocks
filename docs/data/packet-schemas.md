@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a91-8dec-dec852abd665
+document_type: general
+policy_exempt: false
+summary: This document describes the current packet schema source-of-truth pipeline for Space Rocks.
+---
 ## Packet Schemas
 
 Parent index: [Data](./!INDEX.md)

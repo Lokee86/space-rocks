@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ccd-ad42-ad259d1759b2
+document_type: general
+policy_exempt: false
+summary: This folder owns client gameplay-event-presentation documentation.
+---
 # Gameplay Event Presentation
 
 Parent index: [Client](../!INDEX.md)

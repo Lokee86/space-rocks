@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-735a-971a-020c651119fe
+document_type: general
+policy_exempt: false
+summary: This doc owns agent-facing repo safety rules.
+---
 # Repo Hygiene
 Parent index: [Agent](./!INDEX.md)
 

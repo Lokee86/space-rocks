@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f6e-8357-acea6043060c
+document_type: general
+policy_exempt: false
+summary: Client devtools documentation lives here.
+---
 # Client
 
 Parent index: [Devtools](../!INDEX.md)

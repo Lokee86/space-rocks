@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fd3-8c04-a674a7a10752
+document_type: general
+policy_exempt: false
+summary: Player-data service documentation lives here.
+---
 # Player Data
 
 Parent index: [Services](../!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e16-9711-cfc452b6e940
+document_type: general
+policy_exempt: false
+summary: This document defines the game-server process boundary for temporarily co-hosting the logically independent diagnostic-aggregator service. It records the permitted composition-root hosting exception and the forbidden runtime and domain...
+---
 # Diagnostic-Aggregator Hosting
 
 Parent index: [Game Server Integrations](./!INDEX.md)

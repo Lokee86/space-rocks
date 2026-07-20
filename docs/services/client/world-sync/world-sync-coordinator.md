@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78db-afe0-ef4f1ed3c27d
+document_type: general
+policy_exempt: false
+summary: This document describes the client WorldSync coordinator.
+---
 # World Sync Coordinator
 
 Parent index: [World Sync](./!INDEX.md)

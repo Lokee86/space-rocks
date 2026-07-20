@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73f9-b505-8d2f072a5d8e
+document_type: general
+policy_exempt: false
+summary: This index summarizes the world docs.
+---
 # World
 
 This index summarizes the world docs.

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75d5-a62c-2eae6cc69568
+document_type: general
+policy_exempt: false
+summary: This doc plans the verification and quality-gate policy for Space Rocks.
+---
 # Verification And Quality Gates
 
 Parent index: [Technical Planning](./!INDEX.md)

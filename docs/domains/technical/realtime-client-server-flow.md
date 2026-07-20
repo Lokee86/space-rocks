@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-710c-a88e-90912b4c2221
+document_type: general
+policy_exempt: false
+summary: This document describes the cross-system realtime client/server flow for Space Rocks.
+---
 # Realtime Client Server Flow
 
 Parent index: [Technical](./!INDEX.md)

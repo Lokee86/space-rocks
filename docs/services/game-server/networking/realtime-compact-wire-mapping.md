@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7484-bb8d-bef7e73827f7
+document_type: general
+policy_exempt: false
+summary: This document explains realtime compact-wire architecture and ownership only. The authoritative physical contract is shared/packets/realtimewire.toml. Generated tables are in docs/protocol/generated/realtime-wire-reference.md.
+---
 # Realtime Compact Wire Mapping
 
 Parent index: [Game Server Networking](./!INDEX.md)

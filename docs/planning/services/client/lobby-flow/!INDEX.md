@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75b5-a4cc-b5c36baea4c1
+document_type: general
+policy_exempt: false
+summary: This index summarizes the lobby flow docs.
+---
 # Lobby Flow
 
 This index summarizes the lobby flow docs.

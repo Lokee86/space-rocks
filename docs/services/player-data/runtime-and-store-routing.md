@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-769f-b2c0-a7423b95f10d
+document_type: general
+policy_exempt: false
+summary: This document describes the player-data service runtime, mode policy, store-routing seam, and backing-store selection behavior.
+---
 # Runtime And Store Routing
 
 Parent index: [Player Data](./!INDEX.md)

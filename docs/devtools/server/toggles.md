@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76d8-8200-0c667552c86a
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side devtools toggle system for gameplay-affecting debug controls.
+---
 ## Toggles
 
 Parent index: [Server](./!INDEX.md)

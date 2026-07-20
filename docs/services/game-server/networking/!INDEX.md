@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73ee-a8c8-7ba2c20731e8
+document_type: general
+policy_exempt: false
+summary: Networking documentation for the game server lives here.
+---
 # Game Server Networking
 
 Parent index: [Game Server](../!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73e3-81f0-51b109500603
+document_type: general
+policy_exempt: false
+summary: This document describes the current Plasmic-to-Astro workflow used by the Space Rocks web site.
+---
 # Plasmic / Astro Workflow
 
 Parent index: [Web](./!INDEX.md)

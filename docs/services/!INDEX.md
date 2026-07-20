@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b8a-9efb-3903ae09e29a
+document_type: general
+policy_exempt: false
+summary: Service documentation covers runtime, executable, package, and implementation responsibility.
+---
 # Services
 
 Parent index: [Documentation](../!INDEX.md)

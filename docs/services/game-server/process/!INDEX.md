@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-723f-a4f6-13d5c1e309c6
+document_type: general
+policy_exempt: false
+summary: Process documentation for the game server lives here.
+---
 # Game Server Process
 
 Parent index: [Game Server](../!INDEX.md)

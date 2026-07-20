@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75ce-880d-63e9b3310aab
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side devtools clear-entity tools.
+---
 # Clear Entity Tools
 
 Parent index: [Server](./!INDEX.md)

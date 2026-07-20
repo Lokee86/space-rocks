@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74ae-acd1-0b84712fd4de
+document_type: general
+policy_exempt: false
+summary: This document describes the client devtools readmodels that consume server debug status packets and lane-applied devtools gameplay readmodels built from lane-native gameplay output.
+---
 ## Debug Status And Target Readmodels
 
 Parent index: [Client](./!INDEX.md)

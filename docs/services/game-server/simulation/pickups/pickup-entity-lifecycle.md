@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d5f-a6f3-8fff457de85e
+document_type: general
+policy_exempt: false
+summary: "\uFEFF\x23\x20\x50\x69\x63\x6B\x75\x70\x20\x45\x6E\x74\x69\x74\x79\x20\x4C\x69\x66\x65\x63\x79\x63\x6C\x65"
+---
 ﻿# Pickup Entity Lifecycle
 
 Parent index: [Game Server Simulation Pickups](./!INDEX.md)

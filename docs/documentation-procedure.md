@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e3a-bb43-a1c8491568fb
+document_type: general
+policy_exempt: false
+summary: This procedure defines the standard process for creating, updating, moving, and removing Space Rocks documentation.
+---
 ## Documentation Procedure
 Parent index: [Documentation](./!INDEX.md)
 

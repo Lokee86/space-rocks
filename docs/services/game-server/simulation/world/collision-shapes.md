@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-72a2-a7e5-224a38965b27
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server collision-shape support boundary.
+---
 # Collision Shapes
 
 Parent index: [Game Server Simulation World](./!INDEX.md)

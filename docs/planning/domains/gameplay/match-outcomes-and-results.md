@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7180-81fa-db7af9247ca9
+document_type: general
+policy_exempt: false
+summary: This doc plans EndOfMatchFlow, the result-orchestration seam that begins after the authoritative game/match layer locks a MatchDecision.
+---
 # Match Outcomes And Results
 Parent index: [Gameplay Planning](./!INDEX.md)
 

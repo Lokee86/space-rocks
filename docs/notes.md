@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ba7-a6d4-3cc61a4a2515
+document_type: general
+policy_exempt: false
+summary: This file is a small parking lot for project memory that does not yet belong in a canonical document.
+---
 # Project Notes
 Parent index: [Documentation](./!INDEX.md)
 

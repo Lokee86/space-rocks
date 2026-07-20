@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-708b-9bcb-a33d05477392
+document_type: general
+policy_exempt: false
+summary: This document describes HTTP request/response contract ownership, the OpenAPI source of truth, enforcement expectations, and contract-change rules.
+---
 # HTTP API Contracts
 
 Parent index: [Protocol](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b1a-805e-3aa19c0e59a8
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side debug command surface for Space Rocks devtools.
+---
 # Debug Command Surface
 
 Parent index: [Server](./!INDEX.md)

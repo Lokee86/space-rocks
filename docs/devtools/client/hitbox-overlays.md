@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7817-83e2-e9b0cc0eb5a2
+document_type: general
+policy_exempt: false
+summary: This document describes the current client-side server hitbox overlay implementation.
+---
 # Hitbox Overlays
 
 Parent index: [Client](./!INDEX.md)

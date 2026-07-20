@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7730-9e50-4c7aba4d74a0
+document_type: general
+policy_exempt: false
+summary: This document describes the client gameplay event and visual-effects presentation flow.
+---
 # Gameplay Events And Effects
 
 Parent index: [Gameplay Event Presentation](./!INDEX.md)

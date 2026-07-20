@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78ae-be61-97f2e2664720
+document_type: general
+policy_exempt: false
+summary: This document describes the client implementation responsibility for single-player local pilot selection and local profile management in the pregame menu.
+---
 ## Local Pilot Flow
 
 Parent index: [Pregame Menu Flow](./!INDEX.md)

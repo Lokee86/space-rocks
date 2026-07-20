@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ddf-9a4b-d61b85c44618
+document_type: general
+policy_exempt: false
+summary: This folder mirrors current devtools documentation areas for future devtools planning.
+---
 # Devtools Planning
 
 Parent index: [Planning](../!INDEX.md)

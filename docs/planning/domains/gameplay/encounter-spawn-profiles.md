@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f77-a0b9-af51346c2043
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for non-player encounter spawn profile selection, scheduling, population policy, targeting, safety, and lifecycle handoffs.
+---
 # Encounter Spawn Profiles
 Parent index: [Gameplay Planning](./!INDEX.md)
 

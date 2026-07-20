@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7457-8db8-a6e2496ab4fa
+document_type: general
+policy_exempt: false
+summary: API server documentation lives here.
+---
 # API Server
 
 Parent index: [Services](../!INDEX.md)

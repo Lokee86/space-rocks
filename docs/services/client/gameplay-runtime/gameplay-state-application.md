@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7eae-87e1-6f630d4c885f
+document_type: general
+policy_exempt: false
+summary: This document describes the completed lane-native client gameplay presentation path.
+---
 # Gameplay State Application
 
 Parent index: [Gameplay Runtime](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74a1-8d89-24251f6c906f
+document_type: general
+policy_exempt: false
+summary: This document describes the client devtools player-label overlay used to inspect remote players during development.
+---
 # Player Dev Labels
 
 Parent index: [Client](./!INDEX.md)

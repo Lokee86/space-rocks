@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7952-ac50-43da20839cf7
+document_type: general
+policy_exempt: false
+summary: This document maps planned API product surfaces for Space Rocks. It is planning-owned and non-current. Current implemented surfaces live in ../../protocol/api-product-surface.md. Exact HTTP shape lives in...
+---
 <!-- documentation-policy-exempt: planned API surface map; intentionally uses the same lightweight map shape as the current API surface map because full planning sections would blur its purpose. -->
 # API Product Surface
 

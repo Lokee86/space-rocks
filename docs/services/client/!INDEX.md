@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b03-9fda-29dd122f7df8
+document_type: general
+policy_exempt: false
+summary: Client service documentation lives here.
+---
 # Client
 
 Parent index: [Services](../!INDEX.md)

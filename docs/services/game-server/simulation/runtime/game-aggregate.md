@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a87-b38a-a09cc6c9cd74
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server simulation Game aggregate.
+---
 ## Game Aggregate
 
 Parent index: [Game Server Simulation Runtime](./!INDEX.md)

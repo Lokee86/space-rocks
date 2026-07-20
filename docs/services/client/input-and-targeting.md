@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-718d-9d70-82154d8ff70c
+document_type: general
+policy_exempt: false
+summary: This document describes how the client service owns local gameplay input translation, mouse action coordination, UI click protection, and client-side targeting presentation.
+---
 # Input And Targeting
 
 Parent index: [Client](./!INDEX.md)

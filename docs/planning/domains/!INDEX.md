@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e29-b25f-6b472bb29a28
+document_type: general
+policy_exempt: false
+summary: This index summarizes the domains docs.
+---
 # Domains
 
 This index summarizes the domains docs.

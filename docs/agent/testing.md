@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7181-a08b-1847334e738d
+document_type: general
+policy_exempt: false
+summary: This document owns testing and verification guidance for agents.
+---
 # Agent Testing Rules
 Parent index: [Agent](./!INDEX.md)
 

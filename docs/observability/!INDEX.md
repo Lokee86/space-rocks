@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7bbf-a68d-8bc50614ae31
+document_type: general
+policy_exempt: false
+summary: This index summarizes the observability docs.
+---
 # Observability
 
 This index summarizes the observability docs.

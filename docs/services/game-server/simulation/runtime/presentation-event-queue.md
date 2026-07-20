@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a30-b2a3-ad5d1479bdb2
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server presentation event queue.
+---
 # Presentation Event Queue
 
 Parent index: [Game Server Simulation Runtime](./!INDEX.md)

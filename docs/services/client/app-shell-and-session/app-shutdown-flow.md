@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7639-b88e-d1a5597ba846
+document_type: general
+policy_exempt: false
+summary: This document describes the client app shutdown flow owned by the app-shell/session boundary.
+---
 # App Shutdown Flow
 
 Parent index: [App Shell And Session](./!INDEX.md)

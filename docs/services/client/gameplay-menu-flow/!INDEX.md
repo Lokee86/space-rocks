@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-717d-8c4a-4966371558e2
+document_type: general
+policy_exempt: false
+summary: This folder owns client gameplay menu flow documentation.
+---
 # Gameplay Menu Flow
 
 Parent index: [Client](../!INDEX.md)

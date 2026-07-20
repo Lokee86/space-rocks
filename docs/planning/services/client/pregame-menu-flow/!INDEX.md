@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e81-9de6-7fcbfa4326d7
+document_type: general
+policy_exempt: false
+summary: This index summarizes the pregame menu flow docs.
+---
 # Pregame Menu Flow
 
 This index summarizes the pregame menu flow docs.

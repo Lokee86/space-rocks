@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78ee-a374-69a568dad8ac
+document_type: general
+policy_exempt: false
+summary: This index summarizes the targeting docs.
+---
 # Targeting
 
 This index summarizes the targeting docs.

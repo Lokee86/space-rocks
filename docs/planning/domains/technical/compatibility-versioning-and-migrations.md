@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c66-979c-3547043df28e
+document_type: general
+policy_exempt: false
+summary: This doc plans cross-cutting compatibility, versioning, and migration policy for Space Rocks.
+---
 # Compatibility Versioning And Migrations
 
 Parent index: [Technical Planning](./!INDEX.md)

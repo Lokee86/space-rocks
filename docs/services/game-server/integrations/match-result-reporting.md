@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7dde-9367-c6632ace752f
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server integration boundary that reports authoritative match results into the player-data runtime.
+---
 # Match Result Reporting
 
 Parent index: [Game Server Integrations](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d4f-a3a3-814a3e40cd32
+document_type: general
+policy_exempt: false
+summary: Web service documentation lives here.
+---
 # Web
 
 Parent index: [Services](../!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76d5-a72f-6059ecd52fae
+document_type: general
+policy_exempt: false
+summary: This document describes how the Godot client presents pickup entities received from server-authoritative gameplay state.
+---
 # Pickup Presentation
 
 Parent index: [World Sync](./!INDEX.md)

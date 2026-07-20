@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7394-90ed-7a973e007678
+document_type: general
+policy_exempt: false
+summary: This folder mirrors current protocol documentation areas for future protocol planning.
+---
 # Protocol Planning
 
 Parent index: [Planning](../!INDEX.md)

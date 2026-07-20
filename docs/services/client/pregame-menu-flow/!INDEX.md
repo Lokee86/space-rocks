@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76f2-b3de-d74ad55f5ab0
+document_type: general
+policy_exempt: false
+summary: Client pregame menu flow documentation lives here.
+---
 # Pregame Menu Flow
 
 Parent index: [Client](../!INDEX.md)

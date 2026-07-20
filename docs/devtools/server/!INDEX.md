@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7578-be49-cc4f7daaaec0
+document_type: general
+policy_exempt: false
+summary: Server devtools documentation lives here.
+---
 # Server
 
 Parent index: [Devtools](../!INDEX.md)

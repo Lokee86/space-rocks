@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76f4-8e22-65a29146ed9b
+document_type: general
+policy_exempt: false
+summary: Diagnostic-aggregator is a logically independent bounded diagnostic-report service. It is currently co-hosted by the game-server process through the public services/diagnostic-aggregator/hosted package.
+---
 # Diagnostic Aggregator
 
 Parent index: [Services](../!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-771e-b0ed-cfd0238f5788
+document_type: general
+policy_exempt: false
+summary: Game-server service boundary documentation lives here.
+---
 # Game Server
 
 Parent index: [Services](../!INDEX.md)

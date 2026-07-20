@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-776a-8bce-8a44757f27c5
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server executable startup composition and the logging/runtime identity gate. The process hosts game-server, player-data, and the diagnostic-aggregator HTTP surface in one process while keeping...
+---
 # Service Startup
 
 Parent index: [Game Server Process](./!INDEX.md)

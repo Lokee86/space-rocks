@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c3c-ac4e-c21a0e76b0ab
+document_type: general
+policy_exempt: false
+summary: This document describes the Bruno collection used for local API-server smoke testing.
+---
 # Bruno Smoke Test
 
 Parent index: [API Server](./!INDEX.md)

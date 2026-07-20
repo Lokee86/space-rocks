@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7785-b8df-a9f2a9817ec9
+document_type: general
+policy_exempt: false
+summary: This document describes the current technical domain flow for local single-player startup, routing, room creation, gameplay entry, result handoff, and teardown.
+---
 # Local Single-Player Flow
 
 Parent index: [Technical](./!INDEX.md)

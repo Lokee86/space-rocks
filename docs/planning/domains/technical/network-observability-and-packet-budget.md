@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f05-a882-c4053091d08d
+document_type: general
+policy_exempt: false
+summary: This doc plans the network-visibility and packet-budget seam for future growth in gameplay and realtime state delivery.
+---
 # Network Observability And Packet Budget
 Parent index: [Technical Planning](./!INDEX.md)
 

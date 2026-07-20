@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79ea-af41-3ad2a35040fe
+document_type: general
+policy_exempt: false
+summary: This document defines the actionable development sequence for Space Rocks after the documentation and planning overhaul.
+---
 <!-- policy-exempt: roadmap sequencing document -->
 
 # Development Roadmap

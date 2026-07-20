@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-72ac-9fe8-c39de15624e8
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server implementation for asteroid spawning and asteroid variant assignment.
+---
 # Asteroid Spawning And Variants
 
 Parent index: [Game Server Simulation World](./!INDEX.md)

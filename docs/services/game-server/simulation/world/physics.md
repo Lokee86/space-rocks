@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7792-97bd-e64c3f8acc09
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server physics support boundary.
+---
 ## Physics
 
 Parent index: [Game Server Simulation World](./!INDEX.md)

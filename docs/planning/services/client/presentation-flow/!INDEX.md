@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7645-85f4-dbb4f0b77e3b
+document_type: general
+policy_exempt: false
+summary: This index summarizes the presentation flow docs.
+---
 # Presentation Flow
 
 This index summarizes the presentation flow docs.

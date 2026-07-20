@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7351-8f26-10a1b6c924fd
+document_type: general
+policy_exempt: false
+summary: This document describes the current API-server auth and OAuth implementation in services/api-server/.
+---
 # Auth And OAuth
 
 Parent index: [API Server](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f73-b34c-eae4358a4e08
+document_type: general
+policy_exempt: false
+summary: This doc plans operational readiness and technical failure behavior for Space Rocks.
+---
 # Operational Readiness And Failure Modes
 
 Parent index: [Technical Planning](./!INDEX.md)

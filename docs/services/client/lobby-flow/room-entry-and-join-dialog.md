@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73d1-a5b1-a5176a83ca94
+document_type: general
+policy_exempt: false
+summary: This document describes the current client room-entry flow for multiplayer room creation and joining.
+---
 # Room Entry and Join Dialog
 
 Parent index: [Lobby Flow](./!INDEX.md)

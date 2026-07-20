@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f2d-8355-28d717c59f99
+document_type: general
+policy_exempt: false
+summary: Rooms documentation for the game server lives here.
+---
 # Game Server Rooms
 
 Parent index: [Game Server](../!INDEX.md)

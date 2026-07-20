@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7dc7-964c-6a76aa7307cf
+document_type: general
+policy_exempt: false
+summary: This folder mirrors current systems-design documentation areas for future systems-design planning.
+---
 # Systems Design Planning
 
 Parent index: [Planning](../!INDEX.md)

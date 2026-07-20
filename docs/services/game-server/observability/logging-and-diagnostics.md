@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70ee-8da0-4dfdfa6966f6
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server logging and diagnostics boundary. It explains how game-server owners emit canonical structured runtime events, how process-level logging configuration is retained, which diagnostic events belong...
+---
 # Logging And Diagnostics
 
 Parent index: [Game Server Observability](./!INDEX.md)

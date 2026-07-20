@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fb6-8cd5-e3bb4a442a5c
+document_type: general
+policy_exempt: false
+summary: This doc tracks the remaining realtime protocol architecture work after the lane-native P2 cutover.
+---
 # Realtime Protocol Architecture
 Parent index: [Protocol Planning](./!INDEX.md)
 

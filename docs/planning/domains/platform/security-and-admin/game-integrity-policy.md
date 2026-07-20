@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fc6-8d9a-0388d70bee4b
+document_type: general
+policy_exempt: false
+summary: This document plans the future game integrity policy for Space Rocks.
+---
 # Game Integrity Policy
 
 Parent index: [Security And Admin](./!INDEX.md)

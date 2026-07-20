@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7042-821d-eba28766a183
+document_type: general
+policy_exempt: false
+summary: This document describes the client-side asteroid variant presentation slice.
+---
 ## Asteroid Variant Presentation
 
 Parent index: [World Sync](./!INDEX.md)

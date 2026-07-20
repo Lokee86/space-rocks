@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7015-9fb8-ee92cf8310a4
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server radial effects service boundary.
+---
 # Radial Effects
 
 Parent index: [Game Server Simulation Combat](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7557-9cec-09dacf91dfc8
+document_type: general
+policy_exempt: false
+summary: This document defines the authority rules and seam boundaries for Space Rocks devtools.
+---
 # Devtools Authority and Seams
 
 Parent index: [Design](./!INDEX.md)

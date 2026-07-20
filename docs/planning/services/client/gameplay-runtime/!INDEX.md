@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7413-9f1c-0923abd1aeff
+document_type: general
+policy_exempt: false
+summary: This index summarizes the gameplay runtime docs.
+---
 # Gameplay Runtime
 
 This index summarizes the gameplay runtime docs.

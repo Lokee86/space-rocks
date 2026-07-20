@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7256-95de-031465ece0ef
+document_type: general
+policy_exempt: false
+summary: This document describes the client viewport config flow owned by the app-shell/session boundary.
+---
 # Client Viewport Config Flow
 
 Parent index: [App Shell And Session](./!INDEX.md)

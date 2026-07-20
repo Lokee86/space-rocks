@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-793b-b8e4-d7bb5156b1c2
+document_type: general
+policy_exempt: false
+summary: This doc guides safe edits to the Go game server.
+---
 # Server Editing
 Parent index: [Agent](./!INDEX.md)
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ea0-9b42-7ad7091aca9c
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server collision-to-damage flow.
+---
 # Collision To Damage Flow
 
 Parent index: [Game Server Simulation Combat](./!INDEX.md)

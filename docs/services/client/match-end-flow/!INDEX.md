@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-77e8-a620-4155ba540ea7
+document_type: general
+policy_exempt: false
+summary: This folder owns client match-end orchestration and match-results presentation documentation.
+---
 # Match End Flow
 
 Parent index: [Client](../!INDEX.md)

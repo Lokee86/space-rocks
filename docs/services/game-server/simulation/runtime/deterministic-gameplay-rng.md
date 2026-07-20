@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ba4-806e-ab5be9611826
+document_type: general
+policy_exempt: false
+summary: This document describes the authoritative game-server runtime RNG seam used for gameplay randomness.
+---
 # Deterministic Gameplay RNG Runtime
 
 Parent index: [Game Server Simulation Runtime](./!INDEX.md)

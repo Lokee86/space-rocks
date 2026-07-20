@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7042-9bf6-96b26ec555e7
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server integration with API-server bearer-token verification.
+---
 # Auth Verifier Integration
 
 Parent index: [Game Server Integrations](./!INDEX.md)

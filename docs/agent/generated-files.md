@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a8d-a437-aff9f4afce02
+document_type: general
+policy_exempt: false
+summary: This doc tells agents how to handle generated files safely.
+---
 # Generated Files
 Parent index: [Agent](./!INDEX.md)
 

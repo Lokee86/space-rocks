@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e39-9ff1-24f6b4f7d60f
+document_type: general
+policy_exempt: false
+summary: docs/limits contains factual current limitations, unavailable features, incomplete integrations, hardcoded fallbacks, current constraints, and accepted stable limitations.
+---
 # Current Limits
 
 Parent index: [Documentation](../!INDEX.md)

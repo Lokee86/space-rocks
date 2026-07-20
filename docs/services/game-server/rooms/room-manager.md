@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7842-bb65-1cf4405bd568
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server room manager boundary.
+---
 # Room Manager
 
 Parent index: [Game Server Rooms](./!INDEX.md)

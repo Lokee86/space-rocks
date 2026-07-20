@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74c1-a070-61ba56253172
+document_type: general
+policy_exempt: false
+summary: This document describes how services/player-data receives match-result commands, validates identity and play-mode routing, and commits the result into the correct account, local-profile, or guest sink.
+---
 # Match Result Sinks
 
 Parent index: [Player Data](./!INDEX.md)

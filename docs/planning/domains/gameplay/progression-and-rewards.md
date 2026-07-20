@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-72a6-9b64-3deca47c6e57
+document_type: general
+policy_exempt: false
+summary: This doc plans the durable progression and reward architecture for player advancement, XP, level-derived rank and insignia, earned reward grants, durable unlocks, rare persistent drops, and reward award construction.
+---
 # Progression And Rewards
 Parent index: [Gameplay Planning](./!INDEX.md)
 

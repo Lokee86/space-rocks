@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79f7-b43f-05739d5d10b8
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server simulation boundary for player input routing after networking has already resolved the active game player.
+---
 # Player Input Routing
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

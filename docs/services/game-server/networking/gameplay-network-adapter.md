@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78bf-97cf-dc04120cc5dc
+document_type: general
+policy_exempt: false
+summary: This document covers the game-server inbound gameplay network adapter.
+---
 # Gameplay Network Adapter
 
 Parent index: [Game Server Networking](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-729a-98e5-0145cf6b3a91
+document_type: general
+policy_exempt: false
+summary: This document describes the client implementation responsibility for pregame mode presentation and menu action routing.
+---
 ## Pregame Mode And Actions
 
 Parent index: [Pregame Menu Flow](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7647-9062-6bfc664aa9da
+document_type: general
+policy_exempt: false
+summary: Targeting documentation for the game server lives here.
+---
 # Game Server Simulation Targeting
 
 Parent index: [Game Server Simulation](../!INDEX.md)

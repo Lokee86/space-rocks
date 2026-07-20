@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7040-8898-6191656246a2
+document_type: general
+policy_exempt: false
+summary: This document describes the permitted co-hosting arrangement in which the logically independent player-data service HTTP surface is mounted inside the game-server process.
+---
 # Player Data HTTP Hosting
 
 Parent index: [Game Server Integrations](./!INDEX.md)

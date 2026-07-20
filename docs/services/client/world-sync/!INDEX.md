@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ee6-85c8-43c85dec8a87
+document_type: general
+policy_exempt: false
+summary: Client world sync documentation lives here.
+---
 # World Sync
 
 Parent index: [Client](../!INDEX.md)

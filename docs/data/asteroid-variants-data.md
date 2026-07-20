@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-734d-8b19-64d118e54e0f
+document_type: general
+policy_exempt: false
+summary: This document describes the asteroid variant source data, the generated or source-derived outputs that consume it, and the validation expectations that keep the client and game server aligned on asteroid variant meaning.
+---
 ## Asteroid Variants Data
 
 Parent index: [Data](./!INDEX.md)

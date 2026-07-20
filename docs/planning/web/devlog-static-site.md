@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fee-831d-40ffe34f5a71
+document_type: general
+policy_exempt: false
+summary: Future-only planning for remaining devlog static-site improvements.
+---
 # Devlog Static Site
 
 Parent index: [Web](./!INDEX.md)

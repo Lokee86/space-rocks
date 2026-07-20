@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7981-8fb8-01e66ddf9fd9
+document_type: general
+policy_exempt: false
+summary: 'This document describes the server-side debugshapecatalog readout: how reusable collision-shape definitions are built, requested through sr.tooling, correlated, and consumed by the existing client hitbox presentation.'
+---
 # Debug Shape Catalog Output
 
 Parent index: [Server](./!INDEX.md)

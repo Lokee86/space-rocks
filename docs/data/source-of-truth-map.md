@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74e6-a690-bad981f08956
+document_type: general
+policy_exempt: false
+summary: This document maps the current Space Rocks data source-of-truth boundaries.
+---
 ## Source Of Truth Map
 
 Parent index: [Data](./!INDEX.md)

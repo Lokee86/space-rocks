@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7758-a1b6-4588257ea151
+document_type: general
+policy_exempt: false
+summary: This document describes the client implementation responsibility for pregame profile context loading and profile readout display.
+---
 ## Profile Flow
 
 Parent index: [Pregame Menu Flow](./!INDEX.md)

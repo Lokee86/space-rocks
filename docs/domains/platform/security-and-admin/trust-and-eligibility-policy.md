@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70bb-bc79-05d4a3d4fb83
+document_type: general
+policy_exempt: false
+summary: This doc records the current trust and eligibility policy for Space Rocks.
+---
 # Trust And Eligibility Policy
 
 Parent index: [Security And Admin](./!INDEX.md)

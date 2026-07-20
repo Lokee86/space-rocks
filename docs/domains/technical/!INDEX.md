@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f3b-8ea3-4b4fd8d9b5a0
+document_type: general
+policy_exempt: false
+summary: Cross-system technical domain documentation lives here.
+---
 # Technical
 
 Parent index: [Domains](../!INDEX.md)

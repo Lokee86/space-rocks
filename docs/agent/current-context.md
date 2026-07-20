@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-795c-a1ba-4f94bd558403
+document_type: general
+policy_exempt: false
+summary: This file is volatile project memory.
+---
 # Agent Current Context
 Parent index: [Agent](./!INDEX.md)
 

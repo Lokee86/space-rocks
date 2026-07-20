@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75f5-a2d2-096c1f3e1ae2
+document_type: general
+policy_exempt: false
+summary: This document plans the social and community systems domain for Space Rocks.
+---
 # Social And Community Systems
 
 Parent index: [Platform Planning](./!INDEX.md)

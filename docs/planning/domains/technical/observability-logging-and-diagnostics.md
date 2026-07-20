@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75de-8a9c-dfb4e8f30cbf
+document_type: general
+policy_exempt: false
+summary: This document owns remaining future work for observability, logging, and diagnostics. Current contract, emitter, service runtime, and diagnostic-aggregator behavior belongs in current data/service documents linked below.
+---
 # Observability, Logging, And Diagnostics
 
 Parent index: [Technical Planning](./!INDEX.md)

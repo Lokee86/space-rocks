@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7db5-bd14-6a53921ca223
+document_type: general
+policy_exempt: false
+summary: This document describes the current graceful game-server process shutdown boundary, including the HTTP lifecycle, service-owned logging closures, hosted diagnostic-aggregator closure, player-data logging runtime closure, and room cleanup.
+---
 # Service Shutdown
 
 Parent index: [Game Server Process](./!INDEX.md)

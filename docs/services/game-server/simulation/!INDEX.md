@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-767b-9973-d6c1d7d33f3b
+document_type: general
+policy_exempt: false
+summary: Simulation documentation for the game server lives here.
+---
 # Game Server Simulation
 
 Parent index: [Game Server](../!INDEX.md)

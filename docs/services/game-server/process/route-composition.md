@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7423-bcca-f5f45ef33451
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server HTTP route table, hosted diagnostic-report surface, middleware chain, dependency order, and listener/serve boundary.
+---
 # Route Composition
 
 Parent index: [Game Server Process](./!INDEX.md)

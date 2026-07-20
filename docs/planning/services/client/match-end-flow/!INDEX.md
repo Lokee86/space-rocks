@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76d6-ab79-d38dec370cde
+document_type: general
+policy_exempt: false
+summary: This index summarizes the match end flow docs.
+---
 # Match End Flow
 
 This index summarizes the match end flow docs.

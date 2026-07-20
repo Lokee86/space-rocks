@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7655-8c4d-06d04c810fd0
+document_type: general
+policy_exempt: false
+summary: World simulation documentation for the game server lives here.
+---
 # Game Server Simulation World
 
 Parent index: [Game Server Simulation](../!INDEX.md)

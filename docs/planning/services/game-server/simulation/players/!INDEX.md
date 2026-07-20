@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e87-a69f-f24b4163e7ed
+document_type: general
+policy_exempt: false
+summary: This index summarizes the players docs.
+---
 # Players
 
 This index summarizes the players docs.

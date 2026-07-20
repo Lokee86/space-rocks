@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75e1-909c-d8706b356e3c
+document_type: general
+policy_exempt: false
+summary: This doc guides safe agent edits to Godot scenes, scripts, imports, and tests.
+---
 # Godot Editing
 Parent index: [Agent](./!INDEX.md)
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7315-bb2f-7f9cf1c3ab5d
+document_type: general
+policy_exempt: false
+summary: This document describes the client diagnostic surface for observing bounded long-match replay and deletion stores.
+---
 # Long-Match Store Diagnostics
 
 Parent index: [Client](./!INDEX.md)

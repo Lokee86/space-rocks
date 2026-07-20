@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a81-b9f9-b305c0731994
+document_type: general
+policy_exempt: false
+summary: This doc plans the durable inventory and hangar architecture for player-held ships, weapons, modules, hardwired equipment, unlock/access state, acquisition state, and the handoff into build eligibility.
+---
 # Inventory And Hangar
 Parent index: [Gameplay Planning](./!INDEX.md)
 

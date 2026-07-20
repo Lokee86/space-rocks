@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-77a6-a3eb-9d976f729a40
+document_type: general
+policy_exempt: false
+summary: This document describes the Godot client gameplay audio flow.
+---
 # Gameplay Audio Flow
 
 Parent index: [Gameplay Event Presentation](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7183-a4fa-e5b6e126a78a
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server boundary for live telemetry packets carried by the dedicated reliable sr.tooling WebRTC DataChannel.
+---
 # Telemetry And Packet Routing
 
 Parent index: [Game Server Networking](./!INDEX.md)

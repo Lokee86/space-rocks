@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7964-a7e0-48cd541c0e56
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server service boundary for authoritative weapon firing and projectile creation.
+---
 # Weapons And Projectile Fire
 
 Parent index: [Game Server Simulation Combat](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7360-95fe-ce1e96eb041d
+document_type: general
+policy_exempt: false
+summary: This document describes the conceptual damage model for Space Rocks combat.
+---
 # Damage
 
 Parent index: [Combat](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fd0-bea7-daa44427e576
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for lives, death, elimination, and respawn semantics.
+---
 # Lives, Death, Elimination, And Respawn
 Parent index: [Gameplay Planning](./!INDEX.md)
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75ca-a2c0-5b2340cb21e8
+document_type: general
+policy_exempt: false
+summary: This doc provides a short, stable orientation layer for new agent sessions.
+---
 # Session Primer
 Parent index: [Agent](./!INDEX.md)
 

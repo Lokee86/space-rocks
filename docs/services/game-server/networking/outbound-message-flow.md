@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-71cf-b081-e875da77284d
+document_type: general
+policy_exempt: false
+summary: This document describes per-session outbound delivery for the game server, covering both queued WebSocket responses and active realtime WebRTC lane delivery.
+---
 # Outbound Packet Routing
 
 Parent index: [Game Server Networking](./!INDEX.md)

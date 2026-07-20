@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7249-b36c-1a66c47768d5
+document_type: general
+policy_exempt: false
+summary: This note records the current state of the isolated P4 Player Experience Foundation implementation while P3 work continues on main.
+---
 # P4 Team Contracts Worktree Status
 
 Parent index: [Planning](./!INDEX.md)

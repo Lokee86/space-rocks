@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7310-b9b0-856c145fa91d
+document_type: general
+policy_exempt: false
+summary: This doc plans the match-content composition layer for Space Rocks.
+---
 # Levels, Missions, And Content Structure
 Parent index: [Gameplay Planning](./!INDEX.md)
 

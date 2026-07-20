@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-729b-a436-c2c5cb63ba27
+document_type: general
+policy_exempt: false
+summary: This document describes the current Space Rocks devlog static-site implementation.
+---
 # Devlog Static Site
 
 Parent index: [Web](./!INDEX.md)

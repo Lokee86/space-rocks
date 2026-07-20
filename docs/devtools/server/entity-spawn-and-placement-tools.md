@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7df4-8f31-6d4877407395
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side devtools entity spawn and placement command handling.
+---
 # Entity Spawn And Placement Tools
 
 Parent index: [Server](./!INDEX.md)

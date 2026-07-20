@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7465-8b09-bce729abb38e
+document_type: general
+policy_exempt: false
+summary: This document describes the current client observability architecture. The canonical envelope is the primary record model; ClientLogger is the compatibility-facing facade around the canonical emitter and the local rolling writer.
+---
 # Client Logging
 
 Parent index: [Client](./!INDEX.md)

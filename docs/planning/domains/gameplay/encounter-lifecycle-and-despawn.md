@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-787f-9e9c-12194dae1781
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for non-player encounter retirement, despawn, and lifecycle evaluation after spawn.
+---
 # Encounter Lifecycle And Despawn
 Parent index: [Gameplay Planning](./!INDEX.md)
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7512-8e38-c0e2e840f1ca
+document_type: general
+policy_exempt: false
+summary: This document describes the current client HUD and gameplay-session UI implementation.
+---
 # HUD And Gameplay UI
 
 Parent index: [Client](./!INDEX.md)

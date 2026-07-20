@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-792e-b7fb-ee9ef9b85d4a
+document_type: general
+policy_exempt: false
+summary: "\uFEFF\x23\x20\x50\x6C\x61\x79\x65\x72\x20\x43\x61\x6D\x65\x72\x61\x20\x56\x69\x65\x77\x20\x53\x74\x61\x74\x65"
+---
 ﻿# Player Camera View State
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

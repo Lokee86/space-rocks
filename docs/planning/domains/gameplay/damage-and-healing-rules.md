@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fdb-bba6-a62b01ca82d9
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for damage and healing rules.
+---
 # Damage And Healing Rules
 Parent index: [Gameplay Planning](./!INDEX.md)
 

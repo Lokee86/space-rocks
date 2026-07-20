@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-71a7-b28a-55c086618f09
+document_type: general
+policy_exempt: false
+summary: This document describes the cross-system player-data routing flow for Space Rocks.
+---
 # Player Data Routing Flow
 
 Parent index: [Platform](./!INDEX.md)

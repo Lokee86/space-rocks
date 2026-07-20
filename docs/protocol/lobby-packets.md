@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-700d-a29c-f64a6fa6b68e
+document_type: general
+policy_exempt: false
+summary: This document describes the current realtime lobby packet protocol between the Godot client and the Go game server.
+---
 ## Lobby Packets
 
 Parent index: [Protocol](./!INDEX.md)

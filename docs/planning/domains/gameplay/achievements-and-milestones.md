@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-793a-a83c-7c0ffb983972
+document_type: general
+policy_exempt: false
+summary: This doc plans the achievement and milestone seam for long-lived player goals, one-time recognition, threshold progress, live completion feedback, and reward handoff.
+---
 # Achievements And Milestones
 Parent index: [Gameplay Planning](./!INDEX.md)
 

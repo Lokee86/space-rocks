@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74f1-bbeb-8a3e515b16b8
+document_type: general
+policy_exempt: false
+summary: This folder owns client lobby-flow documentation.
+---
 # Lobby Flow
 
 Parent index: [Client](../!INDEX.md)

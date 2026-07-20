@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75b0-ade2-6e881197c5e6
+document_type: general
+policy_exempt: false
+summary: Combat documentation for the game server lives here.
+---
 # Game Server Simulation Combat
 
 Parent index: [Game Server Simulation](../!INDEX.md)

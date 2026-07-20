@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73ed-bcf2-fa38866c9462
+document_type: general
+policy_exempt: false
+summary: Generated protocol references derived from source-of-truth data.
+---
 # Generated
 
 Parent index: [Protocol](../!INDEX.md)

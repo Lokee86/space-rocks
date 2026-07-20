@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7572-b1a6-acbfce9611aa
+document_type: general
+policy_exempt: false
+summary: This index summarizes the generated docs.
+---
 # Generated
 
 This index summarizes the generated docs.

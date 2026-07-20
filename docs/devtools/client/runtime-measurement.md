@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78a4-9f4f-7abb266ec5e3
+document_type: general
+policy_exempt: false
+summary: This document describes the runtime measurement path used by the Godot client and game server during a live gameplay room.
+---
 ## Runtime Measurement
 
 Parent index: [Client](./!INDEX.md)

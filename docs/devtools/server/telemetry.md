@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-71ab-91fc-e8b3885ee171
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server runtime telemetry and developer readout surfaces delivered through the dedicated reliable sr.tooling WebRTC DataChannel.
+---
 ## Telemetry
 
 Parent index: [Server](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74e0-8c96-47331bb28c6e
+document_type: general
+policy_exempt: false
+summary: This doc guides safe agent edits to the Godot client.
+---
 # Client Editing
 Parent index: [Agent](./!INDEX.md)
 

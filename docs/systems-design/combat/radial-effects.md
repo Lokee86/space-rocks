@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7706-8d9d-46acac52d265
+document_type: general
+policy_exempt: false
+summary: This document describes the systems-design model for radial effects in Space Rocks combat.
+---
 # Radial Effects
 
 Parent index: [Combat](./!INDEX.md)

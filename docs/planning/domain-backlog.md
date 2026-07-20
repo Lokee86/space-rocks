@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e7f-be3f-69231a792bfe
+document_type: general
+policy_exempt: false
+summary: This file tracks unscheduled, cross-domain, or not-yet-routed planning items.
+---
 # Domain Backlog
 Parent index: [Planning](./!INDEX.md)
 

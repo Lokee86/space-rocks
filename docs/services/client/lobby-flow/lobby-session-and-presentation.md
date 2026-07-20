@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a27-ac5e-78cd11167b98
+document_type: general
+policy_exempt: false
+summary: This document describes the current client lobby session and multiplayer lobby presentation implementation.
+---
 # Lobby Session and Presentation
 
 Parent index: [Lobby Flow](./!INDEX.md)

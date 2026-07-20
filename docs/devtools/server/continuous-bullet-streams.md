@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c32-b25f-ffa5b9bd706c
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side devtools continuous bullet stream implementation.
+---
 # Continuous Bullet Streams
 
 Parent index: [Server](./!INDEX.md)

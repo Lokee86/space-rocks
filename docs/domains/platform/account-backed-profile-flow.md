@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7832-8b88-cd9feea961d7
+document_type: general
+policy_exempt: false
+summary: This doc describes the current account backend flow for Space Rocks.
+---
 # Account Backed Profile Flow
 
 Parent index: [Platform](./!INDEX.md)

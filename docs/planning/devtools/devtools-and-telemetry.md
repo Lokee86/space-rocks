@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7434-84a7-f559e1365e23
+document_type: general
+policy_exempt: false
+summary: This document plans the completed Space Rocks developer tooling, admin tooling, telemetry, runtime diagnostics, durable-state test tooling, content tooling, and release-verification support.
+---
 # Devtools Completed Suite
 
 Parent index: [Devtools Planning](./!INDEX.md)

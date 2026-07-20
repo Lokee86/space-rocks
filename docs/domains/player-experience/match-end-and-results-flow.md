@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7981-b569-b7f2a57540fe
+document_type: general
+policy_exempt: false
+summary: This document describes the current cross-system match end and results flow for Space Rocks.
+---
 # Match End And Results Flow
 
 Parent index: [Player Experience](./!INDEX.md)

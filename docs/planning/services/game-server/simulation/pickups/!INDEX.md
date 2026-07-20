@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c47-b34b-7714d85a0439
+document_type: general
+policy_exempt: false
+summary: This index summarizes the pickups docs.
+---
 # Pickups
 
 This index summarizes the pickups docs.

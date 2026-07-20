@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7eba-acf1-77d5507d5932
+document_type: general
+policy_exempt: false
+summary: This document describes the conceptual relationship between spawning and world space in Space Rocks.
+---
 # Spawning And Space
 
 Parent index: [World](./!INDEX.md)

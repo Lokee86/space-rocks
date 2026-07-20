@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d90-a807-1f6ceed5bf2a
+document_type: general
+policy_exempt: false
+summary: This index summarizes the client docs.
+---
 # Client
 
 This index summarizes the client docs.

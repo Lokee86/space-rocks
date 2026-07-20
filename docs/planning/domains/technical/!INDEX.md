@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f6e-b8d0-c79310aa5bfc
+document_type: general
+policy_exempt: false
+summary: This folder owns cross-cutting future technical planning for runtime performance, packet budget, observability, verification gates, build/release environments, compatibility, migrations, operational readiness, and related technical work.
+---
 # Technical Planning
 
 Parent index: [Domains](../!INDEX.md)

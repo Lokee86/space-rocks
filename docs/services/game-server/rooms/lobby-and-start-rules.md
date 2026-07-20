@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fa4-9bac-4b1fe523d69b
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server room rules for lobby admission, ready state, multiplayer start, single-player start, and return-to-lobby readiness reset.
+---
 # Lobby And Start Rules
 
 Parent index: [Game Server Rooms](./!INDEX.md)

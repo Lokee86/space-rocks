@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-750c-9f22-7d60e27d7f82
+document_type: general
+policy_exempt: false
+summary: This doc guides agents editing Space Rocks documentation under the new documentation structure.
+---
 # Documentation Editing
 Parent index: [Agent](./!INDEX.md)
 

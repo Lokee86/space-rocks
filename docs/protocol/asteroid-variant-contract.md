@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78b8-a48f-6d0bde1848a7
+document_type: general
+policy_exempt: false
+summary: This document describes the asteroid variant protocol contract between the game server and the client.
+---
 ## Asteroid Variant Contract
 
 Parent index: [Protocol](./!INDEX.md)

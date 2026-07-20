@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-711c-ab9e-81b3771987f6
+document_type: general
+policy_exempt: false
+summary: Observability is an active tools/datasync source-of-truth domain. The editable contract is the TOML source set below. data-sync validates the cross-file model and generates all language/runtime metadata and the generated contract...
+---
 # Observability Contract
 
 Parent index: [Data](./!INDEX.md)

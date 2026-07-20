@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f33-ae3f-8ac2d90b1963
+document_type: general
+policy_exempt: false
+summary: This document describes the combat systems-design model for pickups.
+---
 ## Pickups
 
 Parent index: [Combat](./!INDEX.md)

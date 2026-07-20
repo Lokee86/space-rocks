@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e46-b496-bd7a5734eda7
+document_type: general
+policy_exempt: false
+summary: This document describes how the Godot client sends outbound realtime packets to the game server.
+---
 # Outbound Packet Sending
 
 Parent index: [Networking Flow](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c3e-a2a8-9de6d9344154
+document_type: general
+policy_exempt: false
+summary: This document describes the current player-data HTTP protocol surfaces.
+---
 # Player Data HTTP API
 
 Parent index: [Protocol](./!INDEX.md)

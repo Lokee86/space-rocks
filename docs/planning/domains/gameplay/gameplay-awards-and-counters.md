@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-793d-afa9-447df935de72
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for gameplay awards and counters.
+---
 # Gameplay Awards And Counters
 Parent index: [Gameplay Planning](./!INDEX.md)
 

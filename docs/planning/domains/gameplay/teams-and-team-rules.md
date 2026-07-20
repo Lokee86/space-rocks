@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79bd-9c74-9246b3c0336b
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for team structure and team-rule semantics.
+---
 # Teams And Team Rules
 Parent index: [Gameplay Planning](./!INDEX.md)
 

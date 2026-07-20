@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-707b-93b5-f009411b846a
+document_type: general
+policy_exempt: false
+summary: This index summarizes the security and admin docs.
+---
 # Security And Admin
 
 This index summarizes the security and admin docs.

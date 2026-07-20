@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-71df-8d63-571897b5dd4b
+document_type: general
+policy_exempt: false
+summary: This document defines the documentation policies for Space Rocks.
+---
 ## Documentation Policies
 Parent index: [Documentation](./!INDEX.md)
 

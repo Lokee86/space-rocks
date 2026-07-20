@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7677-83c0-662d1954ad12
+document_type: general
+policy_exempt: false
+summary: This document defines the systems-design model for ship entities in Space Rocks.
+---
 # Ships
 
 Parent index: [Entities](./!INDEX.md)

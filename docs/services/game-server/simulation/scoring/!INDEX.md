@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7fb8-8287-4676589c833b
+document_type: general
+policy_exempt: false
+summary: This index summarizes the scoring docs.
+---
 # Scoring
 
 This index summarizes the scoring docs.

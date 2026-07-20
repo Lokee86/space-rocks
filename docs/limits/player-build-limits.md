@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7de6-a90c-eb87be6faa55
+document_type: general
+policy_exempt: false
+summary: This file captures the active constraints on player builds, ship variants, loadouts, weapons, shields, and presentation.
+---
 # Player Build Limits
 Parent index: [Current Limits](./!INDEX.md)
 

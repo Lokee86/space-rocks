@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d90-a636-1b2cc379c3e2
+document_type: general
+policy_exempt: false
+summary: This document describes the current client room-session state implementation.
+---
 # Room Session State
 
 Parent index: [App Shell And Session](./!INDEX.md)

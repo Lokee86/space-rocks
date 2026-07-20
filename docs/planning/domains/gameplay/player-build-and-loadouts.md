@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ab2-8b17-827d11fbd5fd
+document_type: general
+policy_exempt: false
+summary: This doc plans the player-build seam for ship variants, weapon-point rules, module slots, loadout selection, and match-start build resolution.
+---
 # Player Build And Loadouts
 Parent index: [Gameplay Planning](./!INDEX.md)
 

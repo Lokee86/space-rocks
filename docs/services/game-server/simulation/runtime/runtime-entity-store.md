@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d3c-b31e-8e653198466e
+document_type: general
+policy_exempt: false
+summary: This document describes the in-memory entity store used by the game-server simulation runtime.
+---
 # Runtime Entity Store
 
 Parent index: [Game Server Simulation Runtime](./!INDEX.md)

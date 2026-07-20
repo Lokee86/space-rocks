@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73d6-b904-dff921154223
+document_type: general
+policy_exempt: false
+summary: This document describes the current CRT-style media frame implementation used by the Space Rocks web site.
+---
 # CRT Media Frame
 
 Parent index: [Web](./!INDEX.md)

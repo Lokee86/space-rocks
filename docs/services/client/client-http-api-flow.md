@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b5c-9a03-a73d498aae80
+document_type: general
+policy_exempt: false
+summary: This document describes the client implementation responsibility for shared HTTP API consumption.
+---
 ## Client HTTP API Flow
 
 Parent index: [Client](./!INDEX.md)

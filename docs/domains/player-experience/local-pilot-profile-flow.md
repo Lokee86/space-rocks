@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7715-9901-9f93f6a6c344
+document_type: general
+policy_exempt: false
+summary: This document describes the current cross-system player-experience flow for local pilot selection, Guest fallback, local profile management, profile readout, and single-player profile handoff.
+---
 # Local Pilot Profile Flow
 
 Parent index: [Player Experience](./!INDEX.md)

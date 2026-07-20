@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7914-b787-e22fb598884c
+document_type: general
+policy_exempt: false
+summary: This index summarizes the combat docs.
+---
 # Combat
 
 This index summarizes the combat docs.

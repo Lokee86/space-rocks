@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f49-b0ec-b97a41ba70af
+document_type: general
+policy_exempt: false
+summary: This document describes canonical target state in the game-server simulation.
+---
 ## Canonical Target State
 
 Parent index: [Game Server Simulation Targeting](./!INDEX.md)

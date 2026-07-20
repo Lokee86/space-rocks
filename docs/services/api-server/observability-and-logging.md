@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d90-b7ea-c206094c832b
+document_type: general
+policy_exempt: false
+summary: The API server owns a canonical observability emitter boundary for request, auth, player-stat, and match-result workflows. It consumes generated Ruby contract metadata and writes bounded local rolling JSONL without sharing active...
+---
 # API Server Observability And Logging
 
 Parent index: [API Server](./!INDEX.md)

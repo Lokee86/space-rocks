@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-77c4-9779-8299209f5598
+document_type: general
+policy_exempt: false
+summary: This folder contains future platform planning for account, identity, matchmaking, social, persistence, rankings, and related platform-facing systems.
+---
 # Platform Planning
 
 Parent index: [Domains](../!INDEX.md)

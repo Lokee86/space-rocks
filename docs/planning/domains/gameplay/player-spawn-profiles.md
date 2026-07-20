@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78cd-b17b-767e1dc78070
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for player-spawn profile selection, placement, safety, and spawn presentation handoffs.
+---
 # Player Spawn Profiles
 Parent index: [Gameplay Planning](./!INDEX.md)
 

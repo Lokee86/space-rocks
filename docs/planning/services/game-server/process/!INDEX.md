@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7333-beeb-b2f0e467cda3
+document_type: general
+policy_exempt: false
+summary: This index summarizes the process docs.
+---
 # Process
 
 This index summarizes the process docs.

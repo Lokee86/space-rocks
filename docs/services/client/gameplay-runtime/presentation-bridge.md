@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74ba-91cc-f8938cfaee33
+document_type: general
+policy_exempt: false
+summary: PresentationBridge owns the boundary between refreshed realtime gameplay state and frame-coalesced client presentation.
+---
 # Presentation Bridge
 
 Parent index: [Gameplay Runtime](./!INDEX.md)

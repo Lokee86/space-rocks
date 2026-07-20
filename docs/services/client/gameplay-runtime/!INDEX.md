@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70b6-8566-2d94e5417e63
+document_type: general
+policy_exempt: false
+summary: Client gameplay runtime documentation lives here.
+---
 # Gameplay Runtime
 
 Parent index: [Client](../!INDEX.md)

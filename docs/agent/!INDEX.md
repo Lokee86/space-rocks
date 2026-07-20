@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e09-91de-8f7a89b7bdfa
+document_type: general
+policy_exempt: false
+summary: This index summarizes the agent docs.
+---
 # Agent
 
 This index summarizes the agent docs.

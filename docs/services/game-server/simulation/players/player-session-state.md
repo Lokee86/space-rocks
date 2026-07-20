@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b6c-b924-f8759f221320
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server simulation’s per-player session state.
+---
 ## Player Session State
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

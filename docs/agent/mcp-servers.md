@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-768b-9f6c-c2f483d3df25
+document_type: general
+policy_exempt: false
+summary: The MCP server is maintained as its own sibling repository rather than inside Space Rocks.
+---
 # Workspace MCP
 Parent index: [Agent](./!INDEX.md)
 

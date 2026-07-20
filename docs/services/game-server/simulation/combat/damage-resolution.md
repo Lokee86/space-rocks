@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b96-873a-e8c5be32931b
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server damage resolution service boundary.
+---
 # Damage Resolution
 
 Parent index: [Game Server Simulation Combat](./!INDEX.md)

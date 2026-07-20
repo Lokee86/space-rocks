@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-72c5-9204-b0f756654f1f
+document_type: general
+policy_exempt: false
+summary: This document owns the cross-service canonical-emitter boundary. The observability contract is authored under shared/contracts/observability/; data-sync validates it and generates the language metadata consumed by runtime emitters....
+---
 # Canonical Event Emission
 
 Parent index: [Observability](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-750d-b7c6-853d94e157de
+document_type: general
+policy_exempt: false
+summary: Runtime documentation for the game server simulation lives here.
+---
 # Game Server Simulation Runtime
 
 Parent index: [Game Server Simulation](../!INDEX.md)

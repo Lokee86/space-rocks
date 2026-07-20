@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7231-b56a-df2dc67ed42f
+document_type: general
+policy_exempt: false
+summary: Data documentation covers source-of-truth material, generated outputs, schemas, persistence contracts, and data pipelines.
+---
 # Data
 
 Parent index: [Documentation](../!INDEX.md)

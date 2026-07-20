@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76dd-89f7-43542271711d
+document_type: general
+policy_exempt: false
+summary: This index summarizes the spectate flow docs.
+---
 # Spectate Flow
 
 This index summarizes the spectate flow docs.

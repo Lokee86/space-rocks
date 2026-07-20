@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d50-8b8a-c47c8b32b2ac
+document_type: general
+policy_exempt: false
+summary: This index summarizes the gameplay event presentation docs.
+---
 # Gameplay Event Presentation
 
 This index summarizes the gameplay event presentation docs.

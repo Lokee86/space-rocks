@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-77b2-b9d6-688b40830c04
+document_type: general
+policy_exempt: false
+summary: This document describes the player-data service implementation responsibility for the local profiles HTTP API.
+---
 ## Local Profiles HTTP API
 
 Parent index: [Player Data](./!INDEX.md)

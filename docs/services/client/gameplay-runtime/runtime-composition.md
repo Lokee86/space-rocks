@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7711-b660-a71ca9072d43
+document_type: general
+policy_exempt: false
+summary: This document describes the current client gameplay runtime composition.
+---
 # Runtime Composition
 
 Parent index: [Gameplay Runtime](./!INDEX.md)

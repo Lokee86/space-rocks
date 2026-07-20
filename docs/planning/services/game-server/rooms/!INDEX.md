@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-72b4-af87-46322114686e
+document_type: general
+policy_exempt: false
+summary: This index summarizes the rooms docs.
+---
 # Rooms
 
 This index summarizes the rooms docs.

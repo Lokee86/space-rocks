@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7783-903b-81bb1a9107c7
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server scoring policy and award boundary.
+---
 # Scoring Policy And Awards
 
 Parent index: [Scoring](./!INDEX.md)

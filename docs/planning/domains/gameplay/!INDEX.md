@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d8f-8bc3-d8a43f1f1de6
+document_type: general
+policy_exempt: false
+summary: This folder contains future gameplay and player-experience planning, not current implementation authority.
+---
 # Gameplay Planning
 
 Parent index: [Domains](../!INDEX.md)

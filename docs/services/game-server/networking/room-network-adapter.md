@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-73db-992d-ab27847b7887
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server networking adapter that turns room/lobby WebSocket packets into room-domain operations and turns room-domain results back into room snapshot or room error packets.
+---
 # Room Network Adapter
 
 Parent index: [Game Server Networking](./!INDEX.md)

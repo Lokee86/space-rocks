@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-75d4-bf60-ee58224cf1a2
+document_type: general
+policy_exempt: false
+summary: This document plans the abuse and enforcement admin domain for Space Rocks.
+---
 # Abuse And Enforcement Admin
 
 Parent index: [Security And Admin](./!INDEX.md)

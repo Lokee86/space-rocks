@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7465-905f-293abe64c9fd
+document_type: general
+policy_exempt: false
+summary: This document describes the API-server implementation responsibility for authenticated-account player stats and match-result persistence.
+---
 # Player Stats And Match Results
 
 Parent index: [API Server](./!INDEX.md)

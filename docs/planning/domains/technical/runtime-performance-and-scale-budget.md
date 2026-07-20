@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7483-b2fd-ff87e5d8c898
+document_type: general
+policy_exempt: false
+summary: This doc plans runtime performance and scale-budget policy for Space Rocks.
+---
 # Runtime Performance And Scale Budget
 
 Parent index: [Technical Planning](./!INDEX.md)

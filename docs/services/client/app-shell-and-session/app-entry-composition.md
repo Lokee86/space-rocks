@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7608-95dc-2a009add623b
+document_type: general
+policy_exempt: false
+summary: This document describes the client app-entry composition boundary implemented by client/scenes/game.tscn and client/scripts/shell/appentry.gd.
+---
 # App Entry Composition
 
 Parent index: [App Shell And Session](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7deb-a96d-3576d54c009e
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for match participation and joining semantics.
+---
 # Participation And Joining
 Parent index: [Gameplay Planning](./!INDEX.md)
 

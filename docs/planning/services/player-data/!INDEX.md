@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7d1f-9a58-37c8d7d4cb35
+document_type: general
+policy_exempt: false
+summary: This index summarizes the player data docs.
+---
 # Player Data
 
 This index summarizes the player data docs.

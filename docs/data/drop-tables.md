@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74ad-8c3c-e78d7da9721f
+document_type: general
+policy_exempt: false
+summary: "\uFEFF\x23\x20\x44\x72\x6F\x70\x20\x54\x61\x62\x6C\x65\x73"
+---
 ﻿# Drop Tables
 
 Parent index: [Data](./!INDEX.md)

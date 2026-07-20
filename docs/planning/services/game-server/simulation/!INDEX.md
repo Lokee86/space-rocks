@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7609-81be-74849888ef2e
+document_type: general
+policy_exempt: false
+summary: This index summarizes the simulation docs.
+---
 # Simulation
 
 This index summarizes the simulation docs.

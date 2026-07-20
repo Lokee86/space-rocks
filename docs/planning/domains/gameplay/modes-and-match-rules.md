@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79e9-b323-c2278366b7a5
+document_type: general
+policy_exempt: false
+summary: This doc plans the match-rule seam for turning a selected mode into a resolved set of authoritative match rules.
+---
 # Modes And Match Rules
 Parent index: [Gameplay Planning](./!INDEX.md)
 

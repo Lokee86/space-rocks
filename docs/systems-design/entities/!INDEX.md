@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-744c-839a-84a57212638d
+document_type: general
+policy_exempt: false
+summary: Entities systems-design documentation lives here.
+---
 # Entities
 
 Parent index: [Systems Design](../!INDEX.md)

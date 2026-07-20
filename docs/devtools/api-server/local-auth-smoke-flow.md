@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-725a-ac95-e0d9d4772624
+document_type: general
+policy_exempt: false
+summary: This document describes the local development smoke flow for API-server authentication.
+---
 # Local Auth Smoke Flow
 
 Parent index: [API Server](./!INDEX.md)

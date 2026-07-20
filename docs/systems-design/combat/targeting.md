@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c24-8274-17bd2e3465c6
+document_type: general
+policy_exempt: false
+summary: This document defines the gameplay targeting model for Space Rocks combat and interaction systems.
+---
 ## Targeting
 
 Parent index: [Combat](./!INDEX.md)

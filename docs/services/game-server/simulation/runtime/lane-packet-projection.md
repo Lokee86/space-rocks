@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ecc-aec2-5ef861a7a273
+document_type: general
+policy_exempt: false
+summary: This document describes the active game-server lane-native realtime projection path for realtime gameplay presentation.
+---
 # Lane Packet Projection
 
 Parent index: [Game Server Simulation Runtime](./!INDEX.md)

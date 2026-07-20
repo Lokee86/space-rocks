@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-755d-a4e3-d4299e0609b1
+document_type: general
+policy_exempt: false
+summary: This doc owns prompt/report expectations for implementation agents.
+---
 # Prompting And Reporting
 Parent index: [Agent](./!INDEX.md)
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76cf-aae7-e93f1b9f86c8
+document_type: general
+policy_exempt: false
+summary: 'This document describes the client devtools window: the Godot debug window used to inspect live gameplay state, send server-authoritative debug commands, select debug targets, request placement-based debug spawns, and toggle client-only...'
+---
 # Devtools Window
 
 Parent index: [Client](./!INDEX.md)

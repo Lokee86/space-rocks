@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b0d-b714-1ac2b9a2fd05
+document_type: general
+policy_exempt: false
+summary: This document maps current API product surfaces for Space Rocks.
+---
 <!-- documentation-policy-exempt: current API surface map; intentionally omits full protocol doc shape because adding policy sections would blur its purpose. -->
 # API Product Surface
 

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ee2-bd29-70445fbcd9e1
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server player pause and suspension boundary.
+---
 # Player Pause And Suspension
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

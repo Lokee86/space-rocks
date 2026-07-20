@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79c1-9c3c-0062f0287c9a
+document_type: general
+policy_exempt: false
+summary: This document describes the current internal API surface implemented by services/api-server.
+---
 ## Internal API Surface
 
 Parent index: [API Server](./!INDEX.md)

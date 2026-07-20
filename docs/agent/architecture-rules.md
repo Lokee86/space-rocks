@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b69-9108-1c0766b9d878
+document_type: general
+policy_exempt: false
+summary: This document defines mandatory architecture and seam-editing guardrails for agents changing Space Rocks code, structure, or ownership boundaries.
+---
 # Architecture and Seam Editing Rules
 Parent index: [Agent](./!INDEX.md)
 

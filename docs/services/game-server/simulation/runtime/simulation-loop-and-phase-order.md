@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79bb-8304-b92bd7a5e6aa
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server simulation loop and phase-order boundary.
+---
 # Simulation Loop And Phase Order
 
 Parent index: [Game Server Simulation Runtime](./!INDEX.md)

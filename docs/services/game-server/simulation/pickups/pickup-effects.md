@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-74ca-a20a-7a5395c204e4
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server service boundary for pickup effect resolution and application.
+---
 # Pickup Effects
 
 Parent index: [Game Server Simulation Pickups](./!INDEX.md)

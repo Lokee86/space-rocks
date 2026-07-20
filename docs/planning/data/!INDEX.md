@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ede-afc7-aa7bd29b019a
+document_type: general
+policy_exempt: false
+summary: This folder mirrors current data documentation areas for future data planning.
+---
 # Data Planning
 
 Parent index: [Planning](../!INDEX.md)

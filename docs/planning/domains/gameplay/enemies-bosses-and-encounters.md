@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7add-9880-56cda71dc96b
+document_type: general
+policy_exempt: false
+summary: This doc plans the authored encounter and player-hazard content seam for asteroid pressure, enemy archetypes, enemy AI, enemy loadouts, boss phases, waves, encounter profiles, and encounter sequencing.
+---
 # Enemies, Bosses, And Encounters
 Parent index: [Gameplay Planning](./!INDEX.md)
 

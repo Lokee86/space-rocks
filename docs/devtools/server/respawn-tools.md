@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78da-a579-4f65620f4d09
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side devtools respawn command.
+---
 # Respawn Tools
 
 Parent index: [Server](./!INDEX.md)

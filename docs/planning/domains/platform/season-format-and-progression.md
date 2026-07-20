@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c22-a298-3c536708fa63
+document_type: general
+policy_exempt: false
+summary: This document plans the season-format and campaign-progression domain for Space Rocks.
+---
 # Season Format And Progression
 
 Parent index: [Platform Planning](./!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-711b-bfe7-6e8aba218465
+document_type: general
+policy_exempt: false
+summary: This document defines the systems-design model for projectile entities in Space Rocks.
+---
 # Projectiles
 
 Parent index: [Entities](./!INDEX.md)

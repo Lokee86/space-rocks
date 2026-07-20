@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b85-ad67-dc73cf0d5461
+document_type: general
+policy_exempt: false
+summary: This document describes the game-server networking auth-routing boundary.
+---
 # Auth Routing
 
 Parent index: [Game Server Networking](./!INDEX.md)

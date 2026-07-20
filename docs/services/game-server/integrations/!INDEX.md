@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76a1-b162-19158a904bfd
+document_type: general
+policy_exempt: false
+summary: Integration documentation for the game server lives here.
+---
 # Game Server Integrations
 
 Parent index: [Game Server](../!INDEX.md)

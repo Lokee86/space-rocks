@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7efd-9dac-cf6cae7fc537
+document_type: general
+policy_exempt: false
+summary: This document describes the client world-sync entity owners that render server-authoritative projectile, asteroid, and pickup state as Godot scene nodes.
+---
 # Entity Sync Owners
 
 Parent index: [World Sync](./!INDEX.md)

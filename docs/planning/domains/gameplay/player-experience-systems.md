@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7e89-af4f-26b08c65cbc8
+document_type: general
+policy_exempt: false
+summary: This doc maps the player-facing experience loops for Space Rocks.
+---
 # Player Experience Systems
 Parent index: [Gameplay Planning](./!INDEX.md)
 

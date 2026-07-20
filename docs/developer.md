@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-765e-9c37-cd42b268597f
+document_type: general
+policy_exempt: false
+summary: This document is the Space Rocks developer onboarding and handoff guide.
+---
 ## Developer Onboarding
 
 Parent index: [Documentation](./!INDEX.md)

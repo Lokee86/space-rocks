@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f47-b6c6-8d333a5fb78f
+document_type: general
+policy_exempt: false
+summary: Observability documentation for the game server lives here.
+---
 # Game Server Observability
 
 Parent index: [Game Server](../!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78e0-8bc4-ffa02f9c9b06
+document_type: general
+policy_exempt: false
+summary: This document describes client-side devtools for inspecting gameplay targets and performing click-based placement actions.
+---
 # Target And Placement Debugging
 
 Parent index: [Client](./!INDEX.md)

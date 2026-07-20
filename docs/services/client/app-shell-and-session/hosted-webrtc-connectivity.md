@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b69-be67-91633c46924c
+document_type: general
+policy_exempt: false
+summary: This document records the hosted-connectivity policy for the Godot client's WebRTC DataChannel connection to the dedicated game server.
+---
 # Hosted WebRTC Connectivity: ICE, STUN, And TURN
 
 Parent index: [App Shell And Session](./!INDEX.md)

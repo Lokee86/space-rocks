@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-78a9-8376-81a32865b218
+document_type: general
+policy_exempt: false
+summary: This document is the authoritative inventory and migration contract for moving runtime developer tooling onto the dedicated sr.tooling WebRTC DataChannel.
+---
 # Tooling Channel Migration Contract
 
 Parent index: [Design](./!INDEX.md)

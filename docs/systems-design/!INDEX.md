@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f26-bbd4-b6c006346d0d
+document_type: general
+policy_exempt: false
+summary: Systems-design documentation covers conceptual mechanics, authority boundaries, and invariants.
+---
 # Systems Design
 
 Parent index: [Documentation](../!INDEX.md)

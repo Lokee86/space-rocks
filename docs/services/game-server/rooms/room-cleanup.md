@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7944-a66b-28c98f43f96b
+document_type: general
+policy_exempt: false
+summary: This document describes the current game-server room cleanup boundary.
+---
 # Room Cleanup
 
 Parent index: [Game Server Rooms](./!INDEX.md)

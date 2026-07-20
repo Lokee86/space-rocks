@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7a6f-ad8c-4185948cf3e8
+document_type: general
+policy_exempt: false
+summary: This document describes the client gameplay presentation flow.
+---
 # Gameplay Presentation Flow
 
 Parent index: [Presentation Flow](./!INDEX.md)

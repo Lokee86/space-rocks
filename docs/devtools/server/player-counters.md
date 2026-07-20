@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7ccc-a367-8b641f683a7d
+document_type: general
+policy_exempt: false
+summary: This document describes the server-side devtools surface for player counter mutation.
+---
 # Player Counters
 
 Parent index: [Server](./!INDEX.md)

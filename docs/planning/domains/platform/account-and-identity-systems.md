@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-727c-af0b-264e3c308336
+document_type: general
+policy_exempt: false
+summary: This document plans future account and identity policy that is not yet current implementation.
+---
 # Account And Identity Systems
 
 Parent index: [Platform Planning](./!INDEX.md)

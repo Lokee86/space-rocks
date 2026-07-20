@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-790b-b76b-a487cdd1b45e
+document_type: general
+policy_exempt: false
+summary: Diagnostic-aggregator devtools documentation lives here.
+---
 # Diagnostic Aggregator
 
 Parent index: [Devtools](../!INDEX.md)

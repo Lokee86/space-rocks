@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-752a-a0f3-8a5dc38ef098
+document_type: general
+policy_exempt: false
+summary: This document describes the current client-side devtools packet routing and input flow.
+---
 # Packet Routing And Devtools Input
 
 Parent index: [Client](./!INDEX.md)

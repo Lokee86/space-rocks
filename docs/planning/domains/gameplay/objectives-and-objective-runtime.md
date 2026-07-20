@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-777e-8790-042b42dd48f0
+document_type: general
+policy_exempt: false
+summary: This doc is the authoritative P4 planning owner for the shared Objective Foundation.
+---
 # Objectives And Objective Runtime
 Parent index: [Gameplay Planning](./!INDEX.md)
 

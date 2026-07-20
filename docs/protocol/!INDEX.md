@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7909-9da8-9ef434007d10
+document_type: general
+policy_exempt: false
+summary: Protocol documentation covers communication and message-flow behavior.
+---
 # Protocol
 
 Parent index: [Documentation](../!INDEX.md)

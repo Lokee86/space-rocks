@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7868-b763-30851bf45926
+document_type: general
+policy_exempt: false
+summary: This document describes how Space Rocks currently defines and enforces HTTP request and response contracts across services.
+---
 ## HTTP Contract Enforcement
 
 Parent index: [Protocol](./!INDEX.md)

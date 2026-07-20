@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-79f7-8e14-50e6e7f4ef9e
+document_type: general
+policy_exempt: false
+summary: Devtools design documentation lives here.
+---
 # Design
 
 Parent index: [Devtools](../!INDEX.md)

@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7c5c-b484-a4850adc7497
+document_type: general
+policy_exempt: false
+summary: This document defines the current transport boundary between gameplay data delivery and signaling/control.
+---
 ## Realtime WebRTC Gameplay Transport
 
 Parent index: [Protocol](./!INDEX.md)

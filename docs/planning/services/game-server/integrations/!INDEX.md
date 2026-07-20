@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7f63-812d-6b79b3928c57
+document_type: general
+policy_exempt: false
+summary: This index summarizes the integrations docs.
+---
 # Integrations
 
 This index summarizes the integrations docs.

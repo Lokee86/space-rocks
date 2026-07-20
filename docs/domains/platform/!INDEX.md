@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7886-a977-ac5e4c0c0cc0
+document_type: general
+policy_exempt: false
+summary: Cross-system platform domain documentation lives here.
+---
 # Platform
 
 Parent index: [Domains](../!INDEX.md)

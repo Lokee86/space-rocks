@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-76c0-a9c8-4515c021b78d
+document_type: general
+policy_exempt: false
+summary: This index summarizes the game server docs.
+---
 # Game Server
 
 This index summarizes the game server docs.
@@ -25,7 +33,6 @@ Client presentation, API-server planning, and unrelated product design belong in
 
 - [integrations](integrations/!INDEX.md) - Integrations documentation.
 - [networking](networking/!INDEX.md) - Networking documentation.
-
 - [process](process/!INDEX.md) - Process documentation.
 - [rooms](rooms/!INDEX.md) - Rooms documentation.
 - [simulation](simulation/!INDEX.md) - Simulation documentation.

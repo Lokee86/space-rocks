@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7bcc-9c43-632ad98ab188
+document_type: general
+policy_exempt: false
+summary: This document defines the systems-design model for weapons in Space Rocks.
+---
 # Weapons
 
 Parent index: [Combat](./!INDEX.md)

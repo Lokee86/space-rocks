@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-71a5-b1b0-eba66c6d4cd4
+document_type: general
+policy_exempt: false
+summary: This folder owns client app-shell-and-session documentation.
+---
 # App Shell And Session
 
 Parent index: [Client](../!INDEX.md)

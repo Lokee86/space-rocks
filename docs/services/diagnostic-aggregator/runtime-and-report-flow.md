@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70db-aab8-778efa779304
+document_type: general
+policy_exempt: false
+summary: The diagnostic aggregator is the bounded service for triggered diagnostic reports. It accepts diagnostic material, applies validation and safety policy, constructs a finalized report, stores it for bounded retrieval, and exposes the...
+---
 # Runtime and Report Flow
 
 Parent index: [Diagnostic Aggregator](./!INDEX.md)

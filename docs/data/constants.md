@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7601-bbd9-395af4238b4c
+document_type: general
+policy_exempt: false
+summary: This document describes the current constants source-of-truth files, generated outputs, pipeline behavior, consumers, validation workflow, and implementation map for Space Rocks constants.
+---
 # Constants Pipeline
 
 Parent index: [Data](./!INDEX.md)

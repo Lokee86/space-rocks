@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7da6-ac62-ae9d204986d4
+document_type: general
+policy_exempt: false
+summary: This doc records the current account, identity, authentication, admission, and player-data routing behavior for Space Rocks.
+---
 # Account And Identity Current State
 Parent index: [Platform](./!INDEX.md)
 

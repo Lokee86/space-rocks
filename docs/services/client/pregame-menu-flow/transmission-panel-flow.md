@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-70ba-83e6-c86009a45a5e
+document_type: general
+policy_exempt: false
+summary: This document describes the client implementation responsibility for the pregame transmission panel flow.
+---
 ## Transmission Panel Flow
 
 Parent index: [Pregame Menu Flow](./!INDEX.md)

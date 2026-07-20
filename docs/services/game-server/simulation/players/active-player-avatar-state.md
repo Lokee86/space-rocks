@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-7b31-8d47-5c0a447df510
+document_type: general
+policy_exempt: false
+summary: This document describes active player avatar state in the game-server simulation.
+---
 # Active Player Avatar State
 
 Parent index: [Game Server Simulation Players](./!INDEX.md)

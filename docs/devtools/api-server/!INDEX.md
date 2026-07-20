@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-761f-9728-094c459eb77f
+document_type: general
+policy_exempt: false
+summary: API-server devtools documentation lives here.
+---
 # API Server
 
 Parent index: [Devtools](../!INDEX.md)

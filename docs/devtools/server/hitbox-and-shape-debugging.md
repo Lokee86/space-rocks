@@ -1,3 +1,11 @@
+---
+author: brian
+created: "2026-07-19"
+document_id: 019f7d55-fb2c-740b-8764-ae75cf5968e0
+document_type: general
+policy_exempt: false
+summary: This document describes the server side of hitbox and shape debugging for Space Rocks devtools.
+---
 # Hitbox And Shape Debugging
 
 Parent index: [Server](./!INDEX.md)
