@@ -69,7 +69,7 @@ The API server owns account identity and online persistence. The game server own
 
 ## Associated systems
 
-* [Client](../../services/client/!INDEX.md) - stores the user bearer token, validates saved auth state, starts Discord login-session handoff, sends WebSocket auth, and displays profile state.
+* [Client](../../services/client/!INDEX.md) - stores the user bearer token through Windows DPAPI or the macOS login Keychain, validates and migrates saved auth state, starts Discord login-session handoff, sends WebSocket auth, and displays profile state.
 * [API Server](../../services/api-server/!INDEX.md) - owns Rails authenticated accounts, OAuth/password auth, bearer tokens, internal token verification, and Rails/Postgres account-backed stats.
 * [Game Server](../../services/game-server/!INDEX.md) - owns WebSocket sessions, auth verification handoff, multiplayer admission, room lifecycle, gameplay authority, and match-result reporting.
 * [Player Data](../../services/player-data/!INDEX.md) - owns identity-based profile/stat routing across Guest, Local Profile, and Authenticated Account routes.

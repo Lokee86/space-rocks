@@ -1,2 +1,5 @@
 # EngineForge bridge (auto-managed, do not remove)
 addons/engineforge_bridge/
+
+# Platform credential-helper build outputs.
+native/credential-helper/bin/

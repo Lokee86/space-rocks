@@ -5,7 +5,7 @@ signal auth_state_changed
 signal auth_error(message: String)
 
 const AuthSessionScript := preload("res://scripts/auth/auth_session.gd")
-const AuthTokenStoreScript := preload("res://scripts/auth/auth_token_store.gd")
+const AuthCredentialStoreScript := preload("res://scripts/auth/auth_credential_store.gd")
 const AuthApiClientScript := preload("res://scripts/auth/auth_api_client.gd")
 
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
@@ -14,7 +14,7 @@ const DISCORD_POLL_INTERVAL_SECONDS := 1.0
 const DISCORD_POLL_TIMEOUT_SECONDS := 120.0
 
 var auth_session: AuthSession
-var auth_token_store: AuthTokenStore
+var auth_credential_store
 var auth_api_client
 var _auth_operation_epoch := 0
 var _operation_trace_factory: Callable
@@ -24,8 +24,8 @@ var _active_auth_trace: ClientOperationTrace
 func _ready() -> void:
 	if auth_session == null:
 		auth_session = AuthSessionScript.new()
-	if auth_token_store == null:
-		auth_token_store = AuthTokenStoreScript.new()
+	if auth_credential_store == null:
+		auth_credential_store = AuthCredentialStoreScript.new()
 	if auth_api_client == null:
 		auth_api_client = AuthApiClientScript.new()
 
@@ -43,12 +43,12 @@ func get_session() -> AuthSession:
 func initialize_from_saved_token() -> void:
 	if auth_session == null:
 		auth_session = AuthSessionScript.new()
-	if auth_token_store == null:
-		auth_token_store = AuthTokenStoreScript.new()
+	if auth_credential_store == null:
+		auth_credential_store = AuthCredentialStoreScript.new()
 	if auth_api_client == null:
 		auth_api_client = AuthApiClientScript.new()
 
-	var token := auth_token_store.load_token()
+	var token: String = str(auth_credential_store.load_token())
 	if token.is_empty():
 		_cancel_auth_operation()
 		auth_session.clear()
@@ -67,10 +67,10 @@ func request_discord_sign_in() -> void:
 
 func logout() -> void:
 	_ensure_auth_objects()
-	var token := auth_token_store.load_token()
+	var token: String = str(auth_credential_store.load_token())
 	_cancel_auth_operation()
 
-	auth_token_store.clear_token()
+	auth_credential_store.clear_token()
 	auth_session.clear()
 	auth_state_changed.emit()
 
@@ -150,7 +150,16 @@ func _poll_discord_login_session(
 				)
 				return
 
-			auth_token_store.save_token(token)
+			if !auth_credential_store.save_token(token):
+				call_deferred("_logout_remote", token)
+				_fail_auth_sign_in(
+					"Secure credential storage is unavailable.",
+					operation_epoch,
+					operation_trace.trace_id(),
+					"credential_storage_unavailable"
+				)
+				return
+
 			auth_session.set_signed_in(token, user_payload)
 			_emit_auth_terminal(
 				ObservabilityContract.EVENT_AUTH_SUCCEEDED,
@@ -175,7 +184,7 @@ func _poll_discord_login_session(
 			"Discord sign-in timed out.",
 			operation_epoch,
 			operation_trace.trace_id(),
-				"timeout",
+			"timeout",
 		)
 
 
@@ -188,7 +197,7 @@ func _fail_auth_sign_in(
 ) -> void:
 	if !_is_current_auth_operation(operation_epoch, trace_id):
 		return
-	auth_token_store.clear_token()
+	auth_credential_store.clear_token()
 	auth_session.clear()
 	_emit_auth_terminal(
 		ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE if provider_unavailable else ObservabilityContract.EVENT_AUTH_FAILED,
@@ -208,8 +217,8 @@ func _logout_remote(token: String) -> void:
 func _ensure_auth_objects() -> void:
 	if auth_session == null:
 		auth_session = AuthSessionScript.new()
-	if auth_token_store == null:
-		auth_token_store = AuthTokenStoreScript.new()
+	if auth_credential_store == null:
+		auth_credential_store = AuthCredentialStoreScript.new()
 	if auth_api_client == null:
 		auth_api_client = AuthApiClientScript.new()
 
@@ -221,14 +230,26 @@ func _validate_saved_token(token: String, operation_epoch: int, operation_trace:
 	if result != null && result.ok:
 		var user_payload: Dictionary = result.body.get("user", {})
 		if !user_payload.is_empty():
-			auth_session.set_signed_in(token, user_payload)
-			_emit_auth_terminal(
-				ObservabilityContract.EVENT_AUTH_SUCCEEDED,
-				operation_trace.trace_id(),
-				"saved_token"
-			)
+			if auth_credential_store.requires_legacy_migration() && !auth_credential_store.save_token(token):
+				auth_credential_store.clear_token()
+				auth_session.clear()
+				call_deferred("_logout_remote", token)
+				_emit_auth_terminal(
+					ObservabilityContract.EVENT_AUTH_FAILED,
+					operation_trace.trace_id(),
+					"saved_token",
+					"credential_storage_unavailable"
+				)
+				auth_error.emit("Secure credential migration failed. Sign in again.")
+			else:
+				auth_session.set_signed_in(token, user_payload)
+				_emit_auth_terminal(
+					ObservabilityContract.EVENT_AUTH_SUCCEEDED,
+					operation_trace.trace_id(),
+					"saved_token"
+				)
 		else:
-			auth_token_store.clear_token()
+			auth_credential_store.clear_token()
 			auth_session.clear()
 			_emit_auth_terminal(
 				ObservabilityContract.EVENT_AUTH_FAILED,
@@ -237,7 +258,7 @@ func _validate_saved_token(token: String, operation_epoch: int, operation_trace:
 				"malformed_response"
 			)
 	else:
-		auth_token_store.clear_token()
+		auth_credential_store.clear_token()
 		auth_session.clear()
 		_emit_auth_terminal(
 			ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE if _is_provider_unavailable(result) else ObservabilityContract.EVENT_AUTH_FAILED,
@@ -284,6 +305,7 @@ func _is_current_auth_operation(operation_epoch: int, trace_id: String = "") -> 
 	if trace_id.is_empty():
 		return true
 	return _active_auth_trace != null && _active_auth_trace.trace_id() == trace_id
+
 
 func _emit_auth_terminal(
 	event_name: String,

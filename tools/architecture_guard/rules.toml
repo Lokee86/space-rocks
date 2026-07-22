@@ -39,3 +39,18 @@ pattern = "math/rand"
 include = ["services/game-server/internal/game/*.go", "services/game-server/internal/game/**/*.go", "services/game-server/internal/devtools/*.go", "services/game-server/internal/devtools/**/*.go"]
 exclude = ["services/game-server/internal/game/rng/**", "**/*_test.go"]
 message = "authoritative gameplay and devtools production code must not import process-global math/rand; use the seeded rng package instead"
+
+[[content_rules]]
+id = "client-legacy-auth-token-path-is-read-only"
+kind = "literal"
+pattern = "auth_token.json"
+include = ["client/scripts/**/*.gd"]
+exclude = ["client/scripts/auth/auth_token_store.gd"]
+message = "only the read-only legacy migration reader may reference the plaintext auth-token path"
+
+[[content_rules]]
+id = "client-no-json-bearer-token-persistence"
+kind = "regex"
+pattern = "JSON\\.stringify\\([^\\n]*token"
+include = ["client/scripts/auth/*.gd"]
+message = "bearer credentials must use AuthCredentialStore, not JSON serialization"

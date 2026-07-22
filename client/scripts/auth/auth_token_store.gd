@@ -1,5 +1,5 @@
 extends RefCounted
-class_name AuthTokenStore
+class_name LegacyAuthTokenReader
 
 var token_path := "user://auth_token.json"
 
@@ -14,24 +14,13 @@ func load_token() -> String:
 
 	var text := file.get_as_text()
 	file.close()
+	clear_token()
 
-	var parser := JSON.new()
-	if parser.parse(text) != OK:
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
 		return ""
 
-	if typeof(parser.data) != TYPE_DICTIONARY:
-		return ""
-
-	return str(parser.data.get("token", ""))
-
-
-func save_token(token: String) -> void:
-	var file := FileAccess.open(token_path, FileAccess.WRITE)
-	if file == null:
-		return
-
-	file.store_string(JSON.stringify({ "token": token }))
-	file.close()
+	return str(parsed.get("token", ""))
 
 
 func clear_token() -> void:

@@ -14,7 +14,7 @@ Parent index: [Client](./!INDEX.md)
 
 This document describes the current client-side auth session and session boot flow implemented under `client/`.
 
-It documents how the Godot client stores the Space Rocks bearer token, validates saved session state, starts the Discord browser handoff, updates menu/auth presentation, sends websocket authentication, and gates multiplayer boot requests.
+It documents how the Godot client persists the Space Rocks bearer token through platform secure storage, validates saved session state, migrates the former plaintext token file, starts the Discord browser handoff, updates menu/auth presentation, sends websocket authentication, and gates multiplayer boot requests.
 
 ## Overview
 
@@ -39,7 +39,7 @@ If no saved token exists, the controller clears auth state and emits `auth_state
 
 Saved-token validation, Discord sign-in, and logout share one monotonically increasing auth-operation epoch. Starting any of these operations advances the epoch; each new operation supersedes older awaited operations. A stale completion returns without changing the token store or `AuthSession`, and without emitting `auth_state_changed` or `auth_error`. Logout advances the epoch before clearing local state. Its remote logout request still uses the token captured before local clearing and may finish independently.
 
-Current user-facing sign-in is Discord-only. The sign-in window has disabled manual email/password and Google controls. Pressing the Discord button starts a Rails login-session handoff: the client asks Rails for a login session, opens the returned browser URL, polls the exchange endpoint, receives the normal Space Rocks bearer token, stores it in `user://auth_token.json`, and updates the in-memory session.
+Current user-facing sign-in is Discord-only. The sign-in window has disabled manual email/password and Google controls. Pressing the Discord button starts a Rails login-session handoff: the client asks Rails for a login session, opens the returned browser URL, polls the exchange endpoint, receives the normal Space Rocks bearer token, stores it through `AuthCredentialStore`, and updates the in-memory session. Windows uses user-scoped DPAPI with an encrypted local blob; macOS uses a generic-password item in the current user's login Keychain.
 
 Multiplayer entry is gated by client signed-in state. If the player requests multiplayer while signed out, the menu routes to the sign-in screen. If the player is already signed in, or becomes signed in while on the sign-in screen, the menu routes to multiplayer pregame.
 
@@ -111,21 +111,18 @@ email
 
 `user_id` is the Rails user id returned in the auth payload. The client session does not currently store `account_id`.
 
-### Auth token store
+### Auth credential store
 
-`AuthTokenStore` persists the bearer token to:
+`AuthCredentialStore` owns bearer-token persistence through the packaged native credential helper.
 
 ```text
-user://auth_token.json
+Windows -> user-scoped DPAPI -> user://auth_credential.bin
+macOS   -> per-user login Keychain generic-password item
 ```
 
-The file contains:
+The helper accepts one JSON request over standard input and returns one JSON response over standard output. The bearer token is never placed in process arguments. Windows stores only a DPAPI-encrypted binary blob. macOS stores no token file.
 
-```json
-{ "token": "..." }
-```
-
-The store only loads, saves, and clears the token. It does not encrypt the file, rotate tokens, validate tokens, or store provider credentials.
+`LegacyAuthTokenReader` is a one-time migration component for the former `user://auth_token.json` format. It deletes the plaintext file immediately after reading it, before remote validation. A valid token is then migrated from memory after API validation. If secure storage is unavailable or migration fails, the client remains signed out and revokes the token remotely where possible.
 
 ### Auth API client
 
@@ -215,13 +212,13 @@ Startup validation flow:
 ```text
 AppEntry._ready()
 AuthSessionController.initialize_from_saved_token()
-AuthTokenStore.load_token()
+AuthCredentialStore.load_token()
 if token exists:
     GET /api/auth/me with bearer token
     if valid:
         AuthSession.set_signed_in(token, user)
     else:
-        AuthTokenStore.clear_token()
+        AuthCredentialStore.clear_token()
         AuthSession.clear()
 emit auth_state_changed
 ```
@@ -324,7 +321,7 @@ Client-owned local state:
 * `AuthSession.user_id`
 * `AuthSession.display_name`
 * `AuthSession.email`
-* `user://auth_token.json`
+* Windows DPAPI-encrypted `user://auth_credential.bin`, or the macOS Keychain generic-password item
 
 The client does not own durable account identity.
 
@@ -350,7 +347,7 @@ The client must not store:
 
 ## Security and failure behavior
 
-The saved bearer token is a valid credential while it remains unexpired and unrevoked. Treat `user://auth_token.json` as sensitive local state.
+The saved bearer token is a valid credential while it remains unexpired and unrevoked. Windows stores only a DPAPI-encrypted blob tied to the current Windows user. macOS stores the token in the current user's login Keychain. Failure to launch or use the platform credential helper fails signed out and removes any remaining plaintext legacy token. Credential deletion writes a non-secret revocation marker before calling the helper; if deletion fails, later loads remain blocked and retry deletion so a logged-out credential cannot silently reappear.
 
 Current failure behavior:
 
@@ -382,7 +379,8 @@ Logging rules:
 ### Auth session
 
 * `client/scripts/auth/auth_session.gd`
-* `client/scripts/auth/auth_token_store.gd`
+* `client/scripts/auth/auth_credential_store.gd`
+* `client/scripts/auth/auth_token_store.gd` - read-only legacy migration
 * `client/scripts/auth/auth_api_client.gd`
 * `client/scripts/auth/auth_session_controller.gd`
 
@@ -444,7 +442,8 @@ These backend paths are listed for boundary clarity. The client does not own the
 ### Auth state and token storage
 
 * `client/tests/unit/test_auth_session.gd`
-* `client/tests/unit/test_auth_token_store.gd`
+* `client/tests/unit/test_auth_token_store.gd` - secure-store protocol and legacy migration coverage
+* `client/native/credential-helper/` - native helper unit tests and Windows DPAPI integration tests
 * `client/tests/unit/test_auth_session_controller.gd`
 
 The controller tests also cover the two logout races: saved-token validation completing after logout, and Discord sign-in initialization completing after logout. Both verify that logout remains the sole local auth-state change.
@@ -494,4 +493,4 @@ The current Rails auth response used by login-session exchange does not include 
 
 The connection service sends websocket `authenticate_request` whenever the current auth session has a token. Session boot behavior decides whether a pending request waits for auth. Multiplayer waits; single-player does not.
 
-Token hardening beyond the current `user://auth_token.json` store belongs in planning or limits documentation, not in this client service implementation doc.
+The packaged client must include the matching credential helper: beside the Windows executable or under `Contents/Helpers` in the signed macOS application bundle. Other platforms intentionally do not persist account credentials.

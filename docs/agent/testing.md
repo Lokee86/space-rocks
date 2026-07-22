@@ -35,8 +35,9 @@ The shared Go CI runner is:
 bash tools/ci/run_go_tests.sh
 ```
 
-It executes all three stages, even if an earlier stage fails:
+It executes all stages, even if an earlier stage fails:
 
+- `client credential helper`: `go test -buildvcs=false ./...`
 - `player-data`: `go test -buildvcs=false ./...`
 - `game-server default`: `go test -buildvcs=false ./...`
 - `game-server nodevtools`: `go test -tags nodevtools -buildvcs=false ./...`
@@ -123,6 +124,16 @@ Run client GUT tests, if the `godot` CLI is available:
 ```bash
 godot --headless --path client -s res://addons/gut/gut_cmdln.gd -gdir=res://tests/unit -ginclude_subdirs -gexit
 ```
+
+The client credential helper is also part of the shared Go runner. Its Windows tests exercise a real DPAPI encrypt/decrypt/delete round trip and verify that the encrypted blob does not contain the plaintext bearer token. The macOS Keychain backend must be built and exercised on macOS because it links Apple Security and CoreFoundation frameworks.
+
+After building the helper on either target platform, run the end-to-end credential smoke:
+
+```bash
+godot --headless --path client -s res://tools/verify_credential_helper.gd
+```
+
+This uses isolated smoke-test service/account identifiers and verifies Godot pipe launch, secure save, secure load, secure clear, and post-clear absence.
 
 
 For focused client logger verification, use `client/tests/unit/test_client_logger.gd`. It uses `user://logger_test_output` with the `client-test` prefix and cleans up its own JSONL files, so it is a good place to confirm file-output and formatting behavior without broadening into a full client testing catalog.
