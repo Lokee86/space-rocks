@@ -25,7 +25,7 @@ Space Rocks worktrees may include unrelated user/editor changes, so agents must 
 - Godot may rewrite `uid`, `unique_id`, offsets, imports, and scene metadata.
 - Generated recordings and build artifacts should not be committed.
 - Avoid committing `*.avi`, `tmp/`, `*/tmp/`, and `client/.godot/`.
-- The older `space-rocks-(4.3)/` copy is not the active project.
+- The active Godot project lives under `client/`; do not create or retain duplicate project copies at the repository root.
 - Avoid broad cleanup during scoped work.
 
 ## Related docs

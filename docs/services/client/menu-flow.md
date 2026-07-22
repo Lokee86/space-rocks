@@ -157,7 +157,6 @@ It does not own durable account data, profile persistence, room membership autho
 * `client/scripts/lobby/lobby_shell_flow.gd`
 * `client/scripts/lobby/lobby_return_flow.gd`
 * `client/scripts/lobby/lobby_session_state.gd`
-* `client/scripts/ui/lobby/multiplayer_dialog.gd`
 * `client/scripts/ui/lobby/join_dialog.gd`
 * `client/scripts/ui/lobby/join_dialog_flow.gd`
 * `client/scripts/ui/lobby/multiplayer_lobby.gd`
@@ -184,7 +183,6 @@ It does not own durable account data, profile persistence, room membership autho
 * `client/scenes/ui/main_menu.tscn`
 * `client/scenes/ui/pregame_menu.tscn`
 * `client/scenes/ui/dialogs/login_window.tscn`
-* `client/scenes/ui/dialogs/multiplayer_dialog.tscn`
 * `client/scenes/ui/dialogs/join_dialog.tscn`
 * `client/scenes/ui/dialogs/multiplayer_lobby.tscn`
 * `client/scenes/ui/dialogs/game_menu.tscn`

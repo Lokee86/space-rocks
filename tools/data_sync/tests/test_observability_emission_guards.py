@@ -132,7 +132,6 @@ CLIENT_PRESENTATION_RUNTIME_FILES = (
     "client/scripts/gameplay/events/gameplay_event_controller.gd",
     "client/scripts/lobby/multiplayer_lobby_presenter.gd",
     "client/scripts/shell/gameplay_menu_flow.gd",
-    "client/scripts/ui/lobby/multiplayer_dialog.gd",
     "client/scripts/ui/lobby/lobby_player_list_view.gd",
     "client/scripts/ui/lobby/player_row.gd",
     "client/scripts/ui/menus/main_menu.gd",

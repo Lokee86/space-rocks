@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dit0jfue34eju"]
 
 [ext_resource type="Texture2D" uid="uid://bvlf24tljrybv" path="res://assets/ui/windows/display_screen.png" id="1_vliri"]
-[ext_resource type="Shader" uid="uid://b4mx6ws1e6xch" path="res://shaders/screen_static2.gdshader" id="2_vliri"]
+[ext_resource type="Shader" uid="uid://camotq8rlhg7i" path="res://shaders/screen_static.gdshader" id="2_vliri"]
 [ext_resource type="Texture2D" uid="uid://bbh0o5hdyjxf8" path="res://assets/ui/windows/display_screen_overlay.png" id="3_8cx4h"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ogmjd"]

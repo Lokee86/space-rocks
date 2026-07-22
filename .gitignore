@@ -35,8 +35,10 @@ __pycache__/
 
 *.avi
 
-# Local Codex workspace state
+# Local agent/editor workspace state
 .codex/
+.codex-hackathon/
+.ruby-lsp/
 tools/space-rocks-mcp/node_modules/
 
 # EngineForge bridge (auto-managed, do not remove)

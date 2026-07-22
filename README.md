@@ -2,6 +2,8 @@
 
 Space Rocks is an Asteroids-inspired game project with a Godot client, a Go realtime game server, and a Ruby/Rails API server for backend account and platform concerns.
 
+Follow the [Devlog!](https://space-rocks.laughingskull.ca/)
+
 The project is in active development. Expect rough edges while systems, documentation, and tooling continue to move.
 
 ## Overview
