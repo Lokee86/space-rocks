@@ -7,7 +7,10 @@ import (
 	"time"
 )
 
-var ErrReportNotFound = errors.New("storage: diagnostic report not found")
+var (
+	ErrClosed         = errors.New("storage: report store is closed")
+	ErrReportNotFound = errors.New("storage: diagnostic report not found")
+)
 
 // Report is the narrow persistence projection for a finalized diagnostic report.
 type Report struct {

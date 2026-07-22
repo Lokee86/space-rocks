@@ -27,3 +27,7 @@ func (l reportLayout) archivePath(start, end time.Time, sequence uint64, compres
 	start = start.UTC()
 	return filepath.Join(l.archiveDir(), start.Format("2006"), start.Format("01"), start.Format("02"), name)
 }
+
+func formatTimestamp(value time.Time) string {
+	return value.UTC().Format("20060102T150405.000000000Z")
+}

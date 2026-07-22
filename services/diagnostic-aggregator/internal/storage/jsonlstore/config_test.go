@@ -11,9 +11,6 @@ func TestDefaultConfig(t *testing.T) {
 	if config.Root != "storage" || config.SegmentMaxBytes != 64*1024*1024 || config.SegmentMaxAge != time.Hour {
 		t.Fatalf("segment defaults = %#v", config)
 	}
-	if config.RetentionMaxAge != 14*24*time.Hour || config.RetentionMaxBytes != 1*1024*1024*1024 {
-		t.Fatalf("retention defaults = %#v", config)
-	}
 	if config.DiagnosticReportRetention != DefaultDiagnosticReportRetention {
 		t.Fatalf("diagnostic report retention default = %s", config.DiagnosticReportRetention)
 	}
@@ -35,8 +32,6 @@ func TestConfigValidation(t *testing.T) {
 		{"root", func(config *Config) { config.Root = "" }, "storage root"},
 		{"segment bytes", func(config *Config) { config.SegmentMaxBytes = 0 }, "segment max bytes"},
 		{"segment age", func(config *Config) { config.SegmentMaxAge = 0 }, "segment max age"},
-		{"retention age", func(config *Config) { config.RetentionMaxAge = 0 }, "retention max age"},
-		{"retention bytes", func(config *Config) { config.RetentionMaxBytes = 0 }, "retention max bytes"},
 		{"diagnostic report retention", func(config *Config) { config.DiagnosticReportRetention = 0 }, "diagnostic report retention"},
 		{"negative flush", func(config *Config) { config.FlushInterval = -time.Second }, "flush interval"},
 	}

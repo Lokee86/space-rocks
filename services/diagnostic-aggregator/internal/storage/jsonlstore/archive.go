@@ -7,24 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 )
-
-func finalizeSegment(layout Layout, activePath string, start, end time.Time, sequence uint64, compressed bool) (uint64, error) {
-	for {
-		archivePath := layout.ArchivePath(start, end, sequence, compressed)
-		if _, err := os.Stat(archivePath); err == nil {
-			sequence++
-			continue
-		} else if !os.IsNotExist(err) {
-			return sequence, fmt.Errorf("jsonlstore: inspect archive path: %w", err)
-		}
-		if err := finalizeArchive(activePath, archivePath, compressed); err != nil {
-			return sequence, err
-		}
-		return sequence + 1, nil
-	}
-}
 
 // finalizeArchive durably copies or atomically renames a closed active source.
 func finalizeArchive(source, destination string, compressed bool) (result error) {

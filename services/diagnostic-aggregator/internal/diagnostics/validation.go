@@ -139,6 +139,21 @@ func ValidateSubmissionEnvelope(submission DiagnosticSubmission, limits Submissi
 
 func validationError(code ValidationCode) error { return &ValidationError{code: code} }
 
+func validUUID(value string) bool {
+	if len(value) != 36 || value[8] != '-' || value[13] != '-' || value[18] != '-' || value[23] != '-' {
+		return false
+	}
+	for index, character := range value {
+		if index == 8 || index == 13 || index == 18 || index == 23 {
+			continue
+		}
+		if !((character >= '0' && character <= '9') || (character >= 'a' && character <= 'f') || (character >= 'A' && character <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
 // DecodeSubmissionEvents strictly decodes and validates all embedded canonical events.
 func DecodeSubmissionEvents(submission DiagnosticSubmission, limits SubmissionLimits) ([]events.Event, error) {
 	if err := ValidateSubmissionEnvelope(submission, limits); err != nil {

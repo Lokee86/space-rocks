@@ -1,2 +1,2 @@
-// Package storage owns durable persistence of aggregated log data.
+// Package storage defines the persistence boundary for finalized diagnostic reports.
 package storage

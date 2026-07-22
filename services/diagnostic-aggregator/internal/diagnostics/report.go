@@ -88,6 +88,11 @@ type DiagnosticReport struct {
 	Summary            DiagnosticReportSummary      `json:"summary"`
 }
 
+type TimeRange struct {
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
+}
+
 type DiagnosticReportSummary struct {
 	SubmittedEventCount uint64    `json:"submitted_event_count"`
 	AcceptedEventCount  uint64    `json:"accepted_event_count"`
