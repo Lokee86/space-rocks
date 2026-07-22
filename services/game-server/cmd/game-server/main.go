@@ -56,7 +56,7 @@ func runWithContext(ctx context.Context) int {
 		Context: observability.Context{TraceID: startupTraceID},
 		Fields:  observability.Fields{"reason_code": "process_start"},
 	})
-	_, err = logging.ConfigureFileOutput("logs/game-server", "game-server")
+	_, err = logging.ConfigureFileOutput(runtimePath("logs/game-server"), "game-server")
 	if err != nil {
 		logging.Emit(observability.Request{
 			Event:   observability.EventNameObservabilityUnavailable,
@@ -97,7 +97,7 @@ func runWithContext(ctx context.Context) int {
 		})
 		return 1
 	}
-	_, err = playerlogging.ConfigureFileOutput("logs/player-data", "player-data")
+	_, err = playerlogging.ConfigureFileOutput(runtimePath("logs/player-data"), "player-data")
 	if err != nil {
 		emitPlayerDataObservabilityUnavailable("open_failed")
 	} else if status := playerlogging.Status(); status.Degraded {
@@ -129,7 +129,7 @@ func runWithContext(ctx context.Context) int {
 	measurementController := servertooling.NewController(servertooling.Dependencies{
 		Rooms:        rooms,
 		BuildVersion: gameIdentity.Version,
-		ReportWriter: measurement.NewReportWriter("measurement-results/game-server"),
+		ReportWriter: measurement.NewReportWriter(runtimePath("measurement-results/game-server")),
 	})
 
 	webRTCTransportConfig := buildWebRTCTransportConfigFromEnv()
@@ -171,7 +171,7 @@ func runWithContext(ctx context.Context) int {
 	mux.Handle("PUT /api/player-data/local-profiles/default", playerDataLocalProfilesHandler)
 
 	server := newHTTPServer(httpapi.WithRequestContext(mux))
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", serverListenAddress())
 	if err != nil {
 		logging.Emit(observability.Request{
 			Event:   observability.EventNameServiceRuntimeFailed,

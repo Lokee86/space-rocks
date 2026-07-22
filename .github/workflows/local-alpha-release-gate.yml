@@ -1,0 +1,100 @@
+name: Local Packaged Alpha Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/local-alpha-release-gate.yml'
+      - 'client/**'
+      - 'services/game-server/**'
+      - 'services/player-data/**'
+      - 'shared/go/**'
+      - 'tools/release/**'
+  pull_request:
+    paths:
+      - '.github/workflows/local-alpha-release-gate.yml'
+      - 'client/**'
+      - 'services/game-server/**'
+      - 'services/player-data/**'
+      - 'shared/go/**'
+      - 'tools/release/**'
+
+concurrency:
+  group: local-alpha-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows-local-alpha:
+    name: Windows local alpha
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: services/game-server/go.mod
+          cache-dependency-path: |
+            services/game-server/go.sum
+            services/player-data/go.sum
+      - name: Setup Godot with export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Build and verify Windows package
+        run: python tools/release/package_local_alpha.py --platform windows
+      - name: Upload tested Windows package
+        uses: actions/upload-artifact@v7
+        with:
+          name: space-rocks-local-alpha-windows-${{ github.sha }}
+          path: dist/local-alpha/windows
+          if-no-files-found: error
+
+  macos-local-alpha:
+    name: macOS local alpha
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: services/game-server/go.mod
+          cache-dependency-path: |
+            services/game-server/go.sum
+            services/player-data/go.sum
+      - name: Setup Godot with export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Build and verify macOS package
+        run: python3 tools/release/package_local_alpha.py --platform macos --adhoc-sign
+      - name: Upload tested macOS package
+        uses: actions/upload-artifact@v7
+        with:
+          name: space-rocks-local-alpha-macos-${{ github.sha }}
+          path: dist/local-alpha/macos
+          if-no-files-found: error

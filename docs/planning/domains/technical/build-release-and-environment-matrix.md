@@ -22,7 +22,7 @@ This matrix keeps local, dev-hosted, staging, and production build shapes separa
 
 ## Current status
 
-Active planning.
+The local packaged single-player alpha build shape is implemented for Windows and macOS. Native release-gate jobs export the Godot client, bundle the local-only server and platform credential helper, complete a deterministic server-authoritative single-player match, verify the resolved result and local stats across a complete restart, and upload the exact tested artifacts. The Windows artifact has passed this gate locally; the macOS implementation is exercised by the native macOS job. Manual promotion smoke is limited to visible presentation and ordinary player-driven interaction.
 
 ## Ownership Boundary
 
@@ -44,7 +44,7 @@ It should stay on release shape, environment matrix, and packaging/deployment co
 | Shape                             | Role                                                                                              |
 | --------------------------------- | ------------------------------------------------------------------------------------------------- |
 | Local Development                 | Fast local iteration with editor/dev runners, local services, debug tools, and local data stores. |
-| Local Packaged Single-Player Beta | First release-shaped testing target for local single-player packaging.                            |
+| Local Packaged Single-Player Alpha | First release-shaped testing target for local single-player packaging.                            |
 | Dev-Hosted Multiplayer            | Multiplayer testing target using hosted or semi-hosted services before full staging readiness.    |
 | Hosted Staging                    | Production-like hosted validation environment.                                                    |
 | Hosted Production                 | Public online production environment.                                                             |
@@ -65,11 +65,11 @@ It may use:
 
 Local development is not a releasable build shape and does not need production constraints.
 
-## Local Packaged Single-Player Beta
+## Local Packaged Single-Player Alpha
 
 Local packaged single-player is the first release-shaped testing target.
 
-These builds are beta/testing builds, not production builds. They may keep devtools open or enabled for diagnostics, bug reporting, and testing.
+These builds are alpha/testing builds, not production builds. They may keep devtools open or enabled for diagnostics, bug reporting, and testing.
 
 Local packaged single-player should not require hosted auth, hosted multiplayer, matchmaking, or durable online services.
 
@@ -162,7 +162,7 @@ Production should block incompatible clients before login or gameplay access.
 | Shape                             | SQLite Policy |
 | --------------------------------- | ------------- |
 | Local Development                 | Allowed.      |
-| Local Packaged Single-Player Beta | Allowed.      |
+| Local Packaged Single-Player Alpha | Allowed.      |
 | Dev-Hosted Multiplayer            | Not allowed.  |
 | Hosted Staging                    | Not allowed.  |
 | Hosted Production                 | Not allowed.  |
@@ -176,7 +176,7 @@ Local packaged single-player may use embedded SQLite for local profiles and loca
 | Shape                             | Devtools Policy                                    |
 | --------------------------------- | -------------------------------------------------- |
 | Local Development                 | Enabled/open.                                      |
-| Local Packaged Single-Player Beta | Likely enabled/open for testing.                   |
+| Local Packaged Single-Player Alpha | Likely enabled/open for testing.                   |
 | Dev-Hosted Multiplayer            | Controlled alpha may be open to testers; post-alpha must be gated. |
 | Hosted Staging                    | Strongly gated.                                    |
 | Hosted Production Client          | Disabled completely.                               |
@@ -212,18 +212,32 @@ Release gates define the minimum pass/fail bar for a build shape.
 
 They are not all the same. Local development only needs basic sanity checks. Local packaged single-player needs packaging and local-runtime verification. Hosted multiplayer targets need service, auth, compatibility, and operational checks.
 
-The first local packaged single-player beta gate should likely verify:
+The local packaged single-player alpha gate verifies:
 
-* Client exports successfully.
-* Bundled local server starts.
-* Client connects to bundled local server.
-* Local profile create/load works.
-* Single-player match starts.
-* Single-player match ends.
-* Results screen appears.
-* Local stats persist.
-* Quitting cleans up the local server process.
-* Hosted auth and multiplayer services are not required.
+Automated on the native target operating system:
+
+* Client exports successfully from a clean staged project copy.
+* The matching local-server and credential-helper executables are present in the package.
+* The bundled server binds only to loopback; normal packages default to `127.0.0.1:8080` and the gate uses an isolated loopback port.
+* The client starts and owns the bundled server process.
+* The server health endpoint becomes ready.
+* DPAPI or Keychain credential save/load/delete works through the exported client.
+* Local profile creation and default selection work.
+* A real single-player room starts through the normal WebSocket and realtime transport seams.
+* The gate assigns a deterministic score, exhausts the player's lives, and reaches the server-owned `game_over` state.
+* The resolved match result identifies the active match and expected player score.
+* Local game, score, high-score, and ship-death statistics persist across a complete client/server restart.
+* Quitting the exported client cleans up the bundled server process.
+* The package completes without hosted auth, API, matchmaking, or multiplayer services.
+* The exact tested artifact receives a versioned SHA-256 manifest and is uploaded by CI.
+
+Manual before alpha promotion while visual presentation remains intentionally outside the headless gate:
+
+* The package launches normally with visible graphics and working controls.
+* A player-driven single-player match can be played without the deterministic smoke controls.
+* The visible results screen presents the completed match and persisted statistics correctly.
+
+The implementation entry point is `tools/release/package_local_alpha.py`; the promotion checklist is `tools/release/local_alpha_manual_smoke.md`.
 
 ## Packaging Expectations
 
@@ -241,7 +255,7 @@ This doc should keep enough structure to support future decisions about hosted A
 
 ## Implementation sequence
 
-1. Finalize the local packaged single-player beta gate and keep it aligned with local packaging constraints.
+1. Finalize the local packaged single-player alpha gate and keep it aligned with local packaging constraints.
 2. Lock the local packaged single-player server to local-only behavior with the existing embedded storage policy.
 3. Define dev-hosted multiplayer constraints so hosted services can be used without becoming production assumptions.
 4. Keep hosted staging production-like for auth, compatibility, and observability checks.
@@ -260,9 +274,7 @@ This doc should keep enough structure to support future decisions about hosted A
 
 ## Open decisions
 
-* What exact mechanism should lock the packaged single-player server to local-only access?
-* What exact build flags distinguish the packaged single-player server variant from multiplayer server variants?
-* What is the final minimum gate for the first local packaged single-player beta?
+* Which visible presentation checks, if any, are stable enough to automate without brittle UI testing?
 * Which server devtools become admin tools?
 * How are bot/TAS flags represented in results, telemetry, leaderboards, and reward eligibility?
 

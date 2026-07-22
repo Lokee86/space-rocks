@@ -7,6 +7,8 @@ const RoomSessionController := preload("res://scripts/session/room_session_contr
 
 const ClientConfigController := preload("res://scripts/session/client_config_controller.gd")
 const AppShutdownController := preload("res://scripts/session/app_shutdown_controller.gd")
+const LocalServerProcessScript := preload("res://scripts/boot/local_server_process.gd")
+const LocalAlphaSmokeScript := preload("res://scripts/boot/local_alpha_smoke.gd")
 const AuthSessionControllerScript := preload("res://scripts/auth/auth_session_controller.gd")
 const AuthApiClientScript := preload("res://scripts/auth/auth_api_client.gd")
 const ApiHttpClientScript := preload("res://scripts/api/api_http_client.gd")
@@ -38,6 +40,7 @@ var room_session_controller
 var gameplay_session_controller
 var client_config_controller
 var app_shutdown_controller
+var local_server_process
 var auth_session_controller
 var api_http_client
 var player_data_profile_api_client
@@ -60,11 +63,43 @@ func _ready() -> void:
 
 	get_tree().set_auto_accept_quit(false)
 
+	local_server_process = LocalServerProcessScript.new()
+	add_child(local_server_process)
+	var local_server_start_error: Error = local_server_process.start()
+	var smoke_phase := _local_alpha_smoke_phase()
+	if local_server_start_error != OK:
+		ClientLogger.emit_canonical(
+			ObservabilityContract.EVENT_CLIENT_DEPENDENCY_UNAVAILABLE,
+			"",
+			{},
+			{
+				"subsystem": "local_packaged_alpha",
+				"dependency": "bundled_game_server",
+				"failure_mode": "process_start_failed",
+				"error_code": str(local_server_start_error),
+			}
+		)
+		if !smoke_phase.is_empty():
+			get_tree().quit(2)
+			return
+	if !smoke_phase.is_empty():
+		var smoke = LocalAlphaSmokeScript.new()
+		add_child(smoke)
+		var smoke_exit_code: int = await smoke.run(smoke_phase)
+		local_server_process.stop()
+		await get_tree().create_timer(0.1).timeout
+		get_tree().quit(smoke_exit_code)
+		return
+
 	_setup_boot_and_config(logger_callable)
 
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
-	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
+	app_shutdown_controller.configure(
+		session_boot_controller.get_connection_service(),
+		get_tree(),
+		local_server_process
+	)
 
 	api_http_client = ApiHttpClientScript.new()
 
@@ -183,7 +218,18 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
+	if local_server_process != null:
+		local_server_process.stop()
 	ClientLogger.close_file_output()
+
+
+func _local_alpha_smoke_phase() -> String:
+	if local_server_process == null || !local_server_process.is_required():
+		return ""
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--local-alpha-smoke="):
+			return argument.trim_prefix("--local-alpha-smoke=")
+	return ""
 
 
 func _setup_boot_and_config(logger_callable: Callable) -> void:

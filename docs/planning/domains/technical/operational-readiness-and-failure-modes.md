@@ -182,7 +182,7 @@ A service should not continue into partially broken production operation when re
 
 ## Incident Platform Future-Proofing
 
-A full incident-management platform is not required for early local or beta builds.
+A full incident-management platform is not required for early local, alpha, or beta builds.
 
 Hosted production should still be planned with the assumption that service health, readiness checks, degraded states, operational logs, and critical failure events may later feed an incident-management layer.
 

@@ -53,6 +53,7 @@ services/game-server/logs/
 services/game-server/measurement-results/
 
 logs/
+dist/
 /.worktrees/
 /.workingtrees/
 

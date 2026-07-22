@@ -303,7 +303,7 @@ Remaining:
 - P3D release/environment/compatibility gates
 ```
 
-P3D is the release gate for local-profile schema changes that ship in public packaged beta, release candidate, or launch builds. Disposable local development and testing profiles do not need backup or migration protection. Before a public packaged beta, release candidate, or launch build introduces or ships a local-profile schema change, the gate requires schema versioning, a forward migration path, automatic pre-migration backup, validation, visible safe failure, preservation of the original data, and migration tests.
+P3D is the release gate for local-profile schema changes that ship in public packaged alpha, beta, release candidate, or launch builds. Disposable local development and testing profiles do not need backup or migration protection. Before a public packaged alpha, beta, release candidate, or launch build introduces or ships a local-profile schema change, the gate requires schema versioning, a forward migration path, automatic pre-migration backup, validation, visible safe failure, preservation of the original data, and migration tests.
 
 ### Scope
 
@@ -332,7 +332,7 @@ The implemented observability baseline includes the SSoT, canonical envelope, ge
 ```text
 local development sanity gate exists
 documentation and contract gate exists
-local packaged single-player beta gate exists
+local packaged single-player alpha gate exists
 dev-hosted multiplayer gate exists
 hosted staging gate requires validated hosted observability and diagnostic verification; continuous centralized log collection remains optional future work
 production candidate blockers are explicit

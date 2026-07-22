@@ -270,7 +270,7 @@ session-limited or elevated access where practical
 | Environment              | Developer tools                               | Admin tools                  |
 | ------------------------ | --------------------------------------------- | ---------------------------- |
 | Local Development        | Enabled/open.                                 | Optional/local only.         |
-| Local Packaged Beta      | Likely enabled for diagnostics.               | Not normally needed.         |
+| Local Packaged Alpha      | Likely enabled for diagnostics.               | Not normally needed.         |
 | Dev-Hosted Multiplayer   | Controlled alpha may be open to testers; post-alpha developer-gated. | Admin-gated where useful.    |
 | Hosted Staging           | Strongly developer-gated.                     | Strongly admin-gated.        |
 | Hosted Production Client | Disabled completely.                          | No client admin tools.       |

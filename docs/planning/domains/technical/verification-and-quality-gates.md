@@ -24,14 +24,14 @@ This doc keeps verification and release gates aligned so code, docs, contracts, 
 
 ## Current status
 
-The current automated CI baseline is implemented. Release-shaped planning remains active for packaged beta, dev-hosted multiplayer, hosted staging, production candidate, runtime-heavy feature, migration/compatibility, and operational readiness gates.
+The current automated CI baseline and native local-packaged-alpha gate are implemented. Release-shaped planning remains active for dev-hosted multiplayer, hosted staging, production candidate, runtime-heavy feature, migration/compatibility, and operational readiness gates.
 
 ## Current automated baseline
 
-GitHub Actions currently runs three independent jobs: repository checks, Go tests, and Godot/GUT client tests. The shared local/CI runners are the operational entry points; exact commands and environment variables are maintained in [Agent Testing Rules](../../../agent/testing.md).
+GitHub Actions runs the three baseline jobs—repository checks, Go tests, and Godot/GUT client tests—plus a separate native local-alpha workflow with Windows and macOS package jobs. The shared local/CI runners are the operational entry points; exact commands and environment variables are maintained in [Agent Testing Rules](../../../agent/testing.md).
 
 * Repository checks run the Python suite, data-sync drift checks, and configuration-driven architecture rules.
-* Go tests run player-data plus game-server default and `nodevtools` variants.
+* Go tests run the credential helper, player-data, and game-server default, `nodevtools`, and `localpackage` variants.
 * Client tests run the Godot 4.6.3 clean-runner sequence: editor bootstrap, headless import, and GUT, with logs and bounded stage timeouts.
 
 This baseline is current development confidence, not a claim that packaged, staging, production, runtime, migration, or operational gates are complete.
@@ -86,7 +86,7 @@ A check can begin as manual verification and become automated later. Automation 
 | -------------------------------- | ----------------------------------------------------------------------- |
 | Local Development Sanity         | Basic confidence before trusting local changes.                         |
 | Documentation And Contract Gate  | Prevent stale docs, stale generated files, and source-of-truth drift.   |
-| Local Packaged Beta Gate         | Prove the first packaged single-player testing build works outside dev. |
+| Local Packaged Alpha Gate         | Prove the first packaged single-player testing build works outside dev. |
 | Dev-Hosted Multiplayer Gate      | Prove multiplayer works against hosted or semi-hosted services.         |
 | Hosted Staging Gate              | Prove a production-like environment is ready for validation.            |
 | Production Candidate Gate        | Prove a build/environment is safe enough for public production.         |
@@ -138,9 +138,9 @@ The configuration-driven architecture guard runs in repository checks, but it do
 
 Do not require a static guard when detection would be vague, noisy, speculative, brittle, or easy to evade. Use the smallest reliable proof: a focused test, a static rule, or both when each verifies a distinct part of the invariant. Ordinary features do not require speculative architecture rules.
 
-## Local Packaged Beta Gate
+## Local Packaged Alpha Gate
 
-Local packaged beta is the first release-shaped testing target.
+Local packaged alpha is the first release-shaped testing target.
 
 This gate should prove that the game works outside the normal editor/dev-runner path.
 
@@ -156,10 +156,12 @@ Acceptable evidence includes packaged-build smoke plus targeted checks for:
 * results screen display,
 * local stats persistence,
 * server process cleanup on quit,
-* devtools policy matching beta expectations,
+* devtools policy matching alpha expectations,
 * no hosted auth or hosted multiplayer requirement.
 
-These builds are beta/testing builds, not production builds. Devtools may remain open or enabled for diagnostics and bug reporting.
+These builds are alpha/testing builds, not production builds. Devtools may remain open or enabled for diagnostics and bug reporting.
+
+The implemented native gate runs on Windows and macOS. It exports from a temporary clean project copy, assembles the client/server/credential-helper package, and runs the exported client twice. The first run verifies secure credential storage, creates a local profile, starts a real single-player session through the normal WebSocket and realtime transport seams, deterministically completes the server-authoritative match, verifies the resolved result, and waits for local statistics to be recorded. The second run proves the selected profile and game, score, high-score, and ship-death statistics survived a complete client/server restart. The gate also proves loopback-only server ownership and cleanup, writes a SHA-256 release manifest, and uploads the exact tested artifact. Only visual presentation and ordinary player-driven interaction remain in the manual promotion smoke.
 
 ## Dev-Hosted Multiplayer Gate
 
@@ -329,7 +331,7 @@ Operational commands and environment variables for these checks belong in [Agent
 
 Verification should grow toward launch-shaped confidence, not only first-slice confidence.
 
-Local packaged beta, dev-hosted multiplayer, hosted staging, and production candidate builds each need their own gate because they protect different risks.
+Local packaged alpha, dev-hosted multiplayer, hosted staging, and production candidate builds each need their own gate because they protect different risks.
 
 A feature or build can be correct in local development and still fail release-shaped verification if it breaks packaging, migration, runtime health, operational readiness, generated contracts, or production admission rules.
 
@@ -337,7 +339,7 @@ A feature or build can be correct in local development and still fail release-sh
 
 1. Keep local development sanity checks fast and seam-focused.
 2. Enforce documentation and contract checks wherever source-of-truth drift can block release-shaped work.
-3. Use packaged-build smoke for the first local packaged beta gate.
+3. Use packaged-build smoke for the first local packaged alpha gate.
 4. Require hosted staging and production candidate checks to cover runtime, migration, and operational readiness risks.
 5. Keep runtime-heavy feature, migration, and operational gates separate so each risk is measured at the right level.
 
@@ -355,7 +357,7 @@ A feature or build can be correct in local development and still fail release-sh
 
 ## Open decisions
 
-* Which checks should stay manual through local packaged beta?
+* Which visible presentation checks should stay manual through local packaged alpha?
 * Which checks must become automated before hosted production?
 * Which contract checks protect the highest-risk seams first?
 * Which runtime scenarios are required for each release-shaped build?

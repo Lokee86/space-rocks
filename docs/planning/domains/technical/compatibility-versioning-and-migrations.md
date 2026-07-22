@@ -79,7 +79,7 @@ Examples:
 | Stage                  | Policy                                                               |
 | ---------------------- | -------------------------------------------------------------------- |
 | Local Development      | Loose compatibility; coordinated local breakage is acceptable.       |
-| Local Packaged Beta    | Best-effort forward migration; no forever-support promise.           |
+| Local Packaged Alpha    | Best-effort forward migration; no forever-support promise.           |
 | Dev-Hosted Multiplayer | Forced upgrades are acceptable.                                      |
 | Hosted Staging         | Should follow production compatibility expectations where practical. |
 | Hosted Production      | Current version only at first.                                       |
@@ -125,7 +125,7 @@ OpenAPI and generated clients should be treated as source-of-truth contract surf
 
 Disposable local development and testing profiles do not need backup or migration protection.
 
-Local profile migration for public packaged beta, release candidate, or launch builds should protect existing progress before upgrading.
+Local profile migration for public packaged alpha, beta, release candidate, or launch builds should protect existing progress before upgrading.
 
 Local-profile-to-online-account migration is out of scope.
 
@@ -156,7 +156,7 @@ Hosted migration details belong in the relevant data and service docs. This doc 
 
 Generated contract drift blocks release-shaped builds.
 
-Release-shaped builds include packaged beta/testing builds, dev-hosted multiplayer builds, staging candidates, and production candidates.
+Release-shaped builds include packaged alpha/beta testing builds, dev-hosted multiplayer builds, staging candidates, and production candidates.
 
 Local development remains loose. It does not need to block or warn on every drift case unless a local tool chooses to do so.
 
@@ -172,7 +172,7 @@ If generated files do not match the relevant source-of-truth, the build should n
 
 ## Deprecation And Removal
 
-Pre-production and beta builds do not receive long-term compatibility support unless explicitly marked.
+Pre-production alpha and beta builds do not receive long-term compatibility support unless explicitly marked.
 
 Hosted production removals should be more deliberate. Removing an old route, packet field, data field, migration path, or generated contract shape should require confirming that no supported build still depends on it.
 

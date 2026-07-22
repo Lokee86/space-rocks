@@ -41,6 +41,7 @@ It executes all stages, even if an earlier stage fails:
 - `player-data`: `go test -buildvcs=false ./...`
 - `game-server default`: `go test -buildvcs=false ./...`
 - `game-server nodevtools`: `go test -tags nodevtools -buildvcs=false ./...`
+- `game-server localpackage`: `go test -tags localpackage -buildvcs=false ./...`
 
 The runner reports each stage and returns nonzero if any stage fails.
 
@@ -135,6 +136,22 @@ godot --headless --path client -s res://tools/verify_credential_helper.gd
 
 This uses isolated smoke-test service/account identifiers and verifies Godot pipe launch, secure save, secure load, secure clear, and post-clear absence.
 
+## Local Packaged Alpha Gate
+
+Run the native Windows package gate:
+
+```bash
+python tools/release/package_local_alpha.py --platform windows
+```
+
+Run the native macOS package gate:
+
+```bash
+python3 tools/release/package_local_alpha.py --platform macos --adhoc-sign
+```
+
+The packager exports from a clean temporary client copy so an open editor and its import cache cannot contaminate or block the release artifact. It builds the `localpackage` server variant, bundles the platform credential helper, and runs the exported client through seed and verify restarts on an isolated loopback port. The seed run verifies secure credentials, creates a local profile, starts a real single-player session through the normal WebSocket/realtime seams, deterministically reaches `game_over`, validates the resolved result, and waits for local stats. The verify run proves profile selection and accumulated stats survived a complete restart. The gate also checks process cleanup and writes `release-manifest.json`. Use `tools/release/local_alpha_manual_smoke.md` against that exact artifact before promotion.
+
 
 For focused client logger verification, use `client/tests/unit/test_client_logger.gd`. It uses `user://logger_test_output` with the `client-test` prefix and cleans up its own JSONL files, so it is a good place to confirm file-output and formatting behavior without broadening into a full client testing catalog.
 
@@ -158,7 +175,7 @@ bash tools/ci/run_client_tests.sh
 
 The client runner uses Godot 4.6.3 in CI, checks out LFS assets, performs a 1200-frame first-run editor bootstrap under Xvfb with the compatibility renderer and OpenGL 3 software driver, imports headlessly, and runs the existing GUT selection under `tests/unit`. Each stage has a timeout, streams stdout to the console and an artifact directory, and records a Godot engine log; CI uploads that directory unconditionally. Local runs use Xvfb when available and retain a headless bootstrap fallback. Bootstrap, import, and GUT timeouts are configurable with `GODOT_BOOTSTRAP_TIMEOUT`, `GODOT_IMPORT_TIMEOUT`, and `GODOT_GUT_TIMEOUT`; `GODOT_ARTIFACT_DIR` stores streamed stage output and Godot engine logs.
 
-The remaining gameplay/network smoke boundary is manual: websocket connection, asteroid spawning, actual shooting/effects, pause/debug flow, and the full gameplay loop.
+The packaged gate now covers WebSocket/realtime connection, single-player admission, authoritative match completion, resolved results, local persistence, and restart behavior. Manual smoke remains appropriate for visible rendering, ordinary player controls, asteroid/shooting/effects presentation, pause/debug presentation, and the human-played gameplay loop.
 
 ## Data-sync checks
 

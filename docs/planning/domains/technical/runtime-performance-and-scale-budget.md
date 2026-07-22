@@ -14,7 +14,7 @@ Parent index: [Technical Planning](./!INDEX.md)
 
 This doc plans runtime performance and scale-budget policy for Space Rocks.
 
-It defines what runtime pressure must be measured, how those measurements should be gathered, and how runtime evidence gates packaged beta, dev-hosted multiplayer, staging, and production readiness.
+It defines what runtime pressure must be measured, how those measurements should be gathered, and how runtime evidence gates packaged alpha, dev-hosted multiplayer, staging, and production readiness.
 
 This doc is optimization-adjacent. It defines measurement coverage and decision gates that determine when optimization is needed, but it does not prescribe optimization tactics before evidence identifies the limiting pressure.
 
@@ -198,20 +198,20 @@ Manual measurement is acceptable early. Release-shaped builds should move toward
 
 | Build Or Environment   | Runtime Expectation                                                                                                |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Local Packaged Beta    | Single-player is playable, diagnosable, and does not visibly degrade under expected local load.                    |
+| Local Packaged Alpha    | Single-player is playable, diagnosable, and does not visibly degrade under expected local load.                    |
 | Dev-Hosted Multiplayer | Multiplayer flows run under controlled test load with runtime warnings visible.                                    |
 | Hosted Staging         | Production-like runtime checks and load scenarios pass before production promotion.                                |
 | Hosted Production      | Runtime gates are part of release readiness; degraded performance triggers operational downgrade or release block. |
 
 Current baseline measurement is the first reference point, not the final target.
 
-This plan should support launch-shaped confidence from local packaged beta through hosted production, even if early implementation starts with smaller measurement slices.
+This plan should support launch-shaped confidence from local packaged alpha through hosted production, even if early implementation starts with smaller measurement slices.
 
 ## Required Coverage By Release Shape
 
-### Local Packaged Beta
+### Local Packaged Alpha
 
-Local packaged beta should have runtime coverage for:
+Local packaged alpha should have runtime coverage for:
 
 * bundled local server startup,
 * single-player room simulation,
@@ -338,7 +338,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
 2. Use manual measurement and devtools overlays first, then grow toward repeatable runtime scenarios with seeded scenario configuration.
-3. Apply the launch-shape coverage matrix to local packaged beta, dev-hosted multiplayer, hosted staging, and hosted production.
+3. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
 4. Add decision states and load scenarios as the evidence base grows.
 5. Treat optimization as a follow-on choice after the limiting pressure is measured.
 
