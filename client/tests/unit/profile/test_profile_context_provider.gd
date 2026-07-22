@@ -42,7 +42,7 @@ func test_single_player_selected_local_profile_returns_active_selected_display_n
 
 
 func test_multiplayer_signed_in_returns_display_name_active_authenticated_account() -> void:
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "Ada")
 	var provider := ProfileContextProvider.new()
 	provider.configure(controller)
@@ -56,7 +56,7 @@ func test_multiplayer_signed_in_returns_display_name_active_authenticated_accoun
 
 
 func test_multiplayer_signed_in_with_empty_display_name_falls_back_to_pilot() -> void:
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "")
 	var provider := ProfileContextProvider.new()
 	provider.configure(controller)
@@ -70,7 +70,7 @@ func test_multiplayer_signed_in_with_empty_display_name_falls_back_to_pilot() ->
 
 
 func test_multiplayer_signed_out_falls_back_to_guest_offline_guest() -> void:
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(false, "Ada")
 	var provider := ProfileContextProvider.new()
 	provider.configure(controller)

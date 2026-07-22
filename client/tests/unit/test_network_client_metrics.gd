@@ -144,6 +144,7 @@ func test_decode_failure_emits_bounded_canonical_event_with_trace() -> void:
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
 	var client := NetworkClient.new()
+	autofree(client)
 	var fake_socket := FakeSocket.new()
 	fake_socket.ready_state = WebSocketPeer.STATE_OPEN
 	fake_socket.packets = ["{invalid json".to_utf8_buffer()]
@@ -166,6 +167,7 @@ func test_encode_failure_emits_bounded_canonical_event_without_packet_payload() 
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
 	var client := NetworkClient.new()
+	autofree(client)
 	var fake_socket := FakeSocket.new()
 	fake_socket.ready_state = WebSocketPeer.STATE_OPEN
 	client.set_socket_for_tests(fake_socket)
@@ -225,6 +227,7 @@ func test_encode_failure_prefers_explicit_operation_trace() -> void:
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
 	var client := NetworkClient.new()
+	autofree(client)
 	var fake_socket := FakeSocket.new()
 	fake_socket.ready_state = WebSocketPeer.STATE_OPEN
 	client.set_socket_for_tests(fake_socket)

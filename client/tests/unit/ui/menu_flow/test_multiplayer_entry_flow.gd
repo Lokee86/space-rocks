@@ -36,7 +36,7 @@ class FakeMenuFlowController:
 func test_request_multiplayer_signed_out_opens_sign_in() -> void:
 	var flow = MultiplayerEntryFlow.new()
 	var menu_flow_controller = FakeMenuFlowController.new()
-	var auth_session_controller = FakeAuthSessionController.new()
+	var auth_session_controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 
 	auth_session_controller.auth_session.signed_in = false
 	flow.configure(menu_flow_controller, auth_session_controller)
@@ -50,7 +50,7 @@ func test_request_multiplayer_signed_out_opens_sign_in() -> void:
 func test_request_multiplayer_signed_in_opens_multiplayer_pregame() -> void:
 	var flow = MultiplayerEntryFlow.new()
 	var menu_flow_controller = FakeMenuFlowController.new()
-	var auth_session_controller = FakeAuthSessionController.new()
+	var auth_session_controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 
 	auth_session_controller.auth_session.signed_in = true
 	flow.configure(menu_flow_controller, auth_session_controller)
@@ -64,7 +64,7 @@ func test_request_multiplayer_signed_in_opens_multiplayer_pregame() -> void:
 func test_auth_state_changed_on_sign_in_screen_routes_signed_in_to_pregame() -> void:
 	var flow = MultiplayerEntryFlow.new()
 	var menu_flow_controller = FakeMenuFlowController.new()
-	var auth_session_controller = FakeAuthSessionController.new()
+	var auth_session_controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 
 	menu_flow_controller.current_route = MenuRoute.SIGN_IN_SCREEN
 	auth_session_controller.auth_session.signed_in = true
@@ -78,7 +78,7 @@ func test_auth_state_changed_on_sign_in_screen_routes_signed_in_to_pregame() -> 
 func test_auth_state_changed_outside_sign_in_screen_does_not_route() -> void:
 	var flow = MultiplayerEntryFlow.new()
 	var menu_flow_controller = FakeMenuFlowController.new()
-	var auth_session_controller = FakeAuthSessionController.new()
+	var auth_session_controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 
 	menu_flow_controller.current_route = MenuRoute.MAIN_MENU
 	auth_session_controller.auth_session.signed_in = true
@@ -92,7 +92,7 @@ func test_auth_state_changed_outside_sign_in_screen_does_not_route() -> void:
 func test_auth_state_changed_signed_out_on_sign_in_screen_does_not_route() -> void:
 	var flow = MultiplayerEntryFlow.new()
 	var menu_flow_controller = FakeMenuFlowController.new()
-	var auth_session_controller = FakeAuthSessionController.new()
+	var auth_session_controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 
 	menu_flow_controller.current_route = MenuRoute.SIGN_IN_SCREEN
 	auth_session_controller.auth_session.signed_in = false

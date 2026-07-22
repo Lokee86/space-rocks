@@ -62,7 +62,7 @@ static func _collect_pickup_types_from_scene(
 				"resource_path": actual_script_path,
 			}
 		)
-		scene_root.queue_free()
+		scene_root.free()
 		return
 
 	var badge := pickup_root.get_node_or_null("Badge")
@@ -81,7 +81,7 @@ static func _collect_pickup_types_from_scene(
 				"actual_type": "null",
 			}
 		)
-		scene_root.queue_free()
+		scene_root.free()
 		return
 
 	for child in badge.get_children():
@@ -90,4 +90,4 @@ static func _collect_pickup_types_from_scene(
 			if pickup_type not in pickup_types:
 				pickup_types.append(pickup_type)
 
-	scene_root.queue_free()
+	scene_root.free()

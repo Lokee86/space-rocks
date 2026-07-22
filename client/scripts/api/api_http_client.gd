@@ -1,4 +1,4 @@
-extends Node
+extends RefCounted
 class_name ApiHttpClient
 
 const ApiRequestResultScript := preload("res://scripts/api/api_request_result.gd")

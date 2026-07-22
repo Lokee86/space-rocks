@@ -102,7 +102,7 @@ func test_local_profile_loads_profile_stats_with_local_profile_id() -> void:
 func test_authenticated_loads_profile_stats_with_token() -> void:
 	var provider := ProfileStatsProvider.new()
 	var api_client := FakePlayerDataProfileApiClient.new()
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "bearer-token")
 	provider.configure(controller, api_client)
 
@@ -142,7 +142,7 @@ func test_authenticated_stats_maps_profile_response_to_profile_stats() -> void:
 			},
 		},
 	})
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "token-123")
 	provider.configure(controller, api_client)
 
@@ -184,7 +184,7 @@ func test_authenticated_stats_ignores_extra_sensitive_fields() -> void:
 			},
 		},
 	})
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "token-123")
 	provider.configure(controller, api_client)
 
@@ -214,7 +214,7 @@ func test_authenticated_stats_missing_stats_body_returns_zero() -> void:
 			"callsign": "Ada",
 		},
 	})
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "token-123")
 	provider.configure(controller, api_client)
 
@@ -235,7 +235,7 @@ func test_authenticated_stats_missing_stats_body_returns_zero() -> void:
 func test_authenticated_without_token_returns_zero_stats() -> void:
 	var provider := ProfileStatsProvider.new()
 	var api_client := FakePlayerDataProfileApiClient.new()
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "")
 	provider.configure(controller, api_client)
 
@@ -257,7 +257,7 @@ func test_authenticated_without_token_returns_zero_stats() -> void:
 func test_failed_api_returns_cached_stats_when_available() -> void:
 	var provider := ProfileStatsProvider.new()
 	var api_client := FakePlayerDataProfileApiClient.new()
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "bearer-token")
 	provider.configure(controller, api_client)
 
@@ -287,7 +287,7 @@ func test_failed_api_without_cache_returns_zero_stats() -> void:
 	var provider := ProfileStatsProvider.new()
 	var api_client := FakePlayerDataProfileApiClient.new()
 	api_client.result = ApiRequestResult.failure(500, "server_error")
-	var controller := FakeAuthSessionController.new()
+	var controller: FakeAuthSessionController = autofree(FakeAuthSessionController.new())
 	controller.session = _create_session(true, "bearer-token")
 	provider.configure(controller, api_client)
 

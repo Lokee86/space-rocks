@@ -35,14 +35,14 @@ func after_each() -> void:
 func test_configure_network_client_resets_missing_dependency_report() -> void:
 	var sender := ClientPacketSender.new()
 	sender._missing_network_client_reported = true
-	var fake_network := FakeNetworkClient.new()
+	var fake_network: FakeNetworkClient = autofree(FakeNetworkClient.new())
 	sender.configure(fake_network)
 	sender.send_input_packet({"type": "input"})
 	assert_eq(fake_network.sent_packets.size(), 1)
 	assert_false(sender._missing_network_client_reported)
 
 func test_empty_auth_token_remains_intentional_noop() -> void:
-	var fake_network := FakeNetworkClient.new()
+	var fake_network: FakeNetworkClient = autofree(FakeNetworkClient.new())
 	var sender := ClientPacketSender.new(fake_network)
 	sender.send_authenticate_request("")
 	assert_eq(fake_network.sent_packets.size(), 0)
@@ -62,7 +62,7 @@ func test_missing_network_client_is_reported_once_then_resets_on_assignment() ->
 	assert_eq(record["fields"]["dependency"], "network_client")
 	assert_eq(record["fields"]["failure_mode"], "not_configured")
 
-	var fake_network := FakeNetworkClient.new()
+	var fake_network: FakeNetworkClient = autofree(FakeNetworkClient.new())
 	sender.network_client = fake_network
 	sender.send_input_packet({"type": "input"})
 	assert_false(sender._missing_network_client_reported)
@@ -76,7 +76,7 @@ func test_missing_network_client_is_reported_once_then_resets_on_assignment() ->
 
 func test_initial_room_senders_include_operation_trace() -> void:
 	var trace_id := "00000000-0000-4000-8000-000000000025"
-	var fake_network := FakeNetworkClient.new()
+	var fake_network: FakeNetworkClient = autofree(FakeNetworkClient.new())
 	var sender := ClientPacketSender.new(fake_network)
 
 	sender.send_create_room_request(trace_id)

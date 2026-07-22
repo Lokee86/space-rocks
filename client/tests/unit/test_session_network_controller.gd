@@ -275,7 +275,7 @@ func _create_match_controller() -> Array:
 	var connection := FakeConnectionService.new()
 	add_child_autofree(connection)
 	var room := FakeRoomSessionController.new()
-	var gameplay := FakeGameplaySessionController.new()
+	var gameplay: FakeGameplaySessionController = autofree(FakeGameplaySessionController.new())
 	gameplay.set_events(connection.events)
 	var controller := SessionNetworkController.new()
 	controller.configure(connection, null, {})

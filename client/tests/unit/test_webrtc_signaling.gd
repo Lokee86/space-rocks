@@ -19,7 +19,7 @@ func test_server_packet_router_recognizes_webrtc_packet_types() -> void:
 
 
 func test_server_packet_dispatcher_exposes_webrtc_signals() -> void:
-	var dispatcher := ServerPacketDispatcher.new()
+	var dispatcher: Node = autofree(ServerPacketDispatcher.new())
 
 	assert_true(dispatcher.has_signal("webrtc_answer_received"))
 	assert_true(dispatcher.has_signal("webrtc_ice_candidate_received"))

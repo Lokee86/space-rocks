@@ -67,7 +67,6 @@ func _ready() -> void:
 	app_shutdown_controller.configure(session_boot_controller.get_connection_service(), get_tree())
 
 	api_http_client = ApiHttpClientScript.new()
-	add_child(api_http_client)
 
 	player_data_profile_api_client = PlayerDataProfileApiClientScript.new(api_http_client)
 	profile_stats_provider = ProfileStatsProviderScript.new()

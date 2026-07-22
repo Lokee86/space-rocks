@@ -76,7 +76,7 @@ func test_show_profile_combines_context_and_stats() -> void:
 	var flow := ProfileFlow.new()
 	flow.configure(context_provider, stats_provider, transmission_flow)
 
-	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
+	var mounted = autofree(await flow.show_profile(PregameMenuMode.SINGLE_PLAYER))
 
 	assert_eq(context_provider.last_mode, PregameMenuMode.SINGLE_PLAYER)
 	assert_eq(stats_provider.last_context, context_provider.context)
@@ -113,7 +113,7 @@ func test_show_profile_uses_context_readout_fields_with_loaded_stats() -> void:
 	var flow := ProfileFlow.new()
 	flow.configure(context_provider, stats_provider, transmission_flow)
 
-	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
+	var mounted = autofree(await flow.show_profile(PregameMenuMode.SINGLE_PLAYER))
 
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: ACE")
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/ActivityLabel") as Label).text, "STATUS: ACTIVE")
@@ -131,7 +131,7 @@ func test_show_profile_mounts_profile_readout_scene() -> void:
 	var flow := ProfileFlow.new()
 	flow.configure(context_provider, stats_provider, transmission_flow)
 
-	await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
+	autofree(await flow.show_profile(PregameMenuMode.SINGLE_PLAYER))
 
 	assert_eq(transmission_flow.last_scene, ProfileReadoutScene)
 
@@ -144,7 +144,7 @@ func test_show_profile_calls_apply_profile_on_mounted_readout() -> void:
 	var flow := ProfileFlow.new()
 	flow.configure(context_provider, stats_provider, transmission_flow)
 
-	var mounted = await flow.show_profile(PregameMenuMode.SINGLE_PLAYER)
+	var mounted = autofree(await flow.show_profile(PregameMenuMode.SINGLE_PLAYER))
 
 	assert_true(mounted is ProfileReadout)
 	assert_eq((mounted.get_node("ReadoutContainer/VBoxContainer/CallsignActivityContainer/CallsignLabel") as Label).text, "CALLSIGN: Guest")

@@ -4,10 +4,10 @@ const DevtoolsWindowTelemetry := preload("res://scripts/devtools/devtools_window
 
 
 func _configured_telemetry() -> Array:
-	var local_select := OptionButton.new()
-	var target_select := OptionButton.new()
-	var local_text := Label.new()
-	var target_text := Label.new()
+	var local_select: OptionButton = autofree(OptionButton.new())
+	var target_select: OptionButton = autofree(OptionButton.new())
+	var local_text: Label = autofree(Label.new())
+	var target_text: Label = autofree(Label.new())
 	var telemetry := DevtoolsWindowTelemetry.new()
 	telemetry.configure(local_select, target_select, local_text, target_text)
 	return [telemetry, local_select, target_select, local_text, target_text]

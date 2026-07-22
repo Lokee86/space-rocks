@@ -220,7 +220,7 @@ func _new_projectile_sync() -> ProjectileSync:
 
 
 func test_unknown_route_emits_once_without_recording_packet_dictionary() -> void:
-	var dispatcher := ServerPacketDispatcher.new()
+	var dispatcher: Node = autofree(ServerPacketDispatcher.new())
 	var unknown_packets: Array = []
 	dispatcher.unknown_packet_received.connect(func(packet: Dictionary) -> void:
 		unknown_packets.append(packet)

@@ -629,6 +629,7 @@ func _create_controller(auth_session_controller = null, profile_stats_provider =
 
 func _signed_in_auth_session_controller(display_name: String) -> FakeAuthSessionController:
 	var auth_session_controller := FakeAuthSessionController.new()
+	autofree(auth_session_controller)
 	auth_session_controller.auth_session.set_signed_in("bearer-token", {
 		"id": 7,
 		"display_name": display_name,

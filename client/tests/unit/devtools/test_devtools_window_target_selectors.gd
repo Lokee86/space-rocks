@@ -6,7 +6,7 @@ const DevtoolsWindowTargetSelectors := preload("res://scripts/devtools/devtools_
 func _configured_selectors() -> Array:
 	var controls: Array[OptionButton] = []
 	for _index in range(9):
-		controls.append(OptionButton.new())
+		controls.append(autofree(OptionButton.new()))
 	var selectors := DevtoolsWindowTargetSelectors.new()
 	selectors.configure(
 		controls[0],
