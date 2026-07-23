@@ -57,11 +57,20 @@ jobs:
           include-templates: true
       - name: Build and verify Windows package
         run: python tools/release/package_local_alpha.py --platform windows --godot "$env:GODOT"
+      - name: Create Windows release archive
+        shell: pwsh
+        run: Compress-Archive -Path 'dist/local-alpha/windows/*' -DestinationPath 'dist/space-rocks-local-alpha-windows-x86_64.zip' -Force
       - name: Upload tested Windows package
         uses: actions/upload-artifact@v7
         with:
           name: space-rocks-local-alpha-windows-${{ github.sha }}
           path: dist/local-alpha/windows
+          if-no-files-found: error
+      - name: Upload Windows release archive
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/space-rocks-local-alpha-windows-x86_64.zip
+          archive: false
           if-no-files-found: error
 
   macos-local-alpha:
@@ -92,9 +101,54 @@ jobs:
           include-templates: true
       - name: Build and verify macOS package
         run: python3 tools/release/package_local_alpha.py --platform macos --adhoc-sign
+      - name: Create macOS release archive
+        run: ditto -c -k --sequesterRsrc dist/local-alpha/macos dist/space-rocks-local-alpha-macos.zip
       - name: Upload tested macOS package
         uses: actions/upload-artifact@v7
         with:
           name: space-rocks-local-alpha-macos-${{ github.sha }}
           path: dist/local-alpha/macos
           if-no-files-found: error
+      - name: Upload macOS release archive
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/space-rocks-local-alpha-macos.zip
+          archive: false
+          if-no-files-found: error
+
+  publish-local-alpha:
+    name: Publish local alpha prerelease
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs:
+      - windows-local-alpha
+      - macos-local-alpha
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download tested release archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name space-rocks-local-alpha-windows-x86_64.zip --dir release
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name space-rocks-local-alpha-macos.zip --dir release
+      - name: Verify release archives
+        run: |
+          test -s release/space-rocks-local-alpha-windows-x86_64.zip
+          test -s release/space-rocks-local-alpha-macos.zip
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_tag="local-alpha-${GITHUB_SHA::12}"
+          release_title="Space Rocks Local Alpha ${GITHUB_SHA::7}"
+          printf 'Native Windows and macOS local packaged alpha builds.\n\nBoth packages passed their native automated packaged smoke tests for commit `%s`.\n\nThe macOS package is ad-hoc signed and is not notarized.\n' "$GITHUB_SHA" > release-notes.md
+          if gh release view "$release_tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$release_tag" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$release_tag" --repo "$GITHUB_REPOSITORY" --title "$release_title" --notes-file release-notes.md --prerelease --latest=false
+          else
+            gh release create "$release_tag" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$release_title" --notes-file release-notes.md --prerelease --latest=false
+          fi
