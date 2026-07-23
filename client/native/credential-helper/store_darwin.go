@@ -9,13 +9,18 @@ package main
 #include <stdlib.h>
 #include <string.h>
 
-static CFMutableDictionaryRef sr_keychain_query(const char *service_value, const char *account_value) {
+static OSStatus sr_keychain_query(
+	const char *service_value,
+	const char *account_value,
+	const char *keychain_path,
+	CFMutableDictionaryRef *query_output
+) {
 	CFStringRef service = CFStringCreateWithCString(NULL, service_value, kCFStringEncodingUTF8);
 	CFStringRef account = CFStringCreateWithCString(NULL, account_value, kCFStringEncodingUTF8);
 	if (service == NULL || account == NULL) {
 		if (service != NULL) CFRelease(service);
 		if (account != NULL) CFRelease(account);
-		return NULL;
+		return errSecAllocate;
 	}
 
 	CFMutableDictionaryRef query = CFDictionaryCreateMutable(
@@ -24,29 +29,62 @@ static CFMutableDictionaryRef sr_keychain_query(const char *service_value, const
 		&kCFTypeDictionaryKeyCallBacks,
 		&kCFTypeDictionaryValueCallBacks
 	);
-	if (query != NULL) {
-		CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword);
-		CFDictionarySetValue(query, kSecAttrService, service);
-		CFDictionarySetValue(query, kSecAttrAccount, account);
+	if (query == NULL) {
+		CFRelease(service);
+		CFRelease(account);
+		return errSecAllocate;
 	}
+
+	CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword);
+	CFDictionarySetValue(query, kSecAttrService, service);
+	CFDictionarySetValue(query, kSecAttrAccount, account);
 	CFRelease(service);
 	CFRelease(account);
-	return query;
+
+	if (keychain_path != NULL && keychain_path[0] != '\0') {
+		SecKeychainRef keychain = NULL;
+		OSStatus status = SecKeychainOpen(keychain_path, &keychain);
+		if (status != errSecSuccess) {
+			CFRelease(query);
+			return status;
+		}
+		const void *keychains[] = { keychain };
+		CFArrayRef search_list = CFArrayCreate(
+			NULL,
+			keychains,
+			1,
+			&kCFTypeArrayCallBacks
+		);
+		if (search_list == NULL) {
+			CFRelease(keychain);
+			CFRelease(query);
+			return errSecAllocate;
+		}
+		CFDictionarySetValue(query, kSecUseKeychain, keychain);
+		CFDictionarySetValue(query, kSecMatchSearchList, search_list);
+		CFRelease(search_list);
+		CFRelease(keychain);
+	}
+
+	*query_output = query;
+	return errSecSuccess;
 }
 
 static OSStatus sr_keychain_load(
 	const char *service,
 	const char *account,
+	const char *keychain_path,
 	unsigned char **output,
 	long *output_length
 ) {
-	CFMutableDictionaryRef query = sr_keychain_query(service, account);
-	if (query == NULL) return errSecAllocate;
+	CFMutableDictionaryRef query = NULL;
+	OSStatus status = sr_keychain_query(service, account, keychain_path, &query);
+	if (status != errSecSuccess) return status;
 	CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue);
 	CFDictionarySetValue(query, kSecMatchLimit, kSecMatchLimitOne);
 
 	CFTypeRef result = NULL;
-	OSStatus status = SecItemCopyMatching(query, &result);
+	status = SecItemCopyMatching(query, &result);
 	CFRelease(query);
 	if (status != errSecSuccess) return status;
 	if (result == NULL || CFGetTypeID(result) != CFDataGetTypeID()) {
@@ -74,11 +112,13 @@ static OSStatus sr_keychain_load(
 static OSStatus sr_keychain_save(
 	const char *service,
 	const char *account,
+	const char *keychain_path,
 	const unsigned char *secret,
 	long secret_length
 ) {
-	CFMutableDictionaryRef query = sr_keychain_query(service, account);
-	if (query == NULL) return errSecAllocate;
+	CFMutableDictionaryRef query = NULL;
+	OSStatus status = sr_keychain_query(service, account, keychain_path, &query);
+	if (status != errSecSuccess) return status;
 	CFDataRef data = CFDataCreate(NULL, secret, (CFIndex)secret_length);
 	if (data == NULL) {
 		CFRelease(query);
@@ -100,8 +140,9 @@ static OSStatus sr_keychain_save(
 		CFRelease(query);
 		return errSecAllocate;
 	}
-	OSStatus status = SecItemUpdate(query, updates);
+	status = SecItemUpdate(query, updates);
 	if (status == errSecItemNotFound) {
+		CFDictionaryRemoveValue(query, kSecMatchSearchList);
 		CFDictionarySetValue(query, kSecValueData, data);
 		status = SecItemAdd(query, NULL);
 	}
@@ -112,10 +153,15 @@ static OSStatus sr_keychain_save(
 	return status;
 }
 
-static OSStatus sr_keychain_clear(const char *service, const char *account) {
-	CFMutableDictionaryRef query = sr_keychain_query(service, account);
-	if (query == NULL) return errSecAllocate;
-	OSStatus status = SecItemDelete(query);
+static OSStatus sr_keychain_clear(
+	const char *service,
+	const char *account,
+	const char *keychain_path
+) {
+	CFMutableDictionaryRef query = NULL;
+	OSStatus status = sr_keychain_query(service, account, keychain_path, &query);
+	if (status != errSecSuccess) return status;
+	status = SecItemDelete(query);
 	CFRelease(query);
 	return status;
 }
@@ -124,6 +170,7 @@ import "C"
 
 import (
 	"fmt"
+	"os"
 	"unsafe"
 )
 
@@ -132,21 +179,35 @@ const (
 	errSecItemNotFound = -25300
 )
 
-type darwinCredentialStore struct{}
+const credentialKeychainPathEnvironment = "SPACE_ROCKS_CREDENTIAL_KEYCHAIN_PATH"
 
-func newPlatformStore() credentialStore {
-	return darwinCredentialStore{}
+type darwinCredentialStore struct {
+	keychainPath string
 }
 
-func (darwinCredentialStore) Load(req request) (string, error) {
+func newPlatformStore() credentialStore {
+	return darwinCredentialStore{
+		keychainPath: os.Getenv(credentialKeychainPathEnvironment),
+	}
+}
+
+func (store darwinCredentialStore) Load(req request) (string, error) {
 	service := C.CString(req.Service)
 	account := C.CString(req.Account)
+	keychainPath := C.CString(store.keychainPath)
 	defer C.free(unsafe.Pointer(service))
 	defer C.free(unsafe.Pointer(account))
+	defer C.free(unsafe.Pointer(keychainPath))
 
 	var output *C.uchar
 	var outputLength C.long
-	status := int(C.sr_keychain_load(service, account, &output, &outputLength))
+	status := int(C.sr_keychain_load(
+		service,
+		account,
+		keychainPath,
+		&output,
+		&outputLength,
+	))
 	if status == errSecItemNotFound {
 		return "", errCredentialNotFound
 	}
@@ -160,17 +221,20 @@ func (darwinCredentialStore) Load(req request) (string, error) {
 	return string(C.GoBytes(unsafe.Pointer(output), C.int(outputLength))), nil
 }
 
-func (darwinCredentialStore) Save(req request) error {
+func (store darwinCredentialStore) Save(req request) error {
 	service := C.CString(req.Service)
 	account := C.CString(req.Account)
+	keychainPath := C.CString(store.keychainPath)
 	secret := C.CBytes([]byte(req.Secret))
 	defer C.free(unsafe.Pointer(service))
 	defer C.free(unsafe.Pointer(account))
+	defer C.free(unsafe.Pointer(keychainPath))
 	defer C.free(secret)
 
 	status := int(C.sr_keychain_save(
 		service,
 		account,
+		keychainPath,
 		(*C.uchar)(secret),
 		C.long(len(req.Secret)),
 	))
@@ -180,13 +244,15 @@ func (darwinCredentialStore) Save(req request) error {
 	return nil
 }
 
-func (darwinCredentialStore) Clear(req request) error {
+func (store darwinCredentialStore) Clear(req request) error {
 	service := C.CString(req.Service)
 	account := C.CString(req.Account)
+	keychainPath := C.CString(store.keychainPath)
 	defer C.free(unsafe.Pointer(service))
 	defer C.free(unsafe.Pointer(account))
+	defer C.free(unsafe.Pointer(keychainPath))
 
-	status := int(C.sr_keychain_clear(service, account))
+	status := int(C.sr_keychain_clear(service, account, keychainPath))
 	if status == errSecItemNotFound {
 		return errCredentialNotFound
 	}

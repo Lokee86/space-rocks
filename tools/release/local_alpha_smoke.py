@@ -12,6 +12,7 @@ import time
 from .local_alpha_common import ReleaseGateError, run
 
 DEFAULT_LOCAL_SERVER_PORT = 8080
+CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT = "SPACE_ROCKS_CREDENTIAL_KEYCHAIN_PATH"
 
 
 def find_available_loopback_port() -> int:
@@ -83,6 +84,7 @@ def prepare_macos_smoke_keychain(
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         remove_macos_smoke_keychain(keychain_path, environment)
         raise
+    environment[CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT] = str(keychain_path)
     return keychain_path
 
 
@@ -90,15 +92,18 @@ def remove_macos_smoke_keychain(
     keychain_path: Path,
     environment: dict[str, str],
 ) -> None:
-    subprocess.run(
-        ["security", "delete-keychain", str(keychain_path)],
-        cwd=keychain_path.parent,
-        env=environment,
-        check=False,
-        timeout=30,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    try:
+        subprocess.run(
+            ["security", "delete-keychain", str(keychain_path)],
+            cwd=keychain_path.parent,
+            env=environment,
+            check=False,
+            timeout=30,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    finally:
+        environment.pop(CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT, None)
 
 
 def print_smoke_diagnostics(data_root: Path) -> None:

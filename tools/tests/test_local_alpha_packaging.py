@@ -14,6 +14,7 @@ from tools.release.local_alpha_build import (
 from tools.release.local_alpha_common import ReleaseGateError
 from tools.release.local_alpha_manifest import default_version, package_files
 from tools.release.local_alpha_smoke import (
+    CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT,
     prepare_macos_smoke_keychain,
     remove_macos_smoke_keychain,
     smoke_environment,
@@ -104,16 +105,20 @@ def test_macos_smoke_keychain_uses_the_isolated_smoke_home(
     monkeypatch.setattr("tools.release.local_alpha_smoke.subprocess.run", record_run)
 
     keychain_path = prepare_macos_smoke_keychain(tmp_path, environment)
-    remove_macos_smoke_keychain(keychain_path, environment)
 
     assert keychain_path == tmp_path / "local-alpha-smoke.keychain-db"
+    assert environment[CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT] == str(keychain_path)
     assert calls[0][0][:3] == ["security", "create-keychain", "-p"]
     assert calls[2][0][:3] == ["security", "unlock-keychain", "-p"]
     assert calls[3][0][:5] == ["security", "default-keychain", "-d", "user", "-s"]
     assert calls[4][0][:5] == ["security", "list-keychains", "-d", "user", "-s"]
-    assert calls[5][0] == ["security", "delete-keychain", str(keychain_path)]
     assert all(call[1]["env"] is environment for call in calls)
     assert all(call[1]["cwd"] == tmp_path for call in calls)
+
+    remove_macos_smoke_keychain(keychain_path, environment)
+
+    assert calls[5][0] == ["security", "delete-keychain", str(keychain_path)]
+    assert CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT not in environment
 
 
 def test_macos_export_uses_official_universal_template_configuration() -> None:

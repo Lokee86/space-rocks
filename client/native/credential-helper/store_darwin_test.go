@@ -9,6 +9,19 @@ import (
 	"time"
 )
 
+func TestNewPlatformStoreUsesConfiguredKeychainPath(t *testing.T) {
+	const keychainPath = "/tmp/space-rocks-smoke.keychain-db"
+	t.Setenv(credentialKeychainPathEnvironment, keychainPath)
+
+	store, ok := newPlatformStore().(darwinCredentialStore)
+	if !ok {
+		t.Fatalf("newPlatformStore() type = %T, want darwinCredentialStore", newPlatformStore())
+	}
+	if store.keychainPath != keychainPath {
+		t.Fatalf("keychain path = %q, want %q", store.keychainPath, keychainPath)
+	}
+}
+
 func TestDarwinCredentialStoreRoundTripAndUpdate(t *testing.T) {
 	store := darwinCredentialStore{}
 	req := request{
