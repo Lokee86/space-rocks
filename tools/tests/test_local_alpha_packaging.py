@@ -57,12 +57,13 @@ def test_windows_export_targets_the_executable() -> None:
     assert client_export_output("windows", executable) == executable
 
 
-def test_macos_export_texture_compression_is_enabled() -> None:
+def test_macos_export_uses_official_universal_template_configuration() -> None:
     project_settings = (CLIENT_DIR / "project.godot").read_text(encoding="utf-8")
     export_presets = (CLIENT_DIR / "export_presets.cfg").read_text(encoding="utf-8")
 
     assert "textures/vram_compression/import_etc2_astc=true" in project_settings
     assert "texture_format/etc2_astc=true" in export_presets
+    assert 'binary_format/architecture="universal"' in export_presets
 
 
 def test_manifest_file_list_includes_the_complete_package(tmp_path: Path) -> None:

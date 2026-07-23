@@ -71,8 +71,6 @@ def build_client(platform_name: str, godot: str, preset: str, client_executable:
     with tempfile.TemporaryDirectory(prefix="space-rocks-export-") as temporary:
         staged_client = Path(temporary) / "client"
         shutil.copytree(CLIENT_DIR, staged_client, ignore=_ignore_transient_files)
-        if platform_name == "macos":
-            _select_native_macos_architecture(staged_client)
         run(
             [
                 godot,
@@ -98,18 +96,6 @@ def _ignore_transient_files(directory: str, names: list[str]) -> set[str]:
     if directory_path.name == "addons":
         ignored.add("engineforge_bridge")
     return ignored
-
-
-def _select_native_macos_architecture(staged_client: Path) -> None:
-    godot_architecture, _ = native_architectures("macos")
-    presets_path = staged_client / "export_presets.cfg"
-    presets = presets_path.read_text(encoding="utf-8")
-    presets = presets.replace(
-        'binary_format/architecture="universal"',
-        f'binary_format/architecture="{godot_architecture}"',
-        1,
-    )
-    presets_path.write_text(presets, encoding="utf-8")
 
 
 def build_server(platform_name: str, server_output: Path, version: str) -> None:
