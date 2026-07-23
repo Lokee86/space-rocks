@@ -2,7 +2,10 @@ class_name ApiConfig
 extends RefCounted
 
 const RAILS_API_BASE_URL := "http://localhost:3000"
-const DATA_HANDLER_API_BASE_URL := "http://127.0.0.1:8080"
+const DATA_HANDLER_API_BASE_URL := "http://localhost:8080"
+const LOCAL_PACKAGED_ALPHA_FEATURE := "local_packaged_alpha"
+const LOCAL_SERVER_PORT_ENV := "SPACE_ROCKS_LOCAL_SERVER_PORT"
+const DEFAULT_LOCAL_SERVER_PORT := 8080
 
 
 static func auth_me_path() -> String:
@@ -25,17 +28,32 @@ static func player_stats_path() -> String:
 	return "%s/api/player/stats" % RAILS_API_BASE_URL
 
 
+static func player_data_base_url() -> String:
+	return player_data_base_url_for_runtime(OS.has_feature(LOCAL_PACKAGED_ALPHA_FEATURE))
+
+
+static func player_data_base_url_for_runtime(local_packaged_alpha: bool) -> String:
+	var port := OS.get_environment(LOCAL_SERVER_PORT_ENV).strip_edges()
+	if port.is_valid_int():
+		var parsed_port := port.to_int()
+		if parsed_port >= 1 && parsed_port <= 65535:
+			return "http://127.0.0.1:%d" % parsed_port
+	if local_packaged_alpha:
+		return "http://127.0.0.1:%d" % DEFAULT_LOCAL_SERVER_PORT
+	return DATA_HANDLER_API_BASE_URL
+
+
 static func player_data_profile_path() -> String:
-	return "%s/api/player-data/profile" % DATA_HANDLER_API_BASE_URL
+	return "%s/api/player-data/profile" % player_data_base_url()
 
 
 static func player_data_local_profiles_path() -> String:
-	return "%s/api/player-data/local-profiles" % DATA_HANDLER_API_BASE_URL
+	return "%s/api/player-data/local-profiles" % player_data_base_url()
 
 
 static func player_data_local_profile_path(local_profile_id: String) -> String:
-	return "%s/api/player-data/local-profiles/%s" % [DATA_HANDLER_API_BASE_URL, local_profile_id.uri_encode()]
+	return "%s/api/player-data/local-profiles/%s" % [player_data_base_url(), local_profile_id.uri_encode()]
 
 
 static func player_data_local_profiles_default_path() -> String:
-	return "%s/api/player-data/local-profiles/default" % DATA_HANDLER_API_BASE_URL
+	return "%s/api/player-data/local-profiles/default" % player_data_base_url()
