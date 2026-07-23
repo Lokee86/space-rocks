@@ -13,6 +13,7 @@ CLIENT_DIR = ROOT / "client"
 GAME_SERVER_DIR = ROOT / "services" / "game-server"
 CREDENTIAL_HELPER_DIR = CLIENT_DIR / "native" / "credential-helper"
 DEFAULT_OUTPUT_ROOT = ROOT / "dist" / "local-alpha"
+COLLISION_SHAPES_SOURCE = ROOT / "shared" / "collisions" / "collision_shapes.json"
 
 
 def native_architectures(platform_name: str) -> tuple[str, str]:
@@ -59,6 +60,13 @@ def credential_helper_path(platform_name: str, output_dir: Path) -> Path:
     if platform_name == "windows":
         return output_dir / "space-rocks-credential-helper.exe"
     return output_dir / "Space Rocks.app" / "Contents" / "Helpers" / "space-rocks-credential-helper"
+
+
+def package_collision_shapes(server_output: Path) -> Path:
+    destination = server_output.parent / "shared" / "collisions" / "collision_shapes.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(COLLISION_SHAPES_SOURCE, destination)
+    return destination
 
 
 def client_export_output(platform_name: str, client_executable: Path) -> Path:

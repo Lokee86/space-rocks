@@ -10,7 +10,15 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 )
 
-const DefaultShipCollisionShapeID = "v_wing"
+const (
+	DefaultShipCollisionShapeID = "v_wing"
+	collisionShapesRelativePath = "shared/collisions/collision_shapes.json"
+)
+
+var (
+	executablePath   = os.Executable
+	workingDirectory = os.Getwd
+)
 
 // BoundingRadius returns a conservative radius enclosing the local collision shape.
 func BoundingRadius(shape CollisionShape) float64 {
@@ -33,9 +41,9 @@ func BoundingRadius(shape CollisionShape) float64 {
 }
 
 type CollisionShapeCatalog struct {
-	Bullet    ImportedCollisionShape   `json:"bullet"`
-	Ship      ImportedCollisionShape   `json:"ship"`
-	Asteroids []ImportedCollisionShape `json:"asteroids"`
+	Bullet    ImportedCollisionShape            `json:"bullet"`
+	Ship      ImportedCollisionShape            `json:"ship"`
+	Asteroids []ImportedCollisionShape          `json:"asteroids"`
 	Pickups   map[string]ImportedCollisionShape `json:"pickups"`
 }
 
@@ -138,21 +146,39 @@ func (shape ImportedCollisionShape) ToCollisionShape(scale float64) (CollisionSh
 }
 
 func findSharedCollisionShapesPath() (string, error) {
-	workingDirectory, err := os.Getwd()
-	if err != nil {
-		return "", err
+	searched := make([]string, 0, 2)
+
+	if executable, err := executablePath(); err == nil {
+		executableDirectory := filepath.Dir(executable)
+		searched = append(searched, executableDirectory)
+		if path, found := findCollisionShapesFromRoot(executableDirectory); found {
+			return path, nil
+		}
 	}
 
-	current := workingDirectory
+	if directory, err := workingDirectory(); err == nil {
+		if len(searched) == 0 || filepath.Clean(directory) != filepath.Clean(searched[0]) {
+			searched = append(searched, directory)
+			if path, found := findCollisionShapesFromRoot(directory); found {
+				return path, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("shared collision shapes not found from %v", searched)
+}
+
+func findCollisionShapesFromRoot(root string) (string, bool) {
+	current := root
 	for {
-		path := filepath.Join(current, "shared", "collisions", "collision_shapes.json")
+		path := filepath.Join(current, filepath.FromSlash(collisionShapesRelativePath))
 		if _, err := os.Stat(path); err == nil {
-			return path, nil
+			return path, true
 		}
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", fmt.Errorf("shared collision shapes not found from %s", workingDirectory)
+			return "", false
 		}
 		current = parent
 	}

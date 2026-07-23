@@ -8,6 +8,7 @@ from tools.release.local_alpha_build import (
     client_export_output,
     credential_helper_path,
     native_architectures,
+    package_collision_shapes,
     platform_layout,
     resolve_client_executable,
 )
@@ -65,6 +66,19 @@ def test_windows_export_targets_the_executable() -> None:
     executable = Path("dist/local-alpha/windows/SpaceRocks.exe")
 
     assert client_export_output("windows", executable) == executable
+
+
+def test_collision_shapes_are_packaged_beside_the_server(tmp_path: Path, monkeypatch) -> None:
+    source = tmp_path / "source" / "collision_shapes.json"
+    source.parent.mkdir()
+    source.write_text('{"ship": {"type": "polygon"}}', encoding="utf-8")
+    monkeypatch.setattr("tools.release.local_alpha_build.COLLISION_SHAPES_SOURCE", source)
+    server = tmp_path / "package" / "space-rocks-server.exe"
+
+    destination = package_collision_shapes(server)
+
+    assert destination == server.parent / "shared" / "collisions" / "collision_shapes.json"
+    assert destination.read_text(encoding="utf-8") == source.read_text(encoding="utf-8")
 
 
 def test_macos_client_executable_comes_from_bundle_metadata(tmp_path: Path) -> None:

@@ -24,6 +24,7 @@ from tools.release.local_alpha_build import (  # noqa: E402
     credential_helper_path,
     godot_binary,
     platform_layout,
+    package_collision_shapes,
     resolve_client_executable,
 )
 from tools.release.local_alpha_common import ReleaseGateError  # noqa: E402
@@ -80,6 +81,7 @@ def main() -> int:
     client_executable = resolve_client_executable(args.platform, client_executable)
     build_server(args.platform, server_output, version)
     build_credential_helper(args.platform, helper_output)
+    collision_shapes_output = package_collision_shapes(server_output)
 
     if args.platform == "macos":
         server_output.chmod(0o755)
@@ -87,7 +89,7 @@ def main() -> int:
         if args.adhoc_sign:
             ad_hoc_sign_macos(output_dir)
 
-    required_files = [client_executable, server_output, helper_output]
+    required_files = [client_executable, server_output, helper_output, collision_shapes_output]
     missing = [path for path in required_files if not path.is_file()]
     if missing:
         raise ReleaseGateError(f"package is missing required files: {missing}")
