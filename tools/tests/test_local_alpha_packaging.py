@@ -1,4 +1,7 @@
+import plistlib
 from pathlib import Path
+
+import pytest
 
 from tools.release.local_alpha_build import (
     CLIENT_DIR,
@@ -6,7 +9,9 @@ from tools.release.local_alpha_build import (
     credential_helper_path,
     native_architectures,
     platform_layout,
+    resolve_client_executable,
 )
+from tools.release.local_alpha_common import ReleaseGateError
 from tools.release.local_alpha_manifest import default_version, package_files
 from tools.release.local_alpha_smoke import smoke_environment
 
@@ -55,6 +60,27 @@ def test_windows_export_targets_the_executable() -> None:
     executable = Path("dist/local-alpha/windows/SpaceRocks.exe")
 
     assert client_export_output("windows", executable) == executable
+
+
+def test_macos_client_executable_comes_from_bundle_metadata(tmp_path: Path) -> None:
+    expected = tmp_path / "Space Rocks.app" / "Contents" / "MacOS" / "Space Rocks"
+    info_plist = expected.parents[1] / "Info.plist"
+    info_plist.parent.mkdir(parents=True)
+    with info_plist.open("wb") as handle:
+        plistlib.dump({"CFBundleExecutable": "SpaceRocks"}, handle)
+
+    assert resolve_client_executable("macos", expected) == expected.parent / "SpaceRocks"
+
+
+def test_macos_client_executable_rejects_invalid_bundle_metadata(tmp_path: Path) -> None:
+    expected = tmp_path / "Space Rocks.app" / "Contents" / "MacOS" / "Space Rocks"
+    info_plist = expected.parents[1] / "Info.plist"
+    info_plist.parent.mkdir(parents=True)
+    with info_plist.open("wb") as handle:
+        plistlib.dump({"CFBundleExecutable": "../SpaceRocks"}, handle)
+
+    with pytest.raises(ReleaseGateError, match="invalid CFBundleExecutable"):
+        resolve_client_executable("macos", expected)
 
 
 def test_macos_export_uses_official_universal_template_configuration() -> None:

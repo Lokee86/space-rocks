@@ -24,6 +24,7 @@ from tools.release.local_alpha_build import (  # noqa: E402
     credential_helper_path,
     godot_binary,
     platform_layout,
+    resolve_client_executable,
 )
 from tools.release.local_alpha_common import ReleaseGateError  # noqa: E402
 from tools.release.local_alpha_manifest import (  # noqa: E402
@@ -76,6 +77,7 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     build_client(args.platform, godot_binary(args.godot), preset, client_executable)
+    client_executable = resolve_client_executable(args.platform, client_executable)
     build_server(args.platform, server_output, version)
     build_credential_helper(args.platform, helper_output)
 

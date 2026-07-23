@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import platform
+import plistlib
 import shutil
 import tempfile
 
@@ -64,6 +65,25 @@ def client_export_output(platform_name: str, client_executable: Path) -> Path:
     if platform_name == "macos":
         return client_executable.parents[2]
     return client_executable
+
+
+def resolve_client_executable(platform_name: str, expected_path: Path) -> Path:
+    if platform_name != "macos":
+        return expected_path
+
+    info_plist = expected_path.parents[1] / "Info.plist"
+    try:
+        with info_plist.open("rb") as handle:
+            bundle_metadata = plistlib.load(handle)
+    except (OSError, plistlib.InvalidFileException) as error:
+        raise ReleaseGateError(f"could not read macOS bundle metadata: {info_plist}") from error
+
+    executable_name = bundle_metadata.get("CFBundleExecutable")
+    if not isinstance(executable_name, str) or not executable_name:
+        raise ReleaseGateError(f"macOS bundle metadata is missing CFBundleExecutable: {info_plist}")
+    if Path(executable_name).name != executable_name:
+        raise ReleaseGateError(f"macOS bundle has invalid CFBundleExecutable: {executable_name!r}")
+    return expected_path.parent / executable_name
 
 
 def build_client(platform_name: str, godot: str, preset: str, client_executable: Path) -> None:
