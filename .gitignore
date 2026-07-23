@@ -45,7 +45,18 @@ tools/space-rocks-mcp/node_modules/
 addons/engineforge_bridge/
 
 .obsidian/
+
+# Warlock tool state
 /.ddocs/
+/.lexicon/
+/.arcana/
+/.grimoire/
+/.pitlord/
+/.cantrip/
+/.homunculus/
+/.incubus/
+/.ritual/
+/.warlock/
 
 # Local player-data runtime DB
 services/player-data/data/player-data.sqlite3
