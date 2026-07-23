@@ -60,6 +60,12 @@ def credential_helper_path(platform_name: str, output_dir: Path) -> Path:
     return output_dir / "Space Rocks.app" / "Contents" / "Helpers" / "space-rocks-credential-helper"
 
 
+def client_export_output(platform_name: str, client_executable: Path) -> Path:
+    if platform_name == "macos":
+        return client_executable.parents[2]
+    return client_executable
+
+
 def build_client(platform_name: str, godot: str, preset: str, client_executable: Path) -> None:
     client_executable.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="space-rocks-export-") as temporary:
@@ -68,7 +74,15 @@ def build_client(platform_name: str, godot: str, preset: str, client_executable:
         if platform_name == "macos":
             _select_native_macos_architecture(staged_client)
         run(
-            [godot, "--headless", "--path", staged_client, "--export-release", preset, client_executable],
+            [
+                godot,
+                "--headless",
+                "--path",
+                staged_client,
+                "--export-release",
+                preset,
+                client_export_output(platform_name, client_executable),
+            ],
             cwd=ROOT,
             timeout=600,
         )

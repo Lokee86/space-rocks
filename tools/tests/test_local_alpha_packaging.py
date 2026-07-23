@@ -2,6 +2,7 @@ from pathlib import Path
 
 from tools.release.local_alpha_build import (
     CLIENT_DIR,
+    client_export_output,
     credential_helper_path,
     native_architectures,
     platform_layout,
@@ -47,6 +48,13 @@ def test_macos_package_layout() -> None:
     assert server == app / "Contents" / "Helpers" / "space-rocks-server"
     assert credential_helper_path("macos", output_dir) == app / "Contents" / "Helpers" / "space-rocks-credential-helper"
     assert preset == "macOS Local Alpha"
+    assert client_export_output("macos", client) == app
+
+
+def test_windows_export_targets_the_executable() -> None:
+    executable = Path("dist/local-alpha/windows/SpaceRocks.exe")
+
+    assert client_export_output("windows", executable) == executable
 
 
 def test_macos_export_texture_compression_is_enabled() -> None:
