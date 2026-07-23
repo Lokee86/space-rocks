@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from tools.release.local_alpha_build import (
+    CLIENT_DIR,
     credential_helper_path,
     native_architectures,
     platform_layout,
@@ -46,6 +47,14 @@ def test_macos_package_layout() -> None:
     assert server == app / "Contents" / "Helpers" / "space-rocks-server"
     assert credential_helper_path("macos", output_dir) == app / "Contents" / "Helpers" / "space-rocks-credential-helper"
     assert preset == "macOS Local Alpha"
+
+
+def test_macos_export_texture_compression_is_enabled() -> None:
+    project_settings = (CLIENT_DIR / "project.godot").read_text(encoding="utf-8")
+    export_presets = (CLIENT_DIR / "export_presets.cfg").read_text(encoding="utf-8")
+
+    assert "textures/vram_compression/import_etc2_astc=true" in project_settings
+    assert "texture_format/etc2_astc=true" in export_presets
 
 
 def test_manifest_file_list_includes_the_complete_package(tmp_path: Path) -> None:
