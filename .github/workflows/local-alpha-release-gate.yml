@@ -90,8 +90,20 @@ jobs:
           version: 4.6.3
           use-dotnet: false
           include-templates: true
+      - name: Prepare temporary smoke keychain
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/local-alpha-smoke.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security default-keychain -d user -s "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
       - name: Build and verify macOS package
         run: python3 tools/release/package_local_alpha.py --platform macos --adhoc-sign
+      - name: Remove temporary smoke keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/local-alpha-smoke.keychain-db" || true
       - name: Upload tested macOS package
         uses: actions/upload-artifact@v7
         with:

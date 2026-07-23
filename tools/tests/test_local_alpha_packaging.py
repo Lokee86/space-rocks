@@ -11,7 +11,7 @@ from tools.release.local_alpha_build import (
     platform_layout,
     resolve_client_executable,
 )
-from tools.release.local_alpha_common import ReleaseGateError
+from tools.release.local_alpha_common import ROOT, ReleaseGateError
 from tools.release.local_alpha_manifest import default_version, package_files
 from tools.release.local_alpha_smoke import smoke_environment
 
@@ -81,6 +81,19 @@ def test_macos_client_executable_rejects_invalid_bundle_metadata(tmp_path: Path)
 
     with pytest.raises(ReleaseGateError, match="invalid CFBundleExecutable"):
         resolve_client_executable("macos", expected)
+
+
+def test_macos_workflow_prepares_unlocked_temporary_keychain() -> None:
+    workflow = (ROOT / ".github/workflows/local-alpha-release-gate.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Prepare temporary smoke keychain" in workflow
+    assert 'security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"' in workflow
+    assert 'security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"' in workflow
+    assert 'security default-keychain -d user -s "$KEYCHAIN_PATH"' in workflow
+    assert 'security list-keychains -d user -s "$KEYCHAIN_PATH"' in workflow
+    assert "Remove temporary smoke keychain" in workflow
 
 
 def test_macos_export_uses_official_universal_template_configuration() -> None:
