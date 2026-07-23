@@ -178,7 +178,7 @@ def build_credential_helper(platform_name: str, helper_output: Path) -> None:
 def ad_hoc_sign_macos(output_dir: Path) -> None:
     app = output_dir / "Space Rocks.app"
     helpers = app / "Contents" / "Helpers"
-    for helper in sorted(helpers.iterdir()):
-        run(["codesign", "--force", "--sign", "-", helper], cwd=ROOT)
+    for helper_name in ("space-rocks-server", "space-rocks-credential-helper"):
+        run(["codesign", "--force", "--sign", "-", helpers / helper_name], cwd=ROOT)
     run(["codesign", "--force", "--deep", "--sign", "-", app], cwd=ROOT)
     run(["codesign", "--verify", "--deep", "--strict", app], cwd=ROOT)

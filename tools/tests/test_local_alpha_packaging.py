@@ -5,6 +5,7 @@ import pytest
 
 from tools.release.local_alpha_build import (
     CLIENT_DIR,
+    ad_hoc_sign_macos,
     client_export_output,
     credential_helper_path,
     native_architectures,
@@ -79,6 +80,27 @@ def test_collision_shapes_are_packaged_beside_the_server(tmp_path: Path, monkeyp
 
     assert destination == server.parent / "shared" / "collisions" / "collision_shapes.json"
     assert destination.read_text(encoding="utf-8") == source.read_text(encoding="utf-8")
+
+
+def test_macos_signing_ignores_packaged_data_directories(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    calls = []
+    monkeypatch.setattr(
+        "tools.release.local_alpha_build.run",
+        lambda command, **kwargs: calls.append((command, kwargs)),
+    )
+
+    ad_hoc_sign_macos(tmp_path)
+
+    helpers = tmp_path / "Space Rocks.app" / "Contents" / "Helpers"
+    signed_paths = [Path(call[0][-1]) for call in calls[:2]]
+    assert signed_paths == [
+        helpers / "space-rocks-server",
+        helpers / "space-rocks-credential-helper",
+    ]
+    assert helpers / "shared" not in signed_paths
 
 
 def test_macos_client_executable_comes_from_bundle_metadata(tmp_path: Path) -> None:
