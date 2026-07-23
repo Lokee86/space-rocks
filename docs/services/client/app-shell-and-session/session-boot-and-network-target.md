@@ -40,13 +40,14 @@ multiplayer
 
 Network target selection is deliberately small. `SessionNetworkTarget.websocket_url_for_mode()` maps `single_player` to `SINGLE_PLAYER_WS_URL`, maps `multiplayer` to `MULTIPLAYER_WS_URL`, and returns an empty string for unknown modes.
 
-Both current websocket URLs point at the same local Go server route:
+Both current websocket URLs point at the same local Go server route, but the single-player target uses explicit IPv4 loopback because the packaged server binds only to `127.0.0.1`:
 
 ```text
-ws://localhost:8080/ws
+single-player -> ws://127.0.0.1:8080/ws
+multiplayer   -> ws://localhost:8080/ws
 ```
 
-The route path does not define play mode. Play mode is expressed through the client request and server-side session, room, and admission policy. Single-player and multiplayer can later point at different infrastructure without changing the server route model.
+An isolated packaged smoke run can override the single-player port through `SPACE_ROCKS_LOCAL_SERVER_PORT`; the host remains `127.0.0.1`. The route path does not define play mode. Play mode is expressed through the client request and server-side session, room, and admission policy. Single-player and multiplayer can later point at different infrastructure without changing the server route model.
 
 WebSocket target selection is separate from WebRTC connectivity. The WebSocket URL may point at a normal hosted or proxied service route, but WebRTC DataChannel connectivity is established by ICE candidates rather than by a WebRTC URL. Deployment therefore must allow the advertised WebRTC ICE address and UDP path to reach the game server directly. Cloudflare-proxied HTTP routes should not be assumed to carry UDP WebRTC traffic.
 

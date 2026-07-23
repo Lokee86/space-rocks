@@ -236,13 +236,13 @@ GDScript constant names are generated from snake_case TOML keys into upper snake
 Example:
 
 ```toml
-single_player_ws_url = "ws://localhost:8080/ws"
+single_player_ws_url = "ws://127.0.0.1:8080/ws"
 ```
 
 generates:
 
 ```gdscript
-const SINGLE_PLAYER_WS_URL := "ws://localhost:8080/ws"
+const SINGLE_PLAYER_WS_URL := "ws://127.0.0.1:8080/ws"
 ```
 
 GDScript also supports two-number TOML arrays as `Vector2` values.

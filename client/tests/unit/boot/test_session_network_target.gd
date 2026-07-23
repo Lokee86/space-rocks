@@ -20,9 +20,10 @@ func after_each() -> void:
 		OS.unset_environment(SessionNetworkTarget.LOCAL_SERVER_PORT_ENV)
 
 
-func test_websocket_url_for_single_player_mode_returns_single_player_url() -> void:
+func test_websocket_url_for_single_player_mode_returns_ipv4_loopback_url() -> void:
 	var url := SessionNetworkTarget.websocket_url_for_mode(Constants.SESSION_MODE_SINGLE_PLAYER)
 
+	assert_eq(Constants.SINGLE_PLAYER_WS_URL, "ws://127.0.0.1:8080/ws")
 	assert_eq(url, Constants.SINGLE_PLAYER_WS_URL)
 
 
