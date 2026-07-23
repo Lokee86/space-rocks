@@ -12,4 +12,4 @@ func test_player_stats_path_returns_rails_api_player_stats_url() -> void:
 
 
 func test_player_data_profile_path_returns_data_handler_url() -> void:
-	assert_eq(ApiConfig.player_data_profile_path(), "http://localhost:8080/api/player-data/profile")
+	assert_eq(ApiConfig.player_data_profile_path(), "http://127.0.0.1:8080/api/player-data/profile")
