@@ -133,12 +133,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir release
-          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name space-rocks-local-alpha-windows-x86_64.zip --dir release
-          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name space-rocks-local-alpha-macos.zip --dir release
+          windows_artifact_id="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "space-rocks-local-alpha-windows-x86_64.zip") | .id')"
+          macos_artifact_id="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "space-rocks-local-alpha-macos.zip") | .id')"
+          test -n "$windows_artifact_id"
+          test -n "$macos_artifact_id"
+          gh api "/repos/$GITHUB_REPOSITORY/actions/artifacts/$windows_artifact_id/zip" > release/space-rocks-local-alpha-windows-x86_64.zip
+          gh api "/repos/$GITHUB_REPOSITORY/actions/artifacts/$macos_artifact_id/zip" > release/space-rocks-local-alpha-macos.zip
       - name: Verify release archives
         run: |
           test -s release/space-rocks-local-alpha-windows-x86_64.zip
           test -s release/space-rocks-local-alpha-macos.zip
+          unzip -tq release/space-rocks-local-alpha-windows-x86_64.zip
+          unzip -tq release/space-rocks-local-alpha-macos.zip
       - name: Publish GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}

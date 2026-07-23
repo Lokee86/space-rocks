@@ -22,6 +22,11 @@ def test_local_alpha_workflow_publishes_native_release_archives() -> None:
     assert "contents: write" in workflow
     assert "space-rocks-local-alpha-macos.zip" in workflow
     assert "macos-universal" not in workflow
+    assert "actions/runs/$GITHUB_RUN_ID/artifacts" in workflow
+    assert "actions/artifacts/$windows_artifact_id/zip" in workflow
+    assert "actions/artifacts/$macos_artifact_id/zip" in workflow
+    assert "gh run download" not in workflow
+    assert "unzip -tq" in workflow
     assert "--repo \"$GITHUB_REPOSITORY\"" in workflow
     assert "gh release create" in workflow
     assert "--prerelease --latest=false" in workflow
