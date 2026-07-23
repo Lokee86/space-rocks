@@ -56,7 +56,7 @@ jobs:
           use-dotnet: false
           include-templates: true
       - name: Build and verify Windows package
-        run: python tools/release/package_local_alpha.py --platform windows
+        run: python tools/release/package_local_alpha.py --platform windows --godot "$env:GODOT"
       - name: Upload tested Windows package
         uses: actions/upload-artifact@v7
         with:
