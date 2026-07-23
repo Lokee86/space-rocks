@@ -4,6 +4,7 @@ class_name LocalAlphaProfileSmoke
 const LOCAL_SERVER_PORT_ENV := "SPACE_ROCKS_LOCAL_SERVER_PORT"
 const HEALTH_ATTEMPTS := 50
 const CONDITION_ATTEMPTS := 150
+const CLEANUP_ATTEMPTS := 20
 const RETRY_SECONDS := 0.1
 
 
@@ -87,13 +88,34 @@ func verify_persistent_profile_and_stats(display_name: String, score: int) -> St
 	)
 	if int(reset_response.get("code", 0)) != 200:
 		return "could not reset default profile after verification"
-	var delete_response := await _request(
-		HTTPClient.METHOD_DELETE,
-		"/api/player-data/local-profiles/%s" % profile_id
-	)
-	if int(delete_response.get("code", 0)) != 204:
-		return "could not clean up release-gate local profile"
-	return ""
+	return await _delete_profile_with_confirmation(profile_id)
+
+
+func _delete_profile_with_confirmation(profile_id: String) -> String:
+	var last_response := {}
+	for _attempt in CLEANUP_ATTEMPTS:
+		last_response = await _request(
+			HTTPClient.METHOD_DELETE,
+			"/api/player-data/local-profiles/%s" % profile_id
+		)
+		if int(last_response.get("code", 0)) == 204:
+			return ""
+
+		var list_response := await _request(HTTPClient.METHOD_GET, "/api/player-data/local-profiles")
+		if int(list_response.get("code", 0)) == 200:
+			var profile_still_exists := false
+			for profile in _profiles_from(list_response):
+				if str(profile.get("local_profile_id", "")) == profile_id:
+					profile_still_exists = true
+					break
+			if !profile_still_exists:
+				return ""
+		await get_tree().create_timer(RETRY_SECONDS).timeout
+
+	return "could not clean up release-gate local profile (HTTP %d: %s)" % [
+		int(last_response.get("code", 0)),
+		str(last_response.get("text", "")).strip_edges(),
+	]
 
 
 func _load_profile_stats(profile_id: String) -> Dictionary:

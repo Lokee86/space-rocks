@@ -11,9 +11,13 @@ from tools.release.local_alpha_build import (
     platform_layout,
     resolve_client_executable,
 )
-from tools.release.local_alpha_common import ROOT, ReleaseGateError
+from tools.release.local_alpha_common import ReleaseGateError
 from tools.release.local_alpha_manifest import default_version, package_files
-from tools.release.local_alpha_smoke import smoke_environment
+from tools.release.local_alpha_smoke import (
+    prepare_macos_smoke_keychain,
+    remove_macos_smoke_keychain,
+    smoke_environment,
+)
 
 
 def test_dirty_default_version_is_visibly_marked(monkeypatch) -> None:
@@ -83,17 +87,33 @@ def test_macos_client_executable_rejects_invalid_bundle_metadata(tmp_path: Path)
         resolve_client_executable("macos", expected)
 
 
-def test_macos_workflow_prepares_unlocked_temporary_keychain() -> None:
-    workflow = (ROOT / ".github/workflows/local-alpha-release-gate.yml").read_text(
-        encoding="utf-8"
+def test_macos_smoke_keychain_uses_the_isolated_smoke_home(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    calls = []
+    environment = smoke_environment("macos", tmp_path, 43128)
+    monkeypatch.setattr(
+        "tools.release.local_alpha_smoke.secrets.token_urlsafe",
+        lambda _length: "test-password",
     )
 
-    assert "Prepare temporary smoke keychain" in workflow
-    assert 'security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"' in workflow
-    assert 'security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"' in workflow
-    assert 'security default-keychain -d user -s "$KEYCHAIN_PATH"' in workflow
-    assert 'security list-keychains -d user -s "$KEYCHAIN_PATH"' in workflow
-    assert "Remove temporary smoke keychain" in workflow
+    def record_run(command, **kwargs):
+        calls.append((command, kwargs))
+
+    monkeypatch.setattr("tools.release.local_alpha_smoke.subprocess.run", record_run)
+
+    keychain_path = prepare_macos_smoke_keychain(tmp_path, environment)
+    remove_macos_smoke_keychain(keychain_path, environment)
+
+    assert keychain_path == tmp_path / "local-alpha-smoke.keychain-db"
+    assert calls[0][0][:3] == ["security", "create-keychain", "-p"]
+    assert calls[2][0][:3] == ["security", "unlock-keychain", "-p"]
+    assert calls[3][0][:5] == ["security", "default-keychain", "-d", "user", "-s"]
+    assert calls[4][0][:5] == ["security", "list-keychains", "-d", "user", "-s"]
+    assert calls[5][0] == ["security", "delete-keychain", str(keychain_path)]
+    assert all(call[1]["env"] is environment for call in calls)
+    assert all(call[1]["cwd"] == tmp_path for call in calls)
 
 
 def test_macos_export_uses_official_universal_template_configuration() -> None:

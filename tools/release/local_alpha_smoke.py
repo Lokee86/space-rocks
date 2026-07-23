@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import secrets
 import socket
 import subprocess
 import sys
@@ -56,6 +57,50 @@ def smoke_environment(
     return environment
 
 
+def prepare_macos_smoke_keychain(
+    data_root: Path,
+    environment: dict[str, str],
+) -> Path:
+    keychain_path = data_root / "local-alpha-smoke.keychain-db"
+    password = secrets.token_urlsafe(32)
+    commands = (
+        ["security", "create-keychain", "-p", password, keychain_path],
+        ["security", "set-keychain-settings", "-lut", "21600", keychain_path],
+        ["security", "unlock-keychain", "-p", password, keychain_path],
+        ["security", "default-keychain", "-d", "user", "-s", keychain_path],
+        ["security", "list-keychains", "-d", "user", "-s", keychain_path],
+    )
+    try:
+        for command in commands:
+            subprocess.run(
+                [str(part) for part in command],
+                cwd=data_root,
+                env=environment,
+                check=True,
+                timeout=30,
+                stdout=subprocess.DEVNULL,
+            )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        remove_macos_smoke_keychain(keychain_path, environment)
+        raise
+    return keychain_path
+
+
+def remove_macos_smoke_keychain(
+    keychain_path: Path,
+    environment: dict[str, str],
+) -> None:
+    subprocess.run(
+        ["security", "delete-keychain", str(keychain_path)],
+        cwd=keychain_path.parent,
+        env=environment,
+        check=False,
+        timeout=30,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def print_smoke_diagnostics(data_root: Path) -> None:
     candidates = sorted(
         path
@@ -85,7 +130,10 @@ def run_packaged_smoke(platform_name: str, client_executable: Path) -> None:
     with tempfile.TemporaryDirectory(prefix="space-rocks-local-alpha-") as temporary:
         data_root = Path(temporary)
         environment = smoke_environment(platform_name, data_root, server_port)
+        keychain_path = None
         try:
+            if platform_name == "macos":
+                keychain_path = prepare_macos_smoke_keychain(data_root, environment)
             for phase in ("seed", "verify"):
                 run(
                     [client_executable, "--headless", "--", f"--local-alpha-smoke={phase}"],
@@ -97,3 +145,6 @@ def run_packaged_smoke(platform_name: str, client_executable: Path) -> None:
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ReleaseGateError):
             print_smoke_diagnostics(data_root)
             raise
+        finally:
+            if keychain_path is not None:
+                remove_macos_smoke_keychain(keychain_path, environment)
