@@ -157,7 +157,7 @@ func (w *rollingWriter) rotateLocked(now time.Time) error {
 		}
 	}
 
-	file, err := openWriteCloser(w.deps, w.activePath, 0o100|0o200, 0o644)
+	file, err := openWriteCloser(w.deps, w.activePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
