@@ -13,7 +13,7 @@ func (game *Game) randomAsteroidSpawnPosition(targetView *runtime.CameraView) ph
 	margin := constants.AsteroidSpawnMargin
 	for attempts := 0; ; attempts++ {
 		spawn := game.randomOffscreenPosition(targetView, margin)
-		if !game.isOnscreenForAnyCamera(spawn) {
+		if !game.isInsideAsteroidSpawnClearanceForAnyCamera(spawn) {
 			return spawn
 		}
 
@@ -49,9 +49,9 @@ func (game *Game) randomOffscreenPosition(view *runtime.CameraView, margin float
 	}
 }
 
-func (game *Game) isOnscreenForAnyCamera(position physics.Vector2) bool {
+func (game *Game) isInsideAsteroidSpawnClearanceForAnyCamera(position physics.Vector2) bool {
 	for _, view := range game.cameraViews {
-		if isInsideCameraView(view, position) {
+		if isInsideCameraViewWithMargin(view, position, constants.AsteroidSpawnMargin) {
 			return true
 		}
 	}
@@ -95,6 +95,12 @@ func isInsideCameraView(view *runtime.CameraView, position physics.Vector2) bool
 	delta := space.Delta(view.Position(), position)
 	return math.Abs(delta.X) <= view.VisibleWorldWidth()*0.5 &&
 		math.Abs(delta.Y) <= view.VisibleWorldHeight()*0.5
+}
+
+func isInsideCameraViewWithMargin(view *runtime.CameraView, position physics.Vector2, margin float64) bool {
+	delta := space.Delta(view.Position(), position)
+	return math.Abs(delta.X) < view.VisibleWorldWidth()*0.5+margin &&
+		math.Abs(delta.Y) < view.VisibleWorldHeight()*0.5+margin
 }
 
 func isFarFromCameraView(view *runtime.CameraView, position physics.Vector2) bool {
