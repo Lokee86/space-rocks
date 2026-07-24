@@ -89,6 +89,17 @@ def test_collision_shapes_are_packaged_beside_the_server(tmp_path: Path, monkeyp
     assert destination.read_text(encoding="utf-8") == source.read_text(encoding="utf-8")
 
 
+def test_macos_installer_validates_bundle_structure_not_executable_name() -> None:
+    installer = (CLIENT_DIR.parents[0] / "tools" / "release" / "installers" / "install.command").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"$source_app/Contents/Info.plist"' in installer
+    assert '"$source_app/Contents/MacOS"' in installer
+    assert "Contents/MacOS/SpaceRocks" not in installer
+    assert "Contents/MacOS/Space Rocks" not in installer
+
+
 def test_platform_installers_are_packaged(tmp_path: Path, monkeypatch) -> None:
     installers = tmp_path / "installers"
     installers.mkdir()

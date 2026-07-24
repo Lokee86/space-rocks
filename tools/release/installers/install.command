@@ -9,7 +9,7 @@ if [ ! -d "$source_app" ]; then
     echo "Space Rocks.app was not found beside install.command. Run the installer from an extracted Space Rocks release package." >&2
     exit 1
 fi
-if [ ! -x "$source_app/Contents/MacOS/SpaceRocks" ] && [ ! -x "$source_app/Contents/MacOS/Space Rocks" ]; then
+if [ ! -f "$source_app/Contents/Info.plist" ] || [ ! -d "$source_app/Contents/MacOS" ]; then
     echo "The Space Rocks application bundle is incomplete." >&2
     exit 1
 fi
