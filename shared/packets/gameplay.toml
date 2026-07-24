@@ -55,6 +55,12 @@ json = "ready"
 type = "bool"
 
 [[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs.fields]]
 
 name = "x"
 json = "x"

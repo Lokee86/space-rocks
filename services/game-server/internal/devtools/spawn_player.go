@@ -44,6 +44,9 @@ func applyDebugSpawnPlayer(target Target, request SpawnEntityRequest) (string, p
 	if !target.SpawnPlayerShip(playerID, spawnPosition, DummyPlayerCameraConfig()) {
 		return "", physics.Vector2{}, false
 	}
+	if !target.EnableBotPlayer(playerID) {
+		return "", physics.Vector2{}, false
+	}
 
 	return playerID, spawnPosition, true
 }

@@ -64,6 +64,12 @@ func _connect_lobby_signals(callbacks: Dictionary) -> void:
 	var start_handler: Callable = callbacks.get("start_game_requested", Callable())
 	if !start_handler.is_null() && !multiplayer_lobby.start_game_requested.is_connected(start_handler):
 		multiplayer_lobby.start_game_requested.connect(start_handler)
+	var add_bot_handler: Callable = callbacks.get("add_bot_requested", Callable())
+	if !add_bot_handler.is_null() && !multiplayer_lobby.add_bot_requested.is_connected(add_bot_handler):
+		multiplayer_lobby.add_bot_requested.connect(add_bot_handler)
+	var remove_handler: Callable = callbacks.get("remove_member_requested", Callable())
+	if !remove_handler.is_null() && !multiplayer_lobby.remove_member_requested.is_connected(remove_handler):
+		multiplayer_lobby.remove_member_requested.connect(remove_handler)
 	var leave_handler: Callable = callbacks.get("leave_requested", Callable())
 	if !leave_handler.is_null() && !multiplayer_lobby.leave_requested.is_connected(leave_handler):
 		multiplayer_lobby.leave_requested.connect(leave_handler)

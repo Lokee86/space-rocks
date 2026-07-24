@@ -23,6 +23,14 @@ static func start_game_request_packet() -> Dictionary:
 	return Packets.start_game_request_packet()
 
 
+static func add_bot_request_packet() -> Dictionary:
+	return Packets.add_bot_request_packet()
+
+
+static func remove_room_member_request_packet(player_id: String) -> Dictionary:
+	return Packets.remove_room_member_request_packet(player_id)
+
+
 static func start_single_player_request_packet(local_profile_id := "", trace_id := "") -> Dictionary:
 	return Packets.start_single_player_request_packet(local_profile_id, trace_id)
 

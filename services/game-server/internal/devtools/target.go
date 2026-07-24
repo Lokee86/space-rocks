@@ -40,6 +40,7 @@ type ToggleTarget interface {
 type PlayerSpawnTarget interface {
 	EnsurePlayerSession(playerID string, spawnPosition physics.Vector2) bool
 	SpawnPlayerShip(playerID string, spawnPosition physics.Vector2, cameraConfig runtimepkg.ClientConfig) bool
+	EnableBotPlayer(playerID string) bool
 	PlayerIDOccupied(playerID string) bool
 	ReservePlayerID(playerID string) bool
 }

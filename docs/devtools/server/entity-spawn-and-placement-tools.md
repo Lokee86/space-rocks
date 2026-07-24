@@ -168,7 +168,7 @@ The client pickup selector may discover presentation entries, but the server rem
 
 Debug player spawn uses `entity_type = "player"`.
 
-The server builds a `SpawnEntityRequest`, normalizes the requested position into world space, resolves a debug player ID, ensures a player session exists, and creates a player ship.
+The server builds a `SpawnEntityRequest`, normalizes the requested position into world space, resolves a debug player ID, ensures a player session exists, creates a player ship, and attaches the normal bot controller. Devtools-spawned players therefore fly, evade asteroids, shoot, die, and respawn through the same bot and player lifecycle used by lobby bots.
 
 Player ID behavior:
 
@@ -195,6 +195,7 @@ Player spawn uses:
 ```text
 Control.EnsurePlayerSession
 Control.SpawnPlayerShip
+Control.EnableBotPlayer
 DummyPlayerCameraConfig
 ```
 
@@ -470,7 +471,7 @@ placement devtools routing recognizes debug_spawn_pickup
 debug command type recognition includes spawn packet types
 default builds report devtools enabled
 nodevtools builds report devtools disabled through the devtools gate helpers
-debug player ship spawn uses dummy camera config
+debug player ship spawn uses dummy camera config and attaches normal bot logic
 debug bullet spawn requires a valid owner player ID
 debug asteroid variant helpers include all current variants
 ```

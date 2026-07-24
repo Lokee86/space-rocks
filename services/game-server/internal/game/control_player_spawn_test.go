@@ -76,6 +76,26 @@ func TestControlSpawnPlayerShipKeepsExistingValidCameraConfigWhenSuppliedConfigI
 	}
 }
 
+func TestControlEnableBotPlayerRegistersExistingPlayerSession(t *testing.T) {
+	gameInstance := New()
+	control := NewControl(gameInstance)
+	playerID := "player-1"
+	spawnPosition := physics.Vector2{X: 120, Y: 220}
+
+	if !control.EnsurePlayerSession(playerID, spawnPosition) {
+		t.Fatal("expected EnsurePlayerSession to succeed")
+	}
+	if !control.SpawnPlayerShip(playerID, spawnPosition, DummyPlayerCameraConfig()) {
+		t.Fatal("expected SpawnPlayerShip to succeed")
+	}
+	if !control.EnableBotPlayer(playerID) {
+		t.Fatal("expected EnableBotPlayer to succeed")
+	}
+	if gameInstance.botControllers[playerID] == nil {
+		t.Fatalf("expected bot controller for %q", playerID)
+	}
+}
+
 func TestControlTargetPlayerIDsIncludesSessionAndShipTargets(t *testing.T) {
 	gameInstance := New()
 	control := NewControl(gameInstance)

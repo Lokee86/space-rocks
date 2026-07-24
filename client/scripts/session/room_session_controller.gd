@@ -145,6 +145,8 @@ func handle_room_error(packet: Dictionary) -> void:
 				&& connection_service.has_method("clear_room_operation_context") \
 				&& (packet_trace_id.is_empty() || packet_trace_id == active_trace_id):
 			connection_service.clear_room_operation_context()
+	if error_code == "removed_by_owner" && lobby_return_flow != null:
+		lobby_return_flow.return_after_leave()
 	multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
 
 

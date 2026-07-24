@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 )
 
 func (game *Game) runSimulation() {
@@ -48,6 +48,7 @@ func (game *Game) Step(delta float64) {
 				observer(delta)
 			}
 		} else {
+			game.stepBots()
 			game.stepPlayerWeapons(delta)
 			game.stepPlayers(delta, bounds)
 			game.removeReadyPlayers()

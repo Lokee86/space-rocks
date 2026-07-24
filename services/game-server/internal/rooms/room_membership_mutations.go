@@ -86,6 +86,16 @@ func (room *Room) RemoveMemberForSession(sessionID string) (removed RoomMember, 
 	return removed, room.membership.memberCount(), true
 }
 
+func (room *Room) RemoveBotsIfNoHumans() []RoomMember {
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	if room.membership.humanMemberCount() != 0 {
+		return nil
+	}
+	return room.membership.removeBots()
+}
+
 func (room *Room) memberForSessionLocked(sessionID string) (*RoomMember, bool) {
 	playerID, ok := room.membership.playerIDForSession(sessionID)
 	if !ok {

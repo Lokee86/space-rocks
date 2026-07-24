@@ -16,6 +16,7 @@ func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFa
 		if member, ok := capture.Members[fact.GamePlayerID]; ok {
 			summary.AccountID = member.AccountID
 			summary.LocalProfileID = member.LocalProfileID
+			summary.IsBot = member.IsBot
 		}
 		players = append(players, summary)
 	}

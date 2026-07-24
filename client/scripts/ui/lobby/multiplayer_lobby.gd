@@ -8,6 +8,8 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 signal ready_requested(ready: bool)
 signal start_game_requested
+signal add_bot_requested
+signal remove_member_requested(player_id: String)
 signal leave_requested
 
 @export_node_path("Label") var room_code_label_path: NodePath
@@ -15,6 +17,7 @@ signal leave_requested
 @export_node_path("Container") var player_list_container_path: NodePath
 @export_node_path("BaseButton") var ready_button_path: NodePath
 @export_node_path("BaseButton") var start_game_button_path: NodePath
+@export_node_path("BaseButton") var add_bot_button_path: NodePath
 @export_node_path("BaseButton") var leave_button_path: NodePath
 @export var player_row_scene: PackedScene
 
@@ -23,6 +26,7 @@ signal leave_requested
 @onready var player_list_container: Container = get_node_or_null(player_list_container_path) as Container
 @onready var ready_button: BaseButton = get_node_or_null(ready_button_path) as BaseButton
 @onready var start_game_button: BaseButton = get_node_or_null(start_game_button_path) as BaseButton
+@onready var add_bot_button: BaseButton = get_node_or_null(add_bot_button_path) as BaseButton
 @onready var leave_button: BaseButton = get_node_or_null(leave_button_path) as BaseButton
 
 var local_ready := false
@@ -34,6 +38,9 @@ func _ready() -> void:
 	if start_game_button != null:
 		start_game_button.disabled = true
 		start_game_button.pressed.connect(_on_start_game_pressed)
+	if add_bot_button != null:
+		add_bot_button.visible = false
+		add_bot_button.pressed.connect(_on_add_bot_pressed)
 	if leave_button != null:
 		leave_button.pressed.connect(_on_leave_pressed)
 	_update_ready_button_text()
@@ -44,7 +51,7 @@ func apply_lobby_state(
 	room_state: String,
 	local_player_id: String,
 	owner_id: String,
-	_max_players: int,
+	max_players: int,
 	members: Array,
 	can_start := false
 ) -> void:
@@ -60,7 +67,18 @@ func apply_lobby_state(
 		)
 	local_ready = LobbyMemberViewModel.is_local_ready(local_player_id, members)
 	_update_ready_button_text()
-	LobbyPlayerListView.render(player_list_container, player_row_scene, local_player_id, owner_id, members)
+	var local_is_owner := !local_player_id.is_empty() && local_player_id == owner_id
+	if add_bot_button != null:
+		add_bot_button.visible = local_is_owner
+		add_bot_button.disabled = !local_is_owner || members.size() >= max_players
+	LobbyPlayerListView.render(
+		player_list_container,
+		player_row_scene,
+		local_player_id,
+		owner_id,
+		members,
+		Callable(self, "_on_remove_member_requested")
+	)
 
 
 func set_start_enabled(enabled: bool) -> void:
@@ -88,6 +106,13 @@ func _on_start_game_pressed() -> void:
 	start_game_requested.emit()
 
 
+func _on_add_bot_pressed() -> void:
+	add_bot_requested.emit()
+
+
+func _on_remove_member_requested(player_id: String) -> void:
+	remove_member_requested.emit(player_id)
+
+
 func _on_leave_pressed() -> void:
 	leave_requested.emit()
-

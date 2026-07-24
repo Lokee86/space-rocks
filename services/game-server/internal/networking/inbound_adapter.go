@@ -70,6 +70,14 @@ func (a inboundSessionAdapter) HandleStartGameRequest() {
 	a.session.handleStartGameRequest()
 }
 
+func (a inboundSessionAdapter) HandleAddBotRequest() {
+	a.session.handleAddBotRequest()
+}
+
+func (a inboundSessionAdapter) HandleRemoveRoomMemberRequest(playerID string) {
+	a.session.handleRemoveRoomMemberRequest(playerID)
+}
+
 func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string, traceID string) {
 	a.session.handleStartSinglePlayerRequest(localProfileID, traceID)
 }

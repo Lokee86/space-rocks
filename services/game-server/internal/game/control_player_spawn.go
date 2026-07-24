@@ -43,6 +43,12 @@ func (target *Control) SpawnPlayerShip(playerID string, spawnPosition physics.Ve
 	return true
 }
 
+func (target *Control) EnableBotPlayer(playerID string) bool {
+	target.game.mu.Lock()
+	defer target.game.mu.Unlock()
+	return target.game.enableBotPlayerLocked(playerID)
+}
+
 func (target *Control) PlayerIDOccupied(playerID string) bool {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()

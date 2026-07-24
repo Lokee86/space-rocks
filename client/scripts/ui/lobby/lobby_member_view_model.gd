@@ -8,7 +8,7 @@ static func display_name(member, local_player_id: String) -> String:
 		return str(member)
 
 	var player_id := member_player_id(member)
-	var member_name := player_id
+	var member_name := "%s (Bot)" % player_id if member_is_bot(member) else player_id
 	if !local_player_id.is_empty() && player_id == local_player_id:
 		return "%s (You)" % member_name
 	return member_name
@@ -24,6 +24,12 @@ static func member_connected(member) -> bool:
 	if member is Dictionary:
 		return bool(member.get(Packets.FIELD_CONNECTED, member.get(Packets.FIELD_IS_CONNECTED, true)))
 	return true
+
+
+static func member_is_bot(member) -> bool:
+	if member is Dictionary:
+		return bool(member.get(Packets.FIELD_IS_BOT, false))
+	return false
 
 
 static func is_owner(member, owner_id: String) -> bool:

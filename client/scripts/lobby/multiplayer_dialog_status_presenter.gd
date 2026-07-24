@@ -29,6 +29,8 @@ func friendly_room_error_message(error_code: String, message: String) -> String:
 			return Constants.DIALOG_STATUS_ALREADY_IN_ROOM
 		"invalid_room_state":
 			return Constants.DIALOG_STATUS_ROOM_NOT_JOINABLE
+		"removed_by_owner":
+			return "You were removed from the room by its owner."
 
 	if !message.is_empty():
 		return message

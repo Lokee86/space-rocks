@@ -3,6 +3,7 @@ package game
 import (
 	"sync"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
@@ -45,6 +46,7 @@ type Game struct {
 	simulationStepObservers   []simulationStepObserver
 	cameraViews               map[string]*runtime.CameraView
 	playerSessions            map[string]*playerSession
+	botControllers            map[string]*bots.Controller
 	pendingPresentationEvents map[string][]PendingPresentationEvent
 	presentationFrame         *gameplayPresentationFrame
 	runtimeMeasurementMu      sync.RWMutex
@@ -75,6 +77,7 @@ func newGame(source *rng.Source) *Game {
 		stopSimulation:            make(chan struct{}),
 		cameraViews:               make(map[string]*runtime.CameraView),
 		playerSessions:            make(map[string]*playerSession),
+		botControllers:            make(map[string]*bots.Controller),
 		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
 		runtimeMeasurements:       make(map[uint64]measurement.SimulationObserver),
 		spawner:                   spawning.New(source),

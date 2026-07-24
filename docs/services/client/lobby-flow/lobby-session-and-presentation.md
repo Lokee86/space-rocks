@@ -73,7 +73,8 @@ The client lobby session and presentation flow owns:
 * Presenting room code, room status, member rows, local-player marker, owner marker, connected state, and readiness state.
 * Enabling Start only when the local client is the owner and all members are ready.
 * Toggling Ready intent based on the current local-ready state.
-* Sending Ready, Start, and Leave requests through the client connection service.
+* Sending Ready, Start, Add Bot, Remove Member, and Leave requests through the client connection service.
+* Showing bot identity in member rows and owner-only member controls.
 * Clearing lobby presentation and local lobby read model after local leave return.
 * Returning to the configured post-leave menu destination when one exists.
 
@@ -184,7 +185,7 @@ room_state == Lobby
 
 `MultiplayerLobbyPresenter` owns the lifecycle of the `multiplayer_lobby.tscn` instance.
 
-It mounts a typed `MultiplayerLobby`, consumes `LobbySessionState`, and connects the declared `ready_requested`, `start_game_requested`, and `leave_requested` signals directly to the supplied optional callbacks.
+It mounts a typed `MultiplayerLobby`, consumes `LobbySessionState`, and connects the declared `ready_requested`, `start_game_requested`, `add_bot_requested`, `remove_member_requested`, and `leave_requested` signals directly to the supplied optional callbacks.
 
 It:
 
@@ -215,10 +216,12 @@ It emits:
 ```text
 ready_requested(ready)
 start_game_requested
+add_bot_requested
+remove_member_requested(player_id)
 leave_requested
 ```
 
-The Ready button sends the opposite of current local-ready state. The Start button is disabled by default and is enabled only when the presenter applies a state where `can_start_game()` is true.
+The Ready button sends the opposite of current local-ready state. The Start button is disabled by default and is enabled only when the presenter applies a state where `can_start_game()` is true. The Add Bot button is visible only to the room owner and disables at room capacity. The owner also receives a remove control on every non-owner member row, covering both bots and human members.
 
 ### Lobby status view model
 
@@ -244,6 +247,7 @@ The display strings come from generated client lobby constants.
 It currently:
 
 * Uses `player_id` as the display name.
+* Adds `(Bot)` to bot member rows from `is_bot`.
 * Adds `(You)` to the local member row.
 * Reads readiness from `ready`, falling back to legacy alias `is_ready`.
 * Reads connected state from `connected`, falling back to legacy alias `is_connected`.
@@ -280,6 +284,8 @@ Current actions:
 ```text
 send_ready_requested(ready)
 send_start_game_requested()
+send_add_bot_requested()
+send_remove_member_requested(player_id)
 send_leave_requested()
 ```
 
@@ -335,6 +341,8 @@ The lobby UI can send these realtime requests:
 ```text
 set_ready_request
 start_game_request
+add_bot_request
+remove_room_member_request
 leave_room_request
 ```
 

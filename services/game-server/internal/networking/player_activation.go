@@ -7,7 +7,7 @@ var activateMemberPlayerCall = func(room *rooms.Room, expected rooms.GameplayCon
 }
 
 func activateRoomPlayers(room *rooms.Room) {
-	// Websocket sessions keep the per-connection player ID, so activation stays in networking.
+	// Websocket sessions keep the per-connection player ID, so human activation stays in networking.
 	gameplayContext := room.GameplayContext()
 	if gameplayContext.Game == nil {
 		return
@@ -15,7 +15,7 @@ func activateRoomPlayers(room *rooms.Room) {
 	memberSnapshot := room.MembersSnapshot()
 	memberIDs := make([]string, 0, len(memberSnapshot))
 	for _, member := range memberSnapshot {
-		if !member.Connected {
+		if !member.Connected || member.IsBot {
 			continue
 		}
 		memberIDs = append(memberIDs, member.SessionID)
@@ -41,6 +41,16 @@ func activateRoomPlayers(room *rooms.Room) {
 			gameplayContext.Game.RemovePlayer(playerID)
 		}
 	}
+
+	for _, member := range memberSnapshot {
+		if !member.IsBot || !member.Connected {
+			continue
+		}
+		playerID := gameplayContext.Game.AddBot()
+		if !activateMemberPlayerCall(room, gameplayContext, member.SessionID, playerID) {
+			gameplayContext.Game.RemovePlayer(playerID)
+		}
+	}
 }
 
 func deactivateRoomPlayers(room *rooms.Room) {
@@ -48,7 +58,7 @@ func deactivateRoomPlayers(room *rooms.Room) {
 	memberSnapshot := room.MembersSnapshot()
 	memberIDs := make([]string, 0, len(memberSnapshot))
 	for _, member := range memberSnapshot {
-		if !member.Connected {
+		if !member.Connected || member.IsBot {
 			continue
 		}
 		memberIDs = append(memberIDs, member.SessionID)

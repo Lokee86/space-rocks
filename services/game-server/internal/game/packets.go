@@ -20,6 +20,8 @@ const (
 	PacketTypeLeaveRoomRequest              = "leave_room_request"
 	PacketTypeSetReadyRequest               = "set_ready_request"
 	PacketTypeStartGameRequest              = "start_game_request"
+	PacketTypeAddBotRequest                 = "add_bot_request"
+	PacketTypeRemoveRoomMemberRequest       = "remove_room_member_request"
 	PacketTypeStartSinglePlayerRequest      = "start_single_player_request"
 	PacketTypeReturnToLobbyRequest          = "return_to_lobby_request"
 	PacketTypeAuthenticateRequest           = "authenticate_request"
@@ -44,6 +46,7 @@ type ClientPacket struct {
 	RoomCode       string               `json:"room_code"`
 	LocalProfileID string               `json:"local_profile_id"`
 	Ready          bool                 `json:"ready"`
+	PlayerID       string               `json:"player_id"`
 	X              float64              `json:"x"`
 	Y              float64              `json:"y"`
 	TargetKind     string               `json:"target_kind"`
@@ -80,6 +83,15 @@ type StartGameRequest struct {
 	Type string `json:"type"`
 }
 
+type AddBotRequest struct {
+	Type string `json:"type"`
+}
+
+type RemoveRoomMemberRequest struct {
+	Type     string `json:"type"`
+	PlayerID string `json:"player_id"`
+}
+
 type StartSinglePlayerRequest struct {
 	Type           string `json:"type"`
 	TraceID        string `json:"trace_id"`
@@ -110,6 +122,7 @@ type RoomMemberState struct {
 	PlayerID  string `json:"player_id"`
 	Ready     bool   `json:"ready"`
 	Connected bool   `json:"connected"`
+	IsBot     bool   `json:"is_bot"`
 }
 
 type RoomPlayerMatchSummary struct {

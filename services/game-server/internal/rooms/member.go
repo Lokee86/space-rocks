@@ -8,6 +8,7 @@ type RoomMember struct {
 	LocalProfileID string
 	Ready          bool
 	Connected      bool
+	IsBot          bool
 }
 
 func NewRoomMember(sessionID string) *RoomMember {
@@ -16,6 +17,17 @@ func NewRoomMember(sessionID string) *RoomMember {
 		SessionID: sessionID,
 		Connected: true,
 	}
+}
+
+func NewBotRoomMember() *RoomMember {
+	member := &RoomMember{
+		MemberID:  newMemberID(),
+		Ready:     true,
+		Connected: true,
+		IsBot:     true,
+	}
+	member.SessionID = "bot:" + member.MemberID
+	return member
 }
 
 func (member *RoomMember) SetReady(ready bool) {

@@ -4,11 +4,16 @@ class_name PlayerRow
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 
+signal remove_requested(player_id: String)
+
 @onready var player_name_label: Label = find_child("PlayerNameLabel", true, false) as Label
 @onready var player_ready_label: Label = find_child("PlayerReadyLabel", true, false) as Label
 @onready var owner_indicator: CanvasItem = find_child("OwnerIndicator", true, false) as CanvasItem
 @onready var ready_green: CanvasItem = find_child("ReadyGreen", true, false) as CanvasItem
 @onready var ready_red: CanvasItem = find_child("ReadyRed", true, false) as CanvasItem
+@onready var remove_button: BaseButton = find_child("RemoveButton", true, false) as BaseButton
+
+var _player_id := ""
 
 
 func _ready() -> void:
@@ -17,9 +22,20 @@ func _ready() -> void:
 	_report_missing_node(owner_indicator, "OwnerIndicator", "CanvasItem")
 	_report_missing_node(ready_green, "ReadyGreen", "CanvasItem")
 	_report_missing_node(ready_red, "ReadyRed", "CanvasItem")
+	_report_missing_node(remove_button, "RemoveButton", "BaseButton")
+	if remove_button != null:
+		remove_button.pressed.connect(_on_remove_pressed)
 
 
-func set_member(member_name, is_ready, member_connected := true, is_owner := false) -> void:
+func set_member(
+	player_id: String,
+	member_name,
+	is_ready,
+	member_connected := true,
+	is_owner := false,
+	can_remove := false
+) -> void:
+	_player_id = player_id
 	var member_ready := bool(is_ready)
 	var connected := bool(member_connected)
 
@@ -33,6 +49,14 @@ func set_member(member_name, is_ready, member_connected := true, is_owner := fal
 		ready_green.visible = member_ready && connected
 	if ready_red != null:
 		ready_red.visible = !member_ready || !connected
+	if remove_button != null:
+		remove_button.visible = can_remove
+		remove_button.disabled = !can_remove
+
+
+func _on_remove_pressed() -> void:
+	if !_player_id.is_empty():
+		remove_requested.emit(_player_id)
 
 
 func _report_missing_node(node: Node, node_name: String, expected_type: String) -> void:

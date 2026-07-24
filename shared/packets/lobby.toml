@@ -66,6 +66,28 @@ json = "type"
 type = "string"
 
 [[structs]]
+id = "AddBotRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs]]
+id = "RemoveRoomMemberRequest"
+
+[[structs.fields]]
+name = "type"
+json = "type"
+type = "string"
+
+[[structs.fields]]
+name = "player_id"
+go_name = "PlayerID"
+json = "player_id"
+type = "string"
+
+[[structs]]
 id = "StartSinglePlayerRequest"
 
 [[structs.fields]]
@@ -166,6 +188,11 @@ type = "bool"
 [[structs.fields]]
 name = "connected"
 json = "connected"
+type = "bool"
+
+[[structs.fields]]
+name = "is_bot"
+json = "is_bot"
 type = "bool"
 
 [[structs]]
@@ -351,6 +378,14 @@ id = "start_game_request"
 value = "start_game_request"
 
 [[packet_types]]
+id = "add_bot_request"
+value = "add_bot_request"
+
+[[packet_types]]
+id = "remove_room_member_request"
+value = "remove_room_member_request"
+
+[[packet_types]]
 id = "start_single_player_request"
 value = "start_single_player_request"
 
@@ -414,6 +449,20 @@ id = "start_game_request_packet"
 
 [builders.body]
 type = "start_game_request"
+
+[[builders]]
+id = "add_bot_request_packet"
+
+[builders.body]
+type = "add_bot_request"
+
+[[builders]]
+id = "remove_room_member_request_packet"
+args = ["player_id"]
+
+[builders.body]
+type = "remove_room_member_request"
+player_id = "$player_id"
 
 [[builders]]
 id = "start_single_player_request_packet"

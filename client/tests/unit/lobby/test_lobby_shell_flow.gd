@@ -28,6 +28,8 @@ class FakeSessionContext:
 class FakeLobbyNetworkActions:
 	extends RefCounted
 
+	var add_bot_calls := 0
+	var removed_player_ids: Array[String] = []
 	var leave_calls := 0
 
 	func send_ready_requested(_ready: bool) -> void:
@@ -35,6 +37,12 @@ class FakeLobbyNetworkActions:
 
 	func send_start_game_requested() -> void:
 		pass
+
+	func send_add_bot_requested() -> void:
+		add_bot_calls += 1
+
+	func send_remove_member_requested(player_id: String) -> void:
+		removed_player_ids.append(player_id)
 
 	func send_leave_requested() -> void:
 		leave_calls += 1
@@ -57,6 +65,25 @@ class FakeMultiplayerLobbyPresenter:
 
 	func show_lobby(_canvas_layer, _state, _callbacks) -> void:
 		pass
+
+
+func test_bot_member_requests_are_forwarded() -> void:
+	var network_actions := FakeLobbyNetworkActions.new()
+	var flow := LobbyShellFlow.new(
+		FakeLobbyFlow.new(),
+		FakeSessionContext.new(),
+		network_actions,
+		FakeLobbyReturnFlow.new(),
+		FakeMultiplayerLobbyPresenter.new(),
+		null,
+		null,
+		Callable())
+
+	flow._on_lobby_add_bot_requested()
+	flow._on_lobby_remove_member_requested("Player-2")
+
+	assert_eq(network_actions.add_bot_calls, 1)
+	assert_eq(network_actions.removed_player_ids, ["Player-2"])
 
 
 func test_lobby_leave_sends_leave_and_returns_after_leave() -> void:

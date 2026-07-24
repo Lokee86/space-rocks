@@ -11,6 +11,10 @@ func (game *Game) AddPlayer() string {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
+	return game.addPlayerLocked()
+}
+
+func (game *Game) addPlayerLocked() string {
 	playerIndex := game.nextID
 	game.nextID++
 
@@ -70,6 +74,7 @@ func (game *Game) RemovePlayer(playerID string) {
 	delete(game.entities.Players, playerID)
 	delete(game.cameraViews, playerID)
 	delete(game.playerSessions, playerID)
+	delete(game.botControllers, playerID)
 	game.clearTargetsForMissingPlayersLocked()
 	delete(game.pendingPresentationEvents, playerID)
 	game.publishPresentationFrameLocked()

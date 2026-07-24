@@ -14,7 +14,7 @@ func newRoomMembership() *roomMembership {
 func (membership *roomMembership) addMember(member *RoomMember) *RoomMember {
 	member.PlayerID = membership.nextAvailablePlayerID()
 	membership.members[member.PlayerID] = member
-	if membership.ownerID == "" {
+	if membership.ownerID == "" && !member.IsBot {
 		membership.ownerID = member.PlayerID
 	}
 
@@ -68,6 +68,36 @@ func (membership *roomMembership) memberCount() int {
 	return len(membership.members)
 }
 
+func (membership *roomMembership) humanMemberCount() int {
+	count := 0
+	for _, member := range membership.members {
+		if !member.IsBot {
+			count++
+		}
+	}
+	return count
+}
+
+func (membership *roomMembership) removeBots() []RoomMember {
+	botPlayerIDs := make([]string, 0)
+	for playerID, member := range membership.members {
+		if member.IsBot {
+			botPlayerIDs = append(botPlayerIDs, playerID)
+		}
+	}
+
+	removed := make([]RoomMember, 0, len(botPlayerIDs))
+	for _, playerID := range botPlayerIDs {
+		member, ok := membership.members[playerID]
+		if !ok {
+			continue
+		}
+		removed = append(removed, *member)
+		membership.removeMember(playerID)
+	}
+	return removed
+}
+
 func (membership *roomMembership) membersSnapshot() []RoomMember {
 	members := make([]RoomMember, 0, len(membership.members))
 	for _, member := range membership.members {
@@ -83,13 +113,16 @@ func (membership *roomMembership) ownerIDValue() string {
 
 func (membership *roomMembership) setAllReady(ready bool) {
 	for _, member := range membership.members {
-		member.SetReady(ready)
+		member.SetReady(ready || member.IsBot)
 	}
 }
 
 func (membership *roomMembership) nextOwnerID() string {
 	ownerID := ""
-	for remainingPlayerID := range membership.members {
+	for remainingPlayerID, member := range membership.members {
+		if member.IsBot {
+			continue
+		}
 		if ownerID == "" || remainingPlayerID < ownerID {
 			ownerID = remainingPlayerID
 		}

@@ -28,6 +28,7 @@ type LeaveRoomResult struct {
 	RoomID           string
 	SessionID        string
 	RemovedMember    RoomMember
+	RemovedBots      []RoomMember
 	MemberRemoved    bool
 	RemainingMembers int
 }
@@ -143,13 +144,16 @@ func (manager *RoomManager) LeaveRoom(roomID string, sessionID string) (*LeaveRo
 		}
 	}
 
-	removedMember, remainingMembers, memberRemoved := room.RemoveMemberForSession(sessionID)
+	removedMember, _, memberRemoved := room.RemoveMemberForSession(sessionID)
+	removedBots := room.RemoveBotsIfNoHumans()
+	remainingMembers := room.Population().Members
 
 	return &LeaveRoomResult{
 		Room:             room,
 		RoomID:           roomID,
 		SessionID:        sessionID,
 		RemovedMember:    removedMember,
+		RemovedBots:      removedBots,
 		MemberRemoved:    memberRemoved,
 		RemainingMembers: remainingMembers,
 	}, nil

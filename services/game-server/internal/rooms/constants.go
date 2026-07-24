@@ -34,6 +34,8 @@ const (
 	RoomErrorInvalidRoomCode              = "invalid_room_code"
 	RoomErrorNotReady                     = "not_ready"
 	RoomErrorNotRoomOwner                 = "not_room_owner"
+	RoomErrorCannotRemoveOwner            = "cannot_remove_owner"
+	RoomErrorRemovedByOwner               = "removed_by_owner"
 	RoomErrorInvalidRoomState             = "invalid_room_state"
 	RoomErrorAuthRequired                 = "auth_required"
 	RoomErrorInvalidToken                 = "invalid_token"

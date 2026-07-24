@@ -134,6 +134,14 @@ func send_start_game_request() -> void:
 	send_packet(LobbyClientPackets.start_game_request_packet())
 
 
+func send_add_bot_request() -> void:
+	send_packet(LobbyClientPackets.add_bot_request_packet())
+
+
+func send_remove_room_member_request(player_id: String) -> void:
+	send_packet(LobbyClientPackets.remove_room_member_request_packet(player_id))
+
+
 func send_start_single_player_request(local_profile_id := "", trace_id := "") -> void:
 	send_packet(LobbyClientPackets.start_single_player_request_packet(local_profile_id, trace_id))
 

@@ -238,6 +238,16 @@ func send_start_game_request() -> void:
 		client_packet_sender.send_start_game_request()
 
 
+func send_add_bot_request() -> void:
+	if _can_send_outbound():
+		client_packet_sender.send_add_bot_request()
+
+
+func send_remove_room_member_request(player_id: String) -> void:
+	if _can_send_outbound():
+		client_packet_sender.send_remove_room_member_request(player_id)
+
+
 func send_input_packet(packet: Dictionary) -> void:
 	if _can_send_outbound():
 		client_packet_sender.send_input_packet(packet)

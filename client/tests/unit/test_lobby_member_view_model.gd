@@ -17,3 +17,13 @@ func test_display_name_prefers_player_id_and_marks_local_member() -> void:
 	}
 
 	assert_eq(LobbyMemberViewModel.display_name(member, "Player-1"), "Player-1 (You)")
+
+
+func test_display_name_marks_bot_member() -> void:
+	var member := {
+		"player_id": "Player-2",
+		"is_bot": true,
+	}
+
+	assert_true(LobbyMemberViewModel.member_is_bot(member))
+	assert_eq(LobbyMemberViewModel.display_name(member, "Player-1"), "Player-2 (Bot)")

@@ -19,6 +19,7 @@ room_status_label_path = NodePath("CenterContainer/Control/TextureRect/CenterCon
 player_list_container_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/PlayerListContainer")
 ready_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton")
 start_game_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton")
+add_bot_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton")
 leave_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/LeaveButton")
 player_row_scene = ExtResource("3_6rt4v")
 
@@ -194,6 +195,26 @@ layout_mode = 2
 text = "
 
 START"
+label_settings = ExtResource("4_0vxb0")
+
+[node name="AddBotButton" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" instance=ExtResource("3_6lf8k")]
+custom_minimum_size = Vector2(250, 80)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton/CenterContainer"]
+layout_mode = 2
+
+[node name="AddBot" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "\nADD BOT"
 label_settings = ExtResource("4_0vxb0")
 
 [node name="LeaveButton" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" unique_id=1310186729 instance=ExtResource("3_6lf8k")]

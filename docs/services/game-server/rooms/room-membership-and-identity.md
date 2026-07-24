@@ -14,7 +14,7 @@ Parent index: [Game Server Rooms](./!INDEX.md)
 
 This document describes the game-server room membership and identity boundary.
 
-It covers room members, player-facing room IDs, internal member IDs, room owner identity, readiness, connected state, account/local-profile attachment, and the bridge from room membership to active game player identity.
+It covers human and bot room members, player-facing room IDs, internal member IDs, room owner identity, readiness, connected state, account/local-profile attachment, and the bridge from room membership to active game player identity.
 
 ## Overview
 
@@ -47,7 +47,7 @@ RoomMember.LocalProfileID
   local-profile attachment supplied by single-player start
 ```
 
-Room snapshots expose `player_id`, `ready`, `connected`, `local_player_id`, and `owner_id`. They do not expose `MemberID`, `SessionID`, `AccountID`, or `LocalProfileID`.
+Room snapshots expose `player_id`, `ready`, `connected`, `is_bot`, `local_player_id`, and `owner_id`. They do not expose `MemberID`, `SessionID`, `AccountID`, or `LocalProfileID`.
 
 The membership boundary is intentionally narrow. It owns who is in the room and which player-facing identity represents each member. It does not own WebSocket transport, authentication verification, player-data persistence, or game simulation mechanics.
 
@@ -82,8 +82,9 @@ Room membership owns:
 * Looking up a member player ID from a WebSocket session ID.
 * Rebinding a member's `PlayerID` when active game player activation creates a game player ID.
 * Updating owner ID when the owner leaves or is rebound.
-* Selecting the first member as the initial owner.
-* Reassigning ownership when the current owner is removed.
+* Selecting the first human member as the initial owner.
+* Reassigning ownership to another human when the current owner is removed; bots never own rooms.
+* Creating ready synthetic bot members on owner request and removing orphaned bots when the final human leaves.
 * Tracking lobby readiness per member.
 * Tracking connected state on the member record.
 * Attaching authenticated-account IDs to members.
@@ -181,6 +182,8 @@ join_room_request
 leave_room_request
 set_ready_request
 start_game_request
+add_bot_request
+remove_room_member_request
 start_single_player_request
 return_to_lobby_request
 ```
@@ -191,12 +194,13 @@ Generated outbound snapshot fields derived from membership:
 RoomSnapshot.members[].player_id
 RoomSnapshot.members[].ready
 RoomSnapshot.members[].connected
+RoomSnapshot.members[].is_bot
 RoomSnapshot.local_player_id
 RoomSnapshot.owner_id
 RoomSnapshot.current_match_id
 ```
 
-Membership identity is also used when building resolved match summaries. `room.buildMatchResultSummaryLocked` matches game player facts back to room members by `GamePlayerID` / member `PlayerID` and copies `AccountID` or `LocalProfileID` into the player-data match summary.
+Membership identity is also used when building resolved match summaries. `buildMatchResultSummary` matches game player facts back to room members by `GamePlayerID` / member `PlayerID`, copies `AccountID` or `LocalProfileID`, and marks bot rows. Bots remain part of winner resolution and visible match results, but the match-reporting mapper omits bot rows so they cannot mutate guest, local-profile, or authenticated-account statistics.
 
 ## Data ownership
 
@@ -212,6 +216,7 @@ RoomMember.AccountID
 RoomMember.LocalProfileID
 RoomMember.Ready
 RoomMember.Connected
+RoomMember.IsBot
 ```
 
 The room membership aggregate owns:

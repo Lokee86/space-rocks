@@ -23,6 +23,7 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 			PlayerID:  member.PlayerID,
 			Ready:     member.Ready,
 			Connected: member.Connected,
+			IsBot:     member.IsBot,
 		})
 	}
 

@@ -9,6 +9,9 @@ import (
 func BuildRecordMatchResultCommands(summary serverplayerdata.MatchResultSummary) []protocol.PlayerDataRecordMatchResult {
 	commands := make([]protocol.PlayerDataRecordMatchResult, 0, len(summary.Players))
 	for _, player := range summary.Players {
+		if player.IsBot {
+			continue
+		}
 		command := protocol.PlayerDataRecordMatchResult{
 			Type:       protocol.PacketTypePlayerDataRecordMatchResult,
 			ResultID:   summary.MatchID + ":" + player.GamePlayerID,

@@ -26,6 +26,7 @@ type PlayerMatchSummary struct {
 	Score          int
 	ShipDeaths     int
 	Won            bool
+	IsBot          bool
 }
 
 // MatchResultSummary is the logical V1.1 match summary contract.

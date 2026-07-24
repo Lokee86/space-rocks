@@ -26,6 +26,13 @@ func (manager *RoomManager) LeaveMember(roomID, sessionID, _ string) (*LeaveMemb
 		gameInstance.RemovePlayer(removedPlayerID)
 		playerRemoved = true
 	}
+	for _, removedBot := range leaveResult.RemovedBots {
+		if gameInstance == nil || removedBot.PlayerID == "" {
+			continue
+		}
+		room.DeactivateMemberPlayer(removedBot.SessionID)
+		gameInstance.RemovePlayer(removedBot.PlayerID)
+	}
 
 	population := room.Population()
 	cleanupScheduled := population.Members == 0 && population.ActivePlayers == 0

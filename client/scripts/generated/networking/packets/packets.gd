@@ -69,6 +69,8 @@ const TYPE_JOIN_ROOM_REQUEST := "join_room_request"
 const TYPE_LEAVE_ROOM_REQUEST := "leave_room_request"
 const TYPE_SET_READY_REQUEST := "set_ready_request"
 const TYPE_START_GAME_REQUEST := "start_game_request"
+const TYPE_ADD_BOT_REQUEST := "add_bot_request"
+const TYPE_REMOVE_ROOM_MEMBER_REQUEST := "remove_room_member_request"
 const TYPE_START_SINGLE_PLAYER_REQUEST := "start_single_player_request"
 const TYPE_RETURN_TO_LOBBY_REQUEST := "return_to_lobby_request"
 const TYPE_AUTHENTICATE_REQUEST := "authenticate_request"
@@ -122,6 +124,7 @@ const FIELD_INDEX := "index"
 const FIELD_INFINITE_LIVES := "infinite_lives"
 const FIELD_INPUT := "input"
 const FIELD_INVINCIBLE := "invincible"
+const FIELD_IS_BOT := "is_bot"
 const FIELD_IS_CONNECTED := "is_connected"
 const FIELD_IS_READY := "is_ready"
 const FIELD_KIND := "kind"
@@ -506,6 +509,17 @@ static func set_ready_request_packet(ready) -> Dictionary:
 static func start_game_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_game_request"
+	return packet
+
+static func add_bot_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "add_bot_request"
+	return packet
+
+static func remove_room_member_request_packet(player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "remove_room_member_request"
+	packet[FIELD_PLAYER_ID] = player_id
 	return packet
 
 static func start_single_player_request_packet(local_profile_id, trace_id) -> Dictionary:

@@ -31,6 +31,12 @@ class FakeConnectionService:
 	func send_start_game_request() -> void:
 		pass
 
+	func send_add_bot_request() -> void:
+		pass
+
+	func send_remove_room_member_request(_player_id: String) -> void:
+		pass
+
 	func send_leave_room_request() -> void:
 		pass
 
