@@ -70,3 +70,6 @@ dist/
 
 /.ci-artifacts/
 .worktrees/
+
+# Local Hermes session exports
+/srwebrtc*
