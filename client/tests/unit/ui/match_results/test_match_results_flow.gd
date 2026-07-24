@@ -27,8 +27,10 @@ func test_show_results_twice_clears_old_window() -> void:
 	var first_window := flow.show_results("single_player", [])
 	var second_window := flow.show_results("single_player", [])
 
-	assert_false(is_instance_valid(first_window))
+	assert_true(first_window.is_queued_for_deletion())
 	assert_not_null(second_window)
+	await get_tree().process_frame
+	assert_false(is_instance_valid(first_window))
 	assert_eq(mount_parent.get_child_count(), 1)
 	assert_eq(mount_parent.get_child(0), second_window)
 
@@ -95,6 +97,19 @@ func test_quit_emits_quit_to_main_menu_requested() -> void:
 	(flow.window.get_node("%QuitButton") as BaseButton).emit_signal("pressed")
 
 	assert_signal_emitted(flow, "quit_to_main_menu_requested")
+
+
+func test_quit_allows_listener_to_clear_results_synchronously() -> void:
+	var flow := await _create_flow("single_player")
+	var results_window := flow.window
+	flow.quit_to_main_menu_requested.connect(flow.clear)
+
+	(results_window.get_node("%QuitButton") as BaseButton).emit_signal("pressed")
+
+	assert_null(flow.window)
+	assert_true(results_window.is_queued_for_deletion())
+	await get_tree().process_frame
+	assert_false(is_instance_valid(results_window))
 
 
 func _create_flow(session_mode: String) -> MatchResultsFlow:

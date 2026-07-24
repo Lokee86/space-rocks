@@ -89,5 +89,5 @@ func _is_process_running(pid: int) -> bool:
 
 func _kill_process(pid: int) -> Error:
 	if kill_process_handler.is_valid():
-		return int(kill_process_handler.call(pid))
+		return int(kill_process_handler.call(pid)) as Error
 	return OS.kill(pid)

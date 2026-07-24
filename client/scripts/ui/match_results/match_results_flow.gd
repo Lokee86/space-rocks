@@ -66,9 +66,10 @@ func show_results(session_mode: String, rows: Array = []) -> Control:
 
 
 func clear() -> void:
-	if is_instance_valid(window):
-		window.free()
+	var previous_window := window
 	window = null
+	if is_instance_valid(previous_window):
+		previous_window.queue_free()
 
 
 func _on_lobby_replay_requested() -> void:
