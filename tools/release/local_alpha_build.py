@@ -14,6 +14,7 @@ GAME_SERVER_DIR = ROOT / "services" / "game-server"
 CREDENTIAL_HELPER_DIR = CLIENT_DIR / "native" / "credential-helper"
 DEFAULT_OUTPUT_ROOT = ROOT / "dist" / "local-alpha"
 COLLISION_SHAPES_SOURCE = ROOT / "shared" / "collisions" / "collision_shapes.json"
+INSTALLERS_DIR = ROOT / "tools" / "release" / "installers"
 
 
 def native_architectures(platform_name: str) -> tuple[str, str]:
@@ -66,6 +67,16 @@ def package_collision_shapes(server_output: Path) -> Path:
     destination = server_output.parent / "shared" / "collisions" / "collision_shapes.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(COLLISION_SHAPES_SOURCE, destination)
+    return destination
+
+
+def package_installer(platform_name: str, output_dir: Path) -> Path:
+    installer_name = "install.ps1" if platform_name == "windows" else "install.command"
+    source = INSTALLERS_DIR / installer_name
+    destination = output_dir / installer_name
+    shutil.copy2(source, destination)
+    if platform_name == "macos":
+        destination.chmod(0o755)
     return destination
 
 

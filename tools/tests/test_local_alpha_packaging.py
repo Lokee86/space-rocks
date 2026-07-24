@@ -1,5 +1,7 @@
+import os
 import plistlib
 from pathlib import Path
+import stat
 
 import pytest
 
@@ -10,11 +12,12 @@ from tools.release.local_alpha_build import (
     credential_helper_path,
     native_architectures,
     package_collision_shapes,
+    package_installer,
     platform_layout,
     resolve_client_executable,
 )
 from tools.release.local_alpha_common import ReleaseGateError
-from tools.release.local_alpha_manifest import default_version, package_files
+from tools.release.local_alpha_manifest import default_version, package_files, release_version
 from tools.release.local_alpha_smoke import (
     CREDENTIAL_KEYCHAIN_PATH_ENVIRONMENT,
     prepare_macos_smoke_keychain,
@@ -23,11 +26,15 @@ from tools.release.local_alpha_smoke import (
 )
 
 
-def test_dirty_default_version_is_visibly_marked(monkeypatch) -> None:
-    monkeypatch.setattr("tools.release.local_alpha_manifest.git_commit", lambda: "abc123")
+def test_release_version_is_0_1_1() -> None:
+    assert release_version() == "0.1.1"
 
-    assert default_version() == "local-alpha-abc123"
-    assert default_version(dirty=True) == "local-alpha-abc123-dirty"
+
+def test_dirty_default_version_is_visibly_marked(monkeypatch) -> None:
+    monkeypatch.setattr("tools.release.local_alpha_manifest.release_version", lambda: "0.1.1")
+
+    assert default_version() == "0.1.1"
+    assert default_version(dirty=True) == "0.1.1-dirty"
 
 
 def test_native_architecture_mapping(monkeypatch) -> None:
@@ -80,6 +87,28 @@ def test_collision_shapes_are_packaged_beside_the_server(tmp_path: Path, monkeyp
 
     assert destination == server.parent / "shared" / "collisions" / "collision_shapes.json"
     assert destination.read_text(encoding="utf-8") == source.read_text(encoding="utf-8")
+
+
+def test_platform_installers_are_packaged(tmp_path: Path, monkeypatch) -> None:
+    installers = tmp_path / "installers"
+    installers.mkdir()
+    (installers / "install.ps1").write_text("windows installer\n", encoding="utf-8")
+    (installers / "install.command").write_text("mac installer\n", encoding="utf-8")
+    monkeypatch.setattr("tools.release.local_alpha_build.INSTALLERS_DIR", installers)
+
+    windows_output = tmp_path / "windows"
+    windows_output.mkdir()
+    windows_installer = package_installer("windows", windows_output)
+    assert windows_installer == windows_output / "install.ps1"
+    assert windows_installer.read_text(encoding="utf-8") == "windows installer\n"
+
+    macos_output = tmp_path / "macos"
+    macos_output.mkdir()
+    macos_installer = package_installer("macos", macos_output)
+    assert macos_installer == macos_output / "install.command"
+    assert macos_installer.read_text(encoding="utf-8") == "mac installer\n"
+    if os.name != "nt":
+        assert macos_installer.stat().st_mode & stat.S_IXUSR
 
 
 def test_macos_signing_ignores_packaged_data_directories(

@@ -4,11 +4,15 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 from typing import Sequence
 
 from .local_alpha_build import native_architectures
-from .local_alpha_common import ROOT
+from .local_alpha_common import ROOT, ReleaseGateError
+
+VERSION_FILE = ROOT / "tools" / "release" / "version.txt"
+SEMANTIC_VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$")
 
 
 def git_commit() -> str:
@@ -33,9 +37,16 @@ def git_worktree_changes() -> list[str]:
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
+def release_version() -> str:
+    version = VERSION_FILE.read_text(encoding="utf-8").strip()
+    if not SEMANTIC_VERSION.fullmatch(version):
+        raise ReleaseGateError(f"invalid release version in {VERSION_FILE}: {version!r}")
+    return version
+
+
 def default_version(*, dirty: bool = False) -> str:
     suffix = "-dirty" if dirty else ""
-    return f"local-alpha-{git_commit()}{suffix}"
+    return f"{release_version()}{suffix}"
 
 
 def package_files(output_dir: Path) -> list[Path]:
