@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://b6uqvxmbwwfsp" path="res://audio/gameover.mp3" id="5_a2ab3"]
 [ext_resource type="PackedScene" uid="uid://cvvmd6ho6fl74" path="res://scenes/ui/dialogs/game_menu.tscn" id="6_oj5la"]
 [ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="7_hue"]
+[ext_resource type="PackedScene" path="res://scenes/ui/elements/player_status_display.tscn" id="8_status"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_faiu6"]
 font_size = 25
@@ -78,6 +79,14 @@ material = SubResource("LivesHueMaterial")
 texture = ExtResource("2_dcp08")
 expand_mode = 1
 stretch_mode = 6
+
+[node name="PlayerStatusDisplay" parent="." instance=ExtResource("8_status")]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 15.0
+offset_top = 72.0
+offset_right = 535.0
+offset_bottom = 150.0
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=331761437]
 layout_mode = 1

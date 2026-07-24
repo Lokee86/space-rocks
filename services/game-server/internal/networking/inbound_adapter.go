@@ -70,6 +70,14 @@ func (a inboundSessionAdapter) HandleSetTeamAssignmentRequest(targetPlayerID str
 	a.session.handleSetTeamAssignmentRequest(targetPlayerID, teamID, traceID)
 }
 
+func (a inboundSessionAdapter) HandleLoadoutOptionsRequest(localProfileID string, playMode string, modeID string, traceID string) {
+	a.session.handleLoadoutOptionsRequest(localProfileID, playMode, modeID, traceID)
+}
+
+func (a inboundSessionAdapter) HandleSetLoadoutRequest(traceID string, selectedOwnedShipID string, selectedWeaponsByPoint map[string]string, selectedModulesBySlot map[string]string, startingAmmoByPoint map[string]int) {
+	a.session.handleSetLoadoutRequest(traceID, selectedOwnedShipID, selectedWeaponsByPoint, selectedModulesBySlot, startingAmmoByPoint)
+}
+
 func (a inboundSessionAdapter) HandleStartGameRequest() {
 	a.session.handleStartGameRequest()
 }

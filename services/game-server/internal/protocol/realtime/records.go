@@ -51,6 +51,14 @@ type OverlayReceiverRecord struct {
 	SelfID                     string
 	Lives                      int
 	Score                      int
+	Health                     int
+	MaxHealth                  int
+	Shields                    int
+	MaxShields                 int
+	ShieldModuleID             string
+	ArmorModuleID              string
+	EngineModuleID             string
+	UtilityModuleID            string
 	RespawnCooldown            float64
 	PrimaryWeaponID            string
 	PrimaryAmmoPolicy          string
@@ -67,6 +75,12 @@ type SessionPlayerRecord struct {
 	ShipType            string
 	Score               int
 	Lives               int
+	MaxHealth           int
+	MaxShields          int
+	ShieldModuleID      string
+	ArmorModuleID       string
+	EngineModuleID      string
+	UtilityModuleID     string
 	RespawnCooldown     float64
 	PrimaryWeaponID     string
 	PrimaryAmmoPolicy   string

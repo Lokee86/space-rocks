@@ -31,6 +31,8 @@ var request_discord_sign_in_callable: Callable
 var create_room_callable: Callable
 var join_room_callable: Callable
 var logout_callable: Callable
+var request_loadout_options_callable: Callable
+var submit_loadout_callable: Callable
 var current_route := ""
 
 
@@ -43,7 +45,9 @@ func configure(
 		join_room_callable_ref: Callable = Callable(),
 		logout_callable_ref: Callable = Callable(),
 		auth_session_controller_ref: AuthSessionController = null,
-		profile_stats_provider_ref: ProfileStatsProvider = null) -> void:
+		profile_stats_provider_ref: ProfileStatsProvider = null,
+		request_loadout_options_callable_ref: Callable = Callable(),
+		submit_loadout_callable_ref: Callable = Callable()) -> void:
 	canvas_layer = canvas_layer_ref
 	main_menu = main_menu_ref
 	start_single_player_callable = start_single_player_callable_ref
@@ -51,6 +55,8 @@ func configure(
 	create_room_callable = create_room_callable_ref
 	join_room_callable = join_room_callable_ref
 	logout_callable = logout_callable_ref
+	request_loadout_options_callable = request_loadout_options_callable_ref
+	submit_loadout_callable = submit_loadout_callable_ref
 	auth_session_controller = auth_session_controller_ref
 	profile_stats_provider_is_shared = profile_stats_provider_ref != null
 	if profile_context_provider == null:
@@ -202,7 +208,9 @@ func _show_pregame() -> void:
 		Callable(self, "clear_for_room_transition"),
 		profile_context_provider,
 		profile_flow,
-		transmission_flow)
+		transmission_flow,
+		request_loadout_options_callable,
+		submit_loadout_callable)
 	current_route = MenuRoute.PREGAME_MENU
 	if pregame_menu != null:
 		pregame_menu.show()
@@ -227,6 +235,11 @@ func _clear_join_dialog() -> void:
 		join_dialog.queue_free()
 	join_dialog = null
 	join_dialog_flow = null
+
+
+func handle_loadout_options(packet: Dictionary) -> void:
+	if pregame_menu_flow != null:
+		pregame_menu_flow.handle_loadout_options(packet)
 
 
 func get_current_route() -> String:

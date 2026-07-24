@@ -48,7 +48,7 @@ func activateRoomPlayers(room *rooms.Room) {
 		if !assigned {
 			continue
 		}
-		playerID := gameplayContext.Game.AddPlayerWithTeam(teamID)
+		playerID := gameplayContext.Game.AddPlayerWithTeamAndBuild(teamID, session.resolvedBuildTemplate())
 		if !session.setGamePlayerIDForRoom(room, playerID) {
 			gameplayContext.Game.RollbackPlayerAdd(playerID)
 			continue

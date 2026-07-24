@@ -7,6 +7,7 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var connection_service
 var pending_boot_request: PendingBootRequest
+var pending_loadout_request := {}
 var websocket_url := ""
 var logger: Callable
 
@@ -37,6 +38,38 @@ func request_create_room(config: Dictionary = {}) -> void:
 
 func request_join_room(room_code: String) -> void:
 	pending_boot_request.request_join_room(room_code)
+
+
+func request_loadout_options(local_profile_id: String, play_mode: String, mode_id: String) -> void:
+	pending_loadout_request = {
+		"local_profile_id": local_profile_id,
+		"play_mode": play_mode,
+		"mode_id": mode_id,
+	}
+
+
+func has_pending_loadout_request() -> bool:
+	return not pending_loadout_request.is_empty()
+
+
+func pending_loadout_request_is_single_player() -> bool:
+	return str(pending_loadout_request.get("play_mode", "")) == Constants.SESSION_MODE_SINGLE_PLAYER
+
+
+func pending_loadout_request_is_multiplayer() -> bool:
+	return str(pending_loadout_request.get("play_mode", "")) == Constants.SESSION_MODE_MULTIPLAYER
+
+
+func send_pending_loadout_request() -> void:
+	if pending_loadout_request.is_empty():
+		return
+	var request := pending_loadout_request.duplicate(true)
+	pending_loadout_request.clear()
+	connection_service.send_loadout_options_request(
+		str(request.get("local_profile_id", "")),
+		str(request.get("play_mode", "")),
+		str(request.get("mode_id", ""))
+	)
 
 
 func pending_request_type() -> String:
@@ -97,6 +130,7 @@ func send_pending_boot_request() -> void:
 
 func clear() -> void:
 	pending_boot_request.clear()
+	pending_loadout_request.clear()
 
 
 func _log(message: String) -> void:

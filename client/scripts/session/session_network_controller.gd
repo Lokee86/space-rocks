@@ -64,6 +64,7 @@ func _connect_connection_signal(signal_name: StringName, handler: Callable) -> v
 
 func _on_connection_connected() -> void:
 	_webrtc_gameplay_ready = false
+	_try_send_pending_loadout_request()
 	_try_send_pending_boot_request()
 
 
@@ -81,6 +82,19 @@ func _on_connection_closed() -> void:
 func _on_realtime_transport_ready() -> void:
 	_webrtc_gameplay_ready = true
 	_try_send_pending_boot_request()
+
+
+func _try_send_pending_loadout_request() -> void:
+	if shell_boot_flow == null or not shell_boot_flow.has_method("has_pending_loadout_request"):
+		return
+	if not shell_boot_flow.has_pending_loadout_request():
+		return
+	if shell_boot_flow.pending_loadout_request_is_single_player():
+		shell_boot_flow.send_pending_loadout_request()
+		return
+	if shell_boot_flow.pending_loadout_request_is_multiplayer():
+		if connection_service != null && connection_service.is_websocket_auth_authenticated():
+			shell_boot_flow.send_pending_loadout_request()
 
 
 func _try_send_pending_boot_request() -> void:
@@ -103,10 +117,13 @@ func _on_websocket_auth_result_received(packet: Dictionary) -> void:
 		return
 
 	if bool(packet.get("authenticated", false)):
+		_try_send_pending_loadout_request()
 		_try_send_pending_boot_request()
 	else:
 		var error_code := str(packet.get("error_code", ""))
 		if error_code == "token_verification_unavailable":
+			if shell_boot_flow.has_method("send_pending_loadout_request"):
+				shell_boot_flow.send_pending_loadout_request()
 			shell_boot_flow.send_pending_boot_request()
 		else:
 			pass

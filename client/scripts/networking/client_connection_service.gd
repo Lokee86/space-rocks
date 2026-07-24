@@ -17,6 +17,7 @@ signal connected
 signal closed
 signal packet_parse_failed(text: String)
 signal room_snapshot_received(packet: Dictionary)
+signal loadout_options_received(packet: Dictionary)
 signal websocket_auth_result_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
@@ -101,6 +102,7 @@ func _ready() -> void:
 	_bind_resync_request_signal()
 	_connect_coordinator_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
 	_connect_coordinator_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
+	_connect_coordinator_signal("loadout_options_received", Callable(self, "_on_loadout_options_received"))
 	_connect_coordinator_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_coordinator_signal("room_error_received", Callable(self, "_on_room_error_received"))
 	_connect_coordinator_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
@@ -252,6 +254,16 @@ func send_set_ready_request(is_ready: bool) -> void:
 func send_set_team_assignment_request(target_player_id: String, team_id: String) -> void:
 	if _can_send_outbound():
 		client_packet_sender.send_set_team_assignment_request(target_player_id, team_id)
+
+
+func send_loadout_options_request(local_profile_id: String, play_mode: String, mode_id: String) -> void:
+	if _can_send_outbound():
+		client_packet_sender.send_loadout_options_request(local_profile_id, play_mode, mode_id, current_connection_trace_id())
+
+
+func send_set_loadout_request(selection: Dictionary) -> void:
+	if _can_send_outbound():
+		client_packet_sender.send_set_loadout_request(selection, current_connection_trace_id())
 
 
 func send_start_game_request() -> void:
@@ -457,6 +469,10 @@ func _on_room_snapshot_received(packet: Dictionary) -> void:
 	_request_tooling_readouts_if_ready()
 	_sync_telemetry_subscription()
 	room_snapshot_received.emit(packet)
+
+
+func _on_loadout_options_received(packet: Dictionary) -> void:
+	loadout_options_received.emit(packet)
 
 
 func _on_authenticate_result_received(packet: Dictionary) -> void:

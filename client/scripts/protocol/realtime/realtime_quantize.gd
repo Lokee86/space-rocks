@@ -82,6 +82,14 @@ static func decode_overlay_state(overlay_lane_state):
 	decoded.self_id = overlay_lane_state.self_id
 	decoded.lives = overlay_lane_state.lives
 	decoded.score = overlay_lane_state.score
+	decoded.health = overlay_lane_state.health
+	decoded.max_health = overlay_lane_state.max_health
+	decoded.shields = overlay_lane_state.shields
+	decoded.max_shields = overlay_lane_state.max_shields
+	decoded.shield_module_id = overlay_lane_state.shield_module_id
+	decoded.armor_module_id = overlay_lane_state.armor_module_id
+	decoded.engine_module_id = overlay_lane_state.engine_module_id
+	decoded.utility_module_id = overlay_lane_state.utility_module_id
 	decoded.respawn_cooldown = _decode_field(overlay_lane_state.respawn_cooldown, "overlay.respawn_cooldown")
 	decoded.primary_weapon_id = overlay_lane_state.primary_weapon_id
 	decoded.secondary_weapon_id = overlay_lane_state.secondary_weapon_id

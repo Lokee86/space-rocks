@@ -10,6 +10,7 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const LoadoutDialogScene := preload("res://scenes/ui/dialogs/loadout_dialog.tscn")
 
 var main_menu: Control
 var canvas_layer: CanvasLayer
@@ -20,6 +21,9 @@ var client_config_sender: Callable
 var latest_room_state := ""
 var _current_match_id := ""
 var latest_match_result := {}
+var latest_build_options := {}
+var latest_loadout_selection := {}
+var loadout_dialog
 
 var lobby_flow
 var lobby_network_actions
@@ -60,7 +64,8 @@ func configure(
 		multiplayer_lobby_presenter,
 		main_menu,
 		canvas_layer,
-		Callable()
+		Callable(),
+		Callable(self, "_on_lobby_loadout_requested")
 	)
 
 
@@ -74,14 +79,23 @@ func configure_lobby_leave_return_destination(destination: Callable) -> void:
 
 
 func handle_room_snapshot(packet: Dictionary) -> void:
+	_cache_loadout_state(packet)
 	lobby_shell_flow.apply_room_snapshot(packet)
 	var state = lobby_flow.current_state()
 	latest_room_state = state.room_state
 	_current_match_id = str(packet.get(Packets.FIELD_CURRENT_MATCH_ID, ""))
 	_cache_match_result_from_snapshot(packet)
 	_clear_room_operation_after_snapshot()
-	if state.room_state == Constants.ROOM_STATE_IN_GAME && !client_config_sender.is_null():
-		client_config_sender.call()
+	if state.room_state == Constants.ROOM_STATE_IN_GAME:
+		_close_loadout_dialog()
+		if !client_config_sender.is_null():
+			client_config_sender.call()
+
+
+func handle_loadout_options(packet: Dictionary) -> void:
+	_cache_loadout_state(packet)
+	if loadout_dialog != null && is_instance_valid(loadout_dialog):
+		loadout_dialog.configure(latest_build_options, latest_loadout_selection)
 
 
 func handle_room_state_changed(packet: Dictionary) -> void:
@@ -182,11 +196,48 @@ func handle_room_error(packet: Dictionary) -> void:
 
 
 func _on_lobby_left_room() -> void:
+	_close_loadout_dialog()
 	_current_match_id = ""
+	latest_build_options = {}
+	latest_loadout_selection = {}
 	if session_context != null:
 		session_context.clear()
 	if shell_boot_flow != null:
 		shell_boot_flow.clear()
+
+
+func _cache_loadout_state(packet: Dictionary) -> void:
+	var options = packet.get("build_options", null)
+	if options is Dictionary:
+		latest_build_options = options.duplicate(true)
+	var selection = packet.get("loadout_selection", null)
+	if selection is Dictionary:
+		latest_loadout_selection = selection.duplicate(true)
+	if loadout_dialog != null && is_instance_valid(loadout_dialog):
+		loadout_dialog.configure(latest_build_options, latest_loadout_selection)
+
+
+func _on_lobby_loadout_requested() -> void:
+	if loadout_dialog == null || !is_instance_valid(loadout_dialog):
+		loadout_dialog = LoadoutDialogScene.instantiate()
+		if loadout_dialog == null:
+			return
+		canvas_layer.add_child(loadout_dialog)
+		loadout_dialog.submit_requested.connect(_on_loadout_submit_requested)
+		loadout_dialog.close_requested.connect(_close_loadout_dialog)
+	loadout_dialog.configure(latest_build_options, latest_loadout_selection)
+	loadout_dialog.show()
+
+
+func _on_loadout_submit_requested(selection: Dictionary) -> void:
+	if connection_service != null && connection_service.has_method("send_set_loadout_request"):
+		connection_service.send_set_loadout_request(selection)
+
+
+func _close_loadout_dialog() -> void:
+	if loadout_dialog != null && is_instance_valid(loadout_dialog):
+		loadout_dialog.queue_free()
+	loadout_dialog = null
 
 
 func _clear_room_operation_after_snapshot() -> void:

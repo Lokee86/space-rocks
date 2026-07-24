@@ -49,6 +49,16 @@ json = "local_profile_id"
 type = "string"
 
 [[structs.fields]]
+name = "play_mode"
+json = "play_mode"
+type = "string"
+
+[[structs.fields]]
+name = "mode_id"
+json = "mode_id"
+type = "string"
+
+[[structs.fields]]
 
 name = "team_structure"
 json = "team_structure"
@@ -122,6 +132,32 @@ name = "player_id"
 go_name = "PlayerID"
 json = "player_id"
 type = "string"
+
+[[structs.fields]]
+name = "selected_owned_ship_id"
+json = "selected_owned_ship_id"
+type = "string"
+
+[[structs.fields]]
+name = "selected_weapons_by_point"
+json = "selected_weapons_by_point"
+type = "map"
+key_type = "string"
+value_type = "string"
+
+[[structs.fields]]
+name = "selected_modules_by_slot"
+json = "selected_modules_by_slot"
+type = "map"
+key_type = "string"
+value_type = "string"
+
+[[structs.fields]]
+name = "starting_ammo_by_point"
+json = "starting_ammo_by_point"
+type = "map"
+key_type = "string"
+value_type = "int"
 
 [[structs.fields]]
 
@@ -471,6 +507,36 @@ type = "string"
 name = "secondary_ammo_policy"
 go_name = "SecondaryAmmoPolicy"
 json = "secondary_ammo_policy"
+type = "string"
+
+[[structs.fields]]
+name = "max_health"
+json = "max_health"
+type = "int"
+
+[[structs.fields]]
+name = "max_shields"
+json = "max_shields"
+type = "int"
+
+[[structs.fields]]
+name = "shield_module_id"
+json = "shield_module_id"
+type = "string"
+
+[[structs.fields]]
+name = "armor_module_id"
+json = "armor_module_id"
+type = "string"
+
+[[structs.fields]]
+name = "engine_module_id"
+json = "engine_module_id"
+type = "string"
+
+[[structs.fields]]
+name = "utility_module_id"
+json = "utility_module_id"
 type = "string"
 
 [[structs.fields]]

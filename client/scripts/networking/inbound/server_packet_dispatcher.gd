@@ -3,6 +3,7 @@ extends Node
 const ServerPacketRouter := preload("res://scripts/networking/inbound/server_packet_router.gd")
 
 signal room_snapshot_received(packet: Dictionary)
+signal loadout_options_received(packet: Dictionary)
 signal authenticate_result_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
@@ -34,6 +35,8 @@ signal unknown_packet_received(packet: Dictionary)
 func dispatch(packet: Dictionary) -> void:
 	if ServerPacketRouter.is_room_snapshot(packet):
 		room_snapshot_received.emit(packet)
+	elif ServerPacketRouter.is_loadout_options(packet):
+		loadout_options_received.emit(packet)
 	elif ServerPacketRouter.is_authenticate_result(packet):
 		authenticate_result_received.emit(packet)
 	elif ServerPacketRouter.is_room_state_changed(packet):

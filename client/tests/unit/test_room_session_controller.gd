@@ -25,6 +25,8 @@ class FakeSessionContext:
 class FakeConnectionService:
 	extends RefCounted
 
+	var submitted_loadouts: Array = []
+
 	func send_set_ready_request(_ready: bool) -> void:
 		pass
 
@@ -39,6 +41,9 @@ class FakeConnectionService:
 
 	func send_leave_room_request() -> void:
 		pass
+
+	func send_set_loadout_request(selection: Dictionary) -> void:
+		submitted_loadouts.append(selection.duplicate(true))
 
 	var active_operation_type := ""
 	var active_operation_trace_id := ""
@@ -131,6 +136,43 @@ func test_handle_room_snapshot_clears_current_match_id_when_snapshot_is_empty() 
 		Packets.FIELD_MEMBERS: [],
 	})
 	assert_eq(setup.controller.current_match_id(), "")
+
+
+func test_room_snapshot_caches_loadout_and_lobby_dialog_submits_selection() -> void:
+	var setup := _create_controller()
+	setup.controller.handle_room_snapshot({
+		Packets.FIELD_TYPE: Packets.TYPE_ROOM_SNAPSHOT,
+		Packets.FIELD_ROOM_STATE: Constants.ROOM_STATE_LOBBY,
+		Packets.FIELD_ROOM_CODE: "ROOM1",
+		Packets.FIELD_MEMBERS: [],
+		"build_options": {
+			"eligible_ships": [{"owned_ship_id": "ship-1", "ship_id": "v_wing"}],
+			"eligible_weapons": [{"owned_weapon_id": "weapon-1", "weapon_id": "pulse", "weapon_point": "primary_1"}],
+			"eligible_modules": [],
+		},
+		"loadout_selection": {
+			"selected_owned_ship_id": "ship-1",
+			"selected_weapons_by_point": {"primary_1": "weapon-1"},
+			"selected_modules_by_slot": {},
+			"starting_ammo_by_point": {},
+			"valid": true,
+		},
+	})
+
+	setup.controller._on_lobby_loadout_requested()
+	await get_tree().process_frame
+
+	assert_not_null(setup.controller.loadout_dialog)
+	assert_eq(setup.controller.loadout_dialog.readout.ship_option.item_count, 1)
+	var submitted := {
+		"selected_owned_ship_id": "ship-1",
+		"selected_weapons_by_point": {"primary_1": "weapon-1"},
+		"selected_modules_by_slot": {},
+		"starting_ammo_by_point": {},
+	}
+	setup.controller._on_loadout_submit_requested(submitted)
+	assert_eq(setup.connection_service.submitted_loadouts, [submitted])
+	setup.controller._close_loadout_dialog()
 
 
 func test_lobby_return_cleanup_clears_session_context_and_shell_boot_flow() -> void:

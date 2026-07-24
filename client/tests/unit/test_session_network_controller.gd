@@ -96,6 +96,26 @@ class FakeShellBootFlow:
 	var single_player_local_profile_id := ""
 	var create_room_calls := 0
 	var join_room_codes: Array[String] = []
+	var loadout_send_calls := 0
+	var pending_loadout_mode := ""
+
+	func request_loadout_options(_local_profile_id: String, play_mode: String, _mode_id: String) -> void:
+		pending_loadout_mode = play_mode
+
+	func has_pending_loadout_request() -> bool:
+		return not pending_loadout_mode.is_empty()
+
+	func pending_loadout_request_is_single_player() -> bool:
+		return pending_loadout_mode == Constants.SESSION_MODE_SINGLE_PLAYER
+
+	func pending_loadout_request_is_multiplayer() -> bool:
+		return pending_loadout_mode == Constants.SESSION_MODE_MULTIPLAYER
+
+	func send_pending_loadout_request() -> void:
+		if pending_loadout_mode.is_empty():
+			return
+		loadout_send_calls += 1
+		pending_loadout_mode = ""
 
 	func request_single_player(local_profile_id := "") -> void:
 		pending_request = Constants.BOOT_REQUEST_SINGLE_PLAYER
@@ -130,6 +150,34 @@ class FakeShellBootFlow:
 			pending_request = Constants.BOOT_REQUEST_NONE
 
 
+
+
+func test_connection_sends_single_player_loadout_request_without_websocket_auth() -> void:
+	var connection := FakeConnectionService.new()
+	add_child_autofree(connection)
+	var flow := FakeShellBootFlow.new()
+	flow.request_loadout_options("pilot-1", Constants.SESSION_MODE_SINGLE_PLAYER, "arcade_survival")
+	var controller := _create_controller(connection, flow)
+
+	connection.emit_connected()
+
+	assert_eq(flow.loadout_send_calls, 1)
+	assert_false(flow.has_pending_loadout_request())
+
+
+func test_connection_waits_for_auth_before_multiplayer_loadout_request() -> void:
+	var connection := FakeConnectionService.new()
+	add_child_autofree(connection)
+	var flow := FakeShellBootFlow.new()
+	flow.request_loadout_options("", Constants.SESSION_MODE_MULTIPLAYER, "arcade_survival")
+	var controller := _create_controller(connection, flow)
+
+	connection.emit_connected()
+	assert_eq(flow.loadout_send_calls, 0)
+	connection.emit_websocket_auth_result(true)
+
+	assert_eq(flow.loadout_send_calls, 1)
+	assert_false(flow.has_pending_loadout_request())
 
 
 func test_connection_sends_single_player_request_without_websocket_auth() -> void:

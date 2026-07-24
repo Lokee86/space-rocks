@@ -8,6 +8,7 @@ var multiplayer_lobby_presenter
 var main_menu: Control
 var canvas_layer: CanvasLayer
 var logger: Callable
+var loadout_requested_callback: Callable
 
 
 func _init(
@@ -18,7 +19,8 @@ func _init(
 	multiplayer_lobby_presenter_ref,
 	main_menu_ref: Control,
 	canvas_layer_ref: CanvasLayer,
-	logger_callable: Callable
+	logger_callable: Callable,
+	loadout_requested_callable: Callable = Callable()
 ) -> void:
 	lobby_flow = lobby_flow_ref
 	session_context = session_context_ref
@@ -28,6 +30,7 @@ func _init(
 	main_menu = main_menu_ref
 	canvas_layer = canvas_layer_ref
 	logger = logger_callable
+	loadout_requested_callback = loadout_requested_callable
 
 
 func apply_room_snapshot(packet: Dictionary) -> void:
@@ -50,6 +53,7 @@ func _show_multiplayer_lobby(state) -> void:
 		"add_bot_requested": Callable(self, "_on_lobby_add_bot_requested"),
 		"remove_member_requested": Callable(self, "_on_lobby_remove_member_requested"),
 		"team_assignment_requested": Callable(self, "_on_lobby_team_assignment_requested"),
+		"loadout_requested": Callable(self, "_on_lobby_loadout_requested"),
 		"leave_requested": Callable(self, "_on_lobby_leave_requested"),
 	}
 	multiplayer_lobby_presenter.show_lobby(canvas_layer, state, callbacks)
@@ -73,6 +77,11 @@ func _on_lobby_remove_member_requested(player_id: String) -> void:
 
 func _on_lobby_team_assignment_requested(player_id: String, team_id: String) -> void:
 	lobby_network_actions.send_team_assignment_requested(player_id, team_id)
+
+
+func _on_lobby_loadout_requested() -> void:
+	if loadout_requested_callback.is_valid():
+		loadout_requested_callback.call()
 
 
 func _on_lobby_leave_requested() -> void:

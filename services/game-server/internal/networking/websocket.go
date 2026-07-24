@@ -3,6 +3,7 @@ package networking
 import (
 	"net/http"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	toolingrouter "github.com/Lokee86/space-rocks/services/game-server/internal/networking/tooling"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
@@ -22,10 +23,18 @@ func WebSocketHandlerWithAuth(roomManager *rooms.RoomManager, verifier TokenVeri
 }
 
 func WebSocketHandlerWithAuthAndReporter(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter) http.HandlerFunc {
-	return WebSocketHandlerWithAuthAndReporterAndTooling(roomManager, verifier, reporter, nil, nil)
+	return WebSocketHandlerWithAuthReporterToolingAndBuilds(roomManager, verifier, reporter, nil, nil, nil)
 }
 
 func WebSocketHandlerWithAuthAndReporterAndTooling(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter, measurementController toolingrouter.MeasurementController, telemetryProvider toolingrouter.TelemetryProvider) http.HandlerFunc {
+	return WebSocketHandlerWithAuthReporterToolingAndBuilds(roomManager, verifier, reporter, measurementController, telemetryProvider, nil)
+}
+
+func WebSocketHandlerWithAuthReporterAndBuilds(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter, buildService *playerbuild.Service) http.HandlerFunc {
+	return WebSocketHandlerWithAuthReporterToolingAndBuilds(roomManager, verifier, reporter, nil, nil, buildService)
+}
+
+func WebSocketHandlerWithAuthReporterToolingAndBuilds(roomManager *rooms.RoomManager, verifier TokenVerifier, reporter rooms.MatchResultReporter, measurementController toolingrouter.MeasurementController, telemetryProvider toolingrouter.TelemetryProvider, buildService *playerbuild.Service) http.HandlerFunc {
 	originPolicy := newWebSocketOriginPolicy()
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -49,7 +58,7 @@ func WebSocketHandlerWithAuthAndReporterAndTooling(roomManager *rooms.RoomManage
 		}
 		conn.SetReadLimit(webSocketReadLimit)
 
-		session := newWebSocketSessionWithTooling(conn, roomManager, verifier, reporter, measurementController, telemetryProvider)
+		session := newWebSocketSessionWithToolingAndBuilds(conn, roomManager, verifier, reporter, measurementController, telemetryProvider, buildService)
 		handleConnection(session, r.RemoteAddr)
 	}
 }

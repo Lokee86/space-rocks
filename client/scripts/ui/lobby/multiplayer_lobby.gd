@@ -12,6 +12,7 @@ signal start_game_requested
 signal add_bot_requested
 signal remove_member_requested(player_id: String)
 signal team_assignment_requested(player_id: String, team_id: String)
+signal loadout_requested
 signal leave_requested
 
 @export var player_row_scene: PackedScene
@@ -26,6 +27,7 @@ signal leave_requested
 @onready var ready_button: BaseButton = %ReadyButton
 @onready var start_game_button: BaseButton = %StartGameButton
 @onready var add_bot_button: BaseButton = %AddBotButton
+@onready var loadout_button: BaseButton = %LoadoutButton
 @onready var leave_button: BaseButton = %LeaveButton
 var local_ready := false
 
@@ -36,6 +38,7 @@ func _ready() -> void:
 	start_game_button.pressed.connect(_on_start_game_pressed)
 	add_bot_button.visible = false
 	add_bot_button.pressed.connect(_on_add_bot_pressed)
+	loadout_button.pressed.connect(_on_loadout_pressed)
 	leave_button.pressed.connect(_on_leave_pressed)
 	get_viewport().size_changed.connect(_update_window_size)
 	_update_ready_button_text()
@@ -116,6 +119,10 @@ func _on_remove_member_requested(player_id: String) -> void:
 
 func _on_team_assignment_requested(player_id: String, team_id: String) -> void:
 	team_assignment_requested.emit(player_id, team_id)
+
+func _on_loadout_pressed() -> void:
+	loadout_requested.emit()
+
 
 func _on_leave_pressed() -> void:
 	leave_requested.emit()

@@ -36,6 +36,16 @@ func request_single_player(local_profile_id := "") -> void:
 	shell_boot_flow.connect_to_game_server("single player")
 
 
+func request_loadout_options(local_profile_id: String, play_mode: String, mode_id: String) -> void:
+	shell_boot_flow.request_loadout_options(local_profile_id, play_mode, mode_id)
+	shell_boot_flow.set_websocket_url(_websocket_url_for_mode(play_mode))
+	if connection_service.is_server_connected():
+		if play_mode == Constants.SESSION_MODE_SINGLE_PLAYER or connection_service.is_websocket_auth_authenticated():
+			shell_boot_flow.send_pending_loadout_request()
+		return
+	shell_boot_flow.connect_to_game_server("%s loadout" % play_mode)
+
+
 func request_create_room(config: Dictionary = {}) -> void:
 	session_context.request_multiplayer()
 	shell_boot_flow.request_create_room(config)

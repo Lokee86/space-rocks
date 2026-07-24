@@ -12,11 +12,15 @@ var current_score := 0
 var respawn_countdown_remaining := 0.0
 var respawn_timer_template := ""
 var loadout_display_flow := LoadoutDisplayFlow.new()
+var player_status_display: PlayerStatusDisplay
 
 
 func configure(hud_ref: Control) -> void:
 	hud = hud_ref
 	loadout_display_flow.configure(hud)
+	player_status_display = hud.get_node_or_null("%PlayerStatusDisplay") as PlayerStatusDisplay
+	if player_status_display != null:
+		player_status_display.clear_status()
 	var respawn_timer_label := _respawn_timer_label()
 	if respawn_timer_label != null:
 		respawn_timer_template = respawn_timer_label.text
@@ -43,6 +47,17 @@ func apply_overlay_lane_state(overlay_lane_state) -> void:
 		apply_lives(int(overlay_lane_state.lives))
 	if overlay_lane_state.score != null:
 		apply_score(int(overlay_lane_state.score))
+	if player_status_display != null:
+		player_status_display.apply_status({
+			"health": overlay_lane_state.health,
+			"max_health": overlay_lane_state.max_health,
+			"shields": overlay_lane_state.shields,
+			"max_shields": overlay_lane_state.max_shields,
+			"shield_module_id": overlay_lane_state.shield_module_id,
+			"armor_module_id": overlay_lane_state.armor_module_id,
+			"engine_module_id": overlay_lane_state.engine_module_id,
+			"utility_module_id": overlay_lane_state.utility_module_id,
+		})
 
 	var player_state := {
 		"primary_weapon_id": overlay_lane_state.primary_weapon_id,
@@ -78,6 +93,8 @@ func reset() -> void:
 	if hud != null:
 		set_alive()
 		loadout_display_flow.clear()
+		if player_status_display != null:
+			player_status_display.clear_status()
 		hud.hide()
 
 

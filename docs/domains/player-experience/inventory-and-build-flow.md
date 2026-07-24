@@ -30,7 +30,7 @@ The durable inventory and match-local resolved build are different authorities. 
 - Player-build service: computes eligibility, validates selection, and resolves the match-start build.
 - Player session: owns the applied immutable build for the match.
 - Lives and respawn: choose whether mutable equipment persists or resets to the resolved build.
-- Client: will present eligible options and submit selection; the full editor is not implemented yet.
+- Client: opens the existing game-styled loadout readout in pregame and lobby surfaces, submits owned-instance selections, and presents resolved hull, shields, weapons, ammunition, cooldowns, and module identities in the HUD.
 
 ## Authority boundaries
 
@@ -74,7 +74,7 @@ The build catalog is filtered by ownership, item state, ship support, and mode r
 
 ### 4. Select or fall back
 
-A client selection must use eligible owned-instance IDs. Until the player-facing editor is implemented, the server can use the deterministic fallback: eligible default ship, preferred primary weapon, then stable sorted alternatives.
+A client selection must use eligible owned-instance IDs. The client requests authoritative options before room creation through a reusable preflight websocket connection, or reads the personalized option state attached to a lobby snapshot. The server supplies a deterministic fallback: eligible default ship, preferred primary weapon, then stable sorted alternatives. Invalid submissions preserve the last accepted build and return a machine-readable error.
 
 ### 5. Resolve the build
 
@@ -82,7 +82,7 @@ Resolution revalidates the snapshot and selection, compiles ship stats and equip
 
 ### 6. Apply before the match
 
-The game stores a clone on the player session and can replace the provisional active ship while preserving current position, rotation, velocity, and client configuration. Changes are rejected after match time advances.
+Room activation clones the accepted `ResolvedPlayerBuild`, substitutes the authoritative runtime player ID, installs the build on the player session, and only then creates the ship. This avoids spawning a default ship and mutating it after simulation begins. Changes are rejected once the room leaves the lobby state.
 
 ### 7. Spawn and respawn
 
@@ -112,11 +112,11 @@ Outputs:
 
 This document does not define:
 
-- client loadout-editor layout
+- richer loadout-editor content presentation beyond the current baseline selectors
 - named saved-loadout persistence
 - commerce or reward entitlement policy
 - broader ship, weapon, and module content
-- module HUD or active-module input
+- active-module input and cooldown mechanics
 - inventory trading
 - progression unlock design
 
@@ -133,4 +133,4 @@ This document does not define:
 
 ## Notes
 
-The server-side authority chain is implemented. The remaining player-facing work is to expose eligible options, submit a selection, and present the resolved equipment and modules.
+The authority chain is now implemented from identity and inventory loading through pregame/lobby selection, atomic match-start application, realtime projection, HUD presentation, and lobby return. The intentionally narrow V1 catalog remains the primary limitation: `v_wing`, the `pulse` catalog weapon mapped to `basic_cannon`, and no production module entries.

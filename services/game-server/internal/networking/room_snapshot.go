@@ -82,6 +82,7 @@ func buildRoomMatchResultSummary(projection rooms.RoomSnapshot) game.RoomMatchRe
 
 func (session *webSocketSession) EnqueueRoomSnapshot(room *rooms.Room) {
 	packet := BuildRoomSnapshot(room, session.sessionID)
+	packet.BuildOptions, packet.LoadoutSelection = session.playerBuildPacketStates()
 	payload, err := packetcodec.Encode(packet)
 	if err != nil {
 		logging.Emit(observability.Request{

@@ -15,7 +15,7 @@ This doc is the authoritative P4 planning owner for the player-build seam: ship 
 
 ## Implementation Status
 
-The P4 owner-system foundation is implemented in the game server.
+The P4 owner-system foundation and its first end-to-end client integration are implemented on the P4 completion branch.
 
 Implemented flow:
 
@@ -39,7 +39,18 @@ runtime weapon: basic_cannon
 modules: contract supported; default catalog currently empty
 ```
 
-The implementation includes machine-readable blocked reasons, owned-instance validation, required `primary_1`, hardpoint/module-slot compatibility, starting-ammo compilation, passive and active module declarations, hardwired allowed/disabled/normalized policy, shield compilation, immutable clone boundaries, inventory loading through the player-data inventory client, pre-match game application, and rejection of mid-match build changes.
+The implementation includes machine-readable blocked reasons, owned-instance validation, required `primary_1`, hardpoint/module-slot compatibility, starting-ammo compilation, passive and active module declarations, hardwired allowed/disabled/normalized policy, shield compilation, immutable clone boundaries, inventory loading through the player-data inventory client, and rejection of post-lobby build changes.
+
+The integrated runtime path now also includes:
+
+- a reusable pregame websocket preflight that loads authoritative options before room creation
+- personalized build options and accepted selection state in lobby snapshots
+- game-styled pregame and lobby loadout surfaces built from the existing transmission UI language
+- server validation that preserves the last accepted build when a submission is invalid
+- atomic `ResolvedPlayerBuild` application before the runtime ship is created
+- realtime hull, shield, weapon, ammunition, cooldown, and fixed module-slot projection
+- HUD presentation using the existing HUD label and loadout display seams
+- return-to-lobby behavior that restores loadout editing without rebuilding ownership state
 
 ## Ownership Boundary
 
@@ -382,7 +393,7 @@ Selection planning rule:
 ## Remaining Expansion Decisions
 
 - Exact shared-data source and generator shape for larger ship, weapon, and module catalogs.
-- Exact client build-option and saved-loadout presentation.
+- Exact richer client presentation for larger catalogs, comparison stats, blocked-option explanations, and saved loadouts.
 - Exact persistence model for named saved loadouts.
 - Exact shield regeneration content policy.
 - Exact cleanup ordering for remaining ship-side weapon fields.
@@ -407,6 +418,11 @@ Selection planning rule:
 services/game-server/internal/game/playerbuild/
 services/game-server/internal/game/player_builds.go
 services/game-server/internal/game/session.go
+services/game-server/internal/networking/player_build_state.go
+client/scripts/ui/loadout/
+client/scenes/ui/transmission_displays/loadout_readout.tscn
+client/scenes/ui/dialogs/loadout_dialog.tscn
+client/scripts/ui/hud/player_status_display.gd
 ```
 
 Primary tests live beside `internal/game/playerbuild` and in:

@@ -25,6 +25,20 @@ func test_dispatcher_emits_ship_hot_locator_and_lifecycle_packets() -> void:
 	assert_eq(lifecycle_packets, [{"type": "ships_lifecycle", "sequence": 3}])
 
 
+func test_dispatcher_emits_loadout_options_received() -> void:
+	var dispatcher := ServerPacketDispatcher.new()
+	var received: Array = []
+	add_child_autofree(dispatcher)
+	dispatcher.loadout_options_received.connect(func(packet: Dictionary) -> void:
+		received.append(packet)
+	)
+
+	dispatcher.dispatch({Packets.FIELD_TYPE: Packets.TYPE_LOADOUT_OPTIONS, "build_options": {}})
+
+	assert_eq(received.size(), 1)
+	assert_eq(received[0][Packets.FIELD_TYPE], Packets.TYPE_LOADOUT_OPTIONS)
+
+
 func test_dispatcher_emits_asteroid_delta_received() -> void:
 	var dispatcher := ServerPacketDispatcher.new()
 	var asteroid_packets: Array = []

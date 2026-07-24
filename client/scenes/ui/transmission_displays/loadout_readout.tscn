@@ -1,0 +1,245 @@
+[gd_scene format=3]
+
+[ext_resource type="LabelSettings" path="res://assets/ui/label_settings/transmission_display.tres" id="1_label"]
+[ext_resource type="FontFile" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="2_font"]
+[ext_resource type="StyleBox" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="3_normal"]
+[ext_resource type="StyleBox" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="4_pressed"]
+[ext_resource type="StyleBox" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="5_focus"]
+[ext_resource type="PackedScene" path="res://scenes/ui/elements/button_long.tscn" id="6_button"]
+[ext_resource type="Script" path="res://scripts/ui/loadout/loadout_readout.gd" id="7_script"]
+
+[node name="LoadoutReadout" type="Control"]
+layout_mode = 3
+anchor_left = 0.04
+anchor_top = 0.04
+anchor_right = 0.96
+anchor_bottom = 0.96
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_script")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 5
+
+[node name="ScreenLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "LOADOUT"
+label_settings = ExtResource("1_label")
+horizontal_alignment = 1
+
+[node name="Separator" type="ColorRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 1.5)
+layout_mode = 2
+color = Color(0, 1, 1, 1)
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+
+[node name="ShipRow" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/ShipRow"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "SHIP"
+label_settings = ExtResource("1_label")
+vertical_alignment = 1
+
+[node name="ShipOption" type="OptionButton" parent="VBoxContainer/ShipRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/pressed = ExtResource("4_pressed")
+theme_override_styles/hover = ExtResource("5_focus")
+theme_override_styles/focus = ExtResource("5_focus")
+
+[node name="PrimaryWeaponRow" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="VBoxContainer/PrimaryWeaponRow"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "PRIMARY_1 WEAPON"
+label_settings = ExtResource("1_label")
+vertical_alignment = 1
+
+[node name="PrimaryWeaponOption" type="OptionButton" parent="VBoxContainer/PrimaryWeaponRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/pressed = ExtResource("4_pressed")
+theme_override_styles/hover = ExtResource("5_focus")
+theme_override_styles/focus = ExtResource("5_focus")
+
+[node name="ModulesLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "MODULES"
+label_settings = ExtResource("1_label")
+
+[node name="ModuleSlots" type="GridContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 5
+
+[node name="ShieldModule" type="VBoxContainer" parent="VBoxContainer/ModuleSlots"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ModuleSlots/ShieldModule"]
+layout_mode = 2
+text = "SHIELD MOD"
+label_settings = ExtResource("1_label")
+
+[node name="ShieldModuleOption" type="OptionButton" parent="VBoxContainer/ModuleSlots/ShieldModule"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/pressed = ExtResource("4_pressed")
+theme_override_styles/hover = ExtResource("5_focus")
+theme_override_styles/focus = ExtResource("5_focus")
+
+[node name="ArmorModule" type="VBoxContainer" parent="VBoxContainer/ModuleSlots"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ModuleSlots/ArmorModule"]
+layout_mode = 2
+text = "ARMOR MOD"
+label_settings = ExtResource("1_label")
+
+[node name="ArmorModuleOption" type="OptionButton" parent="VBoxContainer/ModuleSlots/ArmorModule"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/pressed = ExtResource("4_pressed")
+theme_override_styles/hover = ExtResource("5_focus")
+theme_override_styles/focus = ExtResource("5_focus")
+
+[node name="EngineModule" type="VBoxContainer" parent="VBoxContainer/ModuleSlots"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ModuleSlots/EngineModule"]
+layout_mode = 2
+text = "ENGINE MOD"
+label_settings = ExtResource("1_label")
+
+[node name="EngineModuleOption" type="OptionButton" parent="VBoxContainer/ModuleSlots/EngineModule"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/pressed = ExtResource("4_pressed")
+theme_override_styles/hover = ExtResource("5_focus")
+theme_override_styles/focus = ExtResource("5_focus")
+
+[node name="UtilityModule" type="VBoxContainer" parent="VBoxContainer/ModuleSlots"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ModuleSlots/UtilityModule"]
+layout_mode = 2
+text = "UTILITY MOD"
+label_settings = ExtResource("1_label")
+
+[node name="UtilityModuleOption" type="OptionButton" parent="VBoxContainer/ModuleSlots/UtilityModule"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_styles/normal = ExtResource("3_normal")
+theme_override_styles/pressed = ExtResource("4_pressed")
+theme_override_styles/hover = ExtResource("5_focus")
+theme_override_styles/focus = ExtResource("5_focus")
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "LOADOUT STATUS: READY"
+label_settings = ExtResource("1_label")
+autowrap_mode = 2
+
+[node name="ActionButtons" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ApplyButton" parent="VBoxContainer/ActionButtons" instance=ExtResource("6_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/ActionButtons/ApplyButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ActionButtons/ApplyButton/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/ActionButtons/ApplyButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "APPLY"
+label_settings = ExtResource("1_label")
+horizontal_alignment = 1
+
+[node name="BackButton" parent="VBoxContainer/ActionButtons" instance=ExtResource("6_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/ActionButtons/BackButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ActionButtons/BackButton/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/ActionButtons/BackButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "BACK"
+label_settings = ExtResource("1_label")
+horizontal_alignment = 1

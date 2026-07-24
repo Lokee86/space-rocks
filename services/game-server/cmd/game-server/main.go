@@ -12,10 +12,12 @@ import (
 
 	"github.com/Lokee86/space-rocks/player-data/httpapi"
 	playerlogging "github.com/Lokee86/space-rocks/player-data/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/playerinventory"
 	servertooling "github.com/Lokee86/space-rocks/services/game-server/internal/tooling"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 	"github.com/google/uuid"
@@ -155,6 +157,24 @@ func runWithContext(ctx context.Context) int {
 		return 1
 	}
 	playerDataSink := newPlayerDataSink(playerDataRuntime)
+	inventoryClient, err := playerinventory.NewRuntimeClient(playerDataSink)
+	if err != nil {
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"dependency": "player_inventory_client", "failure_mode": "initialization_failed"},
+		})
+		return 1
+	}
+	buildService, err := playerbuild.NewService(inventoryClient, playerbuild.DefaultCatalog())
+	if err != nil {
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameDependencyInitializationFailed,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"dependency": "player_build_service", "failure_mode": "initialization_failed"},
+		})
+		return 1
+	}
 
 	reporter, err := matchreporting.NewRuntimeReporter(playerDataSink)
 	if err != nil {
@@ -168,7 +188,7 @@ func runWithContext(ctx context.Context) int {
 	authVerifier := buildAuthVerifierFromEnv(startupTraceID)
 
 	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthAndReporterAndTooling(rooms, authVerifier, reporter, measurementController, measurementController))
+	mux.HandleFunc("GET /ws", networking.WebSocketHandlerWithAuthReporterToolingAndBuilds(rooms, authVerifier, reporter, measurementController, measurementController, buildService))
 
 	playerDataProfileHandler := newPlayerDataProfileHTTPHandler(playerDataRuntime, authVerifier)
 	playerDataLocalProfilesHandler := newPlayerDataLocalProfilesHTTPHandler(playerDataRuntime)

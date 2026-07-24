@@ -1,5 +1,7 @@
 package game
 
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
+
 func (game *Game) playerSessionStateLocked(session *playerSession) PlayerSessionState {
 	lives := 0
 	respawnCooldown := 0.0
@@ -19,7 +21,21 @@ func (game *Game) playerSessionStateLocked(session *playerSession) PlayerSession
 		PrimaryAmmoPolicy:   string(session.PlayerArmory.Primary.AmmoPolicy),
 		SecondaryWeaponID:   string(session.PlayerArmory.Secondary.ID),
 		SecondaryAmmoPolicy: string(session.PlayerArmory.Secondary.AmmoPolicy),
+		MaxHealth:           session.Stats.MaxHealth,
+		MaxShields:          session.Stats.MaxShields,
+		ShieldModuleID:      resolvedModuleCatalogID(session, playerbuild.ShieldMod),
+		ArmorModuleID:       resolvedModuleCatalogID(session, playerbuild.ArmorMod),
+		EngineModuleID:      resolvedModuleCatalogID(session, playerbuild.EngineMod),
+		UtilityModuleID:     resolvedModuleCatalogID(session, playerbuild.UtilityMod),
 	}
+}
+
+func resolvedModuleCatalogID(session *playerSession, slot playerbuild.ModuleSlot) string {
+	module, ok := session.ResolvedBuild.EquippedModules[slot]
+	if !ok {
+		return ""
+	}
+	return module.CatalogID
 }
 
 func (game *Game) playerSessionStatesLocked() map[string]PlayerSessionState {

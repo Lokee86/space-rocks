@@ -8,6 +8,7 @@ var ready_calls: Array = []
 var start_calls := 0
 var add_bot_calls := 0
 var removed_player_ids: Array[String] = []
+var loadout_calls := 0
 var leave_calls := 0
 
 
@@ -16,6 +17,7 @@ func before_each() -> void:
 	start_calls = 0
 	add_bot_calls = 0
 	removed_player_ids = []
+	loadout_calls = 0
 	leave_calls = 0
 
 
@@ -48,6 +50,7 @@ func test_show_lobby_forwards_all_callback_signals() -> void:
 		"start_game_requested": Callable(self, "_on_start_game_requested"),
 		"add_bot_requested": Callable(self, "_on_add_bot_requested"),
 		"remove_member_requested": Callable(self, "_on_remove_member_requested"),
+		"loadout_requested": Callable(self, "_on_loadout_requested"),
 		"leave_requested": Callable(self, "_on_leave_requested"),
 	}
 
@@ -56,12 +59,14 @@ func test_show_lobby_forwards_all_callback_signals() -> void:
 	lobby.start_game_requested.emit()
 	lobby.add_bot_requested.emit()
 	lobby.remove_member_requested.emit("Player-2")
+	lobby.loadout_requested.emit()
 	lobby.leave_requested.emit()
 
 	assert_eq(ready_calls, [true])
 	assert_eq(start_calls, 1)
 	assert_eq(add_bot_calls, 1)
 	assert_eq(removed_player_ids, ["Player-2"])
+	assert_eq(loadout_calls, 1)
 	assert_eq(leave_calls, 1)
 	presenter.clear_lobby()
 	await get_tree().process_frame
@@ -81,6 +86,10 @@ func _on_add_bot_requested() -> void:
 
 func _on_remove_member_requested(player_id: String) -> void:
 	removed_player_ids.append(player_id)
+
+
+func _on_loadout_requested() -> void:
+	loadout_calls += 1
 
 
 func _on_leave_requested() -> void:

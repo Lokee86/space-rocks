@@ -3,6 +3,14 @@ extends RefCounted
 var self_id = null
 var lives = null
 var score = null
+var health = null
+var max_health = null
+var shields = null
+var max_shields = null
+var shield_module_id = null
+var armor_module_id = null
+var engine_module_id = null
+var utility_module_id = null
 var respawn_cooldown = null
 var primary_weapon_id = null
 var secondary_weapon_id = null
@@ -17,6 +25,14 @@ func clear_overlay() -> void:
 	self_id = null
 	lives = null
 	score = null
+	health = null
+	max_health = null
+	shields = null
+	max_shields = null
+	shield_module_id = null
+	armor_module_id = null
+	engine_module_id = null
+	utility_module_id = null
 	respawn_cooldown = null
 	primary_weapon_id = null
 	secondary_weapon_id = null
@@ -47,6 +63,22 @@ func _apply_overlay_fields(overlay_packet: Dictionary) -> void:
 		lives = overlay_packet.get("lives")
 	if overlay_packet.has("score"):
 		score = overlay_packet.get("score")
+	if overlay_packet.has("health"):
+		health = overlay_packet.get("health")
+	if overlay_packet.has("max_health"):
+		max_health = overlay_packet.get("max_health")
+	if overlay_packet.has("shields"):
+		shields = overlay_packet.get("shields")
+	if overlay_packet.has("max_shields"):
+		max_shields = overlay_packet.get("max_shields")
+	if overlay_packet.has("shield_module_id"):
+		shield_module_id = overlay_packet.get("shield_module_id")
+	if overlay_packet.has("armor_module_id"):
+		armor_module_id = overlay_packet.get("armor_module_id")
+	if overlay_packet.has("engine_module_id"):
+		engine_module_id = overlay_packet.get("engine_module_id")
+	if overlay_packet.has("utility_module_id"):
+		utility_module_id = overlay_packet.get("utility_module_id")
 	if overlay_packet.has("respawn_cooldown"):
 		respawn_cooldown = overlay_packet.get("respawn_cooldown")
 	if overlay_packet.has("primary_weapon_id"):

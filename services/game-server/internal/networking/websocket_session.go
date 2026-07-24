@@ -7,8 +7,12 @@ import (
 	"sync"
 	"sync/atomic"
 
+<<<<<<< HEAD
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+=======
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
+>>>>>>> 1d4ace21 (feat(gameplay): complete P4 player loadout integration)
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	toolingrouter "github.com/Lokee86/space-rocks/services/game-server/internal/networking/tooling"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
@@ -33,6 +37,8 @@ type webSocketSession struct {
 	identity             SessionIdentity
 	authVerifier         TokenVerifier
 	matchResultReporter  rooms.MatchResultReporter
+	buildService         *playerbuild.Service
+	buildState           sessionBuildState
 	// realtimeState is owned exclusively by the write loop and intentionally not guarded by mu.
 	realtimeState            realtime.RealtimeSessionState
 	viewTargetPlayerID       string
@@ -47,11 +53,19 @@ type webSocketSession struct {
 	toolingCapabilities      toolingrouter.CapabilitySet
 }
 
-func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter) *webSocketSession {
-	return newWebSocketSessionWithTooling(conn, roomManager, authVerifier, reporter, nil, nil)
+func newWebSocketSession(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter, buildServices ...*playerbuild.Service) *webSocketSession {
+	var buildService *playerbuild.Service
+	if len(buildServices) > 0 {
+		buildService = buildServices[0]
+	}
+	return newWebSocketSessionWithToolingAndBuilds(conn, roomManager, authVerifier, reporter, nil, nil, buildService)
 }
 
 func newWebSocketSessionWithTooling(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter, measurementController toolingrouter.MeasurementController, telemetryProvider toolingrouter.TelemetryProvider) *webSocketSession {
+	return newWebSocketSessionWithToolingAndBuilds(conn, roomManager, authVerifier, reporter, measurementController, telemetryProvider, nil)
+}
+
+func newWebSocketSessionWithToolingAndBuilds(conn *websocket.Conn, roomManager *rooms.RoomManager, authVerifier TokenVerifier, reporter rooms.MatchResultReporter, measurementController toolingrouter.MeasurementController, telemetryProvider toolingrouter.TelemetryProvider, buildService *playerbuild.Service) *webSocketSession {
 	sessionNumber := nextSessionID.Add(1)
 	if reporter == nil {
 		reporter = rooms.NoopMatchResultReporter{}
@@ -67,6 +81,7 @@ func newWebSocketSessionWithTooling(conn *websocket.Conn, roomManager *rooms.Roo
 		identity:                 NewGuestSessionIdentity(),
 		authVerifier:             authVerifier,
 		matchResultReporter:      reporter,
+		buildService:             buildService,
 		webrtcBackpressureLogged: make(map[string]bool),
 		packetObserver:           packetObserverFor(measurementController),
 		receiverObserver:         receiverObserverFor(measurementController),

@@ -103,6 +103,14 @@ func wireOverlayWireFullPacket(packet OverlayWireFullPacket) map[string]any {
 	wire["self_id"] = packet.Receiver.SelfID
 	wire["lives"] = packet.Receiver.Lives
 	wire["score"] = packet.Receiver.Score
+	wire["health"] = packet.Receiver.Health
+	wire["max_health"] = packet.Receiver.MaxHealth
+	wire["shields"] = packet.Receiver.Shields
+	wire["max_shields"] = packet.Receiver.MaxShields
+	wire["shield_module_id"] = packet.Receiver.ShieldModuleID
+	wire["armor_module_id"] = packet.Receiver.ArmorModuleID
+	wire["engine_module_id"] = packet.Receiver.EngineModuleID
+	wire["utility_module_id"] = packet.Receiver.UtilityModuleID
 	wire["respawn_cooldown"] = packet.Receiver.RespawnCooldown
 	wire["primary_weapon_id"] = packet.Receiver.PrimaryWeaponID
 	wire["primary_ammo_policy"] = packet.Receiver.PrimaryAmmoPolicy
@@ -124,6 +132,12 @@ func wireSessionWireFullPacket(packet SessionWireFullPacket) map[string]any {
 			"ship_type":             player.ShipType,
 			"score":                 player.Score,
 			"lives":                 player.Lives,
+			"max_health":            player.MaxHealth,
+			"max_shields":           player.MaxShields,
+			"shield_module_id":      player.ShieldModuleID,
+			"armor_module_id":       player.ArmorModuleID,
+			"engine_module_id":      player.EngineModuleID,
+			"utility_module_id":     player.UtilityModuleID,
 			"respawn_cooldown":      player.RespawnCooldown,
 			"primary_weapon_id":     player.PrimaryWeaponID,
 			"primary_ammo_policy":   player.PrimaryAmmoPolicy,

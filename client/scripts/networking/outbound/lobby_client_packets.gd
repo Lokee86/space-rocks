@@ -45,6 +45,20 @@ static func set_team_assignment_request_packet(target_player_id: String, team_id
 	return Packets.set_team_assignment_request_packet(target_player_id, team_id)
 
 
+static func loadout_options_request_packet(trace_id: String, local_profile_id: String, play_mode: String, mode_id: String) -> Dictionary:
+	return Packets.loadout_options_request_packet(trace_id, local_profile_id, play_mode, mode_id)
+
+
+static func set_loadout_request_packet(trace_id: String, selection: Dictionary) -> Dictionary:
+	return Packets.set_loadout_request_packet(
+		trace_id,
+		str(selection.get("selected_owned_ship_id", "")),
+		selection.get("selected_weapons_by_point", {}),
+		selection.get("selected_modules_by_slot", {}),
+		selection.get("starting_ammo_by_point", {})
+	)
+
+
 static func start_game_request_packet() -> Dictionary:
 	return Packets.start_game_request_packet()
 

@@ -77,6 +77,9 @@ func _connect_lobby_signals(callbacks: Dictionary) -> void:
 	var team_handler: Callable = callbacks.get("team_assignment_requested", Callable())
 	if !team_handler.is_null() && !multiplayer_lobby.team_assignment_requested.is_connected(team_handler):
 		multiplayer_lobby.team_assignment_requested.connect(team_handler)
+	var loadout_handler: Callable = callbacks.get("loadout_requested", Callable())
+	if !loadout_handler.is_null() && !multiplayer_lobby.loadout_requested.is_connected(loadout_handler):
+		multiplayer_lobby.loadout_requested.connect(loadout_handler)
 	var leave_handler: Callable = callbacks.get("leave_requested", Callable())
 	if !leave_handler.is_null() && !multiplayer_lobby.leave_requested.is_connected(leave_handler):
 		multiplayer_lobby.leave_requested.connect(leave_handler)

@@ -8,6 +8,8 @@ type lobbySession interface {
 	HandleLeaveRoomRequest()
 	HandleSetReadyRequest(ready bool)
 	HandleSetTeamAssignmentRequest(targetPlayerID string, teamID string, traceID string)
+	HandleLoadoutOptionsRequest(localProfileID string, playMode string, modeID string, traceID string)
+	HandleSetLoadoutRequest(traceID string, selectedOwnedShipID string, selectedWeaponsByPoint map[string]string, selectedModulesBySlot map[string]string, startingAmmoByPoint map[string]int)
 	HandleStartGameRequest()
 	HandleAddBotRequest()
 	HandleRemoveRoomMemberRequest(playerID string)
@@ -31,6 +33,12 @@ func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 		return true
 	case game.PacketTypeSetTeamAssignmentRequest:
 		session.HandleSetTeamAssignmentRequest(packet.TargetPlayerID, packet.TeamID, packet.TraceID)
+		return true
+	case game.PacketTypeLoadoutOptionsRequest:
+		session.HandleLoadoutOptionsRequest(packet.LocalProfileID, packet.PlayMode, packet.ModeID, packet.TraceID)
+		return true
+	case game.PacketTypeSetLoadoutRequest:
+		session.HandleSetLoadoutRequest(packet.TraceID, packet.SelectedOwnedShipID, packet.SelectedWeaponsByPoint, packet.SelectedModulesBySlot, packet.StartingAmmoByPoint)
 		return true
 	case game.PacketTypeStartGameRequest:
 		session.HandleStartGameRequest()

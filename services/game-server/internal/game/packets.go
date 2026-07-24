@@ -22,6 +22,9 @@ const (
 	PacketTypeLeaveRoomRequest              = "leave_room_request"
 	PacketTypeSetReadyRequest               = "set_ready_request"
 	PacketTypeSetTeamAssignmentRequest      = "set_team_assignment_request"
+	PacketTypeLoadoutOptionsRequest         = "loadout_options_request"
+	PacketTypeLoadoutOptions                = "loadout_options"
+	PacketTypeSetLoadoutRequest             = "set_loadout_request"
 	PacketTypeStartGameRequest              = "start_game_request"
 	PacketTypeAddBotRequest                 = "add_bot_request"
 	PacketTypeRemoveRoomMemberRequest       = "remove_room_member_request"
@@ -41,35 +44,44 @@ const (
 )
 
 type ClientPacket struct {
-	Type               string               `json:"type"`
-	TraceID            string               `json:"trace_id"`
-	MatchID            string               `json:"match_id"`
-	Input              runtime.InputState   `json:"input"`
-	Config             runtime.ClientConfig `json:"config"`
-	RoomCode           string               `json:"room_code"`
-	LocalProfileID     string               `json:"local_profile_id"`
-	TeamStructure      string               `json:"team_structure"`
-	TeamAssignmentMode string               `json:"team_assignment_mode"`
-	TeamCount          int                  `json:"team_count"`
-	MaxPlayers         int                  `json:"max_players"`
-	PresetID           string               `json:"preset_id"`
-	StartingLives      int                  `json:"starting_lives"`
-	InfiniteLives      bool                 `json:"infinite_lives"`
-	TargetScore        int                  `json:"target_score"`
-	TargetPlayerID     string               `json:"target_player_id"`
-	ViewTargetPlayerID string               `json:"view_target_player_id"`
-	TeamID             string               `json:"team_id"`
-	Ready              bool                 `json:"ready"`
-	PlayerID           string               `json:"player_id"`
-	X                  float64              `json:"x"`
-	Y                  float64              `json:"y"`
-	TargetKind         string               `json:"target_kind"`
-	TargetID           string               `json:"target_id"`
-	Token              string               `json:"token"`
-	Sequence           int                  `json:"sequence"`
-	Lane               string               `json:"lane"`
-	BaselineID         string               `json:"baseline_id"`
-	Reason             string               `json:"reason"`
+	Type                   string               `json:"type"`
+	TraceID                string               `json:"trace_id"`
+	MatchID                string               `json:"match_id"`
+	Input                  runtime.InputState   `json:"input"`
+	Config                 runtime.ClientConfig `json:"config"`
+	RoomCode               string               `json:"room_code"`
+	LocalProfileID         string               `json:"local_profile_id"`
+	PlayMode               string               `json:"play_mode"`
+	ModeID                 string               `json:"mode_id"`
+	TeamStructure          string               `json:"team_structure"`
+	TeamAssignmentMode     string               `json:"team_assignment_mode"`
+	TeamCount              int                  `json:"team_count"`
+	MaxPlayers             int                  `json:"max_players"`
+	PresetID               string               `json:"preset_id"`
+	StartingLives          int                  `json:"starting_lives"`
+	InfiniteLives          bool                 `json:"infinite_lives"`
+	TargetScore            int                  `json:"target_score"`
+	TargetPlayerID         string               `json:"target_player_id"`
+	ViewTargetPlayerID     string               `json:"view_target_player_id"`
+	TeamID                 string               `json:"team_id"`
+	Ready                  bool                 `json:"ready"`
+	PlayerID               string               `json:"player_id"`
+	SelectedOwnedShipID    string               `json:"selected_owned_ship_id"`
+	SelectedWeaponsByPoint map[string]string    `json:"selected_weapons_by_point"`
+	SelectedModulesBySlot  map[string]string    `json:"selected_modules_by_slot"`
+	StartingAmmoByPoint    map[string]int       `json:"starting_ammo_by_point"`
+	X                      float64              `json:"x"`
+	Y                      float64              `json:"y"`
+	TargetKind             string               `json:"target_kind"`
+	TargetID               string               `json:"target_id"`
+	Token                  string               `json:"token"`
+	Sequence               int                  `json:"sequence"`
+	Lane                   string               `json:"lane"`
+	BaselineID             string               `json:"baseline_id"`
+	Reason                 string               `json:"reason"`
+	ClientSentMsec         int                  `json:"client_sent_msec"`
+	ServerReceivedMsec     int                  `json:"server_received_msec"`
+	ServerSentMsec         int                  `json:"server_sent_msec"`
 }
 
 type PlayerLocatorState struct {
@@ -116,6 +128,23 @@ type SetTeamAssignmentRequest struct {
 	TeamID         string `json:"team_id"`
 }
 
+type LoadoutOptionsRequest struct {
+	Type           string `json:"type"`
+	TraceID        string `json:"trace_id"`
+	LocalProfileID string `json:"local_profile_id"`
+	PlayMode       string `json:"play_mode"`
+	ModeID         string `json:"mode_id"`
+}
+
+type SetLoadoutRequest struct {
+	Type                   string            `json:"type"`
+	TraceID                string            `json:"trace_id"`
+	SelectedOwnedShipID    string            `json:"selected_owned_ship_id"`
+	SelectedWeaponsByPoint map[string]string `json:"selected_weapons_by_point"`
+	SelectedModulesBySlot  map[string]string `json:"selected_modules_by_slot"`
+	StartingAmmoByPoint    map[string]int    `json:"starting_ammo_by_point"`
+}
+
 type StartGameRequest struct {
 	Type string `json:"type"`
 }
@@ -155,6 +184,60 @@ type AuthenticateResult struct {
 	Message       string `json:"message"`
 }
 
+type BuildShipOption struct {
+	OwnedShipID            string `json:"owned_ship_id"`
+	ShipID                 string `json:"ship_id"`
+	WeightClass            string `json:"weight_class"`
+	DefaultPrimaryWeaponID string `json:"default_primary_weapon_id"`
+}
+
+type BuildWeaponOption struct {
+	OwnedWeaponID string `json:"owned_weapon_id"`
+	WeaponID      string `json:"weapon_id"`
+	WeaponPoint   string `json:"weapon_point"`
+}
+
+type BuildModuleOption struct {
+	OwnedModuleID string `json:"owned_module_id"`
+	ModuleID      string `json:"module_id"`
+	ModuleSlot    string `json:"module_slot"`
+}
+
+type BuildBlockedOption struct {
+	Kind            string `json:"kind"`
+	OwnedInstanceID string `json:"owned_instance_id"`
+	CatalogID       string `json:"catalog_id"`
+	WeaponPoint     string `json:"weapon_point"`
+	ModuleSlot      string `json:"module_slot"`
+	ReasonCode      string `json:"reason_code"`
+}
+
+type EligibleBuildOptionsState struct {
+	ModeID          string               `json:"mode_id"`
+	PlayerID        string               `json:"player_id"`
+	EligibleShips   []BuildShipOption    `json:"eligible_ships"`
+	EligibleWeapons []BuildWeaponOption  `json:"eligible_weapons"`
+	EligibleModules []BuildModuleOption  `json:"eligible_modules"`
+	BlockedOptions  []BuildBlockedOption `json:"blocked_options"`
+}
+
+type LoadoutSelectionState struct {
+	SelectedOwnedShipID    string            `json:"selected_owned_ship_id"`
+	SelectedWeaponsByPoint map[string]string `json:"selected_weapons_by_point"`
+	SelectedModulesBySlot  map[string]string `json:"selected_modules_by_slot"`
+	StartingAmmoByPoint    map[string]int    `json:"starting_ammo_by_point"`
+	Valid                  bool              `json:"valid"`
+	ErrorCode              string            `json:"error_code"`
+	Message                string            `json:"message"`
+}
+
+type LoadoutOptionsPacket struct {
+	Type             string                    `json:"type"`
+	TraceID          string                    `json:"trace_id"`
+	BuildOptions     EligibleBuildOptionsState `json:"build_options"`
+	LoadoutSelection LoadoutSelectionState     `json:"loadout_selection"`
+}
+
 type RoomMemberState struct {
 	PlayerID  string `json:"player_id"`
 	Ready     bool   `json:"ready"`
@@ -178,25 +261,27 @@ type RoomMatchResultSummary struct {
 }
 
 type RoomSnapshot struct {
-	Type                  string                 `json:"type"`
-	RoomCode              string                 `json:"room_code"`
-	RoomState             string                 `json:"room_state"`
-	CurrentMatchID        string                 `json:"current_match_id"`
-	Members               []RoomMemberState      `json:"members"`
-	LocalPlayerID         string                 `json:"local_player_id"`
-	OwnerID               string                 `json:"owner_id"`
-	MaxPlayers            int                    `json:"max_players"`
-	PresetID              string                 `json:"preset_id"`
-	ModeID                string                 `json:"mode_id"`
-	ModeLocked            bool                   `json:"mode_locked"`
-	StartingLives         int                    `json:"starting_lives"`
-	InfiniteLives         bool                   `json:"infinite_lives"`
-	TargetScore           int                    `json:"target_score"`
-	TeamStructure         string                 `json:"team_structure"`
-	TeamAssignmentMode    string                 `json:"team_assignment_mode"`
-	TeamCount             int                    `json:"team_count"`
-	TeamAssignmentsLocked bool                   `json:"team_assignments_locked"`
-	MatchResult           RoomMatchResultSummary `json:"match_result"`
+	Type                  string                    `json:"type"`
+	RoomCode              string                    `json:"room_code"`
+	RoomState             string                    `json:"room_state"`
+	CurrentMatchID        string                    `json:"current_match_id"`
+	Members               []RoomMemberState         `json:"members"`
+	LocalPlayerID         string                    `json:"local_player_id"`
+	OwnerID               string                    `json:"owner_id"`
+	MaxPlayers            int                       `json:"max_players"`
+	PresetID              string                    `json:"preset_id"`
+	ModeID                string                    `json:"mode_id"`
+	ModeLocked            bool                      `json:"mode_locked"`
+	StartingLives         int                       `json:"starting_lives"`
+	InfiniteLives         bool                      `json:"infinite_lives"`
+	TargetScore           int                       `json:"target_score"`
+	TeamStructure         string                    `json:"team_structure"`
+	TeamAssignmentMode    string                    `json:"team_assignment_mode"`
+	TeamCount             int                       `json:"team_count"`
+	TeamAssignmentsLocked bool                      `json:"team_assignments_locked"`
+	BuildOptions          EligibleBuildOptionsState `json:"build_options"`
+	LoadoutSelection      LoadoutSelectionState     `json:"loadout_selection"`
+	MatchResult           RoomMatchResultSummary    `json:"match_result"`
 }
 
 type RoomStateChanged struct {
@@ -245,6 +330,12 @@ type PlayerSessionState struct {
 	PrimaryAmmoPolicy   string  `json:"primary_ammo_policy"`
 	SecondaryWeaponID   string  `json:"secondary_weapon_id"`
 	SecondaryAmmoPolicy string  `json:"secondary_ammo_policy"`
+	MaxHealth           int     `json:"max_health"`
+	MaxShields          int     `json:"max_shields"`
+	ShieldModuleID      string  `json:"shield_module_id"`
+	ArmorModuleID       string  `json:"armor_module_id"`
+	EngineModuleID      string  `json:"engine_module_id"`
+	UtilityModuleID     string  `json:"utility_module_id"`
 	SpawnX              float64 `json:"spawn_x"`
 	SpawnY              float64 `json:"spawn_y"`
 }

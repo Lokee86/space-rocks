@@ -85,6 +85,36 @@ class FakeProfileFlow:
 		return null
 
 
+class LocalProfileContextProvider:
+	extends ProfileContextProvider
+
+	func context_for_mode(_mode: String) -> Dictionary:
+		return {
+			"callsign": "Ranger",
+			"identity_kind": "local_profile",
+			"local_profile_id": "pilot-local-1",
+			"activity_status": "ACTIVE",
+		}
+
+
+class LoadoutRequestProbe:
+	extends RefCounted
+
+	var calls: Array = []
+
+	func capture(local_profile_id: String, play_mode: String, mode_id: String) -> void:
+		calls.append([local_profile_id, play_mode, mode_id])
+
+
+class LoadoutSubmitProbe:
+	extends RefCounted
+
+	var selections: Array = []
+
+	func capture(selection: Dictionary) -> void:
+		selections.append(selection.duplicate(true))
+
+
 class ReturnToMainMenuProbe:
 	extends RefCounted
 
@@ -295,6 +325,60 @@ func test_multiplayer_join_calls_show_join_dialog() -> void:
 	menu.join_game_requested.emit()
 
 	assert_eq(join_probe.calls, 1)
+
+
+func test_loadout_requested_uses_current_local_profile_and_mode() -> void:
+	var menu := FakePregameMenu.new()
+	var profile_context_provider := LocalProfileContextProvider.new()
+	var flow := PregameMenuFlow.new()
+	var request_probe := LoadoutRequestProbe.new()
+
+	add_child_autofree(menu)
+	flow.configure(
+		menu,
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		profile_context_provider,
+		null,
+		null,
+		Callable(request_probe, "capture")
+	)
+	await flow.show_single_player()
+
+	menu.loadout_requested.emit()
+
+	assert_eq(request_probe.calls, [["pilot-local-1", PregameMenuMode.SINGLE_PLAYER, "arcade_survival"]])
+
+
+func test_loadout_submit_forwards_selection() -> void:
+	var menu := FakePregameMenu.new()
+	var flow := PregameMenuFlow.new()
+	var submit_probe := LoadoutSubmitProbe.new()
+	var selection := {"selected_owned_ship_id": "ship-owned-1"}
+
+	add_child_autofree(menu)
+	flow.configure(
+		menu,
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		null,
+		null,
+		null,
+		Callable(),
+		Callable(submit_probe, "capture")
+	)
+
+	flow._on_loadout_submit_requested(selection)
+
+	assert_eq(submit_probe.selections, [selection])
 
 
 func test_profile_requested_calls_profile_flow_with_single_player_mode() -> void:

@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
@@ -15,6 +16,14 @@ func (game *Game) AddPlayer() string {
 }
 
 func (game *Game) AddPlayerWithTeam(teamID teams.ID) string {
+	return game.addPlayerWithTeamAndBuild(teamID, nil)
+}
+
+func (game *Game) AddPlayerWithTeamAndBuild(teamID teams.ID, build playerbuild.ResolvedPlayerBuild) string {
+	return game.addPlayerWithTeamAndBuild(teamID, &build)
+}
+
+func (game *Game) addPlayerWithTeamAndBuild(teamID teams.ID, build *playerbuild.ResolvedPlayerBuild) string {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 	if game.lockedFinalMatchState != nil {
@@ -45,6 +54,16 @@ func (game *Game) addPlayerLocked(teamID teams.ID) string {
 	}
 	session := newPlayerSession(playerID, spawnPosition)
 	session.TeamID = teamID
+	if build != nil {
+		resolved := build.Clone()
+		resolved.PlayerID = playerID
+		if err := session.ApplyResolvedBuild(resolved); err != nil {
+			game.participationRuntime.UnregisterParticipant(playerID)
+			game.lifeRuntime.RollbackParticipant(playerID)
+			game.nextID--
+			return ""
+		}
+	}
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session
 	game.participantRecords[playerID] = &participantRecord{ID: playerID, TeamID: teamID}

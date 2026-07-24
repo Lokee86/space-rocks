@@ -5,6 +5,7 @@ extends RefCounted
 signal realtime_transport_ready
 signal authenticate_result_received(packet: Dictionary)
 signal room_snapshot_received(packet: Dictionary)
+signal loadout_options_received(packet: Dictionary)
 signal room_state_changed(packet: Dictionary)
 signal room_error_received(packet: Dictionary)
 signal player_pause_state_received(packet: Dictionary)
@@ -21,6 +22,7 @@ func configure(dispatcher, pipeline, transport_session = null) -> void:
 	set_realtime_transport_session(transport_session)
 	_connect_dispatcher_signal("authenticate_result_received", Callable(self, "_on_authenticate_result_received"))
 	_connect_dispatcher_signal("room_snapshot_received", Callable(self, "_on_room_snapshot_received"))
+	_connect_dispatcher_signal("loadout_options_received", Callable(self, "_on_loadout_options_received"))
 	_connect_dispatcher_signal("room_state_changed", Callable(self, "_on_room_state_changed"))
 	_connect_dispatcher_signal("room_error_received", Callable(self, "_on_room_error_received"))
 	_connect_dispatcher_signal("player_pause_state_received", Callable(self, "_on_player_pause_state_received"))
@@ -58,6 +60,10 @@ func _on_authenticate_result_received(packet: Dictionary) -> void:
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:
 	room_snapshot_received.emit(packet)
+
+
+func _on_loadout_options_received(packet: Dictionary) -> void:
+	loadout_options_received.emit(packet)
 
 
 func _on_room_state_changed(packet: Dictionary) -> void:

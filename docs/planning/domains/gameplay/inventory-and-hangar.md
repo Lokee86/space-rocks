@@ -17,6 +17,8 @@ This doc owns the durable inventory and hangar architecture for player-held ship
 
 The V1 owner system is implemented. Guest inventory uses transient memory, Local Profile inventory uses embedded SQLite, authenticated-account inventory uses Rails/Postgres, and the normalized profile response exposes the same hangar contract across all three routes.
 
+The game server now consumes that normalized inventory through the runtime inventory client whenever a player requests loadout options or prepares a room. Pregame requests use the same identity routing as room activation, lobby snapshots carry the personalized eligible option set and accepted selection, and the resolved build retains the exact inventory provenance used for validation. Loadout changes never mutate ownership.
+
 Current implementation authority:
 
 - [Hangar Inventory](../../../services/player-data/hangar-inventory.md)

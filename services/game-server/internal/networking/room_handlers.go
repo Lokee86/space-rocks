@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
@@ -66,6 +67,8 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStr
 	})
 	addSessionMember(room, session.sessionID, session)
 	session.bindRoom(room)
+	session.preparePlayerBuildForRoom(room, "", playerdata.PlayModeMultiplayer, traceID)
+	session.resetDebugShapeCatalogSent()
 	session.EnqueueRoomSnapshot(room)
 }
 
@@ -91,6 +94,8 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string, traceID 
 		room.SetMemberAccountIDForSession(session.sessionID, accountID)
 	}
 	session.bindRoom(room)
+	session.preparePlayerBuildForRoom(room, "", playerdata.PlayModeMultiplayer, traceID)
+	session.resetDebugShapeCatalogSent()
 	BroadcastRoomSnapshot(room)
 }
 
@@ -192,9 +197,11 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 	})
 	attachRoomSession(room, session.sessionID, session)
 	session.bindRoom(room)
+	session.resetDebugShapeCatalogSent()
 	if localProfileID != "" {
 		room.SetMemberLocalProfileIDForSession(session.sessionID, localProfileID)
 	}
+	session.preparePlayerBuildForRoom(room, localProfileID, playerdata.PlayModeSinglePlayer, traceID)
 
 	activateRoomPlayers(room)
 	BroadcastRoomSnapshot(room)

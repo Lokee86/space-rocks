@@ -4,6 +4,7 @@ extends RefCounted
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 const LocalPilotFlowScript := preload("res://scripts/ui/menu_flow/local_pilot_flow.gd")
 const MultiplayerRoomSetupScene := preload("res://scenes/ui/transmission_displays/multiplayer_room_setup_readout.tscn")
+const LoadoutReadoutScene := preload("res://scenes/ui/transmission_displays/loadout_readout.tscn")
 
 var pregame_menu: PregameMenu
 var return_to_main_menu: Callable
@@ -12,6 +13,8 @@ var create_room_callable: Callable
 var show_join_dialog_callable: Callable
 var logout_callable: Callable
 var clear_for_room_transition_callable: Callable
+var request_loadout_options_callable: Callable
+var submit_loadout_callable: Callable
 var profile_context_provider: ProfileContextProvider
 var profile_flow: ProfileFlow
 var transmission_flow: TransmissionFlow
@@ -29,7 +32,9 @@ func configure(
 		clear_for_room_transition_callable_ref: Callable = Callable(),
 		profile_context_provider_ref: ProfileContextProvider = null,
 		profile_flow_ref: ProfileFlow = null,
-		transmission_flow_ref: TransmissionFlow = null) -> void:
+		transmission_flow_ref: TransmissionFlow = null,
+		request_loadout_options_callable_ref: Callable = Callable(),
+		submit_loadout_callable_ref: Callable = Callable()) -> void:
 	pregame_menu = pregame_menu_ref
 	return_to_main_menu = return_to_main_menu_callable
 	start_single_player_callable = start_single_player_callable_ref
@@ -40,6 +45,8 @@ func configure(
 	profile_context_provider = profile_context_provider_ref
 	profile_flow = profile_flow_ref
 	transmission_flow = transmission_flow_ref
+	request_loadout_options_callable = request_loadout_options_callable_ref
+	submit_loadout_callable = submit_loadout_callable_ref
 	local_pilot_flow = LocalPilotFlowScript.new()
 	if local_pilot_flow != null:
 		local_pilot_flow.configure(transmission_flow, Callable(pregame_menu, "set_callsign"), profile_context_provider)
@@ -59,6 +66,8 @@ func configure(
 			pregame_menu.profile_requested.connect(_on_profile_requested)
 		if not pregame_menu.select_pilot_requested.is_connected(_on_select_pilot_requested):
 			pregame_menu.select_pilot_requested.connect(_on_select_pilot_requested)
+		if not pregame_menu.loadout_requested.is_connected(_on_loadout_requested):
+			pregame_menu.loadout_requested.connect(_on_loadout_requested)
 
 
 func show_single_player() -> void:
@@ -136,6 +145,45 @@ func _on_logout_requested() -> void:
 		logout_callable.call()
 	if return_to_main_menu.is_valid():
 		return_to_main_menu.call()
+
+
+func _on_loadout_requested() -> void:
+	if not request_loadout_options_callable.is_valid():
+		return
+	var local_profile_id := ""
+	if profile_context_provider != null:
+		var context: Dictionary = profile_context_provider.context_for_mode(current_mode)
+		if str(context.get("identity_kind", "")) == "local_profile":
+			local_profile_id = str(context.get("local_profile_id", ""))
+	request_loadout_options_callable.call(local_profile_id, current_mode, "arcade_survival")
+
+
+func handle_loadout_options(packet: Dictionary) -> void:
+	if not is_visible() or transmission_flow == null:
+		return
+	var readout := transmission_flow.mount_primary(LoadoutReadoutScene)
+	if readout == null:
+		return
+	readout.configure(
+		packet.get("build_options", {}),
+		packet.get("loadout_selection", {})
+	)
+	readout.submit_requested.connect(_on_loadout_submit_requested)
+	readout.close_requested.connect(_on_loadout_close_requested)
+
+
+func is_visible() -> bool:
+	return pregame_menu != null && pregame_menu.visible
+
+
+func _on_loadout_submit_requested(selection: Dictionary) -> void:
+	if submit_loadout_callable.is_valid():
+		submit_loadout_callable.call(selection)
+
+
+func _on_loadout_close_requested() -> void:
+	if transmission_flow != null:
+		transmission_flow.clear_primary()
 
 
 func _on_profile_requested() -> void:

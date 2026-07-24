@@ -11,6 +11,10 @@ static func is_room_snapshot(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_ROOM_SNAPSHOT
 
 
+static func is_loadout_options(packet: Dictionary) -> bool:
+	return packet_type(packet) == Packets.TYPE_LOADOUT_OPTIONS
+
+
 static func is_room_state_changed(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_ROOM_STATE_CHANGED
 

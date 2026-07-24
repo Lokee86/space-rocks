@@ -55,13 +55,13 @@ func test_back_button_emits_back_requested() -> void:
 	assert_signal_emitted(menu, "back_requested")
 
 
-func test_single_player_future_buttons_are_disabled() -> void:
+func test_single_player_loadout_is_available_while_future_buttons_remain_disabled() -> void:
 	var menu := await _create_menu()
 
 	menu.show_single_player_mode()
 
 	assert_true((menu.get_node_or_null("%CampaignJoinButton") as BaseButton).disabled)
-	assert_true((menu.get_node_or_null("%LoadoutButton") as BaseButton).disabled)
+	assert_false((menu.get_node_or_null("%LoadoutButton") as BaseButton).disabled)
 	assert_true((menu.get_node_or_null("%ProvisionerButton") as BaseButton).disabled)
 	assert_true((menu.get_node_or_null("%BuyOrebitsButton") as BaseButton).disabled)
 
@@ -113,6 +113,17 @@ func test_join_button_emits_join_game_requested_in_multiplayer_mode() -> void:
 	(menu.get_node_or_null("%CampaignJoinButton") as BaseButton).emit_signal("pressed")
 
 	assert_signal_emitted(menu, "join_game_requested")
+
+
+func test_loadout_button_emits_loadout_requested() -> void:
+	var menu := await _create_menu()
+
+	menu.show_single_player_mode()
+	watch_signals(menu)
+
+	(menu.get_node_or_null("%LoadoutButton") as BaseButton).emit_signal("pressed")
+
+	assert_signal_emitted(menu, "loadout_requested")
 
 
 func test_profile_button_emits_profile_requested_in_single_player_mode() -> void:

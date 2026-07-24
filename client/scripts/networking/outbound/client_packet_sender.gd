@@ -156,6 +156,14 @@ func send_set_team_assignment_request(target_player_id: String, team_id: String)
 	send_packet(LobbyClientPackets.set_team_assignment_request_packet(target_player_id, team_id))
 
 
+func send_loadout_options_request(local_profile_id: String, play_mode: String, mode_id: String, trace_id: String = "") -> void:
+	send_packet(LobbyClientPackets.loadout_options_request_packet(trace_id, local_profile_id, play_mode, mode_id), trace_id)
+
+
+func send_set_loadout_request(selection: Dictionary, trace_id: String = "") -> void:
+	send_packet(LobbyClientPackets.set_loadout_request_packet(trace_id, selection), trace_id)
+
+
 func send_start_game_request() -> void:
 	send_packet(LobbyClientPackets.start_game_request_packet())
 

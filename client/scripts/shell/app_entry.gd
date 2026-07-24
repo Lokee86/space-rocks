@@ -210,8 +210,16 @@ func _ready() -> void:
 		Callable(self, "_request_join_room_from_pregame"),
 		Callable(self, "_logout_from_pregame"),
 		auth_session_controller,
-		profile_stats_provider
+		profile_stats_provider,
+		Callable(session_boot_controller, "request_loadout_options"),
+		Callable(session_boot_controller.get_connection_service(), "send_set_loadout_request")
 	)
+	var loadout_options_handler := Callable(menu_flow_controller, "handle_loadout_options")
+	if !session_boot_controller.get_connection_service().loadout_options_received.is_connected(loadout_options_handler):
+		session_boot_controller.get_connection_service().loadout_options_received.connect(loadout_options_handler)
+	var room_loadout_options_handler := Callable(room_session_controller, "handle_loadout_options")
+	if !session_boot_controller.get_connection_service().loadout_options_received.is_connected(room_loadout_options_handler):
+		session_boot_controller.get_connection_service().loadout_options_received.connect(room_loadout_options_handler)
 	room_session_controller.configure_lobby_leave_return_destination(
 		Callable(menu_flow_controller, "show_multiplayer_pregame")
 	)
