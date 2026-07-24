@@ -191,6 +191,26 @@ func apply(server_pickups: Dictionary, local_visual_position: Vector2, local_ser
 		pickup_node.apply_lifespan_state(age_seconds, lifespan_seconds)
 
 
+func rebase_to_view_anchor(anchor_visual_position: Vector2, anchor_server_position: Vector2) -> void:
+	for pickup_id in pickup_server_positions.keys():
+		if !target_pickup_positions.has(pickup_id):
+			continue
+		var copy_offset := WorldWrapScript.visual_copy_offset_to_anchor(
+			target_pickup_positions[pickup_id],
+			anchor_visual_position,
+			anchor_server_position,
+			pickup_server_positions[pickup_id]
+		)
+		if copy_offset == Vector2.ZERO:
+			continue
+		target_pickup_positions[pickup_id] += copy_offset
+		if pickup_visual_positions.has(pickup_id):
+			pickup_visual_positions[pickup_id] += copy_offset
+		var pickup_node: PickupPresentation = pickup_nodes.get(pickup_id, null)
+		if pickup_node != null && is_instance_valid(pickup_node):
+			pickup_node.global_position += copy_offset
+
+
 func remove_missing(server_pickups: Dictionary) -> void:
 	var stale_pickup_ids = []
 

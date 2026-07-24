@@ -198,6 +198,26 @@ func apply(
 		apply_asteroid(asteroid_id, server_asteroids[asteroid_id], local_visual_position, local_server_position)
 
 
+func rebase_to_view_anchor(anchor_visual_position: Vector2, anchor_server_position: Vector2) -> void:
+	for asteroid_id in asteroid_server_positions.keys():
+		if !asteroid_visual_positions.has(asteroid_id):
+			continue
+		var copy_offset := WorldWrapScript.visual_copy_offset_to_anchor(
+			asteroid_visual_positions[asteroid_id],
+			anchor_visual_position,
+			anchor_server_position,
+			asteroid_server_positions[asteroid_id]
+		)
+		if copy_offset == Vector2.ZERO:
+			continue
+		asteroid_visual_positions[asteroid_id] += copy_offset
+		if target_asteroid_positions.has(asteroid_id):
+			target_asteroid_positions[asteroid_id] += copy_offset
+		var asteroid_node: AsteroidPresentation = asteroid_nodes.get(asteroid_id, null)
+		if asteroid_node != null:
+			asteroid_node.global_position += copy_offset
+
+
 func remove_asteroid(asteroid_id: String) -> void:
 	if not deleted_asteroid_ids.has(asteroid_id):
 		deleted_asteroid_ids[asteroid_id] = true

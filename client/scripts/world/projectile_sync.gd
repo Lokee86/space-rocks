@@ -22,6 +22,7 @@ var reused_projectile_node_count := 0
 var released_projectile_node_count := 0
 var target_projectile_positions := {}
 var target_projectile_rotations := {}
+var projectile_server_positions := {}
 var deleted_projectile_ids := {}
 var _deleted_projectile_id_order := []
 var _measurement_observer: Callable
@@ -196,6 +197,7 @@ func apply_projectile(
 
 	target_projectile_positions[bullet_id] = visual_position
 	target_projectile_rotations[bullet_id] = server_rotation
+	projectile_server_positions[bullet_id] = server_position
 
 	if !initialized_projectiles.has(bullet_id):
 		initialized_projectiles[bullet_id] = true
@@ -211,6 +213,25 @@ func apply(
 ) -> void:
 	for bullet_id in server_bullets.keys():
 		apply_projectile(bullet_id, server_bullets[bullet_id], local_visual_position, local_server_position)
+
+
+func rebase_to_view_anchor(anchor_visual_position: Vector2, anchor_server_position: Vector2) -> void:
+	for bullet_id in projectile_server_positions.keys():
+		if !target_projectile_positions.has(bullet_id):
+			continue
+		var copy_offset := WorldWrapScript.visual_copy_offset_to_anchor(
+			target_projectile_positions[bullet_id],
+			anchor_visual_position,
+			anchor_server_position,
+			projectile_server_positions[bullet_id]
+		)
+		if copy_offset == Vector2.ZERO:
+			continue
+		target_projectile_positions[bullet_id] += copy_offset
+		var bullet_node: Node2D = projectile_nodes.get(bullet_id, null)
+		if bullet_node != null:
+			bullet_node.global_position += copy_offset
+
 
 func remove_projectile(bullet_id: String) -> void:
 	if not deleted_projectile_ids.has(bullet_id):
@@ -235,6 +256,7 @@ func _release_projectile_node(bullet_id: String) -> void:
 	initialized_projectiles.erase(bullet_id)
 	target_projectile_positions.erase(bullet_id)
 	target_projectile_rotations.erase(bullet_id)
+	projectile_server_positions.erase(bullet_id)
 	bullet_node.visible = false
 	if projectile_type == "torpedo":
 		(bullet_node as TorpedoPresentation).reset_for_pool()
@@ -267,6 +289,7 @@ func reset() -> void:
 	pooled_projectile_nodes_by_type.clear()
 	target_projectile_positions.clear()
 	target_projectile_rotations.clear()
+	projectile_server_positions.clear()
 	deleted_projectile_ids.clear()
 	_deleted_projectile_id_order.clear()
 

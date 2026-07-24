@@ -97,6 +97,7 @@ func apply_world_lane_state(world_lane_state_ref) -> void:
 	if player_render_api != null:
 		player_render_api.remove_missing(world_lane_state.ships, current_self_id)
 		player_render_api.apply_state(current_self_id, world_lane_state.ships)
+	_rebase_world_entities_to_view_anchor()
 	var local_visual_position: Vector2 = player_render_api.visual_position()
 	var local_server_position: Vector2 = player_render_api.server_position()
 	if projectile_sync != null:
@@ -158,6 +159,7 @@ func apply_state(
 	asteroid_sync.remove_missing(server_asteroids)
 	pickup_sync.remove_missing(server_pickups)
 	player_render_api.apply_state(self_id, server_players)
+	_rebase_world_entities_to_view_anchor()
 	projectile_sync.apply(
 		server_bullets,
 		player_render_api.visual_position(),
@@ -173,6 +175,16 @@ func apply_state(
 		player_render_api.visual_position(),
 		player_render_api.server_position()
 	)
+
+
+func _rebase_world_entities_to_view_anchor() -> void:
+	if player_render_api == null:
+		return
+	var anchor_visual_position: Vector2 = player_render_api.visual_position()
+	var anchor_server_position: Vector2 = player_render_api.server_position()
+	for entity_sync in [projectile_sync, asteroid_sync, pickup_sync]:
+		if entity_sync != null && entity_sync.has_method("rebase_to_view_anchor"):
+			entity_sync.rebase_to_view_anchor(anchor_visual_position, anchor_server_position)
 
 
 func interpolate(delta: float) -> void:

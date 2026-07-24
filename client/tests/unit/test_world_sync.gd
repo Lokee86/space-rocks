@@ -271,6 +271,49 @@ func test_apply_state_corrects_remote_visual_copy_mismatch_before_interpolation(
 	assert_gt(abs(expected_target.y - rendered_snapshot_a.y), Constants.WORLD_HEIGHT * 0.5)
 
 
+func test_spectated_player_wrap_rebases_sparse_world_entities_to_view_anchor() -> void:
+	var target_id := WorldStateFixture.REMOTE_PLAYER_ID
+	var other_player_id := "other-player"
+	var pickup_id := "pickup-1"
+	var lane := WorldLaneState.new()
+	lane.ships = {
+		WorldStateFixture.LOCAL_PLAYER_ID: WorldStateFixture.player_state(Constants.WORLD_WIDTH * 0.5, 200.0, 0.0),
+		target_id: WorldStateFixture.player_state(Constants.WORLD_WIDTH - 10.0, 200.0, 0.0),
+		other_player_id: WorldStateFixture.player_state(20.0, 200.0, 0.0),
+	}
+	lane.asteroids = {
+		WorldStateFixture.ASTEROID_ID: WorldStateFixture.asteroid_state(15.0, 220.0, 1, 1.0),
+	}
+	lane.bullets = {
+		WorldStateFixture.BULLET_ID: WorldStateFixture.bullet_state(25.0, 230.0, 0.0),
+	}
+	lane.pickups = {
+		pickup_id: {
+			"id": pickup_id,
+			"type": "1_up",
+			"pickup_class": "powerup",
+			"x": 35.0,
+			"y": 240.0,
+		},
+	}
+	lane.asteroid_full_sync_required = true
+	lane.bullet_full_sync_required = true
+	world_sync.set_current_self_id(WorldStateFixture.LOCAL_PLAYER_ID)
+	world_sync.apply_world_lane_state(lane)
+
+	world_sync.set_view_target_player(target_id)
+	world_sync.apply_world_lane_state(lane)
+	lane.ships[target_id][Packets.FIELD_X] = 10.0
+	world_sync.apply_world_lane_state(lane)
+	world_sync.interpolate(999.0)
+
+	assert_eq(world_sync.player_render_api.visual_position(), Vector2(Constants.WORLD_WIDTH + 10.0, 200.0))
+	assert_eq(_player_nodes()[other_player_id].position, Vector2(Constants.WORLD_WIDTH + 20.0, 200.0))
+	assert_eq(_asteroid_nodes()[WorldStateFixture.ASTEROID_ID].global_position, Vector2(Constants.WORLD_WIDTH + 15.0, 220.0))
+	assert_eq(_projectile_nodes()[WorldStateFixture.BULLET_ID].global_position, Vector2(Constants.WORLD_WIDTH + 25.0, 230.0))
+	assert_eq(world_sync.target_source().pickup_positions()[pickup_id]["visual_position"], Vector2(Constants.WORLD_WIDTH + 35.0, 240.0))
+
+
 func test_interpolate_moves_existing_entities_toward_updated_state() -> void:
 	_apply_fixture_state()
 	_apply_state(_updated_state())

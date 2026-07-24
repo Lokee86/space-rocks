@@ -22,6 +22,23 @@ static func visual_position_relative_to(reference_position: Vector2, target: Vec
 	return reference_position + shortest_delta(reference_position, target)
 
 
+static func visual_copy_offset_to_anchor(
+	current_visual_position: Vector2,
+	anchor_visual_position: Vector2,
+	anchor_server_position: Vector2,
+	entity_server_position: Vector2
+) -> Vector2:
+	var desired_visual_position := anchor_visual_position + shortest_delta(
+		anchor_server_position,
+		entity_server_position
+	)
+	var desired_offset := desired_visual_position - current_visual_position
+	return Vector2(
+		_world_copy_axis_offset(desired_offset.x, WORLD_SIZE.x),
+		_world_copy_axis_offset(desired_offset.y, WORLD_SIZE.y)
+	)
+
+
 static func _wrap_coordinate(value: float, size: float) -> float:
 	if size <= 0.0:
 		return value
@@ -42,4 +59,10 @@ static func _shortest_coordinate_delta(delta: float, size: float) -> float:
 	if delta < -half_size:
 		return delta + size
 	return delta
+
+
+static func _world_copy_axis_offset(desired_offset: float, size: float) -> float:
+	if size <= 0.0 || abs(desired_offset) <= size * 0.5:
+		return 0.0
+	return round(desired_offset / size) * size
 
