@@ -827,6 +827,24 @@ Parent index: [Generated](./!INDEX.md)
 | --- | --- | --- | --- | --- | --- |
 | `id` | `id` | `` | `` | `` | `` |
 
+### `ship_lifecycle_update`
+
+- Encoding: `map`
+- Source struct: `ShipState`
+- Identity field: `id`
+- Sparse placeholder: ``
+- Sparse trailing: `false`
+- Preserve unknown fields: `false`
+
+| Name | JSON | Quantization | ID codec | Selector | Value domain |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `id` | `` | `player_id` | `` | `` |
+| `ship_type` | `ship_type` | `` | `` | `` | `` |
+| `health` | `health` | `` | `` | `` | `` |
+| `shields` | `shields` | `` | `` | `` | `` |
+| `target_kind` | `target_kind` | `` | `` | `` | `` |
+| `target_id` | `target_id` | `` | `` | `target_kind` | `` |
+
 ### `ship_update`
 
 - Encoding: `sparse_positional_tuple`
@@ -867,6 +885,7 @@ Parent index: [Generated](./!INDEX.md)
 | `ship_delta` | `ship_updates` | `ship_update` | `` |
 | `ships_lifecycle` | `ship_creates` | `ship_lifecycle_create` | `ship_full` |
 | `ships_lifecycle` | `ship_deletes` | `ship_lifecycle_delete_ids` | `player_ids` |
+| `ships_lifecycle` | `ship_updates` | `ship_lifecycle_update` | `` |
 | `world_delta` | `asteroid_creates` | `asteroid_full` | `` |
 | `world_delta` | `asteroid_deletes` | `asteroid_ids` | `` |
 | `world_delta` | `asteroid_updates` | `asteroid_update` | `` |

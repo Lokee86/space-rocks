@@ -202,7 +202,7 @@ future packet-encoding or transport-format planning
 
 Packet schema owns packet type strings, generated constants, generated struct fields where applicable, and canonical field names. Runtime realtime protocol code owns active lane wire-map emission behavior such as sparse delta omission, numeric wire quantization, and compact alias application. Runtime services own packet consequences and meaning.
 
-Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. Ship lifecycle packets use `sr.ships.lifecycle`. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
+Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. `sr.ships.lifecycle` carries ship creates/deletes and reliable non-transform ship updates such as health, shields, ship type, and target state. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
 
 For example:
 

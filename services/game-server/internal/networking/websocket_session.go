@@ -39,6 +39,7 @@ type webSocketSession struct {
 	firstInputPacketLogged   bool
 	firstRespawnPacketLogged bool
 	webrtcTransport          *WebRTCTransport
+	webrtcBackpressureLogged map[string]bool
 	packetObserver           packetObserver
 	toolingRouter            *toolingrouter.Router
 	toolingCapabilities      toolingrouter.CapabilitySet
@@ -55,18 +56,19 @@ func newWebSocketSessionWithTooling(conn *websocket.Conn, roomManager *rooms.Roo
 	}
 
 	return &webSocketSession{
-		conn:                conn,
-		sessionID:           "session-" + strconv.FormatUint(sessionNumber, 10),
-		connectionTraceID:   uuid.NewString(),
-		rooms:               roomManager,
-		outbound:            make(chan []byte, 16),
-		resyncRequests:      make(chan queuedResyncRequest, 4),
-		identity:            NewGuestSessionIdentity(),
-		authVerifier:        authVerifier,
-		matchResultReporter: reporter,
-		packetObserver:      packetObserverFor(measurementController),
-		toolingRouter:       toolingrouter.NewRouter(measurementController, telemetryProvider),
-		toolingCapabilities: toolingrouter.NewTemporaryCapabilitySet(),
+		conn:                     conn,
+		sessionID:                "session-" + strconv.FormatUint(sessionNumber, 10),
+		connectionTraceID:        uuid.NewString(),
+		rooms:                    roomManager,
+		outbound:                 make(chan []byte, 16),
+		resyncRequests:           make(chan queuedResyncRequest, 4),
+		identity:                 NewGuestSessionIdentity(),
+		authVerifier:             authVerifier,
+		matchResultReporter:      reporter,
+		webrtcBackpressureLogged: make(map[string]bool),
+		packetObserver:           packetObserverFor(measurementController),
+		toolingRouter:            toolingrouter.NewRouter(measurementController, telemetryProvider),
+		toolingCapabilities:      toolingrouter.NewTemporaryCapabilitySet(),
 	}
 }
 
@@ -113,6 +115,19 @@ func (session *webSocketSession) resetFirstPacketLoggingLocked(matchID string) {
 	session.firstRespawnPacketLogged = false
 }
 
+func (session *webSocketSession) shouldLogWebRTCBackpressure(lane string) bool {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	if session.webrtcBackpressureLogged == nil {
+		session.webrtcBackpressureLogged = make(map[string]bool)
+	}
+	if session.webrtcBackpressureLogged[lane] {
+		return false
+	}
+	session.webrtcBackpressureLogged[lane] = true
+	return true
+}
+
 func (session *webSocketSession) hasReadyWebRTCTransport() bool {
 	transport := session.webRTCTransportSnapshot()
 	return transport != nil && transport.Ready()
@@ -129,29 +144,57 @@ func (session *webSocketSession) ensureWebRTCTransport() *WebRTCTransport {
 		return transport
 	}
 
-	peer := NewWebRTCTransport(WebRTCSignalHooks{
+	var peer *WebRTCTransport
+	peer = NewWebRTCTransport(WebRTCSignalHooks{
 		OnLocalICECandidate: func(media string, index int, name string) {
+			if !session.isCurrentWebRTCTransport(peer) {
+				return
+			}
 			session.enqueueWebRTCICECandidate(media, index, name)
 		},
 		OnReady: func() {
-			session.enqueueWebRTCReady()
-			transport := session.webRTCTransportSnapshot()
-			if transport != nil {
-				_ = transport.SendSmoke("server-ready", "server smoke peer ready")
+			if !session.isCurrentWebRTCTransport(peer) {
+				return
 			}
+			session.enqueueWebRTCReady()
+			_ = peer.SendSmoke("server-ready", "server smoke peer ready")
 		},
-		OnPacketReceived: func(packet map[string]any, _lane string) {
-			if _lane == "tooling" {
+		OnPacketReceived: func(packet map[string]any, lane string) {
+			if !session.isCurrentWebRTCTransport(peer) {
+				return
+			}
+			if lane == "tooling" {
 				session.handleToolingPacket(packet)
 				return
 			}
 			session.handleWebRTCPacket(packet)
 		},
-		OnChannelClosed: func(_lane string) {
-			if _lane == "tooling" {
+		OnChannelClosed: func(lane string) {
+			if !session.isCurrentWebRTCTransport(peer) {
+				return
+			}
+			context := session.sessionContext()
+			bufferedBytes, _ := peer.BufferedAmountForLane(lane)
+			logging.Emit(observability.Request{
+				Event: observability.EventNamePacketRouteFailed,
+				Context: observability.Context{
+					TraceID:   session.connectionTraceID,
+					SessionID: session.sessionID,
+					RoomID:    context.RoomID,
+					PlayerID:  context.GamePlayerID,
+				},
+				Fields: observability.Fields{
+					"error_code":     "webrtc_channel_closed",
+					"failure_mode":   "webrtc_channel_closed",
+					"lane":           lane,
+					"transport":      "webrtc",
+					"buffered_bytes": bufferedBytes,
+				},
+			})
+			if lane == "tooling" {
 				session.closeTooling()
 			}
-			session.clearWebRTCTransport()
+			session.clearWebRTCTransportIfCurrent(peer)
 		},
 	})
 	session.mu.Lock()
@@ -166,6 +209,12 @@ func (session *webSocketSession) ensureWebRTCTransport() *WebRTCTransport {
 	return peer
 }
 
+func (session *webSocketSession) isCurrentWebRTCTransport(expected *WebRTCTransport) bool {
+	session.mu.RLock()
+	defer session.mu.RUnlock()
+	return expected != nil && session.webrtcTransport == expected
+}
+
 func (session *webSocketSession) clearWebRTCTransport() {
 	session.mu.Lock()
 	transport := session.webrtcTransport
@@ -175,6 +224,21 @@ func (session *webSocketSession) clearWebRTCTransport() {
 		return
 	}
 	_ = transport.Close()
+}
+
+func (session *webSocketSession) clearWebRTCTransportIfCurrent(expected *WebRTCTransport) bool {
+	if expected == nil {
+		return false
+	}
+	session.mu.Lock()
+	if session.webrtcTransport != expected {
+		session.mu.Unlock()
+		return false
+	}
+	session.webrtcTransport = nil
+	session.mu.Unlock()
+	_ = expected.Close()
+	return true
 }
 
 func (session *webSocketSession) enqueueWebRTCAnswer(descriptionType string, sdp string) {

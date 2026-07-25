@@ -54,9 +54,9 @@ func apply_ship_delta(world_lane_state: WorldLaneState, _lane: String, ship_pack
 	_apply_entity_deltas(world_lane_state, [], _array_field(ship_packet, "ship_updates"), [], "ship")
 
 func apply_ships_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> bool:
-	if not _valid_lifecycle_payload(packet, "ship_creates", "ship_deletes"):
+	if not _valid_lifecycle_payload(packet, "ship_creates", "ship_deletes", "ship_updates"):
 		return false
-	_apply_entity_deltas(world_lane_state, _array_field(packet, "ship_creates"), [], _array_field(packet, "ship_deletes"), "ship")
+	_apply_entity_deltas(world_lane_state, _array_field(packet, "ship_creates"), _array_field(packet, "ship_updates"), _array_field(packet, "ship_deletes"), "ship")
 	return true
 
 func apply_asteroid_delta(world_lane_state: WorldLaneState, _lane: String, asteroid_packet: Dictionary) -> void:
@@ -115,13 +115,20 @@ func _array_field(packet: Dictionary, key: String) -> Array:
 		return value
 	return []
 
-func _valid_lifecycle_payload(packet: Dictionary, creates_key: String, deletes_key: String) -> bool:
-	for key in [creates_key, deletes_key]:
+func _valid_lifecycle_payload(packet: Dictionary, creates_key: String, deletes_key: String, updates_key: String = "") -> bool:
+	var array_keys := [creates_key, deletes_key]
+	if not updates_key.is_empty():
+		array_keys.append(updates_key)
+	for key in array_keys:
 		if packet.has(key) and not packet[key] is Array:
 			return false
 	for record in _array_field(packet, creates_key):
 		if not record is Dictionary:
 			return false
+	if not updates_key.is_empty():
+		for record in _array_field(packet, updates_key):
+			if not record is Dictionary:
+				return false
 	return true
 
 func _apply_entity_deltas(world_lane_state: WorldLaneState, creates: Array, updates: Array, deletes: Array, entity_kind: String) -> void:

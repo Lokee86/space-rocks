@@ -101,7 +101,7 @@ sr.tooling is reliable, ordered, bidirectional, and currently carries measuremen
 sr.ships carries supersedable ship_updates only.
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
-Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. Ship lifecycle packets use sr.ships.lifecycle. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
+Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. `sr.ships.lifecycle` carries ship creates/deletes and reliable non-transform ship updates such as health, shields, ship type, and target state. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
 Hot `ship_delta`, `asteroid_delta`, and `bullet_delta` sequence values must be finite, non-negative, integer-valued numerics. Missing, fractional, negative, non-finite, string, and boolean values are rejected before hot-lane state mutation. Lower sequences are also rejected by client hot-lane sequence guards. Same-sequence packets are valid only for distinct `chunk_index` values of the same `chunk_count`; duplicate chunk indices are rejected. Sequence gaps remain valid because hot packets can be dropped.
 ```
 

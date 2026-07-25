@@ -130,6 +130,50 @@ func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) 
 	assertNoMessageWithin(t, clientConn)
 }
 
+func TestWriteGameplayLaneProtocolMessageBackpressureDefersWholeBatchWithoutAdvancingState(t *testing.T) {
+	serverConn, clientConn := newWebSocketTestConn(t)
+	defer serverConn.Close()
+	defer clientConn.Close()
+
+	gameInstance := game.New()
+	control := game.NewControl(gameInstance)
+	playerID := "player-1"
+	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected EnsurePlayerSession to succeed")
+	}
+	if !control.SpawnPlayerShip(playerID, physics.Vector2{}, runtime.ClientConfig{
+		VisibleWorldWidth:  1280,
+		VisibleWorldHeight: 720,
+	}) {
+		t.Fatal("expected SpawnPlayerShip to succeed")
+	}
+
+	transport, channels := newReadyGameplayWebRTCTransportForTests()
+	channels[webRTCChannelLaneWorld].bufferedAmount = webRTCMaxBufferedAmountBytes
+	room, matchID := newActiveRoomForWriterTest(t, gameInstance)
+	session := &webSocketSession{
+		conn:                     serverConn,
+		context:                  SessionContext{Room: room, RoomID: room.ID, GamePlayerID: playerID},
+		rooms:                    rooms.NewRoomManager(),
+		webrtcTransport:          transport,
+		webrtcBackpressureLogged: make(map[string]bool),
+		realtimeState:            realtime.NewRealtimeSessionState(playerID, matchID),
+	}
+
+	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
+		t.Fatal("expected backpressured batch to defer without closing the session")
+	}
+	for lane, channel := range channels {
+		if len(channel.sentTexts) != 0 {
+			t.Fatalf("lane %q sent packets despite preflight backpressure: %#v", lane, channel.sentTexts)
+		}
+	}
+	if _, ok := session.realtimeState.LaneState(realtime.LaneWorld); ok {
+		t.Fatal("expected deferred batch not to advance world lane state")
+	}
+	assertNoMessageWithin(t, clientConn)
+}
+
 func TestWriteGameplayLaneProtocolMessageSkipsWebSocketWithoutWebRTC(t *testing.T) {
 	serverConn, clientConn := newWebSocketTestConn(t)
 	defer serverConn.Close()

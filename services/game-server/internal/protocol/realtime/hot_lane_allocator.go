@@ -29,7 +29,8 @@ type hotLaneSortedUpdateIDs []hotLaneSortedUpdateID
 func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCohortState, _ HotLaneOffloadPolicy) HotLaneSplitResult {
 	cohortState.EnsureInitialized()
 
-	shipActive := activeUpdateIDsFromWireRecords(worldDelta.Ships.Updates)
+	shipHotUpdates, shipReliableUpdates := partitionShipUpdates(worldDelta.Ships.Updates)
+	shipActive := activeUpdateIDsFromWireRecords(shipHotUpdates)
 	asteroidActive := activeUpdateIDsFromWireRecords(worldDelta.Asteroids.Updates)
 	bulletActive := activeUpdateIDsFromWireRecords(worldDelta.Bullets.Updates)
 	shipIDs := sortedHotLaneUpdateIDs(shipActive)
@@ -48,9 +49,9 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 	}
 	result.WorldHotCount = result.ShipHotCount + result.AsteroidHotCount + result.BulletHotCount
 
+	result.WorldDelta.Ships.Updates = shipReliableUpdates
 	if len(shipIDs) > 0 {
 		assignHotRoutesWithOverride(result.CohortState.ShipRoutes, shipIDs, HotUpdateRouteShips)
-		result.WorldDelta.Ships.Updates = nil
 		result.ShipMode = HotLaneModeFullOwned60Hz
 		result.CohortState.ShipMode = result.ShipMode
 		result.ShipOffloaded = len(shipIDs)
@@ -61,7 +62,7 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 		result.ShipDelta = &ShipWireDeltaPacket{
 			Type:        PacketFamilyShipDelta,
 			Metadata:    metadata,
-			ShipUpdates: worldDelta.Ships.Updates,
+			ShipUpdates: shipHotUpdates,
 		}
 	}
 	if len(asteroidIDs) > 0 {
@@ -100,6 +101,43 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 	result.CohortState.RemoveMissingAsteroids(asteroidActive)
 	result.CohortState.RemoveMissingBullets(bulletActive)
 	return result
+}
+
+var shipHotUpdateKeys = map[string]struct{}{
+	"x":         {},
+	"y":         {},
+	"rotation":  {},
+	"thrusting": {},
+}
+
+func partitionShipUpdates(records []map[string]any) ([]map[string]any, []map[string]any) {
+	hot := make([]map[string]any, 0, len(records))
+	reliable := make([]map[string]any, 0, len(records))
+	for _, record := range records {
+		id := asString(record["id"])
+		if id == "" {
+			continue
+		}
+		hotRecord := map[string]any{"id": id}
+		reliableRecord := map[string]any{"id": id}
+		for key, value := range record {
+			if key == "id" {
+				continue
+			}
+			if _, ok := shipHotUpdateKeys[key]; ok {
+				hotRecord[key] = value
+				continue
+			}
+			reliableRecord[key] = value
+		}
+		if len(hotRecord) > 1 {
+			hot = append(hot, hotRecord)
+		}
+		if len(reliableRecord) > 1 {
+			reliable = append(reliable, reliableRecord)
+		}
+	}
+	return hot, reliable
 }
 
 func sortedHotLaneUpdateIDs(active map[string]bool) hotLaneSortedUpdateIDs {

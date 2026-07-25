@@ -2,6 +2,7 @@ package networking
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -9,19 +10,21 @@ import (
 )
 
 type fakeWebRTCDataChannel struct {
-	readyState webrtc.DataChannelState
-	sentTexts  []string
-	sendErr    error
-	onOpen     func()
-	onClose    func()
-	onMessage  func(webrtc.DataChannelMessage)
-	closed     bool
+	readyState     webrtc.DataChannelState
+	bufferedAmount uint64
+	sentTexts      []string
+	sendErr        error
+	onOpen         func()
+	onClose        func()
+	onMessage      func(webrtc.DataChannelMessage)
+	closed         bool
 }
 
 func (c *fakeWebRTCDataChannel) OnOpen(f func())                             { c.onOpen = f }
 func (c *fakeWebRTCDataChannel) OnClose(f func())                            { c.onClose = f }
 func (c *fakeWebRTCDataChannel) OnMessage(f func(webrtc.DataChannelMessage)) { c.onMessage = f }
 func (c *fakeWebRTCDataChannel) ReadyState() webrtc.DataChannelState         { return c.readyState }
+func (c *fakeWebRTCDataChannel) BufferedAmount() uint64                      { return c.bufferedAmount }
 func (c *fakeWebRTCDataChannel) SendText(s string) error {
 	if c.sendErr != nil {
 		return c.sendErr
@@ -348,6 +351,43 @@ func TestWebRTCTransportSendEncodedLaneJSONRoutesToMatchingChannel(t *testing.T)
 	}
 	if got := event.sentTexts; len(got) != 1 || got[0] != "event" {
 		t.Fatalf("expected event channel only to receive event payload, got %#v", got)
+	}
+}
+
+func TestWebRTCTransportRejectsWritesAboveBufferedAmountLimit(t *testing.T) {
+	peer := NewWebRTCTransport(WebRTCSignalHooks{})
+	channel := &fakeWebRTCDataChannel{
+		readyState:     webrtc.DataChannelStateOpen,
+		bufferedAmount: webRTCMaxBufferedAmountBytes,
+	}
+	peer.channels = map[string]webRTCDataChannel{
+		webRTCChannelLaneWorld: channel,
+	}
+
+	err := peer.SendEncodedLaneJSON(webRTCChannelLaneWorld, []byte("latest-state"))
+	if !errors.Is(err, ErrWebRTCChannelBackpressure) {
+		t.Fatalf("expected backpressure error, got %v", err)
+	}
+	if len(channel.sentTexts) != 0 {
+		t.Fatalf("expected no write while channel is backpressured, got %#v", channel.sentTexts)
+	}
+}
+
+func TestWebRTCTransportAllowsWriteBelowBufferedAmountLimit(t *testing.T) {
+	peer := NewWebRTCTransport(WebRTCSignalHooks{})
+	channel := &fakeWebRTCDataChannel{
+		readyState:     webrtc.DataChannelStateOpen,
+		bufferedAmount: webRTCMaxBufferedAmountBytes - 32,
+	}
+	peer.channels = map[string]webRTCDataChannel{
+		webRTCChannelLaneWorld: channel,
+	}
+
+	if err := peer.SendEncodedLaneJSON(webRTCChannelLaneWorld, []byte("small")); err != nil {
+		t.Fatalf("expected write below threshold to succeed, got %v", err)
+	}
+	if len(channel.sentTexts) != 1 {
+		t.Fatalf("expected one write below threshold, got %#v", channel.sentTexts)
 	}
 }
 

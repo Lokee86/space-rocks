@@ -48,6 +48,34 @@ func test_ship_hot_update_before_reliable_create_is_buffered_and_applied() -> vo
 	assert_false(router.world_lane_state.pending_ship_updates.has("player-2"))
 
 
+func test_ship_lifecycle_applies_reliable_non_transform_update() -> void:
+	var router := RealtimeRouter.new()
+	_sync_empty_world(router)
+	_create_ship(router, 1, "player-6", 100, 200)
+
+	router.route_lane_packet({
+		"type": "ships_lifecycle",
+		"lane": LaneMetadata.LANE_SHIPS_LIFECYCLE,
+		"sequence": 2,
+		"baseline_id": "world-baseline-1",
+		"ship_updates": [{
+			"id": "player-6",
+			"health": 1,
+			"shields": 0,
+			"target_kind": "player",
+			"target_id": "player-2",
+		}],
+	})
+
+	var ship: Dictionary = router.world_lane_state.ships["player-6"]
+	assert_eq(ship["health"], 1)
+	assert_eq(ship["shields"], 0)
+	assert_eq(ship["target_kind"], "player")
+	assert_eq(ship["target_id"], "player-2")
+	assert_eq(ship["x"], 10.0)
+	assert_eq(ship["y"], 20.0)
+
+
 func test_ship_delete_blocks_late_hot_update_without_recreating_ship() -> void:
 	var router := RealtimeRouter.new()
 	_sync_empty_world(router)
@@ -90,6 +118,11 @@ func test_compact_ship_hot_and_lifecycle_packets_decode_and_route() -> void:
 	var lifecycle := _decode('{"t":"spl","l":"sl","q":1,"b":"world-baseline-1","k":"d","sc":[{"id":"player-5","ship_type":"v_wing","x":100,"y":200,"rotation":0,"health":3,"shields":2,"thrusting":false,"target_kind":"","target_id":""}],"sx":[]}')
 	router.route_lane_packet(lifecycle)
 	assert_true(router.world_lane_state.ships.has("player-5"))
+
+	var cold := _decode('{"t":"spl","l":"sl","q":2,"b":"world-baseline-1","k":"d","su":[{"id":"player-5","health":1,"shields":0}]}')
+	router.route_lane_packet(cold)
+	assert_eq(router.world_lane_state.ships["player-5"]["health"], 1)
+	assert_eq(router.world_lane_state.ships["player-5"]["shields"], 0)
 
 	var hot := _decode('{"t":"spd","q":1,"bq":1,"su":[[5,500,600,250,true]]}')
 	router.route_lane_packet(hot)

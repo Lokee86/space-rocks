@@ -673,6 +673,12 @@
       "record_id": "ship_lifecycle_create"
     },
     {
+      "decode_record_ids": [],
+      "packet_id": "ships_lifecycle",
+      "readable_field": "ship_updates",
+      "record_id": "ship_lifecycle_update"
+    },
+    {
       "decode_record_ids": [
         "player_ids"
       ],
@@ -1340,6 +1346,65 @@
       "source_struct": "ShipState",
       "sparse_placeholder": null,
       "sparse_trailing": true
+    },
+    {
+      "encoding": "map",
+      "fields": [
+        {
+          "id_codec": "player_id",
+          "id_codec_by": null,
+          "json": "id",
+          "name": "id",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "ship_type",
+          "name": "ship_type",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "health",
+          "name": "health",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "shields",
+          "name": "shields",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "target_kind",
+          "name": "target_kind",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": "target_kind",
+          "json": "target_id",
+          "name": "target_id",
+          "quantization": null,
+          "value_domain": null
+        }
+      ],
+      "id": "ship_lifecycle_update",
+      "identity_field": "id",
+      "preserve_unknown_fields": false,
+      "source_struct": "ShipState",
+      "sparse_placeholder": null,
+      "sparse_trailing": false
     },
     {
       "encoding": "fixed_tuple",

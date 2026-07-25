@@ -329,7 +329,7 @@ func TestSplitWorldHotUpdatesNeverRetainsMovementUpdatesInWorld(t *testing.T) {
 		Metadata:  Metadata{Lane: LaneWorld, Sequence: 37},
 		Asteroids: FieldRecordDelta[WorldAsteroidWireRecord]{Updates: []map[string]any{{"id": "asteroid-1"}, {"id": "asteroid-2"}, {"id": "asteroid-3"}}},
 		Bullets:   FieldRecordDelta[WorldBulletWireRecord]{Updates: []map[string]any{{"id": "bullet-1"}, {"id": "bullet-2"}, {"id": "bullet-3"}}},
-		Ships:     FieldRecordDelta[WorldShipWireRecord]{Updates: []map[string]any{{"id": "ship-1"}}},
+		Ships:     FieldRecordDelta[WorldShipWireRecord]{Updates: []map[string]any{{"id": "ship-1", "x": int64(10)}}},
 		Pickups:   FieldRecordDelta[WorldPickupWireRecord]{Updates: []map[string]any{{"id": "pickup-1"}}},
 	}
 

@@ -17,7 +17,12 @@ type webRTCChannelSpec struct {
 	MaxRetransmits *uint16
 }
 
-const webRTCChannelLaneWorld = "world"
+const (
+	webRTCChannelLaneWorld       = "world"
+	webRTCMaxBufferedAmountBytes = 32 * 1024
+)
+
+var ErrWebRTCChannelBackpressure = errors.New("webrtc data channel backpressure")
 
 func webRTCChannelSpecs() []webRTCChannelSpec {
 	zeroRetransmits := uint16(0)
@@ -106,6 +111,7 @@ type webRTCDataChannel interface {
 	OnClose(f func())
 	OnMessage(f func(webrtc.DataChannelMessage))
 	ReadyState() webrtc.DataChannelState
+	BufferedAmount() uint64
 	SendText(s string) error
 	Close() error
 }
@@ -235,6 +241,9 @@ func (p *WebRTCTransport) SendEncodedLaneJSON(lane string, encoded []byte) error
 	if err != nil {
 		return err
 	}
+	if channelWouldExceedBufferedAmount(channel, len(encoded)) {
+		return ErrWebRTCChannelBackpressure
+	}
 	return channel.SendText(string(encoded))
 }
 
@@ -250,6 +259,9 @@ func (p *WebRTCTransport) SendEncodedToolingJSON(encoded []byte) error {
 	channel, err := p.toolingChannel()
 	if err != nil {
 		return err
+	}
+	if channelWouldExceedBufferedAmount(channel, len(encoded)) {
+		return ErrWebRTCChannelBackpressure
 	}
 	return channel.SendText(string(encoded))
 }
@@ -379,6 +391,27 @@ func (p *WebRTCTransport) gameplayChannelForLane(lane string) (webRTCDataChannel
 		return nil, errors.New("webrtc gameplay lane channel is not open")
 	}
 	return channel, nil
+}
+
+func (p *WebRTCTransport) BufferedAmountForLane(lane string) (uint64, bool) {
+	p.mu.RLock()
+	channel, ok := p.channels[lane]
+	p.mu.RUnlock()
+	if !ok || channel == nil {
+		return 0, false
+	}
+	return channel.BufferedAmount(), true
+}
+
+func channelWouldExceedBufferedAmount(channel webRTCDataChannel, payloadBytes int) bool {
+	if channel == nil {
+		return false
+	}
+	buffered := channel.BufferedAmount()
+	if buffered >= webRTCMaxBufferedAmountBytes {
+		return true
+	}
+	return uint64(payloadBytes) > webRTCMaxBufferedAmountBytes-buffered
 }
 
 func (p *WebRTCTransport) toolingChannel() (webRTCDataChannel, error) {

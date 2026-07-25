@@ -117,6 +117,22 @@ func TestWebSocketSessionLaterWebRTCOfferReplacesExistingTransport(t *testing.T)
 	}
 }
 
+func TestWebSocketSessionRetiredTransportCannotClearReplacement(t *testing.T) {
+	retired := NewWebRTCTransport(WebRTCSignalHooks{})
+	replacement := NewWebRTCTransport(WebRTCSignalHooks{})
+	session := &webSocketSession{
+		sessionID:       "session-test",
+		webrtcTransport: replacement,
+	}
+
+	if session.clearWebRTCTransportIfCurrent(retired) {
+		t.Fatal("expected retired transport clear to be ignored")
+	}
+	if session.webRTCTransportSnapshot() != replacement {
+		t.Fatal("expected replacement transport to remain installed")
+	}
+}
+
 func TestWebSocketSessionIgnoresToolingPacketsAtSessionBoundary(t *testing.T) {
 	oldFactory := newWebRTCPeerConnection
 	t.Cleanup(func() { newWebRTCPeerConnection = oldFactory })

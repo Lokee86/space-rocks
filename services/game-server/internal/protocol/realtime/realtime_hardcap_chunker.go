@@ -135,22 +135,24 @@ func chunkShipLifecycleCandidate(base RealtimeLaneCandidate, source ShipWireDelt
 	chunks := make([]ShipWireDeltaPacket, 0, 1)
 	current := source
 	current.ShipCreates = nil
+	current.ShipUpdates = nil
 	current.ShipDeletes = nil
 	appendRecord := func(add func(*ShipWireDeltaPacket)) error {
 		trial := current
 		add(&trial)
-		trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(len(source.ShipCreates)+len(source.ShipDeletes)))
+		trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(len(source.ShipCreates)+len(source.ShipUpdates)+len(source.ShipDeletes)))
 		encodedBytes, err := candidateEncodedSize(base, trial)
 		if err != nil {
 			return fmt.Errorf("measure ships.lifecycle chunk: %w", err)
 		}
 		if encodedBytes > HardCapBytes {
-			if len(current.ShipCreates)+len(current.ShipDeletes) == 0 {
+			if len(current.ShipCreates)+len(current.ShipUpdates)+len(current.ShipDeletes) == 0 {
 				return fmt.Errorf("ships.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
 			}
 			chunks = append(chunks, current)
 			current = source
 			current.ShipCreates = nil
+			current.ShipUpdates = nil
 			current.ShipDeletes = nil
 			add(&current)
 			encodedBytes, err = candidateEncodedSize(base, current)
@@ -171,13 +173,19 @@ func chunkShipLifecycleCandidate(base RealtimeLaneCandidate, source ShipWireDelt
 			return nil, err
 		}
 	}
+	for _, record := range source.ShipUpdates {
+		record := record
+		if err := appendRecord(func(packet *ShipWireDeltaPacket) { packet.ShipUpdates = append(packet.ShipUpdates, record) }); err != nil {
+			return nil, err
+		}
+	}
 	for _, id := range source.ShipDeletes {
 		id := id
 		if err := appendRecord(func(packet *ShipWireDeltaPacket) { packet.ShipDeletes = append(packet.ShipDeletes, id) }); err != nil {
 			return nil, err
 		}
 	}
-	if len(chunks) == 0 || len(current.ShipCreates)+len(current.ShipDeletes) > 0 {
+	if len(chunks) == 0 || len(current.ShipCreates)+len(current.ShipUpdates)+len(current.ShipDeletes) > 0 {
 		chunks = append(chunks, current)
 	}
 	result := make([]RealtimeLaneCandidate, 0, len(chunks))

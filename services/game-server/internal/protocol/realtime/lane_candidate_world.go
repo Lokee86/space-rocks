@@ -31,13 +31,14 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			worldDelta := BuildWorldWireDeltaPacket(previousWorldFull, quantizedWorldFull)
 			split := SplitWorldHotUpdates(worldDelta, state.HotLaneCohorts, DefaultHotLaneOffloadPolicy())
 
-			shipLifecyclePresent := len(split.WorldDelta.Ships.Creates) > 0 || len(split.WorldDelta.Ships.Deletes) > 0
+			shipLifecyclePresent := len(split.WorldDelta.Ships.Creates) > 0 || len(split.WorldDelta.Ships.Updates) > 0 || len(split.WorldDelta.Ships.Deletes) > 0
 			bulletLifecyclePresent := len(split.WorldDelta.Bullets.Creates) > 0 || len(split.WorldDelta.Bullets.Deletes) > 0
 			asteroidLifecyclePresent := len(split.WorldDelta.Asteroids.Creates) > 0 || len(split.WorldDelta.Asteroids.Deletes) > 0
 			if shipLifecyclePresent {
 				if shipCandidate, ok := buildShipLifecycleCandidate(split.WorldDelta, state); ok {
 					candidates = append(candidates, shipCandidate)
 					split.WorldDelta.Ships.Creates = nil
+					split.WorldDelta.Ships.Updates = nil
 					split.WorldDelta.Ships.Deletes = nil
 				}
 			}

@@ -719,6 +719,14 @@ var RealtimeWireRecords = []RealtimeWireRecord{
 	{ID: "ship_lifecycle_delete_ids", SourceStruct: "", Encoding: "scalar_list", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 	}},
+	{ID: "ship_lifecycle_update", SourceStruct: "ShipState", Encoding: "map", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
+		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "player_id", IDCodecBy: "", ValueDomain: ""},
+		{Name: "ship_type", JSON: "ship_type", CompactKey: "st", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "health", JSON: "health", CompactKey: "h", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "shields", JSON: "shields", CompactKey: "sh", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "target_kind", JSON: "target_kind", CompactKey: "tk", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "target_id", JSON: "target_id", CompactKey: "tid", Quantization: "", IDCodec: "", IDCodecBy: "target_kind", ValueDomain: ""},
+	}},
 	{ID: "ship_update", SourceStruct: "ShipState", Encoding: "sparse_positional_tuple", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: true, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "player_id", IDCodecBy: "", ValueDomain: ""},
 		{Name: "x", JSON: "x", CompactKey: "x", Quantization: "position", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
@@ -747,6 +755,7 @@ var RealtimeWirePacketFieldBindings = []RealtimeWirePacketFieldBinding{
 	{PacketID: "ship_delta", ReadableField: "ship_updates", RecordIDs: []string{"ship_update"}},
 	{PacketID: "ships_lifecycle", ReadableField: "ship_creates", RecordIDs: []string{"ship_lifecycle_create"}},
 	{PacketID: "ships_lifecycle", ReadableField: "ship_deletes", RecordIDs: []string{"ship_lifecycle_delete_ids"}},
+	{PacketID: "ships_lifecycle", ReadableField: "ship_updates", RecordIDs: []string{"ship_lifecycle_update"}},
 	{PacketID: "world_delta", ReadableField: "asteroid_creates", RecordIDs: []string{"asteroid_full"}},
 	{PacketID: "world_delta", ReadableField: "asteroid_deletes", RecordIDs: []string{"asteroid_ids"}},
 	{PacketID: "world_delta", ReadableField: "asteroid_updates", RecordIDs: []string{"asteroid_update"}},

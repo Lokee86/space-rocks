@@ -13,14 +13,14 @@ func TestActiveRealtimeSeparatesShipMovementAndLifecycleFromWorld(t *testing.T) 
 	previous := game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
 		Players: map[string]runtime.ShipState{
-			"player-1": {ID: "player-1", ShipType: "v_wing", X: 10, Y: 20, Rotation: 0, Health: 3},
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 10, Y: 20, Rotation: 0, Health: 3, Shields: 1},
 			"player-3": {ID: "player-3", ShipType: "v_wing", X: 30, Y: 40, Rotation: 0, Health: 3},
 		},
 	}
 	current := game.GameplayPresentationSnapshot{
 		SelfID: "player-1",
 		Players: map[string]runtime.ShipState{
-			"player-1": {ID: "player-1", ShipType: "v_wing", X: 40, Y: 80, Rotation: 1.5, Health: 3, Thrusting: true},
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 40, Y: 80, Rotation: 1.5, Health: 2, Shields: 4, Thrusting: true, TargetKind: "player", TargetID: "player-2"},
 			"player-2": {ID: "player-2", ShipType: "v_wing", X: 100, Y: 200, Rotation: 0, Health: 3},
 		},
 	}
@@ -43,6 +43,11 @@ func TestActiveRealtimeSeparatesShipMovementAndLifecycleFromWorld(t *testing.T) 
 	if len(shipPacket.ShipUpdates) != 1 || shipPacket.ShipUpdates[0]["id"] != "player-1" {
 		t.Fatalf("ship hot updates = %#v, want player-1 movement", shipPacket.ShipUpdates)
 	}
+	for _, coldKey := range []string{"health", "shields", "ship_type", "target_kind", "target_id"} {
+		if _, exists := shipPacket.ShipUpdates[0][coldKey]; exists {
+			t.Fatalf("ship hot update retained reliable field %q: %#v", coldKey, shipPacket.ShipUpdates[0])
+		}
+	}
 
 	lifecycle := requireCandidateByLane(t, result.SelectedCandidates, LaneShipsLifecycle)
 	lifecyclePacket, ok := lifecycle.Payload.(ShipWireDeltaPacket)
@@ -51,6 +56,20 @@ func TestActiveRealtimeSeparatesShipMovementAndLifecycleFromWorld(t *testing.T) 
 	}
 	if len(lifecyclePacket.ShipCreates) != 1 || lifecyclePacket.ShipCreates[0].ID != "player-2" {
 		t.Fatalf("ship lifecycle creates = %#v, want player-2", lifecyclePacket.ShipCreates)
+	}
+	if len(lifecyclePacket.ShipUpdates) != 1 {
+		t.Fatalf("ship lifecycle updates = %#v, want one reliable update", lifecyclePacket.ShipUpdates)
+	}
+	reliableUpdate := lifecyclePacket.ShipUpdates[0]
+	for key, want := range map[string]any{"id": "player-1", "health": 2, "shields": 4, "target_kind": "player", "target_id": "player-2"} {
+		if got := reliableUpdate[key]; got != want {
+			t.Fatalf("ship lifecycle update %s = %#v, want %#v; update=%#v", key, got, want, reliableUpdate)
+		}
+	}
+	for _, hotKey := range []string{"x", "y", "rotation", "thrusting"} {
+		if _, exists := reliableUpdate[hotKey]; exists {
+			t.Fatalf("ship lifecycle update retained hot field %q: %#v", hotKey, reliableUpdate)
+		}
 	}
 	if len(lifecyclePacket.ShipDeletes) != 1 || lifecyclePacket.ShipDeletes[0] != "player-3" {
 		t.Fatalf("ship lifecycle deletes = %#v, want player-3", lifecyclePacket.ShipDeletes)
@@ -67,6 +86,40 @@ func TestActiveRealtimeSeparatesShipMovementAndLifecycleFromWorld(t *testing.T) 
 
 	assertLaneSchedulePolicy(t, result.PlannedRecords, LaneShips, DeliveryClassHotSupersedable, PriorityHigh)
 	assertLaneSchedulePolicy(t, result.PlannedRecords, LaneShipsLifecycle, DeliveryClassRequired, PriorityCritical)
+}
+
+func TestActiveRealtimeRoutesColdOnlyShipChangeReliablyWithoutHotPacket(t *testing.T) {
+	previous := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 10, Y: 20, Health: 3, Shields: 1},
+		},
+	}
+	current := game.GameplayPresentationSnapshot{
+		SelfID: "player-1",
+		Players: map[string]runtime.ShipState{
+			"player-1": {ID: "player-1", ShipType: "v_wing", X: 10, Y: 20, Health: 2, Shields: 1},
+		},
+	}
+	state := NewRealtimeSessionState("player-1", "match-1")
+	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline-1", SnapshotID: "world-baseline-1", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
+	state.MarkBaselineReady(LaneWorld)
+	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+
+	result, err := BuildActiveRealtimeResult(current, state)
+	if err != nil {
+		t.Fatalf("BuildActiveRealtimeResult returned error: %v", err)
+	}
+	for _, candidate := range result.SelectedCandidates {
+		if candidate.Lane() == LaneShips {
+			t.Fatalf("cold-only change produced hot ship packet: %#v", candidate.Payload)
+		}
+	}
+	lifecycle := requireCandidateByLane(t, result.SelectedCandidates, LaneShipsLifecycle)
+	packet := lifecycle.Payload.(ShipWireDeltaPacket)
+	if len(packet.ShipUpdates) != 1 || packet.ShipUpdates[0]["health"] != 2 {
+		t.Fatalf("reliable cold update = %#v, want health=2", packet.ShipUpdates)
+	}
 }
 
 func TestShipPacketFamiliesUseDedicatedCompactTypes(t *testing.T) {
@@ -91,12 +144,13 @@ func TestShipPacketFamiliesUseDedicatedCompactTypes(t *testing.T) {
 		Type:        PacketFamilyShipsLifecycle,
 		Metadata:    metadata,
 		ShipCreates: []WorldShipWireRecord{{ID: "player-2", ShipType: "v_wing", X: 10, Y: 20, Health: 3}},
+		ShipUpdates: []map[string]any{{"id": "player-1", "health": 2, "shields": 4}},
 	}, nil)
 	lifecycleEncoded, _, err := encodeLanePacket(lifecycle)
 	if err != nil {
 		t.Fatalf("encode ship lifecycle packet: %v", err)
 	}
-	if !bytes.Contains(lifecycleEncoded, []byte(`"t":"spl"`)) || !bytes.Contains(lifecycleEncoded, []byte(`"sc"`)) {
+	if !bytes.Contains(lifecycleEncoded, []byte(`"t":"spl"`)) || !bytes.Contains(lifecycleEncoded, []byte(`"sc"`)) || !bytes.Contains(lifecycleEncoded, []byte(`"su"`)) {
 		t.Fatalf("ship lifecycle compact packet = %s", lifecycleEncoded)
 	}
 }
