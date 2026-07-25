@@ -100,6 +100,44 @@ func estimateJSONStringBytes(value string) int {
 	return size
 }
 
+func estimateCompactShipMovementUpdateBytes(update map[string]any) int {
+	if update == nil {
+		return estimateCompactJSONTupleBytes([]any{compactWireEncodeID("player_id", nil)})
+	}
+
+	id := update["id"]
+	if id == nil {
+		id = update["i"]
+	}
+
+	items := []any{compactWireEncodeID("player_id", id)}
+	values := []struct {
+		readable string
+		compact  string
+	}{
+		{readable: "x", compact: "x"},
+		{readable: "y", compact: "y"},
+		{readable: "rotation", compact: "r"},
+		{readable: "thrusting", compact: "th"},
+	}
+	last := -1
+	resolved := make([]any, len(values))
+	for index, field := range values {
+		value, ok := update[field.readable]
+		if !ok {
+			value, ok = update[field.compact]
+		}
+		if ok {
+			resolved[index] = value
+			last = index
+		}
+	}
+	if last >= 0 {
+		items = append(items, resolved[:last+1]...)
+	}
+	return estimateCompactJSONTupleBytes(items)
+}
+
 func estimateCompactBulletMovementUpdateBytes(update map[string]any) int {
 	if update == nil {
 		return estimateCompactJSONTupleBytes([]any{compactWireEncodeID("bullet_id", nil)})
@@ -161,6 +199,10 @@ func estimateCompactAsteroidMovementUpdateBytes(update map[string]any) int {
 	}
 
 	return estimateCompactJSONTupleBytes(items)
+}
+
+func estimateShipDeltaPacketBytes(packet ShipWireDeltaPacket, updates []map[string]any) int {
+	return estimateCompactLaneDeltaPacketBytes(packet.Type, packet.Metadata, "su", updates, estimateCompactShipMovementUpdateBytes)
 }
 
 func estimateBulletDeltaPacketBytes(packet BulletWireDeltaPacket, updates []map[string]any) int {

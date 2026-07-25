@@ -68,7 +68,7 @@ The devtools ownership extraction is implemented as current state. The live runt
 
 Current runtime devtools are implemented around the Godot client, Go game-server `Controller`/`Target`/`Control` architecture, and generated debug packets.
 
-The `sr.tooling` transport foundation is implemented as a mandatory reliable, ordered, bidirectional negotiated channel with id 9, ready alongside the eight gameplay channels. Runtime measurement is implemented end to end as its first consumer. Telemetry protocol routing exists but still lacks its production provider and final overlay integration. Runtime debug commands and readouts remain on WebSocket pending the locked migration contract.
+The `sr.tooling` transport foundation is implemented as a mandatory reliable, ordered, bidirectional negotiated channel with id 9, ready alongside the ten gameplay channels. Runtime measurement is implemented end to end as its first consumer. Telemetry protocol routing exists but still lacks its production provider and final overlay integration. Runtime debug commands and readouts remain on WebSocket pending the locked migration contract.
 
 Implemented references:
 
@@ -92,7 +92,7 @@ the package-level `nodevtools` helper is not currently enough by itself
 
 ## Tooling transport foundation and migration
 
-Every gameplay connection now creates an `sr.tooling` channel at negotiated id 9. The channel is mandatory, reliable, ordered, bidirectional, and included in readiness with the eight gameplay channels for the room/game lifetime. Runtime measurement and its request/response lifecycle are implemented on the channel. Telemetry subscription routing is implemented, while its production provider and the remaining devtools migration are unfinished.
+Every gameplay connection now creates an `sr.tooling` channel at negotiated id 9. The channel is mandatory, reliable, ordered, bidirectional, and included in readiness with the ten gameplay channels for the room/game lifetime. Runtime measurement and its request/response lifecycle are implemented on the channel. Telemetry subscription routing is implemented, while its production provider and the remaining devtools migration are unfinished.
 
 Unexpected required-channel close recovery preserves the WebSocket/session/room/game context and replaces only the WebRTC peer with a 10-second deadline. Successful recovery preserves the active match and requests fresh world, overlay, and session baselines. Failure disables only single-player replay.
 

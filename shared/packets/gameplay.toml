@@ -706,6 +706,16 @@ value = "world_delta"
 
 [[packet_types]]
 
+id = "ship_delta"
+value = "ship_delta"
+
+[[packet_types]]
+
+id = "ships_lifecycle"
+value = "ships_lifecycle"
+
+[[packet_types]]
+
 id = "overlay_full"
 value = "overlay_full"
 

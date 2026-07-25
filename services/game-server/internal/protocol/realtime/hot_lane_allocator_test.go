@@ -341,11 +341,14 @@ func TestSplitWorldHotUpdatesNeverRetainsMovementUpdatesInWorld(t *testing.T) {
 	if got := len(result.WorldDelta.Bullets.Updates); got != 0 {
 		t.Fatalf("bullet updates = %d, want 0", got)
 	}
-	if got := len(result.WorldDelta.Ships.Updates); got != 1 {
-		t.Fatalf("ship updates = %d, want 1", got)
+	if got := len(result.WorldDelta.Ships.Updates); got != 0 {
+		t.Fatalf("ship updates = %d, want 0", got)
 	}
 	if got := len(result.WorldDelta.Pickups.Updates); got != 1 {
 		t.Fatalf("pickup updates = %d, want 1", got)
+	}
+	if result.ShipDelta == nil || len(result.ShipDelta.ShipUpdates) != 1 {
+		t.Fatalf("expected ship delta with 1 update, got %#v", result.ShipDelta)
 	}
 	if result.AsteroidDelta == nil || len(result.AsteroidDelta.AsteroidUpdates) != 3 {
 		t.Fatalf("expected asteroid delta with 3 updates, got %#v", result.AsteroidDelta)

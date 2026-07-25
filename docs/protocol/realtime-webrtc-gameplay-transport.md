@@ -69,7 +69,7 @@ WebRTC owns active gameplay data packets:
 active realtime gameplay output packets
 ```
 
-The mandatory `sr.tooling` DataChannel is part of the same WebRTC transport foundation. It is a negotiated, reliable, ordered, bidirectional lane that is ready alongside the eight gameplay channels. Runtime measurement request/response traffic is implemented on it, telemetry routing is partially implemented, and legacy runtime debug commands/readouts remain WebSocket-owned pending the authoritative migration contract.
+The mandatory `sr.tooling` DataChannel is part of the same WebRTC transport foundation. It is a negotiated, reliable, ordered, bidirectional lane that is ready alongside the ten gameplay channels. Runtime measurement request/response traffic is implemented on it, telemetry routing is partially implemented, and legacy runtime debug commands/readouts remain WebSocket-owned pending the authoritative migration contract.
 
 Active realtime gameplay output is not WebSocket-owned. There is no WebSocket fallback for active gameplay output packets.
 
@@ -88,21 +88,24 @@ bullets      | sr.bullets       | 6             | bullet_delta
 asteroids.lifecycle | sr.asteroids.lifecycle | 7 | asteroids_lifecycle
 bullets.lifecycle   | sr.bullets.lifecycle   | 8 | bullets_lifecycle
 tooling             | sr.tooling             | 9 | measurement, telemetry, and migrated tooling packets
+ships        | sr.ships         | 10            | ship_delta
+ships.lifecycle     | sr.ships.lifecycle     | 11 | ships_lifecycle
 ```
 
 The current channel policy is:
 
 ```text
-sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, sr.bullets.lifecycle, and sr.tooling are negotiated ordered/reliable channels.
-sr.asteroids and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
+sr.world, sr.overlay, sr.session, sr.event, sr.ships.lifecycle, sr.asteroids.lifecycle, sr.bullets.lifecycle, and sr.tooling are negotiated ordered/reliable channels.
+sr.ships, sr.asteroids, and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
 sr.tooling is reliable, ordered, bidirectional, and currently carries measurement packets generated from shared/packets/tooling.toml.
+sr.ships carries supersedable ship_updates only.
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
-Entity lifecycle ownership is split by entity family. The world lane owns player, pickup, world, and full/bootstrap presentation state. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot asteroid and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
-Hot `asteroid_delta` and `bullet_delta` sequence values must be finite, non-negative, integer-valued numerics. Missing, fractional, negative, non-finite, string, and boolean values are rejected before hot-lane state mutation. Lower sequences are also rejected by client hot-lane sequence guards. Same-sequence packets are valid only for distinct `chunk_index` values of the same `chunk_count`; duplicate chunk indices are rejected. Sequence gaps remain valid because hot packets can be dropped.
+Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. Ship lifecycle packets use sr.ships.lifecycle. Asteroid lifecycle packets use sr.asteroids.lifecycle. Bullet/projectile lifecycle packets use sr.bullets.lifecycle. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
+Hot `ship_delta`, `asteroid_delta`, and `bullet_delta` sequence values must be finite, non-negative, integer-valued numerics. Missing, fractional, negative, non-finite, string, and boolean values are rejected before hot-lane state mutation. Lower sequences are also rejected by client hot-lane sequence guards. Same-sequence packets are valid only for distinct `chunk_index` values of the same `chunk_count`; duplicate chunk indices are rejected. Sequence gaps remain valid because hot packets can be dropped.
 ```
 
-Ordered/reliable delivery is scoped to one DataChannel only. It does not order `sr.world` against `sr.asteroids.lifecycle` or `sr.bullets.lifecycle`, and it does not order a lifecycle channel against its corresponding unordered hot channel. The world/lifecycle race is therefore expected: a lifecycle packet may arrive before the matching `world_full` or after a hot update. The lifecycle packet's explicit world `baseline_id` determines whether the client can apply it now or must keep it pending.
+Ordered/reliable delivery is scoped to one DataChannel only. It does not order `sr.world` against `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, or `sr.bullets.lifecycle`, and it does not order a lifecycle channel against its corresponding unordered hot channel. The world/lifecycle race is therefore expected: a lifecycle packet may arrive before the matching `world_full` or after a hot update. The lifecycle packet's explicit world `baseline_id` determines whether the client can apply it now or must keep it pending.
 
 
 ## Active Gameplay Readiness
@@ -121,7 +124,7 @@ a ready WebRTC transport
 the selected candidate lane mapped to an open gameplay DataChannel
 ```
 
-The readiness set is exactly the eight gameplay channels (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids`, `sr.bullets`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`) plus `sr.tooling`. Channel IDs are 1 through 9, with `sr.tooling` at id 9. All nine channels must be open before the transport is ready.
+The readiness set is exactly the ten gameplay channels (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships`, `sr.asteroids`, `sr.bullets`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`) plus `sr.tooling`. The negotiated IDs are 1 through 11, with `sr.tooling` retaining id 9 and the ship channels using ids 10 and 11. All eleven channels must be open before the transport is ready.
 
 Gameplay output eligibility still requires an active game player. Tooling eligibility is separate: authorized tooling may use a room attachment without gameplay participation or a `GamePlayerID`, as defined by [Tooling Channel Migration Contract](../devtools/design/tooling-channel-migration-contract.md).
 
@@ -165,7 +168,7 @@ WebRTCTransport receives DataChannel text
       -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`. Lifecycle routing submits explicit lane, sequence, and world-baseline metadata to `LifecycleLaneGate`; a completed matching `world_full` records the active world baseline and drains pending packets for that baseline, sorted within each lifecycle lane.
+The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `ship_delta` → `apply_ship_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `ships_lifecycle` → `apply_ships_lifecycle`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`. Lifecycle routing submits explicit lane, sequence, and world-baseline metadata to `LifecycleLaneGate`; a completed matching `world_full` records the active world baseline and drains pending packets for that baseline, sorted within each lifecycle lane.
 
 `RealtimeTransportSession` owns the WebRTC transport lifecycle and transport-originated callbacks. `ClientConnectionService` configures the transport-session dispatch callback but does not inspect or relay each gameplay packet. `ServerPacketDispatcher` emits the typed gameplay signal to `ClientInboundCoordinator`, which invokes the matching typed `RealtimePacketPipeline` apply method. The pipeline expands and validates the packet, refreshes `RealtimePresentationState`, and emits `gameplay_packet_applied(packet)`. `PresentationBridge` consumes that semantic notification with later coalesced flush when ready.
 
@@ -261,7 +264,7 @@ Regular bullet movement updates are emitted as:
 bullet_delta on sr.bullets
 ```
 
-`world_delta` remains responsible for ships, pickups, and full/bootstrap/resync-safe presentation state. World serializer compatibility may still accept asteroid or bullet update sections, but regular active asteroid and bullet movement is split to the dedicated hot movement lanes.
+`world_delta` remains responsible for pickups and full/bootstrap/resync-safe presentation state. World serializer compatibility may still accept ship, asteroid, or bullet update sections, but regular active ship, asteroid, and bullet movement is split to the dedicated hot movement lanes.
 
 ### Hot Movement Cadence
 
@@ -300,11 +303,11 @@ record-level packet-budget enforcement
 general-purpose fragmentation for all lane families
 ```
 
-Focused hot-lane chunking is implemented for `asteroid_delta` and `bullet_delta` before the WebRTC send boundary. It emits multiple JSON messages on `sr.asteroids` or `sr.bullets` when a hot movement update list would exceed the hard encoded packet cap.
+Focused hot-lane chunking is implemented for `ship_delta`, `asteroid_delta`, and `bullet_delta` before the WebRTC send boundary. It emits multiple JSON messages on `sr.ships`, `sr.asteroids`, or `sr.bullets` when a hot movement update list would exceed the hard encoded packet cap.
 
-Unordered/unreliable hot-lane delivery is implemented for sr.asteroids and sr.bullets.
+Unordered/unreliable hot-lane delivery is implemented for sr.ships, sr.asteroids, and sr.bullets.
 
-Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing, and dedicated asteroid/bullet hot movement packets are implemented before the final WebRTC write boundary.
+Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing, and dedicated ship/asteroid/bullet hot movement packets are implemented before the final WebRTC write boundary.
 
 ## Related Docs
 

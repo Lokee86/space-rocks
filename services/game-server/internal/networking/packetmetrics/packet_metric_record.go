@@ -11,10 +11,13 @@ type PacketMetricRecord struct {
 	Channel                string
 	EncodedBytes           int
 	WorldHotCount          int
+	ShipHotCount           int
 	AsteroidHotCount       int
 	BulletHotCount         int
+	ShipOffloadedCount     int
 	AsteroidOffloadedCount int
 	BulletOffloadedCount   int
+	ShipMode               string
 	AsteroidMode           string
 	BulletMode             string
 	Cadence                string

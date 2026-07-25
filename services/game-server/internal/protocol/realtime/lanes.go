@@ -6,6 +6,8 @@ const (
 	LaneSession            = "session"
 	LaneEvent              = "event"
 	LaneControl            = "control"
+	LaneShips              = "ships"
+	LaneShipsLifecycle     = "ships.lifecycle"
 	LaneAsteroids          = "asteroids"
 	LaneBullets            = "bullets"
 	LaneAsteroidsLifecycle = "asteroids.lifecycle"
@@ -19,6 +21,8 @@ func IsBaselineLane(lane Lane) bool {
 const (
 	PacketFamilyWorldFull          = "world_full"
 	PacketFamilyWorldDelta         = "world_delta"
+	PacketFamilyShipDelta          = "ship_delta"
+	PacketFamilyShipsLifecycle     = "ships_lifecycle"
 	PacketFamilyOverlayFull        = "overlay_full"
 	PacketFamilyOverlayDelta       = "overlay_delta"
 	PacketFamilySessionFull        = "session_full"

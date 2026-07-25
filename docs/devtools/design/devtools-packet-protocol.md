@@ -694,7 +694,7 @@ shared/packets/ owns packet shape, not runtime command semantics.
 
 ## Notes
 
-The `sr.tooling` transport foundation is the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the eight gameplay channels. Runtime measurement, runtime debug commands, debug-status subscription, and shape-catalog request/response are active end to end on this channel. The production telemetry provider and legacy overlay ping migration remain incomplete.
+The `sr.tooling` transport foundation is the mandatory negotiated id 9 channel: reliable, ordered, bidirectional, and ready alongside the ten gameplay channels. Runtime measurement, runtime debug commands, debug-status subscription, and shape-catalog request/response are active end to end on this channel. The production telemetry provider and legacy overlay ping migration remain incomplete.
 
 Unexpected required-channel closure preserves the WebSocket/session/room/game context while replacing only the WebRTC peer. Recovery uses a 10-second deadline; success preserves the active match and requests fresh world, overlay, and session baselines, while failure disables only single-player replay.
 

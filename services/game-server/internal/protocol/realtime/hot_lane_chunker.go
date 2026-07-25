@@ -30,8 +30,30 @@ func expandRealtimeCandidate(candidate RealtimeLaneCandidate) ([]RealtimeLaneCan
 	}
 
 	switch lane {
-	case LaneBulletsLifecycle, LaneAsteroidsLifecycle:
+	case LaneShipsLifecycle, LaneBulletsLifecycle, LaneAsteroidsLifecycle:
 		return hardCapChunks, nil
+	case LaneShips:
+		packet, ok := shipWireDeltaPacketFromCandidate(candidate)
+		if !ok {
+			return []RealtimeLaneCandidate{candidate}, nil
+		}
+		packet.Metadata.MatchID = candidate.MatchID
+
+		if shipWireDeltaChunkCount(packet) == 1 {
+			return []RealtimeLaneCandidate{normalizedShipWireDeltaCandidate(candidate, packet, packet.ShipUpdates, 0, 1)}, nil
+		}
+
+		chunkUpdates := greedyShipWireDeltaChunks(packet)
+		if len(chunkUpdates) == 0 {
+			return []RealtimeLaneCandidate{candidate}, nil
+		}
+
+		chunks := make([]RealtimeLaneCandidate, 0, len(chunkUpdates))
+		chunkCount := len(chunkUpdates)
+		for index, updates := range chunkUpdates {
+			chunks = append(chunks, normalizedShipWireDeltaCandidate(candidate, packet, updates, index, chunkCount))
+		}
+		return chunks, nil
 	case LaneBullets:
 		packet, ok := bulletWireDeltaPacketFromCandidate(candidate)
 		if !ok {
@@ -79,6 +101,61 @@ func expandRealtimeCandidate(candidate RealtimeLaneCandidate) ([]RealtimeLaneCan
 	default:
 		return []RealtimeLaneCandidate{candidate}, nil
 	}
+}
+
+func shipWireDeltaChunkCount(packet ShipWireDeltaPacket) int {
+	if estimateShipDeltaPacketBytes(packet, packet.ShipUpdates) <= HardCapBytes {
+		return 1
+	}
+	return len(greedyShipWireDeltaChunks(packet))
+}
+
+func hotLaneModeForShipChunkCount(chunkCount int) HotLaneMode {
+	switch {
+	case chunkCount <= 1:
+		return HotLaneModeFullOwned60Hz
+	case chunkCount == 2:
+		return HotLaneModeFullOwned30Hz
+	default:
+		return HotLaneModeFullOwned20Hz
+	}
+}
+
+func shipWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (ShipWireDeltaPacket, bool) {
+	packet, ok := candidate.Payload.(ShipWireDeltaPacket)
+	return packet, ok
+}
+
+func normalizedShipWireDeltaCandidate(candidate RealtimeLaneCandidate, packet ShipWireDeltaPacket, updates []map[string]any, chunkIndex int, chunkCount int) RealtimeLaneCandidate {
+	packet.ShipUpdates = updates
+	packet.Metadata = packet.Metadata.WithChunk(chunkIndex, chunkCount)
+	candidate.Payload = packet
+	return candidate
+}
+
+func greedyShipWireDeltaChunks(packet ShipWireDeltaPacket) [][]map[string]any {
+	updates := packet.ShipUpdates
+	if len(updates) == 0 {
+		return [][]map[string]any{{}}
+	}
+
+	estimatedPacket := packet
+	estimatedPacket.Metadata.ChunkCount = 2
+	estimatedPacket.Metadata.IsFinalChunk = true
+
+	chunks := make([][]map[string]any, 0, len(updates))
+	chunkStart := 0
+	for idx := 0; idx < len(updates); idx++ {
+		if idx > chunkStart {
+			trialUpdates := updates[chunkStart : idx+1]
+			if estimateShipDeltaPacketBytes(estimatedPacket, trialUpdates) > HardCapBytes {
+				chunks = append(chunks, updates[chunkStart:idx])
+				chunkStart = idx
+			}
+		}
+	}
+	chunks = append(chunks, updates[chunkStart:])
+	return chunks
 }
 
 func bulletWireDeltaChunkCount(packet BulletWireDeltaPacket) int {

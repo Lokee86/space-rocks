@@ -208,7 +208,7 @@ func _measurement_lane(packet: Dictionary) -> String:
 	if not explicit_lane.is_empty():
 		return explicit_lane
 	var packet_type := str(packet.get("type", "unknown"))
-	if packet_type.begins_with("world") or packet_type.contains("asteroid") or packet_type.contains("bullet"):
+	if packet_type.begins_with("world") or packet_type.contains("ship") or packet_type.contains("asteroid") or packet_type.contains("bullet"):
 		return "world"
 	if packet_type.begins_with("overlay"):
 		return "overlay"
@@ -222,6 +222,12 @@ func apply_world_full(packet: Dictionary) -> void:
 	apply_packet(packet)
 
 func apply_world_delta(packet: Dictionary) -> void:
+	apply_packet(packet)
+
+func apply_ship_delta(packet: Dictionary) -> void:
+	apply_packet(packet)
+
+func apply_ships_lifecycle(packet: Dictionary) -> void:
 	apply_packet(packet)
 
 func apply_asteroid_delta(packet: Dictionary) -> void:

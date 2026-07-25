@@ -9,9 +9,9 @@ func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
 		switch lane {
 		case LaneSession:
 			return DeliveryClassDeferrable
-		case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
+		case LaneWorld, LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
 			return DeliveryClassHotSupersedable
-		case LaneAsteroidsLifecycle, LaneBulletsLifecycle:
+		case LaneShipsLifecycle, LaneAsteroidsLifecycle, LaneBulletsLifecycle:
 			return DeliveryClassRequired
 		}
 	default:
@@ -30,9 +30,9 @@ func priorityForCandidate(candidate RealtimeLaneCandidate) Priority {
 		switch lane {
 		case LaneSession:
 			return PriorityMedium
-		case LaneWorld, LaneOverlay, LaneAsteroids, LaneBullets:
+		case LaneWorld, LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
 			return PriorityHigh
-		case LaneAsteroidsLifecycle, LaneBulletsLifecycle:
+		case LaneShipsLifecycle, LaneAsteroidsLifecycle, LaneBulletsLifecycle:
 			return PriorityCritical
 		}
 	}

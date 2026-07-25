@@ -4,6 +4,7 @@ type HotUpdateRoute string
 
 const (
 	HotUpdateRouteWorld     HotUpdateRoute = "world"
+	HotUpdateRouteShips     HotUpdateRoute = "ships"
 	HotUpdateRouteAsteroids HotUpdateRoute = "asteroids"
 	HotUpdateRouteBullets   HotUpdateRoute = "bullets"
 )
@@ -20,8 +21,10 @@ const (
 )
 
 type HotLaneCohortState struct {
+	ShipRoutes             map[string]HotUpdateRoute
 	AsteroidRoutes         map[string]HotUpdateRoute
 	BulletRoutes           map[string]HotUpdateRoute
+	ShipMode               HotLaneMode
 	AsteroidMode           HotLaneMode
 	BulletMode             HotLaneMode
 	StableLowPressureTicks int
@@ -29,25 +32,42 @@ type HotLaneCohortState struct {
 
 func NewHotLaneCohortState() HotLaneCohortState {
 	return HotLaneCohortState{
+		ShipRoutes:     make(map[string]HotUpdateRoute),
 		AsteroidRoutes: make(map[string]HotUpdateRoute),
 		BulletRoutes:   make(map[string]HotUpdateRoute),
+		ShipMode:       HotLaneModeInline,
 		AsteroidMode:   HotLaneModeInline,
 		BulletMode:     HotLaneModeInline,
 	}
 }
 
 func (state *HotLaneCohortState) EnsureInitialized() {
+	if state.ShipRoutes == nil {
+		state.ShipRoutes = make(map[string]HotUpdateRoute)
+	}
 	if state.AsteroidRoutes == nil {
 		state.AsteroidRoutes = make(map[string]HotUpdateRoute)
 	}
 	if state.BulletRoutes == nil {
 		state.BulletRoutes = make(map[string]HotUpdateRoute)
 	}
+	if state.ShipMode == "" {
+		state.ShipMode = HotLaneModeInline
+	}
 	if state.AsteroidMode == "" {
 		state.AsteroidMode = HotLaneModeInline
 	}
 	if state.BulletMode == "" {
 		state.BulletMode = HotLaneModeInline
+	}
+}
+
+func (state *HotLaneCohortState) RemoveMissingShips(activeIDs map[string]bool) {
+	state.EnsureInitialized()
+	for shipID := range state.ShipRoutes {
+		if !activeIDs[shipID] {
+			delete(state.ShipRoutes, shipID)
+		}
 	}
 }
 

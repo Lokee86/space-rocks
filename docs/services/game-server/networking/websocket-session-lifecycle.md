@@ -296,7 +296,7 @@ The detailed packet-family order belongs to inbound packet routing documentation
 
 ## Write loop
 
-`writeServerMessages()` owns the per-session write loop: queued outbound messages and direct resync acknowledgments are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.asteroids and sr.bullets when ready.
+`writeServerMessages()` owns the per-session write loop: queued outbound messages and direct resync acknowledgments are delivered through WebSocket, while active realtime lane packets are triggered from the same loop and delivered through lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.ships.lifecycle, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.ships, sr.asteroids, and sr.bullets when ready.
 
 It selects over four inputs:
 
@@ -329,7 +329,7 @@ debug shape catalog, when eligible
 debug status, when eligible
 ```
 
-Queued outbound messages and resync acknowledgments remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.asteroids and sr.bullets when the transport is ready. Gameplay presentation writes require:
+Queued outbound messages and resync acknowledgments remain WebSocket text messages. Ticker-driven active realtime lane packets are sent over lane-specific WebRTC gameplay DataChannels using the current channel policy: ordered/reliable for sr.world, sr.overlay, sr.session, sr.event, sr.ships.lifecycle, sr.asteroids.lifecycle, and sr.bullets.lifecycle, and unordered/unreliable for sr.ships, sr.asteroids, and sr.bullets when the transport is ready. Gameplay presentation writes require:
 
 ```text
 SessionContext.GamePlayerID is not empty

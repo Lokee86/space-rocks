@@ -10,7 +10,7 @@ const (
 func EstimatePacketBytes(packetFamily string, recordCount int, payloadBytes int) int {
 	overhead := 64
 	switch packetFamily {
-	case PacketFamilyWorldFull, PacketFamilyWorldDelta:
+	case PacketFamilyWorldFull, PacketFamilyWorldDelta, PacketFamilyShipDelta, PacketFamilyShipsLifecycle:
 		overhead = 96
 	case PacketFamilyOverlayFull, PacketFamilyOverlayDelta:
 		overhead = 80

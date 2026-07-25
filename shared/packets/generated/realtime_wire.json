@@ -660,6 +660,28 @@
     },
     {
       "decode_record_ids": [],
+      "packet_id": "ship_delta",
+      "readable_field": "ship_updates",
+      "record_id": "ship_update"
+    },
+    {
+      "decode_record_ids": [
+        "ship_full"
+      ],
+      "packet_id": "ships_lifecycle",
+      "readable_field": "ship_creates",
+      "record_id": "ship_lifecycle_create"
+    },
+    {
+      "decode_record_ids": [
+        "player_ids"
+      ],
+      "packet_id": "ships_lifecycle",
+      "readable_field": "ship_deletes",
+      "record_id": "ship_lifecycle_delete_ids"
+    },
+    {
+      "decode_record_ids": [],
       "packet_id": "world_delta",
       "readable_field": "bullet_creates",
       "record_id": "bullet_full"
@@ -843,6 +865,32 @@
       "runtime": true,
       "snapshot_kind": "delta",
       "use_baseline_sequence": true
+    },
+    {
+      "compact": "spd",
+      "id": "ship_delta",
+      "infer_baseline_id": false,
+      "infer_lane": true,
+      "infer_snapshot_id": true,
+      "infer_snapshot_kind": true,
+      "lane": "ships",
+      "omit_single_chunk_metadata": true,
+      "runtime": true,
+      "snapshot_kind": "delta",
+      "use_baseline_sequence": true
+    },
+    {
+      "compact": "spl",
+      "id": "ships_lifecycle",
+      "infer_baseline_id": false,
+      "infer_lane": false,
+      "infer_snapshot_id": false,
+      "infer_snapshot_kind": false,
+      "lane": "ships.lifecycle",
+      "omit_single_chunk_metadata": false,
+      "runtime": false,
+      "snapshot_kind": "delta",
+      "use_baseline_sequence": false
     },
     {
       "compact": "of",
@@ -1620,6 +1668,116 @@
       "identity_field": "id",
       "preserve_unknown_fields": false,
       "source_struct": "PickupState",
+      "sparse_placeholder": null,
+      "sparse_trailing": false
+    },
+    {
+      "encoding": "map",
+      "fields": [
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "id",
+          "name": "id",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "ship_type",
+          "name": "ship_type",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "x",
+          "name": "x",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "y",
+          "name": "y",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "rotation",
+          "name": "rotation",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "health",
+          "name": "health",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "shields",
+          "name": "shields",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "thrusting",
+          "name": "thrusting",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "target_kind",
+          "name": "target_kind",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "target_id",
+          "name": "target_id",
+          "quantization": null,
+          "value_domain": null
+        }
+      ],
+      "id": "ship_lifecycle_create",
+      "identity_field": "id",
+      "preserve_unknown_fields": false,
+      "source_struct": "ShipState",
+      "sparse_placeholder": null,
+      "sparse_trailing": false
+    },
+    {
+      "encoding": "scalar_list",
+      "fields": [
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "id",
+          "name": "id",
+          "quantization": null,
+          "value_domain": null
+        }
+      ],
+      "id": "ship_lifecycle_delete_ids",
+      "identity_field": "id",
+      "preserve_unknown_fields": false,
+      "source_struct": null,
       "sparse_placeholder": null,
       "sparse_trailing": false
     },
@@ -2827,6 +2985,14 @@
           "readable": "world_delta"
         },
         {
+          "compact": "spd",
+          "readable": "ship_delta"
+        },
+        {
+          "compact": "spl",
+          "readable": "ships_lifecycle"
+        },
+        {
           "compact": "of",
           "readable": "overlay_full"
         },
@@ -2886,6 +3052,14 @@
         {
           "compact": "s",
           "readable": "session"
+        },
+        {
+          "compact": "sh",
+          "readable": "ships"
+        },
+        {
+          "compact": "sl",
+          "readable": "ships.lifecycle"
         },
         {
           "compact": "a",

@@ -20,6 +20,14 @@ func test_lifecycle_is_atomic_across_two_chunks() -> void:
 	var router := RealtimeRouter.new()
 	_world_full(router, "world-baseline-1")
 
+	router.route_lane_packet(_lifecycle_chunk("ships_lifecycle", LaneMetadata.LANE_SHIPS_LIFECYCLE, 0, false, "world-baseline-1", [_ship("ship-1")], ["ship-old"]))
+	assert_false(router.world_lane_state.ships.has("ship-1"))
+
+	router.route_lane_packet(_lifecycle_chunk("ships_lifecycle", LaneMetadata.LANE_SHIPS_LIFECYCLE, 1, true, "world-baseline-1", [_ship("ship-2")], []))
+	assert_true(router.world_lane_state.ships.has("ship-1"))
+	assert_true(router.world_lane_state.ships.has("ship-2"))
+	assert_false(router.world_lane_state.ships.has("ship-old"))
+
 	router.route_lane_packet(_lifecycle_chunk("asteroids_lifecycle", LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, 0, false, "world-baseline-1", [{"id": "asteroid-1"}], ["asteroid-old"]))
 	assert_false(router.world_lane_state.asteroids.has("asteroid-1"))
 
@@ -52,7 +60,7 @@ func test_world_series_errors_emit_one_resync_and_do_not_apply() -> void:
 		assert_false(router.world_lane_state.ships.has("old"), item.name)
 
 func test_lifecycle_series_errors_emit_one_resync_and_do_not_apply() -> void:
-	for lane in [LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, LaneMetadata.LANE_BULLETS_LIFECYCLE]:
+	for lane in [LaneMetadata.LANE_SHIPS_LIFECYCLE, LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, LaneMetadata.LANE_BULLETS_LIFECYCLE]:
 		var router := RealtimeRouter.new()
 		_world_full(router, "world-baseline-1")
 		var requests := []
@@ -91,8 +99,16 @@ func _lifecycle_chunk(type: String, lane: String, index: int, final: bool, basel
 	var packet := {"type": type, "lane": lane, "sequence": 1, "baseline_id": baseline,
 		"snapshot_id": "lifecycle-snapshot-1", "snapshot_kind": "delta", "chunk_index": index,
 		"chunk_count": 2, "is_final_chunk": final}
-	packet["asteroid_creates" if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE else "bullet_creates"] = creates
-	packet["asteroid_deletes" if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE else "bullet_deletes"] = deletes
+	match lane:
+		LaneMetadata.LANE_SHIPS_LIFECYCLE:
+			packet["ship_creates"] = creates
+			packet["ship_deletes"] = deletes
+		LaneMetadata.LANE_ASTEROIDS_LIFECYCLE:
+			packet["asteroid_creates"] = creates
+			packet["asteroid_deletes"] = deletes
+		_:
+			packet["bullet_creates"] = creates
+			packet["bullet_deletes"] = deletes
 	return packet
 
 func _ship(id: String) -> Dictionary:
@@ -102,15 +118,23 @@ func _asteroid(id: String) -> Dictionary:
 	return {"id": id, "x": 10, "y": 20, "velocity_x": 0, "velocity_y": 0, "rotation": 0, "size": 1, "health": 100, "scale": 1000, "variant": 1}
 
 func _record(lane: String, id: String) -> Dictionary:
-	return _asteroid(id) if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE else {"id": id, "owner_id": "player-1", "x": 10, "y": 20, "velocity_x": 0, "velocity_y": 0, "rotation": 0, "lifespan_seconds": 1, "weapon_id": "bullet", "projectile_type": "bullet"}
+	if lane == LaneMetadata.LANE_SHIPS_LIFECYCLE:
+		return _ship(id)
+	if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE:
+		return _asteroid(id)
+	return {"id": id, "owner_id": "player-1", "x": 10, "y": 20, "velocity_x": 0, "velocity_y": 0, "rotation": 0, "lifespan_seconds": 1, "weapon_id": "bullet", "projectile_type": "bullet"}
 
 func _record_id(lane: String, id: String) -> String:
 	return id
 
 func _packet_type(lane: String) -> String:
+	if lane == LaneMetadata.LANE_SHIPS_LIFECYCLE:
+		return "ships_lifecycle"
 	return "asteroids_lifecycle" if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE else "bullets_lifecycle"
 
 func _state(router: RealtimeRouter, lane: String):
+	if lane == LaneMetadata.LANE_SHIPS_LIFECYCLE:
+		return router.world_lane_state.ships
 	return router.world_lane_state.asteroids if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE else router.world_lane_state.bullets
 
 const WorldFullChunkAssembler := preload("res://scripts/protocol/realtime/world_full_chunk_assembler.gd")
@@ -220,7 +244,7 @@ func test_direct_lifecycle_assembler_accepts_bounded_two_chunk_series() -> void:
 	assert_eq(result.packet.asteroid_deletes.size(), 1)
 
 func test_router_lifecycle_assembly_limits_resync_without_partial_state() -> void:
-	for lane in [LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, LaneMetadata.LANE_BULLETS_LIFECYCLE]:
+	for lane in [LaneMetadata.LANE_SHIPS_LIFECYCLE, LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, LaneMetadata.LANE_BULLETS_LIFECYCLE]:
 		var router := RealtimeRouter.new()
 		var requests := []
 		router.resync_request_required.connect(func(requested_lane, _baseline, _sequence, reason): requests.append([requested_lane, reason]))

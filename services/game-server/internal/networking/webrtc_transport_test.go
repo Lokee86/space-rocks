@@ -197,8 +197,8 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 	if fakePeer.localDesc.Type != webrtc.SDPTypeAnswer || fakePeer.localDesc.SDP != "answer-sdp" {
 		t.Fatalf("local description not set: %#v", fakePeer.localDesc)
 	}
-	if len(fakePeer.created) != 9 {
-		t.Fatalf("expected 9 data channels to be created, got %d", len(fakePeer.created))
+	if len(fakePeer.created) != 11 {
+		t.Fatalf("expected 11 data channels to be created, got %d", len(fakePeer.created))
 	}
 	expected := map[string]fakeWebRTCDataChannelCreateSpec{
 		"sr.world":               {Label: "sr.world", Ordered: true, Negotiated: true, ID: 1, MaxRetransmits: nil},
@@ -210,6 +210,8 @@ func TestWebRTCTransportHandleOfferBuildsAnswerAndChannels(t *testing.T) {
 		"sr.asteroids.lifecycle": {Label: "sr.asteroids.lifecycle", Ordered: true, Negotiated: true, ID: 7, MaxRetransmits: nil},
 		"sr.bullets.lifecycle":   {Label: "sr.bullets.lifecycle", Ordered: true, Negotiated: true, ID: 8, MaxRetransmits: nil},
 		"sr.tooling":             {Label: "sr.tooling", Ordered: true, Negotiated: true, ID: 9, MaxRetransmits: nil},
+		"sr.ships":               {Label: "sr.ships", Ordered: false, Negotiated: true, ID: 10, MaxRetransmits: uint16Ptr(0)},
+		"sr.ships.lifecycle":     {Label: "sr.ships.lifecycle", Ordered: true, Negotiated: true, ID: 11, MaxRetransmits: nil},
 	}
 	for _, created := range fakePeer.created {
 		want, ok := expected[created.Label]
@@ -413,6 +415,10 @@ func TestWebRTCTransportReadyTracksAllRequiredChannels(t *testing.T) {
 	fakePeer.channels["sr.bullets.lifecycle"].onOpen()
 	fakePeer.channels["sr.tooling"].readyState = webrtc.DataChannelStateOpen
 	fakePeer.channels["sr.tooling"].onOpen()
+	fakePeer.channels["sr.ships"].readyState = webrtc.DataChannelStateOpen
+	fakePeer.channels["sr.ships"].onOpen()
+	fakePeer.channels["sr.ships.lifecycle"].readyState = webrtc.DataChannelStateOpen
+	fakePeer.channels["sr.ships.lifecycle"].onOpen()
 	if !peer.Ready() {
 		t.Fatal("expected Ready to become true after all channels are open")
 	}

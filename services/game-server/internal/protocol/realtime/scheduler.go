@@ -35,10 +35,7 @@ func SelectSendPlan(records []ScheduleRecord) SendPlan {
 }
 
 func isRealHotLaneChunkRecord(record ScheduleRecord) bool {
-	if record.ChunkCount <= 1 {
-		return false
-	}
-	return record.Lane == LaneBullets || record.Lane == LaneAsteroids
+	return record.Lane == LaneShips || record.Lane == LaneBullets || record.Lane == LaneAsteroids
 }
 
 func appendPlannedRecord(plan *SendPlan, record ScheduleRecord, budget int) int {

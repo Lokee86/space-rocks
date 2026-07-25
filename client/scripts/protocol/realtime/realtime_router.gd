@@ -24,6 +24,7 @@ var baseline_tracker := BaselineTracker.new()
 var gameplay_readiness := GameplayReadiness.new()
 var resync_state := ResyncState.new()
 var lifecycle_lane_gate := LifecycleLaneGate.new()
+var _ship_lifecycle_assembler := LifecycleChunkAssembler.new()
 var _asteroid_lifecycle_assembler := LifecycleChunkAssembler.new()
 var _bullet_lifecycle_assembler := LifecycleChunkAssembler.new()
 
@@ -52,6 +53,10 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			accepted_final_full = _route_world_full(expanded_packet)
 		"world_delta":
 			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
+		"ship_delta":
+			_world_applier.apply_ship_delta(world_lane_state, LaneMetadata.LANE_SHIPS, expanded_packet)
+		"ships_lifecycle":
+			_route_ships_lifecycle(expanded_packet)
 		"asteroid_delta":
 			_world_applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_ASTEROIDS, expanded_packet)
 		"bullet_delta":
@@ -95,7 +100,10 @@ func _route_world_full(packet: Dictionary) -> bool:
 		var lane = entry.get("lane")
 		var lifecycle_packet: Dictionary = entry.get("packet", {})
 		var sequence = entry.get("sequence")
-		if lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE:
+		if lane == LaneMetadata.LANE_SHIPS_LIFECYCLE:
+			if _world_applier.apply_ships_lifecycle(world_lane_state, lifecycle_packet):
+				lifecycle_lane_gate.mark_applied(lane, sequence)
+		elif lane == LaneMetadata.LANE_ASTEROIDS_LIFECYCLE:
 			if _world_applier.apply_asteroids_lifecycle(world_lane_state, lifecycle_packet):
 				lifecycle_lane_gate.mark_applied(lane, sequence)
 		elif lane == LaneMetadata.LANE_BULLETS_LIFECYCLE:
@@ -103,6 +111,28 @@ func _route_world_full(packet: Dictionary) -> bool:
 				lifecycle_lane_gate.mark_applied(lane, sequence)
 	lifecycle_lane_gate.discard_obsolete_baselines(active_baseline_id)
 	return accepted
+
+func _route_ships_lifecycle(packet: Dictionary) -> void:
+	var assembly := _ship_lifecycle_assembler.accept(packet, "ship_creates", "ship_deletes")
+	if assembly.status == LifecycleChunkAssembler.ERROR:
+		_request_lifecycle_resync(assembly.reason)
+		return
+	if assembly.status != LifecycleChunkAssembler.COMPLETE:
+		return
+	packet = assembly.packet
+	var decision := lifecycle_lane_gate.submit(
+		LaneMetadata.LANE_SHIPS_LIFECYCLE,
+		packet,
+		baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD),
+		baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
+	)
+	if decision.status != LifecycleLaneGate.DECISION_APPLY:
+		if decision.status == LifecycleLaneGate.DECISION_RESYNC:
+			baseline_tracker.request_resync_for_lane(LaneMetadata.LANE_WORLD, decision.reason)
+			resync_state.mark_lifecycle_queue_overflow(LaneMetadata.LANE_WORLD)
+		return
+	if _world_applier.apply_ships_lifecycle(world_lane_state, packet):
+		lifecycle_lane_gate.mark_applied(LaneMetadata.LANE_SHIPS_LIFECYCLE, decision.sequence)
 
 func _route_asteroids_lifecycle(packet: Dictionary) -> void:
 	var assembly := _asteroid_lifecycle_assembler.accept(packet, "asteroid_creates", "asteroid_deletes")
@@ -150,6 +180,7 @@ func _route_bullets_lifecycle(packet: Dictionary) -> void:
 
 func reset() -> void:
 	_world_applier.reset()
+	_ship_lifecycle_assembler.reset()
 	_asteroid_lifecycle_assembler.reset()
 	_bullet_lifecycle_assembler.reset()
 	lifecycle_lane_gate.reset()

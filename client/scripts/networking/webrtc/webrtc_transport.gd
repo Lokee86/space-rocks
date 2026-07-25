@@ -11,6 +11,8 @@ const CHANNEL_SPECS := [
 	{"lane": "asteroids_lifecycle", "label": "sr.asteroids.lifecycle", "id": 7, "ordered": true},
 	{"lane": "bullets_lifecycle", "label": "sr.bullets.lifecycle", "id": 8, "ordered": true},
 	{"lane": "tooling", "label": "sr.tooling", "id": 9, "ordered": true},
+	{"lane": "ships", "label": "sr.ships", "id": 10, "ordered": false, "max_retransmits": 0},
+	{"lane": "ships_lifecycle", "label": "sr.ships.lifecycle", "id": 11, "ordered": true},
 ]
 const MAX_PACKETS_PER_POLL := 48
 const MAX_PACKETS_PER_LANE_PER_POLL := 12
@@ -46,8 +48,8 @@ var _general_start_cursor := 0
 var _runtime_metrics = NetworkRuntimeMetrics.new()
 var _lane_metrics: Dictionary = {}
 
-const LIFECYCLE_LANES := ["asteroids_lifecycle", "bullets_lifecycle"]
-const GENERAL_LANES := ["world", "overlay", "session", "event", "asteroids", "bullets", "tooling"]
+const LIFECYCLE_LANES := ["ships_lifecycle", "asteroids_lifecycle", "bullets_lifecycle"]
+const GENERAL_LANES := ["world", "overlay", "session", "event", "ships", "asteroids", "bullets", "tooling"]
 
 
 func set_peer_for_tests(peer: Variant, channels: Variant) -> void:

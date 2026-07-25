@@ -28,9 +28,9 @@ Current implementation facts belong in the canonical protocol, service, and data
 - [Packet Schemas](../../data/packet-schemas.md)
 - [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md)
 
-This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, subtractive asteroid/bullet movement lanes, focused asteroid/bullet hot-lane chunking, chunker-owned hot-lane hard-size guarding, and dedicated reliable ordered lifecycle lanes are already implemented for active realtime gameplay and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md). Dedicated reliable ordered lifecycle lanes are implemented for asteroid and bullet/projectile creates/deletes: `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`.
+This planning doc keeps the remaining architecture boundary for bit packing, protobuf or future binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget policy beyond current candidate-level send-plan selection, resync hardening, transport evolution beyond the current mixed lane policy, and future protocol compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, subtractive ship/asteroid/bullet movement lanes, focused ship/asteroid/bullet hot-lane chunking, chunker-owned hot-lane hard-size guarding, and dedicated reliable ordered lifecycle lanes are already implemented for active realtime gameplay and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md). Dedicated reliable ordered lifecycle lanes are implemented for ship, asteroid, and bullet/projectile creates/deletes: `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`.
 
-Focused asteroid/bullet hot-lane chunking now uses conservative compact-JSON byte estimation for chunk construction. The chunker is the hard-size guard for hot movement packets; scheduler and active encoding must not duplicate that guard.
+Focused ship/asteroid/bullet hot-lane chunking now uses conservative compact-JSON byte estimation for chunk construction. The chunker is the hard-size guard for hot movement packets; scheduler and active encoding must not duplicate that guard.
 
 ## Current Inputs
 
@@ -55,7 +55,7 @@ Planning outputs for the remaining protocol work:
 
 ## Tooling Transport Foundation And Future Consumers
 
-The `sr.tooling` transport foundation is implemented as the ninth mandatory negotiated DataChannel for every gameplay connection. It uses id 9, is reliable, ordered, bidirectional, and must be ready with the eight gameplay channels for the room/game session. Runtime measurement is implemented on the channel, telemetry routing is partially implemented, and WebSocket retains auth, signaling, lobby, session/control setup, and the remaining legacy devtools/admin traffic.
+The `sr.tooling` transport foundation is implemented at negotiated id 9 for every gameplay connection. It is reliable, ordered, bidirectional, and must be ready with the ten gameplay channels for the room/game session. Runtime measurement is implemented on the channel, telemetry routing is partially implemented, and WebSocket retains auth, signaling, lobby, session/control setup, and the remaining legacy devtools/admin traffic.
 
 The packet inventory, capability vocabulary, attachment requirements, and migration sequence are fixed in [Tooling Channel Migration Contract](../../devtools/design/tooling-channel-migration-contract.md). Existing WebSocket runtime debug commands and readouts migrate next.
 
@@ -84,7 +84,7 @@ The packet inventory, capability vocabulary, attachment requirements, and migrat
 
 ## Phase P2 - Realtime Protocol Architecture
 
-Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` lanes, plus unordered/unreliable `sr.asteroids` and `sr.bullets` hot-update lanes, is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
+Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` lanes, plus unordered/unreliable `sr.ships`, `sr.asteroids`, and `sr.bullets` hot-update lanes, is implemented, and this doc now tracks the remaining protocol evolution after that cutover.
 
 ## Implemented Status
 
@@ -94,15 +94,15 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Outbound delivery and realtime policy are separate.
 - Lane baselines, deltas, sequence metadata, metrics, and shadow/parity support exist at the current implementation level.
 - Delta comparison decides what changed; candidate-level scheduling and estimated byte-budget selection decide which lane candidates fit first.
-- Oversized `asteroid_delta` and `bullet_delta` movement update lists are split into real same-sequence hot-lane candidate chunks before scheduling and encoding.
-- Active output can emit multiple encoded packets on `sr.asteroids` or `sr.bullets` in one tick.
-- Hot asteroid and bullet movement packets have focused candidate-level chunking before scheduling and encoding; that chunker is the only hard-size guard for those hot movement packets.
-- Client hot-lane guards accept distinct valid chunks for each `asteroid_delta` or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the two lanes track independently.
-- Independent per-session hot movement cadence enforcement is implemented: `HotLaneTick` runs at the active 60 Hz build cadence; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required, while bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
-- Non-hot world and asteroid/bullet lifecycle changes force related hot movement emission and advance the shared world projection chain; this is implemented protocol/realtime policy, not future transport work.
+- Oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` movement update lists are split into real same-sequence hot-lane candidate chunks before scheduling and encoding.
+- Active output can emit multiple encoded packets on `sr.ships`, `sr.asteroids`, or `sr.bullets` in one tick.
+- Hot ship, asteroid, and bullet movement packets have focused candidate-level chunking before scheduling and encoding; that chunker is the only hard-size guard for those hot movement packets.
+- Client hot-lane guards accept distinct valid chunks for each `ship_delta`, `asteroid_delta`, or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the three lanes track independently.
+- Independent per-session hot movement cadence enforcement is implemented: `HotLaneTick` runs at the active 60 Hz build cadence; ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
+- Non-hot world and ship/asteroid/bullet lifecycle changes force related hot movement emission and advance the shared world projection chain; this is implemented protocol/realtime policy, not future transport work.
 - Record/entity-level prioritization remains future work.
 - High-frequency gameplay state is no longer sent as one full combined packet every tick.
-- Field-delta update maps are implemented for world ship/pickup updates and dedicated asteroid/bullet movement updates.
+- Field-delta update maps are implemented for world ship/pickup updates and dedicated ship/asteroid/bullet movement updates.
 - Field-delta update maps are implemented for overlay receiver updates.
 - Field-delta update maps are implemented for session player and lifecycle updates.
 - Creates remain full records, updates carry identity plus changed fields only, and deletes remain identity lists.
@@ -115,7 +115,7 @@ Lane-native JSON gameplay delivery over ordered/reliable `sr.world`, `sr.overlay
 - Known event tuple packing is implemented for compact `event_batch` records.
 - Sparse delta serialization is implemented for active realtime gameplay delta lanes; empty delta sections are omitted from emitted delta wire maps.
 - Client lifecycle application validates explicit world-baseline dependencies, queues future or not-yet-active lifecycle packets, drains them after matching `world_full` activation, and enforces strict independent lifecycle sequences.
-- The `sr.tooling` transport foundation is implemented at negotiated id 9 with reliable, ordered, bidirectional delivery and mandatory readiness alongside the eight gameplay channels. Lane-aware receive routing separates tooling before normal gameplay dispatch; runtime measurement is implemented, telemetry routing is partial, and the remaining debug-command/readout migration is contract-defined.
+- The `sr.tooling` transport foundation is implemented at negotiated id 9 with reliable, ordered, bidirectional delivery and mandatory readiness alongside the ten gameplay channels. Lane-aware receive routing separates tooling before normal gameplay dispatch; runtime measurement is implemented, telemetry routing is partial, and the remaining debug-command/readout migration is contract-defined.
 - Unexpected required-channel close recovery preserves the WebSocket/session/room/game context, replaces only the WebRTC peer, and uses a 10-second deadline. Successful recovery preserves the active match and requests fresh world, overlay, and session baselines; failure disables only single-player replay.
 
 Current implementation details live in:
@@ -130,14 +130,14 @@ Current implementation details live in:
 
 ## Remaining Protocol Evolution
 
-Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection, stronger resync behavior, future physical lane/channel evolution beyond the current mixed lane policy, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, subtractive asteroid/bullet movement lanes, focused asteroid/bullet hot-lane chunking, and chunker-owned hot-lane hard-size guarding are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
+Future planning here remains focused on bit packing, protobuf or custom binary representation, deeper record/entity-level prioritization, interest management, deeper packet-budget behavior beyond current candidate-level send-plan selection, stronger resync behavior, future physical lane/channel evolution beyond the current mixed lane policy, and future compatibility/versioning. JSON alias compaction, sparse delta serialization, tuple packing, physical gameplay DataChannels, subtractive ship/asteroid/bullet movement lanes, focused ship/asteroid/bullet hot-lane chunking, and chunker-owned hot-lane hard-size guarding are already implemented for active realtime gameplay lanes and are documented in [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md) and [Realtime Compact Wire Mapping](../../services/game-server/networking/realtime-compact-wire-mapping.md).
 
 ### Remaining Priority And Packet Budget Work
 
-Delta decides what changed. The current candidate-level send plan uses the estimated packet budget as an advisory candidate-selection target; it does not imply that every included hot chunk collectively fits under one per-tick budget. The hot-lane chunker separately enforces the per-message hard-size threshold before scheduling, and aggregate same-tick output is not currently capped. Focused hot-lane chunking is implemented for asteroid and bullet movement lists. General record/entity-level prioritization, interest filtering, and deeper budget policy remain future work.
+Delta decides what changed. The current candidate-level send plan uses the estimated packet budget as an advisory candidate-selection target; it does not imply that every included hot chunk collectively fits under one per-tick budget. The hot-lane chunker separately enforces the per-message hard-size threshold before scheduling, and aggregate same-tick output is not currently capped. Focused hot-lane chunking is implemented for ship, asteroid, and bullet movement lists. General record/entity-level prioritization, interest filtering, and deeper budget policy remain future work.
 
-Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, focused asteroid/bullet hot-lane chunking, and chunker-owned hot-lane hard-size guarding. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy. Scheduler and active encoding do not own a second hard-size rejection step for already-chunked hot movement packets.
-Current WebRTC physical gameplay channels are split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.asteroids`, `sr.bullets`); the mandatory reliable/ordered/bidirectional `sr.tooling` transport lane is negotiated at id 9. Client-side hot-lane guards accept distinct valid chunks for each `asteroid_delta` or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the two lanes track independently.
+Current implementation has lane-native packets, baselines, deltas, candidate-level scheduling metadata, estimated byte-budget selection, focused ship/asteroid/bullet hot-lane chunking, and chunker-owned hot-lane hard-size guarding. Delta decides what changed; the current send plan decides which lane candidates are included or deferred; future work remains around record/entity-level prioritization and deeper budget policy. Scheduler and active encoding do not own a second hard-size rejection step for already-chunked hot movement packets.
+Current WebRTC physical gameplay channels are split into reliable/ordered lanes (`sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`) and unordered/unreliable hot-update lanes (`sr.ships`, `sr.asteroids`, `sr.bullets`); the mandatory reliable/ordered/bidirectional `sr.tooling` transport lane is negotiated at id 9. Client-side hot-lane guards accept distinct valid chunks for each `ship_delta`, `asteroid_delta`, or `bullet_delta` lane sequence when `chunk_count` matches, and reject duplicates, malformed/inconsistent chunk metadata, and lower sequences; gaps remain valid and the three lanes track independently.
 
 Reliability and ordering remain per DataChannel; they do not establish cross-channel `sr.world`/lifecycle ordering. The implemented client lifecycle gate handles that arrival race by waiting for the referenced active world baseline.
 
@@ -149,7 +149,7 @@ The active collision index is mutable `Game`-owned simulation state. Realtime pr
 
 Future policy may include viewport margin or hysteresis, always-required entities, create/delete transitions, and consistent filtering across full, delta, lifecycle, and hot lanes. None of those receiver-interest sets or packet filters is implemented by this foundation.
 
-Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular asteroid and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, deeper record/entity-level prioritization, further transport policy beyond the current asteroid/bullet unordered hot lanes where safe, and binary representation later.
+Field-delta update maps are now implemented, sparse delta serialization is already in place for the active realtime gameplay lanes, and JSON alias compaction is already in place. Ship, asteroid, bullet, world ship/player, session player/lifecycle, and known event tuple packing are implemented for compact current lane records. Regular ship, asteroid, and bullet movement updates are now subtractively split out of `sr.world` into dedicated hot movement packets. High-density stress cases can still exceed future packet-budget targets even after quantization, compact aliases, sparse deltas, tuple packing, and hot movement lanes; remaining work belongs to packet-size verification with stress logs, deeper record/entity-level prioritization, further transport policy beyond the current ship/asteroid/bullet unordered hot lanes where safe, and binary representation later.
 
 State lanes are quantized during outbound projection before delta comparison.
 Presentation-event records are quantized during explicit event wire shaping.
@@ -183,7 +183,7 @@ Protocol and wire behavior is documented in [Realtime WebSocket Protocol](../../
 
 Client inbound lane routing is documented in [Inbound Packet Routing](../../services/client/networking-flow/inbound-packet-routing.md).
 
-Future packetcodec and transport evolution must preserve these ownership seams. The current baseline includes ordered/reliable lanes for world, overlay, session, event, asteroid lifecycle, and bullet lifecycle traffic, plus unordered/unreliable hot lanes for asteroid and bullet movement traffic.
+Future packetcodec and transport evolution must preserve these ownership seams. The current baseline includes ordered/reliable lanes for world, overlay, session, event, ship lifecycle, asteroid lifecycle, and bullet lifecycle traffic, plus unordered/unreliable hot lanes for ship, asteroid, and bullet movement traffic.
 ## Notes
 
 The planning sections above intentionally avoid duplicating the runtime manuals in the implementation docs.

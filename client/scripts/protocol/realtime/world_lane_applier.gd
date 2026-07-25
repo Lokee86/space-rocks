@@ -48,6 +48,17 @@ func apply_world_delta(world_lane_state: WorldLaneState, baseline_tracker: Basel
 	return true
 
 
+func apply_ship_delta(world_lane_state: WorldLaneState, _lane: String, ship_packet: Dictionary) -> void:
+	if not world_lane_state.accept_ship_delta_sequence(ship_packet.get("sequence"), ship_packet.get("chunk_index", 0), ship_packet.get("chunk_count", 1)):
+		return
+	_apply_entity_deltas(world_lane_state, [], _array_field(ship_packet, "ship_updates"), [], "ship")
+
+func apply_ships_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> bool:
+	if not _valid_lifecycle_payload(packet, "ship_creates", "ship_deletes"):
+		return false
+	_apply_entity_deltas(world_lane_state, _array_field(packet, "ship_creates"), [], _array_field(packet, "ship_deletes"), "ship")
+	return true
+
 func apply_asteroid_delta(world_lane_state: WorldLaneState, _lane: String, asteroid_packet: Dictionary) -> void:
 	if not world_lane_state.accept_asteroid_delta_sequence(asteroid_packet.get("sequence"), asteroid_packet.get("chunk_index", 0), asteroid_packet.get("chunk_count", 1)):
 		return
@@ -137,7 +148,7 @@ func _apply_entity_update(world_lane_state: WorldLaneState, record: Dictionary, 
 	var decoded := _decode_entity_record(record, entity_kind)
 	match entity_kind:
 		"ship":
-			world_lane_state.merge_ship_update(decoded)
+			world_lane_state.merge_or_buffer_ship_update(decoded)
 		"bullet":
 			world_lane_state.merge_or_buffer_bullet_update(decoded)
 		"asteroid":

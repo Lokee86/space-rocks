@@ -288,7 +288,7 @@ Relevant client tests include:
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
 * `client/tests/unit/protocol/realtime/test_gameplay_readiness.gd`
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
-* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - lifecycle coverage for `apply_asteroids_lifecycle` and `apply_bullets_lifecycle`.
+* `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - lifecycle coverage for `apply_ships_lifecycle`, `apply_asteroids_lifecycle`, and `apply_bullets_lifecycle`.
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd` - lifecycle routing coverage.
 * `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd` - lifecycle validation, sequence, bounded queue capacity, overflow resync/recovery, post-overflow draining, and obsolete-baseline coverage.
 * `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` - protocol reset clears the replaced router and lifecycle gate state.

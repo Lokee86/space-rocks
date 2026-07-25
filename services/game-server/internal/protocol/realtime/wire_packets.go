@@ -9,6 +9,14 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime/quantize"
 )
 
+type ShipWireDeltaPacket struct {
+	Type        string `json:"type"`
+	Metadata    Metadata
+	ShipCreates []WorldShipWireRecord
+	ShipUpdates []map[string]any `json:"ship_updates"`
+	ShipDeletes []string
+}
+
 type AsteroidWireDeltaPacket struct {
 	Type            string `json:"type"`
 	Metadata        Metadata
@@ -258,6 +266,17 @@ func wireWorldWireDeltaPacket(packet WorldWireDeltaPacket) map[string]any {
 	putRecordArrayIfNonEmpty(wire, "pickup_creates", packet.Pickups.Creates)
 	putFilteredRecordArrayIfNonEmpty(wire, "pickup_updates", packet.Pickups.Updates, []string{"id", "x", "y", "age_seconds"})
 	putStringArrayIfNonEmpty(wire, "pickup_deletes", packet.Pickups.Deletes)
+	return wire
+}
+
+func wireShipWireDeltaPacket(packet ShipWireDeltaPacket) map[string]any {
+	wire := wireMetadataPacket(packet.Type, packet.Metadata)
+	if packet.Metadata.Lane == LaneShipsLifecycle {
+		putRecordArrayIfNonEmpty(wire, "ship_creates", packet.ShipCreates)
+		putStringArrayIfNonEmpty(wire, "ship_deletes", packet.ShipDeletes)
+		return wire
+	}
+	putFilteredRecordArrayIfNonEmpty(wire, "ship_updates", packet.ShipUpdates, []string{"id", "x", "y", "rotation", "thrusting"})
 	return wire
 }
 
@@ -544,7 +563,7 @@ func wireMetadataPacket(packetType string, metadata Metadata) map[string]any {
 
 func isRuntimePacketType(packetType string) bool {
 	switch packetType {
-	case PacketFamilyWorldFull, PacketTypeWorldDelta, PacketFamilyOverlayFull, PacketTypeOverlayDelta,
+	case PacketFamilyWorldFull, PacketTypeWorldDelta, PacketFamilyShipDelta, PacketFamilyOverlayFull, PacketTypeOverlayDelta,
 		PacketFamilySessionFull, PacketTypeSessionDelta, PacketFamilyAsteroidDelta, PacketFamilyBulletDelta:
 		return true
 	default:

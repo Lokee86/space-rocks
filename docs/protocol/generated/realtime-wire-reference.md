@@ -141,6 +141,8 @@ Parent index: [Generated](./!INDEX.md)
 | `event` | `event` |
 | `overlay` | `o` |
 | `session` | `s` |
+| `ships` | `sh` |
+| `ships.lifecycle` | `sl` |
 | `world` | `w` |
 
 ### `packet_type`
@@ -158,6 +160,8 @@ Parent index: [Generated](./!INDEX.md)
 | `resync_required` | `resync_required` |
 | `session_delta` | `sd` |
 | `session_full` | `sf` |
+| `ship_delta` | `spd` |
+| `ships_lifecycle` | `spl` |
 | `world_delta` | `wd` |
 | `world_full` | `wf` |
 
@@ -250,6 +254,8 @@ Parent index: [Generated](./!INDEX.md)
 | `resync_required` | `resync_required` | `control` | `` | `false` |
 | `session_delta` | `sd` | `session` | `delta` | `true` |
 | `session_full` | `sf` | `session` | `full` | `true` |
+| `ship_delta` | `spd` | `ships` | `delta` | `true` |
+| `ships_lifecycle` | `spl` | `ships.lifecycle` | `delta` | `false` |
 | `world_delta` | `wd` | `world` | `delta` | `true` |
 | `world_full` | `wf` | `world` | `full` | `true` |
 
@@ -786,6 +792,41 @@ Parent index: [Generated](./!INDEX.md)
 | --- | --- | --- | --- | --- | --- |
 | `id` | `id` | `` | `ship_id` | `` | `` |
 
+### `ship_lifecycle_create`
+
+- Encoding: `map`
+- Source struct: `ShipState`
+- Identity field: `id`
+- Sparse placeholder: ``
+- Sparse trailing: `false`
+- Preserve unknown fields: `false`
+
+| Name | JSON | Quantization | ID codec | Selector | Value domain |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `id` | `` | `` | `` | `` |
+| `ship_type` | `ship_type` | `` | `` | `` | `` |
+| `x` | `x` | `` | `` | `` | `` |
+| `y` | `y` | `` | `` | `` | `` |
+| `rotation` | `rotation` | `` | `` | `` | `` |
+| `health` | `health` | `` | `` | `` | `` |
+| `shields` | `shields` | `` | `` | `` | `` |
+| `thrusting` | `thrusting` | `` | `` | `` | `` |
+| `target_kind` | `target_kind` | `` | `` | `` | `` |
+| `target_id` | `target_id` | `` | `` | `` | `` |
+
+### `ship_lifecycle_delete_ids`
+
+- Encoding: `scalar_list`
+- Source struct: ``
+- Identity field: `id`
+- Sparse placeholder: ``
+- Sparse trailing: `false`
+- Preserve unknown fields: `false`
+
+| Name | JSON | Quantization | ID codec | Selector | Value domain |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `id` | `` | `` | `` | `` |
+
 ### `ship_update`
 
 - Encoding: `sparse_positional_tuple`
@@ -823,6 +864,9 @@ Parent index: [Generated](./!INDEX.md)
 | `session_delta` | `players` | `player_session` | `` |
 | `session_full` | `player_lifecycle` | `player_lifecycle` | `` |
 | `session_full` | `players` | `player_session` | `` |
+| `ship_delta` | `ship_updates` | `ship_update` | `` |
+| `ships_lifecycle` | `ship_creates` | `ship_lifecycle_create` | `ship_full` |
+| `ships_lifecycle` | `ship_deletes` | `ship_lifecycle_delete_ids` | `player_ids` |
 | `world_delta` | `asteroid_creates` | `asteroid_full` | `` |
 | `world_delta` | `asteroid_deletes` | `asteroid_ids` | `` |
 | `world_delta` | `asteroid_updates` | `asteroid_update` | `` |

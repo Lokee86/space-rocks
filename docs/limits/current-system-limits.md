@@ -27,7 +27,7 @@ Accepted practical ceilings that are not active bugs or roadmap work belong in [
 - The server is expected to be running separately for the Godot client.
 - Local server launch from the Godot client is not implemented.
 - The current client expects a local Go server target during development.
-- Realtime candidate construction uses an approximately 1,200-byte `HardCapBytes` limit for `world_full`, asteroid/bullet lifecycle, and asteroid/bullet movement candidates; splittable candidates are chunked before encoding and an individually oversized record fails explicitly.
+- Realtime candidate construction uses an approximately 1,200-byte `HardCapBytes` limit for `world_full`, ship/asteroid/bullet lifecycle, and ship/asteroid/bullet movement candidates; splittable candidates are chunked before encoding and an individually oversized record fails explicitly.
 
 #### Active client realtime receive limits
 

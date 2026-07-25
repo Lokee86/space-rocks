@@ -259,18 +259,16 @@ func TestSelectSendPlanIncludesChunkedRequiredLifecycleWithoutDeferral(t *testin
 	}
 }
 
-func TestIsRealHotLaneChunkRecordRejectsLifecycleLanes(t *testing.T) {
-	if isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneAsteroidsLifecycle, ChunkCount: 2}) {
-		t.Fatal("expected asteroid lifecycle record to bypass hot-lane chunking")
+func TestIsRealHotLaneChunkRecordSelectsHotMovementAndRejectsLifecycle(t *testing.T) {
+	for _, lane := range []Lane{LaneShipsLifecycle, LaneAsteroidsLifecycle, LaneBulletsLifecycle} {
+		if isRealHotLaneChunkRecord(ScheduleRecord{Lane: lane, ChunkCount: 2}) {
+			t.Fatalf("expected lifecycle lane %q not to be treated as hot movement", lane)
+		}
 	}
-	if isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneBulletsLifecycle, ChunkCount: 2}) {
-		t.Fatal("expected bullet lifecycle record to bypass hot-lane chunking")
-	}
-	if !isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneAsteroids, ChunkCount: 2}) {
-		t.Fatal("expected asteroid hot-lane record to use hot-lane chunking")
-	}
-	if !isRealHotLaneChunkRecord(ScheduleRecord{Lane: LaneBullets, ChunkCount: 2}) {
-		t.Fatal("expected bullet hot-lane record to use hot-lane chunking")
+	for _, lane := range []Lane{LaneShips, LaneAsteroids, LaneBullets} {
+		if !isRealHotLaneChunkRecord(ScheduleRecord{Lane: lane, ChunkCount: 1}) {
+			t.Fatalf("expected hot movement lane %q to be selected even when unchunked", lane)
+		}
 	}
 }
 

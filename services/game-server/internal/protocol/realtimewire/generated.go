@@ -292,8 +292,8 @@ var RealtimeWireKeyReadableByCompact = map[string]string{
 }
 var RealtimeWireValueDomains = map[string][]RealtimeWireValueAlias{
 	"event_type": {{Domain: "event_type", Readable: "bullet_blast", Compact: "bb"}, {Domain: "event_type", Readable: "damage_applied", Compact: "dmg"}, {Domain: "event_type", Readable: "damage_over_time_started", Compact: "dots"}, {Domain: "event_type", Readable: "damage_over_time_tick", Compact: "dott"}, {Domain: "event_type", Readable: "pickup_collected", Compact: "pcol"}, {Domain: "event_type", Readable: "pickup_dropped", Compact: "pdr"}, {Domain: "event_type", Readable: "pickup_effect_applied", Compact: "pea"}, {Domain: "event_type", Readable: "pickup_expired", Compact: "pexp"}, {Domain: "event_type", Readable: "radial_effect_started", Compact: "rfx"}, {Domain: "event_type", Readable: "ship_death", Compact: "shd"}},
-	"lane": {{Domain: "lane", Readable: "asteroids", Compact: "a"}, {Domain: "lane", Readable: "asteroids.lifecycle", Compact: "al"}, {Domain: "lane", Readable: "bullets", Compact: "b"}, {Domain: "lane", Readable: "bullets.lifecycle", Compact: "bl"}, {Domain: "lane", Readable: "control", Compact: "control"}, {Domain: "lane", Readable: "event", Compact: "event"}, {Domain: "lane", Readable: "overlay", Compact: "o"}, {Domain: "lane", Readable: "session", Compact: "s"}, {Domain: "lane", Readable: "world", Compact: "w"}},
-	"packet_type": {{Domain: "packet_type", Readable: "asteroid_delta", Compact: "ad"}, {Domain: "packet_type", Readable: "asteroids_lifecycle", Compact: "al"}, {Domain: "packet_type", Readable: "bullet_delta", Compact: "bd"}, {Domain: "packet_type", Readable: "bullets_lifecycle", Compact: "bl"}, {Domain: "packet_type", Readable: "event_batch", Compact: "eb"}, {Domain: "packet_type", Readable: "overlay_delta", Compact: "od"}, {Domain: "packet_type", Readable: "overlay_full", Compact: "of"}, {Domain: "packet_type", Readable: "resync_request", Compact: "resync_request"}, {Domain: "packet_type", Readable: "resync_required", Compact: "resync_required"}, {Domain: "packet_type", Readable: "session_delta", Compact: "sd"}, {Domain: "packet_type", Readable: "session_full", Compact: "sf"}, {Domain: "packet_type", Readable: "world_delta", Compact: "wd"}, {Domain: "packet_type", Readable: "world_full", Compact: "wf"}},
+	"lane": {{Domain: "lane", Readable: "asteroids", Compact: "a"}, {Domain: "lane", Readable: "asteroids.lifecycle", Compact: "al"}, {Domain: "lane", Readable: "bullets", Compact: "b"}, {Domain: "lane", Readable: "bullets.lifecycle", Compact: "bl"}, {Domain: "lane", Readable: "control", Compact: "control"}, {Domain: "lane", Readable: "event", Compact: "event"}, {Domain: "lane", Readable: "overlay", Compact: "o"}, {Domain: "lane", Readable: "session", Compact: "s"}, {Domain: "lane", Readable: "ships", Compact: "sh"}, {Domain: "lane", Readable: "ships.lifecycle", Compact: "sl"}, {Domain: "lane", Readable: "world", Compact: "w"}},
+	"packet_type": {{Domain: "packet_type", Readable: "asteroid_delta", Compact: "ad"}, {Domain: "packet_type", Readable: "asteroids_lifecycle", Compact: "al"}, {Domain: "packet_type", Readable: "bullet_delta", Compact: "bd"}, {Domain: "packet_type", Readable: "bullets_lifecycle", Compact: "bl"}, {Domain: "packet_type", Readable: "event_batch", Compact: "eb"}, {Domain: "packet_type", Readable: "overlay_delta", Compact: "od"}, {Domain: "packet_type", Readable: "overlay_full", Compact: "of"}, {Domain: "packet_type", Readable: "resync_request", Compact: "resync_request"}, {Domain: "packet_type", Readable: "resync_required", Compact: "resync_required"}, {Domain: "packet_type", Readable: "session_delta", Compact: "sd"}, {Domain: "packet_type", Readable: "session_full", Compact: "sf"}, {Domain: "packet_type", Readable: "ship_delta", Compact: "spd"}, {Domain: "packet_type", Readable: "ships_lifecycle", Compact: "spl"}, {Domain: "packet_type", Readable: "world_delta", Compact: "wd"}, {Domain: "packet_type", Readable: "world_full", Compact: "wf"}},
 	"snapshot_kind": {{Domain: "snapshot_kind", Readable: "delta", Compact: "d"}, {Domain: "snapshot_kind", Readable: "full", Compact: "f"}},
 }
 var RealtimeWireValueCompactByReadable = map[string]map[string]string{
@@ -318,6 +318,8 @@ var RealtimeWireValueCompactByReadable = map[string]map[string]string{
 		"event": "event",
 		"overlay": "o",
 		"session": "s",
+		"ships": "sh",
+		"ships.lifecycle": "sl",
 		"world": "w",
 	},
 	"packet_type": {
@@ -332,6 +334,8 @@ var RealtimeWireValueCompactByReadable = map[string]map[string]string{
 		"resync_required": "resync_required",
 		"session_delta": "sd",
 		"session_full": "sf",
+		"ship_delta": "spd",
+		"ships_lifecycle": "spl",
 		"world_delta": "wd",
 		"world_full": "wf",
 	},
@@ -362,6 +366,8 @@ var RealtimeWireValueReadableByCompact = map[string]map[string]string{
 		"event": "event",
 		"o": "overlay",
 		"s": "session",
+		"sh": "ships",
+		"sl": "ships.lifecycle",
 		"w": "world",
 	},
 	"packet_type": {
@@ -376,6 +382,8 @@ var RealtimeWireValueReadableByCompact = map[string]map[string]string{
 		"resync_required": "resync_required",
 		"sd": "session_delta",
 		"sf": "session_full",
+		"spd": "ship_delta",
+		"spl": "ships_lifecycle",
 		"wd": "world_delta",
 		"wf": "world_full",
 	},
@@ -452,6 +460,8 @@ var RealtimeWirePackets = []RealtimeWirePacket{
 	{ID: "resync_required", Compact: "resync_required", Lane: "control", SnapshotKind: "", Runtime: false, InferLane: false, InferSnapshotKind: false, InferSnapshotID: false, InferBaselineID: false, UseBaselineSequence: false, OmitSingleChunkMetadata: false},
 	{ID: "session_delta", Compact: "sd", Lane: "session", SnapshotKind: "delta", Runtime: true, InferLane: true, InferSnapshotKind: true, InferSnapshotID: true, InferBaselineID: false, UseBaselineSequence: true, OmitSingleChunkMetadata: true},
 	{ID: "session_full", Compact: "sf", Lane: "session", SnapshotKind: "full", Runtime: true, InferLane: true, InferSnapshotKind: true, InferSnapshotID: true, InferBaselineID: true, UseBaselineSequence: false, OmitSingleChunkMetadata: true},
+	{ID: "ship_delta", Compact: "spd", Lane: "ships", SnapshotKind: "delta", Runtime: true, InferLane: true, InferSnapshotKind: true, InferSnapshotID: true, InferBaselineID: false, UseBaselineSequence: true, OmitSingleChunkMetadata: true},
+	{ID: "ships_lifecycle", Compact: "spl", Lane: "ships.lifecycle", SnapshotKind: "delta", Runtime: false, InferLane: false, InferSnapshotKind: false, InferSnapshotID: false, InferBaselineID: false, UseBaselineSequence: false, OmitSingleChunkMetadata: false},
 	{ID: "world_delta", Compact: "wd", Lane: "world", SnapshotKind: "delta", Runtime: true, InferLane: true, InferSnapshotKind: true, InferSnapshotID: true, InferBaselineID: false, UseBaselineSequence: true, OmitSingleChunkMetadata: true},
 	{ID: "world_full", Compact: "wf", Lane: "world", SnapshotKind: "full", Runtime: true, InferLane: true, InferSnapshotKind: true, InferSnapshotID: true, InferBaselineID: true, UseBaselineSequence: false, OmitSingleChunkMetadata: true},
 }
@@ -467,6 +477,8 @@ var RealtimeWirePacketByCompact = map[string]string{
 	"resync_required": "resync_required",
 	"sd": "session_delta",
 	"sf": "session_full",
+	"spd": "ship_delta",
+	"spl": "ships_lifecycle",
 	"wd": "world_delta",
 	"wf": "world_full",
 }
@@ -692,6 +704,21 @@ var RealtimeWireRecords = []RealtimeWireRecord{
 	{ID: "ship_ids", SourceStruct: "", Encoding: "scalar_id_list", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "ship_id", IDCodecBy: "", ValueDomain: ""},
 	}},
+	{ID: "ship_lifecycle_create", SourceStruct: "ShipState", Encoding: "map", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
+		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "ship_type", JSON: "ship_type", CompactKey: "st", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "x", JSON: "x", CompactKey: "x", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "y", JSON: "y", CompactKey: "y", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "rotation", JSON: "rotation", CompactKey: "r", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "health", JSON: "health", CompactKey: "h", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "shields", JSON: "shields", CompactKey: "sh", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "thrusting", JSON: "thrusting", CompactKey: "th", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "target_kind", JSON: "target_kind", CompactKey: "tk", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "target_id", JSON: "target_id", CompactKey: "tid", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+	}},
+	{ID: "ship_lifecycle_delete_ids", SourceStruct: "", Encoding: "scalar_list", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
+		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+	}},
 	{ID: "ship_update", SourceStruct: "ShipState", Encoding: "sparse_positional_tuple", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: true, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "player_id", IDCodecBy: "", ValueDomain: ""},
 		{Name: "x", JSON: "x", CompactKey: "x", Quantization: "position", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
@@ -717,6 +744,9 @@ var RealtimeWirePacketFieldBindings = []RealtimeWirePacketFieldBinding{
 	{PacketID: "session_delta", ReadableField: "players", RecordIDs: []string{"player_session"}},
 	{PacketID: "session_full", ReadableField: "player_lifecycle", RecordIDs: []string{"player_lifecycle"}},
 	{PacketID: "session_full", ReadableField: "players", RecordIDs: []string{"player_session"}},
+	{PacketID: "ship_delta", ReadableField: "ship_updates", RecordIDs: []string{"ship_update"}},
+	{PacketID: "ships_lifecycle", ReadableField: "ship_creates", RecordIDs: []string{"ship_lifecycle_create"}},
+	{PacketID: "ships_lifecycle", ReadableField: "ship_deletes", RecordIDs: []string{"ship_lifecycle_delete_ids"}},
 	{PacketID: "world_delta", ReadableField: "asteroid_creates", RecordIDs: []string{"asteroid_full"}},
 	{PacketID: "world_delta", ReadableField: "asteroid_deletes", RecordIDs: []string{"asteroid_ids"}},
 	{PacketID: "world_delta", ReadableField: "asteroid_updates", RecordIDs: []string{"asteroid_update"}},

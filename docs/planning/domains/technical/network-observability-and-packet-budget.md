@@ -39,7 +39,7 @@ These are the current project policy numbers for realtime gameplay traffic:
 - Realtime gameplay datagrams must stay below roughly 1,100-1,200 B.
 - Non-realtime, control, and debug payloads are separate from gameplay packet budgets and must not redefine the realtime budget.
 
-The roughly 1,200 B `HardCapBytes` limit is a per-candidate construction cap for `world_full`, `asteroids_lifecycle`, `bullets_lifecycle`, `asteroid_delta`, and `bullet_delta`. Server candidate expansion exact-encodes compact payloads while constructing chunks, preserves logical identity metadata, and explicitly errors when one record cannot fit. The scheduler's 500 B `TargetBytes` value is an advisory candidate-selection target, not an aggregate per-tick transport cap. One tick may emit multiple chunks, so the total encoded bytes across all messages in that tick are not currently capped by `TargetBytes`.
+The roughly 1,200 B `HardCapBytes` limit is a per-candidate construction cap for `world_full`, `ships_lifecycle`, `asteroids_lifecycle`, `bullets_lifecycle`, `ship_delta`, `asteroid_delta`, and `bullet_delta`. Server candidate expansion exact-encodes compact payloads while constructing chunks, preserves logical identity metadata, and explicitly errors when one record cannot fit. The scheduler's 500 B `TargetBytes` value is an advisory candidate-selection target, not an aggregate per-tick transport cap. One tick may emit multiple chunks, so the total encoded bytes across all messages in that tick are not currently capped by `TargetBytes`.
 
 ## Current Inputs
 
@@ -82,13 +82,13 @@ P1 answers whether the current lane-native realtime architecture can safely supp
 - `packet_count` is a count of encoded packets written, not unique lanes.
 - Encoded bandwidth evidence should be interpreted with write cadence: under peak stress, bandwidth may drop because write cadence drops even while entity pressure rises.
 - Hot movement cadence is enforced during candidate construction using an independent per-session 60 Hz cadence tick: asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
-- Non-hot world changes and asteroid/bullet lifecycle changes force immediate hot emission and projection advancement.
+- Non-hot world changes and ship/asteroid/bullet lifecycle changes force immediate hot emission and projection advancement.
 - Successful per-packet wire logs and non-empty per-tick write summaries measure packets actually written; cadence labels describe the enforced candidate policy.
 - Large-packet warnings and slow-write diagnostics should be treated as partial or seam-specific support only where current code still emits them, not as the complete current evidence story.
 - `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.
 Recent extreme debug bullet-stream stress showed server-side hot-lane delivery sustaining 60 Hz writes with complete same-sequence bullet chunks under the encoded hard cap in that tested configuration. This historical result does not override the current bullet `full_owned_30hz`/`full_owned_20hz` cadence policy; those modes do not govern ordinary unchunked asteroids. Client-side projectile rendering anomalies around roughly 450-500 active projectiles are tracked as a stable limitation rather than as active evidence of server packet starvation.
-Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable asteroid/bullet hot movement lanes, dedicated ordered/reliable asteroid/bullet lifecycle lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable `sr.asteroids` and `sr.bullets`.
+Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable ship/asteroid/bullet hot movement lanes, dedicated ordered/reliable ship/asteroid/bullet lifecycle lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable `sr.ships`, `sr.asteroids`, and `sr.bullets`.
 
 ### Future-State Note
 

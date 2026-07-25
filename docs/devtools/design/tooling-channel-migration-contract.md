@@ -24,7 +24,7 @@ Implemented foundations:
 
 ```text
 sr.tooling negotiated channel id 9
-mandatory readiness with the eight gameplay channels
+mandatory readiness with the ten gameplay channels
 reliable, ordered, bidirectional delivery
 lane-aware client and server routing
 measurement request/response consumer

@@ -64,10 +64,13 @@ func ShadowLaneMetricRecords(result ShadowRealtimeResult) []packetmetrics.Packet
 		record.Channel = diagnostics.Channel
 		record.EncodedBytes = diagnostics.EncodedBytes
 		record.WorldHotCount = diagnostics.WorldHotCount
+		record.ShipHotCount = diagnostics.ShipHotCount
 		record.AsteroidHotCount = diagnostics.AsteroidHotCount
 		record.BulletHotCount = diagnostics.BulletHotCount
+		record.ShipOffloadedCount = diagnostics.ShipOffloadedCount
 		record.AsteroidOffloadedCount = diagnostics.AsteroidOffloadedCount
 		record.BulletOffloadedCount = diagnostics.BulletOffloadedCount
+		record.ShipMode = string(diagnostics.ShipMode)
 		record.AsteroidMode = string(diagnostics.AsteroidMode)
 		record.BulletMode = string(diagnostics.BulletMode)
 		record.Cadence = diagnostics.Cadence

@@ -1,5 +1,18 @@
 package realtime
 
+func (packet ShipWireDeltaPacket) Lane() Lane { return packet.Metadata.Lane }
+func (packet ShipWireDeltaPacket) CandidateKind() RealtimeLaneCandidateKind {
+	return RealtimeLaneCandidateKindDelta
+}
+func (packet ShipWireDeltaPacket) PacketFamily() string { return packet.Type }
+func (packet ShipWireDeltaPacket) LaneMetadata() (Metadata, bool) {
+	return packet.Metadata, packet.Metadata != (Metadata{})
+}
+func (packet ShipWireDeltaPacket) WirePacket() map[string]any {
+	return wireShipWireDeltaPacket(packet)
+}
+func (ShipWireDeltaPacket) realtimeLanePayload() {}
+
 func (packet AsteroidWireDeltaPacket) Lane() Lane { return packet.Metadata.Lane }
 func (packet AsteroidWireDeltaPacket) CandidateKind() RealtimeLaneCandidateKind {
 	return RealtimeLaneCandidateKindDelta

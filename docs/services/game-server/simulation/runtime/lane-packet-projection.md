@@ -27,10 +27,10 @@ authoritative game state
 -> raw lane records
 -> numeric wire quantization into wire-shaped records
 -> lane candidate selection, delta comparison, and hot movement split
--> regular asteroid movement updates move to dedicated hot-lane delta packets on sr.asteroids, and bullet movement updates move to dedicated hot-lane delta packets on sr.bullets
--> asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.asteroids.lifecycle and sr.bullets.lifecycle
--> oversized asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
--> the chunker is the only hard-size guard for asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
+-> regular ship movement updates move to dedicated hot-lane delta packets on sr.ships, asteroid movement updates move to sr.asteroids, and bullet movement updates move to sr.bullets
+-> ship/asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.ships.lifecycle, sr.asteroids.lifecycle, and sr.bullets.lifecycle
+-> oversized ship/asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
+-> the chunker is the only hard-size guard for ship/asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
 -> typed candidate payload
 -> payload wire serializer produces the sparse readable wire map
 -> compact descriptor encoder
@@ -51,7 +51,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive asteroid/bullet movement splitting, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot-lane hard-size guarding for asteroid and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for asteroid and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive ship/asteroid/bullet movement splitting, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot-lane hard-size guarding for ship, asteroid, and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for ship, asteroid, and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -123,7 +123,7 @@ event_batch
 
 Asteroid and bullet lanes produce hot, high-priority, supersedable movement candidates. Lifecycle defines existence. Hot lanes update known entities only.
 
-Hot movement cadence is enforced during candidate construction using an independent per-session 60 Hz cadence tick. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression. Non-hot world changes and asteroid/bullet lifecycle changes force immediate hot emission and advance the shared world projection chain. This is replication policy owned by protocol/realtime; networking owns invocation and successful-write handling.
+Hot movement cadence is enforced during candidate construction using an independent per-session 60 Hz cadence tick. Ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression. Non-hot world changes and ship/asteroid/bullet lifecycle changes force immediate hot emission and advance the shared world projection chain. This is replication policy owned by protocol/realtime; networking owns invocation and successful-write handling.
 
 Lifecycle candidates are required/critical and must not be treated as hot-supersedable movement candidates.
 
@@ -214,8 +214,8 @@ Projection, shadow, and inspection paths must not treat event access as an impli
 Relevant active files include:
 
 * `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, generated compact descriptor application, encoded-byte accounting inputs, and shadow/parity helpers.
-* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
-* `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `asteroid_delta` and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
+* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive ship/asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
+* `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
 * `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - conservative compact-JSON byte estimation used by hot-lane chunk construction.
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.

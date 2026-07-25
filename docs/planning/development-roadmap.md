@@ -61,7 +61,7 @@ P3A automated verification baseline implemented.
 P3 observability and release-foundation baseline is implemented; remaining work is explicit below.
 ```
 
-Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
+Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused ship/asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 

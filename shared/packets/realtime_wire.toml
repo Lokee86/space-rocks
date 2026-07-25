@@ -362,10 +362,10 @@ compact = "spy"
 
 [[value_domains]]
 id = "packet_type"
-entries = [{ readable = "world_full", compact = "wf" }, { readable = "world_delta", compact = "wd" }, { readable = "overlay_full", compact = "of" }, { readable = "overlay_delta", compact = "od" }, { readable = "session_full", compact = "sf" }, { readable = "session_delta", compact = "sd" }, { readable = "asteroid_delta", compact = "ad" }, { readable = "asteroids_lifecycle", compact = "al" }, { readable = "bullet_delta", compact = "bd" }, { readable = "bullets_lifecycle", compact = "bl" }, { readable = "event_batch", compact = "eb" }, { readable = "resync_request", compact = "resync_request" }, { readable = "resync_required", compact = "resync_required" }]
+entries = [{ readable = "world_full", compact = "wf" }, { readable = "world_delta", compact = "wd" }, { readable = "ship_delta", compact = "spd" }, { readable = "ships_lifecycle", compact = "spl" }, { readable = "overlay_full", compact = "of" }, { readable = "overlay_delta", compact = "od" }, { readable = "session_full", compact = "sf" }, { readable = "session_delta", compact = "sd" }, { readable = "asteroid_delta", compact = "ad" }, { readable = "asteroids_lifecycle", compact = "al" }, { readable = "bullet_delta", compact = "bd" }, { readable = "bullets_lifecycle", compact = "bl" }, { readable = "event_batch", compact = "eb" }, { readable = "resync_request", compact = "resync_request" }, { readable = "resync_required", compact = "resync_required" }]
 [[value_domains]]
 id = "lane"
-entries = [{ readable = "world", compact = "w" }, { readable = "overlay", compact = "o" }, { readable = "session", compact = "s" }, { readable = "asteroids", compact = "a" }, { readable = "bullets", compact = "b" }, { readable = "asteroids.lifecycle", compact = "al" }, { readable = "bullets.lifecycle", compact = "bl" }, { readable = "event", compact = "event" }, { readable = "control", compact = "control" }]
+entries = [{ readable = "world", compact = "w" }, { readable = "overlay", compact = "o" }, { readable = "session", compact = "s" }, { readable = "ships", compact = "sh" }, { readable = "ships.lifecycle", compact = "sl" }, { readable = "asteroids", compact = "a" }, { readable = "bullets", compact = "b" }, { readable = "asteroids.lifecycle", compact = "al" }, { readable = "bullets.lifecycle", compact = "bl" }, { readable = "event", compact = "event" }, { readable = "control", compact = "control" }]
 [[value_domains]]
 id = "snapshot_kind"
 entries = [{ readable = "full", compact = "f" }, { readable = "delta", compact = "d" }]
@@ -610,6 +610,23 @@ infer_snapshot_kind = true
 infer_snapshot_id = true
 use_baseline_sequence = true
 omit_single_chunk_metadata = true
+[[packets]]
+id = "ship_delta"
+compact = "spd"
+lane = "ships"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+use_baseline_sequence = true
+omit_single_chunk_metadata = true
+[[packets]]
+id = "ships_lifecycle"
+compact = "spl"
+lane = "ships.lifecycle"
+snapshot_kind = "delta"
+runtime = false
 [[packets]]
 id = "overlay_full"
 compact = "of"
@@ -930,6 +947,50 @@ quantization = "position"
 name = "age_seconds"
 json = "age_seconds"
 quantization = "seconds"
+
+[[records]]
+id = "ship_lifecycle_create"
+source_struct = "ShipState"
+encoding = "map"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+[[records.fields]]
+name = "ship_type"
+json = "ship_type"
+[[records.fields]]
+name = "x"
+json = "x"
+[[records.fields]]
+name = "y"
+json = "y"
+[[records.fields]]
+name = "rotation"
+json = "rotation"
+[[records.fields]]
+name = "health"
+json = "health"
+[[records.fields]]
+name = "shields"
+json = "shields"
+[[records.fields]]
+name = "thrusting"
+json = "thrusting"
+[[records.fields]]
+name = "target_kind"
+json = "target_kind"
+[[records.fields]]
+name = "target_id"
+json = "target_id"
+
+[[records]]
+id = "ship_lifecycle_delete_ids"
+encoding = "scalar_list"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
 
 [[records]]
 id = "asteroid_lifecycle_create"
@@ -1495,6 +1556,20 @@ record_id = "ship_update"
 packet_id = "world_delta"
 readable_field = "ship_deletes"
 record_id = "player_ids"
+[[packet_fields]]
+packet_id = "ship_delta"
+readable_field = "ship_updates"
+record_id = "ship_update"
+[[packet_fields]]
+packet_id = "ships_lifecycle"
+readable_field = "ship_creates"
+record_id = "ship_lifecycle_create"
+decode_record_ids = ["ship_full"]
+[[packet_fields]]
+packet_id = "ships_lifecycle"
+readable_field = "ship_deletes"
+record_id = "ship_lifecycle_delete_ids"
+decode_record_ids = ["player_ids"]
 [[packet_fields]]
 packet_id = "world_delta"
 readable_field = "bullet_creates"

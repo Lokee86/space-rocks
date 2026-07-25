@@ -1,6 +1,8 @@
 extends RefCounted
 
 const LANE_WORLD := "world"
+const LANE_SHIPS := "ships"
+const LANE_SHIPS_LIFECYCLE := "ships.lifecycle"
 const LANE_ASTEROIDS := "asteroids"
 const LANE_ASTEROIDS_LIFECYCLE := "asteroids.lifecycle"
 const LANE_BULLETS := "bullets"

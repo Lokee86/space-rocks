@@ -4,14 +4,18 @@ import "sort"
 
 type HotLaneSplitResult struct {
 	WorldDelta        WorldWireDeltaPacket
+	ShipDelta         *ShipWireDeltaPacket
 	AsteroidDelta     *AsteroidWireDeltaPacket
 	BulletDelta       *BulletWireDeltaPacket
 	CohortState       HotLaneCohortState
 	WorldHotCount     int
+	ShipHotCount      int
 	AsteroidHotCount  int
 	BulletHotCount    int
+	ShipOffloaded     int
 	AsteroidOffloaded int
 	BulletOffloaded   int
+	ShipMode          HotLaneMode
 	AsteroidMode      HotLaneMode
 	BulletMode        HotLaneMode
 }
@@ -25,21 +29,41 @@ type hotLaneSortedUpdateIDs []hotLaneSortedUpdateID
 func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCohortState, _ HotLaneOffloadPolicy) HotLaneSplitResult {
 	cohortState.EnsureInitialized()
 
+	shipActive := activeUpdateIDsFromWireRecords(worldDelta.Ships.Updates)
 	asteroidActive := activeUpdateIDsFromWireRecords(worldDelta.Asteroids.Updates)
 	bulletActive := activeUpdateIDsFromWireRecords(worldDelta.Bullets.Updates)
+	shipIDs := sortedHotLaneUpdateIDs(shipActive)
 	asteroidIDs := sortedHotLaneUpdateIDs(asteroidActive)
 	bulletIDs := sortedHotLaneUpdateIDs(bulletActive)
 
 	result := HotLaneSplitResult{
 		WorldDelta:       worldDelta,
 		CohortState:      cohortState,
+		ShipMode:         HotLaneModeInline,
 		AsteroidMode:     HotLaneModeInline,
 		BulletMode:       HotLaneModeInline,
+		ShipHotCount:     len(shipIDs),
 		AsteroidHotCount: len(asteroidIDs),
 		BulletHotCount:   len(bulletIDs),
 	}
-	result.WorldHotCount = result.AsteroidHotCount + result.BulletHotCount
+	result.WorldHotCount = result.ShipHotCount + result.AsteroidHotCount + result.BulletHotCount
 
+	if len(shipIDs) > 0 {
+		assignHotRoutesWithOverride(result.CohortState.ShipRoutes, shipIDs, HotUpdateRouteShips)
+		result.WorldDelta.Ships.Updates = nil
+		result.ShipMode = HotLaneModeFullOwned60Hz
+		result.CohortState.ShipMode = result.ShipMode
+		result.ShipOffloaded = len(shipIDs)
+		metadata := worldDelta.Metadata
+		metadata.Lane = LaneShips
+		metadata.SnapshotKind = SnapshotKind("delta")
+		metadata = metadata.WithChunk(0, 1)
+		result.ShipDelta = &ShipWireDeltaPacket{
+			Type:        PacketFamilyShipDelta,
+			Metadata:    metadata,
+			ShipUpdates: worldDelta.Ships.Updates,
+		}
+	}
 	if len(asteroidIDs) > 0 {
 		assignHotRoutesWithOverride(result.CohortState.AsteroidRoutes, asteroidIDs, HotUpdateRouteAsteroids)
 		result.WorldDelta.Asteroids.Updates = nil
@@ -72,6 +96,7 @@ func SplitWorldHotUpdates(worldDelta WorldWireDeltaPacket, cohortState HotLaneCo
 			BulletUpdates: worldDelta.Bullets.Updates,
 		}
 	}
+	result.CohortState.RemoveMissingShips(shipActive)
 	result.CohortState.RemoveMissingAsteroids(asteroidActive)
 	result.CohortState.RemoveMissingBullets(bulletActive)
 	return result

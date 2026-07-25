@@ -14,10 +14,13 @@ type CandidateWriteDiagnostics struct {
 	Channel                string
 	EncodedBytes           int
 	WorldHotCount          int
+	ShipHotCount           int
 	AsteroidHotCount       int
 	BulletHotCount         int
+	ShipOffloadedCount     int
 	AsteroidOffloadedCount int
 	BulletOffloadedCount   int
+	ShipMode               HotLaneMode
 	AsteroidMode           HotLaneMode
 	BulletMode             HotLaneMode
 	Cadence                string
@@ -34,10 +37,10 @@ func CandidateWriteDiagnosticsFor(candidate RealtimeLaneCandidate, state Realtim
 		Channel:      string(lane),
 		EncodedBytes: encodedBytes,
 	}
-	if lane == LaneAsteroids || lane == LaneBullets {
+	if lane == LaneShips || lane == LaneAsteroids || lane == LaneBullets {
 		diagnostics.Cadence = hotPacketCadenceForDiagnostics(candidate, state)
-		diagnostics.WorldHotCount, diagnostics.AsteroidHotCount, diagnostics.BulletHotCount, diagnostics.AsteroidOffloadedCount, diagnostics.BulletOffloadedCount = hotLaneCountsForDiagnostics(candidate)
-		diagnostics.AsteroidMode, diagnostics.BulletMode = hotLaneModesForDiagnostics(state)
+		diagnostics.WorldHotCount, diagnostics.ShipHotCount, diagnostics.AsteroidHotCount, diagnostics.BulletHotCount, diagnostics.ShipOffloadedCount, diagnostics.AsteroidOffloadedCount, diagnostics.BulletOffloadedCount = hotLaneCountsForDiagnostics(candidate)
+		diagnostics.ShipMode, diagnostics.AsteroidMode, diagnostics.BulletMode = hotLaneModesForDiagnostics(state)
 		diagnostics.PacketOverTarget = encodedBytes > WarningBytes && encodedBytes < HardCapBytes
 		diagnostics.PacketOverHardCap = encodedBytes >= HardCapBytes
 	}
@@ -60,6 +63,9 @@ func hotPacketCadenceForDiagnostics(candidate RealtimeLaneCandidate, state Realt
 	laneState, ok := state.LaneState(LaneWorld)
 	if !ok {
 		return "inline"
+	}
+	if lane == LaneShips {
+		return hotPacketCadenceLabel(state.HotLaneCohorts.ShipMode, laneState.Sequence)
 	}
 	if lane == LaneAsteroids {
 		return hotPacketCadenceLabel(state.HotLaneCohorts.AsteroidMode, laneState.Sequence)
@@ -87,17 +93,19 @@ func hotPacketCadenceLabel(mode HotLaneMode, sequence int) string {
 	}
 }
 
-func hotLaneModesForDiagnostics(state RealtimeSessionState) (HotLaneMode, HotLaneMode) {
-	return state.HotLaneCohorts.AsteroidMode, state.HotLaneCohorts.BulletMode
+func hotLaneModesForDiagnostics(state RealtimeSessionState) (HotLaneMode, HotLaneMode, HotLaneMode) {
+	return state.HotLaneCohorts.ShipMode, state.HotLaneCohorts.AsteroidMode, state.HotLaneCohorts.BulletMode
 }
 
-func hotLaneCountsForDiagnostics(candidate RealtimeLaneCandidate) (int, int, int, int, int) {
+func hotLaneCountsForDiagnostics(candidate RealtimeLaneCandidate) (int, int, int, int, int, int, int) {
 	switch delta := candidate.Payload.(type) {
+	case ShipWireDeltaPacket:
+		return 0, len(delta.ShipUpdates), 0, 0, len(delta.ShipUpdates), 0, 0
 	case AsteroidWireDeltaPacket:
-		return 0, len(delta.AsteroidUpdates), 0, len(delta.AsteroidUpdates), 0
+		return 0, 0, len(delta.AsteroidUpdates), 0, 0, len(delta.AsteroidUpdates), 0
 	case BulletWireDeltaPacket:
-		return 0, 0, len(delta.BulletUpdates), 0, len(delta.BulletUpdates)
+		return 0, 0, 0, len(delta.BulletUpdates), 0, 0, len(delta.BulletUpdates)
 	default:
-		return 0, 0, 0, 0, 0
+		return 0, 0, 0, 0, 0, 0, 0
 	}
 }

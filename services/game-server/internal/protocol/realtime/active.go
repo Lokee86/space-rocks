@@ -163,10 +163,13 @@ func ActiveLaneMetricRecords(result ActiveRealtimeResult) []packetmetrics.Packet
 		record.Channel = diagnostics.Channel
 		record.EncodedBytes = diagnostics.EncodedBytes
 		record.WorldHotCount = diagnostics.WorldHotCount
+		record.ShipHotCount = diagnostics.ShipHotCount
 		record.AsteroidHotCount = diagnostics.AsteroidHotCount
 		record.BulletHotCount = diagnostics.BulletHotCount
+		record.ShipOffloadedCount = diagnostics.ShipOffloadedCount
 		record.AsteroidOffloadedCount = diagnostics.AsteroidOffloadedCount
 		record.BulletOffloadedCount = diagnostics.BulletOffloadedCount
+		record.ShipMode = string(diagnostics.ShipMode)
 		record.AsteroidMode = string(diagnostics.AsteroidMode)
 		record.BulletMode = string(diagnostics.BulletMode)
 		record.Cadence = diagnostics.Cadence
@@ -205,7 +208,7 @@ func encodeLanePacketUnchecked(candidate RealtimeLaneCandidate) ([]byte, int, er
 	if err != nil {
 		return nil, 0, err
 	}
-	if candidate.Lane() == LaneWorld || candidate.Lane() == LaneSession || candidate.Lane() == LaneOverlay || candidate.Lane() == LaneEvent || candidate.Lane() == LaneAsteroids || candidate.Lane() == LaneBullets || candidate.Lane() == LaneAsteroidsLifecycle || candidate.Lane() == LaneBulletsLifecycle {
+	if candidate.Lane() == LaneWorld || candidate.Lane() == LaneSession || candidate.Lane() == LaneOverlay || candidate.Lane() == LaneEvent || candidate.Lane() == LaneShips || candidate.Lane() == LaneAsteroids || candidate.Lane() == LaneBullets || candidate.Lane() == LaneShipsLifecycle || candidate.Lane() == LaneAsteroidsLifecycle || candidate.Lane() == LaneBulletsLifecycle {
 		packet = CompactWirePacket(packet)
 		if len(packet) == 0 {
 			return nil, 0, fmt.Errorf("compact lane packet is empty")

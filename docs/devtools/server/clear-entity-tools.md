@@ -29,7 +29,7 @@ debug_clear_asteroids
 
 Both commands are room/global commands. They do not target a player, do not use placement coordinates, and do not resolve through the canonical gameplay target. `GameplayDebugFlow` or `DevConnectionService` builds the command payload with `request_id` and `trace_id`; `ClientConnectionService.send_tooling_packet()` sends it through `sr.tooling`; and server networking/tooling capability-checks and dispatches it to the existing devtools controller before the authoritative `Game` entity store is mutated through `Control.ClearBullets` and `Control.ClearAsteroids`.
 
-Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
+Debug/devtools entity creation and clearing are reflected to clients through normal realtime entity-family lanes: ship/asteroid/bullet lifecycle lanes for existence and hot lanes for movement.
 
 ## Debug-only scope
 

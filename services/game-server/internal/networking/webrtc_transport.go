@@ -31,6 +31,8 @@ func webRTCChannelSpecs() []webRTCChannelSpec {
 		{Lane: "asteroids.lifecycle", Label: "sr.asteroids.lifecycle", ID: 7, Ordered: true},
 		{Lane: "bullets.lifecycle", Label: "sr.bullets.lifecycle", ID: 8, Ordered: true},
 		{Lane: "tooling", Label: "sr.tooling", ID: 9, Ordered: true},
+		{Lane: "ships", Label: "sr.ships", ID: 10, Ordered: false, MaxRetransmits: &zeroRetransmits},
+		{Lane: "ships.lifecycle", Label: "sr.ships.lifecycle", ID: 11, Ordered: true},
 	}
 }
 
