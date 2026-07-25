@@ -1,0 +1,130 @@
+---
+title: "Devlog 005: Cleared for Launch"
+date: 2026-07-23
+summary: |
+  **Emergency Status**: A state of emergency has been declared across Xenobia, Ranger reserves have been activated. We have reached a major milestone with the first downloadable alpha builds.
+socialImage: ""
+socialImageAlt: ""
+heroLine1: "STATE-OF-EMERGENCY DECLARED"
+heroLine2: "RANGER RESERVES ACTIVATED"
+heroLine3: "LAUNCH AUTHORIZED"
+heroMediaKind: "images"
+heroImages:
+  - "/media/devlog/0005-lift-off/lift_off.png"
+heroYoutubeUrl: ""
+heroVideoSrc: ""
+heroVideoAutoPlay: false
+heroVideoMuted: true
+heroVideoLoop: false
+heroMediaAlt: "Ranger crews prepare an interceptor for launch inside a Xenobian hangar."
+articleLabel: "Devlog Entry - 005"
+articleTitle: "Cleared for Launch"
+intro: |
+  For the first time, Space Rocks! has left the station.
+
+  Windows and macOS alpha builds can now be downloaded, extracted, launched, and PLAYED!! on another computer. The game is still early, still rough, and still very capable of finding new ways to break, but it has crossed an important line: Space Rocks! is no longer confined to the hangar.
+
+  Elsewhere in Xenobia, the situation is quickly deteriorating.
+
+  - [Launch Authorization Received](#launch-authorization-received)
+  - [Liftoff](#liftoff)
+  - [First Flight Record](#first-flight-record)
+  - [What’s Next](#whats-next)
+articleMediaKind: "images"
+articleImages:
+  - "/media/devlog/0005-lift-off/command_crisis.png"
+articleYoutubeUrl: ""
+articleMediaAlt: "Xenobian command tracks spreading threats and emergency deployments across the system."
+finishedTitle: "Launch Systems"
+finishedBody: "Windows and macOS alpha builds are packaged and playable."
+nowTitle: "First Flights"
+nowBody: "Testing the game beyond the development machine."
+comingUpTitle: "Player Systems"
+comingUpBody: "More gameplay systems."
+utilityTitle: "Emergency Status"
+utilityText: |
+  **Emergency Status**: A state of emergency has been declared across Xenobia, Ranger reserves have been activated. We have reached a major milestone with the first downloadable alpha builds.
+finePrint: >
+  Space Rocks! is an active development project. All media, features, names, and content
+  are work in progress and subject to change before final release.
+---
+
+## Launch Authorization Received
+
+**This is the Xenobian Emergency Broadcast Network.**
+
+All civilian vessels operating beyond the inner colony routes are advised to review current navigation restrictions before departure.
+
+Following the loss of Gideon-IV, additional shipping lanes have been closed across the outer system. Unscheduled asteroid fields continue to appear near established transit corridors, forcing commercial traffic into longer and increasingly congested routes.
+
+Several remote colonies are now reporting delayed food, medicine, and reactor-fuel deliveries.
+
+Authorities maintain that there is no immediate threat to the inner worlds.
+
+Authorities have also requested that citizens disregard unauthorized recordings allegedly recovered from Gideon-IV.
+
+Ranger Command has confirmed that patrol forces are being reassigned throughout the system. No explanation has been provided for the scale of the deployment.
+
+Pirate activity has increased sharply in sectors left without regular patrol coverage.
+
+Convoys travelling through the Orison, Morrow, and Carver routes have reported false distress signals, improvised navigation beacons, and coordinated attacks by vessels operating without registered transponders. Civilian captains are reminded that emergency signals should be verified before leaving protected lanes.
+
+Unidentified transmissions similar to those recorded near Gideon-IV have now been detected in three additional sectors.
+
+The source of these signals remains unknown.
+
+Ranger Command has authorized the immediate activation of reserve pilots and expanded recruitment throughout Xenobia. Qualified personnel are being assigned to convoy escort, route clearance, emergency response, reconnaissance, and anti-piracy operations.
+
+New pilots should expect limited preparation time, incomplete intelligence, and rapidly changing mission orders.
+
+Citizens are advised to remain calm.
+
+Trade will continue.
+
+The colonies will remain supplied.
+
+The Ranger Corps will remain. Where Xenobia needs them.
+
+## Liftoff
+
+Finally! Space Rocks! has been packaged into complete Windows and macOS builds that can be downloaded, moved to another computer, and launched without the project source, development tools, or someone standing nearby with a terminal open.
+
+And, more importantly, it can actually be played.
+
+This is still a controlled alpha build. It is unsigned, unfinished, and almost certainly carrying a few loose panels nobody has noticed yet. But it is no longer confined to the machine where it was built.
+
+Space Rocks! has left the station.
+
+## First Flight Record
+
+Getting there required work across nearly every part of the project.
+
+A new runtime measurement system now coordinates captures across the client and server, records what the game and network are doing during a test, and exports the results for inspection. The in-game telemetry panel was also repaired, making those measurements accessible without manually stitching the process together behind the scenes.
+
+Developer commands, diagnostic readouts, and continuous telemetry have moved onto their own dedicated tooling connection. That keeps development traffic separate from normal gameplay and gives those systems a clearer, more reliable path for testing, debugging, and future automation.
+
+The client received another security pass as well. Authentication credentials that had previously lived in ordinary configuration are now handled through secure platform storage on Windows and macOS. Several older diagnostic paths, stale assets, ownership problems, and other pieces of project debris were also removed or cleaned up along the way.
+
+Then came the release work.
+
+The Windows and macOS build pipelines now assemble the client and its supporting local services, test the native packages, create downloadable archives, and publish them as controlled prereleases. The first tests on another machine uncovered missing packaged data, unreliable local network addresses, profile and stat persistence problems, and a long list of macOS export and packaging complications.
+
+Those problems were tracked down and corrected as they appeared.
+
+None of this adds a new weapon, enemy, mission, or explosion. It does something the project needed first: it makes Space Rocks! easier to measure, easier to diagnose, safer to distribute, and capable of surviving outside its development environment.
+
+That is what cleared it for launch.
+
+## What’s Next
+
+Now we start putting that work under pressure.
+
+The downloadable builds need to be tested across more hardware and operating-system configurations. Installation, startup, local services, profiles, statistics, collisions, reconnects, shutdown, and diagnostic reporting all need to behave reliably somewhere other than the development machine.
+
+The new measurement and tooling systems will help expose what happens when they do not.
+
+Foundational match and player-experience work is also continuing behind the scenes, preparing the game for more structured modes, objectives, teams, scoring, and longer-term campaign play. Those systems are not ready for the spotlight yet, but they are beginning to define what Space Rocks! becomes beyond its current survival loop.
+
+There is still plenty left to build.
+
+But the instruments are online, the launch systems are working, and the first builds are now in the hands of actual pilots.
