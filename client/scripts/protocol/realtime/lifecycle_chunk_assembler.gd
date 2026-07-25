@@ -18,7 +18,7 @@ var _clock: Callable
 func _init(clock: Callable = Callable(Time, "get_ticks_msec")) -> void:
 	_clock = clock
 
-func accept(packet: Dictionary, creates_key: String, deletes_key: String) -> Dictionary:
+func accept(packet: Dictionary, creates_key: String, deletes_key: String, updates_key: String = "") -> Dictionary:
 	if not _chunks.is_empty() and _now_msec() - _started_at >= RealtimeReceiveLimits.LIFECYCLE_ASSEMBLY_LIFETIME_MSEC:
 		return _fail("expired")
 	var sequence = LaneMetadata.parse_non_negative_integer(packet.get("sequence"))
@@ -42,9 +42,10 @@ func accept(packet: Dictionary, creates_key: String, deletes_key: String) -> Dic
 		return _fail("non_contiguous_lifecycle_chunk_index")
 	var creates = packet.get(creates_key, [])
 	var deletes = packet.get(deletes_key, [])
-	if not creates is Array or not deletes is Array:
+	var updates = packet.get(updates_key, []) if not updates_key.is_empty() else []
+	if not creates is Array or not deletes is Array or not updates is Array:
 		return _fail("invalid_lifecycle_record_array")
-	var records: int = creates.size() + deletes.size()
+	var records: int = creates.size() + updates.size() + deletes.size()
 	var estimated_bytes := JSON.stringify(packet).to_utf8_buffer().size()
 	if _record_count + records > RealtimeReceiveLimits.MAX_LIFECYCLE_RECORDS_PER_ASSEMBLY:
 		return _fail("record_limit")
@@ -58,8 +59,12 @@ func accept(packet: Dictionary, creates_key: String, deletes_key: String) -> Dic
 	var assembled := packet.duplicate(true)
 	assembled[creates_key] = []
 	assembled[deletes_key] = []
+	if not updates_key.is_empty():
+		assembled[updates_key] = []
 	for chunk in _chunks:
 		assembled[creates_key].append_array(chunk.get(creates_key, []))
+		if not updates_key.is_empty():
+			assembled[updates_key].append_array(chunk.get(updates_key, []))
 		assembled[deletes_key].append_array(chunk.get(deletes_key, []))
 	reset()
 	return {"status": COMPLETE, "packet": assembled}

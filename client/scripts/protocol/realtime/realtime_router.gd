@@ -113,7 +113,7 @@ func _route_world_full(packet: Dictionary) -> bool:
 	return accepted
 
 func _route_ships_lifecycle(packet: Dictionary) -> void:
-	var assembly := _ship_lifecycle_assembler.accept(packet, "ship_creates", "ship_deletes")
+	var assembly := _ship_lifecycle_assembler.accept(packet, "ship_creates", "ship_deletes", "ship_updates")
 	if assembly.status == LifecycleChunkAssembler.ERROR:
 		_request_lifecycle_resync(assembly.reason)
 		return

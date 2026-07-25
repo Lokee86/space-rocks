@@ -16,6 +16,36 @@ func test_world_full_is_atomic_across_two_chunks() -> void:
 	assert_true(router.world_lane_state.ships.has("ship-1"))
 	assert_true(router.world_lane_state.asteroids.has("asteroid-1"))
 
+func test_chunked_ship_lifecycle_preserves_updates_from_every_chunk() -> void:
+	var router := RealtimeRouter.new()
+	_world_full(router, "world-baseline-1", [_ship("ship-remote")])
+
+	router.route_lane_packet(_lifecycle_chunk(
+		"ships_lifecycle",
+		LaneMetadata.LANE_SHIPS_LIFECYCLE,
+		0,
+		false,
+		"world-baseline-1",
+		[],
+		[],
+		[{"id": "ship-remote", "health": 75}]
+	))
+	assert_eq(router.world_lane_state.ships["ship-remote"]["health"], 100)
+
+	router.route_lane_packet(_lifecycle_chunk(
+		"ships_lifecycle",
+		LaneMetadata.LANE_SHIPS_LIFECYCLE,
+		1,
+		true,
+		"world-baseline-1",
+		[],
+		[],
+		[{"id": "ship-remote", "shields": 5}]
+	))
+	assert_eq(router.world_lane_state.ships["ship-remote"]["health"], 75)
+	assert_eq(router.world_lane_state.ships["ship-remote"]["shields"], 5)
+
+
 func test_lifecycle_is_atomic_across_two_chunks() -> void:
 	var router := RealtimeRouter.new()
 	_world_full(router, "world-baseline-1")
@@ -84,8 +114,8 @@ func test_router_replacement_clears_partial_world_and_lifecycle_series() -> void
 	assert_false(router.world_lane_state.asteroids.has("late-asteroid"))
 	assert_eq(requests.size(), 0)
 
-func _world_full(router: RealtimeRouter, baseline: String) -> void:
-	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 1, "baseline_id": baseline, "snapshot_id": "world-snapshot-1", "snapshot_kind": "full", "chunk_index": 0, "chunk_count": 1, "is_final_chunk": true, "ships": [], "bullets": [], "asteroids": [], "pickups": []})
+func _world_full(router: RealtimeRouter, baseline: String, ships: Array = []) -> void:
+	router.route_lane_packet({"type": "world_full", "lane": LaneMetadata.LANE_WORLD, "sequence": 1, "baseline_id": baseline, "snapshot_id": "world-snapshot-1", "snapshot_kind": "full", "chunk_index": 0, "chunk_count": 1, "is_final_chunk": true, "ships": ships, "bullets": [], "asteroids": [], "pickups": []})
 
 func _world_chunk(index: int, final: bool, ships: Array, asteroids: Array, baseline := "world-baseline-1") -> Dictionary:
 	return {
@@ -95,13 +125,14 @@ func _world_chunk(index: int, final: bool, ships: Array, asteroids: Array, basel
 		"is_final_chunk": final, "ships": ships, "bullets": [], "asteroids": asteroids, "pickups": [],
 	}
 
-func _lifecycle_chunk(type: String, lane: String, index: int, final: bool, baseline: String, creates: Array, deletes: Array) -> Dictionary:
+func _lifecycle_chunk(type: String, lane: String, index: int, final: bool, baseline: String, creates: Array, deletes: Array, updates: Array = []) -> Dictionary:
 	var packet := {"type": type, "lane": lane, "sequence": 1, "baseline_id": baseline,
 		"snapshot_id": "lifecycle-snapshot-1", "snapshot_kind": "delta", "chunk_index": index,
 		"chunk_count": 2, "is_final_chunk": final}
 	match lane:
 		LaneMetadata.LANE_SHIPS_LIFECYCLE:
 			packet["ship_creates"] = creates
+			packet["ship_updates"] = updates
 			packet["ship_deletes"] = deletes
 		LaneMetadata.LANE_ASTEROIDS_LIFECYCLE:
 			packet["asteroid_creates"] = creates

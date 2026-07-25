@@ -220,6 +220,35 @@ func TestBuildActiveRealtimeResultAdvancesHotLaneTickForUnchunkedAsteroids(t *te
 	}
 }
 
+func TestBuildActiveRealtimeResultDoesNotForceChunkedAsteroidsForBulletLifecycle(t *testing.T) {
+	previous, current := syncedMovingAsteroidSnapshots(300)
+	previous.Bullets = map[string]runtime.BulletState{}
+	current.Bullets = map[string]runtime.BulletState{
+		"bullet-1": {
+			ID:             "bullet-1",
+			OwnerID:        "player-1",
+			X:              10,
+			Y:              20,
+			Rotation:       0.5,
+			WeaponID:       "laser",
+			ProjectileType: "bolt",
+		},
+	}
+	state := syncedWorldState(t, previous)
+	state.HotLaneTick = 0
+
+	result := mustBuildActiveRealtimeResult(t, current, state)
+	if result.SessionState.HotLaneCohorts.AsteroidMode != HotLaneModeFullOwned30Hz {
+		t.Fatalf("asteroid cohort mode = %q, want full-owned 30hz", result.SessionState.HotLaneCohorts.AsteroidMode)
+	}
+	if _, ok := findCandidateByLane(result.SelectedCandidates, LaneBulletsLifecycle); !ok {
+		t.Fatal("expected bullet lifecycle candidate")
+	}
+	if _, ok := findCandidateByLane(result.SelectedCandidates, LaneAsteroids); ok {
+		t.Fatal("bullet lifecycle incorrectly forced chunked asteroid hot lane off cadence")
+	}
+}
+
 func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.T) {
 	previousAsteroids := make(map[string]runtime.AsteroidState, 300)
 	currentAsteroids := make(map[string]runtime.AsteroidState, 300)
