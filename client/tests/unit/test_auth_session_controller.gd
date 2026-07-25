@@ -362,6 +362,7 @@ func test_saved_token_provider_failure_is_distinct_from_invalid_token_failure() 
 	var records := _auth_records(writer)
 	assert_eq(records[1]["event"], ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE)
 	assert_eq(records[1]["fields"]["failure_mode"], "http_5xx")
+	assert_eq(token_store.stored_token, "bearer-token")
 
 	ClientLogger.reset_for_tests()
 	writer = FakeWriter.new()
@@ -380,6 +381,24 @@ func test_saved_token_provider_failure_is_distinct_from_invalid_token_failure() 
 	records = _auth_records(writer)
 	assert_eq(records[1]["event"], ObservabilityContract.EVENT_AUTH_FAILED)
 	assert_eq(records[1]["fields"]["failure_mode"], "invalid_or_expired_token")
+	assert_eq(invalid_store.stored_token, "")
+
+
+func test_saved_token_network_failure_preserves_saved_credential() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.current_user_result = ApiRequestResult.failure(0, "network_failure_7")
+	var controller := _create_controller(fake_client)
+	var token_store := InMemoryAuthCredentialStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_credential_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_push_error_count(1)
+
+	assert_false(controller.get_session().is_signed_in())
+	assert_eq(token_store.stored_token, "bearer-token")
 
 
 func test_cancelled_saved_token_validation_emits_no_stale_terminal_event() -> void:

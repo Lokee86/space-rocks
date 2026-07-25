@@ -258,10 +258,12 @@ func _validate_saved_token(token: String, operation_epoch: int, operation_trace:
 				"malformed_response"
 			)
 	else:
-		auth_credential_store.clear_token()
+		var provider_unavailable := _is_provider_unavailable(result)
+		if !provider_unavailable:
+			auth_credential_store.clear_token()
 		auth_session.clear()
 		_emit_auth_terminal(
-			ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE if _is_provider_unavailable(result) else ObservabilityContract.EVENT_AUTH_FAILED,
+			ObservabilityContract.EVENT_AUTH_PROVIDER_UNAVAILABLE if provider_unavailable else ObservabilityContract.EVENT_AUTH_FAILED,
 			operation_trace.trace_id(),
 			"saved_token",
 			_failure_mode_for_result(result)
