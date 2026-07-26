@@ -34,7 +34,7 @@ jobs:
       - name: Install Pitlord
         run: |
           mkdir -p "$RUNNER_TEMP/pitlord-bin"
-          GOBIN="$RUNNER_TEMP/pitlord-bin" go install github.com/Lokee86/pitlord/cmd/pitlord@v0.1.0
+          GOBIN="$RUNNER_TEMP/pitlord-bin" go install github.com/Lokee86/pitlord/cmd/pitlord@v0.1.1
           echo "$RUNNER_TEMP/pitlord-bin" >> "$GITHUB_PATH"
       - name: Run repository checks
         run: bash tools/ci/run_repo_checks.sh
