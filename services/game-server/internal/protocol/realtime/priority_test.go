@@ -2,7 +2,7 @@ package realtime
 
 import "testing"
 
-func TestLaneCandidateClassificationTreatsLifecycleLanesAsRequiredCritical(t *testing.T) {
+func TestLaneCandidateClassificationTreatsLifecycleAndSessionStateAsRequired(t *testing.T) {
 	tests := []struct {
 		name         string
 		candidate    RealtimeLaneCandidate
@@ -20,6 +20,12 @@ func TestLaneCandidateClassificationTreatsLifecycleLanesAsRequiredCritical(t *te
 			candidate:    mustRealtimeLaneCandidate(BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 1}}, nil),
 			wantDelivery: DeliveryClassRequired,
 			wantPriority: PriorityCritical,
+		},
+		{
+			name:         "session delta",
+			candidate:    mustRealtimeLaneCandidate(SessionWireLaneDelta{Metadata: Metadata{Lane: LaneSession, Sequence: 1}}, nil),
+			wantDelivery: DeliveryClassRequired,
+			wantPriority: PriorityMedium,
 		},
 		{
 			name:         "asteroid hot lane",

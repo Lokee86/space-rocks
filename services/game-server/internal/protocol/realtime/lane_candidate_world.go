@@ -34,9 +34,10 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			shipLifecyclePresent := len(split.WorldDelta.Ships.Creates) > 0 || len(split.WorldDelta.Ships.Updates) > 0 || len(split.WorldDelta.Ships.Deletes) > 0
 			bulletLifecyclePresent := len(split.WorldDelta.Bullets.Creates) > 0 || len(split.WorldDelta.Bullets.Deletes) > 0
 			asteroidLifecyclePresent := len(split.WorldDelta.Asteroids.Creates) > 0 || len(split.WorldDelta.Asteroids.Deletes) > 0
+			lifecycleCandidates := make([]RealtimeLaneCandidate, 0, 3)
 			if shipLifecyclePresent {
 				if shipCandidate, ok := buildShipLifecycleCandidate(split.WorldDelta, state); ok {
-					candidates = append(candidates, shipCandidate)
+					lifecycleCandidates = append(lifecycleCandidates, shipCandidate)
 					split.WorldDelta.Ships.Creates = nil
 					split.WorldDelta.Ships.Updates = nil
 					split.WorldDelta.Ships.Deletes = nil
@@ -44,14 +45,14 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			}
 			if bulletLifecyclePresent {
 				if bulletCandidate, ok := buildBulletLifecycleCandidate(split.WorldDelta, state); ok {
-					candidates = append(candidates, bulletCandidate)
+					lifecycleCandidates = append(lifecycleCandidates, bulletCandidate)
 					split.WorldDelta.Bullets.Creates = nil
 					split.WorldDelta.Bullets.Deletes = nil
 				}
 			}
 			if asteroidLifecyclePresent {
 				if asteroidCandidate, ok := buildAsteroidLifecycleCandidate(split.WorldDelta, state); ok {
-					candidates = append(candidates, asteroidCandidate)
+					lifecycleCandidates = append(lifecycleCandidates, asteroidCandidate)
 					split.WorldDelta.Asteroids.Creates = nil
 					split.WorldDelta.Asteroids.Deletes = nil
 				}
@@ -125,6 +126,7 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			allPresentHotAllowed := (!shipHotPresent || shipHotAllowed) && (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
 			anyHotAllowed := shipHotAllowed || asteroidHotAllowed || bulletHotAllowed
 			if allPresentHotAllowed && (projectionAdvanceRequired || anyHotAllowed) {
+				candidates = append(candidates, lifecycleCandidates...)
 				chainedWorldProjection := quantizedWorldFull
 				chainedWorldProjection.Metadata = split.WorldDelta.Metadata
 				candidates = append(candidates, mustRealtimeLaneCandidate(split.WorldDelta, chainedWorldProjection))

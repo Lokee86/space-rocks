@@ -8,7 +8,7 @@ func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
 	case RealtimeLaneCandidateKindDelta:
 		switch lane {
 		case LaneSession:
-			return DeliveryClassDeferrable
+			return DeliveryClassRequired
 		case LaneWorld, LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
 			return DeliveryClassHotSupersedable
 		case LaneShipsLifecycle, LaneAsteroidsLifecycle, LaneBulletsLifecycle:
