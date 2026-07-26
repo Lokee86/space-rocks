@@ -77,7 +77,6 @@ static func record_event(operation: String, fields: Dictionary = {}) -> void:
 	entry["stage"] = operation
 	entry["time_msec"] = Time.get_ticks_msec()
 	_append(entry)
-	_emit_debug("asteroid_trace", entry)
 
 
 static func anomaly(code: String, fields: Dictionary = {}) -> void:

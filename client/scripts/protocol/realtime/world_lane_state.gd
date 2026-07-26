@@ -115,7 +115,8 @@ func mark_asteroid_dirty(id, source: String = "unknown") -> void:
 		return
 	removed_asteroid_ids.erase(id)
 	dirty_asteroid_ids[id] = true
-	asteroid_dirty_sources[id] = source
+	if source == "lifecycle_create" or asteroid_dirty_sources.get(id, "") != "lifecycle_create":
+		asteroid_dirty_sources[id] = source
 
 func mark_asteroid_removed(id) -> void:
 	if id == null or id == "":

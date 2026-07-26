@@ -121,7 +121,7 @@ func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state 
 			}
 
 			shipHotAllowed := shipHotPresent && (worldDeltaHasChanges || shipLifecyclePresent || hotPacketCadenceAllows(split.CohortState.ShipMode, state.HotLaneTick))
-			asteroidHotAllowed := asteroidHotPresent && (worldDeltaHasChanges || asteroidLifecyclePresent || hotPacketCadenceAllows(split.CohortState.AsteroidMode, state.HotLaneTick))
+			asteroidHotAllowed := asteroidHotPresent && hotPacketCadenceAllows(split.CohortState.AsteroidMode, state.HotLaneTick)
 			bulletHotAllowed := bulletHotPresent && (worldDeltaHasChanges || bulletLifecyclePresent || hotPacketCadenceAllows(split.CohortState.BulletMode, state.HotLaneTick))
 			allPresentHotAllowed := (!shipHotPresent || shipHotAllowed) && (!asteroidHotPresent || asteroidHotAllowed) && (!bulletHotPresent || bulletHotAllowed)
 			anyHotAllowed := shipHotAllowed || asteroidHotAllowed || bulletHotAllowed

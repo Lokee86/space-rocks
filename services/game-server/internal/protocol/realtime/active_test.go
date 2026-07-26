@@ -255,6 +255,28 @@ func TestBuildActiveRealtimeResultDefersLifecycleUntilChunkedAsteroidCadence(t *
 	}
 }
 
+func TestBuildActiveRealtimeResultDoesNotLetAsteroidLifecycleBypassChunkedCadence(t *testing.T) {
+	previous, current := syncedMovingAsteroidSnapshots(300)
+	delete(current.Asteroids, "asteroid-300")
+	current.Asteroids["asteroid-301"] = runtime.AsteroidState{ID: "asteroid-301", X: 320, Y: 330, Size: 2, Health: 3, Scale: 1, Variant: 1}
+	state := syncedWorldState(t, previous)
+	state.HotLaneTick = 0
+
+	blocked := mustBuildActiveRealtimeResult(t, current, state)
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
+		if _, ok := findCandidateByLane(blocked.SelectedCandidates, lane); ok {
+			t.Fatalf("lane %q escaped the blocked asteroid cadence tick", lane)
+		}
+	}
+
+	allowed := mustBuildActiveRealtimeResult(t, current, blocked.SessionState)
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
+		if _, ok := findCandidateByLane(allowed.SelectedCandidates, lane); !ok {
+			t.Fatalf("expected lane %q on the permitted asteroid cadence tick", lane)
+		}
+	}
+}
+
 func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.T) {
 	previousAsteroids := make(map[string]runtime.AsteroidState, 300)
 	currentAsteroids := make(map[string]runtime.AsteroidState, 300)

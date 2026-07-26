@@ -149,6 +149,7 @@ func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleInWorldDeltaUnderPr
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+	state.HotLaneTick = 2
 
 	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -319,15 +320,26 @@ func TestAssembleRealtimeLaneCandidatesThrottlesChunkedAsteroidsTo30Hz(t *testin
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesForcesHotLanesWithMovementAndCreation(t *testing.T) {
-	previous, current := syncedMovingAsteroidSnapshots(1)
-	current.Asteroids["asteroid-2"] = runtime.AsteroidState{ID: "asteroid-2", X: 20, Y: 30, Size: 2, Health: 3, Scale: 1, Variant: 1}
-	state := syncedWorldState(t, previous)
-	state.HotLaneTick = 1
-	plan := mustAssembleRealtimeLaneCandidates(t, current, state)
+func TestAssembleRealtimeLaneCandidatesKeepsChunkedAsteroidLifecycleOnCadence(t *testing.T) {
+	previous, current := syncedMovingAsteroidSnapshots(300)
+	delete(current.Asteroids, "asteroid-300")
+	current.Asteroids["asteroid-301"] = runtime.AsteroidState{ID: "asteroid-301", X: 320, Y: 330, Size: 2, Health: 3, Scale: 1, Variant: 1}
+
+	blockedState := syncedWorldState(t, previous)
+	blockedState.HotLaneTick = 1
+	blocked := mustAssembleRealtimeLaneCandidates(t, current, blockedState)
 	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
-		if _, ok := findCandidateByLane(plan.Candidates, lane); !ok {
-			t.Fatalf("expected lane %q", lane)
+		if _, ok := findCandidateByLane(blocked.Candidates, lane); ok {
+			t.Fatalf("lane %q escaped the blocked asteroid cadence tick", lane)
+		}
+	}
+
+	allowedState := syncedWorldState(t, previous)
+	allowedState.HotLaneTick = 2
+	allowed := mustAssembleRealtimeLaneCandidates(t, current, allowedState)
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
+		if _, ok := findCandidateByLane(allowed.Candidates, lane); !ok {
+			t.Fatalf("expected lane %q on the permitted asteroid cadence tick", lane)
 		}
 	}
 }

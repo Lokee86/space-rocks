@@ -144,11 +144,12 @@ func apply_world_lane_state(world_lane_state_ref) -> void:
 							"asteroid_id": str(asteroid_id),
 							"state_count": world_lane_state.asteroids.size(),
 						})
-					AsteroidTrace.record_event("presentation_apply", {
-						"asteroid_id": str(asteroid_id),
-						"source": source,
-						"node_existed": node_existed,
-					})
+					if source != "hot_update" or not node_existed:
+						AsteroidTrace.record_event("presentation_apply", {
+							"asteroid_id": str(asteroid_id),
+							"source": source,
+							"node_existed": node_existed,
+						})
 					asteroid_sync.apply_asteroid(str(asteroid_id), world_lane_state.asteroids[asteroid_id], player_render_api.visual_position(), player_render_api.server_position())
 			world_lane_state.clear_asteroid_change_sets()
 	if pickup_sync != null:
