@@ -240,11 +240,15 @@ static func current_file_output_path() -> String:
 
 
 static func file_output_status() -> Dictionary:
+	var maintenance := {}
+	if _file_writer.has_method("startup_maintenance_status"):
+		maintenance = _file_writer.startup_maintenance_status()
 	return {
 		"enabled": _file_writer.enabled,
 		"current_path": _file_writer.current_path,
 		"failure_count": _file_writer.failure_count,
 		"last_failure_message": _file_writer.last_failure_message,
+		"startup_maintenance": maintenance,
 		"emitter": _emitter.status(),
 	}
 

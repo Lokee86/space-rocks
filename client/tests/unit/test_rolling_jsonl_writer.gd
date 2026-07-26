@@ -1,9 +1,31 @@
 extends GutTest
 
 const RollingJSONLWriter := preload("res://scripts/logging/rolling_jsonl_writer.gd")
+const LogArchiveMaintenance := preload("res://scripts/logging/log_archive_maintenance.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const RollingJSONLWriterTestSupport := preload("res://tests/unit/logging/rolling_jsonl_writer_test_support.gd")
 const FakeFilesystemWriter := RollingJSONLWriterTestSupport.FakeFilesystemWriter
+
+class BlockingLogArchiveMaintenance extends LogArchiveMaintenance:
+	var maintenance_started := Semaphore.new()
+	var release_maintenance := Semaphore.new()
+
+	func _perform_maintenance(
+		_archive_paths_to_compress: Array[String],
+		_archive_directory_path: String,
+		_configured_prefix: String,
+		_configuration: Dictionary
+	) -> Array[String]:
+		maintenance_started.post()
+		release_maintenance.wait()
+		return []
+
+class BlockingMaintenanceWriter extends RollingJSONLWriter:
+	var maintenance := BlockingLogArchiveMaintenance.new()
+
+	func _create_startup_maintenance():
+		return maintenance
+
 func before_each() -> void:
 	_cleanup_real_writer_test_root()
 func after_each() -> void:
@@ -63,6 +85,7 @@ func test_configuration_uses_generated_client_defaults_when_policy_is_empty() ->
 	assert_eq(writer.configuration["retention_max_bytes"], 250 * 1024 * 1024)
 	assert_eq(writer.configuration["retention_max_files"], RollingJSONLWriter.DEFAULT_RETENTION_MAX_FILES)
 	assert_eq(writer.configuration["compression_enabled"], ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED)
+	assert_true(writer.configuration["startup_maintenance_async"])
 	assert_eq(writer.current_path, "user://writer-test/active/client.jsonl.open")
 	writer.close()
 
@@ -108,6 +131,90 @@ func test_clean_close_reopens_existing_active_segment_without_archiving() -> voi
 	assert_eq(writer.handles[1].seek_end_calls, 1)
 	assert_eq(writer.file_sizes[writer.current_path], 17)
 	assert_eq(writer.segment_started_at_unix_ms, 6000)
+
+
+func test_startup_maintenance_does_not_block_fresh_active_logging() -> void:
+	var active_directory := "user://writer-test/active"
+	var archive_directory := "user://writer-test/archive"
+	assert_eq(DirAccess.make_dir_recursive_absolute(active_directory), OK)
+	assert_eq(DirAccess.make_dir_recursive_absolute(archive_directory), OK)
+	var active_path := active_directory.path_join("client.jsonl.open")
+	var previous_active := FileAccess.open(active_path, FileAccess.WRITE)
+	assert_ne(previous_active, null)
+	if previous_active != null:
+		previous_active.store_line("previous-session")
+		previous_active.close()
+
+	var writer := BlockingMaintenanceWriter.new()
+	assert_true(writer.configure("user://writer-test", "client", {
+		"compression_enabled": false,
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+		"startup_maintenance_async": true,
+	}))
+	writer.maintenance.maintenance_started.wait()
+
+	assert_true(writer.enabled)
+	assert_eq(writer.current_path, active_path)
+	assert_true(writer.startup_maintenance_status()["running"])
+	writer.write_line("startup-event")
+
+	var active_reader := FileAccess.open(active_path, FileAccess.READ)
+	assert_ne(active_reader, null)
+	if active_reader != null:
+		assert_eq(active_reader.get_as_text(), "startup-event\n")
+		active_reader.close()
+
+	writer.maintenance.release_maintenance.post()
+	writer.wait_for_startup_maintenance()
+	var maintenance_status := writer.startup_maintenance_status()
+	assert_false(maintenance_status["running"])
+	assert_true(maintenance_status["completed"])
+	writer.close()
+
+
+func test_async_startup_recovery_compresses_previous_segment_after_active_open() -> void:
+	var active_directory := "user://writer-test/active"
+	var archive_directory := "user://writer-test/archive"
+	assert_eq(DirAccess.make_dir_recursive_absolute(active_directory), OK)
+	assert_eq(DirAccess.make_dir_recursive_absolute(archive_directory), OK)
+	var active_path := active_directory.path_join("client.jsonl.open")
+	var previous_active := FileAccess.open(active_path, FileAccess.WRITE)
+	assert_ne(previous_active, null)
+	if previous_active != null:
+		previous_active.store_line("previous-session")
+		previous_active.close()
+
+	var writer := RollingJSONLWriter.new()
+	assert_true(writer.configure("user://writer-test", "client", {
+		"compression_enabled": true,
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+		"startup_maintenance_async": true,
+	}))
+	writer.write_line("startup-event")
+	writer.wait_for_startup_maintenance()
+
+	var active_reader := FileAccess.open(active_path, FileAccess.READ)
+	assert_ne(active_reader, null)
+	if active_reader != null:
+		assert_eq(active_reader.get_as_text(), "startup-event\n")
+		active_reader.close()
+
+	var archive_files := _archive_files(archive_directory)
+	assert_eq(archive_files.size(), 1)
+	assert_true(archive_files[0].ends_with(".jsonl.gz"))
+	if archive_files.size() == 1:
+		var archive := FileAccess.open_compressed(
+			archive_files[0],
+			FileAccess.READ,
+			FileAccess.COMPRESSION_GZIP
+		)
+		assert_ne(archive, null)
+		if archive != null:
+			assert_eq(archive.get_as_text(), "previous-session\n")
+			archive.close()
+	writer.close()
 
 
 func test_configuration_recovers_existing_active_file_into_archive_and_opens_fresh_active() -> void:

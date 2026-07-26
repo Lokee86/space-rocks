@@ -38,11 +38,12 @@ func test_status_exposes_writer_runtime_state() -> void:
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
 	var status := ClientLogger.file_output_status()
-	assert_eq(status.size(), 5)
+	assert_eq(status.size(), 6)
 	assert_true(status["enabled"])
 	assert_eq(status["current_path"], "user://fake-logs/active/client.jsonl.open")
 	assert_eq(status["failure_count"], 0)
 	assert_eq(status["last_failure_message"], "")
+	assert_eq(status["startup_maintenance"], {})
 	assert_eq(status["emitter"], {
 		"accepted_count": 0,
 		"rejected_count": 0,

@@ -52,17 +52,19 @@ A lower-level helper must use the supplied owner trace rather than create a seco
 <base_dir>/archive/<timestamped completed segment>.jsonl.gz
 ```
 
-`client/scripts/logging/rolling_jsonl_writer.gd` owns active writes, age/size rotation, startup recovery of an interrupted `.jsonl.open` file, and retention. Completed segments are compressed by `client/scripts/logging/gzip_archive_compressor.gd`; the uncompressed archive is removed only after the gzip replacement is finalized. The active file is flushed after stored records.
+`client/scripts/logging/rolling_jsonl_writer.gd` owns active writes, age/size rotation, the startup handoff from an interrupted `.jsonl.open` file, and maintenance lifecycle. Completed segments are compressed by `client/scripts/logging/gzip_archive_compressor.gd`; the uncompressed archive is removed only after the gzip replacement is finalized. The active file is flushed after stored records.
 
-A clean shutdown writes the small `.jsonl.clean` marker after closing the active handle. The next launch removes that marker and reopens the same active segment in append mode, so normal launches do not create one archive each. An active file without the marker is treated as an interrupted segment and recovered into the archive before a fresh active segment opens.
+A clean shutdown writes the small `.jsonl.clean` marker after closing the active handle. The next launch removes that marker and reopens the same active segment in append mode, so normal launches do not create one archive each. An active file without the marker is renamed into the archive first. That rename is the only recovery work performed before a fresh active file opens and file logging becomes available.
 
-Retention scans the archive once per pass and removes segments by age, total bytes, and a default 256-file ceiling, oldest first. This bounds startup filesystem work even when segments are unusually small. Configuration, rotation, recovery, compression, retention, and close failures degrade to console-only logging with bounded warning reporting; they do not block the client workflow. `current_file_output_path()` reports the active path while output is enabled.
+After the active handle is ready, `client/scripts/logging/log_archive_maintenance.gd` runs startup compression and retention on a worker thread. Startup events therefore write immediately while old-segment gzip work and archive scanning continue in the background. No temporary in-memory log or later append is required: the previous segment has already been atomically separated from the new active file.
+
+Retention scans the archive once per pass and removes segments by age, total bytes, and a default 256-file ceiling, oldest first. Rotation maintenance remains serialized with startup maintenance so both paths cannot mutate the archive concurrently. Configuration, rotation, recovery, compression, retention, and close failures degrade with bounded warning reporting; they do not block the client workflow or disable a healthy active file merely because background archive preparation failed. `current_file_output_path()` reports the active path while output is enabled.
 
 Normal startup requests `user://logs` with the `client` prefix. GUT processes skip persistent application logging, so repeated test scene construction cannot populate the real client archive directory. The resolved OS path depends on Godot's user-data directory; focused writer tests use a temporary user-data root.
 
 ## Status and failure behavior
 
-Canonical validation failures expose rejection codes and the rejected key through emitter status. Redacted records increment the redaction counter while storing only the generated replacement marker. A writer or compression failure increments write/failure status and disables the affected file path without turning a diagnostics failure into a gameplay failure. Console compatibility output remains available.
+Canonical validation failures expose rejection codes and the rejected key through emitter status. Redacted records increment the redaction counter while storing only the generated replacement marker. Writer status includes `startup_maintenance.running` and `startup_maintenance.completed`. Background compression or retention failures are collected by the main logging path and reported without discarding startup events or disabling a healthy active file. Active-write failures still disable the affected file path without turning a diagnostics failure into a gameplay failure. Console compatibility output remains available.
 
 ## Code map
 
@@ -72,6 +74,7 @@ Implementation:
 client/scripts/logging/observability_emitter.gd
 client/scripts/logging/logger.gd
 client/scripts/logging/rolling_jsonl_writer.gd
+client/scripts/logging/log_archive_maintenance.gd
 client/scripts/logging/gzip_archive_compressor.gd
 client/scripts/observability/client_operation_trace.gd
 client/scripts/generated/observability/contract_generated.gd
@@ -92,7 +95,7 @@ client/tests/unit/networking/realtime/test_realtime_packet_pipeline_match_bounda
 client/tests/unit/devtools/gameplay_debug_flow_test.gd
 ```
 
-The first group covers emitter contract behavior and status; the second covers trace construction/ownership; the migrated workflow tests cover boot, auth, connection, room, gameplay, and devtools call sites.
+The writer tests also hold startup maintenance deliberately unfinished while confirming that a fresh active file accepts and flushes startup records, then verify that interrupted segments are compressed after the active file is already available. The first group covers emitter contract behavior and status; the second covers trace construction/ownership; the migrated workflow tests cover boot, auth, connection, room, gameplay, and devtools call sites.
 
 ## Boundaries
 

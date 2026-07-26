@@ -2,6 +2,7 @@ extends RefCounted
 
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const GzipArchiveCompressor := preload("res://scripts/logging/gzip_archive_compressor.gd")
+const LogArchiveMaintenance := preload("res://scripts/logging/log_archive_maintenance.gd")
 
 var enabled := false
 var current_path := ""
@@ -16,6 +17,9 @@ var last_failure_message := ""
 var _failure_warning_emitted := false
 var _handle = null
 var _archive_compressor := GzipArchiveCompressor.new()
+var _archive_mutex := Mutex.new()
+var _startup_maintenance
+var startup_maintenance_completed := false
 
 const DEFAULT_RETENTION_MAX_FILES := 256
 
@@ -48,6 +52,7 @@ func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> boo
 	var clean_marker_path := _build_clean_shutdown_marker_path()
 	var active_exists := _file_exists(candidate_path)
 	var resume_clean_segment := active_exists and _clean_shutdown_marker_exists(clean_marker_path)
+	var startup_archives: Array[String] = []
 	if resume_clean_segment:
 		if _remove_clean_shutdown_marker(clean_marker_path) != OK:
 			_record_failure("failed to remove clean shutdown marker: %s" % clean_marker_path)
@@ -56,8 +61,10 @@ func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> boo
 		if segment_started_at_unix_ms <= 0:
 			segment_started_at_unix_ms = last_configured_at_unix_ms
 	elif active_exists:
-		if !_recover_interrupted_active_segment(candidate_path):
+		var recovered_archive_path := _recover_interrupted_active_segment(candidate_path)
+		if recovered_archive_path.is_empty():
 			return false
+		startup_archives.append(recovered_archive_path)
 	elif _clean_shutdown_marker_exists(clean_marker_path):
 		_remove_clean_shutdown_marker(clean_marker_path)
 
@@ -71,20 +78,23 @@ func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> boo
 	enabled = true
 	current_path = candidate_path
 	_handle = handle
-	_apply_retention()
+	_start_startup_maintenance(startup_archives)
 	return true
 
-func _recover_interrupted_active_segment(candidate_path: String) -> bool:
+func _recover_interrupted_active_segment(candidate_path: String) -> String:
 	var rotation_time_unix_ms := _current_time_unix_ms()
 	var segment_start_unix_ms := _get_file_modified_time_unix_ms(candidate_path)
 	if segment_start_unix_ms <= 0:
 		segment_start_unix_ms = rotation_time_unix_ms
 
 	var archive_path := archive_directory_path.path_join(_build_segment_archive_filename(configured_prefix, segment_start_unix_ms, rotation_time_unix_ms))
-	if !_finalize_archive(candidate_path, archive_path):
+	_archive_mutex.lock()
+	var rename_error := _rename_file(candidate_path, archive_path)
+	_archive_mutex.unlock()
+	if rename_error != OK:
 		_record_failure("failed to recover interrupted active log file: %s" % candidate_path)
-		return false
-	return true
+		return ""
+	return archive_path
 
 func _normalize_policy(policy: Dictionary) -> Dictionary:
 	var normalized := {
@@ -94,6 +104,7 @@ func _normalize_policy(policy: Dictionary) -> Dictionary:
 		"retention_max_bytes": 250 * 1024 * 1024,
 		"retention_max_files": DEFAULT_RETENTION_MAX_FILES,
 		"compression_enabled": ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED,
+		"startup_maintenance_async": true,
 		"active_directory_name": "active",
 		"archive_directory_name": "archive",
 	}
@@ -101,6 +112,73 @@ func _normalize_policy(policy: Dictionary) -> Dictionary:
 		if policy.has(key):
 			normalized[key] = policy[key]
 	return normalized
+
+func _start_startup_maintenance(startup_archives: Array[String]) -> void:
+	_startup_maintenance = null
+	startup_maintenance_completed = false
+
+	if !_should_run_startup_maintenance_async():
+		_archive_mutex.lock()
+		for archive_path in startup_archives:
+			if _compression_enabled():
+				_compress_archive(archive_path)
+		_apply_retention_unlocked()
+		_archive_mutex.unlock()
+		startup_maintenance_completed = true
+		return
+
+	var maintenance = _create_startup_maintenance()
+	var start_error: Error = maintenance.start(
+		startup_archives,
+		archive_directory_path,
+		configured_prefix,
+		configuration,
+		_archive_mutex
+	)
+	if start_error != OK:
+		_record_failure("failed to start background log archive maintenance")
+		return
+	_startup_maintenance = maintenance
+
+
+func _create_startup_maintenance():
+	return LogArchiveMaintenance.new()
+
+
+func _should_run_startup_maintenance_async() -> bool:
+	return bool(configuration.get("startup_maintenance_async", true))
+
+
+func poll_startup_maintenance() -> void:
+	if _startup_maintenance == null:
+		return
+	_record_startup_maintenance_failures(_startup_maintenance.poll_failures())
+	var status: Dictionary = _startup_maintenance.status()
+	if bool(status.get("completed", false)):
+		startup_maintenance_completed = true
+
+
+func wait_for_startup_maintenance() -> void:
+	if _startup_maintenance == null:
+		return
+	_record_startup_maintenance_failures(_startup_maintenance.wait_for_completion())
+	startup_maintenance_completed = true
+
+
+func startup_maintenance_status() -> Dictionary:
+	poll_startup_maintenance()
+	if _startup_maintenance != null:
+		return _startup_maintenance.status()
+	return {
+		"running": false,
+		"completed": startup_maintenance_completed,
+	}
+
+
+func _record_startup_maintenance_failures(failures: Array[String]) -> void:
+	for failure in failures:
+		_record_failure(str(failure))
+
 
 func _current_time_unix_ms() -> int:
 	return int(Time.get_unix_time_from_system() * 1000.0)
@@ -255,6 +333,12 @@ func _archive_file_infos() -> Array[ArchiveFileInfo]:
 	return files
 
 func _apply_retention() -> void:
+	_archive_mutex.lock()
+	_apply_retention_unlocked()
+	_archive_mutex.unlock()
+
+
+func _apply_retention_unlocked() -> void:
 	var archive_files := _archive_file_infos()
 	var now_unix_ms := _current_time_unix_ms()
 	var max_age_seconds := int(configuration["retention_max_age"])
@@ -311,11 +395,14 @@ func _apply_retention() -> void:
 			total_bytes -= info.size_bytes
 
 func _finalize_archive(source_path: String, archive_path: String) -> bool:
+	_archive_mutex.lock()
+	var finalized := true
 	if _rename_file(source_path, archive_path) != OK:
-		return false
-	if _compression_enabled():
+		finalized = false
+	elif _compression_enabled():
 		_compress_archive(archive_path)
-	return true
+	_archive_mutex.unlock()
+	return finalized
 
 func _compress_archive(archive_path: String) -> bool:
 	if _archive_compressor.compress(archive_path):
@@ -354,6 +441,7 @@ func _rotate_active_segment() -> bool:
 	return true
 
 func write_line(line: String) -> void:
+	poll_startup_maintenance()
 	if !enabled || _handle == null:
 		return
 
@@ -378,6 +466,7 @@ func close() -> void:
 		if !clean_marker_path.is_empty() and _write_clean_shutdown_marker(clean_marker_path) != OK:
 			_record_failure("failed to write clean shutdown marker: %s" % clean_marker_path)
 
+	wait_for_startup_maintenance()
 	enabled = false
 	current_path = ""
 	_handle = null

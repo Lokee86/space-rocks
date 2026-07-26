@@ -52,6 +52,9 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 	var fail_clean_marker_write := false
 	var fail_clean_marker_remove := false
 
+	func _should_run_startup_maintenance_async() -> bool:
+		return false
+
 	func _current_time_unix_ms() -> int:
 		return fake_now
 
