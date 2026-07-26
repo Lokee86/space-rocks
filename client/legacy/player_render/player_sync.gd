@@ -43,12 +43,10 @@ func reset() -> void:
 
 func set_view_target_player(player_id: String) -> void:
 	view_target_player_id = player_id
-	_make_local_camera_current()
 
 
 func clear_view_target_player() -> void:
 	view_target_player_id = ""
-	_make_local_camera_current()
 
 
 func focus_camera_on_player(player_id: String) -> bool:
@@ -56,20 +54,6 @@ func focus_camera_on_player(player_id: String) -> bool:
 		return false
 
 	view_target_player_id = player_id
-	_make_local_camera_current()
-
-	return true
-
-
-func _make_local_camera_current() -> bool:
-	if local_player == null:
-		return false
-
-	var camera := local_player.get_node_or_null("Camera2D") as Camera2D
-	if camera == null:
-		return false
-
-	camera.make_current()
 	return true
 
 

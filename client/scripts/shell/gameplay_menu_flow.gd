@@ -149,6 +149,16 @@ func set_game_over() -> void:
 	is_game_over = true
 	is_gameplay_paused = false
 	_configure_game_menu_for_game_over()
+	if uses_match_over_overlay_menu:
+		return
+	if game_over_container != null:
+		game_over_container.show()
+	if game_over_margin_container != null:
+		game_over_margin_container.show()
+	if cycle_view != null:
+		cycle_view.hide()
+	if game_menu != null:
+		game_menu.show()
 
 
 func refresh_game_over_menu_state() -> void:

@@ -110,6 +110,34 @@ func test_apply_state_updates_remote_players_from_last_anchor_when_self_is_missi
 	assert_eq(api.server_position(), Vector2(100.0, 200.0))
 
 
+func test_focus_camera_on_player_selects_existing_remote_render_anchor() -> void:
+	var self_id := "player-1"
+	var target_id := "player-2"
+	var server_players := {
+		self_id: {
+			Packets.FIELD_X: 100.0,
+			Packets.FIELD_Y: 200.0,
+			Packets.FIELD_ROTATION: 0.0,
+		},
+		target_id: {
+			Packets.FIELD_X: 400.0,
+			Packets.FIELD_Y: 500.0,
+			Packets.FIELD_ROTATION: 0.0,
+		}
+	}
+
+	api.apply_state(self_id, server_players)
+
+	assert_true(api.focus_camera_on_player(target_id))
+	api.apply_state(self_id, server_players)
+
+	assert_eq(api.server_position(), Vector2(400.0, 500.0))
+
+
+func test_focus_camera_on_player_rejects_missing_player_node() -> void:
+	assert_false(api.focus_camera_on_player("missing-player"))
+
+
 func test_apply_state_falls_back_to_self_position_when_view_target_missing() -> void:
 	var self_id := "player-1"
 	var server_players := {

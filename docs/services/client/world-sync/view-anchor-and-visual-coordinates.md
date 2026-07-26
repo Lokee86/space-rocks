@@ -206,7 +206,7 @@ set_view_target_player(player_id)
 clear_view_target_player()
 ```
 
-These calls route through the active player-render API rather than directly manipulating legacy player sync.
+These calls route through the active player-render API rather than directly manipulating legacy player sync. The gameplay camera remains the `ViewAnchor/Camera2D`; selecting a spectate target changes the render anchor and does not search for or activate a camera under the player scene.
 
 ### Player render API boundary
 
