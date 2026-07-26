@@ -7,6 +7,7 @@ var repeated_background: TextureRect
 var repeated_foreground_background: TextureRect
 var repeated_planet_background: TextureRect
 var parallax_target: Node2D
+var camera: Camera2D
 
 var background_drift_offset := Vector2.ZERO
 var foreground_drift_offset := Vector2.ZERO
@@ -18,12 +19,15 @@ func configure(
 	background: TextureRect,
 	foreground_background: TextureRect,
 	planet_background: TextureRect,
-	parallax_target_ref: Node2D
+	parallax_target_ref: Node2D,
+	camera_ref: Camera2D = null
 ) -> void:
 	repeated_background = background
 	repeated_foreground_background = foreground_background
 	repeated_planet_background = planet_background
 	parallax_target = parallax_target_ref
+	camera = camera_ref
+	_apply_camera_zoom()
 
 
 func set_parallax_target(parallax_target_ref: Node2D) -> void:
@@ -52,6 +56,7 @@ func process_frame() -> void:
 		planet_drift_offset + (scroll_position * Constants.PLANET_BACKGROUND_PARALLAX)
 	)
 
+	_apply_camera_zoom()
 	_set_scroll_offset(repeated_background, background_offset)
 	_set_scroll_offset(repeated_foreground_background, foreground_offset)
 	_set_scroll_offset(repeated_planet_background, planet_offset)
@@ -75,9 +80,19 @@ func clear() -> void:
 	planet_drift_offset = Vector2.ZERO
 	last_valid_parallax_position = Vector2.ZERO
 
+	_apply_camera_zoom()
 	_set_scroll_offset(repeated_background, Vector2.ZERO)
 	_set_scroll_offset(repeated_foreground_background, Constants.FOREGROUND_BACKGROUND_OFFSET)
 	_set_scroll_offset(repeated_planet_background, Vector2.ZERO)
+
+
+func _apply_camera_zoom() -> void:
+	var camera_zoom := 1.0
+	if camera != null:
+		camera_zoom = max(camera.zoom.x, 0.001)
+	_set_tile_scale(repeated_background, camera_zoom)
+	_set_tile_scale(repeated_foreground_background, camera_zoom)
+	_set_tile_scale(repeated_planet_background, camera_zoom)
 
 
 func _shader_material(texture_rect: TextureRect) -> ShaderMaterial:
@@ -86,9 +101,15 @@ func _shader_material(texture_rect: TextureRect) -> ShaderMaterial:
 	return texture_rect.material as ShaderMaterial
 
 
+func _set_tile_scale(texture_rect: TextureRect, tile_scale: float) -> void:
+	var shader_material := _shader_material(texture_rect)
+	if shader_material == null:
+		return
+	shader_material.set_shader_parameter("tile_scale", tile_scale)
+
+
 func _set_scroll_offset(texture_rect: TextureRect, scroll_offset: Vector2) -> void:
 	var shader_material := _shader_material(texture_rect)
 	if shader_material == null:
 		return
 	shader_material.set_shader_parameter("scroll_offset", scroll_offset)
-

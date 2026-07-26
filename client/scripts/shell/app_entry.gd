@@ -122,7 +122,13 @@ func _ready() -> void:
 
 	background_controller = BackgroundController.new()
 	add_child(background_controller)
-	background_controller.configure(repeated_background, repeated_foreground_background, repeated_planet_background, view_anchor)
+	background_controller.configure(
+		repeated_background,
+		repeated_foreground_background,
+		repeated_planet_background,
+		view_anchor,
+		gameplay_camera
+	)
 
 	gameplay_session_controller = GameplaySessionController.new()
 	add_child(gameplay_session_controller)

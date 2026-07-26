@@ -33,14 +33,14 @@ client/scenes/game.tscn
    -> Camera2D
 
 AppEntry._ready()
--> BackgroundController.configure(..., view_anchor)
+-> BackgroundController.configure(..., view_anchor, gameplay_camera)
 -> GameplaySessionController.configure(..., view_anchor, ...)
 -> AppEntry._make_view_anchor_camera_current()
 ```
 
-`BackgroundController` owns the node-facing background presentation lifecycle. It creates `GameplayBackgroundFlow`, passes the repeated texture nodes and parallax target, and calls `process_frame()` each frame.
+`BackgroundController` owns the node-facing background presentation lifecycle. It creates `GameplayBackgroundFlow`, passes the repeated texture nodes, parallax target, and active gameplay camera, and calls `process_frame()` each frame.
 
-`GameplayBackgroundFlow` owns background scroll offset calculation. It reads the parallax target's `global_position`, combines that with generated drift and parallax constants, then writes `scroll_offset` shader parameters to each background layer's `ShaderMaterial`.
+`GameplayBackgroundFlow` owns background scroll and zoom presentation. It reads the parallax target's `global_position`, combines that with generated drift and parallax constants, reads `Camera2D.zoom`, then writes both `scroll_offset` and `tile_scale` shader parameters to each background layer's `ShaderMaterial`.
 
 The background follows the same `ViewAnchor` basis as camera and world presentation. It does not choose the active render anchor. Detailed ViewAnchor, render-anchor, visual coordinate, and toroidal wrap behavior belongs to world-sync documentation.
 
@@ -58,12 +58,15 @@ Background and viewport presentation owns:
 
 * wiring repeated background texture nodes from the root scene
 * wiring the background parallax target
+* wiring the active gameplay camera into background presentation
 * making the `ViewAnchor/Camera2D` camera current during app entry
 * advancing per-frame background drift offsets
 * sampling the current parallax target position
 * preserving the last valid parallax position when the target reference is unavailable
 * combining parallax target position with generated background constants
 * writing `scroll_offset` shader parameters to background materials
+* writing camera zoom to each layer's `tile_scale` shader parameter
+* scaling repeated background sampling around the viewport center
 * resetting background offsets when requested
 * keeping background presentation aligned with the client render anchor seam
 
@@ -120,7 +123,7 @@ This file documents the startup camera handoff only. The ViewAnchor's server/vis
 
 `BackgroundController` is the node-owned background presentation controller.
 
-It is created by `AppEntry`, added as a child node, configured with the repeated background `TextureRect` nodes and the `ViewAnchor`, and processed by Godot each frame.
+It is created by `AppEntry`, added as a child node, configured with the repeated background `TextureRect` nodes, the `ViewAnchor`, and `ViewAnchor/Camera2D`, and processed by Godot each frame.
 
 Its public surface is intentionally small:
 
@@ -143,6 +146,7 @@ repeated_background
 repeated_foreground_background
 repeated_planet_background
 parallax_target
+camera
 background_drift_offset
 foreground_drift_offset
 planet_drift_offset
@@ -156,7 +160,9 @@ Each frame, it:
 2. Reads parallax_target.global_position when available.
 3. Falls back to last_valid_parallax_position when the target is missing.
 4. Calculates background, foreground, and planet offsets.
-5. Writes those offsets to each layer's shader material.
+5. Reads the current uniform camera zoom.
+6. Writes camera zoom to each layer's `tile_scale`.
+7. Writes the calculated offsets to each layer's `scroll_offset`.
 ```
 
 ### Repeated shader layers
@@ -167,9 +173,10 @@ The scene uses repeated background `TextureRect` nodes with `ShaderMaterial` mat
 
 ```text
 scroll_offset
+tile_scale
 ```
 
-If a texture node or shader material is missing, `_set_scroll_offset()` no-ops for that layer.
+`tile_scale` receives the active `Camera2D.zoom.x`. The repeating shader converts `FRAGCOORD` around the viewport center before sampling, so zoom enlarges or reduces background features around the same visual center instead of stretching from the top-left corner. If a texture node or shader material is missing, the parameter write no-ops for that layer.
 
 ### Parallax constants
 
@@ -207,6 +214,8 @@ It consumes scene nodes, generated constants, and Godot presentation APIs:
 ```text
 Node2D.global_position
 Camera2D.make_current()
+Camera2D.zoom
+ShaderMaterial.set_shader_parameter("tile_scale", value)
 ShaderMaterial.set_shader_parameter("scroll_offset", value)
 ```
 
@@ -225,6 +234,7 @@ planet_drift_offset
 last_valid_parallax_position
 active parallax target reference
 shader scroll_offset values
+shader tile_scale values
 ```
 
 This state is:
@@ -316,11 +326,10 @@ Owns HUD presentation. Background presentation must not become a HUD layout or g
 
 ## Tests
 
-There are no focused unit tests for:
+Focused background-flow tests cover camera zoom propagation to every repeated layer and the neutral fallback when no camera is configured:
 
 ```text
-BackgroundController
-GameplayBackgroundFlow
+client/tests/unit/background/test_background_flow.gd
 ```
 
 Adjacent tests cover the systems that background and viewport presentation depends on:
@@ -343,6 +352,8 @@ Manual verification should include:
 camera is current after app boot
 background scrolls during gameplay
 background follows ViewAnchor movement
+mouse-wheel zoom scales ships and all three background layers together
+zoom remains centered instead of shifting the texture pattern toward a corner
 background does not visibly jump across world-wrap edges
 foreground and planet layers use their distinct parallax offsets
 returning to gameplay after menu/session transitions does not orphan background updates
@@ -364,7 +375,7 @@ returning to gameplay after menu/session transitions does not orphan background 
 
 Legacy documentation correctly identified the core invariant: camera and background should follow `ViewAnchor`, not the local player node directly.
 
-`ParallaxBackground` and `ParallaxLayer` nodes exist in the scene, but the current implementation drives layer motion through shader `scroll_offset` values rather than relying on Godot parallax layer motion. The layers currently use zero motion scale and oversized repeated texture rectangles.
+`ParallaxBackground` and `ParallaxLayer` nodes exist in the scene, but the current implementation drives layer motion through shader `scroll_offset` values rather than relying on Godot parallax layer motion. Camera scale is applied through the same shared repeating shader's `tile_scale` parameter. All three background layers now use `client/shaders/repeating_background.gdshader`; the planet layer no longer carries a duplicated inline shader. The layers currently use zero motion scale and oversized repeated texture rectangles.
 
 `GameplayBackgroundFlow.set_scroll_reference()` can write offsets from an explicit scroll position, but the normal runtime path uses `process_frame()` with the configured parallax target.
 
