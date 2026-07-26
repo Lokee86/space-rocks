@@ -29,8 +29,10 @@ WebSocket message
 -> inbound packet routing
 -> current room + current game player lookup
 -> Game.HandlePacket(playerID, packet)
--> player/session/camera mutation
+-> latest input stored in the per-player input mailbox
 -> Game.Step(...)
+-> mailbox drained once under simulation ownership
+-> player/session/camera mutation
 -> movement and weapon simulation consume stored input
 -> lane-native realtime projection
 ```
@@ -124,7 +126,9 @@ This means player input routing starts only after networking has already resolve
 
 ### Packet dispatch inside the game
 
-`Game.HandlePacket` locks the game instance before inspecting the packet.
+`Game.HandlePacket` treats high-frequency `input` packets separately from control packets. Input packets update a latest-value per-player mailbox protected by a narrow input mutex and return without acquiring the main game mutex. Multiple input packets received before the next simulation tick overwrite the same pending entry, so only the newest state for each player is retained.
+
+At the start of `Game.Step`, after the simulation has acquired the main game mutex, the game drains the pending-input mailbox and applies accepted states to active ships. Respawn, pause, and client config packets continue through the main game lock because they perform immediate control-state mutations.
 
 Respawn requests are handled first:
 
@@ -147,10 +151,6 @@ If no active ship exists, the packet returns without further mutation. This prev
 The active-player switch currently handles:
 
 ```text
-input
--> if playerCanReceiveInput(...)
--> player.SetInput(packet.Input)
-
 pause_request
 -> game.togglePlayerPaused(playerID)
 
@@ -161,9 +161,9 @@ client_config
 
 ### Input acceptance gate
 
-Input packets do not immediately move or fire the ship. They replace the stored `runtime.InputState` on the active runtime ship.
+Input packets do not immediately move or fire the ship. They replace the pending `runtime.InputState` for that player. At the next simulation tick, the latest pending state replaces the stored input on the active runtime ship.
 
-The input acceptance gate is:
+The input acceptance gate is evaluated while the simulation drains the mailbox:
 
 ```text
 playerCanReceiveInput(playerID, player)
@@ -346,6 +346,8 @@ Input data is treated as player intent, not authoritative outcome. Config data i
 ```text
 input
 -> Game.HandlePacket
+-> latest-value per-player mailbox
+-> Game.Step mailbox drain
 -> active player lookup
 -> playerCanReceiveInput
 -> runtime.Ship.SetInput
@@ -454,6 +456,7 @@ Important non-ownership boundaries:
 
 Relevant focused tests include:
 
+* `services/game-server/internal/game/input_test.go`
 * `services/game-server/tests/game/pause_test.go`
 * `services/game-server/tests/game/respawn_test.go`
 * `services/game-server/internal/networking/gameplay_packets_test.go`
@@ -474,6 +477,8 @@ Current verified behavior includes:
 * Respawn packets route through respawn request handling.
 * Client config packets reach the game instance and update session/camera config.
 * Input packet decode preserves movement and fire booleans.
+* Repeated pre-tick input packets coalesce to the newest state.
+* Removing a player clears any pending input mailbox entry.
 
 Broader verification should include the game-server Go test suite when changing packet routing, player gates, pause behavior, respawn behavior, movement, weapon fire, or generated packet fields.
 

@@ -227,6 +227,8 @@ Godot input action
 
 The client sends gameplay input only when the session is active enough to accept gameplay input. `GameplaySessionController._input(event)` and `_unhandled_input(event)` return immediately when `accepts_gameplay_packets` is false, so inactive sessions do not route input through devtools checks, HUD input-policy checks, normal gameplay input routing, or `set_input_as_handled()`. Paused gameplay, disconnected network state, and blocking UI state should prevent gameplay input packets from being sent.
 
+`GameplayInputFlow` sends the first input state immediately, then sends again when the movement/fire state changes. Unchanged state is refreshed by a 250 ms heartbeat rather than being retransmitted once per rendered frame. This keeps press and release transitions immediate while preventing render-rate-dependent WebSocket input pressure.
+
 The server remains authoritative after input is sent. The client updates presentation from incoming lane packets rather than treating local input as confirmed gameplay lane state.
 
 ## Mouse action priority
@@ -417,6 +419,7 @@ Current implementation paths:
 
 Relevant tests include:
 
+* `client/tests/unit/gameplay/input/test_gameplay_input_flow.gd`
 * `client/tests/unit/gameplay/input/test_hud_input_policy.gd`
 * `client/tests/unit/test_mouse_action_mapper.gd`
 * `client/tests/unit/test_gameplay_input_context.gd`

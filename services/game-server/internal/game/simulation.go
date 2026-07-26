@@ -38,6 +38,7 @@ func (game *Game) Step(delta float64) {
 
 		bounds := space.DefaultBounds()
 
+		game.applyPendingPlayerInputsLocked()
 		game.stepPlayerSessions(delta)
 		if game.isMatchOverLocked() {
 			game.stepAsteroids(delta, bounds)

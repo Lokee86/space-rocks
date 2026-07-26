@@ -21,6 +21,8 @@ import (
 
 type Game struct {
 	mu                        sync.Mutex
+	inputMu                   sync.Mutex
+	pendingPlayerInputs       map[string]runtime.InputState
 	rngSource                 *rng.Source
 	stopSimulation            chan struct{}
 	startSimulationOnce       sync.Once
@@ -74,6 +76,7 @@ func newGame(source *rng.Source) *Game {
 
 	game := &Game{
 		rngSource:                 source,
+		pendingPlayerInputs:       make(map[string]runtime.InputState),
 		collisionShapes:           collisionShapes,
 		stopSimulation:            make(chan struct{}),
 		cameraViews:               make(map[string]*runtime.CameraView),

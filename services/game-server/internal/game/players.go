@@ -72,6 +72,9 @@ func (game *Game) RemovePlayer(playerID string) {
 	defer game.mu.Unlock()
 
 	delete(game.entities.Players, playerID)
+	game.inputMu.Lock()
+	delete(game.pendingPlayerInputs, playerID)
+	game.inputMu.Unlock()
 	delete(game.cameraViews, playerID)
 	delete(game.playerSessions, playerID)
 	delete(game.botControllers, playerID)
