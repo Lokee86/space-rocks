@@ -16,11 +16,16 @@ class InMemoryAuthCredentialStore:
 	var stored_token := ""
 	var migration_required := false
 	var save_succeeds := true
+	var save_results: Array = []
+	var save_attempts := 0
 
 	func load_token() -> String:
 		return stored_token
 
 	func save_token(token: String) -> bool:
+		save_attempts += 1
+		if !save_results.is_empty() && !bool(save_results.pop_front()):
+			return false
 		if !save_succeeds:
 			return false
 		stored_token = token
@@ -43,23 +48,40 @@ class FakeAuthApiClient:
 	signal discord_sign_in_released
 
 	var current_user_result: ApiRequestResult
+	var current_user_results: Array = []
 	var discord_sign_in_result: ApiRequestResult
+	var discord_sign_in_results: Array = []
+	var discord_exchange_result: ApiRequestResult
+	var discord_exchange_results: Array = []
 	var logout_result: ApiRequestResult
 	var wait_for_current_user := false
 	var wait_for_discord_sign_in := false
 	var logout_tokens: Array[String] = []
 	var current_user_trace_ids: Array[String] = []
+	var discord_begin_calls := 0
+	var discord_exchange_calls := 0
 
 	func get_current_user(_token: String, trace_id: String = ""):
 		current_user_trace_ids.append(trace_id)
 		if wait_for_current_user:
 			await current_user_released
+		if !current_user_results.is_empty():
+			return current_user_results.pop_front()
 		return current_user_result
 
 	func begin_discord_login_session(_trace_id: String = ""):
+		discord_begin_calls += 1
 		if wait_for_discord_sign_in:
 			await discord_sign_in_released
+		if !discord_sign_in_results.is_empty():
+			return discord_sign_in_results.pop_front()
 		return discord_sign_in_result
+
+	func exchange_discord_login_session(_login_session_id: String, _poll_secret: String, _trace_id: String = ""):
+		discord_exchange_calls += 1
+		if !discord_exchange_results.is_empty():
+			return discord_exchange_results.pop_front()
+		return discord_exchange_result
 
 	func release_current_user() -> void:
 		current_user_released.emit()
@@ -138,6 +160,7 @@ func test_failed_legacy_migration_signs_out_and_revokes_token() -> void:
 	store.migration_required = true
 	store.save_succeeds = false
 	controller.auth_credential_store = store
+	controller.credential_save_retry_delays_seconds = []
 	watch_signals(controller)
 
 	controller.initialize_from_saved_token()
@@ -350,6 +373,7 @@ func test_saved_token_provider_failure_is_distinct_from_invalid_token_failure() 
 	var fake_client := FakeAuthApiClient.new()
 	fake_client.current_user_result = ApiRequestResult.failure(503, "unavailable")
 	var controller := _create_controller(fake_client, func(operation_name: String): return _fixed_auth_trace(operation_name))
+	controller.saved_token_retry_delays_seconds = []
 	var token_store := InMemoryAuthCredentialStore.new()
 	token_store.stored_token = "bearer-token"
 	controller.auth_credential_store = token_store
@@ -388,6 +412,7 @@ func test_saved_token_network_failure_preserves_saved_credential() -> void:
 	var fake_client := FakeAuthApiClient.new()
 	fake_client.current_user_result = ApiRequestResult.failure(0, "network_failure_7")
 	var controller := _create_controller(fake_client)
+	controller.saved_token_retry_delays_seconds = []
 	var token_store := InMemoryAuthCredentialStore.new()
 	token_store.stored_token = "bearer-token"
 	controller.auth_credential_store = token_store
@@ -399,6 +424,133 @@ func test_saved_token_network_failure_preserves_saved_credential() -> void:
 
 	assert_false(controller.get_session().is_signed_in())
 	assert_eq(token_store.stored_token, "bearer-token")
+
+
+func test_saved_token_network_failure_retries_and_restores_session() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.current_user_results = [
+		ApiRequestResult.failure(0, "network_failure_7"),
+		ApiRequestResult.success(200, {
+			"user": {"id": 42, "display_name": "Ada Lovelace"},
+		}),
+	]
+	var controller := _create_controller(
+		fake_client,
+		func(operation_name: String): return _fixed_auth_trace(operation_name)
+	)
+	controller.saved_token_retry_delays_seconds = [0.0]
+	var token_store := InMemoryAuthCredentialStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_credential_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_true(controller.get_session().is_signed_in())
+	assert_eq(controller.get_session().display_name, "Ada Lovelace")
+	assert_eq(token_store.stored_token, "bearer-token")
+	assert_eq(fake_client.current_user_trace_ids, [
+		"00000000-0000-4000-8000-000000000061",
+		"00000000-0000-4000-8000-000000000061",
+	])
+
+
+func test_saved_token_non_auth_failure_preserves_saved_credential() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.current_user_result = ApiRequestResult.failure(404, "not_found")
+	var controller := _create_controller(fake_client)
+	controller.saved_token_retry_delays_seconds = []
+	var token_store := InMemoryAuthCredentialStore.new()
+	token_store.stored_token = "bearer-token"
+	controller.auth_credential_store = token_store
+
+	controller.initialize_from_saved_token()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_false(controller.get_session().is_signed_in())
+	assert_eq(token_store.stored_token, "bearer-token")
+
+
+func test_discord_begin_retries_transient_failure_before_rejecting_response() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.discord_sign_in_results = [
+		ApiRequestResult.failure(0, "request_failed"),
+		ApiRequestResult.success(200, {
+			"login_session_id": "login-session-id",
+			"poll_secret": "poll-secret",
+			"login_url": "",
+		}),
+	]
+	var controller := _create_controller(fake_client)
+	controller.discord_begin_retry_delays_seconds = [0.0]
+	watch_signals(controller)
+
+	controller.request_discord_sign_in()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(fake_client.discord_begin_calls, 2)
+	assert_signal_emitted_with_parameters(controller, "auth_error", ["Unable to start Discord sign-in."])
+
+
+func test_discord_poll_retries_transient_exchange_failure_without_second_login() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.discord_exchange_results = [
+		ApiRequestResult.failure(0, "network_failure_7"),
+		ApiRequestResult.success(200, {
+			"token": "discord-token",
+			"user": {"id": 42, "display_name": "Ada Lovelace"},
+		}),
+	]
+	var controller := _create_controller(fake_client)
+	controller.discord_poll_interval_seconds = 0.0
+	controller.discord_poll_timeout_seconds = 1.0
+	var operation := controller._begin_auth_operation("discord_sign_in")
+
+	await controller._poll_discord_login_session(
+		"login-session-id",
+		"poll-secret",
+		operation["epoch"],
+		operation["trace"]
+	)
+
+	assert_true(controller.get_session().is_signed_in())
+	assert_eq(controller.get_session().token, "discord-token")
+	assert_eq(fake_client.discord_exchange_calls, 2)
+	assert_eq(controller.auth_credential_store.load_token(), "discord-token")
+
+
+func test_discord_success_retries_secure_save_before_failing_login() -> void:
+	var fake_client := FakeAuthApiClient.new()
+	fake_client.discord_exchange_result = ApiRequestResult.success(200, {
+		"token": "discord-token",
+		"user": {"id": 42, "display_name": "Ada Lovelace"},
+	})
+	var controller := _create_controller(fake_client)
+	controller.discord_poll_interval_seconds = 0.0
+	controller.discord_poll_timeout_seconds = 1.0
+	controller.credential_save_retry_delays_seconds = [0.0]
+	var token_store := InMemoryAuthCredentialStore.new()
+	token_store.save_results = [false, true]
+	controller.auth_credential_store = token_store
+	var operation := controller._begin_auth_operation("discord_sign_in")
+
+	await controller._poll_discord_login_session(
+		"login-session-id",
+		"poll-secret",
+		operation["epoch"],
+		operation["trace"]
+	)
+
+	assert_true(controller.get_session().is_signed_in())
+	assert_eq(token_store.stored_token, "discord-token")
+	assert_eq(token_store.save_attempts, 2)
+	assert_eq(fake_client.discord_exchange_calls, 1)
 
 
 func test_cancelled_saved_token_validation_emits_no_stale_terminal_event() -> void:

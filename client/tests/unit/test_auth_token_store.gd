@@ -21,6 +21,16 @@ func after_each() -> void:
 	_cleanup_files()
 
 
+func test_test_process_uses_isolated_credential_identity_and_paths() -> void:
+	var store := AuthCredentialStore.new()
+
+	var test_scope := str(OS.get_process_id())
+	assert_eq(store.service_name, "ca.laughingskull.space-rocks.test.%s" % test_scope)
+	assert_eq(store.encrypted_blob_path, "user://test_auth_credential_%s.bin" % test_scope)
+	assert_eq(store.revocation_marker_path, "user://test_auth_credential_revoked_%s" % test_scope)
+	assert_eq(store.legacy_token_path, "user://test_auth_token_%s.json" % test_scope)
+
+
 func test_secure_store_round_trip_uses_helper_protocol() -> void:
 	var store = _create_store()
 

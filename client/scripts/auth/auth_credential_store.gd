@@ -3,6 +3,7 @@ class_name AuthCredentialStore
 
 const LegacyAuthTokenReaderScript := preload("res://scripts/auth/auth_token_store.gd")
 const SERVICE_NAME := "ca.laughingskull.space-rocks"
+const TEST_SERVICE_NAME := "ca.laughingskull.space-rocks.test"
 const ACCOUNT_NAME := "session"
 const WINDOWS_HELPER_NAME := "space-rocks-credential-helper.exe"
 const MACOS_HELPER_NAME := "space-rocks-credential-helper"
@@ -11,10 +12,21 @@ var service_name := SERVICE_NAME
 var account_name := ACCOUNT_NAME
 var encrypted_blob_path := "user://auth_credential.bin"
 var revocation_marker_path := "user://auth_credential_revoked"
+var legacy_token_path := "user://auth_token.json"
 var helper_path_override := ""
 var request_handler: Callable
 var legacy_token_reader
 var _loaded_from_legacy := false
+
+
+func _init() -> void:
+	if !_is_test_process():
+		return
+	var test_scope := str(OS.get_process_id())
+	service_name = "%s.%s" % [TEST_SERVICE_NAME, test_scope]
+	encrypted_blob_path = "user://test_auth_credential_%s.bin" % test_scope
+	revocation_marker_path = "user://test_auth_credential_revoked_%s" % test_scope
+	legacy_token_path = "user://test_auth_token_%s.json" % test_scope
 
 
 func load_token() -> String:
@@ -154,3 +166,11 @@ func _remove_revocation_marker() -> void:
 func _ensure_legacy_reader() -> void:
 	if legacy_token_reader == null:
 		legacy_token_reader = LegacyAuthTokenReaderScript.new()
+		legacy_token_reader.token_path = legacy_token_path
+
+
+func _is_test_process() -> bool:
+	for argument in OS.get_cmdline_args():
+		if str(argument).contains("gut_cmdln.gd"):
+			return true
+	return false

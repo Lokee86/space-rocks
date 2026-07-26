@@ -65,7 +65,7 @@ Rails/API account identity
 != display name
 ```
 
-The API server owns account identity and online persistence. The game server owns realtime session identity, multiplayer admission, room participation, gameplay authority, and trusted match facts. The player-data runtime owns identity-based store routing. The client owns presentation, local token storage, and initiating the appropriate requests.
+The API server owns account identity and online persistence. The game server owns realtime session identity, multiplayer admission, room participation, gameplay authority, and trusted match facts. The player-data runtime owns identity-based store routing. The client owns presentation, local token storage, and initiating the appropriate requests. Automated GUT runs use a per-process test credential identity so development verification cannot mutate the live saved account session.
 
 ## Associated systems
 
@@ -237,9 +237,11 @@ On startup, the client loads its saved bearer token.
 ```text
 saved token exists
 -> client calls GET /api/auth/me
+-> transient API startup or transport failure retries with bounded backoff
 -> API server verifies token
 -> valid token returns current user
--> invalid token clears local client auth state
+-> explicit invalid or unauthorized response clears local client auth state
+-> other failures preserve the credential for a later session
 ```
 
 `GET /api/auth/me` returns `account_id`. The current client auth session state still stores the auth payload as client session presentation state and does not make the client authoritative for account identity.
@@ -422,8 +424,10 @@ Current account backend failures are intentionally separated by boundary.
 Client auth/session failures:
 
 * missing saved token signs the client out
-* invalid saved token clears local auth state
-* Discord login-session failure clears local auth state
+* explicit invalid or unauthorized saved token clears local auth state
+* transient saved-token validation failures preserve the credential
+* transient Discord creation and polling failures retry without requiring another browser login
+* permanent Discord login-session failure clears local auth state
 * logout clears local state immediately
 
 WebSocket auth failures:

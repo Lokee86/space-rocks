@@ -35,11 +35,11 @@ Session boot flow
 
 On startup, `AppEntry` creates an `AuthSessionController`, wires it into the main menu, profile providers, and connection service, then calls `initialize_from_saved_token()`.
 
-If no saved token exists, the controller clears auth state and emits `auth_state_changed`. If a saved token exists, the controller validates it through Rails `GET /api/auth/me`. A valid response repopulates `AuthSession`. An invalid or failed response clears the saved token and signs the client out.
+If no saved token exists, the controller clears auth state and emits `auth_state_changed`. If a saved token exists, the controller validates it through Rails `GET /api/auth/me`. A valid response repopulates `AuthSession`. Transient network, startup, rate-limit, and server failures are retried while preserving the credential. Only an explicit authentication rejection clears the saved token.
 
 Saved-token validation, Discord sign-in, and logout share one monotonically increasing auth-operation epoch. Starting any of these operations advances the epoch; each new operation supersedes older awaited operations. A stale completion returns without changing the token store or `AuthSession`, and without emitting `auth_state_changed` or `auth_error`. Logout advances the epoch before clearing local state. Its remote logout request still uses the token captured before local clearing and may finish independently.
 
-Current user-facing sign-in is Discord-only. The sign-in window has disabled manual email/password and Google controls. Pressing the Discord button starts a Rails login-session handoff: the client asks Rails for a login session, opens the returned browser URL, polls the exchange endpoint, receives the normal Space Rocks bearer token, stores it through `AuthCredentialStore`, and updates the in-memory session. Windows uses user-scoped DPAPI with an encrypted local blob; macOS uses a generic-password item in the current user's login Keychain.
+Current user-facing sign-in is Discord-only. The sign-in window has disabled manual email/password and Google controls. Pressing the Discord button starts a Rails login-session handoff: the client asks Rails for a login session, opens the returned browser URL, polls the exchange endpoint, receives the normal Space Rocks bearer token, stores it through `AuthCredentialStore`, and updates the in-memory session. Login-session creation and polling tolerate transient API restarts without requiring a second browser login, and secure credential writes are retried before the completed login is rejected. Windows uses user-scoped DPAPI with an encrypted local blob; macOS uses a generic-password item in the current user's login Keychain.
 
 Multiplayer entry is gated by client signed-in state. If the player requests multiplayer while signed out, the menu routes to the sign-in screen. If the player is already signed in, or becomes signed in while on the sign-in screen, the menu routes to multiplayer pregame.
 
@@ -60,7 +60,8 @@ When a websocket connects, the client sends `authenticate_request` if the curren
 * Open the browser login URL returned by Rails.
 * Poll the Discord login-session exchange endpoint until authenticated, failed, canceled, or timed out.
 * Save the bearer token returned by a successful login-session exchange.
-* Clear local auth state on auth failure.
+* Preserve saved credentials through transient API and transport failures.
+* Clear saved credentials only after explicit authentication rejection or logout.
 * Clear local auth state immediately on logout.
 * Call Rails logout when a token existed at logout time.
 * Route signed-out multiplayer entry to the sign-in screen.
@@ -118,7 +119,10 @@ email
 ```text
 Windows -> user-scoped DPAPI -> user://auth_credential.bin
 macOS   -> per-user login Keychain generic-password item
+GUT     -> per-process test service and test filenames
 ```
+
+GUT processes are detected from the command line and receive a per-process credential service name and test-scoped blob, marker, and legacy-token paths. Headless tests therefore cannot load, overwrite, revoke, or migrate the live client credential even though Godot resolves both through the same project `user://` root.
 
 The helper accepts one JSON request over standard input and returns one JSON response over standard output. The bearer token is never placed in process arguments. Windows stores only a DPAPI-encrypted binary blob. macOS stores no token file.
 
@@ -215,15 +219,19 @@ AuthSessionController.initialize_from_saved_token()
 AuthCredentialStore.load_token()
 if token exists:
     GET /api/auth/me with bearer token
+    if transient API or transport failure:
+        retry validation with bounded backoff
     if valid:
         AuthSession.set_signed_in(token, user)
-    else:
+    if explicitly rejected as invalid or unauthorized:
         AuthCredentialStore.clear_token()
         AuthSession.clear()
+    otherwise:
+        preserve the credential and leave this runtime session signed out
 emit auth_state_changed
 ```
 
-Invalid saved tokens are cleared locally.
+Explicitly invalid or unauthorized saved tokens are cleared locally. Generic request, response-contract, startup, and server failures do not destroy the saved credential.
 
 ### Discord login-session handoff
 
@@ -240,11 +248,11 @@ repeat until success, failure, cancel, or timeout:
     body: { "poll_secret": "<poll-secret>" }
 ```
 
-The controller polls once per second for up to 120 seconds.
+The controller polls once per second for up to 120 seconds. Login-session creation uses bounded retry delays when the API is temporarily unavailable. Polling treats network failures, request setup failures, rate limiting, and `5xx` responses as transient and continues polling the same login session until success or timeout.
 
-`202` means the browser login session is still pending. A successful exchange must return a non-empty `token` and a dictionary `user` payload. On success, the client saves the token, updates `AuthSession`, and emits `auth_state_changed`.
+`202` means the browser login session is still pending. A successful exchange must return a non-empty `token` and a dictionary `user` payload. On success, the client retries temporary secure-store write failures before updating `AuthSession` and emitting `auth_state_changed`.
 
-Begin-session failure, malformed response, failed exchange, or timeout clears local auth state and emits `auth_error`.
+Permanent begin-session failure, malformed response, permanent exchange failure, exhausted credential-write retries, or timeout clears local auth state and emits `auth_error`.
 
 ### Logout flow
 
@@ -352,10 +360,12 @@ The saved bearer token is a valid credential while it remains unexpired and unre
 Current failure behavior:
 
 * Missing saved token signs the client out.
-* Invalid saved token signs the client out and clears the local token.
-* Failed Discord login-session creation clears local auth state.
-* Malformed login-session creation response clears local auth state.
-* Failed login-session exchange clears local auth state.
+* Explicitly invalid or unauthorized saved tokens sign the client out and clear the local token.
+* Transient saved-token validation failures retry with bounded backoff and preserve the credential if retries are exhausted.
+* Transient Discord login-session creation failures retry before failing the sign-in request.
+* Transient login-session polling failures continue the same browser login session.
+* Temporary secure credential-write failures retry before rejecting a successful Discord exchange.
+* Malformed or permanent login-session failures clear local auth state.
 * Login-session polling timeout clears local auth state.
 * Logout clears local state immediately.
 * Websocket `invalid_token` prevents pending multiplayer boot from being sent.
@@ -446,7 +456,7 @@ These backend paths are listed for boundary clarity. The client does not own the
 * `client/native/credential-helper/` - native helper unit tests and Windows DPAPI integration tests
 * `client/tests/unit/test_auth_session_controller.gd`
 
-The controller tests also cover the two logout races: saved-token validation completing after logout, and Discord sign-in initialization completing after logout. Both verify that logout remains the sole local auth-state change.
+The controller tests also cover saved-token retry and credential-preservation behavior, Discord begin/poll recovery through transient failures, secure-store save retries, and the two logout races: saved-token validation completing after logout, and Discord sign-in initialization completing after logout. The race tests verify that logout remains the sole local auth-state change. Credential-store tests verify that GUT processes receive a per-process test identity and cannot address the live DPAPI blob or Keychain item.
 
 ### Sign-in UI and menu routing
 
