@@ -4,8 +4,8 @@ import (
 	"math"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/spawning"
 )
@@ -29,12 +29,6 @@ func (game *Game) spawnDebugBullet(ownerID string, position physics.Vector2, dir
 	bullet := runtime.NewBullet(bulletID, ownerID, spawnPosition, rotation, velocity, constants.BasicCannonProjectileLifetime)
 	game.entities.Projectiles[bullet.ID] = bullet
 	return bullet, true
-}
-
-func (game *Game) spawnAsteroidBatch(view *runtime.CameraView) {
-	for range constants.AsteroidSpawnBatchSize {
-		game.spawnAsteroid(view)
-	}
 }
 
 func (game *Game) spawnAsteroid(view *runtime.CameraView) {

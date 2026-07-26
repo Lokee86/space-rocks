@@ -15,6 +15,8 @@ player_respawn_delay = 3.0
 [constants.server.asteroids]
 asteroid_spawn_interval = 3.0
 asteroid_spawn_batch_size = 3
+asteroid_timed_spawn_base_limit = 24
+asteroid_timed_spawn_per_camera_limit = 8
 asteroid_spawn_margin = 160.0
 asteroid_despawn_margin = 320.0
 asteroid_min_speed = 115.0

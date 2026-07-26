@@ -28,7 +28,8 @@ The current server flow is:
 simulation tick
 -> step player/session state
 -> if match is still active, evaluate asteroid spawn timing
--> for each active camera view, spawn a batch when the interval elapses
+-> build a sorted active-camera list when the interval elapses
+-> spend one bounded global timed-spawn budget across those camera views
 -> choose an offscreen spawn position
 -> plan asteroid velocity, size, and variant
 -> allocate asteroid id
@@ -144,13 +145,23 @@ hasCameraViews() == true
 
 When there are no camera views, the asteroid spawn timer resets to `0`.
 
-When spawning is allowed, `asteroidSpawnElapsed` accumulates tick delta. Once it reaches `constants.AsteroidSpawnInterval`, the timer resets and the game spawns one asteroid batch for each active camera view.
+When spawning is allowed, `asteroidSpawnElapsed` accumulates tick delta. Once it reaches `constants.AsteroidSpawnInterval`, the game builds a stable sorted camera-view list and spends one global timed-spawn budget across it. The budget is the larger of `AsteroidSpawnBatchSize` and the active camera count, so single-player keeps the existing three-asteroid wave while larger rooms receive approximately one timed asteroid per camera rather than multiplying the full batch by every player.
+
+Timed spawning is also bounded by a live-population ceiling:
+
+```text
+AsteroidTimedSpawnBaseLimit + active camera count * AsteroidTimedSpawnPerCameraLimit
+```
+
+When the ceiling is full, the timer remains ready and timed spawning resumes as soon as capacity opens. Fragment and debug spawns are not rejected by this timed-spawn ceiling.
 
 Current generated constants include:
 
 ```text
 AsteroidSpawnInterval = 3.0
 AsteroidSpawnBatchSize = 3
+AsteroidTimedSpawnBaseLimit = 24
+AsteroidTimedSpawnPerCameraLimit = 8
 AsteroidSpawnMargin = 160.0
 AsteroidDespawnMargin = 320.0
 AsteroidMinSpeed = 115.0
@@ -571,6 +582,8 @@ Asteroid spawning and variants must preserve these rules:
 * The client must observe asteroid existence through server state.
 * Timed asteroid spawning must not run after match over.
 * Timed asteroid spawning requires at least one active camera view.
+* Timed asteroid spawning must use a bounded global room budget rather than multiplying a full batch by every camera.
+* Timed asteroid spawning must stop at the configured live timed-population ceiling.
 * Timed asteroid spawn positions must be offscreen for all active camera views.
 * Root game code owns mutation into `game.entities.Asteroids`.
 * Spawn planning should remain separate from spawn application.

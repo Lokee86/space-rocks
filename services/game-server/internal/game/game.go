@@ -35,6 +35,7 @@ type Game struct {
 	dropTables                drops.Tables
 	radialEffects             radial.Store
 	asteroidSpawnElapsed      float64
+	asteroidSpawnCameraCursor int
 	worldSimulationOptions    WorldSimulationOptions
 	collisionShapes           physics.CollisionShapeCatalog
 	entities                  runtime.EntityStore
