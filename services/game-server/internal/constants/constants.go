@@ -34,6 +34,8 @@ const BaseScore = 120
 // data-sync:start constants.server.asteroids
 const AsteroidSpawnInterval = 3.0
 const AsteroidSpawnBatchSize = 3
+const AsteroidTimedSpawnBaseLimit = 24
+const AsteroidTimedSpawnPerCameraLimit = 8
 const AsteroidSpawnMargin = 160.0
 const AsteroidDespawnMargin = 320.0
 const AsteroidMinSpeed = 115.0
