@@ -38,26 +38,26 @@ func newActiveRoomForWriterTest(t *testing.T, gameInstance *game.Game) (*rooms.R
 }
 
 func newReadyGameplayWebRTCTransportForTests() (*WebRTCTransport, map[string]*fakeWebRTCDataChannel) {
-	world := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
-	overlay := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
-	sessionChannel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
-	event := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
-	channels := map[string]*fakeWebRTCDataChannel{
-		webRTCChannelLaneWorld: world,
-		"overlay":              overlay,
-		"session":              sessionChannel,
-		"event":                event,
+	laneNames := []string{
+		webRTCChannelLaneWorld,
+		"overlay",
+		"session",
+		"event",
+		"ships",
+		"asteroids",
+		"bullets",
+		"ships.lifecycle",
+		"asteroids.lifecycle",
+		"bullets.lifecycle",
 	}
-	transport := &WebRTCTransport{
-		channels: map[string]webRTCDataChannel{
-			webRTCChannelLaneWorld: world,
-			"overlay":              overlay,
-			"session":              sessionChannel,
-			"event":                event,
-		},
-		ready: true,
+	channels := make(map[string]*fakeWebRTCDataChannel, len(laneNames))
+	transportChannels := make(map[string]webRTCDataChannel, len(laneNames))
+	for _, lane := range laneNames {
+		channel := &fakeWebRTCDataChannel{readyState: webrtc.DataChannelStateOpen}
+		channels[lane] = channel
+		transportChannels[lane] = channel
 	}
-	return transport, channels
+	return &WebRTCTransport{channels: transportChannels, ready: true}, channels
 }
 
 func TestWriteGameplayLaneProtocolMessageWritesLanePacket(t *testing.T) {
@@ -130,7 +130,7 @@ func TestWriteGameplayLaneProtocolMessageUsesWebRTCForLanePackets(t *testing.T) 
 	assertNoMessageWithin(t, clientConn)
 }
 
-func TestWriteGameplayLaneProtocolMessageBackpressureDefersWholeBatchWithoutAdvancingState(t *testing.T) {
+func TestWriteGameplayLaneProtocolMessageBackpressureBlocksOnlyAffectedLaneGroup(t *testing.T) {
 	serverConn, clientConn := newWebSocketTestConn(t)
 	defer serverConn.Close()
 	defer clientConn.Close()
@@ -161,15 +161,23 @@ func TestWriteGameplayLaneProtocolMessageBackpressureDefersWholeBatchWithoutAdva
 	}
 
 	if !writeGameplayLaneProtocolMessage(session, "127.0.0.1:1234") {
-		t.Fatal("expected backpressured batch to defer without closing the session")
+		t.Fatal("expected world backpressure to leave the session open")
 	}
-	for lane, channel := range channels {
-		if len(channel.sentTexts) != 0 {
-			t.Fatalf("lane %q sent packets despite preflight backpressure: %#v", lane, channel.sentTexts)
+	if len(channels[webRTCChannelLaneWorld].sentTexts) != 0 {
+		t.Fatalf("world lane sent despite backpressure: %#v", channels[webRTCChannelLaneWorld].sentTexts)
+	}
+	for _, lane := range []string{"overlay", "session"} {
+		if len(channels[lane].sentTexts) == 0 {
+			t.Fatalf("independent lane %q was suppressed by world backpressure", lane)
 		}
 	}
 	if _, ok := session.realtimeState.LaneState(realtime.LaneWorld); ok {
-		t.Fatal("expected deferred batch not to advance world lane state")
+		t.Fatal("blocked world group advanced world lane state")
+	}
+	for _, lane := range []realtime.Lane{realtime.LaneOverlay, realtime.LaneSession} {
+		if _, ok := session.realtimeState.LaneState(lane); !ok {
+			t.Fatalf("successful independent lane %q did not advance", lane)
+		}
 	}
 	assertNoMessageWithin(t, clientConn)
 }

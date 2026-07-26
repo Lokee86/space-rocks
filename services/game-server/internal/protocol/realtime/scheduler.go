@@ -105,6 +105,8 @@ func hotPacketCadenceAllows(mode HotLaneMode, sequence int) bool {
 		return sequence%2 == 0
 	case HotLaneModeFullOwned20Hz:
 		return sequence%3 == 0
+	case HotLaneModeFullOwned15Hz:
+		return sequence%4 == 0
 	default:
 		return true
 	}

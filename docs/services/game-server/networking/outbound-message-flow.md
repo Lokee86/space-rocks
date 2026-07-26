@@ -163,26 +163,27 @@ When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(sess
 1. Writes debug shape catalog output first when eligible.
 2. Resets `session.realtimeState` when the receiver is empty or changes.
 3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
-4. Advances `HotLaneTick` and applies the current cadence policy: ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression; chunked asteroid lifecycle and its related projection/hot transition wait for the permitted asteroid cadence tick.
+4. Advances `HotLaneTick` and applies the shared chunk-pressure cadence policy independently to ships, asteroids, and bullets: one chunk at 60 Hz, two chunks at 30 Hz, three chunks at 20 Hz, and four or more chunks at the 15 Hz floor. All chunks for an eligible sequence are sent in the same tick; additional pressure increases the parallel in-flight chunk burst rather than reducing cadence below 15 Hz.
 5. Selects included lane candidates from the send plan, including lifecycle candidates before expanded hot chunks when needed.
 6. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
 7. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
 8. `CompactWirePacket` applies generated descriptor-driven aliases, value domains, ID codecs/selectors, record encodings, and event layouts.
 9. `packetcodec` encodes each selected candidate into `EncodedLanePackets`.
-10. Preflights every selected payload against the buffered amount of its destination lane, including bytes reserved earlier in the same pass. If any selected payload would cross the 32 KiB per-lane threshold, the function skips the entire gameplay send pass for that session tick.
-11. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the transport is ready.
-12. Logs lane wire packet details after successful writes.
-13. Drains active event_batch events only after a successful WebRTC write.
-14. Persists lane metadata only after successful writes.
-15. Stores baseline projections for non-event lane packets only after successful writes.
-16. Marks a lane baseline ready after a final full packet.
-17. Emits a non-empty per-tick debug summary after packet writes; cadence-suppressed or backpressure-skipped ticks produce no successful wire log or write summary.
+10. Groups selected packets into independent transport transactions. `world`, `ships.lifecycle`, `asteroids.lifecycle`, and `bullets.lifecycle` form one reliable projection group; each hot, overlay, session, and event lane forms its own group.
+11. Preflights each group against the buffered amount of its destination lane, including bytes reserved by earlier chunks in that group. A blocked group is skipped without suppressing unrelated groups.
+12. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the group is eligible.
+13. Logs lane wire packet details after successful writes.
+14. Drains active event_batch events only after the event group succeeds.
+15. Persists metadata and projections only for successful groups. Chunked hot projections commit only after the final chunk of the same-sequence burst succeeds.
+16. Seeds independent ship, asteroid, and bullet movement projections after a successful world full; later reliable world commits synchronize entity membership without consuming deferred hot movement.
+17. Marks a baseline lane ready after a successful final full packet.
+18. Emits a non-empty per-tick debug summary after packet writes; cadence-suppressed or individually backpressure-skipped lanes produce no successful wire log for that lane.
 
 `BuildActiveRealtimeResultForGame` obtains a receiver-scoped view over the current shared immutable presentation frame. Networking and `protocol/realtime` do not copy the complete entity maps per session. Receiver-specific pending events, realtime session state, baseline/delta state, candidate selection, encoding, and post-write persistence remain per session.
 
 The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. The physical compact-wire contract lives in `shared/packets/realtime_wire.toml`, with generated reference data in `docs/protocol/generated/realtime-wire-reference.md`. Realtime runtime owns projection, sparse omission, generic descriptor application, scheduling, chunking, and encoded-byte accounting. Generated descriptors own physical aliases, value domains, ID codecs/selectors, record encodings, event layouts, quantization assignments, and decode compatibility alternatives. Networking owns successful WebRTC gameplay delivery, queued WebSocket delivery, event-batch drain-after-success behavior, post-write lane metadata persistence, and successful-write diagnostics. `packetcodec` owns JSON encoding only. `event_batch` remains one ordered batch of pending presentation events; known events use registered layouts, while unknown event maps remain compatibility pass-through records. Sparse delta omission does not implement record-level splitting or entity-level prioritization.
 
-Hot asteroid/bullet chunk construction uses conservative compact-JSON byte estimation before scheduling so the write path does not repeatedly JSON-encode trial chunks. The chunker is the hard-size guard for hot movement packets. Active encoding records the final encoded byte size for diagnostics and accounting, but it does not reject already-scheduled hot packets for size.
+Hot ship/asteroid/bullet chunk construction uses conservative compact-JSON byte estimation before scheduling so the write path does not repeatedly JSON-encode trial chunks. The chunker is the hard-size guard for hot movement packets. Active encoding records the final encoded byte size for diagnostics and accounting, but it does not reject already-scheduled hot packets for size.
 
 The networking layer owns successful WebRTC delivery for active realtime gameplay packets, successful WebSocket delivery for queued one-off packets, and the post-write session state changes that follow from those successful writes. `server_sent_msec` is not generated by the writer: it is captured as the server Unix-millisecond wall-clock time when the game publishes its immutable presentation frame, so all receiver snapshots using that frame carry the same timestamp. Networking does not own frame publication or timestamp creation; realtime lane projection carries the frame timestamp into encoded lane metadata.
 Active lane metadata persistence, event drain, and baseline persistence happen only after a successful WebRTC write.
@@ -191,11 +192,11 @@ Chunk metadata exists in the wire shape and scheduler records. The current activ
 
 The 500 B scheduler target is not a total-per-tick send ceiling; aggregate encoded bytes may exceed it when multiple hot chunks or required packets are written.
 
-### Current cross-lane preflight coupling
+### Independent lane-group preflight and commit
 
-Reliability, ordering, and buffered amount are tracked per physical DataChannel, but the current per-session send pass is grouped. After all selected candidates are encoded, networking checks every selected lane before writing the first packet. One congested lane can therefore suppress unrelated hot, lifecycle, world, overlay, session, or event packets for that session for the current tick.
+Reliability, ordering, buffered amount, metadata, and movement projections are tracked per physical lane group. A congested ship, asteroid, bullet, overlay, session, or event lane suppresses only that group for the current tick. Other eligible groups continue writing and commit their own state independently.
 
-Because no packet is written in that case, lane metadata, baseline projections, and event draining also remain unchanged. This preserves post-write correctness, but it means the physical lanes are not yet isolated scheduling transactions. Future hardening should allow an affected supersedable hot lane to defer independently while preserving required lifecycle/baseline ordering and explicit recovery behavior.
+Reliable world projection changes and the three reliable entity lifecycle lanes remain one group because the world projection records the lifecycle membership boundary. If any lane in that reliable group cannot accept the complete group, none of its metadata or projections advance. Hot movement projections are separate from the world projection, so a successful reliable commit cannot consume movement that was deferred by cadence or hot-lane backpressure.
 
 ### Debug status
 

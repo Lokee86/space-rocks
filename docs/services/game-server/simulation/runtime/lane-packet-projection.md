@@ -98,7 +98,13 @@ Current gameplay presentation ownership is split as:
 
 ```text
 world lane
-= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
+= pickups, reliable world projection state, and full/bootstrap world snapshots
+
+ships.lifecycle lane
+= ship creates/deletes and reliable non-transform updates such as health, shields, ship type, and target state
+
+ships lane
+= regular ship movement updates
 
 asteroids.lifecycle lane
 = asteroid creates/deletes
@@ -121,9 +127,11 @@ event_batch
 = transient presentation events sent separately from baseline/delta lanes
 ```
 
-Asteroid and bullet lanes produce hot, high-priority, supersedable movement candidates. Lifecycle defines existence. Hot lanes update known entities only.
+Ship, asteroid, and bullet lanes produce hot, high-priority, supersedable movement candidates. Lifecycle defines existence. Hot lanes update known entities only.
 
-Hot movement cadence is enforced during candidate construction using an independent per-session 60 Hz cadence tick. Ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression. Non-hot world and ship/bullet lifecycle changes can force related hot emission and advance the shared world projection chain; chunked asteroid lifecycle and its related hot/projection transition wait for the permitted asteroid cadence tick. This is replication policy owned by protocol/realtime; networking owns invocation and successful-write handling.
+Hot movement cadence is enforced independently for ships, asteroids, and bullets during candidate construction using the per-session 60 Hz cadence tick. Every hot lane uses the same chunk-pressure tiers: one chunk emits at 60 Hz, two chunks at 30 Hz, three chunks at 20 Hz, and four or more chunks at the 15 Hz floor. Cadence never drops below 15 Hz; all chunks for an eligible logical sequence are emitted in one same-tick unordered burst so additional pressure increases parallel in-flight chunk count instead of lowering cadence again.
+
+Movement in one entity family never forces another hot lane to bypass its cadence. Reliable world and lifecycle changes also do not force hot emission. Each hot lane compares against and commits its own movement projection, while the reliable world projection commits independently. Reliable lifecycle/world candidates remain eligible on ticks where a related hot lane is cadence-suppressed. Networking preflights and commits each hot lane independently, while the reliable world plus lifecycle candidates form one atomic send group.
 
 Lifecycle candidates are required/critical and must not be treated as hot-supersedable movement candidates.
 
@@ -137,7 +145,13 @@ Field-delta comparison is current behavior for these update groups:
 
 ```text
 world lane
-= ship and pickup updates, plus legacy/bootstrap/resync-compatible asteroid and bullet sections
+= pickup and reliable world updates, plus full/bootstrap/resync-compatible entity sections
+
+ships_lifecycle
+= ship creates/deletes and reliable non-transform updates
+
+ships lane
+= regular ship movement updates only
 
 asteroids_lifecycle
 = asteroid_creates and asteroid_deletes
@@ -214,7 +228,8 @@ Projection, shadow, and inspection paths must not treat event access as an impli
 Relevant active files include:
 
 * `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, generated compact descriptor application, encoded-byte accounting inputs, and shadow/parity helpers.
-* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - subtractive ship/asteroid/bullet movement split from world_delta into dedicated hot movement lane deltas.
+* `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - movement/cold-field classification support for dedicated hot and reliable lifecycle records.
+* `services/game-server/internal/protocol/realtime/hot_lane_projection.go` - independent ship, asteroid, and bullet movement projections, including reliable-world membership synchronization that preserves deferred hot movement.
 * `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
 * `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - conservative compact-JSON byte estimation used by hot-lane chunk construction.
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
@@ -243,8 +258,9 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/quantize/` - numeric quantization algorithms; generated descriptors own field-path policy assignments.
 * `services/game-server/internal/protocol/realtime/quantize_world.go` - world lane quantization projection.
 * `services/game-server/internal/protocol/realtime/quantized_records.go` - quantized wire record types.
-* `services/game-server/internal/networking/websocket_write.go` - session write-loop integration and active write triggering.
-* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over ordered/reliable world, overlay, session, event, asteroid lifecycle, and bullet lifecycle channels plus unordered/unreliable asteroid and bullet hot-update channels.
+* `services/game-server/internal/protocol/realtime/baseline.go` - successful-candidate metadata/projection commit, including final-chunk-only hot projection commits and world-full hot projection seeding.
+* `services/game-server/internal/networking/websocket_write.go` - session write-loop integration, per-lane-group preflight, independent hot-lane commits, and the atomic reliable world/lifecycle send group.
+* `services/game-server/internal/networking/webrtc_transport.go` - active gameplay lane transport delivery over ordered/reliable world, overlay, session, event, ship lifecycle, asteroid lifecycle, and bullet lifecycle channels plus unordered/unreliable ship, asteroid, and bullet hot-update channels.
 * `services/game-server/internal/networking/packetmetrics/` - packet observability helpers and related support types used by outbound networking seams.
 * `services/game-server/internal/networking/` - websocket session, WebRTC transport, and outbound delivery boundaries.
 * `shared/packets/gameplay.toml` - shared gameplay schema and realtime packet type values.

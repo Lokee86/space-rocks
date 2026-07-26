@@ -148,3 +148,40 @@ func AdvanceMetadataForSuccessfulWrite(lane Lane, metadata Metadata) Metadata {
 	metadata.SnapshotID = sequenceBackedBatchID(metadata.Sequence)
 	return metadata
 }
+
+// CommitSuccessfulCandidate advances only the candidate that completed its
+// transport write. Chunked candidates commit their projection on the final
+// chunk so an incomplete same-sequence burst remains supersedable.
+func CommitSuccessfulCandidate(state *RealtimeSessionState, candidate RealtimeLaneCandidate) {
+	if state == nil {
+		return
+	}
+	metadata, ok := candidate.Metadata()
+	if !ok {
+		return
+	}
+	persistedMetadata := AdvanceMetadataForSuccessfulWrite(candidate.Lane(), metadata)
+	state.UpdateLane(candidate.Lane(), persistedMetadata)
+	if !metadata.IsFinalChunk {
+		return
+	}
+	projection, hasProjection := CandidateProjection(candidate)
+	if hasProjection {
+		state.StoreBaselineProjection(candidate.Lane(), projection)
+	}
+	if candidate.Kind() == RealtimeLaneCandidateKindFull {
+		state.MarkBaselineReady(candidate.Lane())
+	}
+	if candidate.Lane() != LaneWorld || !hasProjection {
+		return
+	}
+	world, ok := projection.(WorldWireFullPacket)
+	if !ok {
+		return
+	}
+	if candidate.Kind() == RealtimeLaneCandidateKindFull {
+		seedHotLaneProjections(state, world)
+		return
+	}
+	syncHotLaneProjectionMembership(state, world)
+}

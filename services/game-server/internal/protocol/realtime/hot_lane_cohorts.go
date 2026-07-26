@@ -17,6 +17,7 @@ const (
 	HotLaneModeFullOwned60Hz HotLaneMode = "full_owned_60hz"
 	HotLaneModeFullOwned30Hz HotLaneMode = "full_owned_30hz"
 	HotLaneModeFullOwned20Hz HotLaneMode = "full_owned_20hz"
+	HotLaneModeFullOwned15Hz HotLaneMode = "full_owned_15hz"
 	HotLaneModeNeedsChunking HotLaneMode = "needs_chunking"
 )
 

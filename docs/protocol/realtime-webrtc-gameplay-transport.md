@@ -44,7 +44,7 @@ devtools command consequences
 packet schema generation rules
 compact field alias details
 future binary/protobuf packet format design
-future transport designs beyond the current unordered/unreliable asteroid and bullet hot lanes
+future transport designs beyond the current unordered/unreliable ship, asteroid, and bullet hot lanes
 record-level prioritization policy
 ```
 
@@ -136,16 +136,16 @@ The server send boundary is:
 
 ```text
 BuildActiveRealtimeResultForGame
--> realtime lane candidates, including expanded asteroid/bullet hot chunks when needed
+-> realtime lane candidates, including expanded ship/asteroid/bullet hot chunks when needed
 -> selected realtime lane candidates
 -> encoded lane packet list
 -> SendEncodedLaneJSON(candidate.Lane, encodedPacket) for each encoded packet
 -> physical WebRTC active gameplay DataChannel
 ```
 
-Before writing the first selected packet, the current server implementation preflights every selected payload against its destination lane's buffered amount and same-pass reserved bytes. If any selected payload would exceed the 32 KiB per-lane threshold, the entire gameplay write pass is skipped for that session tick. Physical DataChannel reliability remains lane-specific, but this grouped preflight creates current cross-lane send coupling.
+The server preflights independent lane groups against each destination channel's buffered amount and same-group reserved bytes. `world`, `ships.lifecycle`, `asteroids.lifecycle`, and `bullets.lifecycle` form one reliable projection group; each hot, overlay, session, and event lane is its own group. A blocked group is skipped without suppressing unrelated groups.
 
-Active metadata advancement, event draining, and baseline persistence must only happen after the active WebRTC write path succeeds. A preflight-skipped pass advances none of them.
+Metadata, event draining, and projections advance only for groups that complete their WebRTC writes. Chunked hot-lane projections commit after the final chunk of the same-sequence burst. The reliable world group synchronizes lifecycle membership but does not advance the independent ship, asteroid, or bullet movement projections.
 
 ## Client Receive Boundary
 
@@ -270,7 +270,9 @@ bullet_delta on sr.bullets
 
 ### Hot Movement Cadence
 
-Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required. Bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression; chunked asteroid lifecycle and its related hot/projection transition remain on the permitted asteroid cadence tick.
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Ships, asteroids, and bullets use the same chunk-pressure cadence tiers: one chunk at 60 Hz, two chunks at 30 Hz, three chunks at 20 Hz, and four or more chunks at the 15 Hz floor.
+
+Cadence does not fall below 15 Hz. On an eligible tick, every chunk for the logical hot-lane sequence is written as a same-tick unordered burst, allowing the chunks to remain in flight concurrently. Movement or lifecycle changes on another lane do not bypass this cadence. Reliable world/lifecycle traffic remains eligible while a hot lane is cadence-suppressed or independently backpressured.
 
 ## Control and Resync Boundary
 

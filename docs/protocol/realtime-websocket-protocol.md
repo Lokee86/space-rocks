@@ -374,7 +374,9 @@ Chunk metadata exists in the wire shape and scheduler records. The roughly 1,200
 
 ### Hot movement cadence
 
-Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required. Bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression; chunked asteroid lifecycle and its related projection/hot transition remain on the permitted asteroid cadence tick. Sequence numbers advance only for successfully written candidates, while `HotLaneTick` advances on every eligible active build, so skipped sends cannot freeze cadence. This is candidate policy in protocol/realtime; it does not change DataChannel reliability or hot-lane chunk metadata semantics.
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Ship, asteroid, and bullet movement independently use one chunk at 60 Hz, two chunks at 30 Hz, three chunks at 20 Hz, and four or more chunks at the 15 Hz floor. On an eligible tick, every chunk for the logical sequence is emitted in one unordered same-tick burst; pressure beyond four chunks increases the number of concurrently in-flight chunks rather than reducing cadence below 15 Hz.
+
+Movement or lifecycle changes on another lane do not bypass cadence. Reliable world and lifecycle traffic remains eligible while a hot lane is cadence-suppressed or independently backpressured. Sequence numbers and lane projections advance only for successfully written groups, while `HotLaneTick` advances on every eligible active build, so skipped sends cannot freeze cadence. This is candidate policy in protocol/realtime; it does not change DataChannel reliability or hot-lane chunk metadata semantics.
 
 ### Numeric wire quantization
 

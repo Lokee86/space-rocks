@@ -84,6 +84,8 @@ func hotPacketCadenceLabel(mode HotLaneMode, sequence int) string {
 		return "30hz"
 	case HotLaneModeFullOwned20Hz:
 		return "20hz"
+	case HotLaneModeFullOwned15Hz:
+		return "15hz"
 	case HotLaneModeNeedsChunking:
 		return "chunking"
 	case HotLaneModeOverflow:

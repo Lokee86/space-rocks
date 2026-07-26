@@ -110,15 +110,21 @@ func shipWireDeltaChunkCount(packet ShipWireDeltaPacket) int {
 	return len(greedyShipWireDeltaChunks(packet))
 }
 
-func hotLaneModeForShipChunkCount(chunkCount int) HotLaneMode {
+func hotLaneModeForChunkCount(chunkCount int) HotLaneMode {
 	switch {
 	case chunkCount <= 1:
 		return HotLaneModeFullOwned60Hz
 	case chunkCount == 2:
 		return HotLaneModeFullOwned30Hz
-	default:
+	case chunkCount == 3:
 		return HotLaneModeFullOwned20Hz
+	default:
+		return HotLaneModeFullOwned15Hz
 	}
+}
+
+func hotLaneModeForShipChunkCount(chunkCount int) HotLaneMode {
+	return hotLaneModeForChunkCount(chunkCount)
 }
 
 func shipWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (ShipWireDeltaPacket, bool) {
@@ -166,14 +172,7 @@ func bulletWireDeltaChunkCount(packet BulletWireDeltaPacket) int {
 }
 
 func hotLaneModeForBulletChunkCount(chunkCount int) HotLaneMode {
-	switch {
-	case chunkCount <= 1:
-		return HotLaneModeFullOwned60Hz
-	case chunkCount == 2:
-		return HotLaneModeFullOwned30Hz
-	default:
-		return HotLaneModeFullOwned20Hz
-	}
+	return hotLaneModeForChunkCount(chunkCount)
 }
 
 func bulletWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (BulletWireDeltaPacket, bool) {
@@ -219,8 +218,15 @@ func asteroidWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (Aste
 	return packet, ok
 }
 
+func asteroidWireDeltaChunkCount(packet AsteroidWireDeltaPacket) int {
+	if estimateAsteroidDeltaPacketBytes(packet, packet.AsteroidUpdates) <= HardCapBytes {
+		return 1
+	}
+	return len(greedyAsteroidWireDeltaChunks(packet))
+}
+
 func asteroidWireDeltaRequiresChunking(packet AsteroidWireDeltaPacket) bool {
-	return estimateAsteroidDeltaPacketBytes(packet, packet.AsteroidUpdates) > HardCapBytes
+	return asteroidWireDeltaChunkCount(packet) > 1
 }
 
 func normalizedAsteroidWireDeltaCandidate(candidate RealtimeLaneCandidate, packet AsteroidWireDeltaPacket, updates []map[string]any, chunkIndex int, chunkCount int) RealtimeLaneCandidate {

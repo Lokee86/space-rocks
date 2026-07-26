@@ -64,7 +64,7 @@ func TestAssembleRealtimeLaneCandidatesOmitsWorldWhenStoredBaselineMatches(t *te
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesRoutesMovementOnlyShipChangesToHotLane(t *testing.T) {
 	snapshot := game.GameplayPresentationSnapshot{
 		SelfID:  "player-1",
 		Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 2}},
@@ -76,22 +76,25 @@ func TestAssembleRealtimeLaneCandidatesEmitsWorldDeltaWhenStoredBaselineDiffers(
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 0, Rotation: 0}}}, 1))
 
 	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
-	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneWorld); ok {
+		t.Fatal("movement-only ship changes must not emit world delta")
+	}
+	ship, ok := findCandidateByLane(plan.Candidates, LaneShips)
 	if !ok {
-		t.Fatal("expected world delta candidate when stored baseline differs")
+		t.Fatal("expected ship hot delta candidate")
 	}
-	if world.Kind() != RealtimeLaneCandidateKindDelta {
-		t.Fatalf("expected world delta candidate, got kind=%q", world.Kind())
+	if ship.Kind() != RealtimeLaneCandidateKindDelta {
+		t.Fatalf("expected ship delta candidate, got kind=%q", ship.Kind())
 	}
-	if _, ok := world.Payload.(WorldWireDeltaPacket); !ok {
-		t.Fatalf("expected world delta packet, got %T", world.Payload)
+	if _, ok := ship.Payload.(ShipWireDeltaPacket); !ok {
+		t.Fatalf("expected ship wire delta packet, got %T", ship.Payload)
 	}
-	if _, ok := world.Projection.(WorldWireFullPacket); !ok {
-		t.Fatalf("expected current world full projection to be carried, got %T", world.Projection)
+	if _, ok := ship.Projection.(ShipHotLaneProjection); !ok {
+		t.Fatalf("expected ship hot projection, got %T", ship.Projection)
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesCarriesIndependentAsteroidProjection(t *testing.T) {
 	policy := DefaultHotLaneOffloadPolicy()
 	count := policy.AsteroidHotLaneEntityBudget*2 + 1
 	snapshot := game.GameplayPresentationSnapshot{SelfID: "player-1", Asteroids: map[string]runtime.AsteroidState{}}
@@ -106,29 +109,22 @@ func TestAssembleRealtimeLaneCandidatesUsesFullWorldProjectionAfterHotSplit(t *t
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
-	state.HotLaneTick = 2
+	state.HotLaneTick = 12
 
 	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
-	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
+	if _, ok := findCandidateByLane(plan.Candidates, LaneWorld); ok {
+		t.Fatal("movement-only asteroid changes must not emit world delta")
+	}
+	asteroid, ok := findCandidateByLane(plan.Candidates, LaneAsteroids)
 	if !ok {
-		t.Fatal("expected world candidate")
-	}
-	delta, ok := world.Payload.(WorldWireDeltaPacket)
-	if !ok {
-		t.Fatalf("expected world delta packet, got %T", world.Payload)
-	}
-	if len(delta.Asteroids.Updates) != 0 {
-		t.Fatalf("expected world asteroid updates removed, got %d", len(delta.Asteroids.Updates))
-	}
-	projection, ok := world.Projection.(WorldWireFullPacket)
-	if !ok {
-		t.Fatalf("expected world projection packet, got %T", world.Projection)
-	}
-	if len(projection.Asteroids) != count {
-		t.Fatalf("expected full projection to remain at %d asteroids, got %d", count, len(projection.Asteroids))
-	}
-	if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); !ok {
 		t.Fatal("expected asteroid hot lane candidate")
+	}
+	projection, ok := asteroid.Projection.(AsteroidHotLaneProjection)
+	if !ok {
+		t.Fatalf("expected asteroid hot projection, got %T", asteroid.Projection)
+	}
+	if len(projection.Records) != count {
+		t.Fatalf("asteroid projection records = %d, want %d", len(projection.Records), count)
 	}
 }
 
@@ -199,6 +195,7 @@ func TestAssembleRealtimeLaneCandidatesMovesBulletLifecycleOutOfWorldDeltaUnderP
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 2, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previous, 1))
+	state.HotLaneTick = 12
 
 	plan := mustAssembleRealtimeLaneCandidates(t, snapshot, state)
 	world, ok := findCandidateByLane(plan.Candidates, LaneWorld)
@@ -282,45 +279,54 @@ func TestAssembleRealtimeLaneCandidatesEmitsAsteroidLifecycleCandidateWhenAstero
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesHonorsAsteroidHotCadence(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesEmitsUnchunkedAsteroidsAt60HzWithoutWorldDelta(t *testing.T) {
 	previous, current := syncedMovingAsteroidSnapshots(1)
 	for _, tick := range []int{1, 2} {
 		state := syncedWorldState(t, previous)
 		state.HotLaneTick = tick
 		plan := mustAssembleRealtimeLaneCandidates(t, current, state)
-		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
-		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
-		if !hasHot || !hasWorld {
-			t.Fatalf("tick %d omitted hot/world candidates", tick)
+		if _, ok := findCandidateByLane(plan.Candidates, LaneAsteroids); !ok {
+			t.Fatalf("tick %d omitted 60hz asteroid hot candidate", tick)
+		}
+		if _, ok := findCandidateByLane(plan.Candidates, LaneWorld); ok {
+			t.Fatalf("tick %d emitted world delta for movement-only asteroid changes", tick)
 		}
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesThrottlesChunkedAsteroidsTo30Hz(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesFloorsHeavyAsteroidsAt15HzAndBurstsAllChunks(t *testing.T) {
 	count := 300
 	previous, current := syncedMovingAsteroidSnapshots(count)
-	for _, tick := range []int{1, 2, 3} {
+	for _, tick := range []int{1, 2, 3, 4} {
 		state := syncedWorldState(t, previous)
 		state.HotLaneTick = tick
 		plan := mustAssembleRealtimeLaneCandidates(t, current, state)
-		_, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
-		_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
-		if (tick == 1 || tick == 3) && (hasHot || hasWorld) {
-			t.Fatalf("tick %d unexpectedly emitted hot/world candidates", tick)
+		candidate, hasHot := findCandidateByLane(plan.Candidates, LaneAsteroids)
+		if hasWorld := func() bool { _, ok := findCandidateByLane(plan.Candidates, LaneWorld); return ok }(); hasWorld {
+			t.Fatalf("tick %d emitted world delta for movement-only asteroid pressure", tick)
 		}
-		if tick == 2 && (!hasHot || !hasWorld) {
-			t.Fatalf("tick %d omitted hot/world candidates", tick)
+		if tick < 4 && hasHot {
+			t.Fatalf("tick %d emitted 15hz asteroid hot candidate early", tick)
 		}
-		if tick == 2 {
-			candidate, _ := findCandidateByLane(plan.Candidates, LaneAsteroids)
-			if len(mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})) <= 1 {
-				t.Fatal("expected asteroid candidate to expand into multiple chunks")
+		if tick == 4 {
+			if !hasHot {
+				t.Fatal("fourth tick omitted 15hz asteroid hot candidate")
+			}
+			chunks := mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})
+			if len(chunks) < 4 {
+				t.Fatalf("heavy asteroid candidate expanded to %d chunks, want at least 4", len(chunks))
+			}
+			for index, chunk := range chunks {
+				metadata, _ := chunk.Metadata()
+				if metadata.Sequence != candidate.Payload.(AsteroidWireDeltaPacket).Metadata.Sequence || metadata.ChunkIndex != index || metadata.ChunkCount != len(chunks) {
+					t.Fatalf("chunk %d metadata = %#v, want same-sequence parallel burst", index, metadata)
+				}
 			}
 		}
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesKeepsChunkedAsteroidLifecycleOnCadence(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesKeepsAsteroidLifecycleIndependentFromHotCadence(t *testing.T) {
 	previous, current := syncedMovingAsteroidSnapshots(300)
 	delete(current.Asteroids, "asteroid-300")
 	current.Asteroids["asteroid-301"] = runtime.AsteroidState{ID: "asteroid-301", X: 320, Y: 330, Size: 2, Health: 3, Scale: 1, Variant: 1}
@@ -328,18 +334,21 @@ func TestAssembleRealtimeLaneCandidatesKeepsChunkedAsteroidLifecycleOnCadence(t 
 	blockedState := syncedWorldState(t, previous)
 	blockedState.HotLaneTick = 1
 	blocked := mustAssembleRealtimeLaneCandidates(t, current, blockedState)
-	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
-		if _, ok := findCandidateByLane(blocked.Candidates, lane); ok {
-			t.Fatalf("lane %q escaped the blocked asteroid cadence tick", lane)
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneWorld} {
+		if _, ok := findCandidateByLane(blocked.Candidates, lane); !ok {
+			t.Fatalf("expected reliable lane %q on blocked hot tick", lane)
 		}
+	}
+	if _, ok := findCandidateByLane(blocked.Candidates, LaneAsteroids); ok {
+		t.Fatal("asteroid hot lane escaped blocked cadence tick")
 	}
 
 	allowedState := syncedWorldState(t, previous)
-	allowedState.HotLaneTick = 2
+	allowedState.HotLaneTick = 4
 	allowed := mustAssembleRealtimeLaneCandidates(t, current, allowedState)
-	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneWorld, LaneAsteroids} {
 		if _, ok := findCandidateByLane(allowed.Candidates, lane); !ok {
-			t.Fatalf("expected lane %q on the permitted asteroid cadence tick", lane)
+			t.Fatalf("expected lane %q on permitted hot tick", lane)
 		}
 	}
 }
@@ -363,32 +372,49 @@ func TestAssembleRealtimeLaneCandidatesEmitsLifecycleWithoutAsteroidHotMovement(
 	}
 }
 
-func TestAssembleRealtimeLaneCandidatesHonorsBulletChunkCadence(t *testing.T) {
+func TestAssembleRealtimeLaneCandidatesAdjustsBulletCadenceByChunkPressure(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		target     int
+		count      int
+		period     int
 		wantChunks int
+		minimum    bool
 	}{
-		{name: "one chunk", target: 1, wantChunks: 1},
-		{name: "two chunks", target: 2, wantChunks: 2},
-		{name: "three chunks", target: 3, wantChunks: 3},
+		{name: "one chunk 60hz", target: 1, period: 1, wantChunks: 1},
+		{name: "two chunks 30hz", target: 2, period: 2, wantChunks: 2},
+		{name: "three chunks 20hz", target: 3, period: 3, wantChunks: 3},
+		{name: "four or more chunks 15hz", count: 240, period: 4, wantChunks: 4, minimum: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			count := bulletUpdateCountForChunkTarget(t, tc.target)
+			count := tc.count
+			if count == 0 {
+				count = bulletUpdateCountForChunkTarget(t, tc.target)
+			}
 			previous, current := syncedMovingBulletSnapshots(count)
-			for _, tick := range []int{1, 2, 3} {
+			for tick := 1; tick <= 12; tick++ {
 				state := syncedWorldState(t, previous)
 				state.HotLaneTick = tick
-				plan := mustAssembleRealtimeLaneCandidates(t, current, state)
-				_, hasHot := findCandidateByLane(plan.Candidates, LaneBullets)
-				_, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld)
-				want := tc.target == 1 || tick == tc.target
-				if hasHot != want || hasWorld != want {
-					t.Fatalf("tick %d hot=%t world=%t want=%t", tick, hasHot, hasWorld, want)
+				preparedState := state
+				plan, err := assembleRealtimeLaneCandidates(current, state, &preparedState)
+				if err != nil {
+					t.Fatalf("assemble realtime lane candidates: %v", err)
+				}
+				candidate, hasHot := findCandidateByLane(plan.Candidates, LaneBullets)
+				if _, hasWorld := findCandidateByLane(plan.Candidates, LaneWorld); hasWorld {
+					t.Fatalf("tick %d emitted world delta for movement-only bullets", tick)
+				}
+				want := tick%tc.period == 0
+				if hasHot != want {
+					t.Fatalf("tick %d hot=%t want=%t period=%d mode=%q count=%d", tick, hasHot, want, tc.period, preparedState.HotLaneCohorts.BulletMode, count)
 				}
 				if want {
-					candidate, _ := findCandidateByLane(plan.Candidates, LaneBullets)
-					if got := len(mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate})); got != tc.wantChunks {
+					got := len(mustExpandRealtimeCandidateChunks([]RealtimeLaneCandidate{candidate}))
+					if tc.minimum {
+						if got < tc.wantChunks {
+							t.Fatalf("tick %d expanded chunks=%d, want at least %d", tick, got, tc.wantChunks)
+						}
+					} else if got != tc.wantChunks {
 						t.Fatalf("tick %d expanded chunks=%d, want %d", tick, got, tc.wantChunks)
 					}
 				}

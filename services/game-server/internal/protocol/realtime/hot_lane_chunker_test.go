@@ -36,7 +36,7 @@ func encodedCandidateBytes(t *testing.T, candidate RealtimeLaneCandidate) int {
 	return recordedBytes
 }
 
-func TestHotLaneModeForBulletChunkCount(t *testing.T) {
+func TestHotLaneModeForChunkCount(t *testing.T) {
 	for _, tc := range []struct {
 		count int
 		want  HotLaneMode
@@ -44,9 +44,10 @@ func TestHotLaneModeForBulletChunkCount(t *testing.T) {
 		{count: 1, want: HotLaneModeFullOwned60Hz},
 		{count: 2, want: HotLaneModeFullOwned30Hz},
 		{count: 3, want: HotLaneModeFullOwned20Hz},
-		{count: 7, want: HotLaneModeFullOwned20Hz},
+		{count: 4, want: HotLaneModeFullOwned15Hz},
+		{count: 7, want: HotLaneModeFullOwned15Hz},
 	} {
-		if got := hotLaneModeForBulletChunkCount(tc.count); got != tc.want {
+		if got := hotLaneModeForChunkCount(tc.count); got != tc.want {
 			t.Fatalf("chunk count %d mode = %q, want %q", tc.count, got, tc.want)
 		}
 	}

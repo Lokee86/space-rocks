@@ -81,8 +81,111 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		return true
 	}
 
+	sentEventBatch := false
+	for _, group := range groupEncodedRealtimeLanePackets(result.EncodedLanePackets) {
+		blocked, valid := preflightRealtimeSendGroup(session, transport, group, context, gameplayContext.MatchID)
+		if !valid {
+			return false
+		}
+		if blocked {
+			continue
+		}
+
+		groupSent := true
+		for _, encoded := range group.Packets {
+			candidate := encoded.Candidate
+			if len(encoded.Encoded) == 0 {
+				continue
+			}
+			if !session.sessionContextMatches(context) || !context.Room.GameplayContextMatches(gameplayContext) {
+				session.realtimeState = nextRealtimeState
+				return true
+			}
+			lane := string(candidate.Lane())
+			channelLabel, _ := webRTCChannelLabelForLane(lane)
+			if err := transport.SendEncodedLaneJSON(lane, encoded.Encoded); err != nil {
+				if errors.Is(err, ErrWebRTCChannelBackpressure) {
+					logRealtimeBackpressure(session, transport, candidate, lane, channelLabel, context, gameplayContext.MatchID, 0)
+					groupSent = false
+					break
+				}
+				logging.Emit(observability.Request{
+					Event: observability.EventNameGameServerWriteFailed,
+					Context: observability.Context{
+						TraceID:    session.connectionTraceID,
+						SessionID:  session.sessionID,
+						RoomID:     context.RoomID,
+						PlayerID:   context.GamePlayerID,
+						MatchID:    gameplayContext.MatchID,
+						PacketType: candidate.PacketFamily(),
+					},
+					Fields: observability.Fields{
+						"error_code":   "webrtc_lane_write_failed",
+						"failure_mode": "webrtc_lane_write_failed",
+						"lane":         lane,
+						"transport":    "webrtc",
+						"channel":      channelLabel,
+					},
+				})
+				session.realtimeState = nextRealtimeState
+				return false
+			}
+			session.observePacketWrite(lane, candidate.PacketFamily(), len(encoded.Encoded))
+		}
+		if !groupSent {
+			continue
+		}
+
+		for _, encoded := range group.Packets {
+			realtime.CommitSuccessfulCandidate(&nextRealtimeState, encoded.Candidate)
+			if encoded.Candidate.Kind() == realtime.RealtimeLaneCandidateKindEventBatch {
+				sentEventBatch = true
+			}
+		}
+		session.realtimeState = nextRealtimeState
+	}
+
+	// Cadence and cohort state advance even when an individual hot lane is
+	// backpressured. Only that lane's metadata and projection remain uncommitted.
+	session.realtimeState = nextRealtimeState
+	if sentEventBatch {
+		drainActiveEventBatchAfterWrite(gameplayContext.Game, context.GamePlayerID, result.EventBatchEventIDs)
+	}
+	return true
+}
+
+type encodedRealtimeLaneGroup struct {
+	Key     string
+	Packets []realtime.EncodedRealtimeLanePacket
+}
+
+func groupEncodedRealtimeLanePackets(packets []realtime.EncodedRealtimeLanePacket) []encodedRealtimeLaneGroup {
+	groups := make([]encodedRealtimeLaneGroup, 0, len(packets))
+	indexes := make(map[string]int, len(packets))
+	for _, packet := range packets {
+		key := realtimeSendGroupKey(packet.Candidate)
+		if index, ok := indexes[key]; ok {
+			groups[index].Packets = append(groups[index].Packets, packet)
+			continue
+		}
+		indexes[key] = len(groups)
+		groups = append(groups, encodedRealtimeLaneGroup{Key: key, Packets: []realtime.EncodedRealtimeLanePacket{packet}})
+	}
+	return groups
+}
+
+func realtimeSendGroupKey(candidate realtime.RealtimeLaneCandidate) string {
+	switch candidate.Lane() {
+	case realtime.LaneWorld, realtime.LaneShipsLifecycle, realtime.LaneAsteroidsLifecycle, realtime.LaneBulletsLifecycle:
+		return "world.reliable"
+	default:
+		return string(candidate.Lane())
+	}
+}
+
+func preflightRealtimeSendGroup(session *webSocketSession, transport *WebRTCTransport, group encodedRealtimeLaneGroup, context SessionContext, matchID string) (bool, bool) {
 	reservedBytesByLane := make(map[string]uint64)
-	for _, encoded := range result.EncodedLanePackets {
+	for _, encoded := range group.Packets {
 		candidate := encoded.Candidate
 		if len(encoded.Encoded) == 0 {
 			continue
@@ -96,7 +199,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 					SessionID:  session.sessionID,
 					RoomID:     context.RoomID,
 					PlayerID:   context.GamePlayerID,
-					MatchID:    gameplayContext.MatchID,
+					MatchID:    matchID,
 					PacketType: candidate.PacketFamily(),
 				},
 				Fields: observability.Fields{
@@ -106,125 +209,52 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 					"transport":    "webrtc",
 				},
 			})
-			return false
+			return false, false
 		}
 		channelLabel, ok := webRTCChannelLabelForLane(lane)
 		if !ok {
-			return false
+			return false, false
 		}
 		bufferedBytes, ok := transport.BufferedAmountForLane(lane)
 		if !ok {
-			return false
+			return false, false
 		}
 		reservedBytes := reservedBytesByLane[lane]
 		payloadBytes := uint64(len(encoded.Encoded))
 		if bufferedBytes >= webRTCMaxBufferedAmountBytes || reservedBytes+payloadBytes > webRTCMaxBufferedAmountBytes-bufferedBytes {
-			if session.shouldLogWebRTCBackpressure(lane) {
-				logging.Emit(observability.Request{
-					Event: observability.EventNamePacketRouteFailed,
-					Context: observability.Context{
-						TraceID:    session.connectionTraceID,
-						SessionID:  session.sessionID,
-						RoomID:     context.RoomID,
-						PlayerID:   context.GamePlayerID,
-						MatchID:    gameplayContext.MatchID,
-						PacketType: candidate.PacketFamily(),
-					},
-					Fields: observability.Fields{
-						"error_code":     "webrtc_channel_backpressure",
-						"failure_mode":   "webrtc_channel_backpressure",
-						"lane":           lane,
-						"transport":      "webrtc",
-						"channel":        channelLabel,
-						"buffered_bytes": bufferedBytes,
-						"reserved_bytes": reservedBytes,
-					},
-				})
-			}
-			return true
+			logRealtimeBackpressure(session, transport, candidate, lane, channelLabel, context, matchID, reservedBytes)
+			return true, true
 		}
 		reservedBytesByLane[lane] = reservedBytes + payloadBytes
 	}
+	return false, true
+}
 
-	sentEventBatch := false
-	for _, encoded := range result.EncodedLanePackets {
-		candidate := encoded.Candidate
-		encodedPacket := encoded.Encoded
-		if len(encodedPacket) == 0 {
-			continue
-		}
-		if !session.sessionContextMatches(context) || !context.Room.GameplayContextMatches(gameplayContext) {
-			return true
-		}
-		lane := string(candidate.Lane())
-		channelLabel, _ := webRTCChannelLabelForLane(lane)
-		if err := transport.SendEncodedLaneJSON(lane, encodedPacket); err != nil {
-			if errors.Is(err, ErrWebRTCChannelBackpressure) {
-				if session.shouldLogWebRTCBackpressure(lane) {
-					bufferedBytes, _ := transport.BufferedAmountForLane(lane)
-					logging.Emit(observability.Request{
-						Event: observability.EventNamePacketRouteFailed,
-						Context: observability.Context{
-							TraceID:    session.connectionTraceID,
-							SessionID:  session.sessionID,
-							RoomID:     context.RoomID,
-							PlayerID:   context.GamePlayerID,
-							MatchID:    gameplayContext.MatchID,
-							PacketType: candidate.PacketFamily(),
-						},
-						Fields: observability.Fields{
-							"error_code":     "webrtc_channel_backpressure",
-							"failure_mode":   "webrtc_channel_backpressure",
-							"lane":           lane,
-							"transport":      "webrtc",
-							"channel":        channelLabel,
-							"buffered_bytes": bufferedBytes,
-						},
-					})
-				}
-				return true
-			}
-			logging.Emit(observability.Request{
-				Event: observability.EventNameGameServerWriteFailed,
-				Context: observability.Context{
-					TraceID:    session.connectionTraceID,
-					SessionID:  session.sessionID,
-					RoomID:     context.RoomID,
-					PlayerID:   context.GamePlayerID,
-					MatchID:    gameplayContext.MatchID,
-					PacketType: candidate.PacketFamily(),
-				},
-				Fields: observability.Fields{
-					"error_code":   "webrtc_lane_write_failed",
-					"failure_mode": "webrtc_lane_write_failed",
-					"lane":         lane,
-					"transport":    "webrtc",
-					"channel":      channelLabel,
-				},
-			})
-			return false
-		}
-		session.observePacketWrite(lane, candidate.PacketFamily(), len(encodedPacket))
-		if candidate.Kind() == realtime.RealtimeLaneCandidateKindEventBatch {
-			sentEventBatch = true
-		}
-		if metadata, ok := candidate.Metadata(); ok {
-			persistedMetadata := realtime.AdvanceMetadataForSuccessfulWrite(candidate.Lane(), metadata)
-			nextRealtimeState.UpdateLane(candidate.Lane(), persistedMetadata)
-			if projection, ok := realtime.CandidateProjection(candidate); ok {
-				nextRealtimeState.StoreBaselineProjection(candidate.Lane(), projection)
-			}
-			if metadata.IsFinalChunk && candidate.Kind() == realtime.RealtimeLaneCandidateKindFull {
-				nextRealtimeState.MarkBaselineReady(candidate.Lane())
-			}
-		}
+func logRealtimeBackpressure(session *webSocketSession, transport *WebRTCTransport, candidate realtime.RealtimeLaneCandidate, lane string, channelLabel string, context SessionContext, matchID string, reservedBytes uint64) {
+	if !session.shouldLogWebRTCBackpressure(lane) {
+		return
 	}
-
-	session.realtimeState = nextRealtimeState
-	if sentEventBatch {
-		drainActiveEventBatchAfterWrite(gameplayContext.Game, context.GamePlayerID, result.EventBatchEventIDs)
-	}
-	return true
+	bufferedBytes, _ := transport.BufferedAmountForLane(lane)
+	logging.Emit(observability.Request{
+		Event: observability.EventNamePacketRouteFailed,
+		Context: observability.Context{
+			TraceID:    session.connectionTraceID,
+			SessionID:  session.sessionID,
+			RoomID:     context.RoomID,
+			PlayerID:   context.GamePlayerID,
+			MatchID:    matchID,
+			PacketType: candidate.PacketFamily(),
+		},
+		Fields: observability.Fields{
+			"error_code":     "webrtc_channel_backpressure",
+			"failure_mode":   "webrtc_channel_backpressure",
+			"lane":           lane,
+			"transport":      "webrtc",
+			"channel":        channelLabel,
+			"buffered_bytes": bufferedBytes,
+			"reserved_bytes": reservedBytes,
+		},
+	})
 }
 
 func resetRealtimeStateForContext(session *webSocketSession, context SessionContext, matchID string) {

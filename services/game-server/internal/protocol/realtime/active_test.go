@@ -85,6 +85,18 @@ func decodedPacketType(wire map[string]any) string {
 		return "session_full"
 	case "sd":
 		return "session_delta"
+	case "spd":
+		return "ship_delta"
+	case "ad":
+		return "asteroid_delta"
+	case "bd":
+		return "bullet_delta"
+	case "sl":
+		return "ships_lifecycle"
+	case "al":
+		return "asteroids_lifecycle"
+	case "bl":
+		return "bullets_lifecycle"
 	default:
 		return ""
 	}
@@ -110,6 +122,18 @@ func decodedPacketLane(wire map[string]any) string {
 			return "overlay"
 		case "session_full", "session_delta":
 			return "session"
+		case "ship_delta":
+			return "ships"
+		case "asteroid_delta":
+			return "asteroids"
+		case "bullet_delta":
+			return "bullets"
+		case "ships_lifecycle":
+			return "ships.lifecycle"
+		case "asteroids_lifecycle":
+			return "asteroids.lifecycle"
+		case "bullets_lifecycle":
+			return "bullets.lifecycle"
 		default:
 			return ""
 		}
@@ -220,7 +244,7 @@ func TestBuildActiveRealtimeResultAdvancesHotLaneTickForUnchunkedAsteroids(t *te
 	}
 }
 
-func TestBuildActiveRealtimeResultDefersLifecycleUntilChunkedAsteroidCadence(t *testing.T) {
+func TestBuildActiveRealtimeResultDoesNotDelayReliableLifecycleForChunkedAsteroidCadence(t *testing.T) {
 	previous, current := syncedMovingAsteroidSnapshots(300)
 	previous.Bullets = map[string]runtime.BulletState{}
 	current.Bullets = map[string]runtime.BulletState{
@@ -237,25 +261,28 @@ func TestBuildActiveRealtimeResultDefersLifecycleUntilChunkedAsteroidCadence(t *
 	state := syncedWorldState(t, previous)
 	state.HotLaneTick = 0
 
-	first := mustBuildActiveRealtimeResult(t, current, state)
-	if first.SessionState.HotLaneCohorts.AsteroidMode != HotLaneModeFullOwned30Hz {
-		t.Fatalf("asteroid cohort mode = %q, want full-owned 30hz", first.SessionState.HotLaneCohorts.AsteroidMode)
+	blocked := mustBuildActiveRealtimeResult(t, current, state)
+	if blocked.SessionState.HotLaneCohorts.AsteroidMode != HotLaneModeFullOwned15Hz {
+		t.Fatalf("asteroid cohort mode = %q, want full-owned 15hz", blocked.SessionState.HotLaneCohorts.AsteroidMode)
 	}
-	for _, lane := range []Lane{LaneBulletsLifecycle, LaneWorld, LaneAsteroids} {
-		if _, ok := findCandidateByLane(first.SelectedCandidates, lane); ok {
-			t.Fatalf("lane %q escaped the deferred world projection boundary", lane)
+	for _, lane := range []Lane{LaneBulletsLifecycle, LaneWorld} {
+		if _, ok := findCandidateByLane(blocked.SelectedCandidates, lane); !ok {
+			t.Fatalf("expected reliable lane %q while asteroid cadence is blocked", lane)
 		}
+	}
+	if _, ok := findCandidateByLane(blocked.SelectedCandidates, LaneAsteroids); ok {
+		t.Fatal("asteroid hot lane escaped its 15hz cadence")
 	}
 
-	second := mustBuildActiveRealtimeResult(t, current, first.SessionState)
-	for _, lane := range []Lane{LaneBulletsLifecycle, LaneWorld, LaneAsteroids} {
-		if _, ok := findCandidateByLane(second.SelectedCandidates, lane); !ok {
-			t.Fatalf("expected lane %q on the next permitted cadence tick", lane)
-		}
+	allowedState := blocked.SessionState
+	allowedState.HotLaneTick = 3
+	allowed := mustBuildActiveRealtimeResult(t, current, allowedState)
+	if _, ok := findCandidateByLane(allowed.SelectedCandidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid hot lane on the fourth tick")
 	}
 }
 
-func TestBuildActiveRealtimeResultDoesNotLetAsteroidLifecycleBypassChunkedCadence(t *testing.T) {
+func TestBuildActiveRealtimeResultKeepsAsteroidLifecycleIndependentFromHotCadence(t *testing.T) {
 	previous, current := syncedMovingAsteroidSnapshots(300)
 	delete(current.Asteroids, "asteroid-300")
 	current.Asteroids["asteroid-301"] = runtime.AsteroidState{ID: "asteroid-301", X: 320, Y: 330, Size: 2, Health: 3, Scale: 1, Variant: 1}
@@ -263,17 +290,20 @@ func TestBuildActiveRealtimeResultDoesNotLetAsteroidLifecycleBypassChunkedCadenc
 	state.HotLaneTick = 0
 
 	blocked := mustBuildActiveRealtimeResult(t, current, state)
-	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
-		if _, ok := findCandidateByLane(blocked.SelectedCandidates, lane); ok {
-			t.Fatalf("lane %q escaped the blocked asteroid cadence tick", lane)
+	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneWorld} {
+		if _, ok := findCandidateByLane(blocked.SelectedCandidates, lane); !ok {
+			t.Fatalf("expected reliable lane %q while asteroid hot cadence is blocked", lane)
 		}
 	}
+	if _, ok := findCandidateByLane(blocked.SelectedCandidates, LaneAsteroids); ok {
+		t.Fatal("asteroid hot lane escaped its blocked cadence tick")
+	}
 
-	allowed := mustBuildActiveRealtimeResult(t, current, blocked.SessionState)
-	for _, lane := range []Lane{LaneAsteroidsLifecycle, LaneAsteroids, LaneWorld} {
-		if _, ok := findCandidateByLane(allowed.SelectedCandidates, lane); !ok {
-			t.Fatalf("expected lane %q on the permitted asteroid cadence tick", lane)
-		}
+	allowedState := blocked.SessionState
+	allowedState.HotLaneTick = 3
+	allowed := mustBuildActiveRealtimeResult(t, current, allowedState)
+	if _, ok := findCandidateByLane(allowed.SelectedCandidates, LaneAsteroids); !ok {
+		t.Fatal("expected asteroid hot lane on the fourth tick")
 	}
 }
 
@@ -304,7 +334,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleAsteroidLanePackets(t *testing.
 	currentSnapshot.Asteroids = currentAsteroids
 
 	state := NewRealtimeSessionState("player-1", "match-1")
-	state.HotLaneTick = 1
+	state.HotLaneTick = 3
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
@@ -395,7 +425,7 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 	currentSnapshot.Bullets = currentBullets
 
 	state := NewRealtimeSessionState("player-1", "match-1")
-	state.HotLaneTick = 2
+	state.HotLaneTick = 3
 	state.UpdateLane(LaneWorld, Metadata{Lane: LaneWorld, Sequence: 1, BaselineID: "world-baseline", SnapshotID: "world-baseline", SnapshotKind: SnapshotKind("full"), IsFinalChunk: true})
 	state.MarkBaselineReady(LaneWorld)
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, previousSnapshot, 1))
@@ -407,8 +437,8 @@ func TestBuildActiveRealtimeResultEncodesMultipleBulletLanePackets(t *testing.T)
 	state.StoreBaselineProjection(LaneSession, mustSessionWireFull(t, previousSnapshot, 1))
 
 	result := mustBuildActiveRealtimeResult(t, currentSnapshot, state)
-	if result.SessionState.HotLaneCohorts.BulletMode != HotLaneModeFullOwned20Hz {
-		t.Fatalf("bullet cohort mode = %q, want full-owned 20hz", result.SessionState.HotLaneCohorts.BulletMode)
+	if result.SessionState.HotLaneCohorts.BulletMode != HotLaneModeFullOwned15Hz {
+		t.Fatalf("bullet cohort mode = %q, want full-owned 15hz", result.SessionState.HotLaneCohorts.BulletMode)
 	}
 
 	bulletPackets := encodedPacketsForLane(result, LaneBullets)
@@ -511,8 +541,9 @@ func TestBuildActiveRealtimeResultSelectsDeltaPacketsForChangedStoredBaselines(t
 	state.StoreBaselineProjection(LaneWorld, mustWorldWireFull(t, game.GameplayPresentationSnapshot{SelfID: "player-1", Players: map[string]runtime.ShipState{"player-1": {ID: "player-1", ShipType: "v_wing", X: 1, Y: 1, Rotation: 0, Health: 5, Shields: 0}}}, 1))
 
 	result := mustBuildActiveRealtimeResult(t, snapshot, state)
-	assertSelectedCandidate(t, result, LaneWorld, RealtimeLaneCandidateKindDelta)
-	assertEncodedPacketTypeAndLane(t, result, LaneWorld, PacketTypeWorldDelta, string(LaneWorld))
+	assertNoSelectedCandidate(t, result, LaneWorld)
+	assertSelectedCandidate(t, result, LaneShips, RealtimeLaneCandidateKindDelta)
+	assertEncodedPacketTypeAndLane(t, result, LaneShips, PacketFamilyShipDelta, string(LaneShips))
 }
 
 func tinyActiveBoundarySnapshot() game.GameplayPresentationSnapshot {

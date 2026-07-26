@@ -278,7 +278,7 @@ asteroids lane
 bullets lane
 = regular bullet/projectile movement updates
 
-Lifecycle defines entity existence. Hot asteroid and bullet lanes update known entities only and must not create or resurrect entities.
+Lifecycle defines entity existence. Hot ship, asteroid, and bullet lanes update known entities only and must not create or resurrect entities.
 
 overlay lane
 = receiver-local overlay and HUD state

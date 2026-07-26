@@ -54,6 +54,17 @@ func TestHotPacketCadenceAllowsFullOwned20HzEveryThirdTick(t *testing.T) {
 	}
 }
 
+func TestHotPacketCadenceAllowsFullOwned15HzEveryFourthTick(t *testing.T) {
+	for _, sequence := range []int{1, 2, 3, 5} {
+		if hotPacketCadenceAllows(HotLaneModeFullOwned15Hz, sequence) {
+			t.Fatalf("sequence %d should skip 15hz hot packets", sequence)
+		}
+	}
+	if !hotPacketCadenceAllows(HotLaneModeFullOwned15Hz, 4) {
+		t.Fatal("sequence 4 should emit 15hz hot packets")
+	}
+}
+
 func TestClassifyHotPacketEncodedSizeBands(t *testing.T) {
 	if got := ClassifyHotPacketEncodedSize(800); got != EncodedPacketSizeNormal {
 		t.Fatalf("size 800 = %q, want normal", got)
