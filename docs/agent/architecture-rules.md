@@ -35,7 +35,7 @@ Use these rules to decide where a change belongs before editing. They govern own
 
 Process co-hosting permits composition-root construction, registration, and closure only. It does not permit service reach-through or imports from another service's domain or runtime packages. For diagnostic-aggregator, only the game-server composition-root adapter may import the public `services/diagnostic-aggregator/hosted` package. Game-server internal packages and all player-data packages must not import any diagnostic-aggregator package.
 
-Adding a diagnostic dependency to gameplay, networking, rooms, match reporting, player-data runtime/store code, or their constructors is an architecture violation. Stop and report rather than implementing that dependency. Use the transport/API boundary described in [Game-server Diagnostic-Aggregator Hosting](../services/game-server/integrations/diagnostic-aggregator-hosting.md). This invariant does not claim that an automated import guard currently exists.
+Adding a diagnostic dependency to gameplay, networking, rooms, match reporting, player-data runtime/store code, or their constructors is an architecture violation. Stop and report rather than implementing that dependency. Use the transport/API boundary described in [Game-server Diagnostic-Aggregator Hosting](../services/game-server/integrations/diagnostic-aggregator-hosting.md). Pitlord rule `game-runtime-no-diagnostic-aggregator-dependency` enforces this import boundary for game-server internals and player-data source.
 
 ### High-risk seam verification
 

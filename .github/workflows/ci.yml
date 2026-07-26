@@ -24,8 +24,18 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: services/game-server/go.mod
+          cache: false
       - name: Install Python tooling
         run: python -m pip install -r requirements-dev.txt
+      - name: Install Pitlord
+        run: |
+          mkdir -p "$RUNNER_TEMP/pitlord-bin"
+          GOBIN="$RUNNER_TEMP/pitlord-bin" go install github.com/Lokee86/pitlord/cmd/pitlord@v0.1.0
+          echo "$RUNNER_TEMP/pitlord-bin" >> "$GITHUB_PATH"
       - name: Run repository checks
         run: bash tools/ci/run_repo_checks.sh
 

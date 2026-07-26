@@ -444,7 +444,7 @@ The completed game-server rollout gate was run from the repository root:
 - `go vet -buildvcs=false ./...` and `go vet -tags nodevtools -buildvcs=false ./...` passed in `services/game-server`.
 - `gofmt -l` was clean for the cleanup files `internal/logging/logger.go` and `internal/logging/logger_test.go`; the repository-wide scan still reports unrelated existing drift, including generated outputs.
 - `PYTHONPATH=. python -m pytest tests tools/tests tools/data_sync/tests` passed, including architecture and observability emission guards.
-- `python tools/architecture_guard/main.py` passed.
+- `pitlord check --repo . --policy tools/pitlord/policy.json` passed.
 - `python tools/data_sync/main.py -validate` passed.
 - Constants, packets, realtime-wire, and drop-table generated-data `-check` gates passed.
 - `git diff --check` passed.

@@ -113,7 +113,7 @@ The current architecture guard is:
 - use `services/game-server/internal/game/rng` for production gameplay randomness
 - use test-local deterministic sources only inside tests and fixtures when building expected values
 
-This keeps the gameplay random stream anchored to the match seed instead of ambient process state.
+Pitlord rule `game-server-no-process-global-math-rand` enforces the production import restriction. This keeps the gameplay random stream anchored to the match seed instead of ambient process state.
 
 ## Current seeded call sites
 

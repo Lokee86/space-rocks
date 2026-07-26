@@ -30,7 +30,7 @@ The current automated CI baseline and native local-packaged-alpha gate are imple
 
 GitHub Actions runs the three baseline jobs—repository checks, Go tests, and Godot/GUT client tests—plus a separate native local-alpha workflow with Windows and macOS package jobs. The shared local/CI runners are the operational entry points; exact commands and environment variables are maintained in [Agent Testing Rules](../../../agent/testing.md).
 
-* Repository checks run the Python suite, data-sync drift checks, and configuration-driven architecture rules.
+* Repository checks run the Python suite, data-sync drift checks, and the declarative Pitlord architecture policy at `tools/pitlord/policy.json`.
 * Go tests run the credential helper, player-data, and game-server default, `nodevtools`, and `localpackage` variants.
 * Client tests run the Godot 4.6.3 clean-runner sequence: editor bootstrap, headless import, and GUT, with logs and bounded stage timeouts.
 
@@ -134,7 +134,7 @@ Before a new high-risk seam is treated as complete, its enforcement evidence mus
 * the owner and the forbidden bypass or reach-through behavior being checked; and
 * a narrow, configuration-driven static architecture rule when the violation can be checked reliably.
 
-The configuration-driven architecture guard runs in repository checks, but it does not prove all architecture automatically. Existing guards are intentionally incomplete and should expand when concrete risk justifies them. If recurring cleanup findings or regressions expose the same ownership violation, reach-through, forbidden dependency, or duplicated authority, strengthen the focused tests or architecture rules instead of relying on memory or documentation alone.
+Pitlord runs in repository checks against `tools/pitlord/policy.json`, but it does not prove all architecture automatically. Existing rules are intentionally incomplete and should expand when concrete risk justifies them. If recurring cleanup findings or regressions expose the same ownership violation, reach-through, forbidden dependency, or duplicated authority, strengthen the focused tests or Pitlord rules instead of relying on memory or documentation alone.
 
 Do not require a static guard when detection would be vague, noisy, speculative, brittle, or easy to evade. Use the smallest reliable proof: a focused test, a static rule, or both when each verifies a distinct part of the invariant. Ordinary features do not require speculative architecture rules.
 

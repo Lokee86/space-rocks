@@ -82,7 +82,7 @@ Game-server integration hosting does not own:
 - Gameplay simulation, networking, rooms, or match-reporting behavior.
 - Player-data runtime/domain behavior or player-data storage.
 - A direct in-process diagnostic call path.
-- A static architecture guard; this document records the boundary and intended dependency rule, but does not claim that an automated guard already exists.
+- The architecture guard implementation; Pitlord owns static enforcement while this document owns the boundary and rationale.
 
 ## Domain roles
 
@@ -119,7 +119,7 @@ The exact handler, application-service, and report-store implementation paths be
 
 Tests for this boundary should verify the HTTP transport/API behavior and service lifecycle wiring without granting runtime or domain code a direct diagnostic dependency. Co-hosting tests may verify construction, registration, request routing, and close behavior at the composition root.
 
-This document does not claim that a static architecture guard already exists. Any future dependency check should enforce the import and direct-call rules stated here without treating co-hosting as domain ownership.
+Pitlord rule `game-runtime-no-diagnostic-aggregator-dependency` rejects diagnostic-aggregator references under game-server internals and player-data source while leaving the composition-root hosting adapter permitted. Behavioral tests must still verify transport/API behavior and service lifecycle wiring.
 
 ## Related docs
 

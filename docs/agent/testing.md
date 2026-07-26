@@ -82,13 +82,13 @@ cd services/game-server
 go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 ```
 
-Run the server devtools boundary static check:
+Run the repository architecture policy:
 
 ```bash
-python3 -m pytest tools/tests/test_server_devtools_boundary.py
+pitlord check --repo . --policy tools/pitlord/policy.json
 ```
 
-This check protects the server devtools boundary: `internal/devtools` owns controller, command, targeting, stream-runtime, and debug DTO behavior; `internal/game` exposes authoritative capabilities through `Control`; package dependencies remain one-way; and legacy game-side debug adapters remain absent.
+The Pitlord policy protects the server devtools boundary: `internal/devtools` owns controller, command, targeting, stream-runtime, and debug DTO behavior; `internal/game` exposes authoritative capabilities through `Control`; package dependencies remain one-way; and legacy game-side debug adapters remain absent. The same policy also guards player-data service isolation, diagnostic-aggregator hosting, deterministic gameplay RNG ownership, client source-of-truth boundaries, and credential persistence paths.
 
 A separate focused test guards canonical devtools documentation against removed architecture names and paths.
 
@@ -155,15 +155,15 @@ The packager exports from a clean temporary client copy so an open editor and it
 
 For focused client logger verification, use `client/tests/unit/test_client_logger.gd`. It uses `user://logger_test_output` with the `client-test` prefix and cleans up its own JSONL files, so it is a good place to confirm file-output and formatting behavior without broadening into a full client testing catalog.
 
-Run the configuration-driven architecture guard:
+Run the configuration-driven Pitlord architecture policy:
 
 ```bash
-python tools/architecture_guard/main.py
+pitlord check --repo . --policy tools/pitlord/policy.json
 ```
 
 Selected scene-backed client integration tests run headlessly and without a server. They cover full game-scene boot/reset propagation and the weapon cooldown visual transition lifecycle.
 
-The guard reads `tools/architecture_guard/rules.toml`; repository-specific invariants remain narrow TOML rules rather than Python logic. Current high-confidence boundaries prevent client scripts from directly reading selected server-owned player, respawn, and asteroid constants, and prevent non-owner client scripts from reaching through `runtime_context.world_sync`. Keep the full rule definitions and exclusions in the TOML file rather than duplicating them here.
+The policy lives at `tools/pitlord/policy.json`; repository-specific invariants remain narrow declarative rules rather than custom Python scans. Current high-confidence boundaries prevent client scripts from directly reading selected server-owned player, respawn, and asteroid constants, prevent non-owner client scripts from reaching through `runtime_context.world_sync`, and enforce focused server and service ownership anchors. Keep full rule definitions and exclusions in the policy rather than duplicating them here.
 
 Shared local/CI runners are available from the repository root:
 
