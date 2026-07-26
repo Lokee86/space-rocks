@@ -19,6 +19,7 @@ const MultiplayerEntryFlowScript := preload("res://scripts/ui/menu_flow/multipla
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const AsteroidTrace := preload("res://scripts/networking/realtime/asteroid_trace.gd")
 
 @onready var main_menu: Control = %MainMenu
 @onready var user_interface: CanvasLayer = $UserInterface
@@ -59,6 +60,7 @@ func _ready() -> void:
 			{},
 			{"subsystem": "file_logging", "failure_mode": "configure_failed"}
 		)
+	AsteroidTrace.configure()
 	ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTING)
 
 	get_tree().set_auto_accept_quit(false)

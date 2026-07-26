@@ -8,6 +8,7 @@ const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
 
 const ClientLogger = preload("res://scripts/logging/logger.gd")
 const ObservabilityContract = preload("res://scripts/generated/observability/contract_generated.gd")
+const AsteroidTrace = preload("res://scripts/networking/realtime/asteroid_trace.gd")
 const DELETED_ASTEROID_ID_CAP := 2048
 
 var asteroids_layer: Node2D
@@ -98,6 +99,10 @@ func get_asteroid_node(asteroid_id: String) -> AsteroidPresentation:
 		return null
 	asteroids_layer.add_child(asteroid_node)
 	asteroid_nodes[asteroid_id] = asteroid_node
+	AsteroidTrace.record_event("presentation_node_created", {
+		"asteroid_id": asteroid_id,
+		"deleted_tombstone_present": deleted_asteroid_ids.has(asteroid_id),
+	})
 	_record_lifecycle("created")
 
 	return asteroid_node
@@ -133,8 +138,11 @@ func apply_asteroid(
 	create_if_missing: bool = true
 ) -> void:
 	if create_if_missing:
+		if deleted_asteroid_ids.has(asteroid_id):
+			AsteroidTrace.record_event("presentation_tombstone_cleared", {"asteroid_id": asteroid_id})
 		_clear_deleted_asteroid_id(asteroid_id)
 	elif deleted_asteroid_ids.has(asteroid_id):
+		AsteroidTrace.record_event("presentation_update_blocked_by_tombstone", {"asteroid_id": asteroid_id})
 		return
 
 	if !create_if_missing and !asteroid_nodes.has(asteroid_id):
@@ -219,6 +227,11 @@ func rebase_to_view_anchor(anchor_visual_position: Vector2, anchor_server_positi
 
 
 func remove_asteroid(asteroid_id: String) -> void:
+	AsteroidTrace.record_event("presentation_remove", {
+		"asteroid_id": asteroid_id,
+		"node_existed": asteroid_nodes.has(asteroid_id),
+		"initialized": initialized_asteroids.has(asteroid_id),
+	})
 	if not deleted_asteroid_ids.has(asteroid_id):
 		deleted_asteroid_ids[asteroid_id] = true
 		_deleted_asteroid_id_order.append(asteroid_id)

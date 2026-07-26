@@ -7,6 +7,7 @@ const ProjectileSyncScript = preload("res://scripts/world/projectile_sync.gd")
 const PickupSyncScript = preload("res://scripts/world/pickup_sync.gd")
 const PlayerRenderApiScript = preload("res://scripts/world/player_render/player_render_api.gd")
 const TargetPositionSource = preload("res://scripts/gameplay/targeting/target_position_source.gd")
+const AsteroidTrace = preload("res://scripts/networking/realtime/asteroid_trace.gd")
 
 var asteroid_sync
 var projectile_sync
@@ -82,6 +83,16 @@ func _dictionary_size(owner, property_name: String) -> int:
 	return value.size() if value is Dictionary else 0
 
 
+func _dictionary_property_has(owner, property_name: StringName, key) -> bool:
+	if owner == null:
+		return false
+	for property in owner.get_property_list():
+		if StringName(property.get("name", "")) != property_name:
+			continue
+		var value = owner.get(property_name)
+		return value is Dictionary and value.has(key)
+	return false
+
 
 func set_current_self_id(self_id: String) -> void:
 	current_self_id = self_id
@@ -119,9 +130,25 @@ func apply_world_lane_state(world_lane_state_ref) -> void:
 			world_lane_state.clear_asteroid_change_sets()
 		else:
 			for asteroid_id in world_lane_state.removed_asteroid_ids.keys():
+				AsteroidTrace.record_event("presentation_remove_requested", {
+					"asteroid_id": str(asteroid_id),
+					"node_existed": _dictionary_property_has(asteroid_sync, &"asteroid_nodes", asteroid_id),
+				})
 				asteroid_sync.remove_asteroid(str(asteroid_id))
 			for asteroid_id in world_lane_state.dirty_asteroid_ids.keys():
 				if world_lane_state.asteroids.has(asteroid_id):
+					var source: String = str(world_lane_state.asteroid_dirty_sources.get(asteroid_id, "unknown"))
+					var node_existed: bool = _dictionary_property_has(asteroid_sync, &"asteroid_nodes", asteroid_id)
+					if source == "hot_update" and not node_existed:
+						AsteroidTrace.anomaly("hot_update_recreating_presentation_node", {
+							"asteroid_id": str(asteroid_id),
+							"state_count": world_lane_state.asteroids.size(),
+						})
+					AsteroidTrace.record_event("presentation_apply", {
+						"asteroid_id": str(asteroid_id),
+						"source": source,
+						"node_existed": node_existed,
+					})
 					asteroid_sync.apply_asteroid(str(asteroid_id), world_lane_state.asteroids[asteroid_id], player_render_api.visual_position(), player_render_api.server_position())
 			world_lane_state.clear_asteroid_change_sets()
 	if pickup_sync != null:

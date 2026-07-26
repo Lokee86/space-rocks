@@ -41,6 +41,15 @@ func Emit(request observability.Request) observability.Result {
 	return eventEmitter.Emit(request)
 }
 
+// EmitLegacy is reserved for bounded temporary diagnostic traces that do not
+// belong in the permanent semantic event catalog.
+func EmitLegacy(request observability.LegacyRequest) observability.Result {
+	if eventEmitter == nil {
+		eventEmitter = fallbackEmitter()
+	}
+	return eventEmitter.EmitLegacy(request)
+}
+
 func init() {
 	rootLevel.Set(slog.LevelWarn)
 	eventEmitter = fallbackEmitter()

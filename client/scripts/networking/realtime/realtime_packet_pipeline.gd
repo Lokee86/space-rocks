@@ -3,6 +3,7 @@ class_name RealtimePacketPipeline
 
 const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 const DescriptorIndex := preload("res://scripts/protocol/realtime/compact_wire_descriptor_index.gd")
+const AsteroidTrace := preload("res://scripts/networking/realtime/asteroid_trace.gd")
 
 
 
@@ -196,6 +197,7 @@ func set_measurement_observer(observer: Callable) -> void:
 
 func _apply_lane_packet(packet: Dictionary) -> void:
 	var started_usec := Time.get_ticks_usec()
+	AsteroidTrace.record_packet(packet, _router.world_lane_state.asteroids.size())
 	_router.route_lane_packet(packet)
 	_presentation_state.update_from_router(_router)
 	gameplay_packet_applied.emit(packet)

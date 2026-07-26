@@ -24,6 +24,7 @@ var dirty_bullet_ids := {}
 var removed_bullet_ids := {}
 var bullet_full_sync_required := false
 var dirty_asteroid_ids := {}
+var asteroid_dirty_sources := {}
 var removed_asteroid_ids := {}
 var asteroid_full_sync_required := false
 var asteroids := {}
@@ -109,20 +110,23 @@ func clear_bullet_change_sets() -> void:
 	removed_bullet_ids.clear()
 	bullet_full_sync_required = false
 
-func mark_asteroid_dirty(id) -> void:
+func mark_asteroid_dirty(id, source: String = "unknown") -> void:
 	if id == null or id == "":
 		return
 	removed_asteroid_ids.erase(id)
 	dirty_asteroid_ids[id] = true
+	asteroid_dirty_sources[id] = source
 
 func mark_asteroid_removed(id) -> void:
 	if id == null or id == "":
 		return
 	dirty_asteroid_ids.erase(id)
+	asteroid_dirty_sources.erase(id)
 	removed_asteroid_ids[id] = true
 
 func clear_asteroid_change_sets() -> void:
 	dirty_asteroid_ids.clear()
+	asteroid_dirty_sources.clear()
 	removed_asteroid_ids.clear()
 	asteroid_full_sync_required = false
 
@@ -286,7 +290,7 @@ func upsert_asteroid(record: Dictionary) -> void:
 	if id == null:
 		return
 	_upsert_record(asteroids, record, ASTEROID_FIELDS)
-	mark_asteroid_dirty(id)
+	mark_asteroid_dirty(id, "lifecycle_create")
 
 func merge_asteroid_update(record: Dictionary) -> void:
 	var id = record.get("id")
@@ -295,7 +299,7 @@ func merge_asteroid_update(record: Dictionary) -> void:
 	if not asteroids.has(id):
 		return
 	_merge_record_update(asteroids, record, ASTEROID_FIELDS)
-	mark_asteroid_dirty(id)
+	mark_asteroid_dirty(id, "hot_update")
 
 func upsert_pickup(record: Dictionary) -> void:
 	_upsert_record(pickups, record, PICKUP_FIELDS)
