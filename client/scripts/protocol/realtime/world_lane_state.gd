@@ -9,6 +9,8 @@ const DELETED_SHIP_ID_CAP := 4096
 const PENDING_SHIP_UPDATE_CAP := 2048
 const DELETED_BULLET_ID_CAP := 4096
 const PENDING_BULLET_UPDATE_CAP := 2048
+const DELETED_ASTEROID_ID_CAP := 4096
+const PENDING_ASTEROID_UPDATE_CAP := 2048
 
 var ships := {}
 var pending_ship_updates := {}
@@ -23,6 +25,10 @@ var _deleted_bullet_id_order := []
 var dirty_bullet_ids := {}
 var removed_bullet_ids := {}
 var bullet_full_sync_required := false
+var pending_asteroid_updates := {}
+var deleted_asteroid_ids := {}
+var _pending_asteroid_update_order := []
+var _deleted_asteroid_id_order := []
 var dirty_asteroid_ids := {}
 var asteroid_dirty_sources := {}
 var removed_asteroid_ids := {}
@@ -59,6 +65,10 @@ func clear_world() -> void:
 	latest_bullet_delta_sequence = -1
 	bullet_delta_chunk_count = 1
 	bullet_delta_received_chunks.clear()
+	pending_asteroid_updates.clear()
+	_pending_asteroid_update_order.clear()
+	deleted_asteroid_ids.clear()
+	_deleted_asteroid_id_order.clear()
 	clear_asteroid_change_sets()
 	asteroid_full_sync_required = true
 	latest_asteroid_delta_sequence = -1
@@ -288,9 +298,11 @@ func _parse_hot_delta_chunk_count(chunk_count):
 
 func upsert_asteroid(record: Dictionary) -> void:
 	var id = record.get("id")
-	if id == null:
+	if id == null or id == "":
 		return
+	_clear_deleted_asteroid_id(id)
 	_upsert_record(asteroids, record, ASTEROID_FIELDS)
+	apply_pending_asteroid_update(id)
 	mark_asteroid_dirty(id, "lifecycle_create")
 
 func merge_asteroid_update(record: Dictionary) -> void:
@@ -301,6 +313,37 @@ func merge_asteroid_update(record: Dictionary) -> void:
 		return
 	_merge_record_update(asteroids, record, ASTEROID_FIELDS)
 	mark_asteroid_dirty(id, "hot_update")
+
+func apply_pending_asteroid_update(id) -> void:
+	if not pending_asteroid_updates.has(id):
+		return
+	if asteroids.has(id):
+		merge_asteroid_update(pending_asteroid_updates[id])
+	pending_asteroid_updates.erase(id)
+	_clear_pending_asteroid_update_order(id)
+
+func merge_or_buffer_asteroid_update(record: Dictionary) -> void:
+	var id = record.get("id")
+	if id == null or id == "":
+		return
+	if asteroids.has(id):
+		merge_asteroid_update(record)
+		return
+	if deleted_asteroid_ids.has(id):
+		return
+	if not pending_asteroid_updates.has(id):
+		_pending_asteroid_update_order.append(id)
+	pending_asteroid_updates[id] = record.duplicate(true)
+	while _pending_asteroid_update_order.size() > PENDING_ASTEROID_UPDATE_CAP:
+		pending_asteroid_updates.erase(_pending_asteroid_update_order.pop_front())
+
+func clear_pending_asteroid_updates() -> void:
+	pending_asteroid_updates.clear()
+	_pending_asteroid_update_order.clear()
+
+func clear_pending_asteroid_update(id) -> void:
+	pending_asteroid_updates.erase(id)
+	_clear_pending_asteroid_update_order(id)
 
 func upsert_pickup(record: Dictionary) -> void:
 	_upsert_record(pickups, record, PICKUP_FIELDS)
@@ -347,7 +390,22 @@ func _clear_pending_bullet_update_order(id) -> void:
 
 func delete_asteroid(id) -> void:
 	asteroids.erase(id)
+	clear_pending_asteroid_update(id)
+	if not deleted_asteroid_ids.has(id):
+		deleted_asteroid_ids[id] = true
+		_deleted_asteroid_id_order.append(id)
+		while _deleted_asteroid_id_order.size() > DELETED_ASTEROID_ID_CAP:
+			deleted_asteroid_ids.erase(_deleted_asteroid_id_order.pop_front())
 	mark_asteroid_removed(id)
+
+func _clear_deleted_asteroid_id(id) -> void:
+	if not deleted_asteroid_ids.has(id):
+		return
+	deleted_asteroid_ids.erase(id)
+	_deleted_asteroid_id_order.erase(id)
+
+func _clear_pending_asteroid_update_order(id) -> void:
+	_pending_asteroid_update_order.erase(id)
 
 func delete_pickup(id) -> void:
 	pickups.erase(id)

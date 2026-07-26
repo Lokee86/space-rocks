@@ -79,7 +79,7 @@ func apply_asteroid_delta(world_lane_state: WorldLaneState, _lane: String, aster
 		var decoded := _decode_entity_record(record, "asteroid")
 		var asteroid_id = decoded.get("id")
 		if asteroid_id != null and not world_lane_state.asteroids.has(asteroid_id):
-			AsteroidTrace.anomaly("hot_update_without_lifecycle_record", {
+			AsteroidTrace.record_event("hot_update_buffered_before_lifecycle", {
 				"asteroid_id": str(asteroid_id),
 				"sequence": sequence,
 				"chunk_index": chunk_index,
@@ -197,7 +197,7 @@ func _apply_entity_update(world_lane_state: WorldLaneState, record: Dictionary, 
 		"bullet":
 			world_lane_state.merge_or_buffer_bullet_update(decoded)
 		"asteroid":
-			world_lane_state.merge_asteroid_update(decoded)
+			world_lane_state.merge_or_buffer_asteroid_update(decoded)
 		"pickup":
 			world_lane_state.merge_pickup_update(decoded)
 		_:

@@ -2,6 +2,7 @@ extends RefCounted
 class_name AsteroidSync
 
 const AsteroidSyncState = preload("res://scripts/world/asteroid_sync_state.gd")
+const AsteroidVariantsScript = preload("res://scripts/generated/asteroids/asteroid_variants.gd")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const Packets = preload("res://scripts/generated/networking/packets/packets.gd")
 const WorldWrapScript = preload("res://scripts/world/world_wrap.gd")
@@ -20,6 +21,7 @@ var target_asteroid_positions := {}
 var asteroid_server_positions := {}
 var asteroid_visual_positions := {}
 var asteroid_variants := {}
+var _variant_textures: Array[Texture2D] = []
 var deleted_asteroid_ids := {}
 var _deleted_asteroid_id_order := []
 var _measurement_observer: Callable
@@ -27,6 +29,19 @@ var _measurement_observer: Callable
 
 func configure(layer: Node2D) -> void:
 	asteroids_layer = layer
+	_warm_variant_textures()
+
+
+func _warm_variant_textures() -> void:
+	if not _variant_textures.is_empty():
+		return
+	for variant_index in range(AsteroidVariantsScript.count()):
+		var texture_path := AsteroidVariantsScript.texture_path_for_index(variant_index)
+		if texture_path.is_empty():
+			continue
+		var texture := load(texture_path) as Texture2D
+		if texture != null:
+			_variant_textures.append(texture)
 
 
 func set_measurement_observer(observer: Callable) -> void:

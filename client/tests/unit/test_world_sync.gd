@@ -557,13 +557,14 @@ func test_apply_world_lane_state_uses_direct_asteroid_change_sets() -> void:
 		"health": 50,
 	}
 	world_lane_state.dirty_asteroid_ids["asteroid-1"] = true
+	world_lane_state.asteroid_dirty_sources["asteroid-1"] = "hot_update"
 	world_lane_state.asteroid_full_sync_required = false
 
 	world_sync.apply_world_lane_state(world_lane_state)
 
 	assert_eq(fake_asteroid_sync.apply_asteroid_calls.size(), 1)
 	assert_eq(fake_asteroid_sync.apply_asteroid_calls[0]["asteroid_id"], "asteroid-1")
-	assert_true(fake_asteroid_sync.apply_asteroid_calls[0]["create_if_missing"])
+	assert_false(fake_asteroid_sync.apply_asteroid_calls[0]["create_if_missing"])
 	assert_eq(fake_asteroid_sync.apply_all_calls, 0)
 	assert_eq(fake_asteroid_sync.remove_missing_calls, 0)
 	assert_true(world_lane_state.dirty_asteroid_ids.is_empty())

@@ -626,6 +626,50 @@ func test_bullets_lifecycle_applies_buffered_hot_update_after_create_and_preserv
 	assert_false(world_lane_state.pending_bullet_updates.has("bullet-1"))
 
 
+func test_asteroids_lifecycle_applies_buffered_hot_update_after_create() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_ASTEROIDS, {"sequence": 1, "asteroid_updates": [{"id": "asteroid-1", "x": 55, "y": 66, "rotation": 30}]})
+	assert_false(world_lane_state.asteroids.has("asteroid-1"))
+	assert_true(world_lane_state.pending_asteroid_updates.has("asteroid-1"))
+
+	var applied := applier.apply_asteroids_lifecycle(
+		world_lane_state,
+		{
+			"type": "asteroids_lifecycle",
+			"lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE,
+			"asteroid_creates": [{"id": "asteroid-1", "x": 10, "y": 20, "velocity_x": 0.0, "velocity_y": 0.0, "rotation": 0.0, "size": 2, "health": 90, "scale": 1500, "variant": 3}],
+			"asteroid_deletes": [],
+		}
+	)
+
+	assert_true(applied)
+	assert_true(world_lane_state.asteroids.has("asteroid-1"))
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["x"], 5.5)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["y"], 6.6)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["rotation"], 30)
+	assert_eq(world_lane_state.asteroids["asteroid-1"]["variant"], 3)
+	assert_eq(world_lane_state.asteroid_dirty_sources["asteroid-1"], "lifecycle_create")
+	assert_false(world_lane_state.pending_asteroid_updates.has("asteroid-1"))
+
+
+func test_asteroids_lifecycle_delete_clears_pending_update_and_blocks_late_hot_update() -> void:
+	var applier := WorldLaneApplier.new()
+	var world_lane_state := WorldLaneState.new()
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_ASTEROIDS, {"sequence": 1, "asteroid_updates": [{"id": "asteroid-1", "x": 55, "y": 66}]})
+	assert_true(world_lane_state.pending_asteroid_updates.has("asteroid-1"))
+
+	assert_true(applier.apply_asteroids_lifecycle(world_lane_state, {"type": "asteroids_lifecycle", "lane": LaneMetadata.LANE_ASTEROIDS_LIFECYCLE, "asteroid_creates": [], "asteroid_deletes": ["asteroid-1"]}))
+	assert_false(world_lane_state.pending_asteroid_updates.has("asteroid-1"))
+	assert_true(world_lane_state.deleted_asteroid_ids.has("asteroid-1"))
+
+	applier.apply_asteroid_delta(world_lane_state, LaneMetadata.LANE_ASTEROIDS, {"sequence": 2, "asteroid_updates": [{"id": "asteroid-1", "x": 77, "y": 88}]})
+	assert_false(world_lane_state.pending_asteroid_updates.has("asteroid-1"))
+	assert_false(world_lane_state.asteroids.has("asteroid-1"))
+
+
 func test_bullets_lifecycle_delete_removes_bullet_and_clears_pending_update() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()

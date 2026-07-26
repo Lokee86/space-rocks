@@ -150,7 +150,13 @@ func apply_world_lane_state(world_lane_state_ref) -> void:
 							"source": source,
 							"node_existed": node_existed,
 						})
-					asteroid_sync.apply_asteroid(str(asteroid_id), world_lane_state.asteroids[asteroid_id], player_render_api.visual_position(), player_render_api.server_position())
+					asteroid_sync.apply_asteroid(
+						str(asteroid_id),
+						world_lane_state.asteroids[asteroid_id],
+						player_render_api.visual_position(),
+						player_render_api.server_position(),
+						source != "hot_update"
+					)
 			world_lane_state.clear_asteroid_change_sets()
 	if pickup_sync != null:
 		pickup_sync.remove_missing(world_lane_state.pickups)
