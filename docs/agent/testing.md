@@ -85,10 +85,10 @@ go build -tags nodevtools -buildvcs=false -o ./tmp/game-server ./cmd/game-server
 Run the repository architecture policy:
 
 ```bash
-pitlord check --repo . --policy tools/pitlord/policy.json
+bash tools/pitlord/run.sh
 ```
 
-The Pitlord policy protects the server devtools boundary: `internal/devtools` owns controller, command, targeting, stream-runtime, and debug DTO behavior; `internal/game` exposes authoritative capabilities through `Control`; package dependencies remain one-way; and legacy game-side debug adapters remain absent. The same policy also guards player-data service isolation, diagnostic-aggregator hosting, deterministic gameplay RNG ownership, client source-of-truth boundaries, and credential persistence paths.
+The Pitlord gate refreshes Lexicon's language facts, synchronizes the Arcana graph, and evaluates the composed policy. Repository rules protect exact content and path invariants. Semantic rules enforce source ownership, service isolation, foundational package direction, protocol/networking direction, client runtime separation from devtools, and acyclic game-server area imports.
 
 A separate focused test guards canonical devtools documentation against removed architecture names and paths.
 
@@ -158,12 +158,12 @@ For focused client logger verification, use `client/tests/unit/test_client_logge
 Run the configuration-driven Pitlord architecture policy:
 
 ```bash
-pitlord check --repo . --policy tools/pitlord/policy.json
+bash tools/pitlord/run.sh
 ```
 
 Selected scene-backed client integration tests run headlessly and without a server. They cover full game-scene boot/reset propagation and the weapon cooldown visual transition lifecycle.
 
-The policy lives at `tools/pitlord/policy.json`; repository-specific invariants remain narrow declarative rules rather than custom Python scans. Current high-confidence boundaries prevent client scripts from directly reading selected server-owned player, respawn, and asteroid constants, prevent non-owner client scripts from reaching through `runtime_context.world_sync`, and enforce focused server and service ownership anchors. Keep full rule definitions and exclusions in the policy rather than duplicating them here.
+The composed policy lives at `tools/pitlord/policy.json`, with repository rules in `repository.json` and Arcana-backed ownership/dependency rules in `semantic.json`. Keep full selectors and exclusions in those policy files rather than duplicating them here. A first local run creates ignored `.lexicon/` and `.arcana/` state; later runs update them incrementally.
 
 Shared local/CI runners are available from the repository root:
 
