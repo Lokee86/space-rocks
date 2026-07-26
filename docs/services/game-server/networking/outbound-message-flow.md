@@ -163,19 +163,20 @@ When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(sess
 1. Writes debug shape catalog output first when eligible.
 2. Resets `session.realtimeState` when the receiver is empty or changes.
 3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
-4. Advances `HotLaneTick` and applies the current cadence policy: asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends still bypass cadence suppression.
-5. Selects included lane candidates from the send plan, including lifecycle candidates before expanded asteroid/bullet hot chunks when needed.
+4. Advances `HotLaneTick` and applies the current cadence policy: ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks; asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression; chunked asteroid lifecycle and its related projection/hot transition wait for the permitted asteroid cadence tick.
+5. Selects included lane candidates from the send plan, including lifecycle candidates before expanded hot chunks when needed.
 6. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
 7. Delta serializers in `realtime/wire_packets.go` omit empty delta sections from readable wire maps.
 8. `CompactWirePacket` applies generated descriptor-driven aliases, value domains, ID codecs/selectors, record encodings, and event layouts.
 9. `packetcodec` encodes each selected candidate into `EncodedLanePackets`.
-10. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the transport is ready.
-11. Logs lane wire packet details after successful writes.
-12. Drains active event_batch events only after a successful WebRTC write.
-13. Persists lane metadata only after successful writes.
-14. Stores baseline projections for non-event lane packets only after successful writes.
-15. Marks a lane baseline ready after a final full packet.
-16. Emits a non-empty per-tick debug summary after packet writes; cadence-suppressed no-op ticks produce no wire log or write summary.
+10. Preflights every selected payload against the buffered amount of its destination lane, including bytes reserved earlier in the same pass. If any selected payload would cross the 32 KiB per-lane threshold, the function skips the entire gameplay send pass for that session tick.
+11. `session.webrtcTransport.SendEncodedLaneJSON()` writes each encoded packet over the selected WebRTC lane channel when the transport is ready.
+12. Logs lane wire packet details after successful writes.
+13. Drains active event_batch events only after a successful WebRTC write.
+14. Persists lane metadata only after successful writes.
+15. Stores baseline projections for non-event lane packets only after successful writes.
+16. Marks a lane baseline ready after a final full packet.
+17. Emits a non-empty per-tick debug summary after packet writes; cadence-suppressed or backpressure-skipped ticks produce no successful wire log or write summary.
 
 `BuildActiveRealtimeResultForGame` obtains a receiver-scoped view over the current shared immutable presentation frame. Networking and `protocol/realtime` do not copy the complete entity maps per session. Receiver-specific pending events, realtime session state, baseline/delta state, candidate selection, encoding, and post-write persistence remain per session.
 
@@ -189,6 +190,12 @@ Active lane metadata persistence, event drain, and baseline persistence happen o
 Chunk metadata exists in the wire shape and scheduler records. The current active path uses it for focused `ship_delta`, `asteroid_delta`, and `bullet_delta` hot-lane chunking. Oversized hot movement update lists are split into multiple real candidates before scheduling and encoding, then written as separate WebRTC messages on the same hot lane. This does not make networking the owner of general fragmentation or record/entity-level prioritization.
 
 The 500 B scheduler target is not a total-per-tick send ceiling; aggregate encoded bytes may exceed it when multiple hot chunks or required packets are written.
+
+### Current cross-lane preflight coupling
+
+Reliability, ordering, and buffered amount are tracked per physical DataChannel, but the current per-session send pass is grouped. After all selected candidates are encoded, networking checks every selected lane before writing the first packet. One congested lane can therefore suppress unrelated hot, lifecycle, world, overlay, session, or event packets for that session for the current tick.
+
+Because no packet is written in that case, lane metadata, baseline projections, and event draining also remain unchanged. This preserves post-write correctness, but it means the physical lanes are not yet isolated scheduling transactions. Future hardening should allow an affected supersedable hot lane to defer independently while preserving required lifecycle/baseline ordering and explicit recovery behavior.
 
 ### Debug status
 

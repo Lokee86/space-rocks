@@ -130,6 +130,10 @@ This means player input routing starts only after networking has already resolve
 
 At the start of `Game.Step`, after the simulation has acquired the main game mutex, the game drains the pending-input mailbox and applies accepted states to active ships. Respawn, pause, and client config packets continue through the main game lock because they perform immediate control-state mutations.
 
+Server-owned bot input follows a different ingress path. `stepBots()` runs inside `Game.Step()` while the simulation already owns the main game mutex, computes one decision per bot for that tick, and writes the result directly to the bot ship. Bots therefore exercise ship movement, weapon fire, collision, entity-count, and replication pressure, but they do not exercise asynchronous network decode, network-goroutine timing, input-mailbox replacement, or additional connected-session planning and encoding.
+
+A load run with one connected client and multiple server-owned bots must not be described as a multi-client load run. It validates one receiver under a larger authoritative world. A real connected client adds asynchronous inbound input and one receiver-scoped realtime session; each additional connected client adds another independent baseline/projection, planner, encoder, channel-buffer, and write path.
+
 Respawn requests are handled first:
 
 ```text

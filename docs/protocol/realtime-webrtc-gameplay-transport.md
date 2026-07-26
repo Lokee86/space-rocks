@@ -102,7 +102,7 @@ sr.ships carries supersedable ship_updates only.
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
 Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. `sr.ships.lifecycle` carries ship creates/deletes and reliable non-transform ship updates such as health, shields, ship type, and target state. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
-Hot `ship_delta`, `asteroid_delta`, and `bullet_delta` sequence values must be finite, non-negative, integer-valued numerics. Missing, fractional, negative, non-finite, string, and boolean values are rejected before hot-lane state mutation. Lower sequences are also rejected by client hot-lane sequence guards. Same-sequence packets are valid only for distinct `chunk_index` values of the same `chunk_count`; duplicate chunk indices are rejected. Sequence gaps remain valid because hot packets can be dropped.
+Hot `ship_delta`, `asteroid_delta`, and `bullet_delta` sequence values must be finite, non-negative, integer-valued numerics. Missing, fractional, negative, non-finite, string, and boolean values are rejected before hot-lane state mutation. Each lane buffers distinct same-sequence chunks until the declared `chunk_count` is complete, then applies that logical sequence atomically. Duplicate or inconsistent chunks and completed/lower sequences are rejected. If a newer sequence arrives before the prior sequence is complete, the incomplete prior assembly is discarded without partial mutation. Sequence gaps remain valid because hot packets can be dropped.
 ```
 
 Ordered/reliable delivery is scoped to one DataChannel only. It does not order `sr.world` against `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, or `sr.bullets.lifecycle`, and it does not order a lifecycle channel against its corresponding unordered hot channel. The world/lifecycle race is therefore expected: a lifecycle packet may arrive before the matching `world_full` or after a hot update. The lifecycle packet's explicit world `baseline_id` determines whether the client can apply it now or must keep it pending.
@@ -143,7 +143,9 @@ BuildActiveRealtimeResultForGame
 -> physical WebRTC active gameplay DataChannel
 ```
 
-Active metadata advancement, event draining, and baseline persistence must only happen after the active WebRTC write path succeeds.
+Before writing the first selected packet, the current server implementation preflights every selected payload against its destination lane's buffered amount and same-pass reserved bytes. If any selected payload would exceed the 32 KiB per-lane threshold, the entire gameplay write pass is skipped for that session tick. Physical DataChannel reliability remains lane-specific, but this grouped preflight creates current cross-lane send coupling.
+
+Active metadata advancement, event draining, and baseline persistence must only happen after the active WebRTC write path succeeds. A preflight-skipped pass advances none of them.
 
 ## Client Receive Boundary
 
@@ -268,7 +270,7 @@ bullet_delta on sr.bullets
 
 ### Hot Movement Cadence
 
-Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression.
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required. Bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression; chunked asteroid lifecycle and its related hot/projection transition remain on the permitted asteroid cadence tick.
 
 ## Control and Resync Boundary
 

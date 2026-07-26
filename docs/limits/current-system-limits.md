@@ -28,6 +28,7 @@ Accepted practical ceilings that are not active bugs or roadmap work belong in [
 - Local server launch from the Godot client is not implemented.
 - The current client expects a local Go server target during development.
 - Realtime candidate construction uses an approximately 1,200-byte `HardCapBytes` limit for `world_full`, ship/asteroid/bullet lifecycle, and ship/asteroid/bullet movement candidates; splittable candidates are chunked before encoding and an individually oversized record fails explicitly.
+- Physical gameplay DataChannels have independent reliability and buffering, but the current server send preflight is grouped per session: if any selected lane would exceed the 32 KiB buffered-amount threshold, every gameplay packet selected for that session tick is skipped. Lane-isolated backpressure handling is not yet implemented.
 
 #### Active client realtime receive limits
 
@@ -36,7 +37,6 @@ Accepted practical ceilings that are not active bugs or roadmap work belong in [
 - Limit, expiry, malformed metadata, interrupted, duplicate, mismatched, and non-contiguous failures reset incomplete client assembly state, apply no partial state, and request authoritative recovery. These are active defensive client limits, not missing work and not changes to the server's approximately 1200-byte candidate construction cap.
 
 - `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. This is a bounded but real identity-enforcement gap, not merely a product omission: the intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet. This must be closed before hosted/public account-enabled release shapes rely on strict Guest/Local Profile versus Authenticated Account separation.
-- Timed asteroid population is bounded to `24 + 8 × active camera views`; the global three-second wave budget is `max(3, active camera views)`. Fragment and debug spawns may temporarily exceed that timed-spawn ceiling.
 - Vertical despawn behavior is limited by the relationship between world height, visible viewport height, and despawn margin.
 
 ### Combat Systems

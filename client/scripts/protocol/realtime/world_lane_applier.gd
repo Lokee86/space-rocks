@@ -1,7 +1,6 @@
 extends RefCounted
 
 const RealtimeQuantize = preload("res://scripts/protocol/realtime/realtime_quantize.gd")
-const AsteroidTrace = preload("res://scripts/networking/realtime/asteroid_trace.gd")
 const HotDeltaChunkAssembler = preload("res://scripts/protocol/realtime/hot_delta_chunk_assembler.gd")
 
 const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracker.gd")
@@ -73,63 +72,17 @@ func apply_ships_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary)
 
 func apply_asteroid_delta(world_lane_state: WorldLaneState, _lane: String, asteroid_packet: Dictionary) -> void:
 	var assembly := _asteroid_delta_assembler.accept(asteroid_packet, "asteroid_updates")
-	if assembly.has("superseded"):
-		AsteroidTrace.anomaly("hot_sequence_superseded_incomplete", assembly.superseded)
 	if assembly.status != HotDeltaChunkAssembler.COMPLETE:
-		if assembly.status == HotDeltaChunkAssembler.REJECTED:
-			AsteroidTrace.anomaly("hot_packet_rejected", {
-				"sequence": asteroid_packet.get("sequence"),
-				"chunk_index": asteroid_packet.get("chunk_index", 0),
-				"chunk_count": asteroid_packet.get("chunk_count", 1),
-				"latest_sequence": world_lane_state.latest_asteroid_delta_sequence,
-				"reason": assembly.get("reason", "unknown"),
-			})
 		return
 	var assembled: Dictionary = assembly.packet
-	var sequence = assembled.get("sequence")
-	if not world_lane_state.accept_asteroid_delta_sequence(sequence):
-		AsteroidTrace.anomaly("hot_packet_rejected", {
-			"sequence": sequence,
-			"chunk_index": 0,
-			"chunk_count": 1,
-			"latest_sequence": world_lane_state.latest_asteroid_delta_sequence,
-			"reason": "completed_sequence_rejected",
-		})
+	if not world_lane_state.accept_asteroid_delta_sequence(assembled.get("sequence")):
 		return
-	var updates := _array_field(assembled, "asteroid_updates")
-	for record in updates:
-		if not record is Dictionary:
-			continue
-		var decoded := _decode_entity_record(record, "asteroid")
-		var asteroid_id = decoded.get("id")
-		if asteroid_id != null and not world_lane_state.asteroids.has(asteroid_id):
-			AsteroidTrace.record_event("hot_update_buffered_before_lifecycle", {
-				"asteroid_id": str(asteroid_id),
-				"sequence": sequence,
-				"chunk_index": 0,
-				"chunk_count": 1,
-				"state_count": world_lane_state.asteroids.size(),
-			})
-	_apply_entity_deltas(world_lane_state, [], updates, [], "asteroid")
+	_apply_entity_deltas(world_lane_state, [], _array_field(assembled, "asteroid_updates"), [], "asteroid")
 
 func apply_asteroids_lifecycle(world_lane_state: WorldLaneState, packet: Dictionary) -> bool:
 	if not _valid_lifecycle_payload(packet, "asteroid_creates", "asteroid_deletes"):
-		AsteroidTrace.anomaly("invalid_lifecycle_payload", {
-			"sequence": packet.get("sequence", -1),
-			"chunk_index": packet.get("chunk_index", 0),
-			"chunk_count": packet.get("chunk_count", 1),
-		})
 		return false
-	var creates := _array_field(packet, "asteroid_creates")
-	var deletes := _array_field(packet, "asteroid_deletes")
-	AsteroidTrace.record_event("lifecycle_apply", {
-		"sequence": packet.get("sequence", -1),
-		"baseline_id": str(packet.get("baseline_id", "")),
-		"create_count": creates.size(),
-		"delete_count": deletes.size(),
-		"state_count_before": world_lane_state.asteroids.size(),
-	})
-	_apply_entity_deltas(world_lane_state, creates, [], deletes, "asteroid")
+	_apply_entity_deltas(world_lane_state, _array_field(packet, "asteroid_creates"), [], _array_field(packet, "asteroid_deletes"), "asteroid")
 	return true
 
 func apply_bullet_delta(world_lane_state: WorldLaneState, _lane: String, bullet_packet: Dictionary) -> void:

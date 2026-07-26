@@ -71,8 +71,10 @@ The active gameplay packet families are:
 ```text
 world_full
 world_delta
+ship_delta
 asteroid_delta
 bullet_delta
+ships_lifecycle
 asteroids_lifecycle
 bullets_lifecycle
 overlay_full
@@ -372,7 +374,7 @@ Chunk metadata exists in the wire shape and scheduler records. The roughly 1,200
 
 ### Hot movement cadence
 
-Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required; bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Forced sends bypass cadence suppression. Sequence numbers advance only for successfully written candidates, while `HotLaneTick` advances on every eligible active build, so skipped sends cannot freeze cadence. This is candidate policy in protocol/realtime; it does not change DataChannel reliability or hot-lane chunk metadata semantics.
+Each eligible active build advances an independent per-session 60 Hz `HotLaneTick`. Ship movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Asteroid movement emits at 60 Hz when unchunked and 30 Hz when chunking is required. Bullet movement emits at 60 Hz for one chunk, 30 Hz for two chunks, and 20 Hz for three or more chunks. Ship and bullet forced sends may bypass normal cadence suppression; chunked asteroid lifecycle and its related projection/hot transition remain on the permitted asteroid cadence tick. Sequence numbers advance only for successfully written candidates, while `HotLaneTick` advances on every eligible active build, so skipped sends cannot freeze cadence. This is candidate policy in protocol/realtime; it does not change DataChannel reliability or hot-lane chunk metadata semantics.
 
 ### Numeric wire quantization
 
@@ -845,7 +847,7 @@ event_batch = one candidate
 
 Hot ship_delta, asteroid_delta, and bullet_delta packets require finite, non-negative integer-valued numeric sequence values according to the `int` schema. Fractional, negative, missing, non-finite, string, and boolean values are invalid. Sequence gaps are valid because unordered/unreliable hot packets may be dropped.
 
-For `ship_delta`, `asteroid_delta`, and `bullet_delta`, the client accepts a same-sequence packet only when its `chunk_index` has not already been accepted for that lane and sequence and its `chunk_count` matches the count already established for that sequence. Duplicate chunk indices, inconsistent `chunk_count` values, malformed chunk metadata, and lower sequence values are rejected. Distinct chunk indices may arrive in any order, sequence gaps are valid because unordered/unreliable hot packets may be dropped, and ship, asteroid, and bullet chunk tracking are independent.
+For `ship_delta`, `asteroid_delta`, and `bullet_delta`, the client buffers a same-sequence packet only when its `chunk_index` is new for that lane and sequence and its `chunk_count` matches the count already established for the assembly. Distinct chunks may arrive in any order, but the logical sequence mutates world state only after every declared chunk is present. Duplicate indices, inconsistent counts, malformed metadata, and completed or lower sequences are rejected. A newer sequence discards an incomplete older assembly without partial application. Sequence gaps remain valid because unordered/unreliable hot packets may be dropped, and ship, asteroid, and bullet assembly state is independent.
 
 The active path does not implement general record/entity-level prioritization or arbitrary field-level packet splitting. It does implement focused hot-lane chunking for `ship_delta`, `asteroid_delta`, and `bullet_delta`: oversized hot movement update lists become multiple real candidates before `SelectSendPlan` and before final JSON encoding. Hot-lane chunk sizing uses conservative compact-JSON byte estimation. The chunker is the only hot-lane hard-size guard. Scheduler byte estimates remain advisory for candidate-level include/defer decisions, and active encoding records final encoded bytes for diagnostics rather than rejecting already-scheduled hot packets. Scheduler and active encoding do not reject already-built hot candidates; chunk construction normally prevents multi-update chunks above `HardCapBytes`, while an unsplittable single-update chunk may exceed the threshold and still be encoded and sent, with diagnostics recording it. Deferred and supersession storage exists as protocol plumbing, but active cross-tick replay and supersession are not yet the gameplay delivery guarantee.
 ### Runtime observability note

@@ -13,7 +13,6 @@ const BaselineTracker = preload("res://scripts/protocol/realtime/baseline_tracke
 
 const ResyncState = preload("res://scripts/protocol/realtime/resync_state.gd")
 const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
-const AsteroidTrace = preload("res://scripts/networking/realtime/asteroid_trace.gd")
 
 
 
@@ -138,18 +137,9 @@ func _route_ships_lifecycle(packet: Dictionary) -> void:
 func _route_asteroids_lifecycle(packet: Dictionary) -> void:
 	var assembly := _asteroid_lifecycle_assembler.accept(packet, "asteroid_creates", "asteroid_deletes")
 	if assembly.status == LifecycleChunkAssembler.ERROR:
-		AsteroidTrace.anomaly("lifecycle_chunk_assembly_failed", {
-			"sequence": packet.get("sequence", -1),
-			"reason": str(assembly.reason),
-		})
 		_request_lifecycle_resync(assembly.reason)
 		return
 	if assembly.status != LifecycleChunkAssembler.COMPLETE:
-		AsteroidTrace.record_event("lifecycle_chunk_buffered", {
-			"sequence": packet.get("sequence", -1),
-			"chunk_index": packet.get("chunk_index", 0),
-			"chunk_count": packet.get("chunk_count", 1),
-		})
 		return
 	packet = assembly.packet
 	var decision := lifecycle_lane_gate.submit(
@@ -158,20 +148,8 @@ func _route_asteroids_lifecycle(packet: Dictionary) -> void:
 		baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD),
 		baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)
 	)
-	AsteroidTrace.record_event("lifecycle_gate_decision", {
-		"sequence": decision.sequence,
-		"status": str(decision.status),
-		"reason": str(decision.get("reason", "")),
-		"packet_baseline_id": str(packet.get("baseline_id", "")),
-		"active_baseline_id": str(baseline_tracker.get_active_baseline_id(LaneMetadata.LANE_WORLD)),
-		"world_synced": baseline_tracker.is_lane_synced(LaneMetadata.LANE_WORLD),
-	})
 	if decision.status != LifecycleLaneGate.DECISION_APPLY:
 		if decision.status == LifecycleLaneGate.DECISION_RESYNC:
-			AsteroidTrace.anomaly("lifecycle_gate_resync", {
-				"sequence": decision.sequence,
-				"reason": str(decision.reason),
-			})
 			baseline_tracker.request_resync_for_lane(LaneMetadata.LANE_WORLD, decision.reason)
 			resync_state.mark_lifecycle_queue_overflow(LaneMetadata.LANE_WORLD)
 		return

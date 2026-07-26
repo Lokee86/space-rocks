@@ -31,6 +31,12 @@ func (game *Game) spawnDebugBullet(ownerID string, position physics.Vector2, dir
 	return bullet, true
 }
 
+func (game *Game) spawnAsteroidBatch(view *runtime.CameraView) {
+	for range constants.AsteroidSpawnBatchSize {
+		game.spawnAsteroid(view)
+	}
+}
+
 func (game *Game) spawnAsteroid(view *runtime.CameraView) {
 	targetPosition := view.Position()
 	spawn := game.randomAsteroidSpawnPosition(view)

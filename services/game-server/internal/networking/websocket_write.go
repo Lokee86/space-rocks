@@ -204,8 +204,6 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			})
 			return false
 		}
-		bufferedBytes, _ := transport.BufferedAmountForLane(lane)
-		traceAsteroidPacketWrite(session, context, gameplayContext.MatchID, candidate, len(encodedPacket), bufferedBytes)
 		session.observePacketWrite(lane, candidate.PacketFamily(), len(encodedPacket))
 		if candidate.Kind() == realtime.RealtimeLaneCandidateKindEventBatch {
 			sentEventBatch = true

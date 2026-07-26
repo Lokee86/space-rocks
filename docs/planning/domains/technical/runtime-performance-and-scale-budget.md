@@ -142,7 +142,19 @@ Publication occurs once per simulation generation rather than once per receiver 
 
 Contention readers request snapshots continuously and are deliberately harsher than normal per-session requests at 60 Hz. They no longer multiply entity-map copying. Remaining `Step` cost is dominated by once-per-step frame publication and simulation work; reader count adds only brief lock access for frame capture and pending-event copying. The representative 8-player load is healthy relative to the 16.67 ms server tick budget, while the 16-player stress case remains evidence for future scale work.
 
-Revisit this decision when rooms grow larger, sustained entity counts rise, runtime observation shows GC or memory pressure, or snapshot work consumes a material portion of the 16.67 ms tick budget.
+The benchmark player count is an entity-count dimension, not proof of the same number of connected network clients. Server-owned bots run their input decisions inside `Game.Step()` and do not create WebSocket readers, asynchronous input timing, receiver-scoped realtime state, per-session candidate construction, per-session encoding, or DataChannel buffers. Runtime evidence must report both authoritative player/entity count and actual connected-client count.
+
+The canonical multiplayer regression matrix should hold world pressure approximately constant while varying ingress and receiver count:
+
+```text
+A: one connected client plus server-owned bots
+B: one actively controlled network client with equivalent entity pressure
+C: two or more actively controlled network clients with equivalent entity pressure
+```
+
+Each run should capture server tick duration, input mailbox replacements, presentation generation cadence, per-session candidate-build and encode time, skipped send ticks, per-lane buffered amount, client packet-application time, and client frame time. This separates simulation/entity capacity from asynchronous input and per-receiver networking capacity.
+
+Revisit this decision when rooms grow larger, sustained entity counts rise, runtime observation shows GC or memory pressure, snapshot work consumes a material portion of the 16.67 ms tick budget, or real connected-session count materially changes planner, encoding, or write cadence.
 
 ### Collision Broad-Phase Measurement Foundation
 
@@ -229,7 +241,9 @@ Local packaged alpha should have runtime coverage for:
 Dev-hosted multiplayer should have runtime coverage for:
 
 * multiplayer room creation and admission,
-* multiple players in one room,
+* multiple authoritative players or server-owned bots in one room,
+* multiple real connected clients in one room as a separate load dimension,
+* actively changing network input rather than idle connected sessions only,
 * ready/start/end flow,
 * player join and leave churn,
 * match result write pressure,
