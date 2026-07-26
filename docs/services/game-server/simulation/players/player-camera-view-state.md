@@ -46,11 +46,17 @@ Game.AddPlayer()
 -> game.entities.Players[playerID] = ship
 -> setPlayerCameraViewLocked(playerID, ship)
 
-Client client_config packet
+Human client client_config packet
 -> Game.HandlePacket()
--> session.Config = packet.Config
--> cameraView.Config = packet.Config
--> active ship Config = packet.Config, when active
+-> validate positive dimensions
+-> normalize to the fixed 16:9 view and clamp to 0.5-2.0 zoom
+-> session.Config = normalized config
+-> cameraView.Config = normalized config
+-> active ship Config = normalized config, when active
+
+Bot player
+-> camera config remains locked to 1280 by 720
+-> bot-sourced client_config packets are ignored
 
 Game.Step()
 -> stepPlayers()
@@ -88,8 +94,10 @@ The player camera-view boundary owns:
 * Creating a camera view when an active player ship is created through normal player add, respawn, or devtools spawn/respawn paths.
 * Storing one camera view per player ID.
 * Storing the serverâ€™s current per-player visibility anchor position.
-* Storing the most recent valid viewport config received for the player.
-* Seeding missing camera config from session config, active ship config, or world-size fallback.
+* Storing the most recent valid logical visible-world config received for a human player.
+* Seeding missing camera config from session config, active ship config, or the 1280 by 720 base view.
+* Normalizing human camera config to the fixed 16:9 aspect and clamping it to the 0.5-2.0 zoom range.
+* Locking bot camera views to 1280 by 720.
 * Updating camera-view position from the active ship during simulation stepping.
 * Preserving the camera-view position at fatal player damage time.
 * Removing camera-view state when the player is removed from the game.
@@ -200,13 +208,13 @@ This preserves the last player anchor position while the active ship is pending 
 
 Respawn creates a new active ship from the player session and reattaches the camera view to that new ship position through `setPlayerCameraViewLocked`.
 
-`setPlayerCameraViewLocked` preserves an existing valid camera config when possible. This avoids viewport-size reset/flicker across respawn. If the camera view does not already have a valid config, it seeds from session config, then active ship config, then full world size.
+`setPlayerCameraViewLocked` preserves an existing valid camera config when possible. This avoids view-size reset/flicker across respawn. If the camera view does not already have a valid config, it seeds from session config, then active ship config, then the 1280 by 720 base view. Every stored config is normalized to the fixed 16:9 aspect and the supported 0.5-2.0 zoom range.
 
 ## Protocols and APIs
 
 The camera-view boundary consumes the generated gameplay `client_config` packet.
 
-The packet is for reporting the clientâ€™s visible viewport size to the server. The Godot client measures its visible viewport and sends:
+The packet reports a human clientâ€™s logical visible-world size to the server. The Godot camera controller starts from a 1280 by 720 base view, divides it by current zoom, and sends:
 
 ```text
 type = "client_config"
@@ -216,12 +224,7 @@ config.visible_world_height
 
 The server owns authority behind this surface. The client reports dimensions; the server decides how those dimensions affect spawning, visibility, cleanup, and stored runtime config.
 
-`Game.HandlePacket` accepts a client config only when both dimensions are positive:
-
-```text
-packet.Config.VisibleWorldWidth > 0
-packet.Config.VisibleWorldHeight > 0
-```
+`Game.HandlePacket` accepts a human client config only when both dimensions are positive. It then derives one fixed-aspect zoom value, clamps that zoom to 0.5-2.0, and reconstructs the authoritative visible-world dimensions. Config packets targeting bot players are ignored.
 
 When valid, the server updates:
 
@@ -231,7 +234,7 @@ cameraView.Config, if a camera view exists
 runtime.Ship.Config, if an active ship exists
 ```
 
-This means a pending-respawn player with a session and camera view can still refresh server camera config even when no active ship exists.
+This means a pending-respawn human player with a session and camera view can still refresh server camera config even when no active ship exists. Bot sessions, camera views, and ships remain locked to the 1280 by 720 base config.
 
 `CameraView` is not projected directly in lane packets. Clients observe active ship state through world lane records, player session state through session lane records, lifecycle status through session lane lifecycle records, bullets through `bullets_lifecycle` plus `bullet_delta`, asteroids through `asteroids_lifecycle` plus `asteroid_delta`, pickups through world lane pickup records, and presentation events through compact sparse `event_batch` delivery. The server camera view remains internal simulation state, and this doc describes logical behavior rather than literal compact wire keys.
 
@@ -287,7 +290,8 @@ Primary implementation files:
 * `services/game-server/internal/game/runtime/camera.go` - Implements camera config, position, viewport-size fallback, and rectangular inside/far helpers.
 * `services/game-server/internal/game/players.go` - Creates, seeds, updates, and removes camera views during player add/remove.
 * `services/game-server/internal/game/session.go` - Creates new ships for respawn and reattaches camera views through `setPlayerCameraViewLocked`.
-* `services/game-server/internal/game/input.go` - Handles `client_config` packets and updates session, camera-view, and active-ship config.
+* `services/game-server/internal/game/input.go` - Validates and clamps human `client_config` packets, ignores bot config packets, and updates session, camera-view, and active-ship config.
+* `services/game-server/internal/game/bot_players.go` - Locks bot view config to 1280 by 720 and limits bot asteroid perception to the bot camera view.
 * `services/game-server/internal/game/simulation_players.go` - Updates camera-view position from active ship position after movement.
 * `services/game-server/internal/game/combat.go` - Preserves camera-view position when fatal player damage is applied.
 * `services/game-server/internal/game/player_world_state.go` - Uses camera-view position as inactive-player fallback position.
@@ -333,8 +337,11 @@ go test ./services/game-server/tests/game/... -buildvcs=false
 
 Relevant behavior to preserve:
 
-* valid `client_config` packets update player session config and camera-view config
+* valid human `client_config` packets update player session, camera-view, and active-ship config
+* human configs preserve the base 16:9 aspect and clamp to 0.5-2.0 zoom
 * invalid non-positive viewport dimensions are ignored
+* bot camera config remains locked to 1280 by 720
+* bots ignore asteroids outside their locked camera view
 * camera view is created on player add
 * camera view is reattached on respawn
 * camera view position follows active ship movement

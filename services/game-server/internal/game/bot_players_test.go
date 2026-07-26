@@ -54,6 +54,34 @@ func TestAddBotUsesPlayerInputAndRemovalLifecycle(t *testing.T) {
 	}
 }
 
+func TestBotIgnoresAsteroidsOutsideLockedCameraView(t *testing.T) {
+	gameInstance := NewWithSeed(9)
+	botID := gameInstance.AddBot()
+
+	gameInstance.mu.Lock()
+	ship := gameInstance.entities.Players[botID]
+	ship.X = 200
+	ship.Y = 200
+	ship.Rotation = 0
+	gameInstance.cameraViews[botID].SetPosition(ship.Position())
+	gameInstance.entities.Asteroids["offscreen"] = &runtime.Asteroid{
+		ID:   "offscreen",
+		X:    200,
+		Y:    -800,
+		Size: 1,
+	}
+	gameInstance.stepBots()
+	input := ship.Input
+	gameInstance.mu.Unlock()
+
+	if !input.Forward {
+		t.Fatalf("expected bot with no visible asteroid to continue forward, got %+v", input)
+	}
+	if input.PrimaryFire || input.Left || input.Right {
+		t.Fatalf("expected off-screen asteroid to be absent from bot perception, got %+v", input)
+	}
+}
+
 func TestBotRespawnsAfterNormalCooldown(t *testing.T) {
 	gameInstance := NewWithSeed(11)
 	botID := gameInstance.AddBot()

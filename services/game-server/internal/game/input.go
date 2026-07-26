@@ -16,27 +16,31 @@ func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 		return
 	}
 	if packet.Type == PacketTypeClientConfig {
-		if packet.Config.VisibleWorldWidth > 0 && packet.Config.VisibleWorldHeight > 0 {
-			if session, ok := game.playerSessions[playerID]; ok && session != nil {
-				session.Config = packet.Config
-			}
-			if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
-				cameraView.SetConfig(packet.Config)
-			}
+		if _, isBot := game.botControllers[playerID]; isBot {
+			return
 		}
-	}
+		if packet.Config.VisibleWorldWidth <= 0 || packet.Config.VisibleWorldHeight <= 0 {
+			return
+		}
 
-	player, ok := game.entities.Players[playerID]
-	if !ok {
+		config := runtime.ClampCameraConfig(packet.Config)
+		if session, ok := game.playerSessions[playerID]; ok && session != nil {
+			session.Config = config
+		}
+		if cameraView, ok := game.cameraViews[playerID]; ok && cameraView != nil {
+			cameraView.SetConfig(config)
+		}
+		if player, ok := game.entities.Players[playerID]; ok && player != nil {
+			player.SetConfig(config)
+		}
 		return
 	}
-	switch packet.Type {
-	case PacketTypePauseRequest:
+
+	if _, ok := game.entities.Players[playerID]; !ok {
+		return
+	}
+	if packet.Type == PacketTypePauseRequest {
 		game.togglePlayerPaused(playerID)
-	case PacketTypeClientConfig:
-		if packet.Config.VisibleWorldWidth > 0 && packet.Config.VisibleWorldHeight > 0 {
-			player.SetConfig(packet.Config)
-		}
 	}
 }
 

@@ -5,8 +5,8 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -35,13 +35,10 @@ func newPlayerSession(id string, spawnPosition physics.Vector2) *playerSession {
 		ShipTypeID:    runtime.DefaultShipTypeID,
 		Stats:         runtime.ResolveShipStats(runtime.DefaultShipTypeID),
 		SpawnPosition: spawnPosition,
-		Config: runtime.ClientConfig{
-			VisibleWorldWidth:  constants.WorldWidth,
-			VisibleWorldHeight: constants.WorldHeight,
-		},
-		Targeting: EmptyPlayerTargeting(),
-		Lives:     constants.PlayerStartingLives,
-		PlayerArmory: weapons.DefaultPlayerArmory(),
+		Config:        runtime.DefaultCameraConfig(),
+		Targeting:     EmptyPlayerTargeting(),
+		Lives:         constants.PlayerStartingLives,
+		PlayerArmory:  weapons.DefaultPlayerArmory(),
 	}
 }
 

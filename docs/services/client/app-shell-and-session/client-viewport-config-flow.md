@@ -14,11 +14,11 @@ Parent index: [App Shell And Session](./!INDEX.md)
 
 This document describes the client viewport config flow owned by the app-shell/session boundary.
 
-It covers how the Godot client reports its visible viewport size to the realtime server through the `client_config` packet.
+It covers how the Godot client reports its logical visible-world size to the realtime server through the `client_config` packet, including player camera zoom.
 
 ## Overview
 
-The client viewport config flow sends the current visible viewport size to the game server after session boot and when the viewport size changes.
+The client viewport config flow sends the current logical visible-world size to the game server after session boot, when the viewport changes, and whenever player zoom changes. Gameplay uses a 1280 by 720 base view at 1.0 zoom. Mouse-wheel up zooms in and mouse-wheel down zooms out through a clamped 0.5 to 2.0 zoom range.
 
 The current flow is:
 
@@ -26,7 +26,10 @@ The current flow is:
 AppEntry._setup_boot_and_config()
 -> ClientConfigController.configure(connection_service, viewport)
 -> ClientViewportConfigFlow.configure(connection_service, viewport)
+-> AppEntry._setup_gameplay_camera()
+-> GameplayCameraController provides logical visible-world size
 -> Viewport.size_changed connects to ClientViewportConfigFlow.send_client_config
+-> zoom changes call ClientConfigController.send_client_config()
 
 ShellBootFlow sends a pending boot request
 -> boot_request_sent
@@ -45,7 +48,7 @@ RoomSessionController.handle_room_snapshot(packet)
 -> ClientConfigController.send_client_config()
 ```
 
-The packet payload is the viewport's visible rectangle size:
+The packet payload is the camera controller's logical world-space view size:
 
 ```text
 visible_world_width
@@ -61,6 +64,7 @@ The server uses the config as runtime visibility/camera information for the curr
 ```text
 client/scripts/session/client_config_controller.gd
 client/scripts/config/client_viewport_config_flow.gd
+client/scripts/gameplay/camera/gameplay_camera_controller.gd
 client/scripts/shell/app_entry.gd
 client/scripts/session/room_session_controller.gd
 ```
@@ -72,8 +76,10 @@ The client viewport config flow owns:
 * creating the viewport config flow from the session/app-shell boundary
 * storing the active connection-service reference
 * storing the active Godot viewport reference
+* accepting a logical visible-world-size provider
 * connecting viewport resize notifications to config sending
-* reading `Viewport.get_visible_rect().size`
+* reporting the 1280 by 720 base view divided by current player zoom
+* resending config when player zoom changes
 * building the generated `client_config` packet
 * sending the packet through `ClientConnectionService.send_packet()`
 * sending config after a boot request is sent
@@ -124,9 +130,9 @@ get_viewport()
 
 `ClientViewportConfigFlow.configure()` connects the Godot viewport's `size_changed` signal to `send_client_config()`.
 
-That makes runtime window/viewport resizing resend the latest visible size to the server.
+That makes runtime window/viewport resizing resend the latest logical visible-world size to the server. Resizing is a resend trigger; it does not grant additional world visibility because `GameplayCameraController` owns the fixed 16:9 gameplay view and zoom calculation.
 
-The flow does not calculate presentation layout. It only reports the viewport size used by server-side visibility/camera logic.
+The flow does not calculate presentation layout. It reports the logical world area used by server-side visibility/camera logic.
 
 ### Boot-time config sender
 
@@ -134,7 +140,7 @@ The flow does not calculate presentation layout. It only reports the viewport si
 
 That means config is sent after a pending session boot request is consumed and sent to the server.
 
-The boot flow owns pending request state. The viewport config flow only sends the current viewport size after boot request emission.
+The boot flow owns pending request state. The viewport config flow only sends the current logical visible-world size after boot request emission.
 
 ### Room-state config sender
 
@@ -156,7 +162,7 @@ connection_service.is_server_connected()
 When connected, it builds:
 
 ```text
-Packets.client_config_packet(viewport_size.x, viewport_size.y)
+Packets.client_config_packet(visible_world_size.x, visible_world_size.y)
 ```
 
 and sends it through:
@@ -217,13 +223,13 @@ The detailed server implementation is owned by game-server service docs and real
 
 The client viewport config flow does not own durable data.
 
-It reads transient runtime data from:
+It reads transient logical camera state from `GameplayCameraController.visible_world_size()`. That value is calculated as:
 
 ```text
-Viewport.get_visible_rect().size
+Vector2(1280, 720) / zoom
 ```
 
-It sends that size to the server as packet data.
+The zoom range is 0.5 to 2.0. The viewport size is retained only as a fallback and resend trigger. The logical visible-world size is sent to the server as packet data.
 
 The source-of-truth for packet shape is:
 
@@ -253,6 +259,7 @@ The server owns the authoritative runtime storage and use of `ClientConfig` for 
 ```text
 client/scripts/session/client_config_controller.gd
 client/scripts/config/client_viewport_config_flow.gd
+client/scripts/gameplay/camera/gameplay_camera_controller.gd
 ```
 
 ### Client composition and trigger files
@@ -306,14 +313,13 @@ These files may use session, viewport, presentation, or world concepts, but they
 
 ## Tests
 
-There are no focused client unit tests for:
+Focused camera tests cover wheel direction, zoom bounds, logical visible-world dimensions, and gameplay-only input handling:
 
 ```text
-ClientConfigController
-ClientViewportConfigFlow
+client/tests/unit/gameplay/camera/test_gameplay_camera_controller.gd
 ```
 
-Related tests cover adjacent trigger and session behavior:
+There are not yet focused packet-sender tests for `ClientConfigController` or `ClientViewportConfigFlow`. Related tests cover adjacent trigger and session behavior:
 
 ```text
 client/tests/unit/test_shell_boot_flow.gd
@@ -349,10 +355,10 @@ Those server tests verify gameplay or visibility behavior that depends on client
 
 ## Notes
 
-This flow is named around viewport config rather than generic client config because the current implementation only reports visible viewport width and height.
+This flow is named around viewport config rather than generic client config because the current implementation reports logical visible-world width and height. Physical display resolution does not grant additional gameplay territory.
 
 `ClientConfigController` is currently a thin wrapper around `ClientViewportConfigFlow`. That wrapper is still useful as the app-shell/session-facing seam because it keeps `AppEntry` and room/session code from depending directly on the lower-level viewport packet implementation.
 
 The client sends viewport config after boot request send and again when a room snapshot reaches `InGame`. This duplication is intentional in the current implementation: boot-time send covers early session setup, while room-state send covers the room-to-gameplay transition.
 
-The config sender silently no-ops while disconnected. That means viewport resize before connection does not queue a later send. The next boot/request or `InGame` room snapshot send is expected to provide the current viewport size.
+The config sender silently no-ops while disconnected. That means viewport resize or zoom input before connection does not queue a later send. The next boot/request or `InGame` room snapshot send is expected to provide the current logical visible-world size.

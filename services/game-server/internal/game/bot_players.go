@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
 func (game *Game) AddBot() string {
@@ -15,9 +16,21 @@ func (game *Game) AddBot() string {
 }
 
 func (game *Game) enableBotPlayerLocked(playerID string) bool {
-	if playerID == "" || game.playerSessions[playerID] == nil {
+	session := game.playerSessions[playerID]
+	if playerID == "" || session == nil {
 		return false
 	}
+
+	config := runtime.DefaultCameraConfig()
+	session.Config = config
+	if ship := game.entities.Players[playerID]; ship != nil {
+		ship.SetConfig(config)
+		game.setPlayerCameraViewLocked(playerID, ship)
+	}
+	if cameraView := game.cameraViews[playerID]; cameraView != nil {
+		cameraView.Config = config
+	}
+
 	game.botControllers[playerID] = bots.NewController()
 	return true
 }
@@ -37,14 +50,18 @@ func (game *Game) stepBots() {
 			continue
 		}
 
+		cameraView := game.cameraViews[playerID]
 		observation := bots.Observation{
 			Position:  ship.Position(),
 			Velocity:  ship.Velocity,
 			Rotation:  ship.Rotation,
-			Asteroids: make([]bots.AsteroidObservation, 0, len(game.entities.Asteroids)),
+			Asteroids: make([]bots.AsteroidObservation, 0),
 		}
 		for _, asteroid := range game.entities.Asteroids {
 			if asteroid == nil || asteroid.PendingDespawn {
+				continue
+			}
+			if cameraView == nil || !isInsideCameraView(cameraView, asteroid.Position()) {
 				continue
 			}
 			observation.Asteroids = append(observation.Asteroids, bots.AsteroidObservation{

@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 )
 
@@ -60,11 +59,10 @@ func (game *Game) setPlayerCameraViewLocked(playerID string, player *runtime.Shi
 			}
 		}
 		if cameraConfig.VisibleWorldWidth <= 0 || cameraConfig.VisibleWorldHeight <= 0 {
-			cameraConfig.VisibleWorldWidth = constants.WorldWidth
-			cameraConfig.VisibleWorldHeight = constants.WorldHeight
+			cameraConfig = runtime.DefaultCameraConfig()
 		}
 	}
-	cameraView.Config = cameraConfig
+	cameraView.Config = runtime.ClampCameraConfig(cameraConfig)
 }
 
 func (game *Game) RemovePlayer(playerID string) {

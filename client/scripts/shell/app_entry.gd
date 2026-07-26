@@ -19,6 +19,7 @@ const MultiplayerEntryFlowScript := preload("res://scripts/ui/menu_flow/multipla
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const GameplayCameraControllerScript := preload("res://scripts/gameplay/camera/gameplay_camera_controller.gd")
 
 @onready var main_menu: Control = %MainMenu
 @onready var user_interface: CanvasLayer = $UserInterface
@@ -28,6 +29,7 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 @onready var repeated_planet_background: TextureRect = %RepeatedPlanetBackground
 @onready var player = $Player
 @onready var view_anchor: Node2D = $ViewAnchor
+@onready var gameplay_camera: Camera2D = $ViewAnchor/Camera2D
 @onready var bullets: Node2D = $Bullets
 @onready var asteroids: Node2D = $Asteroids
 @onready var pickups: Node2D = $Pickups
@@ -49,6 +51,7 @@ var auth_api_client
 var background_controller
 var menu_flow_controller
 var multiplayer_entry_flow
+var gameplay_camera_controller
 
 func _ready() -> void:
 	var logger_callable := Callable(ClientLogger, "shell_info")
@@ -92,6 +95,7 @@ func _ready() -> void:
 		return
 
 	_setup_boot_and_config(logger_callable)
+	_setup_gameplay_camera()
 
 	app_shutdown_controller = AppShutdownController.new()
 	add_child(app_shutdown_controller)
@@ -251,6 +255,23 @@ func _setup_boot_and_config(logger_callable: Callable) -> void:
 		"boot_request_sent",
 		Callable(client_config_controller, "send_client_config")
 	)
+
+
+func _setup_gameplay_camera() -> void:
+	gameplay_camera_controller = GameplayCameraControllerScript.new()
+	add_child(gameplay_camera_controller)
+	gameplay_camera_controller.configure(
+		gameplay_camera,
+		Callable(client_config_controller, "send_client_config"),
+		Callable(self, "_is_gameplay_active")
+	)
+	client_config_controller.configure_visible_world_size_provider(
+		Callable(gameplay_camera_controller, "visible_world_size")
+	)
+
+
+func _is_gameplay_active() -> bool:
+	return gameplay_session_controller != null && gameplay_session_controller.is_gameplay_active()
 
 
 func _connect_main_menu_signals() -> void:

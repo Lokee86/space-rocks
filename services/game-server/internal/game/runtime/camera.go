@@ -5,8 +5,41 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 )
 
+const (
+	BaseVisibleWorldWidth  = 1280.0
+	BaseVisibleWorldHeight = 720.0
+	MinCameraZoom          = 0.5
+	MaxCameraZoom          = 2.0
+
+	MinVisibleWorldWidth  = BaseVisibleWorldWidth / MaxCameraZoom
+	MinVisibleWorldHeight = BaseVisibleWorldHeight / MaxCameraZoom
+	MaxVisibleWorldWidth  = BaseVisibleWorldWidth / MinCameraZoom
+	MaxVisibleWorldHeight = BaseVisibleWorldHeight / MinCameraZoom
+)
+
+func DefaultCameraConfig() ClientConfig {
+	return ClientConfig{
+		VisibleWorldWidth:  BaseVisibleWorldWidth,
+		VisibleWorldHeight: BaseVisibleWorldHeight,
+	}
+}
+
+func ClampCameraConfig(config ClientConfig) ClientConfig {
+	if config.VisibleWorldWidth <= 0 || config.VisibleWorldHeight <= 0 {
+		return DefaultCameraConfig()
+	}
+
+	widthZoom := BaseVisibleWorldWidth / config.VisibleWorldWidth
+	heightZoom := BaseVisibleWorldHeight / config.VisibleWorldHeight
+	zoom := min(max(max(widthZoom, heightZoom), MinCameraZoom), MaxCameraZoom)
+	return ClientConfig{
+		VisibleWorldWidth:  BaseVisibleWorldWidth / zoom,
+		VisibleWorldHeight: BaseVisibleWorldHeight / zoom,
+	}
+}
+
 func (view *CameraView) SetConfig(config ClientConfig) {
-	view.Config = config
+	view.Config = ClampCameraConfig(config)
 }
 
 func (view *CameraView) SetPosition(position physics.Vector2) {
@@ -51,7 +84,7 @@ func (view *CameraView) VisibleWorldWidth() float64 {
 		return view.Config.VisibleWorldWidth
 	}
 
-	return constants.WorldWidth
+	return BaseVisibleWorldWidth
 }
 
 func (view *CameraView) VisibleWorldHeight() float64 {
@@ -59,5 +92,5 @@ func (view *CameraView) VisibleWorldHeight() float64 {
 		return view.Config.VisibleWorldHeight
 	}
 
-	return constants.WorldHeight
+	return BaseVisibleWorldHeight
 }
