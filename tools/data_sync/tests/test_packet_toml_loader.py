@@ -56,6 +56,8 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
     assert realtime_output.packet_type_ids == (
         "world_full",
         "world_delta",
+        "ship_delta",
+        "ships_lifecycle",
         "overlay_full",
         "overlay_delta",
         "session_full",
