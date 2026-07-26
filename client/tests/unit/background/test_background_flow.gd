@@ -24,6 +24,31 @@ func test_process_frame_writes_camera_world_state_to_every_layer() -> void:
 		assert_almost_eq(float(material.get_shader_parameter("camera_zoom")), 2.0, 0.0001)
 
 
+func test_process_frame_writes_viewport_stretch_scale_to_every_layer() -> void:
+	var camera := Camera2D.new()
+	camera.zoom = Vector2.ONE
+	add_child_autofree(camera)
+	var layers := _create_layers()
+	var flow = GameplayBackgroundFlowScript.new()
+	flow.configure(
+		layers[0],
+		layers[1],
+		layers[2],
+		null,
+		camera,
+		func() -> Vector2: return Vector2(1.5, 1.25)
+	)
+
+	flow.process_frame()
+
+	for layer in layers:
+		var material := layer.material as ShaderMaterial
+		assert_eq(
+			material.get_shader_parameter("viewport_stretch_scale"),
+			Vector2(1.5, 1.25)
+		)
+
+
 func test_process_frame_writes_distinct_world_parallax_and_offsets() -> void:
 	var layers := _create_layers()
 	var flow = GameplayBackgroundFlowScript.new()

@@ -40,7 +40,7 @@ AppEntry._ready()
 
 `BackgroundController` owns the node-facing background presentation lifecycle. It creates `GameplayBackgroundFlow`, passes the repeated texture nodes, parallax target, and active gameplay camera, and calls `process_frame()` each frame.
 
-`GameplayBackgroundFlow` owns background world-sampling presentation. It reads the parallax target's `global_position` and `Camera2D.zoom`, then writes camera world position, zoom, per-layer parallax, and world-unit offsets to each background layer's `ShaderMaterial`. The shader reconstructs the visible world position around the camera center and samples repeating textures in world units rather than anchoring texture phase or scale to the window.
+`GameplayBackgroundFlow` owns background world-sampling presentation. It reads the parallax target's `global_position`, `Camera2D.zoom`, and the root viewport's automatically computed stretch transform, then writes camera world position, zoom, viewport stretch scale, per-layer parallax, and world-unit offsets to each background layer's `ShaderMaterial`. The shader reconstructs the visible world position around the camera center using the same effective pixels-per-world-unit scale as gameplay CanvasItems.
 
 The background follows the same `ViewAnchor` basis as camera and world presentation. It does not choose the active render anchor. Detailed ViewAnchor, render-anchor, visual coordinate, and toroidal wrap behavior belongs to world-sync documentation.
 
@@ -65,9 +65,10 @@ Background and viewport presentation owns:
 * preserving the last valid parallax position when the target reference is unavailable
 * combining parallax target position with generated background constants
 * writing camera world position and zoom to background materials
+* writing the active viewport stretch scale to background materials
 * writing per-layer parallax factors and world-unit offsets
 * sampling repeated textures in camera-centered world coordinates
-* keeping texture scale and phase independent of window dimensions
+* keeping background, ships, asteroids, and other CanvasItems on one pixels-per-world-unit scale
 * resetting background offsets when requested
 * keeping background presentation aligned with the client render anchor seam
 
@@ -161,9 +162,9 @@ Each frame, it:
 2. Reads parallax_target.global_position when available.
 3. Falls back to last_valid_parallax_position when the target is missing.
 4. Reads the current uniform camera zoom.
-5. Writes camera_world_position and camera_zoom to every layer.
-6. Writes each layer's parallax_factor.
-7. Writes each layer's world-unit drift and authored offset as layer_world_offset.
+5. Reads `Viewport.get_stretch_transform().get_scale()`.
+6. Writes camera world position, camera zoom, and viewport stretch scale to every layer.
+7. Writes each layer's parallax factor and world-unit drift/authored offset.
 ```
 
 ### Repeated shader layers
@@ -176,11 +177,12 @@ The scene uses repeated background `TextureRect` nodes with `ShaderMaterial` mat
 base_tile_world_size
 camera_world_position
 camera_zoom
+viewport_stretch_scale
 parallax_factor
 layer_world_offset
 ```
 
-The shader converts each fragment's distance from the viewport center into world distance by dividing by `camera_zoom`. It adds the parallax-scaled camera world position and the layer's world-unit offset, then samples the repeating texture using `base_tile_world_size`. Window dimensions therefore only determine how much of the world-space texture is visible; they do not determine texture scale or phase. If a texture node or shader material is missing, the parameter write no-ops for that layer.
+The shader converts each fragment's distance from the viewport center into world distance by dividing by both `camera_zoom` and `viewport_stretch_scale`. It adds the parallax-scaled camera world position and the layer's world-unit offset, then samples the repeating texture using `base_tile_world_size`. `window/stretch/mode="canvas_items"` scales gameplay and UI from the 1280×720 logical viewport, while the explicit stretch-scale compensation keeps the screen-space background shader aligned with that same transform. If a texture node or shader material is missing, the parameter write no-ops for that layer.
 
 ### Parallax constants
 
@@ -219,8 +221,11 @@ It consumes scene nodes, generated constants, and Godot presentation APIs:
 Node2D.global_position
 Camera2D.make_current()
 Camera2D.zoom
+Viewport.get_stretch_transform()
+Transform2D.get_scale()
 ShaderMaterial.set_shader_parameter("camera_world_position", value)
 ShaderMaterial.set_shader_parameter("camera_zoom", value)
+ShaderMaterial.set_shader_parameter("viewport_stretch_scale", value)
 ShaderMaterial.set_shader_parameter("parallax_factor", value)
 ShaderMaterial.set_shader_parameter("layer_world_offset", value)
 ```
@@ -241,6 +246,7 @@ last_valid_parallax_position
 active parallax target reference
 shader camera world-position values
 shader camera zoom values
+shader viewport stretch-scale values
 shader parallax factors
 shader layer world offsets
 ```
@@ -334,7 +340,7 @@ Owns HUD presentation. Background presentation must not become a HUD layout or g
 
 ## Tests
 
-Focused background-flow tests cover camera world-position and zoom propagation, distinct layer parallax and world offsets, explicit scroll-reference updates, and the neutral zoom fallback when no camera is configured:
+Focused background-flow tests cover camera world-position and zoom propagation, viewport stretch-scale propagation, distinct layer parallax and world offsets, explicit scroll-reference updates, and the neutral zoom fallback when no camera is configured:
 
 ```text
 client/tests/unit/background/test_background_flow.gd
@@ -361,7 +367,8 @@ camera is current after app boot
 background scrolls during gameplay
 background follows ViewAnchor movement
 mouse-wheel zoom scales ships and all three background layers together
-resizing the window changes only the visible crop, not star or planet size
+resizing the window scales background features, ships, asteroids, and UI together
+background-to-entity scale remains constant across window-size changes
 background texture phase remains anchored to the camera world position across window-size changes
 zoom remains centered instead of shifting the texture pattern toward a corner
 background does not visibly jump across world-wrap edges
@@ -385,7 +392,7 @@ returning to gameplay after menu/session transitions does not orphan background 
 
 Legacy documentation correctly identified the core invariant: camera and background should follow `ViewAnchor`, not the local player node directly.
 
-`ParallaxBackground` and `ParallaxLayer` nodes exist in the scene, but the current implementation drives layer motion through world-space shader inputs rather than relying on Godot parallax layer motion. All three background layers use `client/shaders/repeating_background.gdshader`, with tile dimensions expressed as world units. The layers currently use zero motion scale and oversized texture rectangles that provide screen coverage while the shader performs the infinite repetition.
+`ParallaxBackground` and `ParallaxLayer` nodes exist in the scene, but the current implementation drives layer motion through world-space shader inputs rather than relying on Godot parallax layer motion. All three background layers use `client/shaders/repeating_background.gdshader`, with tile dimensions expressed as world units. Because the shader starts from screen coordinates, it explicitly compensates for the viewport stretch transform before converting pixels to world units. The layers currently use zero motion scale and oversized texture rectangles that provide screen coverage while the shader performs the infinite repetition.
 
 `GameplayBackgroundFlow.set_scroll_reference()` can write an explicit camera world position without accumulated drift, but the normal runtime path uses `process_frame()` with the configured parallax target.
 
