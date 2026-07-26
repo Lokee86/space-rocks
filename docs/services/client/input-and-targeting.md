@@ -381,6 +381,8 @@ Spectate input is related to camera targeting, but it is not the same as gamepla
 
 Spectate target selection chooses a presentation/camera subject for a dead or observing player. It does not set canonical gameplay target state and should not send gameplay target selection intent.
 
+The spectate menu reads `self_id` from the realtime overlay lane, lifecycle status from the session lane, and currently renderable ships from the world lane. Only active remote ships are offered as spectate targets. When local elimination removes the local ship before a target is selected, world presentation continues updating remote ships against the last valid ViewAnchor.
+
 The gameplay target system and the spectate camera system may both use synchronized player positions, but they should remain separate ownership seams.
 
 ## Code map

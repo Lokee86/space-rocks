@@ -74,6 +74,13 @@ func apply_state(self_id: String, server_players: Dictionary) -> void:
 			anchor_state = server_players[anchor_id]
 
 	if anchor_state.is_empty():
+		player_meaning.apply_with_anchor(
+			self_id,
+			"",
+			server_players,
+			view_anchor_sync.visual_position(),
+			view_anchor_sync.server_position()
+		)
 		return
 
 	view_anchor_sync.update_from_anchor_server_position(Vector2(anchor_state[Packets.FIELD_X], anchor_state[Packets.FIELD_Y]))

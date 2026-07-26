@@ -19,12 +19,17 @@ func configure(gameplay_menu_flow_ref, gameplay_shell_flow_ref, spectate_menu_st
 		gameplay_menu_flow.configure_spectate_menu_state(spectate_menu_state)
 
 
-func apply_gameplay_state(state: Dictionary) -> void:
-	if state == null:
-		return
-	if spectate_menu_state == null:
-		return
+func apply_gameplay_state(state: Dictionary) -> bool:
+	if state == null or spectate_menu_state == null:
+		return false
+
+	var previous_self_id: String = spectate_menu_state.self_id
+	var previous_target_ids: Array = spectate_menu_state.spectate_target_ids()
 	spectate_menu_state.apply_gameplay_state(state)
+	return (
+		previous_self_id != spectate_menu_state.self_id
+		or previous_target_ids != spectate_menu_state.spectate_target_ids()
+	)
 
 
 func reset() -> void:

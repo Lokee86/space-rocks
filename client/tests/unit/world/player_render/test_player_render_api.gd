@@ -71,6 +71,45 @@ func test_apply_state_uses_view_target_position_when_view_target_is_set() -> voi
 	assert_eq(api.server_position(), Vector2(400.0, 500.0))
 
 
+func test_apply_state_updates_remote_players_from_last_anchor_when_self_is_missing() -> void:
+	var self_id := "player-1"
+	var remote_id := "player-2"
+	api.apply_state(self_id, {
+		self_id: {
+			Packets.FIELD_X: 100.0,
+			Packets.FIELD_Y: 200.0,
+			Packets.FIELD_ROTATION: 0.0,
+		},
+		remote_id: {
+			Packets.FIELD_X: 300.0,
+			Packets.FIELD_Y: 200.0,
+			Packets.FIELD_ROTATION: 0.0,
+		}
+	})
+	api.interpolate(1.0, self_id)
+
+	api.remove_missing({
+		remote_id: {
+			Packets.FIELD_X: 500.0,
+			Packets.FIELD_Y: 200.0,
+			Packets.FIELD_ROTATION: 0.0,
+		}
+	}, self_id)
+	api.apply_state(self_id, {
+		remote_id: {
+			Packets.FIELD_X: 500.0,
+			Packets.FIELD_Y: 200.0,
+			Packets.FIELD_ROTATION: 0.0,
+		}
+	})
+	api.interpolate(1.0, self_id)
+
+	var remote_nodes: Dictionary = api.remote_player_nodes(self_id)
+	assert_true(remote_nodes.has(remote_id))
+	assert_eq(remote_nodes[remote_id].position, Vector2(500.0, 200.0))
+	assert_eq(api.server_position(), Vector2(100.0, 200.0))
+
+
 func test_apply_state_falls_back_to_self_position_when_view_target_missing() -> void:
 	var self_id := "player-1"
 	var server_players := {

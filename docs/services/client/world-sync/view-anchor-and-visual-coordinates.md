@@ -192,7 +192,9 @@ Normal behavior uses `self_id`.
 
 If a view target is set and that player exists in the current world lane ship state, the view target can become the active anchor for presentation.
 
-The selected anchor updates `ViewAnchorSync`, and player meaning is applied relative to that anchor.
+When the local ship is absent and no explicit view target has been selected yet, `PlayerRenderApi` retains the last valid ViewAnchor mapping and continues applying remote player state relative to that fixed anchor. This keeps surviving remote players moving after local elimination instead of freezing while the spectate menu is open.
+
+The selected anchor updates `ViewAnchorSync`, and player meaning is applied relative to that anchor. A retained dead-player anchor does not advance until spectate selects a living target or the local player becomes active again.
 
 ### View target support
 
@@ -286,7 +288,7 @@ Target selection itself is not owned here.
 
 ### Spectate
 
-Spectate can change which player presentation follows by setting a view target. World sync keeps this as a presentation anchor concern rather than a server authority concern.
+Spectate can change which player presentation follows by setting a view target. Spectate target availability is derived from realtime world-lane ship presence and current session lifecycle state, so eliminated and pending-respawn players are not offered as camera targets. World sync keeps the camera handoff as a presentation anchor concern rather than a server authority concern.
 
 ### Debug and telemetry
 
@@ -363,6 +365,7 @@ Relevant tests include:
 * `client/tests/unit/world/player_render/test_view_anchor_sync.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_controller.gd`
 * `client/tests/unit/gameplay/test_gameplay_target_candidate_flow.gd`
+* `client/tests/unit/gameplay/spectate/test_spectate_menu_state.gd`
 * `client/tests/unit/test_target_request_flow.gd`
 * `client/tests/unit/test_target_visual_picker.gd`
 * `client/tests/unit/test_mouse_action_flow.gd`

@@ -122,6 +122,11 @@ func get_gameplay_hud_flow() -> GameplayHudFlow:
 	return gameplay_hud_flow
 
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
+	var spectate_targets_changed := false
+	if spectate_session_flow != null:
+		spectate_targets_changed = bool(spectate_session_flow.apply_gameplay_state(state))
+	if spectate_targets_changed and gameplay_menu_flow != null:
+		gameplay_menu_flow.refresh_game_over_menu_state()
 	if gameplay_shell_flow == null:
 		return
 	gameplay_shell_flow.apply_devtools_gameplay_state(state)
