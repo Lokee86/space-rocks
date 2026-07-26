@@ -28,6 +28,12 @@ func TestLaneCandidateClassificationTreatsLifecycleAndSessionStateAsRequired(t *
 			wantPriority: PriorityMedium,
 		},
 		{
+			name:         "world projection delta",
+			candidate:    mustRealtimeLaneCandidate(WorldWireDeltaPacket{Type: PacketFamilyWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 1}}, WorldWireFullPacket{Type: PacketFamilyWorldFull}),
+			wantDelivery: DeliveryClassRequired,
+			wantPriority: PriorityCritical,
+		},
+		{
 			name:         "asteroid hot lane",
 			candidate:    mustRealtimeLaneCandidate(AsteroidWireDeltaPacket{Type: PacketFamilyAsteroidDelta, Metadata: Metadata{Lane: LaneAsteroids, Sequence: 1}}, nil),
 			wantDelivery: DeliveryClassHotSupersedable,

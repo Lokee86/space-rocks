@@ -172,6 +172,39 @@ func TestSelectSendPlanPrefersCriticalBeforeLow(t *testing.T) {
 	}
 }
 
+func TestSelectSendPlanKeepsWorldProjectionWithLifecycleUnderOverflow(t *testing.T) {
+	world := scheduleRecordForCandidate(0, mustRealtimeLaneCandidate(
+		WorldWireDeltaPacket{Type: PacketFamilyWorldDelta, Metadata: Metadata{Lane: LaneWorld, Sequence: 2}},
+		WorldWireFullPacket{Type: PacketFamilyWorldFull, Metadata: Metadata{Lane: LaneWorld, Sequence: 2}},
+	))
+	world.EstimatedBytes = TargetBytes
+	lifecycle := scheduleRecordForCandidate(1, mustRealtimeLaneCandidate(
+		BulletWireDeltaPacket{Type: PacketFamilyBulletsLifecycle, Metadata: Metadata{Lane: LaneBulletsLifecycle, Sequence: 2}},
+		nil,
+	))
+	lifecycle.EstimatedBytes = TargetBytes
+	hot := scheduleRecordForCandidate(2, hotBulletCandidateWithUpdateCount(1))
+	hot.EstimatedBytes = TargetBytes
+
+	plan := SelectSendPlan([]ScheduleRecord{lifecycle, hot, world})
+	if len(plan.Deferred) != 0 {
+		t.Fatalf("deferred records = %#v, want projection group retained under overflow", plan.Deferred)
+	}
+	foundWorld := false
+	for _, record := range plan.Included {
+		if record.Lane != LaneWorld {
+			continue
+		}
+		foundWorld = true
+		if record.DeliveryClass != DeliveryClassRequired || record.Priority != PriorityCritical {
+			t.Fatalf("world projection record = %#v, want required critical", record)
+		}
+	}
+	if !foundWorld {
+		t.Fatalf("included records = %#v, missing world projection commit", plan.Included)
+	}
+}
+
 func TestSelectSendPlanNeverDropsRequiredDelete(t *testing.T) {
 	records := []ScheduleRecord{
 		{Lane: LaneWorld, PacketFamily: PacketFamilyWorldDelta, RecordKind: "delete", DeliveryClass: DeliveryClassRequired, Priority: PriorityCritical, EstimatedBytes: HardCapBytes + 200, EntityID: "delete-1"},

@@ -7,9 +7,9 @@ func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
 		return DeliveryClassEventOnce
 	case RealtimeLaneCandidateKindDelta:
 		switch lane {
-		case LaneSession:
+		case LaneSession, LaneWorld:
 			return DeliveryClassRequired
-		case LaneWorld, LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
+		case LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
 			return DeliveryClassHotSupersedable
 		case LaneShipsLifecycle, LaneAsteroidsLifecycle, LaneBulletsLifecycle:
 			return DeliveryClassRequired
@@ -28,9 +28,11 @@ func priorityForCandidate(candidate RealtimeLaneCandidate) Priority {
 		return PriorityCritical
 	case RealtimeLaneCandidateKindDelta:
 		switch lane {
+		case LaneWorld:
+			return PriorityCritical
 		case LaneSession:
 			return PriorityMedium
-		case LaneWorld, LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
+		case LaneOverlay, LaneShips, LaneAsteroids, LaneBullets:
 			return PriorityHigh
 		case LaneShipsLifecycle, LaneAsteroidsLifecycle, LaneBulletsLifecycle:
 			return PriorityCritical
