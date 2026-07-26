@@ -39,6 +39,7 @@ func test_policy_is_defensively_copied_and_layout_paths_are_prepared() -> void:
 		"segment_max_age": 60,
 		"retention_max_age": 3600,
 		"retention_max_bytes": 8192,
+		"retention_max_files": 12,
 		"compression_enabled": false,
 		"active_directory_name": "current",
 		"archive_directory_name": "history",
@@ -60,6 +61,7 @@ func test_configuration_uses_generated_client_defaults_when_policy_is_empty() ->
 	assert_eq(writer.configuration["segment_max_age"], ObservabilityContract.FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS)
 	assert_eq(writer.configuration["retention_max_age"], ObservabilityContract.RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL)
 	assert_eq(writer.configuration["retention_max_bytes"], 250 * 1024 * 1024)
+	assert_eq(writer.configuration["retention_max_files"], RollingJSONLWriter.DEFAULT_RETENTION_MAX_FILES)
 	assert_eq(writer.configuration["compression_enabled"], ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED)
 	assert_eq(writer.current_path, "user://writer-test/active/client.jsonl.open")
 	writer.close()
@@ -84,6 +86,28 @@ func test_configuration_uses_replaceable_clock_and_filesystem_boundaries() -> vo
 	assert_eq(writer.handles[0].lines, ["{\"event\":\"test\"}"])
 	writer.close()
 	assert_eq(writer.handles[0].close_calls, 1)
+
+
+func test_clean_close_reopens_existing_active_segment_without_archiving() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 7000
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
+	writer.file_sizes[writer.current_path] = 17
+	writer.file_modified_times[writer.current_path] = 6000
+
+	writer.close()
+	assert_true(writer.clean_marker_exists)
+	writer.fake_now = 9000
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
+
+	assert_true(writer.renamed_paths.is_empty())
+	assert_eq(writer.clean_marker_write_calls, 1)
+	assert_eq(writer.clean_marker_remove_calls, 1)
+	assert_false(writer.clean_marker_exists)
+	assert_eq(writer.opened_paths.size(), 2)
+	assert_eq(writer.handles[1].seek_end_calls, 1)
+	assert_eq(writer.file_sizes[writer.current_path], 17)
+	assert_eq(writer.segment_started_at_unix_ms, 6000)
 
 
 func test_configuration_recovers_existing_active_file_into_archive_and_opens_fresh_active() -> void:
@@ -166,6 +190,33 @@ func test_configuration_applies_retention_byte_cleanup_oldest_first() -> void:
 	])
 	assert_true(writer.file_sizes.has("user://fake-writer/archive/client-c-1000-1000.jsonl"))
 	assert_true(writer.file_sizes.has(writer.current_path))
+
+
+func test_configuration_applies_retention_file_count_cleanup_oldest_first() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 10000
+	var policy := {
+		"retention_max_age": 0,
+		"retention_max_bytes": 0,
+		"retention_max_files": 2,
+		"compression_enabled": false,
+	}
+	var oldest := "user://fake-writer/archive/client-a-1000-1000.jsonl"
+	var middle := "user://fake-writer/archive/client-b-2000-2000.jsonl"
+	var newest := "user://fake-writer/archive/client-c-3000-3000.jsonl"
+	writer.file_sizes[oldest] = 1
+	writer.file_sizes[middle] = 1
+	writer.file_sizes[newest] = 1
+	writer.file_modified_times[oldest] = 1000
+	writer.file_modified_times[middle] = 2000
+	writer.file_modified_times[newest] = 3000
+
+	assert_true(writer.configure("user://fake-writer", "client", policy))
+
+	assert_eq(writer.deleted_paths, [oldest])
+	assert_false(writer.file_sizes.has(oldest))
+	assert_true(writer.file_sizes.has(middle))
+	assert_true(writer.file_sizes.has(newest))
 
 
 func test_write_line_rotates_when_segment_size_would_be_exceeded() -> void:

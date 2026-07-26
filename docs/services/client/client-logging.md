@@ -47,15 +47,18 @@ A lower-level helper must use the supplied owner trace rather than create a seco
 
 ```text
 <base_dir>/active/<prefix>.jsonl.open
+<base_dir>/active/<prefix>.jsonl.clean
 <base_dir>/archive/<timestamped completed segment>.jsonl
 <base_dir>/archive/<timestamped completed segment>.jsonl.gz
 ```
 
 `client/scripts/logging/rolling_jsonl_writer.gd` owns active writes, age/size rotation, startup recovery of an interrupted `.jsonl.open` file, and retention. Completed segments are compressed by `client/scripts/logging/gzip_archive_compressor.gd`; the uncompressed archive is removed only after the gzip replacement is finalized. The active file is flushed after stored records.
 
-Startup recovery moves stale active content into the archive path before opening a fresh active writer. Retention removes expired or over-budget archives. Shutdown closes and flushes the active writer. Configuration, rotation, recovery, compression, retention, and close failures degrade to console-only logging with bounded warning reporting; they do not block the client workflow. `current_file_output_path()` reports the active path while output is enabled.
+A clean shutdown writes the small `.jsonl.clean` marker after closing the active handle. The next launch removes that marker and reopens the same active segment in append mode, so normal launches do not create one archive each. An active file without the marker is treated as an interrupted segment and recovered into the archive before a fresh active segment opens.
 
-Normal startup requests `user://logs` with the `client` prefix. The resolved OS path depends on Godot's user-data directory; tests may use a temporary user-data root.
+Retention scans the archive once per pass and removes segments by age, total bytes, and a default 256-file ceiling, oldest first. This bounds startup filesystem work even when segments are unusually small. Configuration, rotation, recovery, compression, retention, and close failures degrade to console-only logging with bounded warning reporting; they do not block the client workflow. `current_file_output_path()` reports the active path while output is enabled.
+
+Normal startup requests `user://logs` with the `client` prefix. GUT processes skip persistent application logging, so repeated test scene construction cannot populate the real client archive directory. The resolved OS path depends on Godot's user-data directory; focused writer tests use a temporary user-data root.
 
 ## Status and failure behavior
 

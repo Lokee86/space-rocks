@@ -81,6 +81,7 @@ func test_application_exit_closes_static_writer_and_repeated_close_is_safe() -> 
 
 func test_app_entry_uses_canonical_startup_lifecycle_and_degradation_events() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/shell/app_entry.gd")
+	assert_true(source.contains('if !_is_test_process() and !ClientLogger.configure_file_output("user://logs", "client")'))
 	assert_true(source.contains("ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTING)"))
 	assert_true(source.contains("ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTED)"))
 	var starting_position := source.find("ObservabilityContract.EVENT_CLIENT_STARTING")

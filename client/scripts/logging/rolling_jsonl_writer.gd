@@ -17,6 +17,8 @@ var _failure_warning_emitted := false
 var _handle = null
 var _archive_compressor := GzipArchiveCompressor.new()
 
+const DEFAULT_RETENTION_MAX_FILES := 256
+
 class ArchiveFileInfo extends RefCounted:
 	var path := ""
 	var modified_time_unix_ms := 0
@@ -43,14 +45,28 @@ func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> boo
 		return false
 
 	var candidate_path := _build_active_file_path()
-	if _file_exists(candidate_path):
+	var clean_marker_path := _build_clean_shutdown_marker_path()
+	var active_exists := _file_exists(candidate_path)
+	var resume_clean_segment := active_exists and _clean_shutdown_marker_exists(clean_marker_path)
+	if resume_clean_segment:
+		if _remove_clean_shutdown_marker(clean_marker_path) != OK:
+			_record_failure("failed to remove clean shutdown marker: %s" % clean_marker_path)
+			return false
+		segment_started_at_unix_ms = _get_file_modified_time_unix_ms(candidate_path)
+		if segment_started_at_unix_ms <= 0:
+			segment_started_at_unix_ms = last_configured_at_unix_ms
+	elif active_exists:
 		if !_recover_interrupted_active_segment(candidate_path):
 			return false
+	elif _clean_shutdown_marker_exists(clean_marker_path):
+		_remove_clean_shutdown_marker(clean_marker_path)
 
-	var handle = _open_file(candidate_path, FileAccess.WRITE)
+	var handle = _open_file(candidate_path, FileAccess.READ_WRITE if resume_clean_segment else FileAccess.WRITE)
 	if handle == null:
 		_record_failure("failed to open active log file: %s" % candidate_path)
 		return false
+	if resume_clean_segment:
+		_seek_file_to_end(handle)
 
 	enabled = true
 	current_path = candidate_path
@@ -76,6 +92,7 @@ func _normalize_policy(policy: Dictionary) -> Dictionary:
 		"segment_max_age": ObservabilityContract.FILE_LOGGING_MAX_ACTIVE_SEGMENT_AGE_SECONDS,
 		"retention_max_age": ObservabilityContract.RETENTION_DEFAULT_AGE_SECONDS_OPERATIONAL,
 		"retention_max_bytes": 250 * 1024 * 1024,
+		"retention_max_files": DEFAULT_RETENTION_MAX_FILES,
 		"compression_enabled": ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED,
 		"active_directory_name": "active",
 		"archive_directory_name": "archive",
@@ -137,6 +154,26 @@ func _rename_file(from_path: String, to_path: String) -> Error:
 func _open_file(path: String, mode: int):
 	return FileAccess.open(path, mode)
 
+func _seek_file_to_end(handle) -> void:
+	handle.seek_end()
+
+func _clean_shutdown_marker_exists(path: String) -> bool:
+	return FileAccess.file_exists(path)
+
+func _write_clean_shutdown_marker(path: String) -> Error:
+	var marker = FileAccess.open(path, FileAccess.WRITE)
+	if marker == null:
+		return FileAccess.get_open_error()
+	marker.store_string("clean")
+	var marker_error := marker.get_error()
+	marker.close()
+	return marker_error
+
+func _remove_clean_shutdown_marker(path: String) -> Error:
+	if !FileAccess.file_exists(path):
+		return OK
+	return DirAccess.remove_absolute(path)
+
 
 func _get_handle_error(handle) -> Error:
 	if handle != null and handle.has_method("get_error"):
@@ -171,6 +208,9 @@ static func _build_segment_archive_filename(prefix: String, segment_start_unix_m
 
 func _build_active_file_path() -> String:
 	return active_directory_path.path_join("%s.jsonl.open" % configured_prefix)
+
+func _build_clean_shutdown_marker_path() -> String:
+	return active_directory_path.path_join("%s.jsonl.clean" % configured_prefix)
 
 func _build_archive_file_path(rotation_unix_ms: int) -> String:
 	return archive_directory_path.path_join(_build_segment_archive_filename(configured_prefix, segment_started_at_unix_ms, rotation_unix_ms))
@@ -220,15 +260,15 @@ func _apply_retention() -> void:
 	var max_age_seconds := int(configuration["retention_max_age"])
 	if max_age_seconds > 0:
 		var cutoff_unix_ms := now_unix_ms - (max_age_seconds * 1000)
+		var age_retained: Array[ArchiveFileInfo] = []
 		for info in archive_files:
 			if info.modified_time_unix_ms > 0 and info.modified_time_unix_ms < cutoff_unix_ms:
 				if _delete_file(info.path) != OK:
 					_record_failure("failed to delete archived log file: %s" % info.path)
-		archive_files = _archive_file_infos()
-
-	var max_bytes := int(configuration["retention_max_bytes"])
-	if max_bytes <= 0:
-		return
+					age_retained.append(info)
+			else:
+				age_retained.append(info)
+		archive_files = age_retained
 
 	archive_files.sort_custom(func(a: ArchiveFileInfo, b: ArchiveFileInfo) -> bool:
 		if a.modified_time_unix_ms == b.modified_time_unix_ms:
@@ -239,6 +279,24 @@ func _apply_retention() -> void:
 			return true
 		return a.modified_time_unix_ms < b.modified_time_unix_ms
 	)
+
+	var max_files := int(configuration["retention_max_files"])
+	if max_files > 0 and archive_files.size() > max_files:
+		var count_retained: Array[ArchiveFileInfo] = []
+		var files_to_remove := archive_files.size() - max_files
+		for index in archive_files.size():
+			var info := archive_files[index]
+			if index < files_to_remove:
+				if _delete_file(info.path) != OK:
+					_record_failure("failed to delete archived log file: %s" % info.path)
+					count_retained.append(info)
+			else:
+				count_retained.append(info)
+		archive_files = count_retained
+
+	var max_bytes := int(configuration["retention_max_bytes"])
+	if max_bytes <= 0:
+		return
 
 	var total_bytes := 0
 	for info in archive_files:
@@ -313,9 +371,12 @@ func write_line(line: String) -> void:
 
 
 func close() -> void:
+	var clean_marker_path := _build_clean_shutdown_marker_path() if !configured_prefix.is_empty() else ""
 	if _handle != null:
 		_handle.flush()
 		_handle.close()
+		if !clean_marker_path.is_empty() and _write_clean_shutdown_marker(clean_marker_path) != OK:
+			_record_failure("failed to write clean shutdown marker: %s" % clean_marker_path)
 
 	enabled = false
 	current_path = ""

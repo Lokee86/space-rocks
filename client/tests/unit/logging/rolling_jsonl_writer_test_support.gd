@@ -9,6 +9,7 @@ class FakeHandle extends RefCounted:
 	var flush_calls := 0
 	var close_calls := 0
 	var error := OK
+	var seek_end_calls := 0
 
 	func store_line(line: String) -> void:
 		lines.append(line)
@@ -23,6 +24,9 @@ class FakeHandle extends RefCounted:
 
 	func get_error() -> Error:
 		return error
+
+	func seek_end() -> void:
+		seek_end_calls += 1
 
 
 class FakeFilesystemWriter extends RollingJSONLWriter:
@@ -42,6 +46,11 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 	var file_sizes: Dictionary = {}
 	var file_modified_times: Dictionary = {}
 	var handles: Array[FakeHandle] = []
+	var clean_marker_exists := false
+	var clean_marker_write_calls := 0
+	var clean_marker_remove_calls := 0
+	var fail_clean_marker_write := false
+	var fail_clean_marker_remove := false
 
 	func _current_time_unix_ms() -> int:
 		return fake_now
@@ -102,6 +111,26 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 		handle.writer = self
 		handles.append(handle)
 		return handle
+
+	func _seek_file_to_end(handle) -> void:
+		handle.seek_end()
+
+	func _clean_shutdown_marker_exists(_path: String) -> bool:
+		return clean_marker_exists
+
+	func _write_clean_shutdown_marker(_path: String) -> Error:
+		clean_marker_write_calls += 1
+		if fail_clean_marker_write:
+			return ERR_CANT_CREATE
+		clean_marker_exists = true
+		return OK
+
+	func _remove_clean_shutdown_marker(_path: String) -> Error:
+		clean_marker_remove_calls += 1
+		if fail_clean_marker_remove:
+			return ERR_CANT_OPEN
+		clean_marker_exists = false
+		return OK
 
 	func _compress_archive(archive_path: String) -> bool:
 		compressed_paths.append(archive_path)

@@ -52,7 +52,7 @@ var multiplayer_entry_flow
 
 func _ready() -> void:
 	var logger_callable := Callable(ClientLogger, "shell_info")
-	if !ClientLogger.configure_file_output("user://logs", "client"):
+	if !_is_test_process() and !ClientLogger.configure_file_output("user://logs", "client"):
 		ClientLogger.emit_canonical(
 			ObservabilityContract.EVENT_OBSERVABILITY_UNAVAILABLE,
 			"",
@@ -221,6 +221,13 @@ func _exit_tree() -> void:
 	if local_server_process != null:
 		local_server_process.stop()
 	ClientLogger.close_file_output()
+
+
+func _is_test_process() -> bool:
+	for argument in OS.get_cmdline_args():
+		if str(argument).contains("gut_cmdln.gd"):
+			return true
+	return false
 
 
 func _local_alpha_smoke_phase() -> String:
