@@ -14,7 +14,7 @@ Parent index: [Presentation Flow](./!INDEX.md)
 
 This document describes the client background and viewport presentation flow.
 
-It explains how the Godot client wires the gameplay camera, ViewAnchor, parallax background layers, shader scroll offsets, and viewport-adjacent presentation behavior without owning world-sync coordinate math or server visibility authority.
+It explains how the Godot client wires the gameplay camera, ViewAnchor, parallax background layers, world-space shader sampling, and viewport-adjacent presentation behavior without owning world-sync coordinate math or server visibility authority.
 
 ## Overview
 
@@ -40,7 +40,7 @@ AppEntry._ready()
 
 `BackgroundController` owns the node-facing background presentation lifecycle. It creates `GameplayBackgroundFlow`, passes the repeated texture nodes, parallax target, and active gameplay camera, and calls `process_frame()` each frame.
 
-`GameplayBackgroundFlow` owns background scroll and zoom presentation. It reads the parallax target's `global_position`, combines that with generated drift and parallax constants, reads `Camera2D.zoom`, then writes both `scroll_offset` and `tile_scale` shader parameters to each background layer's `ShaderMaterial`.
+`GameplayBackgroundFlow` owns background world-sampling presentation. It reads the parallax target's `global_position` and `Camera2D.zoom`, then writes camera world position, zoom, per-layer parallax, and world-unit offsets to each background layer's `ShaderMaterial`. The shader reconstructs the visible world position around the camera center and samples repeating textures in world units rather than anchoring texture phase or scale to the window.
 
 The background follows the same `ViewAnchor` basis as camera and world presentation. It does not choose the active render anchor. Detailed ViewAnchor, render-anchor, visual coordinate, and toroidal wrap behavior belongs to world-sync documentation.
 
@@ -64,9 +64,10 @@ Background and viewport presentation owns:
 * sampling the current parallax target position
 * preserving the last valid parallax position when the target reference is unavailable
 * combining parallax target position with generated background constants
-* writing `scroll_offset` shader parameters to background materials
-* writing camera zoom to each layer's `tile_scale` shader parameter
-* scaling repeated background sampling around the viewport center
+* writing camera world position and zoom to background materials
+* writing per-layer parallax factors and world-unit offsets
+* sampling repeated textures in camera-centered world coordinates
+* keeping texture scale and phase independent of window dimensions
 * resetting background offsets when requested
 * keeping background presentation aligned with the client render anchor seam
 
@@ -156,13 +157,13 @@ last_valid_parallax_position
 Each frame, it:
 
 ```text
-1. Advances drift offsets from generated constants.
+1. Advances world-unit drift offsets from generated constants.
 2. Reads parallax_target.global_position when available.
 3. Falls back to last_valid_parallax_position when the target is missing.
-4. Calculates background, foreground, and planet offsets.
-5. Reads the current uniform camera zoom.
-6. Writes camera zoom to each layer's `tile_scale`.
-7. Writes the calculated offsets to each layer's `scroll_offset`.
+4. Reads the current uniform camera zoom.
+5. Writes camera_world_position and camera_zoom to every layer.
+6. Writes each layer's parallax_factor.
+7. Writes each layer's world-unit drift and authored offset as layer_world_offset.
 ```
 
 ### Repeated shader layers
@@ -172,11 +173,14 @@ The scene uses repeated background `TextureRect` nodes with `ShaderMaterial` mat
 `GameplayBackgroundFlow` expects each configured `TextureRect` to have a `ShaderMaterial` that accepts:
 
 ```text
-scroll_offset
-tile_scale
+base_tile_world_size
+camera_world_position
+camera_zoom
+parallax_factor
+layer_world_offset
 ```
 
-`tile_scale` receives the active `Camera2D.zoom.x`. The repeating shader converts `FRAGCOORD` around the viewport center before sampling, so zoom enlarges or reduces background features around the same visual center instead of stretching from the top-left corner. If a texture node or shader material is missing, the parameter write no-ops for that layer.
+The shader converts each fragment's distance from the viewport center into world distance by dividing by `camera_zoom`. It adds the parallax-scaled camera world position and the layer's world-unit offset, then samples the repeating texture using `base_tile_world_size`. Window dimensions therefore only determine how much of the world-space texture is visible; they do not determine texture scale or phase. If a texture node or shader material is missing, the parameter write no-ops for that layer.
 
 ### Parallax constants
 
@@ -215,8 +219,10 @@ It consumes scene nodes, generated constants, and Godot presentation APIs:
 Node2D.global_position
 Camera2D.make_current()
 Camera2D.zoom
-ShaderMaterial.set_shader_parameter("tile_scale", value)
-ShaderMaterial.set_shader_parameter("scroll_offset", value)
+ShaderMaterial.set_shader_parameter("camera_world_position", value)
+ShaderMaterial.set_shader_parameter("camera_zoom", value)
+ShaderMaterial.set_shader_parameter("parallax_factor", value)
+ShaderMaterial.set_shader_parameter("layer_world_offset", value)
 ```
 
 Viewport-size reporting is adjacent but separate. The `client_config` packet flow lives in [Client Viewport Config Flow](../app-shell-and-session/client-viewport-config-flow.md). That flow reports visible viewport dimensions to the server. This document only covers local visual camera/background presentation.
@@ -233,8 +239,10 @@ foreground_drift_offset
 planet_drift_offset
 last_valid_parallax_position
 active parallax target reference
-shader scroll_offset values
-shader tile_scale values
+shader camera world-position values
+shader camera zoom values
+shader parallax factors
+shader layer world offsets
 ```
 
 This state is:
@@ -326,7 +334,7 @@ Owns HUD presentation. Background presentation must not become a HUD layout or g
 
 ## Tests
 
-Focused background-flow tests cover camera zoom propagation to every repeated layer and the neutral fallback when no camera is configured:
+Focused background-flow tests cover camera world-position and zoom propagation, distinct layer parallax and world offsets, explicit scroll-reference updates, and the neutral zoom fallback when no camera is configured:
 
 ```text
 client/tests/unit/background/test_background_flow.gd
@@ -353,6 +361,8 @@ camera is current after app boot
 background scrolls during gameplay
 background follows ViewAnchor movement
 mouse-wheel zoom scales ships and all three background layers together
+resizing the window changes only the visible crop, not star or planet size
+background texture phase remains anchored to the camera world position across window-size changes
 zoom remains centered instead of shifting the texture pattern toward a corner
 background does not visibly jump across world-wrap edges
 foreground and planet layers use their distinct parallax offsets
@@ -375,9 +385,9 @@ returning to gameplay after menu/session transitions does not orphan background 
 
 Legacy documentation correctly identified the core invariant: camera and background should follow `ViewAnchor`, not the local player node directly.
 
-`ParallaxBackground` and `ParallaxLayer` nodes exist in the scene, but the current implementation drives layer motion through shader `scroll_offset` values rather than relying on Godot parallax layer motion. Camera scale is applied through the same shared repeating shader's `tile_scale` parameter. All three background layers now use `client/shaders/repeating_background.gdshader`; the planet layer no longer carries a duplicated inline shader. The layers currently use zero motion scale and oversized repeated texture rectangles.
+`ParallaxBackground` and `ParallaxLayer` nodes exist in the scene, but the current implementation drives layer motion through world-space shader inputs rather than relying on Godot parallax layer motion. All three background layers use `client/shaders/repeating_background.gdshader`, with tile dimensions expressed as world units. The layers currently use zero motion scale and oversized texture rectangles that provide screen coverage while the shader performs the infinite repetition.
 
-`GameplayBackgroundFlow.set_scroll_reference()` can write offsets from an explicit scroll position, but the normal runtime path uses `process_frame()` with the configured parallax target.
+`GameplayBackgroundFlow.set_scroll_reference()` can write an explicit camera world position without accumulated drift, but the normal runtime path uses `process_frame()` with the configured parallax target.
 
 The background flow keeps `last_valid_parallax_position` so a temporarily missing parallax target does not immediately reset scroll sampling to zero during a frame. Reset behavior is explicit through `clear()`.
 

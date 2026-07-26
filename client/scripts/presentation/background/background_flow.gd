@@ -27,7 +27,9 @@ func configure(
 	repeated_planet_background = planet_background
 	parallax_target = parallax_target_ref
 	camera = camera_ref
-	_apply_camera_zoom()
+	if parallax_target != null:
+		last_valid_parallax_position = parallax_target.global_position
+	_apply_world_sampling(last_valid_parallax_position)
 
 
 func set_parallax_target(parallax_target_ref: Node2D) -> void:
@@ -39,38 +41,37 @@ func process_frame() -> void:
 	foreground_drift_offset += Constants.FOREGROUND_BACKGROUND_DRIFT_PER_FRAME
 	planet_drift_offset += Constants.PLANET_BACKGROUND_DRIFT_PER_FRAME
 
-	var scroll_position := last_valid_parallax_position
+	var camera_world_position := last_valid_parallax_position
 	if parallax_target != null:
 		last_valid_parallax_position = parallax_target.global_position
-		scroll_position = last_valid_parallax_position
+		camera_world_position = last_valid_parallax_position
 
-	var background_offset := (
-		background_drift_offset + (scroll_position * Constants.BACKGROUND_PARALLAX)
-	)
-	var foreground_offset := (
-		foreground_drift_offset
-			+ (scroll_position * Constants.FOREGROUND_BACKGROUND_PARALLAX)
-			+ Constants.FOREGROUND_BACKGROUND_OFFSET
-	)
-	var planet_offset := (
-		planet_drift_offset + (scroll_position * Constants.PLANET_BACKGROUND_PARALLAX)
-	)
-
-	_apply_camera_zoom()
-	_set_scroll_offset(repeated_background, background_offset)
-	_set_scroll_offset(repeated_foreground_background, foreground_offset)
-	_set_scroll_offset(repeated_planet_background, planet_offset)
+	_apply_world_sampling(camera_world_position)
 
 
 func set_scroll_reference(scroll_position: Vector2) -> void:
-	_set_scroll_offset(repeated_background, scroll_position * Constants.BACKGROUND_PARALLAX)
-	_set_scroll_offset(
-		repeated_foreground_background,
-		(scroll_position * Constants.FOREGROUND_BACKGROUND_PARALLAX) + Constants.FOREGROUND_BACKGROUND_OFFSET
+	last_valid_parallax_position = scroll_position
+	var camera_zoom := _camera_zoom()
+	_set_world_sampling(
+		repeated_background,
+		scroll_position,
+		camera_zoom,
+		Constants.BACKGROUND_PARALLAX,
+		Vector2.ZERO
 	)
-	_set_scroll_offset(
+	_set_world_sampling(
+		repeated_foreground_background,
+		scroll_position,
+		camera_zoom,
+		Constants.FOREGROUND_BACKGROUND_PARALLAX,
+		Constants.FOREGROUND_BACKGROUND_OFFSET
+	)
+	_set_world_sampling(
 		repeated_planet_background,
-		scroll_position * Constants.PLANET_BACKGROUND_PARALLAX
+		scroll_position,
+		camera_zoom,
+		Constants.PLANET_BACKGROUND_PARALLAX,
+		Constants.PLANET_BACKGROUND_OFFSET
 	)
 
 
@@ -79,20 +80,38 @@ func clear() -> void:
 	foreground_drift_offset = Vector2.ZERO
 	planet_drift_offset = Vector2.ZERO
 	last_valid_parallax_position = Vector2.ZERO
-
-	_apply_camera_zoom()
-	_set_scroll_offset(repeated_background, Vector2.ZERO)
-	_set_scroll_offset(repeated_foreground_background, Constants.FOREGROUND_BACKGROUND_OFFSET)
-	_set_scroll_offset(repeated_planet_background, Vector2.ZERO)
+	_apply_world_sampling(Vector2.ZERO)
 
 
-func _apply_camera_zoom() -> void:
-	var camera_zoom := 1.0
-	if camera != null:
-		camera_zoom = max(camera.zoom.x, 0.001)
-	_set_tile_scale(repeated_background, camera_zoom)
-	_set_tile_scale(repeated_foreground_background, camera_zoom)
-	_set_tile_scale(repeated_planet_background, camera_zoom)
+func _apply_world_sampling(camera_world_position: Vector2) -> void:
+	var camera_zoom := _camera_zoom()
+	_set_world_sampling(
+		repeated_background,
+		camera_world_position,
+		camera_zoom,
+		Constants.BACKGROUND_PARALLAX,
+		background_drift_offset
+	)
+	_set_world_sampling(
+		repeated_foreground_background,
+		camera_world_position,
+		camera_zoom,
+		Constants.FOREGROUND_BACKGROUND_PARALLAX,
+		foreground_drift_offset + Constants.FOREGROUND_BACKGROUND_OFFSET
+	)
+	_set_world_sampling(
+		repeated_planet_background,
+		camera_world_position,
+		camera_zoom,
+		Constants.PLANET_BACKGROUND_PARALLAX,
+		planet_drift_offset + Constants.PLANET_BACKGROUND_OFFSET
+	)
+
+
+func _camera_zoom() -> float:
+	if camera == null:
+		return 1.0
+	return max(camera.zoom.x, 0.001)
 
 
 func _shader_material(texture_rect: TextureRect) -> ShaderMaterial:
@@ -101,15 +120,17 @@ func _shader_material(texture_rect: TextureRect) -> ShaderMaterial:
 	return texture_rect.material as ShaderMaterial
 
 
-func _set_tile_scale(texture_rect: TextureRect, tile_scale: float) -> void:
+func _set_world_sampling(
+	texture_rect: TextureRect,
+	camera_world_position: Vector2,
+	camera_zoom: float,
+	parallax_factor: float,
+	layer_world_offset: Vector2
+) -> void:
 	var shader_material := _shader_material(texture_rect)
 	if shader_material == null:
 		return
-	shader_material.set_shader_parameter("tile_scale", tile_scale)
-
-
-func _set_scroll_offset(texture_rect: TextureRect, scroll_offset: Vector2) -> void:
-	var shader_material := _shader_material(texture_rect)
-	if shader_material == null:
-		return
-	shader_material.set_shader_parameter("scroll_offset", scroll_offset)
+	shader_material.set_shader_parameter("camera_world_position", camera_world_position)
+	shader_material.set_shader_parameter("camera_zoom", camera_zoom)
+	shader_material.set_shader_parameter("parallax_factor", parallax_factor)
+	shader_material.set_shader_parameter("layer_world_offset", layer_world_offset)
