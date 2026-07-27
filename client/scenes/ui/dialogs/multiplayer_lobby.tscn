@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://bplexs5a86e6h"]
 
-[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_window"]
-[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_label"]
-[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_button"]
-[ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="4_row"]
-[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="5_button_label"]
+[ext_resource type="LabelSettings" uid="uid://cipb7pygv8h8w" path="res://assets/ui/label_settings/transmission_display.tres" id="1_label"]
+[ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="2_normal"]
+[ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="3_pressed"]
+[ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="4_focus"]
+[ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="5_row"]
 [ext_resource type="Script" uid="uid://cc70sca8inya7" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="6_script"]
 
 [node name="MultiplayerLobby" type="Control"]
@@ -15,209 +15,214 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("6_script")
-player_row_scene = ExtResource("4_row")
+player_row_scene = ExtResource("5_row")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = -24.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="WindowFrame" type="NinePatchRect" parent="CenterContainer"]
+[node name="WindowFrame" type="Control" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(820, 680)
-layout_mode = 2
-texture = ExtResource("1_window")
-patch_margin_left = 72
-patch_margin_top = 82
-patch_margin_right = 72
-patch_margin_bottom = 68
-
-[node name="ContentMargin" type="MarginContainer" parent="CenterContainer/WindowFrame"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 62.0
-offset_top = 68.0
-offset_right = -62.0
-offset_bottom = -54.0
+offset_left = 18.0
+offset_top = 15.0
+offset_right = -18.0
+offset_bottom = -15.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin"]
-layout_mode = 2
-theme_override_constants/separation = 8
+[node name="Content" type="VBoxContainer" parent="WindowFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="TitleLabel" type="Label" parent="WindowFrame/Content"]
 layout_mode = 2
 text = "MULTIPLAYER LOBBY"
-label_settings = ExtResource("2_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 1
 
-[node name="RoomInfo" type="GridContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="TitleSeparator" type="ColorRect" parent="WindowFrame/Content"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0, 1, 1, 1)
+
+[node name="RoomInfo" type="GridContainer" parent="WindowFrame/Content"]
 layout_mode = 2
 columns = 2
-
-[node name="RoomCodeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 3
+[node name="RoomCodeLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 layout_mode = 2
 text = "ROOM CODE"
-label_settings = ExtResource("2_label")
-[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+label_settings = ExtResource("1_label")
+[node name="RoomCodeValueLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ROOMID"
-label_settings = ExtResource("2_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 2
-[node name="RoomStatusLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+[node name="RoomStatusLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 layout_mode = 2
 text = "STATUS"
-label_settings = ExtResource("2_label")
-[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+label_settings = ExtResource("1_label")
+[node name="RoomStatusValueLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "PENDING"
-label_settings = ExtResource("2_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 2
-autowrap_mode = 2
-[node name="ModeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+clip_text = true
+[node name="ModeLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 layout_mode = 2
 text = "MODE"
-label_settings = ExtResource("2_label")
-[node name="ModeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+label_settings = ExtResource("1_label")
+[node name="ModeValueLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "FREE-FOR-ALL"
-label_settings = ExtResource("2_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 2
-[node name="AssignmentInfoRow" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+[node name="AssignmentInfoRow" type="Label" parent="WindowFrame/Content/RoomInfo"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ASSIGNMENT"
-label_settings = ExtResource("2_label")
-[node name="AssignmentValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+label_settings = ExtResource("1_label")
+[node name="AssignmentValueLabel" type="Label" parent="WindowFrame/Content/RoomInfo"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "OWNER ASSIGNED"
-label_settings = ExtResource("2_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 2
 
-[node name="Separator" type="ColorRect" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-custom_minimum_size = Vector2(0, 2)
+[node name="RosterPanel" type="PanelContainer" parent="WindowFrame/Content"]
 layout_mode = 2
-color = Color(0.9, 0.88, 0.62, 1)
-
-[node name="PlayerHeader" type="HBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+size_flags_vertical = 3
+theme_override_styles/panel = ExtResource("2_normal")
+[node name="Roster" type="VBoxContainer" parent="WindowFrame/Content/RosterPanel"]
 layout_mode = 2
-theme_override_constants/separation = 8
-[node name="PlayerHeaderLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
-custom_minimum_size = Vector2(159, 0)
+theme_override_constants/separation = 3
+[node name="PlayerHeader" type="HBoxContainer" parent="WindowFrame/Content/RosterPanel/Roster"]
+layout_mode = 2
+theme_override_constants/separation = 6
+[node name="PlayerHeaderLabel" type="Label" parent="WindowFrame/Content/RosterPanel/Roster/PlayerHeader"]
+custom_minimum_size = Vector2(135, 0)
 layout_mode = 2
 text = "PLAYER"
-label_settings = ExtResource("2_label")
-[node name="TeamHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+label_settings = ExtResource("1_label")
+[node name="TeamHeader" type="Label" parent="WindowFrame/Content/RosterPanel/Roster/PlayerHeader"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(136, 0)
 layout_mode = 2
 text = "TEAM"
-label_settings = ExtResource("2_label")
-[node name="HeaderSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+label_settings = ExtResource("1_label")
+[node name="HeaderSpacer" type="Control" parent="WindowFrame/Content/RosterPanel/Roster/PlayerHeader"]
 layout_mode = 2
 size_flags_horizontal = 3
-[node name="ReadyHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
-custom_minimum_size = Vector2(102, 0)
+[node name="ReadyHeader" type="Label" parent="WindowFrame/Content/RosterPanel/Roster/PlayerHeader"]
+custom_minimum_size = Vector2(98, 0)
 layout_mode = 2
 text = "READY"
-label_settings = ExtResource("2_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 2
-
-[node name="PlayerScroll" type="ScrollContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-custom_minimum_size = Vector2(0, 180)
+[node name="RosterSeparator" type="ColorRect" parent="WindowFrame/Content/RosterPanel/Roster"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0, 1, 1, 1)
+[node name="PlayerScroll" type="ScrollContainer" parent="WindowFrame/Content/RosterPanel/Roster"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 1
-
-[node name="PlayerListContainer" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerScroll"]
+[node name="PlayerListContainer" type="VBoxContainer" parent="WindowFrame/Content/RosterPanel/Roster/PlayerScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 3
+theme_override_constants/separation = 2
 
-[node name="Actions" type="HFlowContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="Actions" type="HFlowContainer" parent="WindowFrame/Content"]
 layout_mode = 2
 alignment = 1
-theme_override_constants/separation = 8
-
-[node name="ReadyButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+theme_override_constants/separation = 6
+[node name="ReadyButton" type="Button" parent="WindowFrame/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(112, 58)
+custom_minimum_size = Vector2(115, 34)
 layout_mode = 2
-[node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
+theme_override_styles/normal = ExtResource("2_normal")
+theme_override_styles/pressed = ExtResource("3_pressed")
+theme_override_styles/hover = ExtResource("4_focus")
+theme_override_styles/focus = ExtResource("4_focus")
+[node name="Ready" type="Label" parent="WindowFrame/Content/Actions/ReadyButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 15.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "READY"
-label_settings = ExtResource("5_button_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 1
-
-[node name="StartGameButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+vertical_alignment = 1
+[node name="StartGameButton" type="Button" parent="WindowFrame/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(112, 58)
+custom_minimum_size = Vector2(115, 34)
 layout_mode = 2
-[node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
+theme_override_styles/normal = ExtResource("2_normal")
+theme_override_styles/pressed = ExtResource("3_pressed")
+theme_override_styles/hover = ExtResource("4_focus")
+theme_override_styles/focus = ExtResource("4_focus")
+[node name="Start" type="Label" parent="WindowFrame/Content/Actions/StartGameButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 15.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "START"
-label_settings = ExtResource("5_button_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 1
-
-[node name="AddBotButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+vertical_alignment = 1
+[node name="AddBotButton" type="Button" parent="WindowFrame/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(112, 58)
+custom_minimum_size = Vector2(115, 34)
 layout_mode = 2
-[node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
+theme_override_styles/normal = ExtResource("2_normal")
+theme_override_styles/pressed = ExtResource("3_pressed")
+theme_override_styles/hover = ExtResource("4_focus")
+theme_override_styles/focus = ExtResource("4_focus")
+[node name="AddBot" type="Label" parent="WindowFrame/Content/Actions/AddBotButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 15.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "ADD BOT"
-label_settings = ExtResource("5_button_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 1
-
-[node name="LeaveButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+vertical_alignment = 1
+[node name="LeaveButton" type="Button" parent="WindowFrame/Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(112, 58)
+custom_minimum_size = Vector2(115, 34)
 layout_mode = 2
-[node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
+theme_override_styles/normal = ExtResource("2_normal")
+theme_override_styles/pressed = ExtResource("3_pressed")
+theme_override_styles/hover = ExtResource("4_focus")
+theme_override_styles/focus = ExtResource("4_focus")
+[node name="Leave" type="Label" parent="WindowFrame/Content/Actions/LeaveButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 15.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "LEAVE"
-label_settings = ExtResource("5_button_label")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 1
+vertical_alignment = 1

@@ -87,13 +87,9 @@ func set_start_enabled(enabled: bool) -> void:
 
 
 func _update_window_size() -> void:
-	if window_frame == null:
-		return
-	var viewport_size := get_viewport_rect().size
-	window_frame.custom_minimum_size = Vector2(
-		clampf(viewport_size.x - 48.0, 520.0, 980.0),
-		clampf(viewport_size.y - 48.0, 420.0, 760.0)
-	)
+	# The lobby fills the transmission display; its internal roster and actions adapt.
+	if window_frame != null:
+		window_frame.custom_minimum_size = Vector2.ZERO
 
 
 func _update_ready_button_text() -> void:
