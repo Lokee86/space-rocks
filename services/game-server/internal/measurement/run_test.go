@@ -81,6 +81,38 @@ func TestProcessSamplerCachesAcrossRuns(t *testing.T) {
 	}
 }
 
+func TestProcessSamplerDerivesCPUAndGCPauseDeltas(t *testing.T) {
+	samples := []ProcessSample{
+		{CPUUserTimeNanos: int64(time.Second), GCPauseTotalNanos: 100},
+		{CPUUserTimeNanos: int64(2 * time.Second), CPUSystemTimeNanos: int64(time.Second), GCPauseTotalNanos: 175},
+	}
+	readIndex := 0
+	sampler := NewProcessSamplerWithReader(time.Second, func() ProcessSample {
+		sample := samples[readIndex]
+		readIndex++
+		return sample
+	})
+	now := time.Unix(100, 0)
+	first := sampler.Sample(now)
+	second := sampler.Sample(now.Add(time.Second))
+	if first.CPUUtilizationCores != 0 || first.GCPauseWindowNanos != 0 {
+		t.Fatalf("first sample should establish the cumulative baseline: %#v", first)
+	}
+	if second.CPUUtilizationCores != 2.0 {
+		t.Fatalf("expected two CPU cores of utilization, got %#v", second)
+	}
+	if second.GCPauseWindowNanos != 75 {
+		t.Fatalf("expected GC pause delta of 75ns, got %#v", second)
+	}
+}
+
+func TestRunDefaultSampleCapacityRetainsOneHour(t *testing.T) {
+	run := NewRun(RunContext{})
+	if run.sampleCapacity != 3600 {
+		t.Fatalf("default sample capacity = %d, want 3600", run.sampleCapacity)
+	}
+}
+
 func TestRunFinalizationIsIdempotentAndIgnoresLaterObservations(t *testing.T) {
 	clock := &testClock{now: time.Unix(100, 0)}
 	run := NewRun(RunContext{}, WithClock(clock.Now))

@@ -164,6 +164,20 @@ func TestControllerBuildsLiveTelemetryWithoutActiveMeasurement(t *testing.T) {
 	if _, ok := first.Metrics["server_players"]; !ok {
 		t.Fatalf("authoritative entity counts are missing: %#v", first.Metrics)
 	}
+	for _, key := range []string{
+		"server_resident_set_bytes",
+		"server_peak_resident_set_bytes",
+		"server_cpu_user_time_nanos",
+		"server_cpu_system_time_nanos",
+		"server_cpu_utilization_cores",
+		"server_gc_pause_total_nanos",
+		"server_gc_pause_window_nanos",
+		"server_gc_last_pause_nanos",
+	} {
+		if _, ok := first.Metrics[key]; !ok {
+			t.Fatalf("process metric %q is missing: %#v", key, first.Metrics)
+		}
+	}
 	lanes, ok := first.Metrics["server_lane_metrics"].(map[string]any)
 	if !ok || len(lanes) != 2 {
 		t.Fatalf("unexpected lane metrics: %#v", first.Metrics["server_lane_metrics"])

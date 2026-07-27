@@ -2,7 +2,7 @@ package measurement
 
 import "time"
 
-const ReportVersion = 1
+const ReportVersion = 2
 
 type RunContext struct {
 	RunID          string    `json:"run_id"`
@@ -35,11 +35,19 @@ type EntityCounts struct {
 }
 
 type ProcessSample struct {
-	HeapAllocatedBytes int64  `json:"heap_allocated_bytes"`
-	HeapInUseBytes     int64  `json:"heap_in_use_bytes"`
-	SystemBytes        int64  `json:"system_bytes"`
-	Goroutines         int    `json:"goroutines"`
-	GCCycles           uint32 `json:"gc_cycles"`
+	HeapAllocatedBytes   int64   `json:"heap_allocated_bytes"`
+	HeapInUseBytes       int64   `json:"heap_in_use_bytes"`
+	SystemBytes          int64   `json:"system_bytes"`
+	ResidentSetBytes     int64   `json:"resident_set_bytes"`
+	PeakResidentSetBytes int64   `json:"peak_resident_set_bytes"`
+	CPUUserTimeNanos     int64   `json:"cpu_user_time_nanos"`
+	CPUSystemTimeNanos   int64   `json:"cpu_system_time_nanos"`
+	CPUUtilizationCores  float64 `json:"cpu_utilization_cores"`
+	Goroutines           int     `json:"goroutines"`
+	GCCycles             uint32  `json:"gc_cycles"`
+	GCPauseTotalNanos    uint64  `json:"gc_pause_total_nanos"`
+	GCPauseWindowNanos   uint64  `json:"gc_pause_window_nanos"`
+	GCLastPauseNanos     uint64  `json:"gc_last_pause_nanos"`
 }
 
 type TickSummary struct {

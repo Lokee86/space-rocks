@@ -49,7 +49,9 @@ The client records a sample immediately at start, periodically while recording, 
 
 ## Server capture boundary
 
-The server attaches the measurement observer to the active game when the run starts. Tick summaries, periodic entity/process samples, and packet writes are therefore scoped to that run. A disconnect or shutdown finalizes a partial report.
+The server attaches the measurement observer to the active game when the run starts. Tick summaries, periodic entity/process samples, and packet writes are therefore scoped to that run. Process samples include Go heap/runtime memory, current and peak resident memory, cumulative user/system CPU time, interval CPU utilization expressed as cores consumed, goroutine/GC counts, cumulative GC pause time, interval GC pause time, and the latest GC pause. A disconnect or shutdown finalizes a partial report.
+
+The default one-second sample ring retains 3,600 entries, covering one hour before older samples are overwritten and counted.
 
 ## Presentation
 

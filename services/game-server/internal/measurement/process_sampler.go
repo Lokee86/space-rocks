@@ -40,7 +40,19 @@ func (sampler *ProcessSampler) Sample(now time.Time) ProcessSample {
 		return sampler.sample
 	}
 
-	sampler.sample = sampler.read()
+	next := sampler.read()
+	if sampler.hasValue && now.After(sampler.lastAt) {
+		previousCPU := sampler.sample.CPUUserTimeNanos + sampler.sample.CPUSystemTimeNanos
+		currentCPU := next.CPUUserTimeNanos + next.CPUSystemTimeNanos
+		if currentCPU >= previousCPU {
+			next.CPUUtilizationCores = float64(currentCPU-previousCPU) / float64(now.Sub(sampler.lastAt))
+		}
+		if next.GCPauseTotalNanos >= sampler.sample.GCPauseTotalNanos {
+			next.GCPauseWindowNanos = next.GCPauseTotalNanos - sampler.sample.GCPauseTotalNanos
+		}
+	}
+
+	sampler.sample = next
 	sampler.lastAt = now
 	sampler.hasValue = true
 	return sampler.sample
@@ -51,11 +63,22 @@ var defaultProcessSampler = NewProcessSampler()
 func readProcessSample() ProcessSample {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
+	process := readOSProcessSample()
+	lastPauseNanos := uint64(0)
+	if stats.NumGC > 0 {
+		lastPauseNanos = stats.PauseNs[(stats.NumGC-1)%uint32(len(stats.PauseNs))]
+	}
 	return ProcessSample{
-		HeapAllocatedBytes: int64(stats.HeapAlloc),
-		HeapInUseBytes:     int64(stats.HeapInuse),
-		SystemBytes:        int64(stats.Sys),
-		Goroutines:         runtime.NumGoroutine(),
-		GCCycles:           stats.NumGC,
+		HeapAllocatedBytes:   int64(stats.HeapAlloc),
+		HeapInUseBytes:       int64(stats.HeapInuse),
+		SystemBytes:          int64(stats.Sys),
+		ResidentSetBytes:     process.ResidentSetBytes,
+		PeakResidentSetBytes: process.PeakResidentSetBytes,
+		CPUUserTimeNanos:     process.CPUUserTimeNanos,
+		CPUSystemTimeNanos:   process.CPUSystemTimeNanos,
+		Goroutines:           runtime.NumGoroutine(),
+		GCCycles:             stats.NumGC,
+		GCPauseTotalNanos:    stats.PauseTotalNs,
+		GCLastPauseNanos:     lastPauseNanos,
 	}
 }

@@ -122,8 +122,16 @@ server_total_asteroids_spawned
 server_heap_allocated_bytes
 server_heap_in_use_bytes
 server_system_bytes
+server_resident_set_bytes
+server_peak_resident_set_bytes
+server_cpu_user_time_nanos
+server_cpu_system_time_nanos
+server_cpu_utilization_cores
 server_goroutines
 server_gc_cycles
+server_gc_pause_total_nanos
+server_gc_pause_window_nanos
+server_gc_last_pause_nanos
 server_packets_out
 server_bytes_out
 server_max_packet_bytes
@@ -140,7 +148,7 @@ maximum_encoded_bytes
 last_packet_family
 ```
 
-Entity counts come from the authoritative game aggregate through the same concrete count seam used by runtime measurement. Process counters use the shared bounded process sampler. Packet counters are observed after successful encoded WebRTC lane writes.
+Entity counts come from the authoritative game aggregate through the same concrete count seam used by runtime measurement. Process counters use the shared bounded process sampler. Resident memory and CPU time come from platform process APIs; `server_cpu_utilization_cores` is the process CPU-time delta divided by the sample wall-time delta, so `1.0` represents one fully consumed CPU core. GC window pause time is the cumulative pause delta since the previous process sample. Packet counters are observed after successful encoded WebRTC lane writes.
 
 Live counters are connection-local and room-scoped. Moving the same connection to another room resets its live telemetry sequence and packet totals rather than leaking the earlier room's traffic into the new room.
 

@@ -8,7 +8,7 @@ import (
 
 const (
 	defaultSampleInterval = time.Second
-	defaultSampleCapacity = 120
+	defaultSampleCapacity = 3600
 	maxPacketKeys         = 128
 	maxIdentifierLength   = 64
 )

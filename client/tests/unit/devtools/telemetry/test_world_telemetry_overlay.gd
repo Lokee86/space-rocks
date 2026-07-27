@@ -23,8 +23,13 @@ func test_renders_authoritative_server_and_transport_metrics() -> void:
 		"server_heap_allocated_bytes": 1000,
 		"server_heap_in_use_bytes": 900,
 		"server_system_bytes": 2000,
+		"server_resident_set_bytes": 3000,
+		"server_peak_resident_set_bytes": 4000,
+		"server_cpu_utilization_cores": 1.25,
 		"server_goroutines": 12,
 		"server_gc_cycles": 3,
+		"server_gc_pause_window_nanos": 500,
+		"server_gc_last_pause_nanos": 200,
 		"server_packets_out": 30,
 		"server_bytes_out": 4000,
 		"server_max_packet_bytes": 700,
@@ -44,6 +49,10 @@ func test_renders_authoritative_server_and_transport_metrics() -> void:
 	assert_true(label.text.contains("projectiles: 8"))
 	assert_true(label.text.contains("asteroids_spawned: 9"))
 	assert_true(label.text.contains("match: match-4"))
+	assert_true(label.text.contains("resident_set_bytes: 3000"))
+	assert_true(label.text.contains("peak_resident_set_bytes: 4000"))
+	assert_true(label.text.contains("cpu_cores: 1.25"))
+	assert_true(label.text.contains("gc_pause_window_ns: 500"))
 	assert_true(label.text.contains("packets_out: 30"))
 	assert_true(label.text.contains("tooling p/b/max: 2/300/200"))
 
