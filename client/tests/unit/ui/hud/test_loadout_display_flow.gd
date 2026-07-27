@@ -122,7 +122,7 @@ func test_torpedo_with_cooldown_remaining_on_first_display_creation_shows_cooldo
 	assert_eq(_display_cooldown_label().text, "5.0")
 
 
-func test_active_cooldown_state_keeps_cooldown_overlay_visible() -> void:
+func test_active_cooldown_packet_keeps_overlay_visible_without_snapping() -> void:
 	_flow.apply_player_state(_player_state({
 		Packets.FIELD_SECONDARY_WEAPON_ID: "torpedo",
 		Packets.FIELD_SECONDARY_COOLDOWN_REMAINING: 5.0,
@@ -135,7 +135,7 @@ func test_active_cooldown_state_keeps_cooldown_overlay_visible() -> void:
 	var cooldown_overlay := _display_cooldown_overlay()
 	assert_not_null(cooldown_overlay)
 	assert_true(cooldown_overlay.visible)
-	assert_eq(_display_cooldown_label().text, "4.0")
+	assert_eq(_display_cooldown_label().text, "5.0")
 
 
 func test_larger_active_cooldown_remaining_syncs_overlay_instead_of_leaving_it_stale() -> void:

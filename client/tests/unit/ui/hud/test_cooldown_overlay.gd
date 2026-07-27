@@ -61,6 +61,59 @@ func test_apply_cooldown_with_zero_total_hides_overlay() -> void:
 	assert_false(_overlay.visible)
 
 
+func test_packet_update_does_not_jump_countdown_to_new_sample() -> void:
+	_overlay.apply_cooldown(5.0, 5.0)
+	_overlay._process(0.2)
+	var before_packet: float = float(_overlay._cooldown_remaining)
+
+	_overlay.apply_cooldown(4.95, 5.0)
+
+	assert_almost_eq(_overlay._cooldown_remaining, before_packet, 0.0001)
+
+
+func test_packet_update_smoothly_corrects_countdown_without_reversing() -> void:
+	_overlay.apply_cooldown(5.0, 5.0)
+	_overlay._process(0.2)
+	_overlay.apply_cooldown(4.95, 5.0)
+	var before_process: float = float(_overlay._cooldown_remaining)
+
+	_overlay._process(0.1)
+
+	assert_lt(_overlay._cooldown_remaining, before_process)
+	assert_gt(_overlay._cooldown_remaining, before_process - 0.1)
+
+
+func test_packet_update_can_accelerate_countdown_toward_server() -> void:
+	_overlay.apply_cooldown(5.0, 5.0)
+	_overlay._process(0.2)
+	_overlay.apply_cooldown(4.5, 5.0)
+	var nominal_remaining: float = float(_overlay._cooldown_remaining) - 0.1
+
+	_overlay._process(0.1)
+
+	assert_lt(_overlay._cooldown_remaining, nominal_remaining)
+
+
+func test_increased_packet_remaining_starts_new_cooldown_cycle() -> void:
+	_overlay.apply_cooldown(5.0, 5.0)
+	_overlay._process(1.0)
+	_overlay.apply_cooldown(3.8, 5.0)
+
+	_overlay.apply_cooldown(5.0, 5.0)
+
+	assert_almost_eq(_overlay._cooldown_remaining, 5.0, 0.0001)
+
+
+func test_stale_positive_packet_does_not_restore_locally_finished_countdown() -> void:
+	_overlay.apply_cooldown(0.1, 5.0)
+	_overlay._process(0.1)
+
+	_overlay.apply_cooldown(0.05, 5.0)
+
+	assert_false(_overlay.visible)
+	assert_almost_eq(_overlay._cooldown_remaining, 0.0, 0.0001)
+
+
 func test_sync_countdown_with_remaining_time_makes_overlay_visible() -> void:
 	_overlay.sync_countdown(5.0)
 

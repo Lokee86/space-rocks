@@ -25,6 +25,7 @@ All notable player-facing changes to Space Rocks are recorded here.
 - Final player ships finish despawning after game over instead of reappearing behind the results window.
 - Camera zoom input is ignored after game over.
 - Match-result team swatches remain square and use the same base colour and hue-shift rules as player ships.
+- Weapon cooldown sweeps now advance smoothly from local time while packet updates correct drift without repeatedly snapping the display.
 - Remote-player, spectator, asteroid lifecycle, and realtime cadence behavior is more stable under load.
 - Saved authentication survives restarts, test runs, and temporary provider outages.
 - Asteroid spawning remains bounded and clear of active player camera views.
