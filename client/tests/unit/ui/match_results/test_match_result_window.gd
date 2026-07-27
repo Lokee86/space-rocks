@@ -61,6 +61,9 @@ func test_team_rows_are_grouped_by_team_score_and_subsorted() -> void:
 	await get_tree().process_frame
 
 	var children := (window.get_node("%ScoreContainer") as Container).get_children()
+	var team_swatch := children[0].get_child(0) as ColorRect
+	assert_eq(team_swatch.size_flags_vertical, Control.SIZE_SHRINK_CENTER)
+	assert_almost_eq(team_swatch.size.x, team_swatch.size.y, 0.001)
 	assert_eq((children[0].get_child(1) as Label).text, "TEAM 2  —  400")
 	assert_eq((children[1].get_node("%PlayerIDLabel") as Label).text, "team2-high")
 	assert_eq((children[2].get_child(1) as Label).text, "TEAM 1  —  300")

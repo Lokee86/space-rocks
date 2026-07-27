@@ -91,6 +91,7 @@ func _add_team_header(team_id: String, team_score: int) -> void:
 	header.custom_minimum_size.y = 36
 	var swatch := ColorRect.new()
 	swatch.custom_minimum_size = Vector2(18, 18)
+	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	swatch.color = TeamPresentation.color(team_id)
 	swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.add_child(swatch)
