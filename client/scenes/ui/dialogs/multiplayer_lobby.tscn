@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_window"]
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_label"]
+[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="2_button_label"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_button"]
 [ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="4_row"]
 [ext_resource type="Script" uid="uid://cc70sca8inya7" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="5_script"]
@@ -163,7 +164,7 @@ theme_override_constants/separation = 6
 
 [node name="ReadyButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(108, 46)
+custom_minimum_size = Vector2(143, 46)
 layout_mode = 2
 [node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
 layout_mode = 1
@@ -172,14 +173,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "READY"
-label_settings = ExtResource("2_label")
+text = "\nREADY"
+label_settings = ExtResource("2_button_label")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="StartGameButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(108, 46)
+custom_minimum_size = Vector2(143, 46)
 layout_mode = 2
 [node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
 layout_mode = 1
@@ -188,14 +189,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "START"
-label_settings = ExtResource("2_label")
+text = "\nSTART"
+label_settings = ExtResource("2_button_label")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="AddBotButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(108, 46)
+custom_minimum_size = Vector2(143, 46)
 layout_mode = 2
 [node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
 layout_mode = 1
@@ -204,14 +205,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "ADD BOT"
-label_settings = ExtResource("2_label")
+text = "\nADD BOT"
+label_settings = ExtResource("2_button_label")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="LeaveButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(108, 46)
+custom_minimum_size = Vector2(143, 46)
 layout_mode = 2
 [node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
 layout_mode = 1
@@ -220,7 +221,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "LEAVE"
-label_settings = ExtResource("2_label")
+text = "\nLEAVE"
+label_settings = ExtResource("2_button_label")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ActionBottomSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
