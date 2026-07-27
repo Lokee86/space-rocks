@@ -11,6 +11,7 @@ var active_directory_path := ""
 var archive_directory_path := ""
 var last_configured_at_unix_ms := 0
 var configured_prefix := ""
+var active_file_suffix := ""
 var segment_started_at_unix_ms := 0
 var failure_count := 0
 var last_failure_message := ""
@@ -33,6 +34,7 @@ func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> boo
 	_reset_failure_state()
 	configuration = _normalize_policy(policy)
 	configured_prefix = prefix
+	active_file_suffix = str(_process_id())
 	active_directory_path = base_dir.path_join(configuration["active_directory_name"])
 	archive_directory_path = base_dir.path_join(configuration["archive_directory_name"])
 	last_configured_at_unix_ms = _current_time_unix_ms()
@@ -49,31 +51,21 @@ func configure(base_dir: String, prefix: String, policy: Dictionary = {}) -> boo
 		return false
 
 	var candidate_path := _build_active_file_path()
-	var clean_marker_path := _build_clean_shutdown_marker_path()
-	var active_exists := _file_exists(candidate_path)
-	var resume_clean_segment := active_exists and _clean_shutdown_marker_exists(clean_marker_path)
-	var startup_archives: Array[String] = []
-	if resume_clean_segment:
-		if _remove_clean_shutdown_marker(clean_marker_path) != OK:
-			_record_failure("failed to remove clean shutdown marker: %s" % clean_marker_path)
-			return false
-		segment_started_at_unix_ms = _get_file_modified_time_unix_ms(candidate_path)
-		if segment_started_at_unix_ms <= 0:
-			segment_started_at_unix_ms = last_configured_at_unix_ms
-	elif active_exists:
+	var startup_archives := _recover_stale_active_segments(candidate_path)
+	if _file_exists(candidate_path):
 		var recovered_archive_path := _recover_interrupted_active_segment(candidate_path)
 		if recovered_archive_path.is_empty():
-			return false
-		startup_archives.append(recovered_archive_path)
-	elif _clean_shutdown_marker_exists(clean_marker_path):
-		_remove_clean_shutdown_marker(clean_marker_path)
+			candidate_path = _select_recovery_fallback_active_path()
+			if candidate_path.is_empty():
+				_record_failure("failed to recover interrupted active log file and allocate fallback: %s" % _build_active_file_path())
+				return false
+		else:
+			startup_archives.append(recovered_archive_path)
 
-	var handle = _open_file(candidate_path, FileAccess.READ_WRITE if resume_clean_segment else FileAccess.WRITE)
+	var handle = _open_file(candidate_path, FileAccess.WRITE)
 	if handle == null:
 		_record_failure("failed to open active log file: %s" % candidate_path)
 		return false
-	if resume_clean_segment:
-		_seek_file_to_end(handle)
 
 	enabled = true
 	current_path = candidate_path
@@ -87,14 +79,70 @@ func _recover_interrupted_active_segment(candidate_path: String) -> String:
 	if segment_start_unix_ms <= 0:
 		segment_start_unix_ms = rotation_time_unix_ms
 
-	var archive_path := archive_directory_path.path_join(_build_segment_archive_filename(configured_prefix, segment_start_unix_ms, rotation_time_unix_ms))
+	var archive_prefix := candidate_path.get_file().trim_suffix(".jsonl.open")
+	var archive_path := archive_directory_path.path_join(_build_segment_archive_filename(archive_prefix, segment_start_unix_ms, rotation_time_unix_ms))
 	_archive_mutex.lock()
 	var rename_error := _rename_file(candidate_path, archive_path)
 	_archive_mutex.unlock()
 	if rename_error != OK:
-		_record_failure("failed to recover interrupted active log file: %s" % candidate_path)
 		return ""
 	return archive_path
+
+
+func _recover_stale_active_segments(current_candidate_path: String) -> Array[String]:
+	var recovered_archives: Array[String] = []
+	for active_path in _list_active_files():
+		if active_path == current_candidate_path:
+			continue
+		var filename := active_path.get_file()
+		if filename == "%s.jsonl.open" % configured_prefix:
+			var legacy_marker_path := active_directory_path.path_join("%s.jsonl.clean" % configured_prefix)
+			if !_clean_shutdown_marker_exists(legacy_marker_path):
+				continue
+			var legacy_archive := _recover_interrupted_active_segment(active_path)
+			if !legacy_archive.is_empty():
+				_remove_clean_shutdown_marker(legacy_marker_path)
+				recovered_archives.append(legacy_archive)
+			continue
+
+		var owner_process_id := _process_id_from_active_path(active_path)
+		if owner_process_id <= 0 or _is_process_running(owner_process_id):
+			continue
+		var recovered_archive := _recover_interrupted_active_segment(active_path)
+		if !recovered_archive.is_empty():
+			recovered_archives.append(recovered_archive)
+	return recovered_archives
+
+
+func _process_id_from_active_path(active_path: String) -> int:
+	var filename := active_path.get_file()
+	var prefix_with_separator := "%s-" % configured_prefix
+	if !filename.begins_with(prefix_with_separator) or !filename.ends_with(".jsonl.open"):
+		return 0
+	var suffix := filename.trim_prefix(prefix_with_separator).trim_suffix(".jsonl.open")
+	var process_id_text := suffix.get_slice("-", 0)
+	if !process_id_text.is_valid_int():
+		return 0
+	return int(process_id_text)
+
+
+func _is_process_running(process_id: int) -> bool:
+	return OS.is_process_running(process_id)
+
+
+func _select_recovery_fallback_active_path() -> String:
+	var base_suffix := str(_process_id())
+	for attempt in range(1000):
+		active_file_suffix = base_suffix if attempt == 0 else "%s-%d" % [base_suffix, attempt]
+		var fallback_path := _build_active_file_path()
+		if !_file_exists(fallback_path):
+			return fallback_path
+	active_file_suffix = ""
+	return ""
+
+
+func _process_id() -> int:
+	return OS.get_process_id()
 
 func _normalize_policy(policy: Dictionary) -> Dictionary:
 	var normalized := {
@@ -206,6 +254,28 @@ func _get_file_modified_time_unix_ms(path: String) -> int:
 		return 0
 	return int(modified_time_unix_s * 1000.0)
 
+func _list_active_files() -> Array[String]:
+	var active_files: Array[String] = []
+	var dir := DirAccess.open(active_directory_path)
+	if dir == null:
+		return active_files
+
+	dir.list_dir_begin()
+	while true:
+		var entry := dir.get_next()
+		if entry == "":
+			break
+		if dir.current_is_dir():
+			continue
+		if entry == "%s.jsonl.open" % configured_prefix or (
+			entry.begins_with("%s-" % configured_prefix) and entry.ends_with(".jsonl.open")
+		):
+			active_files.append(active_directory_path.path_join(entry))
+	dir.list_dir_end()
+	active_files.sort()
+	return active_files
+
+
 func _list_archive_files() -> Array[String]:
 	var archive_files: Array[String] = []
 	var dir := DirAccess.open(archive_directory_path)
@@ -232,20 +302,8 @@ func _rename_file(from_path: String, to_path: String) -> Error:
 func _open_file(path: String, mode: int):
 	return FileAccess.open(path, mode)
 
-func _seek_file_to_end(handle) -> void:
-	handle.seek_end()
-
 func _clean_shutdown_marker_exists(path: String) -> bool:
 	return FileAccess.file_exists(path)
-
-func _write_clean_shutdown_marker(path: String) -> Error:
-	var marker = FileAccess.open(path, FileAccess.WRITE)
-	if marker == null:
-		return FileAccess.get_open_error()
-	marker.store_string("clean")
-	var marker_error := marker.get_error()
-	marker.close()
-	return marker_error
 
 func _remove_clean_shutdown_marker(path: String) -> Error:
 	if !FileAccess.file_exists(path):
@@ -284,14 +342,17 @@ func _disable_active_file_output(message: String) -> void:
 static func _build_segment_archive_filename(prefix: String, segment_start_unix_ms: int, rotation_unix_ms: int) -> String:
 	return "%s-%d-%d.jsonl" % [prefix, segment_start_unix_ms, rotation_unix_ms]
 
-func _build_active_file_path() -> String:
-	return active_directory_path.path_join("%s.jsonl.open" % configured_prefix)
+func _active_file_stem() -> String:
+	if active_file_suffix.is_empty():
+		return configured_prefix
+	return "%s-%s" % [configured_prefix, active_file_suffix]
 
-func _build_clean_shutdown_marker_path() -> String:
-	return active_directory_path.path_join("%s.jsonl.clean" % configured_prefix)
+
+func _build_active_file_path() -> String:
+	return active_directory_path.path_join("%s.jsonl.open" % _active_file_stem())
 
 func _build_archive_file_path(rotation_unix_ms: int) -> String:
-	return archive_directory_path.path_join(_build_segment_archive_filename(configured_prefix, segment_started_at_unix_ms, rotation_unix_ms))
+	return archive_directory_path.path_join(_build_segment_archive_filename(_active_file_stem(), segment_started_at_unix_ms, rotation_unix_ms))
 
 func _segment_max_bytes() -> int:
 	return int(configuration["segment_max_bytes"])
@@ -459,16 +520,19 @@ func write_line(line: String) -> void:
 
 
 func close() -> void:
-	var clean_marker_path := _build_clean_shutdown_marker_path() if !configured_prefix.is_empty() else ""
+	var closing_path := current_path
 	if _handle != null:
 		_handle.flush()
 		_handle.close()
-		if !clean_marker_path.is_empty() and _write_clean_shutdown_marker(clean_marker_path) != OK:
-			_record_failure("failed to write clean shutdown marker: %s" % clean_marker_path)
+		_handle = null
+		var archive_path := _build_archive_file_path(_current_time_unix_ms())
+		if !_finalize_archive(closing_path, archive_path):
+			_record_failure("failed to archive active log segment: %s" % closing_path)
 
 	wait_for_startup_maintenance()
 	enabled = false
 	current_path = ""
 	_handle = null
 	configured_prefix = ""
+	active_file_suffix = ""
 	segment_started_at_unix_ms = 0

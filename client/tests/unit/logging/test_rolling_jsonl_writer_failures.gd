@@ -18,14 +18,27 @@ func test_configuration_failure_records_once_and_resets_on_next_configure_attemp
 	assert_true(writer.last_failure_message.contains("failed to create active log directory"))
 	assert_eq(writer.failure_warnings.size(), 2)
 
-func test_recovery_failure_records_and_disables_file_output() -> void:
+func test_recovery_rename_conflict_uses_process_specific_fallback() -> void:
 	var writer := FakeFilesystemWriter.new()
 	writer.fail_rename = true
-	writer.file_sizes["user://fake-writer/active/client.jsonl.open"] = 4
+	writer.file_sizes["user://fake-writer/active/client-4242.jsonl.open"] = 4
+
+	assert_true(writer.configure("user://fake-writer", "client"))
+	assert_eq(writer.failure_count, 0)
+	assert_true(writer.enabled)
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242-1.jsonl.open")
+	assert_true(writer.failure_warnings.is_empty())
+
+
+func test_recovery_and_fallback_open_failure_records_and_disables_file_output() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fail_rename = true
+	writer.fail_all_open = true
+	writer.file_sizes["user://fake-writer/active/client-4242.jsonl.open"] = 4
 
 	assert_false(writer.configure("user://fake-writer", "client"))
 	assert_eq(writer.failure_count, 1)
-	assert_true(writer.last_failure_message.contains("failed to recover interrupted active log file"))
+	assert_true(writer.last_failure_message.contains("failed to open active log file"))
 	assert_false(writer.enabled)
 	assert_eq(writer.failure_warnings.size(), 1)
 
@@ -98,7 +111,7 @@ func test_compression_failure_preserves_archive_and_keeps_file_output_enabled() 
 	writer.fail_compression = true
 	writer.fake_now = 2000
 	writer.write_line("ab")
-	var archive_path := "user://fake-writer/archive/client-1000-2000.jsonl"
+	var archive_path := "user://fake-writer/archive/client-4242-1000-2000.jsonl"
 	assert_true(writer.file_sizes.has(archive_path))
 	assert_false(writer.file_sizes.has("%s.gz" % archive_path))
 	assert_eq(writer.failure_count, 1)

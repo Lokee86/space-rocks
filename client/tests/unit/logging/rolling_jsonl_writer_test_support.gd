@@ -42,6 +42,9 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 	var fail_rename := false
 	var fail_compression := false
 	var fail_open_after_first_call := false
+	var fail_all_open := false
+	var fake_process_id := 4242
+	var running_process_ids: Array[int] = []
 	var fail_delete_paths: Array[String] = []
 	var file_sizes: Dictionary = {}
 	var file_modified_times: Dictionary = {}
@@ -57,6 +60,12 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 
 	func _current_time_unix_ms() -> int:
 		return fake_now
+
+	func _process_id() -> int:
+		return fake_process_id
+
+	func _is_process_running(process_id: int) -> bool:
+		return running_process_ids.has(process_id)
 
 	func _make_dir_recursive(path: String) -> Error:
 		make_dir_paths.append(path)
@@ -74,6 +83,14 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 
 	func _get_file_modified_time_unix_ms(path: String) -> int:
 		return int(file_modified_times.get(path, 0))
+
+	func _list_active_files() -> Array[String]:
+		var active_files: Array[String] = []
+		for path in file_sizes.keys():
+			if path.begins_with("user://fake-writer/active/") and path.ends_with(".jsonl.open"):
+				active_files.append(path)
+		active_files.sort()
+		return active_files
 
 	func _list_archive_files() -> Array[String]:
 		var archive_files: Array[String] = []
@@ -106,7 +123,7 @@ class FakeFilesystemWriter extends RollingJSONLWriter:
 
 	func _open_file(path: String, _mode: int):
 		opened_paths.append(path)
-		if fail_open_after_first_call and opened_paths.size() > 1:
+		if fail_all_open or (fail_open_after_first_call and opened_paths.size() > 1):
 			return null
 		file_sizes[path] = int(file_sizes.get(path, 0))
 		var handle := FakeHandle.new()

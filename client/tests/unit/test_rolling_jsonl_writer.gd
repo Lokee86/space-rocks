@@ -73,7 +73,8 @@ func test_policy_is_defensively_copied_and_layout_paths_are_prepared() -> void:
 	assert_eq(writer.configuration["active_directory_name"], "current")
 	assert_eq(writer.active_directory_path, "user://writer-test/current")
 	assert_eq(writer.archive_directory_path, "user://writer-test/history")
-	assert_eq(writer.current_path, "user://writer-test/current/client.jsonl.open")
+	assert_true(writer.current_path.begins_with("user://writer-test/current/client-"))
+	assert_true(writer.current_path.ends_with(".jsonl.open"))
 	writer.close()
 
 func test_configuration_uses_generated_client_defaults_when_policy_is_empty() -> void:
@@ -86,7 +87,8 @@ func test_configuration_uses_generated_client_defaults_when_policy_is_empty() ->
 	assert_eq(writer.configuration["retention_max_files"], RollingJSONLWriter.DEFAULT_RETENTION_MAX_FILES)
 	assert_eq(writer.configuration["compression_enabled"], ObservabilityContract.FILE_LOGGING_COMPRESSION_ENABLED)
 	assert_true(writer.configuration["startup_maintenance_async"])
-	assert_eq(writer.current_path, "user://writer-test/active/client.jsonl.open")
+	assert_true(writer.current_path.begins_with("user://writer-test/active/client-"))
+	assert_true(writer.current_path.ends_with(".jsonl.open"))
 	writer.close()
 
 
@@ -99,10 +101,10 @@ func test_configuration_uses_replaceable_clock_and_filesystem_boundaries() -> vo
 
 	assert_eq(writer.last_configured_at_unix_ms, 123456)
 	assert_eq(writer.make_dir_paths, ["user://fake-writer/active", "user://fake-writer/archive"])
-	assert_eq(writer.existing_paths, ["user://fake-writer/active/client.jsonl.open"])
-	assert_eq(writer.opened_paths, ["user://fake-writer/active/client.jsonl.open"])
+	assert_eq(writer.existing_paths, ["user://fake-writer/active/client-4242.jsonl.open"])
+	assert_eq(writer.opened_paths, ["user://fake-writer/active/client-4242.jsonl.open"])
 	assert_true(writer.enabled)
-	assert_eq(writer.current_path, "user://fake-writer/active/client.jsonl.open")
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
 
 	writer.write_line("{\"event\":\"test\"}")
 	assert_eq(writer.handles.size(), 1)
@@ -111,26 +113,24 @@ func test_configuration_uses_replaceable_clock_and_filesystem_boundaries() -> vo
 	assert_eq(writer.handles[0].close_calls, 1)
 
 
-func test_clean_close_reopens_existing_active_segment_without_archiving() -> void:
+func test_clean_close_archives_process_segment_and_reopens_fresh() -> void:
 	var writer := FakeFilesystemWriter.new()
 	writer.fake_now = 7000
 	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
 	writer.file_sizes[writer.current_path] = 17
-	writer.file_modified_times[writer.current_path] = 6000
 
+	writer.fake_now = 8000
 	writer.close()
-	assert_true(writer.clean_marker_exists)
+	var archive_path := "user://fake-writer/archive/client-4242-7000-8000.jsonl"
+	assert_true(writer.file_sizes.has(archive_path))
+	assert_false(writer.file_sizes.has("user://fake-writer/active/client-4242.jsonl.open"))
+	assert_eq(writer.clean_marker_write_calls, 0)
+
 	writer.fake_now = 9000
 	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
-
-	assert_true(writer.renamed_paths.is_empty())
-	assert_eq(writer.clean_marker_write_calls, 1)
-	assert_eq(writer.clean_marker_remove_calls, 1)
-	assert_false(writer.clean_marker_exists)
-	assert_eq(writer.opened_paths.size(), 2)
-	assert_eq(writer.handles[1].seek_end_calls, 1)
-	assert_eq(writer.file_sizes[writer.current_path], 17)
-	assert_eq(writer.segment_started_at_unix_ms, 6000)
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
+	assert_eq(writer.file_sizes[writer.current_path], 0)
+	assert_eq(writer.segment_started_at_unix_ms, 9000)
 
 
 func test_startup_maintenance_does_not_block_fresh_active_logging() -> void:
@@ -138,8 +138,8 @@ func test_startup_maintenance_does_not_block_fresh_active_logging() -> void:
 	var archive_directory := "user://writer-test/archive"
 	assert_eq(DirAccess.make_dir_recursive_absolute(active_directory), OK)
 	assert_eq(DirAccess.make_dir_recursive_absolute(archive_directory), OK)
-	var active_path := active_directory.path_join("client.jsonl.open")
-	var previous_active := FileAccess.open(active_path, FileAccess.WRITE)
+	var stale_path := active_directory.path_join("client-999999.jsonl.open")
+	var previous_active := FileAccess.open(stale_path, FileAccess.WRITE)
 	assert_ne(previous_active, null)
 	if previous_active != null:
 		previous_active.store_line("previous-session")
@@ -155,11 +155,11 @@ func test_startup_maintenance_does_not_block_fresh_active_logging() -> void:
 	writer.maintenance.maintenance_started.wait()
 
 	assert_true(writer.enabled)
-	assert_eq(writer.current_path, active_path)
+	assert_ne(writer.current_path, stale_path)
 	assert_true(writer.startup_maintenance_status()["running"])
 	writer.write_line("startup-event")
 
-	var active_reader := FileAccess.open(active_path, FileAccess.READ)
+	var active_reader := FileAccess.open(writer.current_path, FileAccess.READ)
 	assert_ne(active_reader, null)
 	if active_reader != null:
 		assert_eq(active_reader.get_as_text(), "startup-event\n")
@@ -178,8 +178,8 @@ func test_async_startup_recovery_compresses_previous_segment_after_active_open()
 	var archive_directory := "user://writer-test/archive"
 	assert_eq(DirAccess.make_dir_recursive_absolute(active_directory), OK)
 	assert_eq(DirAccess.make_dir_recursive_absolute(archive_directory), OK)
-	var active_path := active_directory.path_join("client.jsonl.open")
-	var previous_active := FileAccess.open(active_path, FileAccess.WRITE)
+	var stale_path := active_directory.path_join("client-999999.jsonl.open")
+	var previous_active := FileAccess.open(stale_path, FileAccess.WRITE)
 	assert_ne(previous_active, null)
 	if previous_active != null:
 		previous_active.store_line("previous-session")
@@ -195,7 +195,7 @@ func test_async_startup_recovery_compresses_previous_segment_after_active_open()
 	writer.write_line("startup-event")
 	writer.wait_for_startup_maintenance()
 
-	var active_reader := FileAccess.open(active_path, FileAccess.READ)
+	var active_reader := FileAccess.open(writer.current_path, FileAccess.READ)
 	assert_ne(active_reader, null)
 	if active_reader != null:
 		assert_eq(active_reader.get_as_text(), "startup-event\n")
@@ -217,36 +217,104 @@ func test_async_startup_recovery_compresses_previous_segment_after_active_open()
 	writer.close()
 
 
-func test_configuration_recovers_existing_active_file_into_archive_and_opens_fresh_active() -> void:
+func test_configuration_recovers_clean_legacy_active_segment() -> void:
 	var writer := FakeFilesystemWriter.new()
 	writer.fake_now = 9000
-	var active_path := "user://fake-writer/active/client.jsonl.open"
-	writer.file_sizes[active_path] = 17
-	writer.file_modified_times[active_path] = 7000
+	writer.clean_marker_exists = true
+	var legacy_path := "user://fake-writer/active/client.jsonl.open"
+	writer.file_sizes[legacy_path] = 17
+	writer.file_modified_times[legacy_path] = 7000
 
 	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
 
 	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client.jsonl.open -> user://fake-writer/archive/client-7000-9000.jsonl"])
-	assert_eq(writer.opened_paths, ["user://fake-writer/active/client.jsonl.open"])
-	assert_eq(writer.file_sizes["user://fake-writer/archive/client-7000-9000.jsonl"], 17)
+	assert_eq(writer.clean_marker_remove_calls, 1)
+	assert_false(writer.clean_marker_exists)
+	assert_true(writer.file_sizes.has("user://fake-writer/archive/client-7000-9000.jsonl"))
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
+
+
+func test_configuration_leaves_unmarked_legacy_active_segment_untouched() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 9000
+	var legacy_path := "user://fake-writer/active/client.jsonl.open"
+	writer.file_sizes[legacy_path] = 17
+	writer.file_modified_times[legacy_path] = 7000
+
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
+
+	assert_true(writer.renamed_paths.is_empty())
+	assert_true(writer.file_sizes.has(legacy_path))
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
+
+
+func test_configuration_recovers_dead_process_active_file_into_archive_and_opens_fresh_active() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 9000
+	var stale_path := "user://fake-writer/active/client-9001.jsonl.open"
+	writer.file_sizes[stale_path] = 17
+	writer.file_modified_times[stale_path] = 7000
+
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
+
+	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client-9001.jsonl.open -> user://fake-writer/archive/client-9001-7000-9000.jsonl"])
+	assert_eq(writer.opened_paths, ["user://fake-writer/active/client-4242.jsonl.open"])
+	assert_eq(writer.file_sizes["user://fake-writer/archive/client-9001-7000-9000.jsonl"], 17)
 	assert_eq(writer.file_sizes[writer.current_path], 0)
-	assert_eq(writer.current_path, active_path)
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
 	assert_true(writer.enabled)
 	assert_eq(writer.last_configured_at_unix_ms, 9000)
 	assert_eq(writer.segment_started_at_unix_ms, 9000)
 
 
-func test_configuration_recovers_existing_active_file_uses_current_clock_when_modified_time_is_unavailable() -> void:
+func test_configuration_leaves_running_process_active_segment_untouched() -> void:
 	var writer := FakeFilesystemWriter.new()
-	writer.fake_now = 5555
-	var active_path := "user://fake-writer/active/client.jsonl.open"
-	writer.file_sizes[active_path] = 9
+	writer.fake_now = 9000
+	writer.running_process_ids = [9001]
+	var active_path := "user://fake-writer/active/client-9001.jsonl.open"
+	writer.file_sizes[active_path] = 17
+	writer.file_modified_times[active_path] = 7000
 
 	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
 
-	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client.jsonl.open -> user://fake-writer/archive/client-5555-5555.jsonl"])
-	assert_eq(writer.file_sizes["user://fake-writer/archive/client-5555-5555.jsonl"], 9)
-	assert_eq(writer.current_path, active_path)
+	assert_true(writer.renamed_paths.is_empty())
+	assert_true(writer.file_sizes.has(active_path))
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
+	assert_true(writer.enabled)
+
+
+func test_recovery_fallback_is_archived_on_clean_close() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 9000
+	writer.fail_rename = true
+	writer.file_sizes["user://fake-writer/active/client-4242.jsonl.open"] = 17
+	writer.file_modified_times["user://fake-writer/active/client-4242.jsonl.open"] = 7000
+
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242-1.jsonl.open")
+	writer.write_line("fallback-session")
+
+	writer.fail_rename = false
+	writer.fake_now = 12000
+	writer.close()
+
+	var fallback_archive := "user://fake-writer/archive/client-4242-1-9000-12000.jsonl"
+	assert_true(writer.file_sizes.has(fallback_archive))
+	assert_false(writer.file_sizes.has("user://fake-writer/active/client-4242-1.jsonl.open"))
+	assert_eq(writer.clean_marker_write_calls, 0)
+
+
+func test_configuration_recovers_dead_process_active_file_uses_current_clock_when_modified_time_is_unavailable() -> void:
+	var writer := FakeFilesystemWriter.new()
+	writer.fake_now = 5555
+	var stale_path := "user://fake-writer/active/client-9001.jsonl.open"
+	writer.file_sizes[stale_path] = 9
+
+	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": false}))
+
+	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client-9001.jsonl.open -> user://fake-writer/archive/client-9001-5555-5555.jsonl"])
+	assert_eq(writer.file_sizes["user://fake-writer/archive/client-9001-5555-5555.jsonl"], 9)
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
 
 
 func test_configuration_applies_retention_age_cleanup_after_open() -> void:
@@ -341,17 +409,17 @@ func test_write_line_rotates_when_segment_size_would_be_exceeded() -> void:
 
 	writer.write_line("ab")
 
-	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client.jsonl.open -> user://fake-writer/archive/client-1000-2000.jsonl"])
+	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client-4242.jsonl.open -> user://fake-writer/archive/client-4242-1000-2000.jsonl"])
 	assert_eq(writer.opened_paths, [
-		"user://fake-writer/active/client.jsonl.open",
-		"user://fake-writer/active/client.jsonl.open",
+		"user://fake-writer/active/client-4242.jsonl.open",
+		"user://fake-writer/active/client-4242.jsonl.open",
 	])
 	assert_eq(writer.handles.size(), 2)
 	assert_eq(writer.handles[0].close_calls, 1)
 	assert_eq(writer.handles[0].lines, [])
 	assert_eq(writer.handles[1].lines, ["ab"])
-	assert_eq(writer.current_path, "user://fake-writer/active/client.jsonl.open")
-	assert_eq(writer.file_sizes["user://fake-writer/archive/client-1000-2000.jsonl"], 10)
+	assert_eq(writer.current_path, "user://fake-writer/active/client-4242.jsonl.open")
+	assert_eq(writer.file_sizes["user://fake-writer/archive/client-4242-1000-2000.jsonl"], 10)
 	assert_eq(writer.file_sizes[writer.current_path], 3)
 
 
@@ -369,15 +437,15 @@ func test_write_line_rotates_when_segment_age_expires() -> void:
 
 	writer.write_line("age")
 
-	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client.jsonl.open -> user://fake-writer/archive/client-1000-3500.jsonl"])
+	assert_eq(writer.renamed_paths, ["user://fake-writer/active/client-4242.jsonl.open -> user://fake-writer/archive/client-4242-1000-3500.jsonl"])
 	assert_eq(writer.opened_paths, [
-		"user://fake-writer/active/client.jsonl.open",
-		"user://fake-writer/active/client.jsonl.open",
+		"user://fake-writer/active/client-4242.jsonl.open",
+		"user://fake-writer/active/client-4242.jsonl.open",
 	])
 	assert_eq(writer.handles.size(), 2)
 	assert_eq(writer.handles[0].close_calls, 1)
 	assert_eq(writer.handles[1].lines, ["age"])
-	assert_eq(writer.file_sizes["user://fake-writer/archive/client-1000-3500.jsonl"], 0)
+	assert_eq(writer.file_sizes["user://fake-writer/archive/client-4242-1000-3500.jsonl"], 0)
 	assert_eq(writer.file_sizes[writer.current_path], 4)
 func test_rotation_compresses_completed_segment_when_enabled() -> void:
 	var writer := FakeFilesystemWriter.new()
@@ -391,7 +459,7 @@ func test_rotation_compresses_completed_segment_when_enabled() -> void:
 	}))
 	writer.fake_now = 2000
 	writer.write_line("ab")
-	var archive_path := "user://fake-writer/archive/client-1000-2000.jsonl"
+	var archive_path := "user://fake-writer/archive/client-4242-1000-2000.jsonl"
 	assert_eq(writer.compressed_paths, [archive_path])
 	assert_false(writer.file_sizes.has(archive_path))
 	assert_true(writer.file_sizes.has("%s.gz" % archive_path))
@@ -410,7 +478,7 @@ func test_rotation_keeps_completed_segment_uncompressed_when_disabled() -> void:
 	}))
 	writer.fake_now = 2000
 	writer.write_line("ab")
-	var archive_path := "user://fake-writer/archive/client-1000-2000.jsonl"
+	var archive_path := "user://fake-writer/archive/client-4242-1000-2000.jsonl"
 	assert_true(writer.compressed_paths.is_empty())
 	assert_true(writer.file_sizes.has(archive_path))
 	assert_false(writer.file_sizes.has("%s.gz" % archive_path))
@@ -419,11 +487,11 @@ func test_rotation_keeps_completed_segment_uncompressed_when_disabled() -> void:
 func test_interrupted_active_recovery_compresses_completed_segment() -> void:
 	var writer := FakeFilesystemWriter.new()
 	writer.fake_now = 9000
-	var active_path := "user://fake-writer/active/client.jsonl.open"
+	var active_path := "user://fake-writer/active/client-9001.jsonl.open"
 	writer.file_sizes[active_path] = 17
 	writer.file_modified_times[active_path] = 7000
 	assert_true(writer.configure("user://fake-writer", "client", {"compression_enabled": true}))
-	var archive_path := "user://fake-writer/archive/client-7000-9000.jsonl"
+	var archive_path := "user://fake-writer/archive/client-9001-7000-9000.jsonl"
 	assert_eq(writer.compressed_paths, [archive_path])
 	assert_false(writer.file_sizes.has(archive_path))
 	assert_true(writer.file_sizes.has("%s.gz" % archive_path))

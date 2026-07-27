@@ -245,7 +245,14 @@ func test_real_file_output_writes_canonical_jsonl_line() -> void:
 		{"raw_bytes": 42}
 	)
 	ClientLogger.close_file_output()
-	var file = FileAccess.open(path, FileAccess.READ)
+	assert_false(FileAccess.file_exists(path))
+	var archive_files := _matching_archive_files(TEST_LOG_PREFIX)
+	assert_eq(archive_files.size(), 1)
+	var file = FileAccess.open_compressed(
+		archive_files[0],
+		FileAccess.READ,
+		FileAccess.COMPRESSION_GZIP
+	)
 	assert_ne(file, null)
 	var parsed = JSON.parse_string(file.get_as_text().strip_edges())
 	assert_true(parsed is Dictionary)
@@ -328,6 +335,24 @@ func test_emit_canonical_respects_level_off_and_category_overrides() -> void:
 	result = ClientLogger.emit_canonical(Contract.EVENT_CLIENT_STARTED)
 	assert_true(result.get("suppressed", false))
 	assert_eq(writer.written_lines.size(), 0)
+
+
+func _matching_archive_files(prefix: String) -> Array[String]:
+	var files: Array[String] = []
+	var archive_path := TEST_LOG_DIR.path_join("archive")
+	var dir := DirAccess.open(archive_path)
+	if dir == null:
+		return files
+	dir.list_dir_begin()
+	while true:
+		var entry := dir.get_next()
+		if entry == "":
+			break
+		if !dir.current_is_dir() and entry.begins_with(prefix) and entry.ends_with(".jsonl.gz"):
+			files.append(archive_path.path_join(entry))
+	dir.list_dir_end()
+	files.sort()
+	return files
 
 
 func _valid_uuid(value: String) -> bool:
