@@ -110,6 +110,7 @@ class FakeGameplayComposition extends GameplayComposition:
 	var devtools_states: Array = []
 	var restore_calls := 0
 	var reset_calls := 0
+	var game_over := false
 
 	func _init() -> void:
 		gameplay_shell_flow = FakeGameplayShellFlow.new()
@@ -139,6 +140,9 @@ class FakeGameplayComposition extends GameplayComposition:
 
 	func reset() -> void:
 		reset_calls += 1
+
+	func is_game_over() -> bool:
+		return game_over
 
 
 class FakeNotReadyGameplayReadiness:
@@ -285,6 +289,18 @@ func test_begin_accepting_gameplay_packets_activates_presentation_bridge() -> vo
 
 	assert_true(controller.accepts_gameplay_packets)
 	assert_eq(presentation_bridge.active_calls, 1)
+
+
+func test_camera_zoom_is_disabled_after_game_over() -> void:
+	var setup = _make_controller(true)
+	var controller: GameplaySessionController = setup["controller"]
+	var gameplay_composition: FakeGameplayComposition = setup["gameplay_composition"]
+
+	controller.accepts_gameplay_packets = true
+	assert_true(controller.is_camera_zoom_active())
+
+	gameplay_composition.game_over = true
+	assert_false(controller.is_camera_zoom_active())
 
 
 func test_reset_delegates_to_presentation_bridge() -> void:

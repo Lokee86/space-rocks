@@ -87,6 +87,12 @@ func is_gameplay_active() -> bool:
 	return accepts_gameplay_packets
 
 
+func is_camera_zoom_active() -> bool:
+	return accepts_gameplay_packets \
+		&& gameplay_composition != null \
+		&& !gameplay_composition.is_game_over()
+
+
 func handle_player_pause_state(packet: Dictionary) -> void:
 	if !accepts_gameplay_packets:
 		return

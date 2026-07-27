@@ -117,6 +117,10 @@ func handle_alive_restored() -> void:
 		menu_flow.set_alive()
 
 
+func is_game_over() -> bool:
+	return room_match_over_handled || local_player_eliminated_handled
+
+
 func reset() -> void:
 	room_match_over_handled = false
 	local_player_eliminated_handled = false

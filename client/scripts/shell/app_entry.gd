@@ -269,15 +269,15 @@ func _setup_gameplay_camera() -> void:
 	gameplay_camera_controller.configure(
 		gameplay_camera,
 		Callable(client_config_controller, "send_client_config"),
-		Callable(self, "_is_gameplay_active")
+		Callable(self, "_is_camera_zoom_active")
 	)
 	client_config_controller.configure_visible_world_size_provider(
 		Callable(gameplay_camera_controller, "visible_world_size")
 	)
 
 
-func _is_gameplay_active() -> bool:
-	return gameplay_session_controller != null && gameplay_session_controller.is_gameplay_active()
+func _is_camera_zoom_active() -> bool:
+	return gameplay_session_controller != null && gameplay_session_controller.is_camera_zoom_active()
 
 
 func _connect_main_menu_signals() -> void:

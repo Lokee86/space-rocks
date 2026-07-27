@@ -216,6 +216,11 @@ func refresh_match_end_state() -> void:
 func refresh_game_over_menu_state() -> void:
 	refresh_match_end_state()
 
+
+func is_game_over() -> bool:
+	return match_end_flow != null && match_end_flow.is_game_over()
+
+
 func _connect_gameplay_shell_signal(signal_name: StringName, handler: Callable) -> void:
 	if gameplay_shell_flow == null:
 		return
