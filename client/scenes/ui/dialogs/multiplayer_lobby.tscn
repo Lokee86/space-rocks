@@ -45,13 +45,36 @@ patch_margin_top = 82
 patch_margin_right = 72
 patch_margin_bottom = 68
 
+[node name="CenterContainer2" type="CenterContainer" parent="CenterContainer/WindowFrame"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -33.0
+offset_right = 33.0
+offset_bottom = 69.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/CenterContainer2"]
+layout_mode = 2
+theme_override_constants/margin_top = 80
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/WindowFrame/CenterContainer2/MarginContainer"]
+layout_mode = 2
+text = "Lobby"
+label_settings = ExtResource("2_label")
+horizontal_alignment = 1
+mouse_filter = 2
+
 [node name="ContentMargin" type="MarginContainer" parent="CenterContainer/WindowFrame"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 58.0
-offset_top = 62.0
+offset_top = 95.0
 offset_right = -58.0
 offset_bottom = -84.0
 grow_horizontal = 2
@@ -60,12 +83,6 @@ grow_vertical = 2
 [node name="Content" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
-
-[node name="TitleLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-layout_mode = 2
-text = "Lobby"
-label_settings = ExtResource("2_label")
-horizontal_alignment = 1
 
 [node name="RoomInfo" type="GridContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
 layout_mode = 2
@@ -154,7 +171,6 @@ horizontal_alignment = 2
 custom_minimum_size = Vector2(0, 162)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 9.0
 horizontal_scroll_mode = 1
 
 [node name="PlayerListContainer" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerScroll"]
@@ -162,11 +178,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 3
-
-[node name="RosterBottomSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-layout_mode = 2
-size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
 
 [node name="Actions" type="HFlowContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
 layout_mode = 2
@@ -178,15 +189,22 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
 clip_contents = true
-[node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "READY"
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "\nREADY"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
 mouse_filter = 2
@@ -196,15 +214,22 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
 clip_contents = true
-[node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "START"
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "\nSTART"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
 mouse_filter = 2
@@ -214,15 +239,22 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
 clip_contents = true
-[node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "ADD BOT"
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "\nADD BOT"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
 mouse_filter = 2
@@ -232,19 +264,26 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
 clip_contents = true
-[node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
+[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "LEAVE"
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton/CenterContainer/MarginContainer"]
+layout_mode = 2
+text = "\nLEAVE"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
 mouse_filter = 2
 
 [node name="ActionBottomSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-custom_minimum_size = Vector2(0, 12)
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
