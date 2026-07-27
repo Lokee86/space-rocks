@@ -9,6 +9,7 @@ signal room_error_received(packet: Dictionary)
 signal world_full_received(packet: Dictionary)
 signal world_delta_received(packet: Dictionary)
 signal ship_delta_received(packet: Dictionary)
+signal player_locator_received(packet: Dictionary)
 signal ships_lifecycle_received(packet: Dictionary)
 signal asteroid_delta_received(packet: Dictionary)
 signal bullet_delta_received(packet: Dictionary)
@@ -45,6 +46,8 @@ func dispatch(packet: Dictionary) -> void:
 		world_delta_received.emit(packet)
 	elif ServerPacketRouter.is_ship_delta(packet):
 		ship_delta_received.emit(packet)
+	elif ServerPacketRouter.is_player_locator(packet):
+		player_locator_received.emit(packet)
 	elif ServerPacketRouter.is_ships_lifecycle(packet):
 		ships_lifecycle_received.emit(packet)
 	elif ServerPacketRouter.is_asteroid_delta(packet):

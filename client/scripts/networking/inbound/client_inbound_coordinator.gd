@@ -28,6 +28,7 @@ func configure(dispatcher, pipeline, transport_session = null) -> void:
 	_connect_dispatcher_signal("world_full_received", Callable(realtime_packet_pipeline, "apply_world_full"))
 	_connect_dispatcher_signal("world_delta_received", Callable(realtime_packet_pipeline, "apply_world_delta"))
 	_connect_dispatcher_signal("ship_delta_received", Callable(realtime_packet_pipeline, "apply_ship_delta"))
+	_connect_dispatcher_signal("player_locator_received", Callable(realtime_packet_pipeline, "apply_player_locator"))
 	_connect_dispatcher_signal("ships_lifecycle_received", Callable(realtime_packet_pipeline, "apply_ships_lifecycle"))
 	_connect_dispatcher_signal("asteroid_delta_received", Callable(realtime_packet_pipeline, "apply_asteroid_delta"))
 	_connect_dispatcher_signal("bullet_delta_received", Callable(realtime_packet_pipeline, "apply_bullet_delta"))

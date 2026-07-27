@@ -32,6 +32,7 @@ class FakeRealtimePipeline:
 	func apply_world_full(packet: Dictionary) -> void: _record("apply_world_full", packet)
 	func apply_world_delta(packet: Dictionary) -> void: _record("apply_world_delta", packet)
 	func apply_ship_delta(packet: Dictionary) -> void: _record("apply_ship_delta", packet)
+	func apply_player_locator(packet: Dictionary) -> void: _record("apply_player_locator", packet)
 	func apply_ships_lifecycle(packet: Dictionary) -> void: _record("apply_ships_lifecycle", packet)
 	func apply_asteroid_delta(packet: Dictionary) -> void: _record("apply_asteroid_delta", packet)
 	func apply_bullet_delta(packet: Dictionary) -> void: _record("apply_bullet_delta", packet)
@@ -78,8 +79,9 @@ func test_realtime_packets_route_to_pipeline_unchanged() -> void:
 	var routes := {
 		"world_full_received": ["apply_world_full", {"type": "world_full", "sequence": 1}],
 		"ship_delta_received": ["apply_ship_delta", {"type": "ship_delta", "sequence": 2}],
-		"ships_lifecycle_received": ["apply_ships_lifecycle", {"type": "ships_lifecycle", "sequence": 3}],
-		"event_batch_received": ["apply_event_batch", {"type": "event_batch", "sequence": 2}],
+		"player_locator_received": ["apply_player_locator", {"type": "player_locator", "sequence": 3}],
+		"ships_lifecycle_received": ["apply_ships_lifecycle", {"type": "ships_lifecycle", "sequence": 4}],
+		"event_batch_received": ["apply_event_batch", {"type": "event_batch", "sequence": 5}],
 		"resync_required_received": ["apply_resync_required", {"type": "resync_required", "lane": "world"}],
 	}
 	for signal_name in routes:

@@ -35,6 +35,10 @@ static func is_ship_delta(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_SHIP_DELTA
 
 
+static func is_player_locator(packet: Dictionary) -> bool:
+	return packet_type(packet) == Packets.TYPE_PLAYER_LOCATOR
+
+
 static func is_ships_lifecycle(packet: Dictionary) -> bool:
 	return packet_type(packet) == Packets.TYPE_SHIPS_LIFECYCLE
 

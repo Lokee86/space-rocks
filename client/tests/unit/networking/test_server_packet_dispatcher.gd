@@ -6,19 +6,23 @@ const AsteroidSync := preload("res://scripts/world/asteroid_sync.gd")
 const ProjectileSync := preload("res://scripts/world/projectile_sync.gd")
 
 
-func test_dispatcher_emits_ship_hot_and_lifecycle_packets() -> void:
+func test_dispatcher_emits_ship_hot_locator_and_lifecycle_packets() -> void:
 	var dispatcher := ServerPacketDispatcher.new()
 	var hot_packets: Array = []
+	var locator_packets: Array = []
 	var lifecycle_packets: Array = []
 	add_child_autofree(dispatcher)
 	dispatcher.ship_delta_received.connect(func(packet: Dictionary) -> void: hot_packets.append(packet))
+	dispatcher.player_locator_received.connect(func(packet: Dictionary) -> void: locator_packets.append(packet))
 	dispatcher.ships_lifecycle_received.connect(func(packet: Dictionary) -> void: lifecycle_packets.append(packet))
 
 	dispatcher.dispatch({"type": "ship_delta", "sequence": 1})
-	dispatcher.dispatch({"type": "ships_lifecycle", "sequence": 2})
+	dispatcher.dispatch({"type": "player_locator", "sequence": 2})
+	dispatcher.dispatch({"type": "ships_lifecycle", "sequence": 3})
 
 	assert_eq(hot_packets, [{"type": "ship_delta", "sequence": 1}])
-	assert_eq(lifecycle_packets, [{"type": "ships_lifecycle", "sequence": 2}])
+	assert_eq(locator_packets, [{"type": "player_locator", "sequence": 2}])
+	assert_eq(lifecycle_packets, [{"type": "ships_lifecycle", "sequence": 3}])
 
 
 func test_dispatcher_emits_asteroid_delta_received() -> void:
