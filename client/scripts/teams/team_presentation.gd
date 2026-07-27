@@ -7,8 +7,9 @@ const TEAM_IDS := [
 	"team_1", "team_2", "team_3", "team_4",
 	"team_5", "team_6", "team_7", "team_8",
 ]
-const TEAM_HUES := [
-	Constants.REMOTE_PLAYER_HUE_ZERO,
+const TEAM_BASE_COLOR := Color("#FFE938")
+const TEAM_HUE_SHIFTS := [
+	Constants.PLAYER_DEFAULT_HUE,
 	Constants.REMOTE_PLAYER_HUE_ONE,
 	Constants.REMOTE_PLAYER_HUE_TWO,
 	Constants.REMOTE_PLAYER_HUE_THREE,
@@ -29,11 +30,19 @@ static func hue(team_id: String, fallback := Constants.PLAYER_DEFAULT_HUE) -> fl
 	var index := TEAM_IDS.find(team_id)
 	if index < 0:
 		return float(fallback)
-	return float(TEAM_HUES[index])
+	return float(TEAM_HUE_SHIFTS[index])
 
 
 static func color(team_id: String) -> Color:
-	return Color.from_hsv(hue(team_id), 0.72, 1.0)
+	var hue_shift := hue(team_id)
+	if is_zero_approx(hue_shift):
+		return TEAM_BASE_COLOR
+	return Color.from_hsv(
+		fposmod(TEAM_BASE_COLOR.h + hue_shift, 1.0),
+		TEAM_BASE_COLOR.s,
+		TEAM_BASE_COLOR.v,
+		TEAM_BASE_COLOR.a
+	)
 
 
 static func ids_for_count(team_count: int) -> Array:

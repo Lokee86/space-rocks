@@ -1,6 +1,16 @@
 extends GutTest
 
 const PlayerHuePresenter := preload("res://scripts/gameplay/presentation/player_hue_presenter.gd")
+const TeamPresentation := preload("res://scripts/teams/team_presentation.gd")
+
+
+func test_team_one_uses_unshifted_base_color() -> void:
+	assert_eq(TeamPresentation.hue("team_1"), 0.0)
+	assert_eq(TeamPresentation.color("team_1").to_html(false), "ffe938")
+
+
+func test_team_two_swatch_matches_the_base_color_after_its_shader_hue_shift() -> void:
+	assert_eq(TeamPresentation.color("team_2").to_html(false), "38ffe5")
 
 
 func test_remote_hue_for_player_is_deterministic() -> void:
