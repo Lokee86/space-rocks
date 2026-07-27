@@ -35,6 +35,7 @@ type webSocketSession struct {
 	matchResultReporter  rooms.MatchResultReporter
 	// realtimeState is owned exclusively by the write loop and intentionally not guarded by mu.
 	realtimeState            realtime.RealtimeSessionState
+	viewTargetPlayerID       string
 	firstPacketMatchID       string
 	firstInputPacketLogged   bool
 	firstRespawnPacketLogged bool
@@ -82,6 +83,22 @@ func (session *webSocketSession) SetAuthenticatedAccountIdentity(userID int64, a
 	session.mu.Lock()
 	session.identity = NewAuthenticatedAccountIdentity(userID, accountID, displayName)
 	session.mu.Unlock()
+}
+
+func (session *webSocketSession) SetViewTargetPlayerID(playerID string) {
+	session.mu.Lock()
+	session.viewTargetPlayerID = playerID
+	session.mu.Unlock()
+}
+
+func (session *webSocketSession) viewTargetPlayerIDSnapshot() string {
+	session.mu.RLock()
+	defer session.mu.RUnlock()
+	return session.viewTargetPlayerID
+}
+
+func (session *webSocketSession) clearViewTargetPlayerID() {
+	session.SetViewTargetPlayerID("")
 }
 
 func (session *webSocketSession) shouldLogFirstInputPacket(matchID string) bool {

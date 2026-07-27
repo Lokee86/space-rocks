@@ -227,6 +227,9 @@ func apply_world_delta(packet: Dictionary) -> void:
 func apply_ship_delta(packet: Dictionary) -> void:
 	apply_packet(packet)
 
+func apply_player_locator(packet: Dictionary) -> void:
+	apply_packet(packet)
+
 func apply_ships_lifecycle(packet: Dictionary) -> void:
 	apply_packet(packet)
 

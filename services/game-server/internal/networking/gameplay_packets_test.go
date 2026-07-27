@@ -112,6 +112,10 @@ func (a gameplayPacketTestAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
 }
 
+func (a gameplayPacketTestAdapter) SetViewTargetPlayerID(playerID string) {
+	a.session.SetViewTargetPlayerID(playerID)
+}
+
 func (a gameplayPacketTestAdapter) EnqueueResyncRequest(context inbound.SessionContext, request realtime.ResyncRequest) bool {
 	select {
 	case a.session.resyncRequests <- queuedResyncRequest{Request: request, RoomID: context.RoomID, ReceiverID: context.GamePlayerID, MatchID: request.MatchID}:

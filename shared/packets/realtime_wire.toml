@@ -121,6 +121,10 @@ readable = "players"
 compact = "pl"
 [[key_aliases]]
 domain = "wire"
+readable = "player_locators"
+compact = "loc"
+[[key_aliases]]
+domain = "wire"
 readable = "player_session_updates"
 compact = "psu"
 [[key_aliases]]
@@ -363,10 +367,22 @@ compact = "spx"
 domain = "wire"
 readable = "spawn_y"
 compact = "spy"
+[[key_aliases]]
+domain = "wire"
+readable = "velocity_x"
+compact = "vx"
+[[key_aliases]]
+domain = "wire"
+readable = "velocity_y"
+compact = "vy"
+[[key_aliases]]
+domain = "wire"
+readable = "active"
+compact = "act"
 
 [[value_domains]]
 id = "packet_type"
-entries = [{ readable = "world_full", compact = "wf" }, { readable = "world_delta", compact = "wd" }, { readable = "ship_delta", compact = "spd" }, { readable = "ships_lifecycle", compact = "spl" }, { readable = "overlay_full", compact = "of" }, { readable = "overlay_delta", compact = "od" }, { readable = "session_full", compact = "sf" }, { readable = "session_delta", compact = "sd" }, { readable = "asteroid_delta", compact = "ad" }, { readable = "asteroids_lifecycle", compact = "al" }, { readable = "bullet_delta", compact = "bd" }, { readable = "bullets_lifecycle", compact = "bl" }, { readable = "event_batch", compact = "eb" }, { readable = "resync_request", compact = "resync_request" }, { readable = "resync_required", compact = "resync_required" }]
+entries = [{ readable = "world_full", compact = "wf" }, { readable = "world_delta", compact = "wd" }, { readable = "ship_delta", compact = "spd" }, { readable = "player_locator", compact = "ploc" }, { readable = "ships_lifecycle", compact = "spl" }, { readable = "overlay_full", compact = "of" }, { readable = "overlay_delta", compact = "od" }, { readable = "session_full", compact = "sf" }, { readable = "session_delta", compact = "sd" }, { readable = "asteroid_delta", compact = "ad" }, { readable = "asteroids_lifecycle", compact = "al" }, { readable = "bullet_delta", compact = "bd" }, { readable = "bullets_lifecycle", compact = "bl" }, { readable = "event_batch", compact = "eb" }, { readable = "resync_request", compact = "resync_request" }, { readable = "resync_required", compact = "resync_required" }]
 [[value_domains]]
 id = "lane"
 entries = [{ readable = "world", compact = "w" }, { readable = "overlay", compact = "o" }, { readable = "session", compact = "s" }, { readable = "ships", compact = "sh" }, { readable = "ships.lifecycle", compact = "sl" }, { readable = "asteroids", compact = "a" }, { readable = "bullets", compact = "b" }, { readable = "asteroids.lifecycle", compact = "al" }, { readable = "bullets.lifecycle", compact = "bl" }, { readable = "event", compact = "event" }, { readable = "control", compact = "control" }]
@@ -407,6 +423,18 @@ policy = "seconds"
 [[quantizations]]
 path = "overlay.secondary_cooldown_remaining"
 policy = "seconds"
+[[quantizations]]
+path = "player_locator.player_locators.x"
+policy = "position"
+[[quantizations]]
+path = "player_locator.player_locators.y"
+policy = "position"
+[[quantizations]]
+path = "player_locator.player_locators.velocity_x"
+policy = "position"
+[[quantizations]]
+path = "player_locator.player_locators.velocity_y"
+policy = "position"
 [[quantizations]]
 path = "world.ships.x"
 policy = "position"
@@ -626,6 +654,16 @@ infer_snapshot_id = true
 use_baseline_sequence = true
 omit_single_chunk_metadata = true
 [[packets]]
+id = "player_locator"
+compact = "ploc"
+lane = "ships"
+snapshot_kind = "delta"
+runtime = true
+infer_lane = true
+infer_snapshot_kind = true
+infer_snapshot_id = true
+omit_single_chunk_metadata = true
+[[packets]]
 id = "ships_lifecycle"
 compact = "spl"
 lane = "ships.lifecycle"
@@ -794,6 +832,35 @@ quantization = "float_generic"
 [[records.fields]]
 name = "thrusting"
 json = "thrusting"
+
+[[records]]
+id = "player_locator"
+source_struct = "PlayerLocatorState"
+encoding = "fixed_tuple"
+identity_field = "id"
+[[records.fields]]
+name = "id"
+json = "id"
+id_codec = "player_id"
+[[records.fields]]
+name = "x"
+json = "x"
+quantization = "position"
+[[records.fields]]
+name = "y"
+json = "y"
+quantization = "position"
+[[records.fields]]
+name = "velocity_x"
+json = "velocity_x"
+quantization = "position"
+[[records.fields]]
+name = "velocity_y"
+json = "velocity_y"
+quantization = "position"
+[[records.fields]]
+name = "active"
+json = "active"
 
 [[records]]
 id = "ship_lifecycle_update"
@@ -1599,6 +1666,10 @@ record_id = "player_ids"
 packet_id = "ship_delta"
 readable_field = "ship_updates"
 record_id = "ship_update"
+[[packet_fields]]
+packet_id = "player_locator"
+readable_field = "player_locators"
+record_id = "player_locator"
 [[packet_fields]]
 packet_id = "ships_lifecycle"
 readable_field = "ship_creates"

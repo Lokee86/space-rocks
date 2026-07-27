@@ -4,6 +4,8 @@ class_name RealtimeRouter
 const LaneMetadata = preload("res://scripts/protocol/realtime/lane_metadata.gd")
 
 const WorldLaneApplier = preload("res://scripts/protocol/realtime/world_lane_applier.gd")
+const PlayerLocatorState = preload("res://scripts/protocol/realtime/player_locator_state.gd")
+const PlayerLocatorApplier = preload("res://scripts/protocol/realtime/player_locator_applier.gd")
 const OverlayLaneState = preload("res://scripts/protocol/realtime/overlay_lane_state.gd")
 const OverlayLaneApplier = preload("res://scripts/protocol/realtime/overlay_lane_applier.gd")
 
@@ -17,6 +19,7 @@ const CompactLanePacket = preload("res://scripts/protocol/realtime/compact_lane_
 
 
 var world_lane_state := WorldLaneState.new()
+var player_locator_state := PlayerLocatorState.new()
 var overlay_lane_state := OverlayLaneState.new()
 var session_lane_state := SessionLaneState.new()
 var event_batch_applier := EventBatchApplier.new()
@@ -29,6 +32,7 @@ var _asteroid_lifecycle_assembler := LifecycleChunkAssembler.new()
 var _bullet_lifecycle_assembler := LifecycleChunkAssembler.new()
 
 var _world_applier := WorldLaneApplier.new()
+var _player_locator_applier := PlayerLocatorApplier.new()
 var _overlay_applier := OverlayLaneApplier.new()
 var _session_applier := SessionLaneApplier.new()
 
@@ -55,6 +59,8 @@ func route_lane_packet(packet: Dictionary) -> Dictionary:
 			_world_applier.apply_world_delta(world_lane_state, baseline_tracker, LaneMetadata.LANE_WORLD, expanded_packet)
 		"ship_delta":
 			_world_applier.apply_ship_delta(world_lane_state, LaneMetadata.LANE_SHIPS, expanded_packet)
+		"player_locator":
+			_player_locator_applier.apply_player_locator(player_locator_state, expanded_packet)
 		"ships_lifecycle":
 			_route_ships_lifecycle(expanded_packet)
 		"asteroid_delta":
@@ -180,6 +186,7 @@ func _route_bullets_lifecycle(packet: Dictionary) -> void:
 
 func reset() -> void:
 	_world_applier.reset()
+	player_locator_state.reset()
 	_ship_lifecycle_assembler.reset()
 	_asteroid_lifecycle_assembler.reset()
 	_bullet_lifecycle_assembler.reset()

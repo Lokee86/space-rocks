@@ -11,6 +11,7 @@ type gameplayPresentationFrame struct {
 	players         map[string]runtime.ShipState
 	playerSessions  map[string]PlayerSessionState
 	playerLifecycle map[string]string
+	playerLocators  map[string]PlayerLocatorState
 	bullets         map[string]runtime.BulletState
 	asteroids       map[string]runtime.AsteroidState
 	pickups         map[string]runtime.PickupState
@@ -27,6 +28,22 @@ func (game *Game) publishPresentationFrameLocked() {
 			state.TeamID = string(session.TeamID)
 		}
 		players[id] = state
+	}
+
+	playerLocators := make(map[string]PlayerLocatorState, len(game.playerSessions))
+	for id, session := range game.playerSessions {
+		locator := PlayerLocatorState{ID: id, X: session.SpawnPosition.X, Y: session.SpawnPosition.Y}
+		if ship := game.entities.Players[id]; ship != nil && !ship.IsPendingDespawn() {
+			locator.X = ship.X
+			locator.Y = ship.Y
+			locator.VelocityX = ship.Velocity.X
+			locator.VelocityY = ship.Velocity.Y
+			locator.Active = true
+		} else if view := game.cameraViews[id]; view != nil {
+			locator.X = view.X
+			locator.Y = view.Y
+		}
+		playerLocators[id] = locator
 	}
 
 	matchDecision := game.matchDecisionLocked()
@@ -54,6 +71,7 @@ func (game *Game) publishPresentationFrameLocked() {
 		players:         players,
 		playerSessions:  game.playerSessionStatesLocked(),
 		playerLifecycle: playerLifecycle,
+		playerLocators:  playerLocators,
 		bullets:         bullets,
 		asteroids:       asteroids,
 		pickups:         game.pickupStatesLocked(),
@@ -70,6 +88,9 @@ type GameplayPresentationSnapshot struct {
 	Players         map[string]runtime.ShipState
 	PlayerSessions  map[string]PlayerSessionState
 	PlayerLifecycle map[string]string
+	PlayerLocators  map[string]PlayerLocatorState
+	CameraView      runtime.CameraView
+	HasCameraView   bool
 	Bullets         map[string]runtime.BulletState
 	Asteroids       map[string]runtime.AsteroidState
 	Pickups         map[string]runtime.PickupState
@@ -91,6 +112,12 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 	pending := game.pendingPresentationEvents[playerID]
 	pendingEvents := make([]PendingPresentationEvent, len(pending))
 	copy(pendingEvents, pending)
+	cameraView := runtime.CameraView{}
+	hasCameraView := false
+	if view := game.cameraViews[playerID]; view != nil {
+		cameraView = *view
+		hasCameraView = true
+	}
 	game.mu.Unlock()
 
 	lives := 0
@@ -104,6 +131,9 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 		Players:         frame.players,
 		PlayerSessions:  frame.playerSessions,
 		PlayerLifecycle: frame.playerLifecycle,
+		PlayerLocators:  frame.playerLocators,
+		CameraView:      cameraView,
+		HasCameraView:   hasCameraView,
 		Bullets:         frame.bullets,
 		Asteroids:       frame.asteroids,
 		Pickups:         frame.pickups,

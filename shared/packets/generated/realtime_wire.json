@@ -315,6 +315,11 @@
       "readable": "players"
     },
     {
+      "compact": "loc",
+      "domain": "wire",
+      "readable": "player_locators"
+    },
+    {
       "compact": "psu",
       "domain": "wire",
       "readable": "player_session_updates"
@@ -618,6 +623,21 @@
       "compact": "spy",
       "domain": "wire",
       "readable": "spawn_y"
+    },
+    {
+      "compact": "vx",
+      "domain": "wire",
+      "readable": "velocity_x"
+    },
+    {
+      "compact": "vy",
+      "domain": "wire",
+      "readable": "velocity_y"
+    },
+    {
+      "compact": "act",
+      "domain": "wire",
+      "readable": "active"
     }
   ],
   "packet_fields": [
@@ -668,6 +688,12 @@
       "packet_id": "ship_delta",
       "readable_field": "ship_updates",
       "record_id": "ship_update"
+    },
+    {
+      "decode_record_ids": [],
+      "packet_id": "player_locator",
+      "readable_field": "player_locators",
+      "record_id": "player_locator"
     },
     {
       "decode_record_ids": [
@@ -891,6 +917,19 @@
       "use_baseline_sequence": true
     },
     {
+      "compact": "ploc",
+      "id": "player_locator",
+      "infer_baseline_id": false,
+      "infer_lane": true,
+      "infer_snapshot_id": true,
+      "infer_snapshot_kind": true,
+      "lane": "ships",
+      "omit_single_chunk_metadata": true,
+      "runtime": true,
+      "snapshot_kind": "delta",
+      "use_baseline_sequence": false
+    },
+    {
       "compact": "spl",
       "id": "ships_lifecycle",
       "infer_baseline_id": false,
@@ -1087,6 +1126,22 @@
     {
       "path": "overlay.secondary_cooldown_remaining",
       "policy": "seconds"
+    },
+    {
+      "path": "player_locator.player_locators.x",
+      "policy": "position"
+    },
+    {
+      "path": "player_locator.player_locators.y",
+      "policy": "position"
+    },
+    {
+      "path": "player_locator.player_locators.velocity_x",
+      "policy": "position"
+    },
+    {
+      "path": "player_locator.player_locators.velocity_y",
+      "policy": "position"
     },
     {
       "path": "world.ships.x",
@@ -1359,6 +1414,65 @@
       "source_struct": "ShipState",
       "sparse_placeholder": null,
       "sparse_trailing": true
+    },
+    {
+      "encoding": "fixed_tuple",
+      "fields": [
+        {
+          "id_codec": "player_id",
+          "id_codec_by": null,
+          "json": "id",
+          "name": "id",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "x",
+          "name": "x",
+          "quantization": "position",
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "y",
+          "name": "y",
+          "quantization": "position",
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "velocity_x",
+          "name": "velocity_x",
+          "quantization": "position",
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "velocity_y",
+          "name": "velocity_y",
+          "quantization": "position",
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "active",
+          "name": "active",
+          "quantization": null,
+          "value_domain": null
+        }
+      ],
+      "id": "player_locator",
+      "identity_field": "id",
+      "preserve_unknown_fields": false,
+      "source_struct": "PlayerLocatorState",
+      "sparse_placeholder": null,
+      "sparse_trailing": false
     },
     {
       "encoding": "map",
@@ -3081,6 +3195,10 @@
         {
           "compact": "spd",
           "readable": "ship_delta"
+        },
+        {
+          "compact": "ploc",
+          "readable": "player_locator"
         },
         {
           "compact": "spl",

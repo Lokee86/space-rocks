@@ -263,7 +263,7 @@ func _configure_gameplay_presentation_flow() -> void:
 		hud,
 		player,
 		Callable(self, "_active_camera"),
-		Callable(world_sync, "get_remote_player_visual_positions"),
+		Callable(world_sync, "get_remote_player_indicator_positions"),
 		Callable(world_sync, "get_remote_player_hues")
 	)
 

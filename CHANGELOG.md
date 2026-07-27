@@ -9,6 +9,7 @@ All notable player-facing changes to Space Rocks are recorded here.
 - Server-owned player bots with lobby add/remove controls and normal gameplay, death, respawn, scoring, and team participation.
 - Team game support across room creation, lobby assignment, gameplay state, HUD presentation, and match results.
 - Player-controlled camera zoom with world-space background scaling.
+- Recipient-specific network interest with coarse player locators for off-screen indicators and spectate camera anchoring.
 
 ### Changed
 

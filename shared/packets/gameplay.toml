@@ -80,6 +80,13 @@ type = "string"
 
 [[structs.fields]]
 
+name = "view_target_player_id"
+go_name = "ViewTargetPlayerID"
+json = "view_target_player_id"
+type = "string"
+
+[[structs.fields]]
+
 name = "team_id"
 json = "team_id"
 type = "string"
@@ -340,6 +347,48 @@ name = "secondary_ammo_remaining"
 go_name = "SecondaryAmmoRemaining"
 json = "secondary_ammo_remaining"
 type = "int"
+
+[[structs]]
+
+id = "PlayerLocatorState"
+
+[[structs.fields]]
+
+name = "id"
+json = "id"
+type = "string"
+
+[[structs.fields]]
+
+name = "x"
+json = "x"
+type = "float"
+
+[[structs.fields]]
+
+name = "y"
+json = "y"
+type = "float"
+
+[[structs.fields]]
+
+name = "velocity_x"
+go_name = "VelocityX"
+json = "velocity_x"
+type = "float"
+
+[[structs.fields]]
+
+name = "velocity_y"
+go_name = "VelocityY"
+json = "velocity_y"
+type = "float"
+
+[[structs.fields]]
+
+name = "active"
+json = "active"
+type = "bool"
 
 [[structs]]
 
@@ -739,6 +788,16 @@ value = "clear_target_request"
 
 [[packet_types]]
 
+id = "set_view_target_request"
+value = "set_view_target_request"
+
+[[packet_types]]
+
+id = "clear_view_target_request"
+value = "clear_view_target_request"
+
+[[packet_types]]
+
 id = "world_full"
 value = "world_full"
 
@@ -751,6 +810,11 @@ value = "world_delta"
 
 id = "ship_delta"
 value = "ship_delta"
+
+[[packet_types]]
+
+id = "player_locator"
+value = "player_locator"
 
 [[packet_types]]
 
@@ -876,6 +940,24 @@ id = "clear_target_request_packet"
 [builders.body]
 
 type = "clear_target_request"
+
+[[builders]]
+
+id = "set_view_target_request_packet"
+args = ["view_target_player_id"]
+
+[builders.body]
+
+type = "set_view_target_request"
+view_target_player_id = "$view_target_player_id"
+
+[[builders]]
+
+id = "clear_view_target_request_packet"
+
+[builders.body]
+
+type = "clear_view_target_request"
 
 [[builders]]
 

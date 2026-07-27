@@ -10,7 +10,10 @@ var realtimeLanePayloadFamilyMatrix = map[Lane]map[RealtimeLaneCandidateKind]map
 	LaneOverlay: {RealtimeLaneCandidateKindFull: {PacketFamilyOverlayFull: {}}, RealtimeLaneCandidateKindDelta: {PacketFamilyOverlayDelta: {}}},
 	LaneSession: {RealtimeLaneCandidateKindFull: {PacketFamilySessionFull: {}}, RealtimeLaneCandidateKindDelta: {PacketFamilySessionDelta: {}}},
 	LaneShips: {
-		RealtimeLaneCandidateKindDelta: {PacketFamilyShipDelta: {}},
+		RealtimeLaneCandidateKindDelta: {
+			PacketFamilyShipDelta:     {},
+			PacketFamilyPlayerLocator: {},
+		},
 	},
 	LaneShipsLifecycle: {
 		RealtimeLaneCandidateKindDelta: {PacketFamilyShipsLifecycle: {}},
@@ -44,6 +47,7 @@ var realtimeLanePayloadTypes = map[reflect.Type]struct{}{
 	reflect.TypeOf(SessionLaneDelta{}):        {},
 	reflect.TypeOf(SessionWireLaneDelta{}):    {},
 	reflect.TypeOf(ShipWireDeltaPacket{}):     {},
+	reflect.TypeOf(PlayerLocatorPacket{}):     {},
 	reflect.TypeOf(AsteroidWireDeltaPacket{}): {},
 	reflect.TypeOf(BulletWireDeltaPacket{}):   {},
 	reflect.TypeOf(EventBatchPacket{}):        {},

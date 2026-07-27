@@ -14,6 +14,7 @@ var pickup_sync
 var player_render_api
 var target_position_source
 var world_lane_state
+var player_locator_state
 var view_anchor: Node2D
 var local_player: Player
 var current_self_id := ""
@@ -146,6 +147,7 @@ func reset() -> void:
 	if pickup_sync != null:
 		pickup_sync.reset()
 	world_lane_state = null
+	player_locator_state = null
 	clear_view_target_player()
 
 
@@ -201,10 +203,44 @@ func interpolate(delta: float) -> void:
 	pickup_sync.interpolate(weight)
 
 
+func apply_player_locator_state(player_locator_state_ref) -> void:
+	player_locator_state = player_locator_state_ref
+
+
 func get_remote_player_visual_positions() -> Dictionary:
 	if player_render_api == null:
 		return {}
 	return player_render_api.get_remote_player_visual_positions(current_self_id)
+
+
+func get_remote_player_indicator_positions() -> Dictionary:
+	var positions := get_remote_player_visual_positions().duplicate()
+	if player_locator_state == null or player_render_api == null:
+		return positions
+	var received_msec := int(player_locator_state.received_msec)
+	if received_msec <= 0:
+		return positions
+	var age_seconds := float(Time.get_ticks_msec() - received_msec) / 1000.0
+	if age_seconds > Constants.PLAYER_LOCATOR_STALE_SECONDS:
+		return positions
+	var extrapolation_seconds: float = min(age_seconds, Constants.PLAYER_LOCATOR_MAX_EXTRAPOLATION_SECONDS)
+	for player_id in player_locator_state.player_locators.keys():
+		var id := str(player_id)
+		if id == current_self_id or positions.has(id):
+			continue
+		var locator = player_locator_state.player_locators[player_id]
+		if not (locator is Dictionary) or not bool(locator.get("active", false)):
+			continue
+		var server_position := Vector2(
+			float(locator.get("x", 0.0)),
+			float(locator.get("y", 0.0))
+		)
+		server_position += Vector2(
+			float(locator.get("velocity_x", 0.0)),
+			float(locator.get("velocity_y", 0.0))
+		) * extrapolation_seconds
+		positions[id] = player_render_api.visual_position_for_server_position(server_position)
+	return positions
 
 
 func get_remote_player_hues() -> Dictionary:

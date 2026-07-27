@@ -1,12 +1,10 @@
 package game
 
 import (
-	"math"
-
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/visibility"
 )
 
 func (game *Game) randomAsteroidSpawnPosition(targetView *runtime.CameraView) physics.Vector2 {
@@ -92,21 +90,15 @@ func (game *Game) hasCameraViews() bool {
 }
 
 func isInsideCameraView(view *runtime.CameraView, position physics.Vector2) bool {
-	delta := space.Delta(view.Position(), position)
-	return math.Abs(delta.X) <= view.VisibleWorldWidth()*0.5 &&
-		math.Abs(delta.Y) <= view.VisibleWorldHeight()*0.5
+	return view != nil && visibility.Contains(*view, position, 0)
 }
 
 func isInsideCameraViewWithMargin(view *runtime.CameraView, position physics.Vector2, margin float64) bool {
-	delta := space.Delta(view.Position(), position)
-	return math.Abs(delta.X) < view.VisibleWorldWidth()*0.5+margin &&
-		math.Abs(delta.Y) < view.VisibleWorldHeight()*0.5+margin
+	return view != nil && visibility.ContainsStrict(*view, position, margin)
 }
 
 func isFarFromCameraView(view *runtime.CameraView, position physics.Vector2) bool {
-	delta := space.Delta(view.Position(), position)
-	return math.Abs(delta.X) > view.VisibleWorldWidth()*0.5+constants.AsteroidDespawnMargin ||
-		math.Abs(delta.Y) > view.VisibleWorldHeight()*0.5+constants.AsteroidDespawnMargin
+	return view == nil || visibility.Outside(*view, position, constants.AsteroidDespawnMargin)
 }
 
 func (game *Game) randomRange(minValue float64, maxValue float64) float64 {

@@ -199,8 +199,6 @@ func player_nodes() -> Dictionary:
 func remove_missing(server_players: Dictionary, self_id: String) -> void:
 	var removed_player_ids := player_lifecycle.remove_missing(server_players, self_id)
 	for player_id in removed_player_ids:
-		if player_id == view_target_player_id:
-			clear_view_target_player()
 		player_targets.erase_player(player_id)
 		player_hue_presenter.remove_player(player_id)
 

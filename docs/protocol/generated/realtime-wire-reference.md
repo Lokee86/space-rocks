@@ -24,6 +24,7 @@ Parent index: [Generated](./!INDEX.md)
 | Domain | Readable | Compact |
 | --- | --- | --- |
 | wire | `absorbed_by_shield` | `abs` |
+| wire | `active` | `act` |
 | wire | `age_seconds` | `age` |
 | wire | `amount` | `amt` |
 | wire | `applied_to_health` | `ah` |
@@ -64,6 +65,7 @@ Parent index: [Generated](./!INDEX.md)
 | wire | `player_lifecycle` | `plc` |
 | wire | `player_lifecycle_deletes` | `plx` |
 | wire | `player_lifecycle_updates` | `plu` |
+| wire | `player_locators` | `loc` |
 | wire | `player_session_deletes` | `psx` |
 | wire | `player_session_updates` | `psu` |
 | wire | `players` | `pl` |
@@ -111,6 +113,8 @@ Parent index: [Generated](./!INDEX.md)
 | wire | `total_asteroids` | `ta` |
 | wire | `type` | `t` |
 | wire | `variant` | `v` |
+| wire | `velocity_x` | `vx` |
+| wire | `velocity_y` | `vy` |
 | wire | `weapon_id` | `wid` |
 
 ## Value domains
@@ -157,6 +161,7 @@ Parent index: [Generated](./!INDEX.md)
 | `event_batch` | `eb` |
 | `overlay_delta` | `od` |
 | `overlay_full` | `of` |
+| `player_locator` | `ploc` |
 | `resync_request` | `resync_request` |
 | `resync_required` | `resync_required` |
 | `session_delta` | `sd` |
@@ -219,6 +224,10 @@ Parent index: [Generated](./!INDEX.md)
 | `overlay.primary_cooldown_remaining` | `seconds` |
 | `overlay.respawn_cooldown` | `seconds` |
 | `overlay.secondary_cooldown_remaining` | `seconds` |
+| `player_locator.player_locators.velocity_x` | `position` |
+| `player_locator.player_locators.velocity_y` | `position` |
+| `player_locator.player_locators.x` | `position` |
+| `player_locator.player_locators.y` | `position` |
 | `session.duration` | `seconds` |
 | `session.elapsed` | `seconds` |
 | `session.lifetime` | `seconds` |
@@ -251,6 +260,7 @@ Parent index: [Generated](./!INDEX.md)
 | `event_batch` | `eb` | `event` | `` | `false` |
 | `overlay_delta` | `od` | `overlay` | `delta` | `true` |
 | `overlay_full` | `of` | `overlay` | `full` | `true` |
+| `player_locator` | `ploc` | `ships` | `delta` | `true` |
 | `resync_request` | `resync_request` | `control` | `` | `false` |
 | `resync_required` | `resync_required` | `control` | `` | `false` |
 | `session_delta` | `sd` | `session` | `delta` | `true` |
@@ -712,6 +722,24 @@ Parent index: [Generated](./!INDEX.md)
 | `player_id` | `player_id` | `` | `player_id` | `` | `` |
 | `status` | `status` | `` | `` | `` | `` |
 
+### `player_locator`
+
+- Encoding: `fixed_tuple`
+- Source struct: `PlayerLocatorState`
+- Identity field: `id`
+- Sparse placeholder: ``
+- Sparse trailing: `false`
+- Preserve unknown fields: `false`
+
+| Name | JSON | Quantization | ID codec | Selector | Value domain |
+| --- | --- | --- | --- | --- | --- |
+| `id` | `id` | `` | `player_id` | `` | `` |
+| `x` | `x` | `position` | `` | `` | `` |
+| `y` | `y` | `position` | `` | `` | `` |
+| `velocity_x` | `velocity_x` | `position` | `` | `` | `` |
+| `velocity_y` | `velocity_y` | `position` | `` | `` | `` |
+| `active` | `active` | `` | `` | `` | `` |
+
 ### `player_session`
 
 - Encoding: `fixed_tuple`
@@ -878,6 +906,7 @@ Parent index: [Generated](./!INDEX.md)
 | `bullets_lifecycle` | `bullet_deletes` | `bullet_lifecycle_delete_ids` | `bullet_ids` |
 | `event_batch` | `batch_id` | `event_batch_id` | `` |
 | `event_batch` | `events` | `event_union` | `` |
+| `player_locator` | `player_locators` | `player_locator` | `` |
 | `session_delta` | `player_lifecycle` | `player_lifecycle` | `` |
 | `session_delta` | `player_lifecycle_deletes` | `player_ids` | `` |
 | `session_delta` | `player_lifecycle_updates` | `player_lifecycle` | `` |

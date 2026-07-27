@@ -14,6 +14,8 @@ const (
 	PacketTypeSetTargetPlayerRequest        = "set_target_player_request"
 	PacketTypeSelectTargetAtPositionRequest = "select_target_at_position_request"
 	PacketTypeClearTargetRequest            = "clear_target_request"
+	PacketTypeSetViewTargetRequest          = "set_view_target_request"
+	PacketTypeClearViewTargetRequest        = "clear_view_target_request"
 	PacketTypeResyncRequest                 = "resync_request"
 	PacketTypeCreateRoomRequest             = "create_room_request"
 	PacketTypeJoinRoomRequest               = "join_room_request"
@@ -51,6 +53,7 @@ type ClientPacket struct {
 	TeamCount          int                  `json:"team_count"`
 	MaxPlayers         int                  `json:"max_players"`
 	TargetPlayerID     string               `json:"target_player_id"`
+	ViewTargetPlayerID string               `json:"view_target_player_id"`
 	TeamID             string               `json:"team_id"`
 	Ready              bool                 `json:"ready"`
 	PlayerID           string               `json:"player_id"`
@@ -63,6 +66,15 @@ type ClientPacket struct {
 	Lane               string               `json:"lane"`
 	BaselineID         string               `json:"baseline_id"`
 	Reason             string               `json:"reason"`
+}
+
+type PlayerLocatorState struct {
+	ID        string  `json:"id"`
+	X         float64 `json:"x"`
+	Y         float64 `json:"y"`
+	VelocityX float64 `json:"velocity_x"`
+	VelocityY float64 `json:"velocity_y"`
+	Active    bool    `json:"active"`
 }
 
 type CreateRoomRequest struct {

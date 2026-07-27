@@ -30,6 +30,8 @@ type RealtimeSessionState struct {
 	Lanes               map[Lane]RealtimeLaneState
 	BaselineReady       map[Lane]bool
 	baselineProjections map[Lane]any
+	packetSequences     map[string]int
+	packetProjections   map[string]any
 	HotLaneCohorts      HotLaneCohortState
 	HotLaneTick         int
 }
@@ -41,6 +43,8 @@ func NewRealtimeSessionState(receiverID string, matchID string) RealtimeSessionS
 		Lanes:               make(map[Lane]RealtimeLaneState),
 		BaselineReady:       make(map[Lane]bool),
 		baselineProjections: make(map[Lane]any),
+		packetSequences:     make(map[string]int),
+		packetProjections:   make(map[string]any),
 		HotLaneCohorts:      NewHotLaneCohortState(),
 	}
 }
@@ -105,6 +109,44 @@ func (state *RealtimeSessionState) ClearBaselineProjection(lane Lane) {
 	delete(state.baselineProjections, lane)
 }
 
+func (state RealtimeSessionState) PacketSequence(packetFamily string) int {
+	if state.packetSequences == nil {
+		return 0
+	}
+	return state.packetSequences[packetFamily]
+}
+
+func (state *RealtimeSessionState) UpdatePacketSequence(packetFamily string, sequence int) {
+	if packetFamily == "" {
+		return
+	}
+	if state.packetSequences == nil {
+		state.packetSequences = make(map[string]int)
+	}
+	if sequence < state.packetSequences[packetFamily] {
+		return
+	}
+	state.packetSequences[packetFamily] = sequence
+}
+
+func (state RealtimeSessionState) PacketProjection(packetFamily string) (any, bool) {
+	if state.packetProjections == nil {
+		return nil, false
+	}
+	projection, ok := state.packetProjections[packetFamily]
+	return projection, ok
+}
+
+func (state *RealtimeSessionState) StorePacketProjection(packetFamily string, projection any) {
+	if packetFamily == "" || projection == nil {
+		return
+	}
+	if state.packetProjections == nil {
+		state.packetProjections = make(map[string]any)
+	}
+	state.packetProjections[packetFamily] = projection
+}
+
 func (state *RealtimeSessionState) RequireFullBaseline(lane Lane) bool {
 	if !IsBaselineLane(lane) {
 		return false
@@ -161,6 +203,15 @@ func CommitSuccessfulCandidate(state *RealtimeSessionState, candidate RealtimeLa
 		return
 	}
 	persistedMetadata := AdvanceMetadataForSuccessfulWrite(candidate.Lane(), metadata)
+	if candidate.PacketFamily() == PacketFamilyPlayerLocator {
+		state.UpdatePacketSequence(PacketFamilyPlayerLocator, persistedMetadata.Sequence)
+		if metadata.IsFinalChunk {
+			if projection, ok := CandidateProjection(candidate); ok {
+				state.StorePacketProjection(PacketFamilyPlayerLocator, projection)
+			}
+		}
+		return
+	}
 	state.UpdateLane(candidate.Lane(), persistedMetadata)
 	if !metadata.IsFinalChunk {
 		return

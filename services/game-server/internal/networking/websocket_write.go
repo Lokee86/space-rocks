@@ -53,7 +53,12 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 	}
 	resetRealtimeStateForContext(session, context, gameplayContext.MatchID)
 
-	result, err := realtime.BuildActiveRealtimeResultForGame(gameplayContext.Game, context.GamePlayerID, session.realtimeState)
+	result, err := realtime.BuildActiveRealtimeResultForGameView(
+		gameplayContext.Game,
+		context.GamePlayerID,
+		session.viewTargetPlayerIDSnapshot(),
+		session.realtimeState,
+	)
 	if err != nil {
 		logging.Emit(observability.Request{
 			Event: observability.EventNameOutboundPacketEncodeFailed,
@@ -263,6 +268,7 @@ func resetRealtimeStateForContext(session *webSocketSession, context SessionCont
 	}
 	if !session.realtimeState.IdentityMatches(context.GamePlayerID, matchID) {
 		session.realtimeState = realtime.NewRealtimeSessionState(context.GamePlayerID, matchID)
+		session.clearViewTargetPlayerID()
 	}
 }
 

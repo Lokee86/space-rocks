@@ -35,6 +35,9 @@ func SelectSendPlan(records []ScheduleRecord) SendPlan {
 }
 
 func isRealHotLaneChunkRecord(record ScheduleRecord) bool {
+	if record.PacketFamily == PacketFamilyPlayerLocator {
+		return false
+	}
 	return record.Lane == LaneShips || record.Lane == LaneBullets || record.Lane == LaneAsteroids
 }
 

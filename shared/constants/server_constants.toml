@@ -1,5 +1,9 @@
 [constants.server.runtime]
 server_tick_rate = 60
+network_interest_entry_margin = 320.0
+network_interest_exit_margin = 480.0
+network_interest_projectile_margin = 640.0
+player_locator_cadence_ticks = 12
 
 [constants.shared.world]
 world_width = 17200.0

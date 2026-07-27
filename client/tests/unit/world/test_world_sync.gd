@@ -2,9 +2,12 @@ extends GutTest
 
 const WorldSync := preload("res://scripts/world/world_sync.gd")
 const WorldLaneState := preload("res://scripts/protocol/realtime/world_lane_state.gd")
+const PlayerLocatorState := preload("res://scripts/protocol/realtime/player_locator_state.gd")
 
 class FakePlayerRenderApi:
 	extends RefCounted
+
+	var remote_positions: Dictionary = {}
 
 	func remove_missing(_server_players: Dictionary, _self_id: String) -> void:
 		pass
@@ -17,6 +20,12 @@ class FakePlayerRenderApi:
 
 	func server_position() -> Vector2:
 		return Vector2.ZERO
+
+	func get_remote_player_visual_positions(_current_self_id: String) -> Dictionary:
+		return remote_positions.duplicate()
+
+	func visual_position_for_server_position(server_position_value: Vector2) -> Vector2:
+		return server_position_value + Vector2(1000.0, 2000.0)
 
 
 class FakeProjectileSync:
@@ -88,6 +97,29 @@ class FakePickupSync:
 
 	func remove_missing(_server_pickups: Dictionary) -> void:
 		remove_missing_calls += 1
+
+
+func test_player_locator_positions_fill_far_player_indicators_without_overriding_rendered_players() -> void:
+	var world_sync := WorldSync.new()
+	var fake_player_render_api := FakePlayerRenderApi.new()
+	fake_player_render_api.remote_positions = {"player-near": Vector2(5.0, 6.0)}
+	world_sync.player_render_api = fake_player_render_api
+	world_sync.current_self_id = "player-self"
+	var locator_state := PlayerLocatorState.new()
+	locator_state.replace_player_locators({
+		"player-self": {"id": "player-self", "x": 1.0, "y": 2.0, "active": true},
+		"player-near": {"id": "player-near", "x": 10.0, "y": 20.0, "active": true},
+		"player-far": {"id": "player-far", "x": 30.0, "y": 40.0, "velocity_x": 0.0, "velocity_y": 0.0, "active": true},
+		"player-dead": {"id": "player-dead", "x": 50.0, "y": 60.0, "active": false},
+	}, 1, 100)
+	world_sync.apply_player_locator_state(locator_state)
+
+	var positions := world_sync.get_remote_player_indicator_positions()
+
+	assert_eq(positions.get("player-near"), Vector2(5.0, 6.0))
+	assert_eq(positions.get("player-far"), Vector2(1030.0, 2040.0))
+	assert_false(positions.has("player-self"))
+	assert_false(positions.has("player-dead"))
 
 
 func test_apply_world_lane_state_uses_direct_bullet_change_sets() -> void:

@@ -6,25 +6,27 @@ var spectate_flow
 var menu_flow
 var spectate_menu_state
 var world_sync
+var connection_service
 
 
-func configure(menu_flow_ref, spectate_menu_state_ref, world_sync_ref) -> void:
+func configure(menu_flow_ref, spectate_menu_state_ref, world_sync_ref, connection_service_ref = null) -> void:
 	menu_flow = menu_flow_ref
 	spectate_menu_state = spectate_menu_state_ref
 	world_sync = world_sync_ref
+	connection_service = connection_service_ref
 	if spectate_flow == null:
 		spectate_flow = GameplaySpectateFlow.new()
 	if menu_flow != null && menu_flow.has_signal("spectate_requested"):
 		var spectate_callable := Callable(self, "_on_spectate_requested")
 		if !menu_flow.spectate_requested.is_connected(spectate_callable):
 			menu_flow.spectate_requested.connect(spectate_callable)
-	spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
+	spectate_flow.configure(menu_flow, spectate_menu_state, world_sync, connection_service)
 
 
 func configure_menu_state(spectate_menu_state_ref) -> void:
 	spectate_menu_state = spectate_menu_state_ref
 	if spectate_flow != null:
-		spectate_flow.configure(menu_flow, spectate_menu_state, world_sync)
+		spectate_flow.configure(menu_flow, spectate_menu_state, world_sync, connection_service)
 
 
 func reset() -> void:
@@ -54,4 +56,3 @@ func request_cycle_target() -> void:
 
 func _on_spectate_requested() -> void:
 	begin_spectating()
-

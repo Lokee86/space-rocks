@@ -24,7 +24,8 @@ func (f *resyncGameplaySessionFake) CurrentSessionContext() SessionContext {
 	}
 	return SessionContext{Room: f.room, RoomID: roomID, GamePlayerID: f.playerID}
 }
-func (f *resyncGameplaySessionFake) EnqueuePlayerPauseState() {}
+func (f *resyncGameplaySessionFake) EnqueuePlayerPauseState()     {}
+func (f *resyncGameplaySessionFake) SetViewTargetPlayerID(string) {}
 func (f *resyncGameplaySessionFake) EnqueueResyncRequest(context SessionContext, request realtime.ResyncRequest) bool {
 	f.contexts = append(f.contexts, context)
 	f.requests = append(f.requests, request)

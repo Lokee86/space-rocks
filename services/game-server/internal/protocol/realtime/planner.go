@@ -18,6 +18,7 @@ func assembleRealtimeLaneCandidates(snapshot game.GameplayPresentationSnapshot, 
 		return RealtimeLanePlan{}, err
 	}
 	candidates = append(candidates, worldCandidates...)
+	candidates = append(candidates, buildPlayerLocatorCandidate(snapshot, state)...)
 
 	overlayCandidates, err := buildOverlayLaneCandidates(snapshot, state)
 	if err != nil {

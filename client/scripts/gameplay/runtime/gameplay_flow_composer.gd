@@ -128,7 +128,7 @@ func configure(
 	runtime_tick_flow.configure(hud_flow_ref)
 
 	spectate_context = GameplaySpectateContext.new()
-	spectate_context.configure(menu_flow_ref, null, world_sync_ref)
+	spectate_context.configure(menu_flow_ref, null, world_sync_ref, connection_service_ref)
 	if spectate_menu_state_ref != null:
 		spectate_context.configure_menu_state(spectate_menu_state_ref)
 

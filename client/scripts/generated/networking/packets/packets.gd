@@ -11,9 +11,12 @@ const TYPE_PLAYER_PAUSE_STATE := "player_pause_state"
 const TYPE_SET_TARGET_PLAYER_REQUEST := "set_target_player_request"
 const TYPE_SELECT_TARGET_AT_POSITION_REQUEST := "select_target_at_position_request"
 const TYPE_CLEAR_TARGET_REQUEST := "clear_target_request"
+const TYPE_SET_VIEW_TARGET_REQUEST := "set_view_target_request"
+const TYPE_CLEAR_VIEW_TARGET_REQUEST := "clear_view_target_request"
 const TYPE_WORLD_FULL := "world_full"
 const TYPE_WORLD_DELTA := "world_delta"
 const TYPE_SHIP_DELTA := "ship_delta"
+const TYPE_PLAYER_LOCATOR := "player_locator"
 const TYPE_SHIPS_LIFECYCLE := "ships_lifecycle"
 const TYPE_OVERLAY_FULL := "overlay_full"
 const TYPE_OVERLAY_DELTA := "overlay_delta"
@@ -84,6 +87,7 @@ const TYPE_ROOM_ERROR := "room_error"
 
 const FIELD_ACCEPTED := "accepted"
 const FIELD_ACCOUNT_ID := "account_id"
+const FIELD_ACTIVE := "active"
 const FIELD_AGE_SECONDS := "age_seconds"
 const FIELD_AMOUNT := "amount"
 const FIELD_APPLIED := "applied"
@@ -221,6 +225,9 @@ const FIELD_TRACE_ID := "trace_id"
 const FIELD_TYPE := "type"
 const FIELD_USER_ID := "user_id"
 const FIELD_VARIANT := "variant"
+const FIELD_VELOCITY_X := "velocity_x"
+const FIELD_VELOCITY_Y := "velocity_y"
+const FIELD_VIEW_TARGET_PLAYER_ID := "view_target_player_id"
 const FIELD_VISIBLE_WORLD_HEIGHT := "visible_world_height"
 const FIELD_VISIBLE_WORLD_WIDTH := "visible_world_width"
 const FIELD_WEAPON_ID := "weapon_id"
@@ -272,6 +279,17 @@ static func select_target_at_position_request_packet(x, y, target_kind, target_i
 static func clear_target_request_packet() -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "clear_target_request"
+	return packet
+
+static func set_view_target_request_packet(view_target_player_id) -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "set_view_target_request"
+	packet[FIELD_VIEW_TARGET_PLAYER_ID] = view_target_player_id
+	return packet
+
+static func clear_view_target_request_packet() -> Dictionary:
+	var packet := {}
+	packet[FIELD_TYPE] = "clear_view_target_request"
 	return packet
 
 static func resync_request_packet(match_id, lane, baseline_id, sequence, reason) -> Dictionary:

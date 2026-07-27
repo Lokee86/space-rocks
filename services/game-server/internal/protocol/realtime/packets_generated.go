@@ -5,6 +5,7 @@ const (
 	PacketTypeWorldFull          = "world_full"
 	PacketTypeWorldDelta         = "world_delta"
 	PacketTypeShipDelta          = "ship_delta"
+	PacketTypePlayerLocator      = "player_locator"
 	PacketTypeShipsLifecycle     = "ships_lifecycle"
 	PacketTypeOverlayFull        = "overlay_full"
 	PacketTypeOverlayDelta       = "overlay_delta"

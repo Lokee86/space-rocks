@@ -22,6 +22,7 @@ const (
 	PacketFamilyWorldFull          = "world_full"
 	PacketFamilyWorldDelta         = "world_delta"
 	PacketFamilyShipDelta          = "ship_delta"
+	PacketFamilyPlayerLocator      = "player_locator"
 	PacketFamilyShipsLifecycle     = "ships_lifecycle"
 	PacketFamilyOverlayFull        = "overlay_full"
 	PacketFamilyOverlayDelta       = "overlay_delta"

@@ -10,6 +10,7 @@ type gameplaySession interface {
 	CurrentSessionContext() SessionContext
 	EnqueuePlayerPauseState()
 	EnqueueResyncRequest(SessionContext, realtime.ResyncRequest) bool
+	SetViewTargetPlayerID(string)
 }
 
 func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) bool {
@@ -41,6 +42,12 @@ func HandleGameplayPacket(session gameplaySession, packet game.ClientPacket) boo
 			return true
 		case game.PacketTypeClearTargetRequest:
 			gameplayContext.Game.ClearTarget(context.GamePlayerID)
+			return true
+		case game.PacketTypeSetViewTargetRequest:
+			session.SetViewTargetPlayerID(packet.ViewTargetPlayerID)
+			return true
+		case game.PacketTypeClearViewTargetRequest:
+			session.SetViewTargetPlayerID("")
 			return true
 		case game.PacketTypePauseRequest:
 			gameplayContext.Game.HandlePacket(context.GamePlayerID, packet)

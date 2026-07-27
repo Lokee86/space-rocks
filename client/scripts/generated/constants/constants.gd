@@ -65,6 +65,8 @@ const WINDOW_MIN_SIZE := Vector2(1280.0, 720.0)
 const WINDOW_MAX_SIZE := Vector2(2875.0, 1500.0)
 const OSINDICATOR_EDGE_MARGIN := 5.0
 const OSINDICATOR_TARGET_VISIBILITY_PADDING := 64.0
+const PLAYER_LOCATOR_MAX_EXTRAPOLATION_SECONDS := 0.75
+const PLAYER_LOCATOR_STALE_SECONDS := 2.0
 # data-sync:end constants.client.presentation.viewport
 
 # data-sync:start constants.client.shell.network

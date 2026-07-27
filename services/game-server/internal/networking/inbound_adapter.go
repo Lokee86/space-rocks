@@ -94,6 +94,10 @@ func (a inboundSessionAdapter) EnqueuePlayerPauseState() {
 	a.session.EnqueuePlayerPauseState()
 }
 
+func (a inboundSessionAdapter) SetViewTargetPlayerID(playerID string) {
+	a.session.SetViewTargetPlayerID(playerID)
+}
+
 func (a inboundSessionAdapter) HandleWebRTCOffer(descriptionType string, sdp string) {
 	a.session.HandleWebRTCOffer(descriptionType, sdp)
 }

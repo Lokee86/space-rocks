@@ -3,6 +3,10 @@ package constants
 
 // data-sync:start constants.server.runtime
 const ServerTickRate = 60
+const NetworkInterestEntryMargin = 320.0
+const NetworkInterestExitMargin = 480.0
+const NetworkInterestProjectileMargin = 640.0
+const PlayerLocatorCadenceTicks = 12
 // data-sync:end constants.server.runtime
 
 // data-sync:start constants.server.player_movement

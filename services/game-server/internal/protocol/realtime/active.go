@@ -33,7 +33,12 @@ type ActiveRealtimeResult struct {
 }
 
 func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
+	return BuildActiveRealtimeResultForGameView(gameInstance, playerID, "", state)
+}
+
+func BuildActiveRealtimeResultForGameView(gameInstance *game.Game, playerID string, viewTargetID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
 	snapshot := gameInstance.GameplayPresentationSnapshot(playerID)
+	snapshot = applyNetworkInterest(snapshot, state, viewTargetID)
 	return BuildActiveRealtimeResult(snapshot, state)
 }
 

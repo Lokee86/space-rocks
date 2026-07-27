@@ -21,6 +21,8 @@ func fanout_lane_states(presentation_state: RealtimePresentationState, world_syn
 		self_id = str(presentation_state.overlay_lane_state.self_id)
 
 	world_adapter.apply_world_lane_state(world_sync_ref, presentation_state.world_lane_state, self_id)
+	if world_sync_ref != null and world_sync_ref.has_method("apply_player_locator_state"):
+		world_sync_ref.apply_player_locator_state(presentation_state.player_locator_state)
 	overlay_adapter.apply_overlay_lane_state(gameplay_hud_flow_ref, RealtimeQuantize.decode_overlay_state(presentation_state.overlay_lane_state))
 	var decoded_session_state = RealtimeQuantize.decode_session_state(presentation_state.session_lane_state)
 	session_adapter.apply_session_lane_state(gameplay_hud_flow_ref, decoded_session_state, self_id)

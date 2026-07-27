@@ -1,6 +1,9 @@
 package realtime
 
 func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
+	if candidate.PacketFamily() == PacketFamilyPlayerLocator {
+		return DeliveryClassHotSupersedable
+	}
 	lane, kind := candidate.Lane(), candidate.Kind()
 	switch kind {
 	case RealtimeLaneCandidateKindEventBatch:
@@ -22,6 +25,9 @@ func deliveryClassForCandidate(candidate RealtimeLaneCandidate) DeliveryClass {
 }
 
 func priorityForCandidate(candidate RealtimeLaneCandidate) Priority {
+	if candidate.PacketFamily() == PacketFamilyPlayerLocator {
+		return PriorityMedium
+	}
 	lane, kind := candidate.Lane(), candidate.Kind()
 	switch kind {
 	case RealtimeLaneCandidateKindEventBatch, RealtimeLaneCandidateKindFull:

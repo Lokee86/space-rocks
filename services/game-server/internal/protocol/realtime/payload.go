@@ -24,6 +24,7 @@ var (
 	_ RealtimeLanePayload = SessionWireFullPacket{}
 	_ RealtimeLanePayload = SessionLaneDelta{}
 	_ RealtimeLanePayload = SessionWireLaneDelta{}
+	_ RealtimeLanePayload = PlayerLocatorPacket{}
 	_ RealtimeLanePayload = AsteroidWireDeltaPacket{}
 	_ RealtimeLanePayload = BulletWireDeltaPacket{}
 	_ RealtimeLanePayload = EventBatchPacket{}
