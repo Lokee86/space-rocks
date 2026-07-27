@@ -209,9 +209,9 @@ func (room *Room) captureGameOverLocked() (gameOverCapture, *RoomDomainError) {
 		State:                 room.State,
 		Game:                  room.match.Game(),
 		MatchID:               room.match.CurrentMatchID(),
-		TraceID:              room.match.CurrentTraceID(),
-		Joinable:             room.Joinable,
-		Members:              members,
+		TraceID:               room.match.CurrentTraceID(),
+		Joinable:              room.Joinable,
+		Members:               members,
 		ParticipantIdentities: identities,
 	}, nil
 }

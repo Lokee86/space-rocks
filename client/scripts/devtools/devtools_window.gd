@@ -509,5 +509,3 @@ func _line_edit_int(input: LineEdit) -> int:
 	if !text.is_valid_int():
 		return 0
 	return int(text)
-
-

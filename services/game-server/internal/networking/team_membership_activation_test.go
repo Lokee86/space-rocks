@@ -10,18 +10,18 @@ import (
 
 func TestActivateRoomPlayersPassesLockedMemberAssignmentsToGame(t *testing.T) {
 	tests := []struct {
-		name       string
-		config     teams.Config
-		assign     []teams.ID
+		name   string
+		config teams.Config
+		assign []teams.ID
 	}{
 		{
-			name:       "custom",
-			config:     teams.Config{Structure: teams.StructureCustom, AssignmentMode: teams.AssignmentOwnerAssigned},
-			assign:     []teams.ID{teams.Team3, teams.Team4},
+			name:   "custom",
+			config: teams.Config{Structure: teams.StructureCustom, AssignmentMode: teams.AssignmentOwnerAssigned},
+			assign: []teams.ID{teams.Team3, teams.Team4},
 		},
 		{
-			name:       "auto balanced",
-			config:     teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
+			name:   "auto balanced",
+			config: teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
 		},
 	}
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_08_001000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_001100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,6 +71,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_001000) do
     t.index ["user_id"], name: "index_password_credentials_on_user_id", unique: true
   end
 
+  create_table "player_inventories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "inventory", null: false
+    t.integer "inventory_version", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_player_inventories_on_user_id", unique: true
+  end
+
   create_table "player_match_results", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "match_id", null: false
@@ -121,6 +130,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_08_001000) do
   add_foreign_key "oauth_login_sessions", "users"
   add_foreign_key "oauth_states", "oauth_login_sessions"
   add_foreign_key "password_credentials", "users"
+  add_foreign_key "player_inventories", "users"
   add_foreign_key "player_match_results", "users"
   add_foreign_key "player_stats", "users"
   add_foreign_key "user_identities", "users"

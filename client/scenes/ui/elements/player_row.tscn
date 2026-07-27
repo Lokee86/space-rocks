@@ -6,10 +6,15 @@
 [ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="2_tyt3a"]
 [ext_resource type="Script" uid="uid://q1x3ko43d4l7" path="res://scripts/ui/lobby/player_row.gd" id="4_iw0ft"]
 [ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="5_remove"]
+[ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="7_nqxdj"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_nls3s"]
+font = ExtResource("7_nqxdj")
+font_size = 18
 
 [node name="PlayerRow" type="HBoxContainer" unique_id=1723963623]
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 284.0
+offset_bottom = 23.0
 size_flags_horizontal = 3
 script = ExtResource("4_iw0ft")
 
@@ -49,20 +54,21 @@ texture = ExtResource("2_opmrn")
 layout_mode = 2
 texture = ExtResource("2_tyt3a")
 
-[node name="RemoveButton" parent="." instance=ExtResource("5_remove")]
-custom_minimum_size = Vector2(42, 42)
+[node name="RemoveButton" parent="." unique_id=1624558809 instance=ExtResource("5_remove")]
+custom_minimum_size = Vector2(24, 0)
 layout_mode = 2
 tooltip_text = "Remove player"
 
-[node name="RemoveLabel" type="Label" parent="RemoveButton"]
+[node name="RemoveLabel" type="Label" parent="RemoveButton" unique_id=446166898]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 2.0
+offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "X"
-label_settings = ExtResource("1_1jkif")
+label_settings = SubResource("LabelSettings_nls3s")
 horizontal_alignment = 1
 vertical_alignment = 1
-mouse_filter = 2
