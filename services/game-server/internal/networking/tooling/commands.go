@@ -3,6 +3,7 @@ package tooling
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/outbound"
 	protocol "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/tooling"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
@@ -42,5 +43,8 @@ func (router *Router) handleCommand(context Context, sender Sender, packet map[s
 		CommandType: command.Type,
 		Applied:     true,
 	})
+	if status, available := outbound.BuildDebugStatusPacket(context.Room, context.GamePlayerID, command.RequestID); available {
+		router.send(sender, status)
+	}
 	return true
 }

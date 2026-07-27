@@ -7,6 +7,7 @@ class FakeWindowController:
 	var received_target_kind := ""
 	var received_target_id := ""
 	var received_target_state: Dictionary = {}
+	var received_debug_status: Dictionary = {}
 
 	func refresh_game_target_options(rows: Array, current_target_kind: String, current_target_id: String) -> void:
 		received_rows = rows
@@ -30,8 +31,8 @@ class FakeWindowController:
 	func refresh_counter_player_targets(_rows: Array) -> void:
 		pass
 
-	func apply_debug_status(_status: Dictionary) -> void:
-		pass
+	func apply_debug_status(status: Dictionary) -> void:
+		received_debug_status = status
 
 	func refresh_spawn_player_slots(_max_players: int) -> void:
 		pass
@@ -39,6 +40,27 @@ class FakeWindowController:
 
 class FakeWindowControllerWithoutTelemetrySources extends FakeWindowController:
 	pass
+
+
+func test_debug_status_packet_forwards_authoritative_freeze_state() -> void:
+	var controller := FakeWindowController.new()
+	var flow := DevtoolsDisplayRefreshFlow.new()
+	flow.configure(controller)
+	var expected_status := {
+		"world_frozen": false,
+		"asteroids_frozen": true,
+		"bullets_frozen": false,
+		"spawning_frozen": true,
+		"collisions_frozen": false,
+	}
+
+	flow.apply_debug_status_packet({
+		"debug_status": expected_status,
+		"debug_statuses": {},
+	})
+
+	assert_eq(controller.received_debug_status, expected_status)
+
 
 func test_refresh_gameplay_state_forwards_game_target_state_to_window_controller() -> void:
 	var controller := FakeWindowController.new()

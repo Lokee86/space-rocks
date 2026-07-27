@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bplexs5a86e6h"]
 
-[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_window"]
-[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_label"]
 [ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="2_button_font"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_label"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_button"]
+[ext_resource type="Texture2D" uid="uid://chav4u18oo2q1" path="res://assets/ui/windows/Window (8).png" id="3_hnx7r"]
 [ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="4_row"]
 [ext_resource type="Script" uid="uid://cc70sca8inya7" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="5_script"]
 
@@ -12,7 +12,7 @@ font = ExtResource("2_button_font")
 font_size = 18
 font_color = Color(0, 0, 0, 1)
 
-[node name="MultiplayerLobby" type="Control"]
+[node name="MultiplayerLobby" type="Control" unique_id=477943481]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,7 +22,7 @@ grow_vertical = 2
 script = ExtResource("5_script")
 player_row_scene = ExtResource("4_row")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1414740651]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -34,18 +34,18 @@ offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="WindowFrame" type="NinePatchRect" parent="CenterContainer"]
+[node name="WindowFrame" type="NinePatchRect" parent="CenterContainer" unique_id=284995346]
 unique_name_in_owner = true
+clip_contents = true
 custom_minimum_size = Vector2(800, 620)
 layout_mode = 2
-clip_contents = true
-texture = ExtResource("1_window")
+texture = ExtResource("3_hnx7r")
 patch_margin_left = 72
 patch_margin_top = 82
 patch_margin_right = 72
 patch_margin_bottom = 68
 
-[node name="CenterContainer2" type="CenterContainer" parent="CenterContainer/WindowFrame"]
+[node name="TitleCenter" type="CenterContainer" parent="CenterContainer/WindowFrame" unique_id=1460745682]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -56,19 +56,18 @@ offset_bottom = 69.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/CenterContainer2"]
+[node name="TitleMargin" type="MarginContainer" parent="CenterContainer/WindowFrame/TitleCenter" unique_id=2065745667]
 layout_mode = 2
-theme_override_constants/margin_top = 80
 mouse_filter = 2
+theme_override_constants/margin_top = 25
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/WindowFrame/CenterContainer2/MarginContainer"]
+[node name="TitleLabel" type="Label" parent="CenterContainer/WindowFrame/TitleCenter/TitleMargin" unique_id=763981894]
 layout_mode = 2
 text = "Lobby"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="ContentMargin" type="MarginContainer" parent="CenterContainer/WindowFrame"]
+[node name="ContentMargin" type="MarginContainer" parent="CenterContainer/WindowFrame" unique_id=1305611455]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -80,32 +79,39 @@ offset_bottom = -84.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin"]
+[node name="Content" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin" unique_id=276573726]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="RoomInfo" type="GridContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content" unique_id=1836680399]
 layout_mode = 2
-columns = 2
+theme_override_constants/margin_top = 10
+
+[node name="RoomInfo" type="GridContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer" unique_id=2142186577]
+layout_mode = 2
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 2
+columns = 2
 
-[node name="RoomCodeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+[node name="RoomCodeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=1815394627]
 layout_mode = 2
 text = "ROOM CODE"
 label_settings = ExtResource("2_label")
-[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=2026644190]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ROOMID"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 2
-[node name="RoomStatusLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="RoomStatusLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=981220647]
 layout_mode = 2
 text = "STATUS"
 label_settings = ExtResource("2_label")
-[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=1731831573]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -114,23 +120,27 @@ label_settings = ExtResource("2_label")
 horizontal_alignment = 2
 clip_text = true
 text_overrun_behavior = 3
-[node name="ModeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="ModeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=1808615962]
 layout_mode = 2
 text = "MODE"
 label_settings = ExtResource("2_label")
-[node name="ModeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="ModeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=610795337]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "FREE-FOR-ALL"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 2
-[node name="AssignmentInfoRow" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="AssignmentInfoRow" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=432950288]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ASSIGNMENT"
 label_settings = ExtResource("2_label")
-[node name="AssignmentValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+
+[node name="AssignmentValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/MarginContainer/RoomInfo" unique_id=2117193058]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -138,58 +148,61 @@ text = "OWNER ASSIGNED"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 2
 
-[node name="Separator" type="ColorRect" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="Separator" type="ColorRect" parent="CenterContainer/WindowFrame/ContentMargin/Content" unique_id=1309846449]
 custom_minimum_size = Vector2(0, 1.5)
 layout_mode = 2
 color = Color(0.9, 0.88, 0.62, 1)
 
-[node name="PlayerHeader" type="HBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="PlayerHeader" type="HBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content" unique_id=1065269022]
 layout_mode = 2
 theme_override_constants/separation = 6
-[node name="PlayerHeaderLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+
+[node name="PlayerHeaderLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader" unique_id=1082022220]
 custom_minimum_size = Vector2(145, 0)
 layout_mode = 2
 text = "PLAYER"
 label_settings = ExtResource("2_label")
-[node name="TeamHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+
+[node name="TeamHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader" unique_id=1302737387]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(126, 0)
 layout_mode = 2
 text = "TEAM"
 label_settings = ExtResource("2_label")
-[node name="HeaderSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+
+[node name="HeaderSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader" unique_id=148914680]
 layout_mode = 2
 size_flags_horizontal = 3
-[node name="ReadyHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+
+[node name="ReadyHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader" unique_id=331764484]
 custom_minimum_size = Vector2(92, 0)
 layout_mode = 2
 text = "READY"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 2
 
-[node name="PlayerScroll" type="ScrollContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="PlayerScroll" type="ScrollContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content" unique_id=191634557]
 custom_minimum_size = Vector2(0, 162)
 layout_mode = 2
 size_flags_vertical = 3
-horizontal_scroll_mode = 1
 
-[node name="PlayerListContainer" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerScroll"]
+[node name="PlayerListContainer" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerScroll" unique_id=495439545]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 3
 
-[node name="Actions" type="HFlowContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+[node name="Actions" type="HFlowContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content" unique_id=819018140]
 layout_mode = 2
 alignment = 1
-theme_override_constants/separation = 6
 
-[node name="ReadyButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+[node name="ReadyButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" unique_id=1366294478 instance=ExtResource("3_button")]
 unique_name_in_owner = true
+clip_contents = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
-clip_contents = true
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
+
+[node name="LabelMargin" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton" unique_id=1842056302]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -197,24 +210,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_constants/margin_top = 5
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton/CenterContainer"]
+[node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton/LabelMargin" unique_id=886569031]
 layout_mode = 2
-mouse_filter = 2
-
-[node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton/CenterContainer/MarginContainer"]
-layout_mode = 2
-text = "\nREADY"
+text = "
+READY"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="StartGameButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+[node name="StartGameButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" unique_id=1068875237 instance=ExtResource("3_button")]
 unique_name_in_owner = true
+clip_contents = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
-clip_contents = true
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
+
+[node name="LabelMargin" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton" unique_id=1060684099]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -222,24 +233,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_constants/margin_top = 5
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton/CenterContainer"]
+[node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton/LabelMargin" unique_id=2093892375]
 layout_mode = 2
-mouse_filter = 2
-
-[node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton/CenterContainer/MarginContainer"]
-layout_mode = 2
-text = "\nSTART"
+text = "
+START"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="AddBotButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+[node name="AddBotButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" unique_id=496101477 instance=ExtResource("3_button")]
 unique_name_in_owner = true
+clip_contents = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
-clip_contents = true
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
+
+[node name="LabelMargin" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton" unique_id=1795927584]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -247,24 +256,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_constants/margin_top = 5
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton/CenterContainer"]
+[node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton/LabelMargin" unique_id=132160876]
 layout_mode = 2
-mouse_filter = 2
-
-[node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton/CenterContainer/MarginContainer"]
-layout_mode = 2
-text = "\nADD BOT"
+text = "
+ADD BOT"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="LeaveButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+[node name="LeaveButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" unique_id=1671550990 instance=ExtResource("3_button")]
 unique_name_in_owner = true
+clip_contents = true
 custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
-clip_contents = true
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
+
+[node name="LabelMargin" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton" unique_id=82834027]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -272,18 +279,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_constants/margin_top = 5
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton/CenterContainer"]
+[node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton/LabelMargin" unique_id=1900826267]
 layout_mode = 2
-mouse_filter = 2
-
-[node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton/CenterContainer/MarginContainer"]
-layout_mode = 2
-text = "\nLEAVE"
+text = "
+LEAVE"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-mouse_filter = 2
-
-[node name="ActionBottomSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2

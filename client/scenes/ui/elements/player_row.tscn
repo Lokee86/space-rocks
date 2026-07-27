@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://bpdd158jrrcux" path="res://assets/ui/ready_green.png" id="3_green"]
 [ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="4_red"]
 [ext_resource type="Script" uid="uid://q1x3ko43d4l7" path="res://scripts/ui/lobby/player_row.gd" id="5_script"]
-[ext_resource type="PackedScene" path="res://scenes/ui/elements/team_selector.tscn" id="6_team"]
+[ext_resource type="PackedScene" uid="uid://v4bfho58yh58" path="res://scenes/ui/elements/team_selector.tscn" id="6_team"]
 [ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="7_remove"]
 [ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="8_font"]
 
@@ -13,65 +13,66 @@
 font = ExtResource("8_font")
 font_size = 18
 
-[node name="PlayerRow" type="HBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
+[node name="PlayerRow" type="HBoxContainer" unique_id=729136679]
+custom_minimum_size = Vector2(0, 26)
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 script = ExtResource("5_script")
 
-[node name="PlayerNameLabel" type="Label" parent="."]
-custom_minimum_size = Vector2(135, 0)
-layout_mode = 2
-text = "Player X"
-label_settings = ExtResource("1_label")
-clip_text = true
-text_overrun_behavior = 3
-
-[node name="OwnerIndicator" type="TextureRect" parent="."]
+[node name="OwnerIndicator" type="TextureRect" parent="." unique_id=914231595]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 texture = ExtResource("2_owner")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="TeamSelector" parent="." instance=ExtResource("6_team")]
+[node name="PlayerNameLabel" type="Label" parent="." unique_id=670544256]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "Player X"
+label_settings = ExtResource("1_label")
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="TeamSelector" parent="." unique_id=606367910 instance=ExtResource("6_team")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(136, 23)
 layout_mode = 2
 
-[node name="Spacer" type="Control" parent="."]
+[node name="Spacer" type="Control" parent="." unique_id=247949259]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="PlayerReadyLabel" type="Label" parent="."]
+[node name="PlayerReadyLabel" type="Label" parent="." unique_id=120991076]
 custom_minimum_size = Vector2(76, 0)
 layout_mode = 2
 text = "STATUS"
 label_settings = ExtResource("1_label")
 horizontal_alignment = 2
 
-[node name="ReadyIndicatorContainer" type="MarginContainer" parent="."]
+[node name="ReadyIndicatorContainer" type="MarginContainer" parent="." unique_id=718528511]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 
-[node name="ReadyGreen" type="TextureRect" parent="ReadyIndicatorContainer"]
+[node name="ReadyGreen" type="TextureRect" parent="ReadyIndicatorContainer" unique_id=1147686284]
 layout_mode = 2
 texture = ExtResource("3_green")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ReadyRed" type="TextureRect" parent="ReadyIndicatorContainer"]
+[node name="ReadyRed" type="TextureRect" parent="ReadyIndicatorContainer" unique_id=876062223]
 layout_mode = 2
 texture = ExtResource("4_red")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="RemoveButton" parent="." instance=ExtResource("7_remove")]
+[node name="RemoveButton" parent="." unique_id=889318478 instance=ExtResource("7_remove")]
 custom_minimum_size = Vector2(26, 26)
 layout_mode = 2
 tooltip_text = "Remove player"
 
-[node name="RemoveLabel" type="Label" parent="RemoveButton"]
+[node name="RemoveLabel" type="Label" parent="RemoveButton" unique_id=1171202755]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

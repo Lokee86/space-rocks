@@ -11,7 +11,7 @@ font = ExtResource("4_font")
 font_size = 18
 font_color = Color(0, 0, 0, 1)
 
-[node name="MatchResultWindow" type="Control"]
+[node name="MatchResultWindow" type="Control" unique_id=285350254]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,7 +21,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("5_script")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1469748631]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,136 +33,167 @@ offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Window7" parent="CenterContainer" instance=ExtResource("1_window")]
+[node name="Window7" parent="CenterContainer" unique_id=346076056 instance=ExtResource("1_window")]
 custom_minimum_size = Vector2(800, 600)
 layout_mode = 2
 
-[node name="ContentMargin" type="MarginContainer" parent="CenterContainer/Window7"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7" unique_id=822622485]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 68.0
-offset_top = 72.0
-offset_right = -68.0
-offset_bottom = -58.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -79.0
+offset_right = 79.0
+offset_bottom = 40.0
 grow_horizontal = 2
-grow_vertical = 2
+theme_override_constants/margin_top = 34
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer/Window7/ContentMargin"]
-layout_mode = 2
-theme_override_constants/separation = 7
-
-[node name="MatchResultLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content"]
+[node name="MatchResultLabel" type="Label" parent="CenterContainer/Window7/MarginContainer" unique_id=708807053]
 layout_mode = 2
 text = "MATCH RESULT"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 1
 
-[node name="SummaryHeader" type="HBoxContainer" parent="CenterContainer/Window7/ContentMargin/Content"]
+[node name="ContentMargin" type="MarginContainer" parent="CenterContainer/Window7" unique_id=305028887]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 68.0
+offset_top = 111.0
+offset_right = -68.0
+offset_bottom = -100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="CenterContainer/Window7/ContentMargin" unique_id=1821832619]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="SummaryHeader" type="HBoxContainer" parent="CenterContainer/Window7/ContentMargin/Content" unique_id=1140851770]
 layout_mode = 2
 theme_override_constants/separation = 8
-[node name="PlayerName" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader"]
+
+[node name="PlayerName" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader" unique_id=257132074]
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
 text = "PLAYER"
 label_settings = ExtResource("2_label")
-[node name="TeamHeader" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader"]
+
+[node name="TeamHeader" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader" unique_id=27447408]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(114, 0)
 layout_mode = 2
 text = "TEAM"
 label_settings = ExtResource("2_label")
-[node name="HeaderSpacer" type="Control" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader"]
+
+[node name="HeaderSpacer" type="Control" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader" unique_id=562145457]
 layout_mode = 2
 size_flags_horizontal = 3
-[node name="Deaths" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader"]
+
+[node name="Deaths" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader" unique_id=1847979321]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 text = "DEATHS"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 2
-[node name="Score" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader"]
+
+[node name="Score" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/SummaryHeader" unique_id=34645122]
 custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 text = "SCORE"
 label_settings = ExtResource("2_label")
 horizontal_alignment = 2
 
-[node name="Separator" type="ColorRect" parent="CenterContainer/Window7/ContentMargin/Content"]
+[node name="Separator" type="ColorRect" parent="CenterContainer/Window7/ContentMargin/Content" unique_id=2046045668]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 
-[node name="ResultsScroll" type="ScrollContainer" parent="CenterContainer/Window7/ContentMargin/Content"]
-custom_minimum_size = Vector2(0, 280)
+[node name="ResultsScroll" type="ScrollContainer" parent="CenterContainer/Window7/ContentMargin/Content" unique_id=1908086869]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
-[node name="ScoreContainer" type="VBoxContainer" parent="CenterContainer/Window7/ContentMargin/Content/ResultsScroll"]
+
+[node name="ScoreContainer" type="VBoxContainer" parent="CenterContainer/Window7/ContentMargin/Content/ResultsScroll" unique_id=605177395]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 3
 
-[node name="Actions" type="HBoxContainer" parent="CenterContainer/Window7/ContentMargin/Content"]
+[node name="Actions" type="HBoxContainer" parent="CenterContainer/Window7/ContentMargin/Content" unique_id=1066280894]
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 8
-[node name="LobbyReplayButton" parent="CenterContainer/Window7/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+alignment = 1
+
+[node name="LobbyReplayButton" parent="CenterContainer/Window7/ContentMargin/Content/Actions" unique_id=1608542296 instance=ExtResource("3_button")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 52)
 layout_mode = 2
-[node name="LobbyLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/LobbyReplayButton"]
-unique_name_in_owner = true
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/ContentMargin/Content/Actions/LobbyReplayButton" unique_id=1522826664]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "LOBBY"
-label_settings = SubResource("ButtonLabel")
-horizontal_alignment = 1
-[node name="ReplayLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/LobbyReplayButton"]
+
+[node name="LobbyLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/LobbyReplayButton/MarginContainer" unique_id=974404582]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 13.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "REPLAY"
+layout_mode = 2
+text = "
+
+LOBBY"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-[node name="MenuButton" parent="CenterContainer/Window7/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+
+[node name="ReplayLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/LobbyReplayButton/MarginContainer" unique_id=355867468]
+unique_name_in_owner = true
+layout_mode = 2
+text = "
+
+REPLAY"
+label_settings = SubResource("ButtonLabel")
+horizontal_alignment = 1
+
+[node name="MenuButton" parent="CenterContainer/Window7/ContentMargin/Content/Actions" unique_id=1272775679 instance=ExtResource("3_button")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 52)
 layout_mode = 2
-[node name="MenuLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/MenuButton"]
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/ContentMargin/Content/Actions/MenuButton" unique_id=1094991561]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "MENU"
+
+[node name="MenuLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/MenuButton/MarginContainer" unique_id=377607371]
+layout_mode = 2
+text = "
+
+MENU"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-[node name="QuitButton" parent="CenterContainer/Window7/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+
+[node name="QuitButton" parent="CenterContainer/Window7/ContentMargin/Content/Actions" unique_id=52357594 instance=ExtResource("3_button")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 52)
 layout_mode = 2
-[node name="QuitLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/QuitButton"]
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Window7/ContentMargin/Content/Actions/QuitButton" unique_id=1704867011]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "QUIT"
+
+[node name="QuitLabel" type="Label" parent="CenterContainer/Window7/ContentMargin/Content/Actions/QuitButton/MarginContainer" unique_id=785228646]
+layout_mode = 2
+text = "
+
+QUIT"
 label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1

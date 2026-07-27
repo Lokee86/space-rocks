@@ -231,6 +231,49 @@ func TestRouterAuthorizedCommandSendsCorrelatedResult(t *testing.T) {
 	}
 }
 
+func TestRouterAppliedCommandImmediatelyPushesAuthoritativeDebugStatus(t *testing.T) {
+	if !devtools.Enabled() {
+		t.Skip("debug readouts are disabled by this build")
+	}
+	gameInstance := game.New()
+	control := game.NewControl(gameInstance)
+	const playerID = "player-a"
+	if !control.EnsurePlayerSession(playerID, physics.Vector2{}) {
+		t.Fatal("expected player session")
+	}
+	room := rooms.NewRoom("room-a", rooms.RoomStateInGame, gameInstance)
+	router := NewRouter(nil, nil)
+	sender := &testSender{}
+
+	router.Handle(Context{
+		SessionID:         "session-a",
+		RoomID:            room.ID,
+		GamePlayerID:      playerID,
+		Room:              room,
+		Capabilities:      NewTemporaryCapabilitySet(),
+		CommandController: devtools.NewController(devtools.Dependencies{Target: control}),
+	}, sender, map[string]any{
+		"type":          devtools.PacketTypeToggleDebugFreezeWorld,
+		"request_id":    "freeze-asteroids",
+		"freeze_target": "asteroids",
+	})
+
+	if len(sender.packets) != 2 {
+		t.Fatalf("expected command result and status push, got %#v", sender.packets)
+	}
+	if sender.packets[0]["type"] != protocol.PacketTypeToolingCommandResult {
+		t.Fatalf("expected command result first, got %#v", sender.packets[0])
+	}
+	status := sender.packets[1]
+	if status["type"] != devtools.PacketTypeDebugStatus || status["request_id"] != "freeze-asteroids" {
+		t.Fatalf("unexpected status packet: %#v", status)
+	}
+	debugStatus, ok := status["debug_status"].(map[string]any)
+	if !ok || debugStatus["asteroids_frozen"] != true {
+		t.Fatalf("expected authoritative asteroid freeze status, got %#v", status["debug_status"])
+	}
+}
+
 func TestRouterRejectsUnavailableOrUnappliedCommand(t *testing.T) {
 	tests := []struct {
 		name       string

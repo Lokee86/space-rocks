@@ -1,9 +1,8 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bgi2nrjlqc8xp"]
 
-[ext_resource type="Script" path="res://scripts/ui/elements/styled_option_button.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://criyj1m502n4o" path="res://scripts/ui/elements/styled_option_button.gd" id="1_script"]
 
-[node name="StyledOptionButton" type="OptionButton"]
-custom_minimum_size = Vector2(130, 32)
-layout_mode = 2
+[node name="StyledOptionButton" type="OptionButton" unique_id=1039721583]
+custom_minimum_size = Vector2(130, 0)
 size_flags_horizontal = 3
 script = ExtResource("1_script")
