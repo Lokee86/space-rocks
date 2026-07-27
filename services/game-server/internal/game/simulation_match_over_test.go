@@ -29,6 +29,21 @@ func TestStepSkipsAsteroidSpawningAfterMatchOver(t *testing.T) {
 	}
 }
 
+func TestStepFinishesPendingPlayerDespawnAfterMatchOver(t *testing.T) {
+	game := newMatchOverTestGame()
+	game.entities.Players["player-1"] = &runtime.Ship{
+		ID:             "player-1",
+		PendingDespawn: true,
+		DespawnDelay:   0.1,
+	}
+
+	game.Step(0.2)
+
+	if _, exists := game.entities.Players["player-1"]; exists {
+		t.Fatal("expected final player sprite to finish despawning after match over")
+	}
+}
+
 func TestStepDoesNotPanicAfterMatchOverWithCleanupSafeEntities(t *testing.T) {
 	game := newMatchOverTestGame()
 	game.entities.Asteroids["asteroid-1"] = &runtime.Asteroid{

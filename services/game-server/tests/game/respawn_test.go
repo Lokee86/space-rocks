@@ -150,9 +150,12 @@ func TestPlayerWithNoLivesCannotRespawn(t *testing.T) {
 	}
 
 	scenario.step(constants.CollisionDespawnDelay)
+	if scenario.playerExists(playerID, playerID) {
+		t.Fatal("expected final player entity to finish despawning after game over")
+	}
 	scenario.advanceRespawnTimer(playerID, constants.PlayerRespawnDelay)
 	scenario.send(playerID, servergame.ClientPacket{Type: servergame.PacketTypeRespawn})
-	if !scenario.playerPendingDespawn(playerID) {
+	if scenario.playerExists(playerID, playerID) {
 		t.Fatal("expected respawn to remain blocked with no lives")
 	}
 	if snapshot := scenario.presentationSnapshot(playerID); snapshot.Lives != 0 {
