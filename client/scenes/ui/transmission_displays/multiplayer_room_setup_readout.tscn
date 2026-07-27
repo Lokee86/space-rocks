@@ -24,7 +24,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 5
 
 [node name="Title" type="Label" parent="Content"]
 layout_mode = 2
@@ -33,23 +33,23 @@ label_settings = ExtResource("3_label")
 horizontal_alignment = 1
 
 [node name="Separator" type="ColorRect" parent="Content"]
-custom_minimum_size = Vector2(0, 2)
+custom_minimum_size = Vector2(0, 1.5)
 layout_mode = 2
 color = Color(0, 1, 1, 1)
 
 [node name="Fields" type="VBoxContainer" parent="Content"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 7
+theme_override_constants/separation = 4
 
 [node name="ModeRow" type="PanelContainer" parent="Content/Fields"]
 layout_mode = 2
 theme_override_styles/panel = ExtResource("4_normal")
 [node name="Row" type="HBoxContainer" parent="Content/Fields/ModeRow"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 [node name="Label" type="Label" parent="Content/Fields/ModeRow/Row"]
-custom_minimum_size = Vector2(145, 0)
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "MODE"
 label_settings = ExtResource("3_label")
@@ -65,9 +65,9 @@ layout_mode = 2
 theme_override_styles/panel = ExtResource("4_normal")
 [node name="Row" type="HBoxContainer" parent="Content/Fields/AssignmentRow"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 [node name="Label" type="Label" parent="Content/Fields/AssignmentRow/Row"]
-custom_minimum_size = Vector2(145, 0)
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "ASSIGNMENT"
 label_settings = ExtResource("3_label")
@@ -83,9 +83,9 @@ layout_mode = 2
 theme_override_styles/panel = ExtResource("4_normal")
 [node name="Row" type="HBoxContainer" parent="Content/Fields/TeamCountRow"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 [node name="Label" type="Label" parent="Content/Fields/TeamCountRow/Row"]
-custom_minimum_size = Vector2(145, 0)
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "TEAMS"
 label_settings = ExtResource("3_label")
@@ -100,9 +100,9 @@ layout_mode = 2
 theme_override_styles/panel = ExtResource("4_normal")
 [node name="Row" type="HBoxContainer" parent="Content/Fields/MaxPlayersRow"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 [node name="Label" type="Label" parent="Content/Fields/MaxPlayersRow/Row"]
-custom_minimum_size = Vector2(145, 0)
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "MAX PLAYERS"
 label_settings = ExtResource("3_label")
@@ -114,10 +114,10 @@ size_flags_horizontal = 3
 
 [node name="Actions" type="HBoxContainer" parent="Content"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 5
 [node name="CreateButton" type="Button" parent="Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/normal = ExtResource("4_normal")
@@ -137,7 +137,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 [node name="CancelButton" type="Button" parent="Content/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/normal = ExtResource("4_normal")

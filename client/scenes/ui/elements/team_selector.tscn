@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/elements/styled_option_button.tscn" id="2_select"]
 
 [node name="TeamSelector" type="HBoxContainer"]
-custom_minimum_size = Vector2(136, 36)
+custom_minimum_size = Vector2(126, 32)
 layout_mode = 2
 theme_override_constants/separation = 6
 script = ExtResource("1_script")
@@ -18,5 +18,5 @@ mouse_filter = 2
 
 [node name="TeamOptionButton" parent="." instance=ExtResource("2_select")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(112, 36)
+custom_minimum_size = Vector2(102, 30)
 layout_mode = 2

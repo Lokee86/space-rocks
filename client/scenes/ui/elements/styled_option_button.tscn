@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/elements/styled_option_button.gd" id="1_script"]
 
 [node name="StyledOptionButton" type="OptionButton"]
-custom_minimum_size = Vector2(160, 40)
+custom_minimum_size = Vector2(130, 32)
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("1_script")
