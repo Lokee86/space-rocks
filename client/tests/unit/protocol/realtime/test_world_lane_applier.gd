@@ -7,6 +7,15 @@ const LaneMetadata := preload("res://scripts/protocol/realtime/lane_metadata.gd"
 const CompactLanePacket := preload("res://scripts/protocol/realtime/compact_lane_packet.gd")
 
 
+func test_world_lane_state_preserves_team_id_for_ship_rendering() -> void:
+	var world_lane_state := WorldLaneState.new()
+	world_lane_state.apply_full_lane({
+		"ships": [{"id": "player-1", "team_id": "team_3"}],
+	})
+
+	assert_eq(world_lane_state.ships["player-1"]["team_id"], "team_3")
+
+
 func test_world_full_replaces_lane_and_removes_missing_entities_by_ownership() -> void:
 	var applier := WorldLaneApplier.new()
 	var world_lane_state := WorldLaneState.new()
