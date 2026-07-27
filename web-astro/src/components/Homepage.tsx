@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import PlasmicHomepage from "./plasmic/space_rocks_devlog/PlasmicHomepage";
-import { CrtMediaFrame } from "./media/CrtMediaFrame";
 import { MarkdownText } from "./markdown/MarkdownText";
 import styles from "./Archive.module.css";
 import markdownStyles from "./markdown/MarkdownText.module.css";
@@ -22,6 +21,98 @@ type MediaFrameOverrides = {
 
 export interface HomepageProps {
   content?: Partial<HomepageContent>;
+}
+
+const DESKTOP_HERO_COPY_HOOK = "js-desktop-hero-copy-line";
+const DESKTOP_HERO_COPY_MIN_PX = 16;
+const DESKTOP_HERO_COPY_MAX_PX = 72;
+const DESKTOP_HERO_COPY_GAP_PX = 10;
+
+function useDesktopHeroCopyFit(contentKey: string) {
+  React.useLayoutEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 931px)");
+    let resizeObserver: ResizeObserver | undefined;
+    let animationFrame = 0;
+    let copyBox: HTMLElement | null = null;
+
+    const fit = () => {
+      const firstLine = document.querySelector<HTMLElement>(
+        `.${DESKTOP_HERO_COPY_HOOK}`,
+      );
+      copyBox = firstLine?.parentElement?.parentElement ?? null;
+
+      if (!copyBox) {
+        return;
+      }
+
+      if (!mediaQuery.matches) {
+        copyBox.style.removeProperty("font-size");
+        return;
+      }
+
+      const availableWidth = copyBox.clientWidth;
+      const availableHeight = copyBox.clientHeight - DESKTOP_HERO_COPY_GAP_PX;
+      if (availableWidth <= 0 || availableHeight <= 0) {
+        return;
+      }
+
+      let low = DESKTOP_HERO_COPY_MIN_PX;
+      let high = DESKTOP_HERO_COPY_MAX_PX;
+      let best = low;
+
+      for (let iteration = 0; iteration < 12; iteration += 1) {
+        const candidate = (low + high) / 2;
+        copyBox.style.fontSize = `${candidate}px`;
+
+        const lineBoxes = Array.from(copyBox.children).map((child) =>
+          (child as HTMLElement).getBoundingClientRect(),
+        );
+        const contentTop = Math.min(...lineBoxes.map((box) => box.top));
+        const contentBottom = Math.max(...lineBoxes.map((box) => box.bottom));
+        const contentHeight = contentBottom - contentTop;
+        const fitsHeight = contentHeight <= availableHeight + 0.5;
+        if (fitsHeight) {
+          best = candidate;
+          low = candidate;
+        } else {
+          high = candidate;
+        }
+      }
+
+      copyBox.style.fontSize = `${Math.floor(best * 10) / 10}px`;
+    };
+
+    const scheduleFit = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(fit);
+    };
+
+    scheduleFit();
+    document.fonts?.ready.then(scheduleFit);
+    window.addEventListener("resize", scheduleFit);
+    mediaQuery.addEventListener("change", scheduleFit);
+
+    const firstLine = document.querySelector<HTMLElement>(
+      `.${DESKTOP_HERO_COPY_HOOK}`,
+    );
+    copyBox = firstLine?.parentElement?.parentElement ?? null;
+    if (copyBox) {
+      resizeObserver = new ResizeObserver(scheduleFit);
+      resizeObserver.observe(copyBox);
+      const hero = copyBox.closest("section");
+      if (hero) {
+        resizeObserver.observe(hero);
+      }
+    }
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", scheduleFit);
+      mediaQuery.removeEventListener("change", scheduleFit);
+      resizeObserver?.disconnect();
+      copyBox?.style.removeProperty("font-size");
+    };
+  }, [contentKey]);
 }
 
 function getMediaFrameOverrides(
@@ -114,6 +205,10 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
     content.articleTitle.trim() !== "" ||
     content.intro.trim() !== "";
 
+  useDesktopHeroCopyFit(
+    `${content.heroLine1}\n${content.heroLine2}\n${content.heroLine3}`,
+  );
+
   if (!hasPublishedDevlog) {
     return (
       <main aria-label="Devlog home">
@@ -130,7 +225,10 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
         heroLine1Media: { children: content.heroLine1 },
         heroLine2Media: { children: content.heroLine2 },
         heroLine3Media: { children: content.heroLine3 },
-        heroLine1Desktop: { children: content.heroLine1 },
+        heroLine1Desktop: {
+          children: content.heroLine1,
+          className: DESKTOP_HERO_COPY_HOOK,
+        },
         heroLine2Desktop: { children: content.heroLine2 },
         heroLine3Desktop: { children: content.heroLine3 },
         heroMediaFrame: heroMediaFrameProps,
@@ -145,20 +243,12 @@ function Homepage_(props: HomepageProps, _ref: React.ForwardedRef<unknown>) {
           ),
         },
         articleMediaFrame: articleMediaFrameProps,
-        screenStack2: {
+        articleBody: {
           children: (
-            <>
-              <CrtMediaFrame
-                {...articleMediaFrameProps}
-                aspectRatio="16 / 9"
-                autoAdvanceMs={5000}
-                showControls={true}
-              />
-              <MarkdownText
-                value={content.body}
-                className={`devlogBody ${markdownStyles.fullWidth}`}
-              />
-            </>
+            <MarkdownText
+              value={content.body}
+              className={`devlogBody ${markdownStyles.fullWidth}`}
+            />
           ),
         },
         finishedTitle: { children: content.finishedTitle },

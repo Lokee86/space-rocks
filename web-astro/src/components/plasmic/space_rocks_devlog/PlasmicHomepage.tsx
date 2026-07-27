@@ -130,6 +130,7 @@ export type PlasmicHomepage__OverridesType = {
   introText?: Flex__<"div">;
   screenStack2?: Flex__<"div">;
   articleMediaFrame?: Flex__<typeof CrtMediaFrame>;
+  articleBody?: Flex__<"div">;
   aside?: Flex__<"aside">;
   finishedTitle?: Flex__<"span">;
   finishedBody?: Flex__<"p">;
@@ -416,13 +417,17 @@ function PlasmicHomepage__RenderFunc(props: {
                         backgroundSize: "cover",
                         gridTemplateColumns: "minmax(0, 1fr)",
                         justifyItems: "center",
-                        gridTemplateRows: "auto"
+                        gridTemplateRows: "auto",
+                        aspectRatio: "auto",
+                        containerType: "normal"
                       }
                     : {
                         backgroundPosition: "right center",
                         backgroundSize: "cover",
-                        gridTemplateColumns: "minmax(0, 46%) minmax(0, 1fr)",
-                        gridTemplateRows: "auto 1fr auto"
+                        gridTemplateColumns: "minmax(0, 44.7%) minmax(0, 1fr)",
+                        gridTemplateRows: "minmax(0, 1fr) auto",
+                        aspectRatio: "1342/430",
+                        containerType: "inline-size"
                       }
               }
             >
@@ -441,7 +446,7 @@ function PlasmicHomepage__RenderFunc(props: {
                           justifySelf: "center",
                           gridRow: "auto"
                         }
-                      : { gridColumn: "1", gridRow: "1 / 4" }
+                      : { gridColumn: "1", gridRow: "1 / 3" }
                 }
               >
                 <CrtMediaFrame
@@ -706,7 +711,7 @@ function PlasmicHomepage__RenderFunc(props: {
                             "rgb(255, 0, 0) 2px 0px 0px, rgb(255, 0, 0) -2px 0px 0px, rgb(255, 0, 0) 0px 2px 0px, rgb(255, 0, 0) 0px -2px 0px, rgba(255, 47, 67, 0.78) 0px 0px 10px",
                           order: "0",
                           gridColumn: "2",
-                          justifySelf: "stretch",
+                          justifySelf: "start",
                           gridRow: "1"
                         }
                 }
@@ -797,7 +802,7 @@ function PlasmicHomepage__RenderFunc(props: {
                       ? "100%"
                       : hasVariant(globalVariants, "screen", "tablet")
                         ? "34%"
-                        : "78%"
+                        : "52%"
                 }
                 displayMinHeight={"0"}
                 displayMinWidth={"0"}
@@ -808,7 +813,7 @@ function PlasmicHomepage__RenderFunc(props: {
                       ? "min(320px, 100%)"
                       : hasVariant(globalVariants, "screen", "tablet")
                         ? "min(300px, 34%)"
-                        : "min(340px, 78%)"
+                        : "min(300px, 52%)"
                 }
                 id={"_sxn1Y_NLVgG"}
                 loading={"lazy"}
@@ -833,7 +838,7 @@ function PlasmicHomepage__RenderFunc(props: {
                           order: "0",
                           gridColumn: "2",
                           justifySelf: "end",
-                          gridRow: "3"
+                          gridRow: "2"
                         }
                 }
               />
@@ -1019,6 +1024,12 @@ function PlasmicHomepage__RenderFunc(props: {
                       waveSlowScale={18}
                       waveSpeed={1}
                       waveStrength={1}
+                    />
+
+                    <div
+                      data-plasmic-name={"articleBody"}
+                      data-plasmic-override={overrides.articleBody}
+                      className={classNames("all", sty.articleBody)}
                     />
                   </div>
                 </div>
@@ -1561,6 +1572,7 @@ const PlasmicDescendants = {
     "introText",
     "screenStack2",
     "articleMediaFrame",
+    "articleBody",
     "aside",
     "finishedTitle",
     "finishedBody",
@@ -1606,13 +1618,15 @@ const PlasmicDescendants = {
     "articleTitle",
     "introText",
     "screenStack2",
-    "articleMediaFrame"
+    "articleMediaFrame",
+    "articleBody"
   ],
   articleLabel: ["articleLabel"],
   articleTitle: ["articleTitle"],
   introText: ["introText"],
-  screenStack2: ["screenStack2", "articleMediaFrame"],
+  screenStack2: ["screenStack2", "articleMediaFrame", "articleBody"],
   articleMediaFrame: ["articleMediaFrame"],
+  articleBody: ["articleBody"],
   aside: [
     "aside",
     "finishedTitle",
@@ -1657,6 +1671,7 @@ type NodeDefaultElementType = {
   introText: "div";
   screenStack2: "div";
   articleMediaFrame: typeof CrtMediaFrame;
+  articleBody: "div";
   aside: "aside";
   finishedTitle: "span";
   finishedBody: "p";
@@ -1749,6 +1764,7 @@ export const PlasmicHomepage = Object.assign(
     introText: makeNodeComponent("introText"),
     screenStack2: makeNodeComponent("screenStack2"),
     articleMediaFrame: makeNodeComponent("articleMediaFrame"),
+    articleBody: makeNodeComponent("articleBody"),
     aside: makeNodeComponent("aside"),
     finishedTitle: makeNodeComponent("finishedTitle"),
     finishedBody: makeNodeComponent("finishedBody"),
