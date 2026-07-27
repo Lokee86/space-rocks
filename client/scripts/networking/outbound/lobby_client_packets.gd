@@ -33,6 +33,10 @@ static func set_ready_request_packet(ready) -> Dictionary:
 	return Packets.set_ready_request_packet(ready)
 
 
+static func set_team_assignment_request_packet(target_player_id: String, team_id: String) -> Dictionary:
+	return Packets.set_team_assignment_request_packet(target_player_id, team_id)
+
+
 static func start_game_request_packet() -> Dictionary:
 	return Packets.start_game_request_packet()
 

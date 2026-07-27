@@ -1,0 +1,111 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/transmission_displays/multiplayer_room_setup_readout.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/elements/styled_option_button.tscn" id="2_select"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_button"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="4_label"]
+
+[node name="MultiplayerRoomSetupReadout" type="VBoxContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 15.0
+offset_right = -18.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 9
+script = ExtResource("1_script")
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 2
+text = "MATCH CONFIGURATION"
+label_settings = ExtResource("4_label")
+horizontal_alignment = 1
+
+[node name="ModeRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+[node name="Label" type="Label" parent="ModeRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+text = "MODE"
+label_settings = ExtResource("4_label")
+[node name="ModeSelect" parent="ModeRow" instance=ExtResource("2_select")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AssignmentRow" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+[node name="Label" type="Label" parent="AssignmentRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+text = "ASSIGNMENT"
+label_settings = ExtResource("4_label")
+[node name="AssignmentSelect" parent="AssignmentRow" instance=ExtResource("2_select")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TeamCountRow" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+[node name="Label" type="Label" parent="TeamCountRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+text = "TEAMS"
+label_settings = ExtResource("4_label")
+[node name="TeamCountSelect" parent="TeamCountRow" instance=ExtResource("2_select")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MaxPlayersRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+[node name="Label" type="Label" parent="MaxPlayersRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+text = "MAX PLAYERS"
+label_settings = ExtResource("4_label")
+[node name="MaxPlayersSelect" parent="MaxPlayersRow" instance=ExtResource("2_select")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Actions" type="HBoxContainer" parent="."]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+[node name="CreateButton" parent="Actions" instance=ExtResource("3_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(145, 48)
+layout_mode = 2
+[node name="Label" type="Label" parent="Actions/CreateButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "CREATE ROOM"
+label_settings = ExtResource("4_label")
+horizontal_alignment = 1
+[node name="CancelButton" parent="Actions" instance=ExtResource("3_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 48)
+layout_mode = 2
+[node name="Label" type="Label" parent="Actions/CancelButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "CANCEL"
+label_settings = ExtResource("4_label")
+horizontal_alignment = 1

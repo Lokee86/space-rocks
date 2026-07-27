@@ -197,6 +197,11 @@ func test_multiplayer_pregame_create_clears_menu_and_requests_create_room() -> v
 
 	(pregame_menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
 	await get_tree().process_frame
+	var setup := pregame_menu.find_child("MultiplayerRoomSetupReadout", true, false) as Control
+	assert_not_null(setup)
+	assert_not_null(_find_pregame_menu(canvas_layer))
+	(setup.get_node("%CreateButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
 	await get_tree().process_frame
 
 	assert_null(_find_pregame_menu(canvas_layer))

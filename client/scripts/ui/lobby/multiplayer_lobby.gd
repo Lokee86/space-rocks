@@ -4,46 +4,42 @@ extends Control
 const LobbyMemberViewModel := preload("res://scripts/ui/lobby/lobby_member_view_model.gd")
 const LobbyPlayerListView := preload("res://scripts/ui/lobby/lobby_player_list_view.gd")
 const LobbyStatusViewModel := preload("res://scripts/ui/lobby/lobby_status_view_model.gd")
+const TeamPresentation := preload("res://scripts/teams/team_presentation.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 signal ready_requested(ready: bool)
 signal start_game_requested
 signal add_bot_requested
 signal remove_member_requested(player_id: String)
+signal team_assignment_requested(player_id: String, team_id: String)
 signal leave_requested
 
-@export_node_path("Label") var room_code_label_path: NodePath
-@export_node_path("Label") var room_status_label_path: NodePath
-@export_node_path("Container") var player_list_container_path: NodePath
-@export_node_path("BaseButton") var ready_button_path: NodePath
-@export_node_path("BaseButton") var start_game_button_path: NodePath
-@export_node_path("BaseButton") var add_bot_button_path: NodePath
-@export_node_path("BaseButton") var leave_button_path: NodePath
 @export var player_row_scene: PackedScene
-
-@onready var room_code_label: Label = get_node_or_null(room_code_label_path) as Label
-@onready var room_status_label: Label = get_node_or_null(room_status_label_path) as Label
-@onready var player_list_container: Container = get_node_or_null(player_list_container_path) as Container
-@onready var ready_button: BaseButton = get_node_or_null(ready_button_path) as BaseButton
-@onready var start_game_button: BaseButton = get_node_or_null(start_game_button_path) as BaseButton
-@onready var add_bot_button: BaseButton = get_node_or_null(add_bot_button_path) as BaseButton
-@onready var leave_button: BaseButton = get_node_or_null(leave_button_path) as BaseButton
-
+@onready var window_frame: Control = %WindowFrame
+@onready var room_code_label: Label = %RoomCodeValueLabel
+@onready var room_status_label: Label = %RoomStatusValueLabel
+@onready var mode_value_label: Label = %ModeValueLabel
+@onready var assignment_row: Control = %AssignmentInfoRow
+@onready var assignment_value_label: Label = %AssignmentValueLabel
+@onready var team_header: Control = %TeamHeader
+@onready var player_list_container: Container = %PlayerListContainer
+@onready var ready_button: BaseButton = %ReadyButton
+@onready var start_game_button: BaseButton = %StartGameButton
+@onready var add_bot_button: BaseButton = %AddBotButton
+@onready var leave_button: BaseButton = %LeaveButton
 var local_ready := false
 
 
 func _ready() -> void:
-	if ready_button != null:
-		ready_button.pressed.connect(_on_ready_pressed)
-	if start_game_button != null:
-		start_game_button.disabled = true
-		start_game_button.pressed.connect(_on_start_game_pressed)
-	if add_bot_button != null:
-		add_bot_button.visible = false
-		add_bot_button.pressed.connect(_on_add_bot_pressed)
-	if leave_button != null:
-		leave_button.pressed.connect(_on_leave_pressed)
+	ready_button.pressed.connect(_on_ready_pressed)
+	start_game_button.disabled = true
+	start_game_button.pressed.connect(_on_start_game_pressed)
+	add_bot_button.visible = false
+	add_bot_button.pressed.connect(_on_add_bot_pressed)
+	leave_button.pressed.connect(_on_leave_pressed)
+	get_viewport().size_changed.connect(_update_window_size)
 	_update_ready_button_text()
+	_update_window_size()
 
 
 func apply_lobby_state(
@@ -53,66 +49,73 @@ func apply_lobby_state(
 	owner_id: String,
 	max_players: int,
 	members: Array,
+	team_structure := "ffa",
+	team_assignment_mode := "",
+	team_count := 0,
+	team_assignments_locked := false,
 	can_start := false
 ) -> void:
-	if room_code_label != null:
-		room_code_label.text = room_code
-	if room_status_label != null:
-		room_status_label.text = LobbyStatusViewModel.status_text(
-			room_state,
-			local_player_id,
-			owner_id,
-			members,
-			can_start
-		)
+	room_code_label.text = room_code
+	room_status_label.text = LobbyStatusViewModel.status_text(room_state, local_player_id, owner_id, members, can_start)
+	mode_value_label.text = TeamPresentation.structure_name(team_structure)
+	assignment_row.visible = team_structure == "custom"
+	assignment_value_label.visible = team_structure == "custom"
+	assignment_value_label.text = TeamPresentation.assignment_name(team_assignment_mode)
+	team_header.visible = team_structure != "ffa"
 	local_ready = LobbyMemberViewModel.is_local_ready(local_player_id, members)
 	_update_ready_button_text()
-	var local_is_owner := !local_player_id.is_empty() && local_player_id == owner_id
-	if add_bot_button != null:
-		add_bot_button.visible = local_is_owner
-		add_bot_button.disabled = !local_is_owner || members.size() >= max_players
+	var local_is_owner := not local_player_id.is_empty() and local_player_id == owner_id
+	add_bot_button.visible = local_is_owner
+	add_bot_button.disabled = not local_is_owner or members.size() >= max_players
 	LobbyPlayerListView.render(
 		player_list_container,
 		player_row_scene,
 		local_player_id,
 		owner_id,
 		members,
-		Callable(self, "_on_remove_member_requested")
+		team_structure,
+		team_assignment_mode,
+		team_count,
+		team_assignments_locked,
+		Callable(self, "_on_remove_member_requested"),
+		Callable(self, "_on_team_assignment_requested")
 	)
 
 
 func set_start_enabled(enabled: bool) -> void:
-	if start_game_button != null:
-		start_game_button.disabled = !enabled
+	start_game_button.disabled = not enabled
+
+
+func _update_window_size() -> void:
+	if window_frame == null:
+		return
+	var viewport_size := get_viewport_rect().size
+	window_frame.custom_minimum_size = Vector2(
+		clampf(viewport_size.x - 48.0, 520.0, 980.0),
+		clampf(viewport_size.y - 48.0, 420.0, 760.0)
+	)
 
 
 func _update_ready_button_text() -> void:
-	if ready_button == null:
-		return
-
-	var button_text := Constants.READY_BUTTON_TEXT_UNREADY if local_ready else Constants.READY_BUTTON_TEXT_READY
 	var ready_label := ready_button.find_child("Ready", true, false) as Label
 	if ready_label != null:
-		ready_label.text = button_text
-	elif "text" in ready_button:
-		ready_button.text = button_text
+		ready_label.text = Constants.READY_BUTTON_TEXT_UNREADY if local_ready else Constants.READY_BUTTON_TEXT_READY
 
 
 func _on_ready_pressed() -> void:
-	ready_requested.emit(!local_ready)
-
+	ready_requested.emit(not local_ready)
 
 func _on_start_game_pressed() -> void:
 	start_game_requested.emit()
 
-
 func _on_add_bot_pressed() -> void:
 	add_bot_requested.emit()
-
 
 func _on_remove_member_requested(player_id: String) -> void:
 	remove_member_requested.emit(player_id)
 
+func _on_team_assignment_requested(player_id: String, team_id: String) -> void:
+	team_assignment_requested.emit(player_id, team_id)
 
 func _on_leave_pressed() -> void:
 	leave_requested.emit()

@@ -145,6 +145,7 @@ type RoomMemberState struct {
 
 type RoomPlayerMatchSummary struct {
 	GamePlayerID string `json:"game_player_id"`
+	TeamID       string `json:"team_id"`
 	Score        int    `json:"score"`
 	ShipDeaths   int    `json:"ship_deaths"`
 	Won          bool   `json:"won"`

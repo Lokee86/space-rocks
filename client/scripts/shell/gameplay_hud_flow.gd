@@ -168,6 +168,15 @@ func score() -> int:
 	return current_score
 
 
+func apply_player_hue(hue: float) -> void:
+	var lives_icon := _get_hud_child("MarginContainer/HBoxContainer/LivesContainer/LivesIcon") as CanvasItem
+	if lives_icon == null:
+		return
+	var material := lives_icon.material as ShaderMaterial
+	if material != null:
+		material.set_shader_parameter("hue_shift", fposmod(hue, 1.0))
+
+
 func apply_lives(lives: int) -> void:
 	var lives_label := _get_hud_child(
 		"MarginContainer/HBoxContainer/LivesContainer/MarginContainer/LivesCount"

@@ -12,7 +12,7 @@ func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFa
 	}
 	players := make([]playerdata.PlayerMatchSummary, 0, len(facts))
 	for _, fact := range facts {
-		summary := playerdata.PlayerMatchSummary{GamePlayerID: fact.GamePlayerID, Score: fact.Score, ShipDeaths: fact.ShipDeaths}
+		summary := playerdata.PlayerMatchSummary{GamePlayerID: fact.GamePlayerID, TeamID: string(fact.TeamID), Score: fact.Score, ShipDeaths: fact.ShipDeaths}
 		if identity, ok := capture.ParticipantIdentities[fact.GamePlayerID]; ok {
 			summary.AccountID = identity.AccountID
 			summary.LocalProfileID = identity.LocalProfileID

@@ -1,251 +1,223 @@
 [gd_scene format=3 uid="uid://bplexs5a86e6h"]
 
-[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_l4dux"]
-[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_6rt4v"]
-[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_6lf8k"]
-[ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="3_6rt4v"]
-[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="4_0vxb0"]
-[ext_resource type="Script" uid="uid://cc70sca8inya7" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="5_75w2v"]
+[ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_window"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_label"]
+[ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_button"]
+[ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="4_row"]
+[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="5_button_label"]
+[ext_resource type="Script" uid="uid://cc70sca8inya7" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="6_script"]
 
-[node name="CenterContainer2" type="CenterContainer" unique_id=862692582]
+[node name="MultiplayerLobby" type="Control"]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("5_75w2v")
-room_code_label_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2/RoomCodeValueLabel")
-room_status_label_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer/RoomStatusValueLabel")
-player_list_container_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/PlayerListContainer")
-ready_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton")
-start_game_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton")
-add_bot_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton")
-leave_button_path = NodePath("CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/LeaveButton")
-player_row_scene = ExtResource("3_6rt4v")
+script = ExtResource("6_script")
+player_row_scene = ExtResource("4_row")
 
-[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1773938725]
-layout_mode = 2
-
-[node name="Control" type="Control" parent="CenterContainer" unique_id=1598582441]
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="CenterContainer/Control" unique_id=507778275]
-custom_minimum_size = Vector2(825, 750)
-layout_mode = 0
-offset_left = -236.0
-offset_top = -200.0
-offset_right = 589.0
-offset_bottom = 450.0
-scale = Vector2(0.6, 0.6)
-texture = ExtResource("1_l4dux")
-
-[node name="CenterContainer2" type="CenterContainer" parent="CenterContainer/Control/TextureRect" unique_id=1691441344]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -33.0
-offset_right = 33.0
-offset_bottom = 69.0
-grow_horizontal = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer2" unique_id=400792181]
-layout_mode = 2
-theme_override_constants/margin_top = 80
-
-[node name="TitleLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer2/MarginContainer" unique_id=1882024878]
-layout_mode = 2
-text = "Lobby"
-label_settings = ExtResource("2_6rt4v")
-
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Control/TextureRect" unique_id=1544140108]
+[node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer" unique_id=24311512]
+[node name="WindowFrame" type="NinePatchRect" parent="CenterContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(820, 680)
 layout_mode = 2
+texture = ExtResource("1_window")
+patch_margin_left = 72
+patch_margin_top = 82
+patch_margin_right = 72
+patch_margin_bottom = 68
 
-[node name="MarginContainer2" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer" unique_id=1529338571]
-layout_mode = 2
-theme_override_constants/margin_left = 18
+[node name="ContentMargin" type="MarginContainer" parent="CenterContainer/WindowFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 62.0
+offset_top = 68.0
+offset_right = -62.0
+offset_bottom = -54.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2" unique_id=1242989710]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="InfoPanel" type="VBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer" unique_id=1548855281]
-custom_minimum_size = Vector2(350, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel" unique_id=795412746]
+[node name="Content" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1051401515]
+[node name="TitleLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
 layout_mode = 2
-
-[node name="RoomCodeLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2" unique_id=517237563]
-layout_mode = 2
-text = "Room Code:"
-label_settings = ExtResource("2_6rt4v")
-
-[node name="Spacer" type="Control" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2" unique_id=99414255]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer2" unique_id=829320041]
-layout_mode = 2
-text = "RoomID"
-label_settings = ExtResource("2_6rt4v")
-horizontal_alignment = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1379801544]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer" unique_id=1657078065]
-layout_mode = 2
-theme_override_constants/margin_bottom = 21
-
-[node name="RoomStatusLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer/MarginContainer" unique_id=1528537327]
-layout_mode = 2
-text = "Status:"
-label_settings = ExtResource("2_6rt4v")
-
-[node name="Spacer" type="Control" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer" unique_id=1574057390]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/HBoxContainer" unique_id=1565001618]
-custom_minimum_size = Vector2(300, 50)
-layout_mode = 2
-text = "Pending"
-label_settings = ExtResource("2_6rt4v")
-horizontal_alignment = 2
-autowrap_mode = 2
-max_lines_visible = 2
-
-[node name="GridContainer" type="GridContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1709481773]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 225
-columns = 2
-
-[node name="PlayerListLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=1310388455]
-layout_mode = 2
-text = "Player"
-label_settings = ExtResource("2_6rt4v")
-
-[node name="PlayerListReadyLabel" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/GridContainer" unique_id=1600545782]
-layout_mode = 2
-text = "Ready"
-label_settings = ExtResource("2_6rt4v")
-horizontal_alignment = 2
-
-[node name="ColorRect" type="ColorRect" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=1133442299]
-custom_minimum_size = Vector2(0, 1.5)
-layout_mode = 2
-
-[node name="PlayerListContainer" type="VBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer" unique_id=2113636314]
-layout_mode = 2
-
-[node name="PlayerRow" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/InfoPanel/VBoxContainer/PlayerListContainer" unique_id=1723963623 instance=ExtResource("3_6rt4v")]
-layout_mode = 2
-
-[node name="ButtonPanel" type="VBoxContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer" unique_id=123058383]
-layout_mode = 2
-
-[node name="ReadyButton" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" unique_id=928907867 instance=ExtResource("3_6lf8k")]
-custom_minimum_size = Vector2(250, 100)
-layout_mode = 2
-
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton" unique_id=1853788429]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton/CenterContainer" unique_id=2099170406]
-layout_mode = 2
-theme_override_constants/margin_left = 7
-theme_override_constants/margin_top = 27
-
-[node name="Ready" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/ReadyButton/CenterContainer/MarginContainer" unique_id=1204919309]
-layout_mode = 2
-text = "READY"
-label_settings = ExtResource("4_0vxb0")
-
-[node name="StartGameButton" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" unique_id=53282095 instance=ExtResource("3_6lf8k")]
-custom_minimum_size = Vector2(250, 100)
-layout_mode = 2
-
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton" unique_id=2134474668]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton/CenterContainer" unique_id=1724975904]
-layout_mode = 2
-
-[node name="Start" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/StartGameButton/CenterContainer/MarginContainer" unique_id=1367895776]
-layout_mode = 2
-text = "
-
-START"
-label_settings = ExtResource("4_0vxb0")
-
-[node name="AddBotButton" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" unique_id=438901414 instance=ExtResource("3_6lf8k")]
-custom_minimum_size = Vector2(250, 100)
-layout_mode = 2
-
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton" unique_id=13695525]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton/CenterContainer" unique_id=456975962]
-layout_mode = 2
-theme_override_constants/margin_left = 5
-theme_override_constants/margin_top = 8
-
-[node name="AddBot" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/AddBotButton/CenterContainer/MarginContainer" unique_id=1115282311]
-layout_mode = 2
-text = "
-
-ADD BOT"
-label_settings = ExtResource("4_0vxb0")
+text = "MULTIPLAYER LOBBY"
+label_settings = ExtResource("2_label")
 horizontal_alignment = 1
 
-[node name="LeaveButton" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel" unique_id=1310186729 instance=ExtResource("3_6lf8k")]
-custom_minimum_size = Vector2(250, 100)
+[node name="RoomInfo" type="GridContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
 layout_mode = 2
+columns = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/LeaveButton" unique_id=1532434576]
+[node name="RoomCodeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+layout_mode = 2
+text = "ROOM CODE"
+label_settings = ExtResource("2_label")
+[node name="RoomCodeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ROOMID"
+label_settings = ExtResource("2_label")
+horizontal_alignment = 2
+[node name="RoomStatusLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+layout_mode = 2
+text = "STATUS"
+label_settings = ExtResource("2_label")
+[node name="RoomStatusValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "PENDING"
+label_settings = ExtResource("2_label")
+horizontal_alignment = 2
+autowrap_mode = 2
+[node name="ModeLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+layout_mode = 2
+text = "MODE"
+label_settings = ExtResource("2_label")
+[node name="ModeValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "FREE-FOR-ALL"
+label_settings = ExtResource("2_label")
+horizontal_alignment = 2
+[node name="AssignmentInfoRow" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ASSIGNMENT"
+label_settings = ExtResource("2_label")
+[node name="AssignmentValueLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/RoomInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "OWNER ASSIGNED"
+label_settings = ExtResource("2_label")
+horizontal_alignment = 2
+
+[node name="Separator" type="ColorRect" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.9, 0.88, 0.62, 1)
+
+[node name="PlayerHeader" type="HBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="PlayerHeaderLabel" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+custom_minimum_size = Vector2(159, 0)
+layout_mode = 2
+text = "PLAYER"
+label_settings = ExtResource("2_label")
+[node name="TeamHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(136, 0)
+layout_mode = 2
+text = "TEAM"
+label_settings = ExtResource("2_label")
+[node name="HeaderSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="ReadyHeader" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerHeader"]
+custom_minimum_size = Vector2(102, 0)
+layout_mode = 2
+text = "READY"
+label_settings = ExtResource("2_label")
+horizontal_alignment = 2
+
+[node name="PlayerScroll" type="ScrollContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 1
+
+[node name="PlayerListContainer" type="VBoxContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content/PlayerScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="Actions" type="HFlowContainer" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="ReadyButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 58)
+layout_mode = 2
+[node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 15.0
 grow_horizontal = 2
 grow_vertical = 2
+text = "READY"
+label_settings = ExtResource("5_button_label")
+horizontal_alignment = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/LeaveButton/CenterContainer" unique_id=944120474]
+[node name="StartGameButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 58)
 layout_mode = 2
+[node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "START"
+label_settings = ExtResource("5_button_label")
+horizontal_alignment = 1
 
-[node name="Leave" type="Label" parent="CenterContainer/Control/TextureRect/CenterContainer/VBoxContainer/MarginContainer2/HBoxContainer/ButtonPanel/LeaveButton/CenterContainer/MarginContainer" unique_id=1126843369]
+[node name="AddBotButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 58)
 layout_mode = 2
-text = "
+[node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "ADD BOT"
+label_settings = ExtResource("5_button_label")
+horizontal_alignment = 1
 
-LEAVE"
-label_settings = ExtResource("4_0vxb0")
+[node name="LeaveButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 58)
+layout_mode = 2
+[node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "LEAVE"
+label_settings = ExtResource("5_button_label")
+horizontal_alignment = 1

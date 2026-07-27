@@ -64,6 +64,7 @@ func buildRoomMatchResultSummary(projection rooms.RoomSnapshot) game.RoomMatchRe
 	for _, player := range summary.Players {
 		matchResult.Players = append(matchResult.Players, game.RoomPlayerMatchSummary{
 			GamePlayerID: player.GamePlayerID,
+			TeamID:       player.TeamID,
 			Score:        player.Score,
 			ShipDeaths:   player.ShipDeaths,
 			Won:          player.Won,

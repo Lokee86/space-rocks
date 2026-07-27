@@ -144,6 +144,10 @@ func send_set_ready_request(is_ready: bool) -> void:
 	send_packet(LobbyClientPackets.set_ready_request_packet(is_ready))
 
 
+func send_set_team_assignment_request(target_player_id: String, team_id: String) -> void:
+	send_packet(LobbyClientPackets.set_team_assignment_request_packet(target_player_id, team_id))
+
+
 func send_start_game_request() -> void:
 	send_packet(LobbyClientPackets.start_game_request_packet())
 

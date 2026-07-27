@@ -24,8 +24,8 @@ func request_single_player(local_profile_id := "") -> void:
 	session_boot_controller.request_single_player(local_profile_id)
 
 
-func request_create_room() -> void:
-	session_boot_controller.request_create_room()
+func request_create_room(config: Dictionary = {}) -> void:
+	session_boot_controller.request_create_room(config)
 
 
 func request_join_room(room_code: String) -> void:

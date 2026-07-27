@@ -125,6 +125,10 @@ func clear_view_target_player() -> void:
 	player_meaning.clear_view_target_player()
 
 
+func get_view_target_player_id() -> String:
+	return player_meaning.get_view_target_player_id()
+
+
 func visual_position() -> Vector2:
 	return view_anchor_sync.visual_position()
 

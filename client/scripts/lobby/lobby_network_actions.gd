@@ -13,6 +13,10 @@ func send_ready_requested(ready: bool) -> void:
 	connection_service.send_set_ready_request(ready)
 
 
+func send_team_assignment_requested(player_id: String, team_id: String) -> void:
+	connection_service.send_set_team_assignment_request(player_id, team_id)
+
+
 func send_start_game_requested() -> void:
 	connection_service.send_start_game_request()
 

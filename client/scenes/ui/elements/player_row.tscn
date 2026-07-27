@@ -1,65 +1,77 @@
 [gd_scene format=3 uid="uid://bq77w6h3620nv"]
 
-[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_1jkif"]
-[ext_resource type="Texture2D" uid="uid://clkc3vojcm4uo" path="res://assets/ui/indicator.png" id="1_l4s7f"]
-[ext_resource type="Texture2D" uid="uid://bpdd158jrrcux" path="res://assets/ui/ready_green.png" id="2_opmrn"]
-[ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="2_tyt3a"]
-[ext_resource type="Script" uid="uid://q1x3ko43d4l7" path="res://scripts/ui/lobby/player_row.gd" id="4_iw0ft"]
-[ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="5_remove"]
-[ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="7_nqxdj"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_label"]
+[ext_resource type="Texture2D" uid="uid://clkc3vojcm4uo" path="res://assets/ui/indicator.png" id="2_owner"]
+[ext_resource type="Texture2D" uid="uid://bpdd158jrrcux" path="res://assets/ui/ready_green.png" id="3_green"]
+[ext_resource type="Texture2D" uid="uid://hsqpl3j0l31" path="res://assets/ui/ready_red.png" id="4_red"]
+[ext_resource type="Script" uid="uid://q1x3ko43d4l7" path="res://scripts/ui/lobby/player_row.gd" id="5_script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/elements/team_selector.tscn" id="6_team"]
+[ext_resource type="PackedScene" uid="uid://bs7lvr3f1p7mq" path="res://scenes/ui/elements/button_square.tscn" id="7_remove"]
+[ext_resource type="FontFile" uid="uid://blox2yqbjs6n8" path="res://assets/fonts/Modeseven-L3n5.ttf" id="8_font"]
 
-[sub_resource type="LabelSettings" id="LabelSettings_nls3s"]
-font = ExtResource("7_nqxdj")
+[sub_resource type="LabelSettings" id="RemoveLabelSettings"]
+font = ExtResource("8_font")
 font_size = 18
 
-[node name="PlayerRow" type="HBoxContainer" unique_id=1723963623]
-offset_right = 284.0
-offset_bottom = 23.0
+[node name="PlayerRow" type="HBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
 size_flags_horizontal = 3
-script = ExtResource("4_iw0ft")
+theme_override_constants/separation = 6
+script = ExtResource("5_script")
 
-[node name="PlayerNameLabel" type="Label" parent="." unique_id=1699343605]
+[node name="PlayerNameLabel" type="Label" parent="."]
+custom_minimum_size = Vector2(135, 0)
 layout_mode = 2
 text = "Player X"
-label_settings = ExtResource("1_1jkif")
+label_settings = ExtResource("1_label")
+clip_text = true
+text_overrun_behavior = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1370028491]
+[node name="OwnerIndicator" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
-theme_override_constants/margin_bottom = 3
-
-[node name="OwnerIndicator" type="TextureRect" parent="MarginContainer" unique_id=395536353]
-custom_minimum_size = Vector2(25, 0)
-layout_mode = 2
-texture = ExtResource("1_l4s7f")
+texture = ExtResource("2_owner")
 expand_mode = 1
+stretch_mode = 5
 
-[node name="Spacer" type="Control" parent="." unique_id=1544892259]
+[node name="TeamSelector" parent="." instance=ExtResource("6_team")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
+mouse_filter = 2
 
-[node name="PlayerReadyLabel" type="Label" parent="." unique_id=1214345410]
+[node name="PlayerReadyLabel" type="Label" parent="."]
+custom_minimum_size = Vector2(76, 0)
 layout_mode = 2
 text = "STATUS"
-label_settings = ExtResource("1_1jkif")
+label_settings = ExtResource("1_label")
 horizontal_alignment = 2
 
-[node name="ReadyIndicatorContainer" type="MarginContainer" parent="." unique_id=1006691543]
+[node name="ReadyIndicatorContainer" type="MarginContainer" parent="."]
+custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 
-[node name="ReadyGreen" type="TextureRect" parent="ReadyIndicatorContainer" unique_id=229938993]
+[node name="ReadyGreen" type="TextureRect" parent="ReadyIndicatorContainer"]
 layout_mode = 2
-texture = ExtResource("2_opmrn")
+texture = ExtResource("3_green")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="ReadyRed" type="TextureRect" parent="ReadyIndicatorContainer" unique_id=914629872]
+[node name="ReadyRed" type="TextureRect" parent="ReadyIndicatorContainer"]
 layout_mode = 2
-texture = ExtResource("2_tyt3a")
+texture = ExtResource("4_red")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="RemoveButton" parent="." unique_id=1624558809 instance=ExtResource("5_remove")]
-custom_minimum_size = Vector2(24, 0)
+[node name="RemoveButton" parent="." instance=ExtResource("7_remove")]
+custom_minimum_size = Vector2(26, 26)
 layout_mode = 2
 tooltip_text = "Remove player"
 
-[node name="RemoveLabel" type="Label" parent="RemoveButton" unique_id=446166898]
+[node name="RemoveLabel" type="Label" parent="RemoveButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -69,6 +81,6 @@ offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "X"
-label_settings = SubResource("LabelSettings_nls3s")
+label_settings = SubResource("RemoveLabelSettings")
 horizontal_alignment = 1
 vertical_alignment = 1

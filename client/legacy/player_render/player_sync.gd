@@ -63,9 +63,6 @@ func apply(
 	local_visual_position: Vector2,
 	local_server_position: Vector2
 ) -> void:
-	if local_player != null:
-		player_hue_presenter.apply_local_player_hue(local_player)
-
 	var remote_player_ids := []
 	for player_id in server_players.keys():
 		if player_id == self_id:
@@ -77,6 +74,8 @@ func apply(
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
 		var player_node: Player = player_lifecycle.get_or_create_player_node(self_id, player_id)
+		if player_id == self_id:
+			player_hue_presenter.apply_local_player_state(state, player_node)
 		var visual_position := local_visual_position
 		if player_id != self_id:
 			visual_position = VisualSyncPositions.relative_to_local_visual(
@@ -98,7 +97,7 @@ func apply(
 				player_lifecycle,
 				player_targets
 			)
-			player_hue_presenter.apply_remote_player_hue(player_id, player_node)
+			player_hue_presenter.apply_remote_player_state(player_id, state, player_node)
 			player_presentation.apply_remote_player_presentation(
 				player_id,
 				self_id,
@@ -124,9 +123,6 @@ func apply_with_anchor(
 	anchor_visual_position: Vector2,
 	anchor_server_position: Vector2
 ) -> void:
-	if local_player != null:
-		player_hue_presenter.apply_local_player_hue(local_player)
-
 	var remote_player_ids := []
 	for player_id in server_players.keys():
 		if player_id == self_id:
@@ -138,6 +134,8 @@ func apply_with_anchor(
 	for player_id in server_players.keys():
 		var state: Dictionary = server_players[player_id]
 		var player_node: Player = player_lifecycle.get_or_create_player_node(self_id, player_id)
+		if player_id == self_id:
+			player_hue_presenter.apply_local_player_state(state, player_node)
 		var visual_position := _visual_position_for_player(
 			player_id,
 			anchor_player_id,
@@ -159,7 +157,7 @@ func apply_with_anchor(
 				player_lifecycle,
 				player_targets
 			)
-			player_hue_presenter.apply_remote_player_hue(player_id, player_node)
+			player_hue_presenter.apply_remote_player_state(player_id, state, player_node)
 			player_presentation.apply_remote_player_presentation(
 				player_id,
 				self_id,

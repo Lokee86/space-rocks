@@ -49,6 +49,7 @@ func _show_multiplayer_lobby(state) -> void:
 		"start_game_requested": Callable(self, "_on_lobby_start_game_requested"),
 		"add_bot_requested": Callable(self, "_on_lobby_add_bot_requested"),
 		"remove_member_requested": Callable(self, "_on_lobby_remove_member_requested"),
+		"team_assignment_requested": Callable(self, "_on_lobby_team_assignment_requested"),
 		"leave_requested": Callable(self, "_on_lobby_leave_requested"),
 	}
 	multiplayer_lobby_presenter.show_lobby(canvas_layer, state, callbacks)
@@ -68,6 +69,10 @@ func _on_lobby_add_bot_requested() -> void:
 
 func _on_lobby_remove_member_requested(player_id: String) -> void:
 	lobby_network_actions.send_remove_member_requested(player_id)
+
+
+func _on_lobby_team_assignment_requested(player_id: String, team_id: String) -> void:
+	lobby_network_actions.send_team_assignment_requested(player_id, team_id)
 
 
 func _on_lobby_leave_requested() -> void:

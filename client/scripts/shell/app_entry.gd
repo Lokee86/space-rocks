@@ -370,9 +370,9 @@ func _start_single_player_from_pregame() -> void:
 		main_menu_session_controller.request_single_player(local_profile_id)
 
 
-func _request_create_room_from_pregame() -> void:
+func _request_create_room_from_pregame(config: Dictionary = {}) -> void:
 	if main_menu_session_controller != null:
-		main_menu_session_controller.request_create_room()
+		main_menu_session_controller.request_create_room(config)
 
 
 func _request_join_room_from_pregame(room_code: String) -> void:

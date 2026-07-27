@@ -49,6 +49,8 @@ class FakeTransmissionFlow:
 
 	var active := false
 	var clear_calls := 0
+	var clear_primary_calls := 0
+	var mounted_primary: Control
 
 	func has_active_subpanel() -> bool:
 		return false
@@ -56,9 +58,19 @@ class FakeTransmissionFlow:
 	func has_active_transmission() -> bool:
 		return active
 
+	func mount_primary(scene: PackedScene) -> Control:
+		mounted_primary = scene.instantiate() as Control
+		active = mounted_primary != null
+		return mounted_primary
+
 	func clear() -> void:
 		clear_calls += 1
 		active = false
+
+	func clear_primary() -> void:
+		clear_primary_calls += 1
+		active = false
+		mounted_primary = null
 
 
 class FakeProfileFlow:
@@ -98,6 +110,17 @@ class Probe:
 
 	func mark_called() -> void:
 		calls += 1
+
+
+class ConfigProbe:
+	extends RefCounted
+
+	var calls := 0
+	var last_config := {}
+
+	func mark_called(config: Dictionary) -> void:
+		calls += 1
+		last_config = config.duplicate(true)
 
 
 func test_show_single_player_sets_current_mode_and_calls_menu() -> void:
@@ -209,12 +232,13 @@ func test_play_endless_requested_does_not_call_start_single_player_when_multipla
 	assert_eq(start_probe.calls, 0)
 
 
-func test_multiplayer_create_calls_clear_then_create() -> void:
+func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void:
 	var menu := FakePregameMenu.new()
 	var profile_context_provider := FakeProfileContextProvider.new()
 	var flow := PregameMenuFlow.new()
 	var clear_probe := Probe.new()
-	var create_probe := Probe.new()
+	var create_probe := ConfigProbe.new()
+	var transmission_flow := FakeTransmissionFlow.new()
 
 	add_child_autofree(menu)
 	flow.configure(
@@ -225,13 +249,29 @@ func test_multiplayer_create_calls_clear_then_create() -> void:
 		Callable(),
 		Callable(),
 		Callable(clear_probe, "mark_called"),
-		profile_context_provider)
+		profile_context_provider,
+		null,
+		transmission_flow)
 	flow.show_multiplayer()
 
 	menu.create_game_requested.emit()
 
+	assert_not_null(transmission_flow.mounted_primary)
+	assert_eq(clear_probe.calls, 0)
+	assert_eq(create_probe.calls, 0)
+	var config := {
+		"team_structure": "auto_balanced",
+		"team_assignment_mode": "",
+		"team_count": 3,
+		"max_players": 8,
+	}
+	transmission_flow.mounted_primary.emit_signal("create_requested", config)
+
 	assert_eq(clear_probe.calls, 1)
 	assert_eq(create_probe.calls, 1)
+	assert_eq(create_probe.last_config, config)
+	transmission_flow.mounted_primary.free()
+	transmission_flow.mounted_primary = null
 
 
 func test_multiplayer_join_calls_show_join_dialog() -> void:

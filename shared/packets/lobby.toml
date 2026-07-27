@@ -271,6 +271,11 @@ json = "game_player_id"
 type = "string"
 
 [[structs.fields]]
+name = "team_id"
+json = "team_id"
+type = "string"
+
+[[structs.fields]]
 name = "score"
 json = "score"
 type = "int"

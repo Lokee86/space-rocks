@@ -241,6 +241,12 @@ func clear_view_target_player() -> void:
 		player_render_api.clear_view_target_player()
 
 
+func get_view_target_player_id() -> String:
+	if player_render_api == null:
+		return ""
+	return player_render_api.get_view_target_player_id()
+
+
 func visual_position_for_server_position(server_position: Vector2) -> Vector2:
 	return player_render_api.visual_position_for_server_position(server_position)
 

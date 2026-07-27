@@ -38,6 +38,10 @@ func show_lobby(canvas_layer: CanvasLayer, state: LobbySessionState, callbacks: 
 		state.owner_id,
 		state.max_players,
 		state.members,
+		state.team_structure,
+		state.team_assignment_mode,
+		state.team_count,
+		state.team_assignments_locked,
 		state.can_start_game()
 	)
 	multiplayer_lobby.set_start_enabled(state.can_start_game())
@@ -70,6 +74,9 @@ func _connect_lobby_signals(callbacks: Dictionary) -> void:
 	var remove_handler: Callable = callbacks.get("remove_member_requested", Callable())
 	if !remove_handler.is_null() && !multiplayer_lobby.remove_member_requested.is_connected(remove_handler):
 		multiplayer_lobby.remove_member_requested.connect(remove_handler)
+	var team_handler: Callable = callbacks.get("team_assignment_requested", Callable())
+	if !team_handler.is_null() && !multiplayer_lobby.team_assignment_requested.is_connected(team_handler):
+		multiplayer_lobby.team_assignment_requested.connect(team_handler)
 	var leave_handler: Callable = callbacks.get("leave_requested", Callable())
 	if !leave_handler.is_null() && !multiplayer_lobby.leave_requested.is_connected(leave_handler):
 		multiplayer_lobby.leave_requested.connect(leave_handler)

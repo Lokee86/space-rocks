@@ -1,48 +1,54 @@
 [gd_scene format=3 uid="uid://cpgo7s8d6qjlc"]
 
-[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_m8y7s"]
-[ext_resource type="Script" uid="uid://sovlxs4ekot1" path="res://scripts/ui/match_results/player_score_row.gd" id="2_player_score_row"]
+[ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="1_label"]
+[ext_resource type="Script" uid="uid://sovlxs4ekot1" path="res://scripts/ui/match_results/player_score_row.gd" id="2_script"]
 
-[node name="PlayerScoreRow" type="HBoxContainer" unique_id=2027068278]
-offset_right = 40.0
-offset_bottom = 40.0
-theme_override_constants/separation = 3
-script = ExtResource("2_player_score_row")
-
-[node name="PlayerIDLabel" type="Label" parent="." unique_id=81972819]
-unique_name_in_owner = true
+[node name="PlayerScoreRow" type="HBoxContainer"]
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-text = "PlayerID"
-label_settings = ExtResource("1_m8y7s")
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+script = ExtResource("2_script")
 
-[node name="Spacer" type="Control" parent="." unique_id=373768922]
+[node name="PlayerIDLabel" type="Label" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+text = "PLAYER"
+label_settings = ExtResource("1_label")
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="TeamSwatch" type="ColorRect" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="TeamLabel" type="Label" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 0)
+layout_mode = 2
+text = "TEAM 1"
+label_settings = ExtResource("1_label")
+
+[node name="Spacer" type="Control" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Separator" type="Label" parent="." unique_id=605817521]
-layout_mode = 2
-text = "|"
-label_settings = ExtResource("1_m8y7s")
-
-[node name="GameDeathsLabel" type="Label" parent="." unique_id=396868876]
+[node name="GameDeathsLabel" type="Label" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(79, 0)
+custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
-text = "XXXXXX"
-label_settings = ExtResource("1_m8y7s")
-horizontal_alignment = 1
-text_overrun_behavior = 1
+text = "0"
+label_settings = ExtResource("1_label")
+horizontal_alignment = 2
 
-[node name="Separator2" type="Label" parent="." unique_id=1560637581]
-layout_mode = 2
-text = "|"
-label_settings = ExtResource("1_m8y7s")
-
-[node name="GameScoreLabel" type="Label" parent="." unique_id=589383169]
+[node name="GameScoreLabel" type="Label" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(172, 0)
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
-text = "SCORE"
-label_settings = ExtResource("1_m8y7s")
-horizontal_alignment = 1
-text_overrun_behavior = 1
+text = "0"
+label_settings = ExtResource("1_label")
+horizontal_alignment = 2

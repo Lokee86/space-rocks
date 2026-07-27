@@ -6,6 +6,7 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 var request_type := Constants.BOOT_REQUEST_NONE
 var join_room_code := ""
 var local_profile_id := ""
+var room_creation_config := {}
 var _operation_trace_factory: Callable
 var trace_id := ""
 
@@ -21,10 +22,11 @@ func request_single_player(local_profile_id_value := "") -> void:
 	trace_id = _new_trace_id("start_single_player")
 
 
-func request_create_room() -> void:
+func request_create_room(config: Dictionary = {}) -> void:
 	request_type = Constants.BOOT_REQUEST_CREATE_ROOM
 	join_room_code = ""
 	local_profile_id = ""
+	room_creation_config = config.duplicate(true)
 	trace_id = _new_trace_id("create_room")
 
 
@@ -60,6 +62,7 @@ func consume_request() -> Dictionary:
 		"type": request_type,
 		"room_code": join_room_code,
 		"local_profile_id": local_profile_id,
+		"room_creation_config": room_creation_config.duplicate(true),
 		"trace_id": trace_id,
 	}
 	clear()
@@ -70,6 +73,7 @@ func clear() -> void:
 	request_type = Constants.BOOT_REQUEST_NONE
 	join_room_code = ""
 	local_profile_id = ""
+	room_creation_config = {}
 	trace_id = ""
 
 

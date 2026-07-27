@@ -157,12 +157,16 @@ func _current_match_result_rows() -> Array:
 	var rows: Array = []
 	for player in players:
 		if player is Dictionary:
-			rows.append({
+			var row := {
 				"game_player_id": player.get("game_player_id", player.get("player_id", "Player")),
 				"score": player.get("score", 0),
 				"ship_deaths": player.get("ship_deaths", 0),
 				"won": player.get("won", false),
-			})
+			}
+			var team_id := str(player.get("team_id", ""))
+			if not team_id.is_empty():
+				row["team_id"] = team_id
+			rows.append(row)
 	return rows
 
 

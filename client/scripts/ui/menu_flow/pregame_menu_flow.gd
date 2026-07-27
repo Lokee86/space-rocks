@@ -3,6 +3,7 @@ extends RefCounted
 
 const PregameMenuMode := preload("res://scripts/ui/menu_flow/pregame_menu_mode.gd")
 const LocalPilotFlowScript := preload("res://scripts/ui/menu_flow/local_pilot_flow.gd")
+const MultiplayerRoomSetupScene := preload("res://scenes/ui/transmission_displays/multiplayer_room_setup_readout.tscn")
 
 var pregame_menu: PregameMenu
 var return_to_main_menu: Callable
@@ -100,12 +101,25 @@ func _on_play_endless_requested() -> void:
 
 
 func _on_create_game_requested() -> void:
-	if current_mode != PregameMenuMode.MULTIPLAYER:
+	if current_mode != PregameMenuMode.MULTIPLAYER or transmission_flow == null:
 		return
+	var setup: Control = transmission_flow.mount_primary(MultiplayerRoomSetupScene)
+	if setup == null:
+		return
+	setup.connect("create_requested", Callable(self, "_on_room_setup_create_requested"))
+	setup.connect("cancel_requested", Callable(self, "_on_room_setup_cancel_requested"))
+
+
+func _on_room_setup_create_requested(config: Dictionary) -> void:
 	if clear_for_room_transition_callable.is_valid():
 		clear_for_room_transition_callable.call()
 	if create_room_callable.is_valid():
-		create_room_callable.call()
+		create_room_callable.call(config)
+
+
+func _on_room_setup_cancel_requested() -> void:
+	if transmission_flow != null:
+		transmission_flow.clear_primary()
 
 
 func _on_join_game_requested() -> void:

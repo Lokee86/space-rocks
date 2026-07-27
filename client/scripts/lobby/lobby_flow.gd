@@ -2,7 +2,6 @@ extends RefCounted
 
 const LobbyPacketReader := preload("res://scripts/lobby/lobby_packet_reader.gd")
 
-
 var lobby_state: LobbySessionState = LobbySessionState.new()
 
 
@@ -13,7 +12,11 @@ func apply_room_snapshot(packet: Dictionary) -> String:
 		LobbyPacketReader.local_player_id(packet),
 		LobbyPacketReader.owner_id(packet),
 		LobbyPacketReader.max_players(packet),
-		LobbyPacketReader.members(packet)
+		LobbyPacketReader.members(packet),
+		LobbyPacketReader.team_structure(packet),
+		LobbyPacketReader.team_assignment_mode(packet),
+		LobbyPacketReader.team_count(packet),
+		LobbyPacketReader.team_assignments_locked(packet)
 	)
 	return lobby_state.summary()
 

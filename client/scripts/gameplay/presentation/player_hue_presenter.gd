@@ -1,7 +1,9 @@
 extends RefCounted
 class_name PlayerHuePresenter
 
-const Constants = preload("res://scripts/generated/constants/constants.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+const TeamPresentation := preload("res://scripts/teams/team_presentation.gd")
 const REMOTE_HUE_STEP := 0.12
 const PLAYER_COLOR_POLICY_LOCAL_SELECTED := "local_selected"
 const PLAYER_COLOR_POLICY_AUTO_DISTINCT := "auto_distinct"
@@ -30,8 +32,16 @@ func reset() -> void:
 
 
 func apply_local_player_hue(player: Player) -> void:
+	if player != null:
+		local_player_hue = player.player_hue
+
+
+func apply_local_player_state(state: Dictionary, player: Player) -> void:
 	if player == null:
 		return
+	var team_id := str(state.get(Packets.FIELD_TEAM_ID, ""))
+	if not team_id.is_empty():
+		player.set_player_hue(TeamPresentation.hue(team_id, player.player_hue))
 	local_player_hue = player.player_hue
 
 
@@ -40,10 +50,13 @@ func set_remote_player_order(remote_player_ids: Array) -> void:
 
 
 func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
+	apply_remote_player_state(player_id, {}, remote_player)
+
+
+func apply_remote_player_state(player_id: String, state: Dictionary, remote_player: Player) -> void:
 	if remote_player == null:
 		return
-
-	var hue := remote_hue_for_player(player_id)
+	var hue := remote_hue_for_player(player_id, str(state.get(Packets.FIELD_TEAM_ID, "")))
 	remote_player_hues[player_id] = hue
 	remote_player.set_player_hue(hue)
 
@@ -51,15 +64,12 @@ func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
 func apply_os_indicator_hue(player_id: String, indicator: Control) -> void:
 	if indicator == null:
 		return
-
 	var graphic := indicator.get_node_or_null("TextureRect") as CanvasItem
 	if graphic == null:
 		return
-
 	var shader_material := graphic.material as ShaderMaterial
 	if shader_material == null:
 		return
-
 	graphic.material = shader_material.duplicate() as ShaderMaterial
 	(graphic.material as ShaderMaterial).set_shader_parameter("hue_shift", remote_hue_for_player(player_id))
 
@@ -71,25 +81,26 @@ func remove_player(player_id: String) -> void:
 func remote_player_hues_without(current_self_id: String) -> Dictionary:
 	var hues := {}
 	for player_id in remote_player_hues:
-		if player_id == current_self_id:
-			continue
-		hues[player_id] = remote_player_hues[player_id]
+		if player_id != current_self_id:
+			hues[player_id] = remote_player_hues[player_id]
 	return hues
 
 
-func remote_hue_for_player(player_id: String) -> float:
+func remote_hue_for_player(player_id: String, team_id := "") -> float:
+	if not team_id.is_empty():
+		return TeamPresentation.hue(team_id, Constants.REMOTE_PLAYER_FALLBACK_HUE)
+
 	var player_color_policy := _player_color_policy()
 	if player_color_policy != PLAYER_COLOR_POLICY_LOCAL_SELECTED \
 			and player_color_policy != PLAYER_COLOR_POLICY_AUTO_DISTINCT \
 			and player_color_policy != PLAYER_COLOR_POLICY_PLAYER_ID_ASSIGNED:
 		player_color_policy = PLAYER_COLOR_POLICY_AUTO_DISTINCT
-
 	if player_color_policy == PLAYER_COLOR_POLICY_PLAYER_ID_ASSIGNED:
 		player_color_policy = PLAYER_COLOR_POLICY_AUTO_DISTINCT
 
 	var slot_index := remote_player_order.find(player_id)
 	if slot_index >= 0:
-		var hue := local_player_hue + (float(slot_index + 1) * REMOTE_HUE_STEP)
+		var hue := local_player_hue + float(slot_index + 1) * REMOTE_HUE_STEP
 		if hue > 1.0:
 			hue -= 1.0
 		return hue
@@ -102,13 +113,9 @@ func _player_color_policy() -> String:
 	return str(Constants.PLAYER_COLOR_POLICY)
 
 
-func hues_similar(
-		first_hue: float,
-		second_hue: float,
-		tolerance := Constants.REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE
-) -> bool:
-		var distance: float = abs(fposmod(first_hue, 1.0) - fposmod(second_hue, 1.0))
-		return min(distance, 1.0 - distance) < tolerance
+func hues_similar(first_hue: float, second_hue: float, tolerance := Constants.REMOTE_PLAYER_HUE_SIMILARITY_TOLERANCE) -> bool:
+	var distance: float = abs(fposmod(first_hue, 1.0) - fposmod(second_hue, 1.0))
+	return min(distance, 1.0 - distance) < tolerance
 
 
 func player_id_hash(player_id: String) -> int:
@@ -116,5 +123,3 @@ func player_id_hash(player_id: String) -> int:
 	for index in range(player_id.length()):
 		hash_value = int((hash_value ^ player_id.unicode_at(index)) * 16777619) & 0x7fffffff
 	return hash_value
-
-

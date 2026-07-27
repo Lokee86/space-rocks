@@ -31,8 +31,8 @@ func request_single_player(local_profile_id := "") -> void:
 	pending_boot_request.request_single_player(local_profile_id)
 
 
-func request_create_room() -> void:
-	pending_boot_request.request_create_room()
+func request_create_room(config: Dictionary = {}) -> void:
+	pending_boot_request.request_create_room(config)
 
 
 func request_join_room(room_code: String) -> void:
@@ -70,6 +70,7 @@ func send_pending_boot_request() -> void:
 	var request_type := str(request.get("type", Constants.BOOT_REQUEST_NONE))
 	var room_code := str(request.get("room_code", ""))
 	var local_profile_id := str(request.get("local_profile_id", ""))
+	var room_creation_config: Dictionary = request.get("room_creation_config", {})
 	var trace_id := str(request.get("trace_id", ""))
 	var request_sent := true
 
@@ -83,7 +84,10 @@ func send_pending_boot_request() -> void:
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
 		connection_service.send_start_single_player_request(local_profile_id)
 	elif request_type == Constants.BOOT_REQUEST_CREATE_ROOM:
-		connection_service.send_create_room_request()
+		if connection_service.has_method("send_configured_create_room_request"):
+			connection_service.send_configured_create_room_request(room_creation_config)
+		else:
+			connection_service.send_create_room_request()
 	elif request_type == Constants.BOOT_REQUEST_JOIN_ROOM:
 		connection_service.send_join_room_request(room_code)
 

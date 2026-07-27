@@ -219,8 +219,19 @@ func send_start_single_player_request(local_profile_id := "") -> void:
 
 
 func send_create_room_request() -> void:
+	send_configured_create_room_request({})
+
+
+func send_configured_create_room_request(config: Dictionary) -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_create_room_request(_active_room_operation_trace_id)
+		client_packet_sender.send_create_room_request(
+			_active_room_operation_trace_id,
+			str(config.get("local_profile_id", "")),
+			str(config.get("team_structure", "ffa")),
+			str(config.get("team_assignment_mode", "")),
+			int(config.get("team_count", 0)),
+			int(config.get("max_players", 0))
+		)
 
 
 func send_join_room_request(room_code: String) -> void:
@@ -231,6 +242,11 @@ func send_join_room_request(room_code: String) -> void:
 func send_set_ready_request(is_ready: bool) -> void:
 	if _can_send_outbound():
 		client_packet_sender.send_set_ready_request(is_ready)
+
+
+func send_set_team_assignment_request(target_player_id: String, team_id: String) -> void:
+	if _can_send_outbound():
+		client_packet_sender.send_set_team_assignment_request(target_player_id, team_id)
 
 
 func send_start_game_request() -> void:

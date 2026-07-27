@@ -155,6 +155,20 @@ func process(delta: float, required_lane_baselines_synced: bool) -> void:
 		dev_tools_session_flow.process(delta)
 	if gameplay_presentation_flow != null:
 		gameplay_presentation_flow.process(delta, required_lane_baselines_synced)
+	_refresh_lives_indicator_hue()
+
+
+func _refresh_lives_indicator_hue() -> void:
+	if gameplay_hud_flow == null or player == null:
+		return
+	var hue := float(player.player_hue)
+	if world_sync != null:
+		var view_target_id: String = str(world_sync.get_view_target_player_id())
+		if not view_target_id.is_empty():
+			var remote_hues: Dictionary = world_sync.get_remote_player_hues()
+			if remote_hues.has(view_target_id):
+				hue = float(remote_hues[view_target_id])
+	gameplay_hud_flow.apply_player_hue(hue)
 
 func handle_devtools_input(event: InputEvent) -> bool:
 	if dev_tools_session_flow == null:

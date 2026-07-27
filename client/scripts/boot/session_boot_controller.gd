@@ -31,9 +31,9 @@ func request_single_player(local_profile_id := "") -> void:
 	shell_boot_flow.connect_to_game_server("single player")
 
 
-func request_create_room() -> void:
+func request_create_room(config: Dictionary = {}) -> void:
 	session_context.request_multiplayer()
-	shell_boot_flow.request_create_room()
+	shell_boot_flow.request_create_room(config)
 	shell_boot_flow.set_websocket_url(SessionNetworkTargetScript.websocket_url_for_mode(Constants.SESSION_MODE_MULTIPLAYER))
 	shell_boot_flow.connect_to_game_server("multiplayer create")
 

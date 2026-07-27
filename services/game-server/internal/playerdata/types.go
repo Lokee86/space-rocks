@@ -21,6 +21,7 @@ type Stats struct {
 // PlayerMatchSummary is the logical V1.1 per-player match summary contract.
 type PlayerMatchSummary struct {
 	GamePlayerID   string
+	TeamID         string
 	AccountID      string
 	LocalProfileID string
 	Score          int

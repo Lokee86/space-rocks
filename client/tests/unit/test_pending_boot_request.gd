@@ -29,6 +29,23 @@ func test_create_room_request_is_multiplayer_without_consuming() -> void:
 	assert_true(pending.has_request())
 
 
+func test_configured_create_room_request_round_trips_configuration() -> void:
+	var pending := PendingBootRequest.new()
+	var config := {
+		"team_structure": "auto_balanced",
+		"team_assignment_mode": "",
+		"team_count": 4,
+		"max_players": 8,
+	}
+	pending.request_create_room(config)
+
+	var request := pending.consume_request()
+
+	assert_eq(request["room_creation_config"], config)
+	config["team_count"] = 2
+	assert_eq(request["room_creation_config"]["team_count"], 4)
+
+
 func test_join_room_request_is_multiplayer_without_consuming() -> void:
 	var pending := PendingBootRequest.new()
 	pending.request_join_room("ABCD")
