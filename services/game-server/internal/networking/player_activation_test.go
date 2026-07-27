@@ -115,6 +115,74 @@ func TestActivateRoomPlayersRollsBackWhenRoomActivationFails(t *testing.T) {
 	}
 }
 
+func TestActivateRoomPlayersRestoresBotsAcrossConsecutiveMatches(t *testing.T) {
+	room := rooms.NewRoom("room", rooms.RoomStateLobby, nil)
+	owner := room.AddMember(rooms.NewRoomMember("session-owner"))
+	firstBot, roomErr := room.AddBotForOwnerSession(owner.SessionID)
+	if roomErr != nil {
+		t.Fatalf("add first bot: %v", roomErr)
+	}
+	secondBot, roomErr := room.AddBotForOwnerSession(owner.SessionID)
+	if roomErr != nil {
+		t.Fatalf("add second bot: %v", roomErr)
+	}
+	owner.SetReady(true)
+
+	session := &webSocketSession{sessionID: owner.SessionID, outbound: make(chan []byte, 1)}
+	attachRoomSession(room, session.sessionID, session)
+	t.Cleanup(func() {
+		detachRoomSession(room, session.sessionID)
+		if gameInstance := room.GameInstance(); gameInstance != nil {
+			gameInstance.Stop()
+		}
+	})
+	session.bindRoom(room)
+
+	if err := room.StartGameForSession(owner.SessionID, game.New); err != nil {
+		t.Fatalf("start first game: %v", err)
+	}
+	activateRoomPlayers(room)
+	if facts := room.GameInstance().PlayerMatchFacts(); len(facts) != 3 {
+		t.Fatalf("first-match facts = %#v, want owner and two bots", facts)
+	}
+
+	if err := room.MarkGameOver(); err != nil {
+		t.Fatalf("mark first game over: %v", err)
+	}
+	if err := room.ResetToLobbyForSession(owner.SessionID); err != nil {
+		t.Fatalf("return to lobby: %v", err)
+	}
+	deactivateRoomPlayers(room)
+
+	for _, botSessionID := range []string{firstBot.SessionID, secondBot.SessionID} {
+		playerID, ok := room.PlayerIDForSession(botSessionID)
+		if !ok || playerID == "" || playerID[:1] != "P" {
+			t.Fatalf("expected restored lobby bot ID for %q, got %q ok=%v", botSessionID, playerID, ok)
+		}
+	}
+
+	owner.SetReady(true)
+	if err := room.StartGameForSession(owner.SessionID, game.New); err != nil {
+		t.Fatalf("start second game: %v", err)
+	}
+	activateRoomPlayers(room)
+
+	facts := room.GameInstance().PlayerMatchFacts()
+	if len(facts) != 3 {
+		t.Fatalf("second-match facts = %#v, want owner and two bots", facts)
+	}
+	factIDs := make(map[string]bool, len(facts))
+	for _, fact := range facts {
+		factIDs[fact.GamePlayerID] = true
+	}
+	for _, botSessionID := range []string{firstBot.SessionID, secondBot.SessionID} {
+		playerID, ok := room.PlayerIDForSession(botSessionID)
+		if !ok || !factIDs[playerID] {
+			t.Fatalf("bot %q resolved to %q but was absent from second match facts %#v", botSessionID, playerID, facts)
+		}
+	}
+}
+
 func TestActivateRoomPlayersCountsSameIdentityAcrossConsecutiveMatches(t *testing.T) {
 	room := rooms.NewRoom("room", rooms.RoomStateLobby, nil)
 	room.AddMember(rooms.NewRoomMember("session-1"))
@@ -165,8 +233,8 @@ func TestActivateRoomPlayersCountsSameIdentityAcrossConsecutiveMatches(t *testin
 		t.Fatalf("expected active player count 0, got %d", got)
 	}
 	playerID, ok = room.PlayerIDForSession("session-1")
-	if !ok || playerID != "player-1" {
-		t.Fatalf("expected room player ID to remain player-1, got %q ok=%v", playerID, ok)
+	if !ok || playerID != "Player-1" {
+		t.Fatalf("expected lobby player ID Player-1 after reset, got %q ok=%v", playerID, ok)
 	}
 
 	if err := room.StartSinglePlayerGame(game.New); err != nil {

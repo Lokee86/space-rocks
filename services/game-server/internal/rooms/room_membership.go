@@ -1,5 +1,11 @@
 package rooms
 
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
+
 type roomMembership struct {
 	members map[string]*RoomMember
 	ownerID string
@@ -124,6 +130,41 @@ func (membership *roomMembership) setAllReady(ready bool) {
 	for _, member := range membership.members {
 		member.SetReady(ready || member.IsBot)
 	}
+}
+
+func (membership *roomMembership) restoreLobbyPlayerIDs() {
+	members := make([]*RoomMember, 0, len(membership.members))
+	for _, member := range membership.members {
+		members = append(members, member)
+	}
+	sort.Slice(members, func(left, right int) bool {
+		leftNumber, leftOK := playerIDNumber(members[left].PlayerID)
+		rightNumber, rightOK := playerIDNumber(members[right].PlayerID)
+		if leftOK != rightOK {
+			return leftOK
+		}
+		if leftOK && leftNumber != rightNumber {
+			return leftNumber < rightNumber
+		}
+		return members[left].MemberID < members[right].MemberID
+	})
+
+	ownerMember := membership.members[membership.ownerID]
+	membership.members = make(map[string]*RoomMember, len(members))
+	membership.ownerID = ""
+	for index, member := range members {
+		playerID := formatPlayerID(index + 1)
+		member.PlayerID = playerID
+		membership.members[playerID] = member
+		if member == ownerMember {
+			membership.ownerID = playerID
+		}
+	}
+}
+
+func playerIDNumber(playerID string) (int, bool) {
+	number, err := strconv.Atoi(strings.TrimPrefix(strings.ToLower(playerID), "player-"))
+	return number, err == nil && number > 0
 }
 
 func (membership *roomMembership) nextOwnerID() string {

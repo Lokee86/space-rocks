@@ -216,6 +216,42 @@ func TestResetToLobbyLooksUpByPlayerID(t *testing.T) {
 	}
 }
 
+func TestResetToLobbyRestoresLobbyPlayerIDsAfterGameplayActivation(t *testing.T) {
+	room := NewRoom("room", RoomStateLobby, nil)
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	bot := room.AddMember(NewBotRoomMember())
+	owner.SetReady(true)
+
+	if err := room.StartGameForSession(owner.SessionID, game.New); err != nil {
+		t.Fatalf("start game: %v", err)
+	}
+	context := room.GameplayContext()
+	if !room.ActivateMemberPlayer(context, owner.SessionID, "player-2") {
+		t.Fatal("activate owner")
+	}
+	if !room.ActivateMemberPlayer(context, bot.SessionID, "player-1") {
+		t.Fatal("activate bot")
+	}
+	if err := room.MarkGameOver(); err != nil {
+		t.Fatalf("mark game over: %v", err)
+	}
+	if err := room.ResetToLobbyForSession(owner.SessionID); err != nil {
+		t.Fatalf("reset to lobby: %v", err)
+	}
+
+	ownerPlayerID, ownerOK := room.PlayerIDForSession(owner.SessionID)
+	botPlayerID, botOK := room.PlayerIDForSession(bot.SessionID)
+	if !ownerOK || !botOK {
+		t.Fatalf("expected both lobby members, owner=%v bot=%v", ownerOK, botOK)
+	}
+	if ownerPlayerID != "Player-2" || botPlayerID != "Player-1" {
+		t.Fatalf("expected restored lobby IDs, owner=%q bot=%q", ownerPlayerID, botPlayerID)
+	}
+	if room.OwnerID() != ownerPlayerID {
+		t.Fatalf("owner ID = %q, want %q", room.OwnerID(), ownerPlayerID)
+	}
+}
+
 func roomWithPlayerIDs(playerIDs ...string) *Room {
 	room := NewRoom("room", RoomStateLobby, nil)
 	for index, playerID := range playerIDs {

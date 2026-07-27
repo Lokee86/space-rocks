@@ -260,6 +260,7 @@ func (room *Room) resetToLobbyLocked(playerID string) (*game.Game, *RoomDomainEr
 	}
 	oldGame := room.match.Game()
 	room.membership.setAllReady(false)
+	room.membership.restoreLobbyPlayerIDs()
 	room.match.ClearGame()
 	room.match.SetActivePlayers(0)
 	room.unlockTeamAssignmentsLocked()
