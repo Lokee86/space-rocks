@@ -21,9 +21,14 @@ func (manager *RoomManager) LeaveMember(roomID, sessionID, _ string) (*LeaveMemb
 	room := leaveResult.Room
 	removedPlayerID := leaveResult.RemovedMember.PlayerID
 	gameInstance := room.GameInstance()
+	abandonBotMatch := leaveResult.RemainingMembers == 0 && len(leaveResult.RemovedBots) > 0
 	playerRemoved := false
 	if leaveResult.MemberRemoved && removedPlayerID != "" && gameInstance != nil && room.DeactivateMemberPlayer(sessionID) {
-		gameInstance.RemovePlayer(removedPlayerID)
+		if abandonBotMatch {
+			gameInstance.DiscardPlayer(removedPlayerID)
+		} else {
+			gameInstance.RemovePlayer(removedPlayerID)
+		}
 		playerRemoved = true
 	}
 	for _, removedBot := range leaveResult.RemovedBots {
@@ -31,7 +36,11 @@ func (manager *RoomManager) LeaveMember(roomID, sessionID, _ string) (*LeaveMemb
 			continue
 		}
 		room.DeactivateMemberPlayer(removedBot.SessionID)
-		gameInstance.RemovePlayer(removedBot.PlayerID)
+		if abandonBotMatch {
+			gameInstance.DiscardPlayer(removedBot.PlayerID)
+		} else {
+			gameInstance.RemovePlayer(removedBot.PlayerID)
+		}
 	}
 
 	population := room.Population()

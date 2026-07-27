@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
 func TestAddBotUsesPlayerInputAndRemovalLifecycle(t *testing.T) {
@@ -51,6 +52,20 @@ func TestAddBotUsesPlayerInputAndRemovalLifecycle(t *testing.T) {
 	gameInstance.mu.Unlock()
 	if playerExists || controllerExists {
 		t.Fatalf("expected bot player and controller removal, player=%v controller=%v", playerExists, controllerExists)
+	}
+}
+
+func TestAddBotWithTeamPreservesMatchMembership(t *testing.T) {
+	gameInstance := NewWithSeed(8)
+	gameInstance.SetTeamStructure(teams.StructureCustom)
+	botID := gameInstance.AddBotWithTeam(teams.Team3)
+
+	if got := gameInstance.PlayerTeam(botID); got != teams.Team3 {
+		t.Fatalf("bot team = %q, want %q", got, teams.Team3)
+	}
+	facts := gameInstance.PlayerMatchFacts()
+	if len(facts) != 1 || facts[0].GamePlayerID != botID || facts[0].TeamID != teams.Team3 {
+		t.Fatalf("bot facts = %+v, want Team3 membership", facts)
 	}
 }
 

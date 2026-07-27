@@ -61,6 +61,23 @@ func TestOwnerAssignmentClearsTargetReady(t *testing.T) {
 	}
 }
 
+func TestOwnerAssignmentKeepsBotReady(t *testing.T) {
+	room := customRoom(t, teams.AssignmentOwnerAssigned)
+	owner := room.AddMember(NewRoomMember("session-owner"))
+	bot, roomErr := room.AddBotForOwnerSession(owner.SessionID)
+	if roomErr != nil {
+		t.Fatalf("add bot: %v", roomErr)
+	}
+
+	if err := room.SetTeamAssignment(owner.SessionID, bot.PlayerID, teams.Team2); err != nil {
+		t.Fatalf("assign bot: %v", err)
+	}
+	botAfter, ok := room.memberForSessionLocked(bot.SessionID)
+	if !ok || !botAfter.Ready {
+		t.Fatalf("assigned bot should remain ready, got %+v", botAfter)
+	}
+}
+
 func TestAutoBalancedMembershipChangesUseCurrentRoster(t *testing.T) {
 	room, err := NewRoomWithConfig("room", RoomStateLobby, nil, RoomCreationConfig{
 		TeamConfig: teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},

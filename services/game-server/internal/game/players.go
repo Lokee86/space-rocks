@@ -84,6 +84,12 @@ func (game *Game) RemovePlayer(playerID string) {
 
 // RollbackPlayerAdd removes a provisional player that never completed room activation.
 func (game *Game) RollbackPlayerAdd(playerID string) {
+	game.DiscardPlayer(playerID)
+}
+
+// DiscardPlayer removes both active participation and durable match facts.
+// Normal departures should use RemovePlayer so completed-match results remain intact.
+func (game *Game) DiscardPlayer(playerID string) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 

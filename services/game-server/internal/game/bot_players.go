@@ -4,13 +4,21 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
 func (game *Game) AddBot() string {
+	return game.AddBotWithTeam(teams.NoTeam)
+}
+
+func (game *Game) AddBotWithTeam(teamID teams.ID) string {
 	game.mu.Lock()
 	defer game.mu.Unlock()
+	if err := teams.ValidateTeamID(teamID); err != nil {
+		teamID = teams.NoTeam
+	}
 
-	playerID := game.addPlayerLocked()
+	playerID := game.addPlayerLocked(teamID)
 	game.enableBotPlayerLocked(playerID)
 	return playerID
 }

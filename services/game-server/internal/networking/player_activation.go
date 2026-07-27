@@ -63,7 +63,11 @@ func activateRoomPlayers(room *rooms.Room) {
 		if !member.IsBot || !member.Connected {
 			continue
 		}
-		playerID := gameplayContext.Game.AddBot()
+		teamID, assigned := teamSnapshot.Assignments[member.MemberID]
+		if !assigned {
+			continue
+		}
+		playerID := gameplayContext.Game.AddBotWithTeam(teamID)
 		if !activateMemberPlayerCall(room, gameplayContext, member.SessionID, playerID) {
 			gameplayContext.Game.RemovePlayer(playerID)
 		}

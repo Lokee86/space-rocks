@@ -8,6 +8,52 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
+func TestActivateRoomPlayersPassesLockedBotAssignmentToGame(t *testing.T) {
+	room, err := rooms.NewRoomWithConfig("room", rooms.RoomStateLobby, nil, rooms.RoomCreationConfig{
+		TeamConfig: teams.Config{Structure: teams.StructureCustom, AssignmentMode: teams.AssignmentOwnerAssigned},
+	})
+	if err != nil {
+		t.Fatalf("create room: %v", err)
+	}
+	owner := room.AddMember(rooms.NewRoomMember("session-owner"))
+	bot, roomErr := room.AddBotForOwnerSession(owner.SessionID)
+	if roomErr != nil {
+		t.Fatalf("add bot: %v", roomErr)
+	}
+	if err := room.SetTeamAssignment(owner.SessionID, owner.PlayerID, teams.Team1); err != nil {
+		t.Fatalf("assign owner: %v", err)
+	}
+	if err := room.SetTeamAssignment(owner.SessionID, bot.PlayerID, teams.Team2); err != nil {
+		t.Fatalf("assign bot: %v", err)
+	}
+	if err := room.SetReadyForSessionInLobby(owner.SessionID, true); err != nil {
+		t.Fatalf("ready owner: %v", err)
+	}
+
+	ownerSession := &webSocketSession{sessionID: owner.SessionID, outbound: make(chan []byte, 1)}
+	attachRoomSession(room, ownerSession.sessionID, ownerSession)
+	ownerSession.bindRoom(room)
+	t.Cleanup(func() {
+		detachRoomSession(room, ownerSession.sessionID)
+		if instance := room.GameInstance(); instance != nil {
+			instance.Stop()
+		}
+	})
+
+	if err := room.StartGameForMember(owner.PlayerID, game.New); err != nil {
+		t.Fatalf("start game: %v", err)
+	}
+	activateRoomPlayers(room)
+
+	botGameID, ok := room.PlayerIDForSession(bot.SessionID)
+	if !ok {
+		t.Fatal("expected bot game player ID")
+	}
+	if got := room.GameInstance().PlayerTeam(botGameID); got != teams.Team2 {
+		t.Fatalf("bot game team = %q, want %q", got, teams.Team2)
+	}
+}
+
 func TestActivateRoomPlayersPassesLockedMemberAssignmentsToGame(t *testing.T) {
 	tests := []struct {
 		name   string

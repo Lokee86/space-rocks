@@ -163,6 +163,25 @@ func TestRemoveLastPlayerCompletesMatchAndRepeatedRemovalIsStable(t *testing.T) 
 	}
 }
 
+func TestDiscardPlayerRemovesActiveAndHistoricalParticipation(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayer()
+	game.AddPlayerScore(playerID, 90)
+
+	game.DiscardPlayer(playerID)
+	game.DiscardPlayer(playerID)
+
+	if _, ok := game.playerSessions[playerID]; ok {
+		t.Fatalf("player session %q still exists after discard", playerID)
+	}
+	if _, ok := game.entities.Players[playerID]; ok {
+		t.Fatalf("active ship %q still exists after discard", playerID)
+	}
+	if facts := game.PlayerMatchFacts(); len(facts) != 0 {
+		t.Fatalf("facts = %+v, want abandoned participation discarded", facts)
+	}
+}
+
 func TestPlayerMatchFactsHasNoAccountOrLocalIdentityFields(t *testing.T) {
 	factType := reflect.TypeOf(PlayerMatchFact{})
 

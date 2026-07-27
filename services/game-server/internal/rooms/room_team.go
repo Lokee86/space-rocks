@@ -110,7 +110,7 @@ func (room *Room) SetTeamAssignment(requestingSessionID string, targetPlayerID s
 
 	if room.roomTeams.assignments[target.MemberID] != teamID {
 		room.roomTeams.assignments[target.MemberID] = teamID
-		if room.roomTeams.rules.AssignmentMode == teams.AssignmentOwnerAssigned {
+		if room.roomTeams.rules.AssignmentMode == teams.AssignmentOwnerAssigned && !target.IsBot {
 			target.SetReady(false)
 		}
 	}
@@ -131,7 +131,7 @@ func (room *Room) rebalanceAutoBalancedLocked() *RoomDomainError {
 	}
 	for _, member := range room.membership.members {
 		teamID := assignments[member.MemberID]
-		if room.roomTeams.assignments[member.MemberID] != teamID {
+		if room.roomTeams.assignments[member.MemberID] != teamID && !member.IsBot {
 			member.SetReady(false)
 		}
 		room.roomTeams.assignments[member.MemberID] = teamID
