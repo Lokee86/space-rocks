@@ -2,10 +2,15 @@
 
 [ext_resource type="Texture2D" uid="uid://biwbtrvoot2cp" path="res://assets/ui/windows/Window (1).png" id="1_window"]
 [ext_resource type="LabelSettings" uid="uid://dbrwpjh7u2rg" path="res://assets/ui/label_settings/interface_label.tres" id="2_label"]
-[ext_resource type="LabelSettings" uid="uid://cysy0xs3aixit" path="res://assets/ui/label_settings/button_font.tres" id="2_button_label"]
+[ext_resource type="FontFile" uid="uid://bhkhmrpqmo85i" path="res://assets/fonts/PixelCaps-LOnE.ttf" id="2_button_font"]
 [ext_resource type="PackedScene" uid="uid://b1dg3edtpymr3" path="res://scenes/ui/elements/button_long.tscn" id="3_button"]
 [ext_resource type="PackedScene" uid="uid://bq77w6h3620nv" path="res://scenes/ui/elements/player_row.tscn" id="4_row"]
 [ext_resource type="Script" uid="uid://cc70sca8inya7" path="res://scripts/ui/lobby/multiplayer_lobby.gd" id="5_script"]
+
+[sub_resource type="LabelSettings" id="ButtonLabel"]
+font = ExtResource("2_button_font")
+font_size = 18
+font_color = Color(0, 0, 0, 1)
 
 [node name="MultiplayerLobby" type="Control"]
 layout_mode = 3
@@ -48,7 +53,7 @@ anchor_bottom = 1.0
 offset_left = 58.0
 offset_top = 62.0
 offset_right = -58.0
-offset_bottom = -48.0
+offset_bottom = -84.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -164,68 +169,76 @@ theme_override_constants/separation = 6
 
 [node name="ReadyButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(143, 46)
+custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
+clip_contents = true
 [node name="Ready" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/ReadyButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "\nREADY"
-label_settings = ExtResource("2_button_label")
+text = "READY"
+label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-vertical_alignment = 1
+mouse_filter = 2
 
 [node name="StartGameButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(143, 46)
+custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
+clip_contents = true
 [node name="Start" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/StartGameButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "\nSTART"
-label_settings = ExtResource("2_button_label")
+text = "START"
+label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-vertical_alignment = 1
+mouse_filter = 2
 
 [node name="AddBotButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(143, 46)
+custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
+clip_contents = true
 [node name="AddBot" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/AddBotButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "\nADD BOT"
-label_settings = ExtResource("2_button_label")
+text = "ADD BOT"
+label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-vertical_alignment = 1
+mouse_filter = 2
 
 [node name="LeaveButton" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions" instance=ExtResource("3_button")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(143, 46)
+custom_minimum_size = Vector2(143, 52)
 layout_mode = 2
+clip_contents = true
 [node name="Leave" type="Label" parent="CenterContainer/WindowFrame/ContentMargin/Content/Actions/LeaveButton"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 13.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "\nLEAVE"
-label_settings = ExtResource("2_button_label")
+text = "LEAVE"
+label_settings = SubResource("ButtonLabel")
 horizontal_alignment = 1
-vertical_alignment = 1
+mouse_filter = 2
 
 [node name="ActionBottomSpacer" type="Control" parent="CenterContainer/WindowFrame/ContentMargin/Content"]
-custom_minimum_size = Vector2(0, 18)
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
