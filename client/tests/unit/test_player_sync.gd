@@ -27,6 +27,18 @@ func test_team_id_forces_shared_authoritative_hue() -> void:
 	assert_ne(first, opposing)
 
 
+func test_remote_hue_survives_death_and_respawn_without_slot_shift() -> void:
+	var sync := PlayerHuePresenter.new()
+	sync.set_remote_player_order(["player-2", "player-3"])
+	var original_hue := sync.remote_hue_for_player("player-3")
+	sync.remote_player_hues["player-3"] = original_hue
+
+	sync.set_remote_player_order(["player-3"])
+	sync.remove_player("player-3")
+
+	assert_eq(sync.remote_hue_for_player("player-3"), original_hue)
+
+
 func test_get_remote_player_hues_filters_current_self_id() -> void:
 	var sync := PlayerHuePresenter.new()
 	sync.remote_player_hues = {

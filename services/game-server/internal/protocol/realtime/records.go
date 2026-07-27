@@ -5,6 +5,7 @@ import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 type WorldShipRecord struct {
 	ID         string
 	ShipType   string
+	TeamID     string
 	X          float64
 	Y          float64
 	Rotation   float64

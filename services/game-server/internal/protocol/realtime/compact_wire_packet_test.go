@@ -268,6 +268,7 @@ func TestCompactWirePacketTuplePacksWorldFullShips(t *testing.T) {
 			map[string]any{
 				"id":          "player-1",
 				"ship_type":   "v_wing",
+				"team_id":     "team_3",
 				"x":           10,
 				"y":           20,
 				"rotation":    30,
@@ -289,7 +290,7 @@ func TestCompactWirePacketTuplePacksWorldFullShips(t *testing.T) {
 	if !ok {
 		t.Fatalf("ships[0] = %#v, want tuple array", ships[0])
 	}
-	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", 2}
+	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", 2, "team_3"}
 	if len(tuple) != len(want) {
 		t.Fatalf("tuple len = %d, want %d (%#v)", len(tuple), len(want), tuple)
 	}
@@ -307,6 +308,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipCreates(t *testing.T) {
 			map[string]any{
 				"id":          "player-1",
 				"ship_type":   "v_wing",
+				"team_id":     "team_3",
 				"x":           10,
 				"y":           20,
 				"rotation":    30,
@@ -321,7 +323,7 @@ func TestCompactWirePacketTuplePacksWorldDeltaShipCreates(t *testing.T) {
 
 	got := CompactWirePacket(input)
 	creates := got["sc"].([]any)
-	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", 2}
+	want := []any{1, "v_wing", 10, 20, 30, 100, 50, true, "player", 2, "team_3"}
 	if tuple, ok := creates[0].([]any); !ok || len(tuple) != len(want) {
 		t.Fatalf("ship create = %#v, want full tuple %#v", creates[0], want)
 	} else {

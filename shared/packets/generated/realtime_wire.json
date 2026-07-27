@@ -420,6 +420,11 @@
       "readable": "ship_type"
     },
     {
+      "compact": "tm",
+      "domain": "wire",
+      "readable": "team_id"
+    },
+    {
       "compact": "sh",
       "domain": "wire",
       "readable": "shields"
@@ -1287,6 +1292,14 @@
           "name": "target_id",
           "quantization": null,
           "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "team_id",
+          "name": "team_id",
+          "quantization": null,
+          "value_domain": null
         }
       ],
       "id": "ship_full",
@@ -1363,6 +1376,14 @@
           "id_codec_by": null,
           "json": "ship_type",
           "name": "ship_type",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "team_id",
+          "name": "team_id",
           "quantization": null,
           "value_domain": null
         },
@@ -1752,6 +1773,14 @@
           "id_codec_by": null,
           "json": "ship_type",
           "name": "ship_type",
+          "quantization": null,
+          "value_domain": null
+        },
+        {
+          "id_codec": null,
+          "id_codec_by": null,
+          "json": "team_id",
+          "name": "team_id",
           "quantization": null,
           "value_domain": null
         },

@@ -30,6 +30,7 @@ func TestProjectWorldLaneFieldOwnershipAndOrder(t *testing.T) {
 			"ship-a": {
 				ID:                         "ship-a",
 				ShipType:                   "v_wing",
+				TeamID:                     "team_3",
 				X:                          10,
 				Y:                          15,
 				Rotation:                   0.1,
@@ -72,7 +73,7 @@ func TestProjectWorldLaneFieldOwnershipAndOrder(t *testing.T) {
 		t.Fatalf("expected ships sorted by ID, got %#v", projection.Ships)
 	}
 	ship := projection.Ships[0]
-	if ship.ShipType != "v_wing" || ship.X != 10 || ship.Y != 15 || ship.Rotation != 0.1 || ship.Health != 3 || ship.Shields != 2 || ship.Thrusting != false || ship.TargetKind != "player" || ship.TargetID != "p-1" {
+	if ship.ShipType != "v_wing" || ship.TeamID != "team_3" || ship.X != 10 || ship.Y != 15 || ship.Rotation != 0.1 || ship.Health != 3 || ship.Shields != 2 || ship.Thrusting != false || ship.TargetKind != "player" || ship.TargetID != "p-1" {
 		t.Fatalf("expected world ship fields to be preserved, got %#v", ship)
 	}
 	if ship.ShipType == "" || ship.TargetKind == "" || ship.TargetID == "" {

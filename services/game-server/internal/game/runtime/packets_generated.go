@@ -18,6 +18,7 @@ type InputState struct {
 type ShipState struct {
 	ID                         string  `json:"id"`
 	ShipType                   string  `json:"ship_type"`
+	TeamID                     string  `json:"team_id"`
 	X                          float64 `json:"x"`
 	Y                          float64 `json:"y"`
 	Rotation                   float64 `json:"rotation"`

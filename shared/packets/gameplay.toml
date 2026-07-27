@@ -230,6 +230,13 @@ type = "string"
 
 [[structs.fields]]
 
+name = "team_id"
+go_name = "TeamID"
+json = "team_id"
+type = "string"
+
+[[structs.fields]]
+
 name = "x"
 json = "x"
 type = "float"

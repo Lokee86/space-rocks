@@ -4,6 +4,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
 func TestGameplayPresentationSnapshotSetsPublishedServerTimestamp(t *testing.T) {
@@ -19,6 +21,16 @@ func TestGameplayPresentationSnapshotSetsPublishedServerTimestamp(t *testing.T) 
 	}
 	if snapshot.ServerSentMsec < int(before) || snapshot.ServerSentMsec > int(after) {
 		t.Fatalf("expected timestamp %d within [%d, %d]", snapshot.ServerSentMsec, before, after)
+	}
+}
+
+func TestGameplayPresentationSnapshotIncludesAuthoritativeTeamID(t *testing.T) {
+	game := New()
+	playerID := game.AddPlayerWithTeam(teams.Team3)
+
+	snapshot := game.GameplayPresentationSnapshot(playerID)
+	if snapshot.Players[playerID].TeamID != string(teams.Team3) {
+		t.Fatalf("team ID = %q, want %q", snapshot.Players[playerID].TeamID, teams.Team3)
 	}
 }
 

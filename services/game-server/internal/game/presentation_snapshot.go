@@ -22,7 +22,11 @@ type gameplayPresentationFrame struct {
 func (game *Game) publishPresentationFrameLocked() {
 	players := make(map[string]runtime.ShipState, len(game.entities.Players))
 	for id, player := range game.entities.Players {
-		players[id] = player.State()
+		state := player.State()
+		if session := game.playerSessions[id]; session != nil {
+			state.TeamID = string(session.TeamID)
+		}
+		players[id] = state
 	}
 
 	matchDecision := game.matchDecisionLocked()

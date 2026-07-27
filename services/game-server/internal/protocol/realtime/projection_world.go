@@ -26,6 +26,7 @@ func ProjectWorldLane(snapshot game.GameplayPresentationSnapshot) WorldLaneProje
 		ships = append(ships, WorldShipRecord{
 			ID:         id,
 			ShipType:   player.ShipType,
+			TeamID:     player.TeamID,
 			X:          player.X,
 			Y:          player.Y,
 			Rotation:   player.Rotation,

@@ -106,6 +106,7 @@ Parent index: [Generated](./!INDEX.md)
 | wire | `target_id` | `tid` |
 | wire | `target_kind` | `tk` |
 | wire | `target_type` | `tt` |
+| wire | `team_id` | `tm` |
 | wire | `thrusting` | `th` |
 | wire | `total_asteroids` | `ta` |
 | wire | `type` | `t` |
@@ -778,6 +779,7 @@ Parent index: [Generated](./!INDEX.md)
 | `thrusting` | `thrusting` | `` | `` | `` | `` |
 | `target_kind` | `target_kind` | `` | `` | `` | `` |
 | `target_id` | `target_id` | `` | `` | `target_kind` | `` |
+| `team_id` | `team_id` | `` | `` | `` | `` |
 
 ### `ship_ids`
 
@@ -805,6 +807,7 @@ Parent index: [Generated](./!INDEX.md)
 | --- | --- | --- | --- | --- | --- |
 | `id` | `id` | `` | `` | `` | `` |
 | `ship_type` | `ship_type` | `` | `` | `` | `` |
+| `team_id` | `team_id` | `` | `` | `` | `` |
 | `x` | `x` | `` | `` | `` | `` |
 | `y` | `y` | `` | `` | `` | `` |
 | `rotation` | `rotation` | `` | `` | `` | `` |
@@ -840,6 +843,7 @@ Parent index: [Generated](./!INDEX.md)
 | --- | --- | --- | --- | --- | --- |
 | `id` | `id` | `` | `player_id` | `` | `` |
 | `ship_type` | `ship_type` | `` | `` | `` | `` |
+| `team_id` | `team_id` | `` | `` | `` | `` |
 | `health` | `health` | `` | `` | `` | `` |
 | `shields` | `shields` | `` | `` | `` | `` |
 | `target_kind` | `target_kind` | `` | `` | `` | `` |

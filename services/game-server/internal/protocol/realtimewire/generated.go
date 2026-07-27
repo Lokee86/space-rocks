@@ -104,6 +104,7 @@ var RealtimeWireKeyAliases = []RealtimeWireKeyAlias{
 	{Domain: "wire", Readable: "target_id", Compact: "tid"},
 	{Domain: "wire", Readable: "target_kind", Compact: "tk"},
 	{Domain: "wire", Readable: "target_type", Compact: "tt"},
+	{Domain: "wire", Readable: "team_id", Compact: "tm"},
 	{Domain: "wire", Readable: "thrusting", Compact: "th"},
 	{Domain: "wire", Readable: "total_asteroids", Compact: "ta"},
 	{Domain: "wire", Readable: "type", Compact: "t"},
@@ -194,6 +195,7 @@ var RealtimeWireKeyCompactByReadable = map[string]string{
 	"wire.target_id": "tid",
 	"wire.target_kind": "tk",
 	"wire.target_type": "tt",
+	"wire.team_id": "tm",
 	"wire.thrusting": "th",
 	"wire.total_asteroids": "ta",
 	"wire.type": "t",
@@ -284,6 +286,7 @@ var RealtimeWireKeyReadableByCompact = map[string]string{
 	"wire.tid": "target_id",
 	"wire.tk": "target_kind",
 	"wire.tt": "target_type",
+	"wire.tm": "team_id",
 	"wire.th": "thrusting",
 	"wire.ta": "total_asteroids",
 	"wire.t": "type",
@@ -700,6 +703,7 @@ var RealtimeWireRecords = []RealtimeWireRecord{
 		{Name: "thrusting", JSON: "thrusting", CompactKey: "th", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "target_kind", JSON: "target_kind", CompactKey: "tk", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "target_id", JSON: "target_id", CompactKey: "tid", Quantization: "", IDCodec: "", IDCodecBy: "target_kind", ValueDomain: ""},
+		{Name: "team_id", JSON: "team_id", CompactKey: "tm", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 	}},
 	{ID: "ship_ids", SourceStruct: "", Encoding: "scalar_id_list", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "ship_id", IDCodecBy: "", ValueDomain: ""},
@@ -707,6 +711,7 @@ var RealtimeWireRecords = []RealtimeWireRecord{
 	{ID: "ship_lifecycle_create", SourceStruct: "ShipState", Encoding: "map", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "ship_type", JSON: "ship_type", CompactKey: "st", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "team_id", JSON: "team_id", CompactKey: "tm", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "x", JSON: "x", CompactKey: "x", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "y", JSON: "y", CompactKey: "y", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "rotation", JSON: "rotation", CompactKey: "r", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
@@ -722,6 +727,7 @@ var RealtimeWireRecords = []RealtimeWireRecord{
 	{ID: "ship_lifecycle_update", SourceStruct: "ShipState", Encoding: "map", IdentityField: "id", SparsePlaceholder: "", SparseTrailing: false, PreserveUnknownFields: false, Fields: []RealtimeWireField{
 		{Name: "id", JSON: "id", CompactKey: "i", Quantization: "", IDCodec: "player_id", IDCodecBy: "", ValueDomain: ""},
 		{Name: "ship_type", JSON: "ship_type", CompactKey: "st", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
+		{Name: "team_id", JSON: "team_id", CompactKey: "tm", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "health", JSON: "health", CompactKey: "h", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "shields", JSON: "shields", CompactKey: "sh", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},
 		{Name: "target_kind", JSON: "target_kind", CompactKey: "tk", Quantization: "", IDCodec: "", IDCodecBy: "", ValueDomain: ""},

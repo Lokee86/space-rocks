@@ -46,7 +46,11 @@ func apply_local_player_state(state: Dictionary, player: Player) -> void:
 
 
 func set_remote_player_order(remote_player_ids: Array) -> void:
-	remote_player_order = remote_player_ids.duplicate()
+	var sorted_ids := remote_player_ids.duplicate()
+	sorted_ids.sort()
+	for player_id in sorted_ids:
+		if not remote_player_order.has(player_id):
+			remote_player_order.append(player_id)
 
 
 func apply_remote_player_hue(player_id: String, remote_player: Player) -> void:
@@ -98,14 +102,14 @@ func remote_hue_for_player(player_id: String, team_id := "") -> float:
 	if player_color_policy == PLAYER_COLOR_POLICY_PLAYER_ID_ASSIGNED:
 		player_color_policy = PLAYER_COLOR_POLICY_AUTO_DISTINCT
 
+	if remote_player_hues.has(player_id):
+		return float(remote_player_hues[player_id])
 	var slot_index := remote_player_order.find(player_id)
 	if slot_index >= 0:
 		var hue := local_player_hue + float(slot_index + 1) * REMOTE_HUE_STEP
 		if hue > 1.0:
 			hue -= 1.0
 		return hue
-	if remote_player_hues.has(player_id):
-		return float(remote_player_hues[player_id])
 	return Constants.REMOTE_PLAYER_FALLBACK_HUE
 
 

@@ -18,6 +18,7 @@ type OverlayReceiverWireRecord struct {
 type WorldShipWireRecord struct {
 	ID         string
 	ShipType   string
+	TeamID     string
 	X          int64
 	Y          int64
 	Rotation   int64

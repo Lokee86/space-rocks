@@ -21,6 +21,7 @@ func quantizeWorldFullPacket(packet WorldFullPacket) (WorldWireFullPacket, error
 		wireShip := WorldShipWireRecord{
 			ID:         ship.ID,
 			ShipType:   ship.ShipType,
+			TeamID:     ship.TeamID,
 			Health:     ship.Health,
 			Shields:    ship.Shields,
 			Thrusting:  ship.Thrusting,

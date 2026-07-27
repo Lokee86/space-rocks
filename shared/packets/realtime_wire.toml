@@ -205,6 +205,10 @@ readable = "ship_type"
 compact = "st"
 [[key_aliases]]
 domain = "wire"
+readable = "team_id"
+compact = "tm"
+[[key_aliases]]
+domain = "wire"
 readable = "shields"
 compact = "sh"
 [[key_aliases]]
@@ -761,6 +765,9 @@ json = "target_kind"
 name = "target_id"
 json = "target_id"
 id_codec_by = "target_kind"
+[[records.fields]]
+name = "team_id"
+json = "team_id"
 
 [[records]]
 id = "ship_update"
@@ -800,6 +807,9 @@ id_codec = "player_id"
 [[records.fields]]
 name = "ship_type"
 json = "ship_type"
+[[records.fields]]
+name = "team_id"
+json = "team_id"
 [[records.fields]]
 name = "health"
 json = "health"
@@ -985,6 +995,9 @@ json = "id"
 [[records.fields]]
 name = "ship_type"
 json = "ship_type"
+[[records.fields]]
+name = "team_id"
+json = "team_id"
 [[records.fields]]
 name = "x"
 json = "x"

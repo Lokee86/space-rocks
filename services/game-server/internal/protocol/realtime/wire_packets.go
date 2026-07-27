@@ -273,7 +273,7 @@ func wireShipWireDeltaPacket(packet ShipWireDeltaPacket) map[string]any {
 	wire := wireMetadataPacket(packet.Type, packet.Metadata)
 	if packet.Metadata.Lane == LaneShipsLifecycle {
 		putRecordArrayIfNonEmpty(wire, "ship_creates", packet.ShipCreates)
-		putFilteredRecordArrayIfNonEmpty(wire, "ship_updates", packet.ShipUpdates, []string{"id", "ship_type", "health", "shields", "target_kind", "target_id"})
+		putFilteredRecordArrayIfNonEmpty(wire, "ship_updates", packet.ShipUpdates, []string{"id", "ship_type", "team_id", "health", "shields", "target_kind", "target_id"})
 		putStringArrayIfNonEmpty(wire, "ship_deletes", packet.ShipDeletes)
 		return wire
 	}

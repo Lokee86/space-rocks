@@ -42,7 +42,8 @@
         50,
         false,
         "player",
-        2
+        2,
+        "team_3"
       ]
     ],
     "t": "wf"
@@ -91,6 +92,7 @@
         "rotation": 30,
         "shields": 50,
         "ship_type": "v_wing",
+        "team_id": "team_3",
         "target_id": "player-2",
         "target_kind": "player",
         "thrusting": false,
@@ -142,6 +144,7 @@
         "rotation": 30,
         "shields": 50,
         "ship_type": "v_wing",
+        "team_id": "team_3",
         "target_id": "player-2",
         "target_kind": "player",
         "thrusting": false,
