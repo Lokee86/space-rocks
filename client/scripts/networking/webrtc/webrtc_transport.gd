@@ -16,6 +16,7 @@ const CHANNEL_SPECS := [
 ]
 const MAX_PACKETS_PER_POLL := 48
 const MAX_PACKETS_PER_LANE_PER_POLL := 12
+const MAX_PENDING_REMOTE_ICE := 256
 const SMOKE_ORIGIN_CLIENT := "client"
 const PacketCodec := preload("res://scripts/networking/packets/packet_codec.gd")
 
@@ -47,6 +48,8 @@ var _lifecycle_start_cursor := 0
 var _general_start_cursor := 0
 var _runtime_metrics = NetworkRuntimeMetrics.new()
 var _lane_metrics: Dictionary = {}
+var _remote_description_set := false
+var _pending_remote_ice: Array[Dictionary] = []
 
 const LIFECYCLE_LANES := ["ships_lifecycle", "asteroids_lifecycle", "bullets_lifecycle"]
 const GENERAL_LANES := ["world", "overlay", "session", "event", "ships", "asteroids", "bullets", "tooling"]
@@ -64,6 +67,8 @@ func set_peer_for_tests(peer: Variant, channels: Variant) -> void:
 	_channel_close_reported = {}
 	_lifecycle_start_cursor = 0
 	_general_start_cursor = 0
+	_remote_description_set = false
+	_pending_remote_ice.clear()
 	_reset_runtime_metrics()
 
 
@@ -91,6 +96,8 @@ func start() -> void:
 	_channels = {}
 	_ready_channels = {}
 	_channel_close_reported = {}
+	_remote_description_set = false
+	_pending_remote_ice.clear()
 	_reset_runtime_metrics()
 	for spec in CHANNEL_SPECS:
 		var lane: String = str(spec.get("lane", ""))
@@ -132,12 +139,27 @@ func _build_initialize_config() -> Dictionary:
 func handle_answer(description_type: String, sdp: String) -> void:
 	if _peer == null:
 		return
-	_peer.set_remote_description(description_type, sdp)
+	var result: int = int(_peer.set_remote_description(description_type, sdp))
+	if result != OK:
+		failed.emit("remote_description_failed", "WebRTC remote description failed")
+		return
+	_remote_description_set = true
+	_flush_pending_remote_ice()
 
 func handle_remote_ice(media: String, index: int, name: String) -> void:
 	if _peer == null:
 		return
-	_peer.add_ice_candidate(media, index, name)
+	if !_remote_description_set:
+		if _pending_remote_ice.size() >= MAX_PENDING_REMOTE_ICE:
+			failed.emit("remote_ice_queue_full", "WebRTC remote ICE candidate queue is full")
+			return
+		_pending_remote_ice.append({
+			"media": media,
+			"index": index,
+			"name": name,
+		})
+		return
+	_add_remote_ice(media, index, name)
 
 func poll() -> void:
 	if _peer == null:
@@ -220,7 +242,28 @@ func close() -> void:
 	_channel_close_reported = {}
 	_lifecycle_start_cursor = 0
 	_general_start_cursor = 0
+	_remote_description_set = false
+	_pending_remote_ice.clear()
 	_reset_runtime_metrics()
+
+
+func _flush_pending_remote_ice() -> void:
+	var pending := _pending_remote_ice.duplicate(true)
+	_pending_remote_ice.clear()
+	for candidate in pending:
+		_add_remote_ice(
+			str(candidate.get("media", "")),
+			int(candidate.get("index", 0)),
+			str(candidate.get("name", "")),
+		)
+
+
+func _add_remote_ice(media: String, index: int, name: String) -> void:
+	if _peer == null:
+		return
+	var result: int = int(_peer.add_ice_candidate(media, index, name))
+	if result != OK:
+		failed.emit("remote_ice_failed", "WebRTC remote ICE candidate failed")
 
 
 func _on_session_description_created(description_type: String, sdp: String) -> void:

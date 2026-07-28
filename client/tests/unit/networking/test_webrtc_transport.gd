@@ -240,6 +240,20 @@ func test_handle_answer_and_remote_ice_forward_to_peer() -> void:
 	assert_eq(fake_peer.add_ice_candidate_args[1], 2)
 	assert_eq(fake_peer.add_ice_candidate_args[2], "candidate-name")
 
+func test_remote_ice_waits_for_remote_description() -> void:
+	var peer := WebRTCTransportScript.new()
+	var fake_peer := FakePeer.new()
+	peer.set_peer_for_tests(fake_peer, {})
+
+	peer.handle_remote_ice("data", 1, "early-candidate")
+
+	assert_true(fake_peer.add_ice_candidate_args.is_empty())
+
+	peer.handle_answer("answer", "remote-sdp")
+
+	assert_eq(fake_peer.set_remote_description_args, ["answer", "remote-sdp"])
+	assert_eq(fake_peer.add_ice_candidate_args, ["data", 1, "early-candidate"])
+
 func test_poll_emits_ready_only_after_all_channels_open() -> void:
 	var peer := WebRTCTransportScript.new()
 	var fake_peer := FakePeer.new()

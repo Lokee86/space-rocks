@@ -187,7 +187,7 @@ WebSocket packet
 -> RealtimeTransportSession
 ```
 
-The WebSocket signaling/control route does not pass through the gameplay pipeline. `ClientInboundCoordinator` forwards answer, remote ICE, ready, smoke, and failure handling to `RealtimeTransportSession` or its coordinator-owned diagnostic/readiness handlers. WebRTC receive routing preserves the lane out of band; `sr.tooling` is separated before normal gameplay dispatch and does not enter `ServerPacketDispatcher`.
+The WebSocket signaling/control route does not pass through the gameplay pipeline. `ClientInboundCoordinator` forwards answer, remote ICE, ready, smoke, and failure handling to `RealtimeTransportSession` or its coordinator-owned diagnostic/readiness handlers. Remote ICE can arrive before the SDP answer is applied, so `WebRTCTransport` bounds and queues early remote candidates, then flushes them immediately after `set_remote_description` succeeds. This prevents candidate-order races during simultaneous multi-client admission. WebRTC receive routing preserves the lane out of band; `sr.tooling` is separated before normal gameplay dispatch and does not enter `ServerPacketDispatcher`.
 
 Inbound control ownership is:
 
