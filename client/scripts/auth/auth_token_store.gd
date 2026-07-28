@@ -4,6 +4,11 @@ class_name LegacyAuthTokenReader
 var token_path := "user://auth_token.json"
 
 
+func _init() -> void:
+	if _is_test_process():
+		token_path = "user://test_auth_token_%s.json" % str(OS.get_process_id())
+
+
 func load_token() -> String:
 	if !FileAccess.file_exists(token_path):
 		return ""
@@ -26,3 +31,10 @@ func load_token() -> String:
 func clear_token() -> void:
 	if FileAccess.file_exists(token_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(token_path))
+
+
+func _is_test_process() -> bool:
+	for argument in OS.get_cmdline_args():
+		if str(argument).contains("gut_cmdln.gd"):
+			return true
+	return false

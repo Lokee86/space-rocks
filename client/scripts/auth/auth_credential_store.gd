@@ -12,7 +12,6 @@ var service_name := SERVICE_NAME
 var account_name := ACCOUNT_NAME
 var encrypted_blob_path := "user://auth_credential.bin"
 var revocation_marker_path := "user://auth_credential_revoked"
-var legacy_token_path := "user://auth_token.json"
 var helper_path_override := ""
 var request_handler: Callable
 var legacy_token_reader
@@ -26,7 +25,6 @@ func _init() -> void:
 	service_name = "%s.%s" % [TEST_SERVICE_NAME, test_scope]
 	encrypted_blob_path = "user://test_auth_credential_%s.bin" % test_scope
 	revocation_marker_path = "user://test_auth_credential_revoked_%s" % test_scope
-	legacy_token_path = "user://test_auth_token_%s.json" % test_scope
 
 
 func load_token() -> String:
@@ -166,7 +164,6 @@ func _remove_revocation_marker() -> void:
 func _ensure_legacy_reader() -> void:
 	if legacy_token_reader == null:
 		legacy_token_reader = LegacyAuthTokenReaderScript.new()
-		legacy_token_reader.token_path = legacy_token_path
 
 
 func _is_test_process() -> bool:
