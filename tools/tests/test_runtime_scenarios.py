@@ -77,6 +77,7 @@ def test_rejects_negative_phase_bullet_streams(tmp_path: Path) -> None:
         ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801),
         ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801),
         ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801),
+        ("receiver_scale_8c_0b_v1.json", 8, 0, 27072801),
         ("simulation_scale_1c_7b_v1.json", 1, 7, 27072802),
     ],
 )

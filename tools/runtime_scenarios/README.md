@@ -39,6 +39,7 @@ These scenarios hold the room at eight total participants and use the same seed,
 receiver_scale_1c_7b_v1  1 real client + 7 bots
 receiver_scale_2c_6b_v1  2 real clients + 6 bots
 receiver_scale_4c_4b_v1  4 real clients + 4 bots
+receiver_scale_8c_0b_v1  8 real clients + 0 bots
 ```
 
 Run each scenario independently so every run receives its own server process, loopback port, logs, and measurement reports.
@@ -50,6 +51,7 @@ python tools/runtime_scenarios/matrix_summary.py \
   .ci-artifacts/runtime-scenarios/<1-client-run> \
   .ci-artifacts/runtime-scenarios/<2-client-run> \
   .ci-artifacts/runtime-scenarios/<4-client-run> \
+  .ci-artifacts/runtime-scenarios/<8-client-run> \
   --output .ci-artifacts/runtime-scenarios/receiver-scale-matrix.json
 ```
 
