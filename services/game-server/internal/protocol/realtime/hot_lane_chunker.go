@@ -140,28 +140,14 @@ func normalizedShipWireDeltaCandidate(candidate RealtimeLaneCandidate, packet Sh
 }
 
 func greedyShipWireDeltaChunks(packet ShipWireDeltaPacket) [][]map[string]any {
-	updates := packet.ShipUpdates
-	if len(updates) == 0 {
-		return [][]map[string]any{{}}
-	}
-
 	estimatedPacket := packet
 	estimatedPacket.Metadata.ChunkCount = 2
 	estimatedPacket.Metadata.IsFinalChunk = true
-
-	chunks := make([][]map[string]any, 0, len(updates))
-	chunkStart := 0
-	for idx := 0; idx < len(updates); idx++ {
-		if idx > chunkStart {
-			trialUpdates := updates[chunkStart : idx+1]
-			if estimateShipDeltaPacketBytes(estimatedPacket, trialUpdates) > HardCapBytes {
-				chunks = append(chunks, updates[chunkStart:idx])
-				chunkStart = idx
-			}
-		}
-	}
-	chunks = append(chunks, updates[chunkStart:])
-	return chunks
+	return greedyHotLaneUpdateChunks(
+		packet.ShipUpdates,
+		estimateShipDeltaPacketBytes(estimatedPacket, nil),
+		estimateCompactShipMovementUpdateBytes,
+	)
 }
 
 func bulletWireDeltaChunkCount(packet BulletWireDeltaPacket) int {
@@ -188,29 +174,14 @@ func normalizedBulletWireDeltaCandidate(candidate RealtimeLaneCandidate, packet 
 }
 
 func greedyBulletWireDeltaChunks(packet BulletWireDeltaPacket) [][]map[string]any {
-	updates := packet.BulletUpdates
-	if len(updates) == 0 {
-		return [][]map[string]any{{}}
-	}
-
 	estimatedPacket := packet
 	estimatedPacket.Metadata.ChunkCount = 2
 	estimatedPacket.Metadata.IsFinalChunk = true
-
-	chunks := make([][]map[string]any, 0, len(updates))
-	chunkStart := 0
-	for idx := 0; idx < len(updates); idx++ {
-		if idx > chunkStart {
-			trialUpdates := updates[chunkStart : idx+1]
-			if estimateBulletDeltaPacketBytes(estimatedPacket, trialUpdates) > HardCapBytes {
-				chunks = append(chunks, updates[chunkStart:idx])
-				chunkStart = idx
-			}
-		}
-	}
-
-	chunks = append(chunks, updates[chunkStart:])
-	return chunks
+	return greedyHotLaneUpdateChunks(
+		packet.BulletUpdates,
+		estimateBulletDeltaPacketBytes(estimatedPacket, nil),
+		estimateCompactBulletMovementUpdateBytes,
+	)
 }
 
 func asteroidWireDeltaPacketFromCandidate(candidate RealtimeLaneCandidate) (AsteroidWireDeltaPacket, bool) {
@@ -237,27 +208,40 @@ func normalizedAsteroidWireDeltaCandidate(candidate RealtimeLaneCandidate, packe
 }
 
 func greedyAsteroidWireDeltaChunks(packet AsteroidWireDeltaPacket) [][]map[string]any {
-	updates := packet.AsteroidUpdates
+	estimatedPacket := packet
+	estimatedPacket.Metadata.ChunkCount = 2
+	estimatedPacket.Metadata.IsFinalChunk = true
+	return greedyHotLaneUpdateChunks(
+		packet.AsteroidUpdates,
+		estimateAsteroidDeltaPacketBytes(estimatedPacket, nil),
+		estimateCompactAsteroidMovementUpdateBytes,
+	)
+}
+
+func greedyHotLaneUpdateChunks(updates []map[string]any, emptyPacketBytes int, estimateUpdate func(map[string]any) int) [][]map[string]any {
 	if len(updates) == 0 {
 		return [][]map[string]any{{}}
 	}
 
-	estimatedPacket := packet
-	estimatedPacket.Metadata.ChunkCount = 2
-	estimatedPacket.Metadata.IsFinalChunk = true
-
-	chunks := make([][]map[string]any, 0, len(updates))
+	chunks := make([][]map[string]any, 0, 1)
 	chunkStart := 0
-	for idx := 0; idx < len(updates); idx++ {
-		if idx > chunkStart {
-			trialUpdates := updates[chunkStart : idx+1]
-			if estimateAsteroidDeltaPacketBytes(estimatedPacket, trialUpdates) > HardCapBytes {
-				chunks = append(chunks, updates[chunkStart:idx])
-				chunkStart = idx
-			}
+	chunkBytes := emptyPacketBytes
+	chunkRecords := 0
+	for index, update := range updates {
+		additionalBytes := estimateUpdate(update)
+		if chunkRecords > 0 {
+			additionalBytes++
 		}
+		if chunkRecords > 0 && chunkBytes+additionalBytes > HardCapBytes {
+			chunks = append(chunks, updates[chunkStart:index])
+			chunkStart = index
+			chunkBytes = emptyPacketBytes
+			chunkRecords = 0
+			additionalBytes = estimateUpdate(update)
+		}
+		chunkBytes += additionalBytes
+		chunkRecords++
 	}
-
 	chunks = append(chunks, updates[chunkStart:])
 	return chunks
 }

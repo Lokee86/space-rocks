@@ -3,6 +3,7 @@ package realtime
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
@@ -15,21 +16,34 @@ type EncodedRealtimeLanePacket struct {
 	EncodedBytes int
 }
 
+type CandidateBuildDurations struct {
+	SnapshotCapture     time.Duration
+	PendingEventCopy    time.Duration
+	InterestFilter      time.Duration
+	LaneCandidates      time.Duration
+	LaneCandidatePhases LaneCandidateBuildDurations
+	ChunkPlanning       time.Duration
+	Scheduling          time.Duration
+}
+
 type ActiveRealtimeResult struct {
-	Snapshot           game.GameplayPresentationSnapshot
-	SessionState       RealtimeSessionState
-	Candidates         []RealtimeLaneCandidate
-	SelectedCandidates []RealtimeLaneCandidate
-	PlannedRecords     []ScheduleRecord
-	SendPlan           SendPlan
-	MetricRecord       packetmetrics.PacketMetricRecord
-	MetricSummaries    []packetmetrics.PacketMetricRecord
-	EncodedLanePackets []EncodedRealtimeLanePacket
-	EncodedPackets     map[Lane][]byte
-	EncodedBytes       map[Lane]int
-	EventBatchEventIDs []string
-	TotalEncodedBytes  int
-	Mode               string
+	Snapshot               game.GameplayPresentationSnapshot
+	SessionState           RealtimeSessionState
+	Candidates             []RealtimeLaneCandidate
+	SelectedCandidates     []RealtimeLaneCandidate
+	PlannedRecords         []ScheduleRecord
+	SendPlan               SendPlan
+	MetricRecord           packetmetrics.PacketMetricRecord
+	MetricSummaries        []packetmetrics.PacketMetricRecord
+	EncodedLanePackets     []EncodedRealtimeLanePacket
+	EncodedPackets         map[Lane][]byte
+	EncodedBytes           map[Lane]int
+	EventBatchEventIDs     []string
+	TotalEncodedBytes      int
+	CandidateBuildDuration time.Duration
+	CandidateBuildPhases   CandidateBuildDurations
+	EncodingDuration       time.Duration
+	Mode                   string
 }
 
 func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
@@ -37,29 +51,61 @@ func BuildActiveRealtimeResultForGame(gameInstance *game.Game, playerID string, 
 }
 
 func BuildActiveRealtimeResultForGameView(gameInstance *game.Game, playerID string, viewTargetID string, state RealtimeSessionState) (ActiveRealtimeResult, error) {
-	snapshot := gameInstance.GameplayPresentationSnapshot(playerID)
+	snapshot, snapshotDurations := gameInstance.GameplayPresentationSnapshotMeasured(playerID)
+	sharedWorldStarted := time.Now()
+	sharedWorld, err := sharedWorldWireProjection(gameInstance, snapshot)
+	sharedWorldDuration := time.Since(sharedWorldStarted)
+	if err != nil {
+		return ActiveRealtimeResult{}, err
+	}
+	interestStarted := time.Now()
 	snapshot = applyNetworkInterest(snapshot, state, viewTargetID)
-	return BuildActiveRealtimeResult(snapshot, state)
+	interestDuration := time.Since(interestStarted)
+	result, err := buildActiveRealtimeResult(snapshot, state, &sharedWorld)
+	result.CandidateBuildPhases.SnapshotCapture = snapshotDurations.SnapshotCapture
+	result.CandidateBuildPhases.PendingEventCopy = snapshotDurations.PendingEventCopy
+	result.CandidateBuildPhases.InterestFilter = interestDuration
+	result.CandidateBuildPhases.LaneCandidates += sharedWorldDuration
+	result.CandidateBuildPhases.LaneCandidatePhases.WorldHotLifecycle += sharedWorldDuration
+	result.CandidateBuildDuration += snapshotDurations.SnapshotCapture + snapshotDurations.PendingEventCopy + interestDuration + sharedWorldDuration
+	return result, err
 }
 
 func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState) (ActiveRealtimeResult, error) {
+	return buildActiveRealtimeResult(snapshot, state, nil)
+}
+
+func buildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sharedWorld *WorldWireFullPacket) (ActiveRealtimeResult, error) {
+	candidateStarted := time.Now()
+	laneCandidatesStarted := time.Now()
 	preparedState := state
+	stateAdvanceStarted := time.Now()
 	preparedState.AdvanceHotLaneTick()
-	candidatePlan, err := assembleRealtimeLaneCandidates(snapshot, preparedState, &preparedState)
+	stateAdvanceDuration := time.Since(stateAdvanceStarted)
+	candidatePlan, laneCandidatePhases, err := assembleRealtimeLaneCandidatesMeasured(snapshot, preparedState, &preparedState, sharedWorld)
 	if err != nil {
 		return ActiveRealtimeResult{}, fmt.Errorf("assemble realtime lane candidates: %w", err)
 	}
+	laneCandidatePhases.StateAdvance = stateAdvanceDuration
+	laneCandidatesDuration := time.Since(laneCandidatesStarted)
+
+	chunkPlanningStarted := time.Now()
 	candidatePlan.Candidates, err = ExpandRealtimeCandidateChunks(candidatePlan.Candidates)
 	if err != nil {
 		return ActiveRealtimeResult{}, fmt.Errorf("expand realtime candidate chunks: %w", err)
 	}
+	chunkPlanningDuration := time.Since(chunkPlanningStarted)
 
+	schedulingStarted := time.Now()
 	records := make([]ScheduleRecord, 0, len(candidatePlan.Candidates))
 	for i, candidate := range candidatePlan.Candidates {
 		records = append(records, scheduleRecordForCandidate(i, candidate))
 	}
 	sendPlan := SelectSendPlan(records)
 	selectedCandidates := IncludedRealtimeLaneCandidates(candidatePlan.Candidates, sendPlan.Included)
+	schedulingDuration := time.Since(schedulingStarted)
+	candidateBuildDuration := time.Since(candidateStarted)
+	encodingStarted := time.Now()
 	encodedPackets := make(map[Lane][]byte, len(selectedCandidates))
 	encodedBytes := make(map[Lane]int, len(selectedCandidates))
 	encodedLanePackets := make([]EncodedRealtimeLanePacket, 0, len(selectedCandidates))
@@ -81,20 +127,29 @@ func BuildActiveRealtimeResult(snapshot game.GameplayPresentationSnapshot, state
 		}
 	}
 
+	encodingDuration := time.Since(encodingStarted)
 	result := ActiveRealtimeResult{
-		Snapshot:           snapshot,
-		SessionState:       preparedState,
-		Candidates:         candidatePlan.Candidates,
-		SelectedCandidates: selectedCandidates,
-		PlannedRecords:     records,
-		SendPlan:           sendPlan,
-		MetricRecord:       packetmetrics.PacketMetricRecord{},
-		MetricSummaries:    nil,
-		EncodedLanePackets: encodedLanePackets,
-		EncodedPackets:     encodedPackets,
-		EncodedBytes:       encodedBytes,
-		EventBatchEventIDs: activeEventBatchEventIDs(snapshot.PendingEvents),
-		Mode:               "active",
+		Snapshot:               snapshot,
+		SessionState:           preparedState,
+		Candidates:             candidatePlan.Candidates,
+		SelectedCandidates:     selectedCandidates,
+		PlannedRecords:         records,
+		SendPlan:               sendPlan,
+		MetricRecord:           packetmetrics.PacketMetricRecord{},
+		MetricSummaries:        nil,
+		EncodedLanePackets:     encodedLanePackets,
+		EncodedPackets:         encodedPackets,
+		EncodedBytes:           encodedBytes,
+		EventBatchEventIDs:     activeEventBatchEventIDs(snapshot.PendingEvents),
+		CandidateBuildDuration: candidateBuildDuration,
+		CandidateBuildPhases: CandidateBuildDurations{
+			LaneCandidates:      laneCandidatesDuration,
+			LaneCandidatePhases: laneCandidatePhases,
+			ChunkPlanning:       chunkPlanningDuration,
+			Scheduling:          schedulingDuration,
+		},
+		EncodingDuration: encodingDuration,
+		Mode:             "active",
 	}
 	result.MetricRecord = result.SendPlan.Summary.ToPacketMetricRecord("active", LaneWorld)
 	totalEncodedBytes := 0

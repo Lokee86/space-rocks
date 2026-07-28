@@ -111,11 +111,7 @@ func (controller *Controller) Stop(context networkingtooling.Context, request pr
 	}
 	report := state.finalize(measurement.StopReasonComplete)
 	exportResult, _ := controller.persistReport(report)
-	payload, err := reportMap(report)
-	if err != nil {
-		return protocol.MeasurementStopped{}, err
-	}
-	payload["server_export"] = exportResult
+	payload := stoppedReportMap(report, exportResult)
 	controller.removeRun(context.SessionID, state)
 	return protocol.MeasurementStopped{
 		Type:          protocol.PacketTypeMeasurementStopped,
@@ -192,6 +188,19 @@ func (controller *Controller) ObservePacketWrite(context networkingtooling.Conte
 	state.observePacketWrite(lane, packetFamily, encodedBytes)
 }
 
+func (controller *Controller) ObserveReceiverTick(context networkingtooling.Context, observation measurement.ReceiverTickObservation) {
+	if context.SessionID == "" {
+		return
+	}
+	controller.mu.Lock()
+	state := controller.runs[context.SessionID]
+	controller.mu.Unlock()
+	if state == nil {
+		return
+	}
+	state.observeReceiverTick(observation)
+}
+
 func (controller *Controller) resolveRoomGame(context networkingtooling.Context) (*rooms.Room, *game.Game, error) {
 	if controller.rooms == nil {
 		return nil, nil, fmt.Errorf("room manager is not configured")
@@ -260,6 +269,12 @@ func (state *ownedRun) observePacketWrite(lane string, packetFamily string, enco
 	state.run.ObservePacketWrite(lane, packetFamily, encodedBytes)
 }
 
+func (state *ownedRun) observeReceiverTick(observation measurement.ReceiverTickObservation) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	state.run.ObserveReceiverTick(observation)
+}
+
 func (state *ownedRun) finalize(reason measurement.StopReason) measurement.ServerReport {
 	state.mu.Lock()
 	defer state.mu.Unlock()
@@ -299,6 +314,26 @@ func partialStopReason(reason string) measurement.StopReason {
 	}
 }
 
+func stoppedReportMap(report measurement.ServerReport, exportResult map[string]any) map[string]any {
+	return map[string]any{
+		"version":                     report.Version,
+		"context":                     report.Context,
+		"stop_reason":                 report.StopReason,
+		"complete":                    report.Complete,
+		"started_at":                  report.StartedAt,
+		"ended_at":                    report.EndedAt,
+		"duration":                    report.Duration,
+		"ticks":                       report.Ticks,
+		"sample_count":                len(report.Samples),
+		"overwritten_sample_count":    report.OverwrittenSampleCount,
+		"packets":                     report.Packets,
+		"dropped_packet_observations": report.DroppedPacketObservations,
+		"receiver":                    report.Receiver,
+		"report_detail":               "summary",
+		"server_export":               exportResult,
+	}
+}
+
 func reportMap(report measurement.ServerReport) (map[string]any, error) {
 	encoded, err := json.Marshal(report)
 	if err != nil {
@@ -317,5 +352,6 @@ func measurementMetrics(report measurement.ServerReport) map[string]any {
 		"ticks":    report.Ticks,
 		"samples":  report.Samples,
 		"packets":  report.Packets,
+		"receiver": report.Receiver,
 	}
 }

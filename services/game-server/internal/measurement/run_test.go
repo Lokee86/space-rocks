@@ -46,6 +46,89 @@ func TestRunAggregatesTicksAndPackets(t *testing.T) {
 	}
 }
 
+func TestRunAggregatesReceiverTimingAndLanePressure(t *testing.T) {
+	run := NewRun(RunContext{})
+	run.ObserveReceiverTick(ReceiverTickObservation{
+		CandidateBuildDuration: 2 * time.Millisecond,
+		CandidateBuildPhases: ReceiverCandidateBuildObservation{
+			SnapshotCaptureDuration:  100 * time.Microsecond,
+			PendingEventCopyDuration: 20 * time.Microsecond,
+			InterestFilterDuration:   200 * time.Microsecond,
+			LaneCandidatesDuration:   time.Millisecond,
+			LaneCandidatePhases: ReceiverLaneCandidateBuildObservation{
+				StateAdvanceDuration:      10 * time.Microsecond,
+				WorldHotLifecycleDuration: 600 * time.Microsecond,
+				PlayerLocatorDuration:     40 * time.Microsecond,
+				OverlayDuration:           100 * time.Microsecond,
+				SessionDuration:           150 * time.Microsecond,
+				EventDuration:             50 * time.Microsecond,
+				CandidateFinalizeDuration: 20 * time.Microsecond,
+			},
+			ChunkPlanningDuration: 300 * time.Microsecond,
+			SchedulingDuration:    100 * time.Microsecond,
+		},
+		EncodingDuration: time.Millisecond,
+		OutboundDuration: 5 * time.Millisecond,
+		Lanes: []ReceiverLaneObservation{
+			{Lane: "world", BufferedBytes: 20},
+			{Lane: "bullets", BufferedBytes: 30},
+		},
+	})
+	run.ObserveReceiverTick(ReceiverTickObservation{
+		CandidateBuildDuration: 4 * time.Millisecond,
+		CandidateBuildPhases: ReceiverCandidateBuildObservation{
+			SnapshotCaptureDuration:  300 * time.Microsecond,
+			PendingEventCopyDuration: 40 * time.Microsecond,
+			InterestFilterDuration:   400 * time.Microsecond,
+			LaneCandidatesDuration:   2 * time.Millisecond,
+			LaneCandidatePhases: ReceiverLaneCandidateBuildObservation{
+				StateAdvanceDuration:      20 * time.Microsecond,
+				WorldHotLifecycleDuration: 1200 * time.Microsecond,
+				PlayerLocatorDuration:     60 * time.Microsecond,
+				OverlayDuration:           200 * time.Microsecond,
+				SessionDuration:           300 * time.Microsecond,
+				EventDuration:             100 * time.Microsecond,
+				CandidateFinalizeDuration: 40 * time.Microsecond,
+			},
+			ChunkPlanningDuration: 500 * time.Microsecond,
+			SchedulingDuration:    200 * time.Microsecond,
+		},
+		EncodingDuration: 3 * time.Millisecond,
+		OutboundDuration: 9 * time.Millisecond,
+		SkippedSend:      true,
+		Lanes: []ReceiverLaneObservation{
+			{Lane: "world", BufferedBytes: 50, Skipped: true},
+		},
+	})
+
+	receiver := run.Snapshot().Receiver
+	if receiver.TickCount != 2 || receiver.SkippedSendTicks != 1 {
+		t.Fatalf("unexpected receiver tick summary: %#v", receiver)
+	}
+	if receiver.CandidateBuildTime.Average != 3*time.Millisecond || receiver.EncodingTime.Maximum != 3*time.Millisecond || receiver.OutboundTime.Total != 14*time.Millisecond {
+		t.Fatalf("unexpected receiver timing summary: %#v", receiver)
+	}
+	phases := receiver.CandidateBuildPhases
+	if phases.SnapshotCaptureTime.Average != 200*time.Microsecond || phases.PendingEventCopyTime.Maximum != 40*time.Microsecond || phases.InterestFilterTime.Total != 600*time.Microsecond || phases.LaneCandidatesTime.Average != 1500*time.Microsecond || phases.ChunkPlanningTime.Maximum != 500*time.Microsecond || phases.SchedulingTime.Total != 300*time.Microsecond {
+		t.Fatalf("unexpected candidate-build phase summary: %#v", phases)
+	}
+	lanePhases := phases.LaneCandidatePhases
+	if lanePhases.StateAdvanceTime.Total != 30*time.Microsecond || lanePhases.WorldHotLifecycleTime.Average != 900*time.Microsecond || lanePhases.PlayerLocatorTime.Maximum != 60*time.Microsecond || lanePhases.OverlayTime.Total != 300*time.Microsecond || lanePhases.SessionTime.Average != 225*time.Microsecond || lanePhases.EventTime.Maximum != 100*time.Microsecond || lanePhases.CandidateFinalizeTime.Total != 60*time.Microsecond {
+		t.Fatalf("unexpected lane-candidate phase summary: %#v", lanePhases)
+	}
+	peak := receiver.CandidateBuildPeak
+	if peak.Total != 4*time.Millisecond || peak.Phases.LaneCandidatesDuration != 2*time.Millisecond || peak.Phases.LaneCandidatePhases.WorldHotLifecycleDuration != 1200*time.Microsecond || peak.Phases.ChunkPlanningDuration != 500*time.Microsecond {
+		t.Fatalf("unexpected peak candidate-build breakdown: %#v", peak)
+	}
+	if len(receiver.Lanes) != 2 || receiver.Lanes[0].Lane != "bullets" || receiver.Lanes[1].Lane != "world" {
+		t.Fatalf("receiver lanes were not sorted: %#v", receiver.Lanes)
+	}
+	world := receiver.Lanes[1]
+	if world.SampleCount != 2 || world.CurrentBufferedBytes != 50 || world.PeakBufferedBytes != 50 || world.SkippedSendTicks != 1 {
+		t.Fatalf("unexpected world receiver lane summary: %#v", world)
+	}
+}
+
 func TestRunPeriodicSamplesAreBoundedAndCountOverwrites(t *testing.T) {
 	clock := &testClock{now: time.Unix(100, 0)}
 	process := NewProcessSamplerWithReader(time.Hour, func() ProcessSample {

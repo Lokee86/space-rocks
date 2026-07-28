@@ -97,11 +97,25 @@ type GameplayPresentationSnapshot struct {
 	TotalAsteroids  int
 	PendingEvents   []PendingPresentationEvent
 	ServerSentMsec  int
+	Generation      uint64
+}
+
+type GameplayPresentationSnapshotDurations struct {
+	SnapshotCapture  time.Duration
+	PendingEventCopy time.Duration
 }
 
 // GameplayPresentationSnapshot returns a receiver-scoped view over the current
 // immutable frame and copies only the receiver's pending events.
 func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresentationSnapshot {
+	snapshot, _ := game.GameplayPresentationSnapshotMeasured(playerID)
+	return snapshot
+}
+
+// GameplayPresentationSnapshotMeasured returns the same receiver-scoped view
+// with exclusive snapshot-capture and pending-event-copy durations.
+func (game *Game) GameplayPresentationSnapshotMeasured(playerID string) (GameplayPresentationSnapshot, GameplayPresentationSnapshotDurations) {
+	snapshotStarted := time.Now()
 	game.mu.Lock()
 	frame := game.presentationFrame
 	if frame == nil {
@@ -109,9 +123,11 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 		frame = game.presentationFrame
 	}
 
+	pendingCopyStarted := time.Now()
 	pending := game.pendingPresentationEvents[playerID]
 	pendingEvents := make([]PendingPresentationEvent, len(pending))
 	copy(pendingEvents, pending)
+	pendingEventCopyDuration := time.Since(pendingCopyStarted)
 	cameraView := runtime.CameraView{}
 	hasCameraView := false
 	if view := game.cameraViews[playerID]; view != nil {
@@ -125,7 +141,7 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 		lives = session.Lives
 	}
 
-	return GameplayPresentationSnapshot{
+	snapshot := GameplayPresentationSnapshot{
 		SelfID:          playerID,
 		Lives:           lives,
 		Players:         frame.players,
@@ -140,5 +156,14 @@ func (game *Game) GameplayPresentationSnapshot(playerID string) GameplayPresenta
 		TotalAsteroids:  frame.totalAsteroids,
 		PendingEvents:   pendingEvents,
 		ServerSentMsec:  frame.serverSentMsec,
+		Generation:      frame.generation,
+	}
+	snapshotCaptureDuration := time.Since(snapshotStarted) - pendingEventCopyDuration
+	if snapshotCaptureDuration < 0 {
+		snapshotCaptureDuration = 0
+	}
+	return snapshot, GameplayPresentationSnapshotDurations{
+		SnapshotCapture:  snapshotCaptureDuration,
+		PendingEventCopy: pendingEventCopyDuration,
 	}
 }

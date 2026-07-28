@@ -36,64 +36,31 @@ func expandHardCapCandidate(candidate RealtimeLaneCandidate) ([]RealtimeLaneCand
 }
 
 func chunkWorldFullCandidate(base RealtimeLaneCandidate, source WorldWireFullPacket) ([]RealtimeLaneCandidate, error) {
-	chunks := make([]WorldWireFullPacket, 0, 1)
-	current := emptyWorldFullLike(source)
+	source.Metadata = source.Metadata.WithChunk(0, 1)
+	fits, err := candidatePayloadFitsHardCap(base, source)
+	if err != nil {
+		return nil, fmt.Errorf("measure world_full packet: %w", err)
+	}
+	if fits {
+		return normalizeWorldFullChunks(base, []WorldWireFullPacket{source})
+	}
 
-	appendRecord := func(add func(*WorldWireFullPacket)) error {
-		trial := current
-		add(&trial)
-		trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(worldFullRecordCount(source)))
-		encodedBytes, err := candidateEncodedSize(base, trial)
+	total := worldFullRecordCount(source)
+	chunks := make([]WorldWireFullPacket, 0, 2)
+	for start := 0; start < total; {
+		end, err := largestHardCapRangeEnd(start, total, func(end int) (int, error) {
+			trial := worldFullRecordRange(source, start, end)
+			trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(total))
+			return candidateEncodedSize(base, trial)
+		})
 		if err != nil {
-			return fmt.Errorf("measure world_full chunk: %w", err)
+			return nil, fmt.Errorf("measure world_full chunk: %w", err)
 		}
-		if encodedBytes > HardCapBytes {
-			if worldFullRecordCount(current) == 0 {
-				return fmt.Errorf("world_full record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-			chunks = append(chunks, current)
-			current = emptyWorldFullLike(source)
-			add(&current)
-			encodedBytes, err = candidateEncodedSize(base, current)
-			if err != nil {
-				return fmt.Errorf("measure world_full single-record chunk: %w", err)
-			}
-			if encodedBytes > HardCapBytes {
-				return fmt.Errorf("world_full record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-		} else {
-			current = trial
+		if end == start {
+			return nil, fmt.Errorf("world_full record cannot fit within hard cap of %d bytes", HardCapBytes)
 		}
-		return nil
-	}
-
-	for _, record := range source.Ships {
-		record := record
-		if err := appendRecord(func(packet *WorldWireFullPacket) { packet.Ships = append(packet.Ships, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, record := range source.Bullets {
-		record := record
-		if err := appendRecord(func(packet *WorldWireFullPacket) { packet.Bullets = append(packet.Bullets, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, record := range source.Asteroids {
-		record := record
-		if err := appendRecord(func(packet *WorldWireFullPacket) { packet.Asteroids = append(packet.Asteroids, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, record := range source.Pickups {
-		record := record
-		if err := appendRecord(func(packet *WorldWireFullPacket) { packet.Pickups = append(packet.Pickups, record) }); err != nil {
-			return nil, err
-		}
-	}
-
-	if len(chunks) == 0 || worldFullRecordCount(current) > 0 {
-		chunks = append(chunks, current)
+		chunks = append(chunks, worldFullRecordRange(source, start, end))
+		start = end
 	}
 	return normalizeWorldFullChunks(base, chunks)
 }
@@ -108,6 +75,19 @@ func emptyWorldFullLike(source WorldWireFullPacket) WorldWireFullPacket {
 
 func worldFullRecordCount(packet WorldWireFullPacket) int {
 	return len(packet.Ships) + len(packet.Bullets) + len(packet.Asteroids) + len(packet.Pickups)
+}
+
+func worldFullRecordRange(source WorldWireFullPacket, start, end int) WorldWireFullPacket {
+	packet := emptyWorldFullLike(source)
+	offset := 0
+	packet.Ships = recordRange(source.Ships, offset, start, end)
+	offset += len(source.Ships)
+	packet.Bullets = recordRange(source.Bullets, offset, start, end)
+	offset += len(source.Bullets)
+	packet.Asteroids = recordRange(source.Asteroids, offset, start, end)
+	offset += len(source.Asteroids)
+	packet.Pickups = recordRange(source.Pickups, offset, start, end)
+	return packet
 }
 
 func normalizeWorldFullChunks(base RealtimeLaneCandidate, chunks []WorldWireFullPacket) ([]RealtimeLaneCandidate, error) {
@@ -132,62 +112,54 @@ func normalizeWorldFullChunks(base RealtimeLaneCandidate, chunks []WorldWireFull
 }
 
 func chunkShipLifecycleCandidate(base RealtimeLaneCandidate, source ShipWireDeltaPacket) ([]RealtimeLaneCandidate, error) {
-	chunks := make([]ShipWireDeltaPacket, 0, 1)
-	current := source
-	current.ShipCreates = nil
-	current.ShipUpdates = nil
-	current.ShipDeletes = nil
-	appendRecord := func(add func(*ShipWireDeltaPacket)) error {
-		trial := current
-		add(&trial)
-		trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(len(source.ShipCreates)+len(source.ShipUpdates)+len(source.ShipDeletes)))
-		encodedBytes, err := candidateEncodedSize(base, trial)
+	source.Metadata = source.Metadata.WithChunk(0, 1)
+	fits, err := candidatePayloadFitsHardCap(base, source)
+	if err != nil {
+		return nil, fmt.Errorf("measure ships.lifecycle packet: %w", err)
+	}
+	if fits {
+		return normalizeShipLifecycleChunks(base, []ShipWireDeltaPacket{source})
+	}
+
+	total := len(source.ShipCreates) + len(source.ShipUpdates) + len(source.ShipDeletes)
+	chunks := make([]ShipWireDeltaPacket, 0, 2)
+	for start := 0; start < total; {
+		end, err := largestHardCapRangeEnd(start, total, func(end int) (int, error) {
+			trial := shipLifecycleRecordRange(source, start, end)
+			trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(total))
+			return candidateEncodedSize(base, trial)
+		})
 		if err != nil {
-			return fmt.Errorf("measure ships.lifecycle chunk: %w", err)
+			return nil, fmt.Errorf("measure ships.lifecycle chunk: %w", err)
 		}
-		if encodedBytes > HardCapBytes {
-			if len(current.ShipCreates)+len(current.ShipUpdates)+len(current.ShipDeletes) == 0 {
-				return fmt.Errorf("ships.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-			chunks = append(chunks, current)
-			current = source
-			current.ShipCreates = nil
-			current.ShipUpdates = nil
-			current.ShipDeletes = nil
-			add(&current)
-			encodedBytes, err = candidateEncodedSize(base, current)
-			if err != nil {
-				return fmt.Errorf("measure ships.lifecycle single-record chunk: %w", err)
-			}
-			if encodedBytes > HardCapBytes {
-				return fmt.Errorf("ships.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-		} else {
-			current = trial
+		if end == start {
+			return nil, fmt.Errorf("ships.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
 		}
-		return nil
+		chunks = append(chunks, shipLifecycleRecordRange(source, start, end))
+		start = end
 	}
-	for _, record := range source.ShipCreates {
-		record := record
-		if err := appendRecord(func(packet *ShipWireDeltaPacket) { packet.ShipCreates = append(packet.ShipCreates, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, record := range source.ShipUpdates {
-		record := record
-		if err := appendRecord(func(packet *ShipWireDeltaPacket) { packet.ShipUpdates = append(packet.ShipUpdates, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, id := range source.ShipDeletes {
-		id := id
-		if err := appendRecord(func(packet *ShipWireDeltaPacket) { packet.ShipDeletes = append(packet.ShipDeletes, id) }); err != nil {
-			return nil, err
-		}
-	}
-	if len(chunks) == 0 || len(current.ShipCreates)+len(current.ShipUpdates)+len(current.ShipDeletes) > 0 {
-		chunks = append(chunks, current)
-	}
+	return normalizeShipLifecycleChunks(base, chunks)
+}
+
+func emptyShipLifecycleLike(source ShipWireDeltaPacket) ShipWireDeltaPacket {
+	source.ShipCreates = nil
+	source.ShipUpdates = nil
+	source.ShipDeletes = nil
+	return source
+}
+
+func shipLifecycleRecordRange(source ShipWireDeltaPacket, start, end int) ShipWireDeltaPacket {
+	packet := emptyShipLifecycleLike(source)
+	offset := 0
+	packet.ShipCreates = recordRange(source.ShipCreates, offset, start, end)
+	offset += len(source.ShipCreates)
+	packet.ShipUpdates = recordRange(source.ShipUpdates, offset, start, end)
+	offset += len(source.ShipUpdates)
+	packet.ShipDeletes = recordRange(source.ShipDeletes, offset, start, end)
+	return packet
+}
+
+func normalizeShipLifecycleChunks(base RealtimeLaneCandidate, chunks []ShipWireDeltaPacket) ([]RealtimeLaneCandidate, error) {
 	result := make([]RealtimeLaneCandidate, 0, len(chunks))
 	for index, packet := range chunks {
 		packet.Metadata = packet.Metadata.WithChunk(index, len(chunks))
@@ -206,50 +178,31 @@ func chunkShipLifecycleCandidate(base RealtimeLaneCandidate, source ShipWireDelt
 }
 
 func chunkAsteroidLifecycleCandidate(base RealtimeLaneCandidate, source AsteroidWireDeltaPacket) ([]RealtimeLaneCandidate, error) {
-	chunks := make([]AsteroidWireDeltaPacket, 0, 1)
-	current := emptyAsteroidLifecycleLike(source)
-	appendRecord := func(add func(*AsteroidWireDeltaPacket)) error {
-		trial := current
-		add(&trial)
-		trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(len(source.AsteroidCreates)+len(source.AsteroidDeletes)))
-		encodedBytes, err := candidateEncodedSize(base, trial)
+	source.Metadata = source.Metadata.WithChunk(0, 1)
+	fits, err := candidatePayloadFitsHardCap(base, source)
+	if err != nil {
+		return nil, fmt.Errorf("measure asteroids.lifecycle packet: %w", err)
+	}
+	if fits {
+		return normalizeAsteroidLifecycleChunks(base, []AsteroidWireDeltaPacket{source})
+	}
 
+	total := len(source.AsteroidCreates) + len(source.AsteroidDeletes)
+	chunks := make([]AsteroidWireDeltaPacket, 0, 2)
+	for start := 0; start < total; {
+		end, err := largestHardCapRangeEnd(start, total, func(end int) (int, error) {
+			trial := asteroidLifecycleRecordRange(source, start, end)
+			trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(total))
+			return candidateEncodedSize(base, trial)
+		})
 		if err != nil {
-			return fmt.Errorf("measure asteroids.lifecycle chunk: %w", err)
+			return nil, fmt.Errorf("measure asteroids.lifecycle chunk: %w", err)
 		}
-		if encodedBytes > HardCapBytes {
-			if len(current.AsteroidCreates)+len(current.AsteroidDeletes) == 0 {
-				return fmt.Errorf("asteroids.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-			chunks = append(chunks, current)
-			current = emptyAsteroidLifecycleLike(source)
-			add(&current)
-			encodedBytes, err = candidateEncodedSize(base, current)
-			if err != nil {
-				return fmt.Errorf("measure asteroids.lifecycle single-record chunk: %w", err)
-			}
-			if encodedBytes > HardCapBytes {
-				return fmt.Errorf("asteroids.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-		} else {
-			current = trial
+		if end == start {
+			return nil, fmt.Errorf("asteroids.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
 		}
-		return nil
-	}
-	for _, record := range source.AsteroidCreates {
-		record := record
-		if err := appendRecord(func(packet *AsteroidWireDeltaPacket) { packet.AsteroidCreates = append(packet.AsteroidCreates, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, id := range source.AsteroidDeletes {
-		id := id
-		if err := appendRecord(func(packet *AsteroidWireDeltaPacket) { packet.AsteroidDeletes = append(packet.AsteroidDeletes, id) }); err != nil {
-			return nil, err
-		}
-	}
-	if len(chunks) == 0 || len(current.AsteroidCreates)+len(current.AsteroidDeletes) > 0 {
-		chunks = append(chunks, current)
+		chunks = append(chunks, asteroidLifecycleRecordRange(source, start, end))
+		start = end
 	}
 	return normalizeAsteroidLifecycleChunks(base, chunks)
 }
@@ -258,6 +211,15 @@ func emptyAsteroidLifecycleLike(source AsteroidWireDeltaPacket) AsteroidWireDelt
 	source.AsteroidCreates = nil
 	source.AsteroidDeletes = nil
 	return source
+}
+
+func asteroidLifecycleRecordRange(source AsteroidWireDeltaPacket, start, end int) AsteroidWireDeltaPacket {
+	packet := emptyAsteroidLifecycleLike(source)
+	offset := 0
+	packet.AsteroidCreates = recordRange(source.AsteroidCreates, offset, start, end)
+	offset += len(source.AsteroidCreates)
+	packet.AsteroidDeletes = recordRange(source.AsteroidDeletes, offset, start, end)
+	return packet
 }
 
 func normalizeAsteroidLifecycleChunks(base RealtimeLaneCandidate, chunks []AsteroidWireDeltaPacket) ([]RealtimeLaneCandidate, error) {
@@ -279,54 +241,51 @@ func normalizeAsteroidLifecycleChunks(base RealtimeLaneCandidate, chunks []Aster
 }
 
 func chunkBulletLifecycleCandidate(base RealtimeLaneCandidate, source BulletWireDeltaPacket) ([]RealtimeLaneCandidate, error) {
-	chunks := make([]BulletWireDeltaPacket, 0, 1)
-	current := source
-	current.BulletCreates = nil
-	current.BulletDeletes = nil
-	appendRecord := func(add func(*BulletWireDeltaPacket)) error {
-		trial := current
-		add(&trial)
-		trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(len(source.BulletCreates)+len(source.BulletDeletes)))
-		encodedBytes, err := candidateEncodedSize(base, trial)
+	source.Metadata = source.Metadata.WithChunk(0, 1)
+	fits, err := candidatePayloadFitsHardCap(base, source)
+	if err != nil {
+		return nil, fmt.Errorf("measure bullets.lifecycle packet: %w", err)
+	}
+	if fits {
+		return normalizeBulletLifecycleChunks(base, []BulletWireDeltaPacket{source})
+	}
+
+	total := len(source.BulletCreates) + len(source.BulletDeletes)
+	chunks := make([]BulletWireDeltaPacket, 0, 2)
+	for start := 0; start < total; {
+		end, err := largestHardCapRangeEnd(start, total, func(end int) (int, error) {
+			trial := bulletLifecycleRecordRange(source, start, end)
+			trial.Metadata = trial.Metadata.WithChunk(0, conservativeChunkCount(total))
+			return candidateEncodedSize(base, trial)
+		})
 		if err != nil {
-			return fmt.Errorf("measure bullets.lifecycle chunk: %w", err)
+			return nil, fmt.Errorf("measure bullets.lifecycle chunk: %w", err)
 		}
-		if encodedBytes > HardCapBytes {
-			if len(current.BulletCreates)+len(current.BulletDeletes) == 0 {
-				return fmt.Errorf("bullets.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-			chunks = append(chunks, current)
-			current = source
-			current.BulletCreates = nil
-			current.BulletDeletes = nil
-			add(&current)
-			encodedBytes, err = candidateEncodedSize(base, current)
-			if err != nil {
-				return fmt.Errorf("measure bullets.lifecycle single-record chunk: %w", err)
-			}
-			if encodedBytes > HardCapBytes {
-				return fmt.Errorf("bullets.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
-			}
-		} else {
-			current = trial
+		if end == start {
+			return nil, fmt.Errorf("bullets.lifecycle record cannot fit within hard cap of %d bytes", HardCapBytes)
 		}
-		return nil
+		chunks = append(chunks, bulletLifecycleRecordRange(source, start, end))
+		start = end
 	}
-	for _, record := range source.BulletCreates {
-		record := record
-		if err := appendRecord(func(packet *BulletWireDeltaPacket) { packet.BulletCreates = append(packet.BulletCreates, record) }); err != nil {
-			return nil, err
-		}
-	}
-	for _, id := range source.BulletDeletes {
-		id := id
-		if err := appendRecord(func(packet *BulletWireDeltaPacket) { packet.BulletDeletes = append(packet.BulletDeletes, id) }); err != nil {
-			return nil, err
-		}
-	}
-	if len(chunks) == 0 || len(current.BulletCreates)+len(current.BulletDeletes) > 0 {
-		chunks = append(chunks, current)
-	}
+	return normalizeBulletLifecycleChunks(base, chunks)
+}
+
+func emptyBulletLifecycleLike(source BulletWireDeltaPacket) BulletWireDeltaPacket {
+	source.BulletCreates = nil
+	source.BulletDeletes = nil
+	return source
+}
+
+func bulletLifecycleRecordRange(source BulletWireDeltaPacket, start, end int) BulletWireDeltaPacket {
+	packet := emptyBulletLifecycleLike(source)
+	offset := 0
+	packet.BulletCreates = recordRange(source.BulletCreates, offset, start, end)
+	offset += len(source.BulletCreates)
+	packet.BulletDeletes = recordRange(source.BulletDeletes, offset, start, end)
+	return packet
+}
+
+func normalizeBulletLifecycleChunks(base RealtimeLaneCandidate, chunks []BulletWireDeltaPacket) ([]RealtimeLaneCandidate, error) {
 	result := make([]RealtimeLaneCandidate, 0, len(chunks))
 	for index, packet := range chunks {
 		packet.Metadata = packet.Metadata.WithChunk(index, len(chunks))
@@ -342,6 +301,49 @@ func chunkBulletLifecycleCandidate(base RealtimeLaneCandidate, source BulletWire
 		result = append(result, candidate)
 	}
 	return result, nil
+}
+
+func candidatePayloadFitsHardCap(base RealtimeLaneCandidate, payload RealtimeLanePayload) (bool, error) {
+	encodedBytes, err := candidateEncodedSize(base, payload)
+	if err != nil {
+		return false, err
+	}
+	return encodedBytes <= HardCapBytes, nil
+}
+
+func largestHardCapRangeEnd(start, total int, encodedSize func(end int) (int, error)) (int, error) {
+	best := start
+	low := start + 1
+	high := total
+	for low <= high {
+		middle := low + (high-low)/2
+		bytes, err := encodedSize(middle)
+		if err != nil {
+			return start, err
+		}
+		if bytes <= HardCapBytes {
+			best = middle
+			low = middle + 1
+		} else {
+			high = middle - 1
+		}
+	}
+	return best, nil
+}
+
+func recordRange[T any](records []T, offset, start, end int) []T {
+	localStart := start - offset
+	if localStart < 0 {
+		localStart = 0
+	}
+	localEnd := end - offset
+	if localEnd > len(records) {
+		localEnd = len(records)
+	}
+	if localStart >= localEnd || localStart >= len(records) || localEnd <= 0 {
+		return nil
+	}
+	return records[localStart:localEnd]
 }
 
 func conservativeChunkCount(recordCount int) int {

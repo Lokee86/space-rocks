@@ -42,6 +42,7 @@ type webSocketSession struct {
 	webrtcTransport          *WebRTCTransport
 	webrtcBackpressureLogged map[string]bool
 	packetObserver           packetObserver
+	receiverObserver         receiverObserver
 	toolingRouter            *toolingrouter.Router
 	toolingCapabilities      toolingrouter.CapabilitySet
 }
@@ -68,6 +69,7 @@ func newWebSocketSessionWithTooling(conn *websocket.Conn, roomManager *rooms.Roo
 		matchResultReporter:      reporter,
 		webrtcBackpressureLogged: make(map[string]bool),
 		packetObserver:           packetObserverFor(measurementController),
+		receiverObserver:         receiverObserverFor(measurementController),
 		toolingRouter:            toolingrouter.NewRouter(measurementController, telemetryProvider),
 		toolingCapabilities:      toolingrouter.NewTemporaryCapabilitySet(),
 	}

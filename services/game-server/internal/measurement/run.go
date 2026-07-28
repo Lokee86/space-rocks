@@ -60,25 +60,45 @@ func WithRoomCountProvider(provider func() int) RunOption {
 }
 
 type Run struct {
-	mu                        sync.Mutex
-	context                   RunContext
-	clock                     func() time.Time
-	start                     time.Time
-	sampleInterval            time.Duration
-	nextSampleElapsed         time.Duration
-	processSampler            *ProcessSampler
-	roomCount                 func() int
-	sampleCapacity            int
-	active                    bool
-	finalReport               *ServerReport
-	ticks                     tickAccumulator
-	window                    tickAccumulator
-	lastEntities              EntityCounts
-	hasEntities               bool
-	lastSampleElapsed         time.Duration
-	packets                   map[packetKey]*PacketSummary
-	droppedPacketObservations uint64
-	samples                   sampleRing
+	mu                         sync.Mutex
+	context                    RunContext
+	clock                      func() time.Time
+	start                      time.Time
+	sampleInterval             time.Duration
+	nextSampleElapsed          time.Duration
+	processSampler             *ProcessSampler
+	roomCount                  func() int
+	sampleCapacity             int
+	active                     bool
+	finalReport                *ServerReport
+	ticks                      tickAccumulator
+	window                     tickAccumulator
+	lastEntities               EntityCounts
+	hasEntities                bool
+	lastSampleElapsed          time.Duration
+	packets                    map[packetKey]*PacketSummary
+	droppedPacketObservations  uint64
+	receiverTicks              uint64
+	receiverSkippedSendTicks   uint64
+	receiverCandidateBuild     tickAccumulator
+	receiverCandidateBuildPeak ReceiverCandidateBuildPeak
+	receiverSnapshotCapture    tickAccumulator
+	receiverPendingEventCopy   tickAccumulator
+	receiverInterestFilter     tickAccumulator
+	receiverLaneCandidates     tickAccumulator
+	receiverLaneStateAdvance   tickAccumulator
+	receiverWorldHotLifecycle  tickAccumulator
+	receiverPlayerLocator      tickAccumulator
+	receiverOverlayCandidates  tickAccumulator
+	receiverSessionCandidates  tickAccumulator
+	receiverEventCandidates    tickAccumulator
+	receiverCandidateFinalize  tickAccumulator
+	receiverChunkPlanning      tickAccumulator
+	receiverScheduling         tickAccumulator
+	receiverEncoding           tickAccumulator
+	receiverOutbound           tickAccumulator
+	receiverLanes              map[string]*ReceiverLaneSummary
+	samples                    sampleRing
 }
 
 type packetKey struct {
@@ -114,6 +134,7 @@ func NewRun(context RunContext, options ...RunOption) *Run {
 		sampleCapacity:    config.sampleCapacity,
 		active:            true,
 		packets:           make(map[packetKey]*PacketSummary),
+		receiverLanes:     make(map[string]*ReceiverLaneSummary),
 		samples:           newSampleRing(config.sampleCapacity),
 	}
 }
@@ -171,6 +192,77 @@ func (run *Run) ObservePacket(observation PacketObservation) {
 
 func (run *Run) ObservePacketWrite(lane string, packetFamily string, encodedBytes int) {
 	run.ObservePacket(PacketObservation{Lane: lane, PacketFamily: packetFamily, EncodedBytes: encodedBytes})
+}
+
+func (run *Run) ObserveReceiverTick(observation ReceiverTickObservation) {
+	run.mu.Lock()
+	defer run.mu.Unlock()
+	if !run.active {
+		return
+	}
+
+	run.receiverTicks++
+	if observation.SkippedSend {
+		run.receiverSkippedSendTicks++
+	}
+	candidateBuildDuration := maxDuration(observation.CandidateBuildDuration)
+	candidateBuildPhases := ReceiverCandidateBuildObservation{
+		SnapshotCaptureDuration:  maxDuration(observation.CandidateBuildPhases.SnapshotCaptureDuration),
+		PendingEventCopyDuration: maxDuration(observation.CandidateBuildPhases.PendingEventCopyDuration),
+		InterestFilterDuration:   maxDuration(observation.CandidateBuildPhases.InterestFilterDuration),
+		LaneCandidatesDuration:   maxDuration(observation.CandidateBuildPhases.LaneCandidatesDuration),
+		LaneCandidatePhases: ReceiverLaneCandidateBuildObservation{
+			StateAdvanceDuration:      maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.StateAdvanceDuration),
+			WorldHotLifecycleDuration: maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.WorldHotLifecycleDuration),
+			PlayerLocatorDuration:     maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.PlayerLocatorDuration),
+			OverlayDuration:           maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.OverlayDuration),
+			SessionDuration:           maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.SessionDuration),
+			EventDuration:             maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.EventDuration),
+			CandidateFinalizeDuration: maxDuration(observation.CandidateBuildPhases.LaneCandidatePhases.CandidateFinalizeDuration),
+		},
+		ChunkPlanningDuration: maxDuration(observation.CandidateBuildPhases.ChunkPlanningDuration),
+		SchedulingDuration:    maxDuration(observation.CandidateBuildPhases.SchedulingDuration),
+	}
+	run.receiverCandidateBuild.add(candidateBuildDuration)
+	if candidateBuildDuration > run.receiverCandidateBuildPeak.Total {
+		run.receiverCandidateBuildPeak = ReceiverCandidateBuildPeak{
+			Total:  candidateBuildDuration,
+			Phases: candidateBuildPhases,
+		}
+	}
+	run.receiverSnapshotCapture.add(candidateBuildPhases.SnapshotCaptureDuration)
+	run.receiverPendingEventCopy.add(candidateBuildPhases.PendingEventCopyDuration)
+	run.receiverInterestFilter.add(candidateBuildPhases.InterestFilterDuration)
+	run.receiverLaneCandidates.add(candidateBuildPhases.LaneCandidatesDuration)
+	run.receiverLaneStateAdvance.add(candidateBuildPhases.LaneCandidatePhases.StateAdvanceDuration)
+	run.receiverWorldHotLifecycle.add(candidateBuildPhases.LaneCandidatePhases.WorldHotLifecycleDuration)
+	run.receiverPlayerLocator.add(candidateBuildPhases.LaneCandidatePhases.PlayerLocatorDuration)
+	run.receiverOverlayCandidates.add(candidateBuildPhases.LaneCandidatePhases.OverlayDuration)
+	run.receiverSessionCandidates.add(candidateBuildPhases.LaneCandidatePhases.SessionDuration)
+	run.receiverEventCandidates.add(candidateBuildPhases.LaneCandidatePhases.EventDuration)
+	run.receiverCandidateFinalize.add(candidateBuildPhases.LaneCandidatePhases.CandidateFinalizeDuration)
+	run.receiverChunkPlanning.add(candidateBuildPhases.ChunkPlanningDuration)
+	run.receiverScheduling.add(candidateBuildPhases.SchedulingDuration)
+	run.receiverEncoding.add(maxDuration(observation.EncodingDuration))
+	run.receiverOutbound.add(maxDuration(observation.OutboundDuration))
+	for _, laneObservation := range observation.Lanes {
+		if !validIdentifier(laneObservation.Lane) {
+			continue
+		}
+		summary := run.receiverLanes[laneObservation.Lane]
+		if summary == nil {
+			summary = &ReceiverLaneSummary{Lane: laneObservation.Lane}
+			run.receiverLanes[laneObservation.Lane] = summary
+		}
+		summary.SampleCount++
+		summary.CurrentBufferedBytes = laneObservation.BufferedBytes
+		if laneObservation.BufferedBytes > summary.PeakBufferedBytes {
+			summary.PeakBufferedBytes = laneObservation.BufferedBytes
+		}
+		if laneObservation.Skipped {
+			summary.SkippedSendTicks++
+		}
+	}
 }
 
 func (run *Run) Snapshot() ServerReport {
@@ -231,6 +323,26 @@ func (run *Run) Reset() {
 	run.lastSampleElapsed = 0
 	run.packets = make(map[packetKey]*PacketSummary)
 	run.droppedPacketObservations = 0
+	run.receiverTicks = 0
+	run.receiverSkippedSendTicks = 0
+	run.receiverCandidateBuild = tickAccumulator{}
+	run.receiverCandidateBuildPeak = ReceiverCandidateBuildPeak{}
+	run.receiverSnapshotCapture = tickAccumulator{}
+	run.receiverPendingEventCopy = tickAccumulator{}
+	run.receiverInterestFilter = tickAccumulator{}
+	run.receiverLaneCandidates = tickAccumulator{}
+	run.receiverLaneStateAdvance = tickAccumulator{}
+	run.receiverWorldHotLifecycle = tickAccumulator{}
+	run.receiverPlayerLocator = tickAccumulator{}
+	run.receiverOverlayCandidates = tickAccumulator{}
+	run.receiverSessionCandidates = tickAccumulator{}
+	run.receiverEventCandidates = tickAccumulator{}
+	run.receiverCandidateFinalize = tickAccumulator{}
+	run.receiverChunkPlanning = tickAccumulator{}
+	run.receiverScheduling = tickAccumulator{}
+	run.receiverEncoding = tickAccumulator{}
+	run.receiverOutbound = tickAccumulator{}
+	run.receiverLanes = make(map[string]*ReceiverLaneSummary)
 	run.samples = newSampleRing(run.sampleCapacity)
 }
 
@@ -252,6 +364,37 @@ func (run *Run) reportLocked(reason StopReason) ServerReport {
 	for _, summary := range run.packets {
 		report.Packets = append(report.Packets, *summary)
 	}
+	report.Receiver = ReceiverSummary{
+		TickCount:          run.receiverTicks,
+		SkippedSendTicks:   run.receiverSkippedSendTicks,
+		CandidateBuildTime: run.receiverCandidateBuild.snapshot(),
+		CandidateBuildPhases: ReceiverCandidateBuildSummary{
+			SnapshotCaptureTime:  run.receiverSnapshotCapture.snapshot(),
+			PendingEventCopyTime: run.receiverPendingEventCopy.snapshot(),
+			InterestFilterTime:   run.receiverInterestFilter.snapshot(),
+			LaneCandidatesTime:   run.receiverLaneCandidates.snapshot(),
+			LaneCandidatePhases: ReceiverLaneCandidateBuildSummary{
+				StateAdvanceTime:      run.receiverLaneStateAdvance.snapshot(),
+				WorldHotLifecycleTime: run.receiverWorldHotLifecycle.snapshot(),
+				PlayerLocatorTime:     run.receiverPlayerLocator.snapshot(),
+				OverlayTime:           run.receiverOverlayCandidates.snapshot(),
+				SessionTime:           run.receiverSessionCandidates.snapshot(),
+				EventTime:             run.receiverEventCandidates.snapshot(),
+				CandidateFinalizeTime: run.receiverCandidateFinalize.snapshot(),
+			},
+			ChunkPlanningTime: run.receiverChunkPlanning.snapshot(),
+			SchedulingTime:    run.receiverScheduling.snapshot(),
+		},
+		CandidateBuildPeak: run.receiverCandidateBuildPeak,
+		EncodingTime:       run.receiverEncoding.snapshot(),
+		OutboundTime:       run.receiverOutbound.snapshot(),
+	}
+	for _, summary := range run.receiverLanes {
+		report.Receiver.Lanes = append(report.Receiver.Lanes, *summary)
+	}
+	sort.Slice(report.Receiver.Lanes, func(i, j int) bool {
+		return report.Receiver.Lanes[i].Lane < report.Receiver.Lanes[j].Lane
+	})
 	sort.Slice(report.Packets, func(i, j int) bool {
 		if report.Packets[i].Lane == report.Packets[j].Lane {
 			return report.Packets[i].PacketFamily < report.Packets[j].PacketFamily
@@ -263,6 +406,9 @@ func (run *Run) reportLocked(reason StopReason) ServerReport {
 	}
 	if report.Packets == nil {
 		report.Packets = []PacketSummary{}
+	}
+	if report.Receiver.Lanes == nil {
+		report.Receiver.Lanes = []ReceiverLaneSummary{}
 	}
 	return report
 }
@@ -286,6 +432,13 @@ func (run *Run) sampleLocked(now time.Time, elapsed time.Duration) {
 
 func validIdentifier(value string) bool {
 	return value != "" && len(value) <= maxIdentifierLength
+}
+
+func maxDuration(duration time.Duration) time.Duration {
+	if duration < 0 {
+		return 0
+	}
+	return duration
 }
 
 type tickAccumulator struct {
@@ -317,5 +470,6 @@ func (accumulator tickAccumulator) snapshot() TickSummary {
 func cloneReport(report ServerReport) ServerReport {
 	report.Samples = append([]PeriodicSample(nil), report.Samples...)
 	report.Packets = append([]PacketSummary(nil), report.Packets...)
+	report.Receiver.Lanes = append([]ReceiverLaneSummary(nil), report.Receiver.Lanes...)
 	return report
 }

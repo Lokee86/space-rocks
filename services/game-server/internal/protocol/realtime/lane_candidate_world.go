@@ -6,16 +6,22 @@ import (
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 )
 
-func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState) ([]RealtimeLaneCandidate, error) {
+func buildWorldLaneCandidates(snapshot game.GameplayPresentationSnapshot, state RealtimeSessionState, sessionState *RealtimeSessionState, sharedWorld *WorldWireFullPacket) ([]RealtimeLaneCandidate, error) {
 	candidates := make([]RealtimeLaneCandidate, 0, 7)
 
 	worldState, worldSynced := state.LaneState(LaneWorld)
 	worldReady := state.LaneBaselineReady(LaneWorld)
 	worldSequence := NextLaneSequence(worldState, worldSynced)
-	worldFull := BuildWorldFullPacket(snapshot, worldSequence)
-	currentWorld, err := quantizeWorldFullPacket(worldFull)
-	if err != nil {
-		return nil, fmt.Errorf("quantize world full packet: %w", err)
+	var currentWorld WorldWireFullPacket
+	if sharedWorld != nil {
+		currentWorld = receiverWorldWireProjection(*sharedWorld, snapshot, worldSequence)
+	} else {
+		worldFull := BuildWorldFullPacket(snapshot, worldSequence)
+		var err error
+		currentWorld, err = quantizeWorldFullPacket(worldFull)
+		if err != nil {
+			return nil, fmt.Errorf("quantize world full packet: %w", err)
+		}
 	}
 
 	storedWorld, worldHasProjection := state.BaselineProjection(LaneWorld)

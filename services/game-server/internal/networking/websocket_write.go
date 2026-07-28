@@ -2,11 +2,13 @@ package networking
 
 import (
 	"errors"
+	"sort"
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/outbound"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -52,6 +54,7 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		return true
 	}
 	resetRealtimeStateForContext(session, context, gameplayContext.MatchID)
+	outboundStarted := time.Now()
 
 	result, err := realtime.BuildActiveRealtimeResultForGameView(
 		gameplayContext.Game,
@@ -86,13 +89,43 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 		return true
 	}
 
+	laneObservations := make(map[string]measurement.ReceiverLaneObservation)
+	skippedSend := false
+	defer func() {
+		session.observeReceiverTick(measurement.ReceiverTickObservation{
+			CandidateBuildDuration: result.CandidateBuildDuration,
+			CandidateBuildPhases: measurement.ReceiverCandidateBuildObservation{
+				SnapshotCaptureDuration:  result.CandidateBuildPhases.SnapshotCapture,
+				PendingEventCopyDuration: result.CandidateBuildPhases.PendingEventCopy,
+				InterestFilterDuration:   result.CandidateBuildPhases.InterestFilter,
+				LaneCandidatesDuration:   result.CandidateBuildPhases.LaneCandidates,
+				LaneCandidatePhases: measurement.ReceiverLaneCandidateBuildObservation{
+					StateAdvanceDuration:      result.CandidateBuildPhases.LaneCandidatePhases.StateAdvance,
+					WorldHotLifecycleDuration: result.CandidateBuildPhases.LaneCandidatePhases.WorldHotLifecycle,
+					PlayerLocatorDuration:     result.CandidateBuildPhases.LaneCandidatePhases.PlayerLocator,
+					OverlayDuration:           result.CandidateBuildPhases.LaneCandidatePhases.Overlay,
+					SessionDuration:           result.CandidateBuildPhases.LaneCandidatePhases.Session,
+					EventDuration:             result.CandidateBuildPhases.LaneCandidatePhases.Event,
+					CandidateFinalizeDuration: result.CandidateBuildPhases.LaneCandidatePhases.CandidateFinalize,
+				},
+				ChunkPlanningDuration: result.CandidateBuildPhases.ChunkPlanning,
+				SchedulingDuration:    result.CandidateBuildPhases.Scheduling,
+			},
+			EncodingDuration: result.EncodingDuration,
+			OutboundDuration: time.Since(outboundStarted),
+			SkippedSend:      skippedSend,
+			Lanes:            receiverLaneObservationList(laneObservations),
+		})
+	}()
+
 	sentEventBatch := false
 	for _, group := range groupEncodedRealtimeLanePackets(result.EncodedLanePackets) {
-		blocked, valid := preflightRealtimeSendGroup(session, transport, group, context, gameplayContext.MatchID)
+		blocked, valid := preflightRealtimeSendGroup(session, transport, group, context, gameplayContext.MatchID, laneObservations)
 		if !valid {
 			return false
 		}
 		if blocked {
+			skippedSend = true
 			continue
 		}
 
@@ -110,6 +143,9 @@ func writeGameplayLaneProtocolMessage(session *webSocketSession, remoteAddr stri
 			channelLabel, _ := webRTCChannelLabelForLane(lane)
 			if err := transport.SendEncodedLaneJSON(lane, encoded.Encoded); err != nil {
 				if errors.Is(err, ErrWebRTCChannelBackpressure) {
+					bufferedBytes, _ := transport.BufferedAmountForLane(lane)
+					recordReceiverLaneObservation(laneObservations, lane, bufferedBytes, true)
+					skippedSend = true
 					logRealtimeBackpressure(session, transport, candidate, lane, channelLabel, context, gameplayContext.MatchID, 0)
 					groupSent = false
 					break
@@ -188,7 +224,7 @@ func realtimeSendGroupKey(candidate realtime.RealtimeLaneCandidate) string {
 	}
 }
 
-func preflightRealtimeSendGroup(session *webSocketSession, transport *WebRTCTransport, group encodedRealtimeLaneGroup, context SessionContext, matchID string) (bool, bool) {
+func preflightRealtimeSendGroup(session *webSocketSession, transport *WebRTCTransport, group encodedRealtimeLaneGroup, context SessionContext, matchID string, laneObservations map[string]measurement.ReceiverLaneObservation) (bool, bool) {
 	reservedBytesByLane := make(map[string]uint64)
 	for _, encoded := range group.Packets {
 		candidate := encoded.Candidate
@@ -224,15 +260,41 @@ func preflightRealtimeSendGroup(session *webSocketSession, transport *WebRTCTran
 		if !ok {
 			return false, false
 		}
+		recordReceiverLaneObservation(laneObservations, lane, bufferedBytes, false)
 		reservedBytes := reservedBytesByLane[lane]
 		payloadBytes := uint64(len(encoded.Encoded))
 		if bufferedBytes >= webRTCMaxBufferedAmountBytes || reservedBytes+payloadBytes > webRTCMaxBufferedAmountBytes-bufferedBytes {
+			recordReceiverLaneObservation(laneObservations, lane, bufferedBytes, true)
 			logRealtimeBackpressure(session, transport, candidate, lane, channelLabel, context, matchID, reservedBytes)
 			return true, true
 		}
 		reservedBytesByLane[lane] = reservedBytes + payloadBytes
 	}
 	return false, true
+}
+
+func recordReceiverLaneObservation(observations map[string]measurement.ReceiverLaneObservation, lane string, bufferedBytes uint64, skipped bool) {
+	if observations == nil || lane == "" {
+		return
+	}
+	observation := observations[lane]
+	observation.Lane = lane
+	if bufferedBytes > observation.BufferedBytes {
+		observation.BufferedBytes = bufferedBytes
+	}
+	observation.Skipped = observation.Skipped || skipped
+	observations[lane] = observation
+}
+
+func receiverLaneObservationList(observations map[string]measurement.ReceiverLaneObservation) []measurement.ReceiverLaneObservation {
+	result := make([]measurement.ReceiverLaneObservation, 0, len(observations))
+	for _, observation := range observations {
+		result = append(result, observation)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Lane < result[j].Lane
+	})
+	return result
 }
 
 func logRealtimeBackpressure(session *webSocketSession, transport *WebRTCTransport, candidate realtime.RealtimeLaneCandidate, lane string, channelLabel string, context SessionContext, matchID string, reservedBytes uint64) {

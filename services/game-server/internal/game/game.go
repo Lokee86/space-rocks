@@ -56,6 +56,8 @@ type Game struct {
 	participantRecords        map[string]*participantRecord
 	pendingPresentationEvents map[string][]PendingPresentationEvent
 	presentationFrame         *gameplayPresentationFrame
+	presentationDerivedMu     sync.Mutex
+	presentationDerived       map[string][]presentationDerivedEntry
 	runtimeMeasurementMu      sync.RWMutex
 	runtimeMeasurements       map[uint64]measurement.SimulationObserver
 	nextMeasurementObserverID uint64
@@ -89,6 +91,7 @@ func newGame(source *rng.Source) *Game {
 		participantRecords:        make(map[string]*participantRecord),
 		teamStructure:             teams.StructureFFA,
 		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
+		presentationDerived:       make(map[string][]presentationDerivedEntry),
 		runtimeMeasurements:       make(map[uint64]measurement.SimulationObserver),
 		spawner:                   spawning.New(source),
 		scoringPolicy:             scoring.NewDefaultPolicy(),

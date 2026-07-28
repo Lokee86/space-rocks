@@ -32,8 +32,9 @@ authoritative game state
 -> regular detailed ship movement updates move to dedicated hot-lane delta packets on sr.ships, asteroid movement updates move to sr.asteroids, and bullet movement updates move to sr.bullets
 -> coarse player_locator snapshots also use sr.ships at low cadence after recipient filtering
 -> ship/asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.ships.lifecycle, sr.asteroids.lifecycle, and sr.bullets.lifecycle
--> oversized ship/asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
--> the chunker is the only hard-size guard for ship/asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
+-> oversized ship/asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using one-pass compact-JSON byte accounting
+-> full-world and lifecycle packets use a complete-packet fast path and binary range packing when they exceed the hard cap
+-> final normalized chunks are encoded and validated against the hard cap before scheduling; scheduler and active encoding consume already-shaped candidates
 -> typed candidate payload
 -> payload wire serializer produces the sparse readable wire map
 -> compact descriptor encoder
@@ -54,7 +55,7 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns recipient-specific network-interest filtering, candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive ship/asteroid/bullet movement splitting, coarse player-locator projection, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot-lane hard-size guarding for ship, asteroid, and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for ship, asteroid, and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns recipient-specific network-interest filtering, candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive ship/asteroid/bullet movement splitting, coarse player-locator projection, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot movement chunk planning belongs to `hot_lane_chunker.go`; full-world and lifecycle hard-cap packing belongs to `realtime_hardcap_chunker.go`. Small hard-cap candidates take a single complete-packet fit check, oversized candidates use binary range packing, and every normalized hard-cap chunk is encoded and validated before scheduling. Scheduler and active encoding must not duplicate those guards. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for ship, asteroid, and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
@@ -239,8 +240,9 @@ Relevant active files include:
 * `services/game-server/internal/protocol/realtime/player_locator.go` - low-cadence coarse player-locator candidate construction and projection.
 * `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - movement/cold-field classification support for dedicated hot and reliable lifecycle records.
 * `services/game-server/internal/protocol/realtime/hot_lane_projection.go` - independent ship, asteroid, and bullet movement projections, including reliable-world membership synchronization that preserves deferred hot movement.
-* `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
-* `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - conservative compact-JSON byte estimation used by hot-lane chunk construction.
+* `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - one-pass candidate-level chunking for oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` movement update lists.
+* `services/game-server/internal/protocol/realtime/hot_lane_size_estimate.go` - compact-JSON byte accounting used by hot-lane chunk construction.
+* `services/game-server/internal/protocol/realtime/realtime_hardcap_chunker.go` - complete-packet fast paths, binary range packing for oversized full-world/lifecycle candidates, and final encoded-size hard-cap validation.
 * `services/game-server/internal/protocol/realtime/hot_lane_policy.go` - hot movement lane budget and cadence thresholds.
 * `services/game-server/internal/protocol/realtime/hot_lane_cohorts.go` - hot movement lane routing modes and cohort selection support.
 * `services/game-server/internal/protocol/realtime/scheduler.go` - lane candidate scheduling and estimated byte-budget include/defer planning for already-built candidates; real hot-lane chunks are created before scheduling.

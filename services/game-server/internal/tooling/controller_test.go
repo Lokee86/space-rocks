@@ -240,6 +240,12 @@ func TestControllerPersistsStoppedReportAndReturnsExportResult(t *testing.T) {
 	if !ok || export["success"] != true || export["path"] != writer.path || export["error"] != "" {
 		t.Fatalf("unexpected server export result: %#v", stopped.Report["server_export"])
 	}
+	if stopped.Report["report_detail"] != "summary" || stopped.Report["sample_count"] != 1 {
+		t.Fatalf("unexpected bounded stop report: %#v", stopped.Report)
+	}
+	if _, included := stopped.Report["samples"]; included {
+		t.Fatalf("measurement stop response must not include full samples: %#v", stopped.Report)
+	}
 }
 
 func TestControllerStopReturnsReportWhenPersistenceFails(t *testing.T) {
@@ -257,8 +263,8 @@ func TestControllerStopReturnsReportWhenPersistenceFails(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stop should preserve the in-memory report after persistence failure: %v", err)
 	}
-	if !stopped.Complete || stopped.Report["ticks"] == nil {
-		t.Fatalf("expected completed in-memory report: %#v", stopped)
+	if !stopped.Complete || stopped.Report["ticks"] == nil || stopped.Report["report_detail"] != "summary" {
+		t.Fatalf("expected completed bounded in-memory report: %#v", stopped)
 	}
 	export, ok := stopped.Report["server_export"].(map[string]any)
 	if !ok || export["success"] != false || export["path"] != "" || export["error"] != "disk unavailable" {
