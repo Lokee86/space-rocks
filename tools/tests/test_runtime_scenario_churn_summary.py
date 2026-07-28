@@ -30,6 +30,11 @@ def test_summarizes_per_round_drift(tmp_path: Path) -> None:
                     {
                         "process": {
                             "peak_resident_set_bytes": rss_mib * 1_048_576,
+                            "resident_set_bytes": (rss_mib - 1) * 1_048_576,
+                            "heap_allocated_bytes": 10 * round_number * 1_048_576,
+                            "heap_in_use_bytes": 12 * round_number * 1_048_576,
+                            "goroutines": 20,
+                            "gc_cycles": 30 * round_number,
                             "cpu_utilization_cores": 0.5,
                         },
                         "entities": {
@@ -88,3 +93,6 @@ def test_summarizes_per_round_drift(tmp_path: Path) -> None:
     assert result["drift"]["server_peak_rss_mib"] == 3.0
     assert result["drift"]["client_peak_memory_mib"] == 1.0
     assert result["rounds"][1]["server"]["receiver_skipped_send_ticks"] == 0
+    assert result["rounds"][1]["server"]["resident_set_mib"] == 42.0
+    assert result["rounds"][1]["server"]["heap_in_use_mib"] == 24.0
+    assert result["rounds"][1]["server"]["goroutines"] == 20

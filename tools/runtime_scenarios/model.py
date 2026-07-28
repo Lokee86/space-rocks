@@ -77,6 +77,7 @@ class Scenario:
                 if not isinstance(round_payload, dict):
                     raise ScenarioError(f"round {round_index} must be an object")
                 _required_text(round_payload, "name")
+                _positive_int(round_payload, "repeat", 1)
                 _positive_int(round_payload, "lives", 2)
                 round_setup = round_payload.get("setup", {})
                 if not isinstance(round_setup, dict):

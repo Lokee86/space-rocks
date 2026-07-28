@@ -24,7 +24,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, and a four-round match-churn scenario now exercises repeated game-over, result, lobby-reset, readiness, and restart cycles. Soak, multi-room coverage, and release thresholds remain.
+Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, and match-churn coverage now spans both a four-round regression and a 90-round soak. The soak completed functionally but exposed persistent server heap and RSS growth across repeated matches. Isolating that retained state, adding multi-room coverage, and defining release thresholds remain.
 
 ## Ownership Boundary
 
@@ -285,6 +285,12 @@ The `receiver_scale_8c_0b_v1` scenario then admitted eight real headless clients
 
 The `match_churn_2c_6b_v1` scenario keeps one room alive across four complete matches with two real headless clients and six bots. Both clients completed all four rounds, observed four matching unique match IDs, validated all eight result entries per round, exported one report per match, cleared lobby readiness, and restarted gameplay three times. The coordinator-side server report held peak RSS flat at 34.086 MiB across all four rounds. Server tick average ranged from 149.223 to 175.075 us and ended 14.749 us above round one; maximum tick time stayed below 1.963 ms. Receiver outbound averages ranged from 0.611 to 0.747 ms, with zero skipped sends and zero client send failures. Coordinator peak memory rose 1.105 MiB from the first to fourth short round while average frame time slightly improved. This is a healthy short-churn baseline, not evidence against slower leaks that require a longer soak.
 
+The `match_churn_soak_2c_6b_v1` scenario repeats the same two-client/six-bot lifecycle 90 times in one room. Both clients completed all 90 rounds, observed the same 90 unique match IDs, validated full eight-participant results, returned to the lobby 89 times, and exported one client report per round. The 90 server exports reported zero skipped receiver sends, while both client streams reported zero send failures. The run lasted approximately 18 minutes.
+
+The soak exposed persistent server memory growth. Comparing the first ten rounds with the last ten, current RSS rose from a 33.083 MiB average to 85.898 MiB, Go heap allocated rose from 7.603 MiB to 44.913 MiB, and heap in use rose from 10.566 MiB to 52.206 MiB. The final round reported 88.227 MiB current RSS and 63.312 MiB heap in use. Goroutines remained flat at 84 and GC cycles continued increasing, so this is not explained by accumulating goroutines or by a single missed garbage collection. The exact retained owner is not yet isolated; repeated measurement state was removed from the active controller map and detached normally, making a simple active-run registry leak less likely. This result is a memory-retention warning and should be investigated before repeated-match hosting is treated as release-ready.
+
+Timing also drifted modestly but remained well within the tick budget. First-ten versus last-ten server tick average increased from 140.895 us to 195.142 us, and receiver outbound average increased from 0.507 ms to 0.636 ms. Client peak memory increased by 2.729 MiB between the same windows. These timing changes are secondary to the retained server heap finding.
+
 The `simulation_scale_1c_7b_v1` isolation scenario seeds 192 asteroids before measurement, uses one real headless receiver plus seven bots, and increases continuous projectile streams from 60 to 120. The first run sampled up to 144 surviving asteroids and 518 projectiles. Server tick time remained healthy at 0.280 ms average and 6.554 ms maximum, with 45.2 MiB peak RSS and 0.482 peak CPU cores. Receiver candidate construction averaged 1.345 ms and peaked at 7.811 ms; outbound work averaged 1.637 ms and peaked at 9.436 ms. No sends were skipped and no client send failures occurred. The headless client recorded a 33 ms frame-time p99 and 76.226 ms maximum, so this load does not identify authoritative simulation as the current limit; visible-client rendering and packet-application behavior should be checked separately if high-entity stutter remains.
 
 Canonical commands:
@@ -444,7 +450,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
 2. Use the implemented seeded runtime harness for repeatable multiplayer pressure while retaining manual measurement for exploratory checks.
-3. Expand the scenario catalog beyond the implemented simulation-heavy, receiver-heavy, and short match-churn cases to cover soak and eventually multi-room pressure separately.
+3. Investigate the retained server heap exposed by the implemented 90-round soak, then add multi-room pressure as the next distinct scenario.
 4. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
 5. Add evidence-based decision thresholds as the scenario baseline grows.
 6. Treat optimization as a follow-on choice after the limiting pressure is measured.
@@ -466,7 +472,8 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 ## Open decisions
 
-* Which additional scenario should be automated next: soak or multi-room pressure?
+* Which owner retains server heap across repeated match resets, and what cleanup boundary should release it?
+* What multi-room pressure shape should be automated after the churn-retention issue is isolated?
 * Which runtime signals should appear in the World Telemetry Overlay?
 * Which slow-tick or frame-pressure thresholds should become release gates?
 * Which entity-heavy feature should get the next dedicated load scenario?

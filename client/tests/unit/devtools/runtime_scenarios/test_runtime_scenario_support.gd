@@ -4,6 +4,7 @@ const ConfigScript := preload("res://scripts/devtools/runtime_scenarios/runtime_
 const RosterScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_roster.gd")
 const StatusWriterScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_status_writer.gd")
 const PhaseRunnerScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_phase_runner.gd")
+const RoundsScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_rounds.gd")
 
 const SCENARIO_PATH := "user://runtime_scenario_support_test.json"
 const STATUS_PATH := "user://runtime_scenario_support_status.json"
@@ -106,14 +107,29 @@ func test_phase_runner_prepares_deterministic_asteroid_pressure() -> void:
 	assert_eq(writer.states, ["setup_started", "setup_completed"])
 
 
+func test_repeated_rounds_expand_with_unique_names() -> void:
+	var rounds: Array = RoundsScript.expand([
+		{
+			"name": "soak-cycle",
+			"repeat": 3,
+			"phases": [{"name": "pressure", "duration_seconds": 1}],
+		}
+	])
+
+	assert_eq(rounds.size(), 3)
+	assert_eq(rounds[0].get("name"), "soak-cycle-001")
+	assert_eq(rounds[2].get("name"), "soak-cycle-003")
+	assert_false(rounds[0].has("repeat"))
+
+
 func test_roster_counts_humans_bots_and_other_player() -> void:
 	var controller := FakeRoomSessionController.new()
 	controller.snapshot = {
 		"local_player_id": "Player-1",
 		"can_start_game": true,
 		"members": [
-			{"player_id": "Player-1", "is_bot": false},
-			{"player_id": "Player-2", "is_bot": false},
+			{"player_id": "Player-1", "is_bot": false, "ready": true},
+			{"player_id": "Player-2", "is_bot": false, "ready": true},
 			{"player_id": "Player-3", "is_bot": true},
 		],
 	}
@@ -122,6 +138,7 @@ func test_roster_counts_humans_bots_and_other_player() -> void:
 
 	assert_true(roster.humans_joined())
 	assert_true(roster.lobby_can_start())
+	assert_true(roster.local_member_ready())
 	assert_eq(roster.human_count(), 2)
 	assert_eq(roster.bot_count(), 1)
 	assert_eq(roster.other_human_player_id(), "Player-2")

@@ -49,7 +49,20 @@ python tools/runtime_scenarios/churn_summary.py \
   --output .ci-artifacts/runtime-scenarios/match-churn-summary.json
 ```
 
-The churn scenario uses a top-level `rounds` array instead of `phases`. Each round owns its `name`, `lives`, optional `setup`, and non-empty `phases` array. Client measurement state is intentionally stopped and exported before each lobby return because normal gameplay reset clears that state.
+The churn scenario uses a top-level `rounds` array instead of `phases`. Each round owns its `name`, `lives`, optional `setup`, and non-empty `phases` array. A positive `repeat` value expands one round template into uniquely named rounds, which keeps long soak definitions compact. Client measurement state is intentionally stopped and exported before each lobby return because normal gameplay reset clears that state.
+
+`match_churn_soak_2c_6b_v1` repeats one two-client/six-bot round template 90 times. Run it headlessly, then compare the first and last ten-round windows:
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/match_churn_soak_2c_6b_v1.json \
+  --headless-coordinator
+
+python tools/runtime_scenarios/soak_summary.py \
+  .ci-artifacts/runtime-scenarios/<match-churn-soak-run> \
+  --window-rounds 10 \
+  --output .ci-artifacts/runtime-scenarios/match-churn-soak-summary.json
+```
 
 ## Receiver-scaling matrix
 

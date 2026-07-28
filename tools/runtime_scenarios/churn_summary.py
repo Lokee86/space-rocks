@@ -99,6 +99,7 @@ def _summarize_round(
     process_samples = [
         sample.get("process", {}) for sample in samples if isinstance(sample, dict)
     ]
+    final_process = process_samples[-1] if process_samples else {}
     entity_samples = [
         sample.get("entities", {}) for sample in samples if isinstance(sample, dict)
     ]
@@ -131,6 +132,17 @@ def _summarize_round(
             "peak_rss_mib": _round(
                 _max_number(process_samples, "peak_resident_set_bytes") / 1_048_576.0
             ),
+            "resident_set_mib": _round(
+                float(final_process.get("resident_set_bytes", 0)) / 1_048_576.0
+            ),
+            "heap_allocated_mib": _round(
+                float(final_process.get("heap_allocated_bytes", 0)) / 1_048_576.0
+            ),
+            "heap_in_use_mib": _round(
+                float(final_process.get("heap_in_use_bytes", 0)) / 1_048_576.0
+            ),
+            "goroutines": int(float(final_process.get("goroutines", 0))),
+            "gc_cycles": int(float(final_process.get("gc_cycles", 0))),
             "max_cpu_cores": _round(
                 _max_number(process_samples, "cpu_utilization_cores")
             ),

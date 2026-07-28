@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime_scenarios.model import Scenario
+from runtime_scenarios.phase_markers import phase_markers_for_scenario
 from runtime_scenarios.server_command import runtime_server_command
 from runtime_scenarios.processes import (
     ManagedProcess,
@@ -42,7 +43,7 @@ class ScenarioRunner:
 
     def run(self) -> int:
         self.run_directory.mkdir(parents=True, exist_ok=False)
-        phase_markers = self._phase_markers()
+        phase_markers = phase_markers_for_scenario(self.scenario.raw)
         summary: dict[str, Any] = {
             "scenario_id": self.scenario.scenario_id,
             "scenario_path": str(self.scenario.path),
@@ -245,48 +246,6 @@ class ScenarioRunner:
             }
             for managed in self.processes
         }
-
-    def _phase_markers(self) -> list[dict[str, Any]]:
-        elapsed = 0.0
-        markers: list[dict[str, Any]] = []
-        rounds = self.scenario.raw.get("rounds")
-        if isinstance(rounds, list) and rounds:
-            for round_index, round_payload in enumerate(rounds, start=1):
-                if not isinstance(round_payload, dict):
-                    continue
-                round_name = str(round_payload.get("name", f"round-{round_index}"))
-                phases = round_payload.get("phases", [])
-                if not isinstance(phases, list):
-                    continue
-                for phase in phases:
-                    if not isinstance(phase, dict):
-                        continue
-                    duration = float(phase.get("duration_seconds", 0.0))
-                    markers.append(
-                        {
-                            "name": f"{round_name}/{phase.get('name', '')}",
-                            "round": round_index,
-                            "start_seconds": elapsed,
-                            "end_seconds": elapsed + duration,
-                            "duration_seconds": duration,
-                        }
-                    )
-                    elapsed += duration
-            return markers
-        for phase in self.scenario.raw.get("phases", []):
-            if not isinstance(phase, dict):
-                continue
-            duration = float(phase.get("duration_seconds", 0.0))
-            markers.append(
-                {
-                    "name": str(phase.get("name", "")),
-                    "start_seconds": elapsed,
-                    "end_seconds": elapsed + duration,
-                    "duration_seconds": duration,
-                }
-            )
-            elapsed += duration
-        return markers
 
     def _new_run_directory(self) -> Path:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

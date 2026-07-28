@@ -4,6 +4,7 @@ class_name RuntimeScenarioChurnRunner
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
 const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const ScenarioRounds := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_rounds.gd")
 
 var scenario: Dictionary = {}
 var role := ""
@@ -45,10 +46,11 @@ func configure(
 
 
 func run(rounds: Array) -> Dictionary:
+	var expanded_rounds: Array = ScenarioRounds.expand(rounds)
 	var match_ids: Array[String] = []
 	var measurement_reports: Array[String] = []
-	for round_index in range(rounds.size()):
-		var round_value = rounds[round_index]
+	for round_index in range(expanded_rounds.size()):
+		var round_value = expanded_rounds[round_index]
 		if !(round_value is Dictionary):
 			return _failure("round %d is not an object" % (round_index + 1))
 		var round: Dictionary = round_value
@@ -95,7 +97,7 @@ func run(rounds: Array) -> Dictionary:
 			"measurement_report": str(export_result.get("path", "")),
 		})
 
-		if round_index < rounds.size() - 1:
+		if round_index < expanded_rounds.size() - 1:
 			var lobby_result: Dictionary = await _return_to_lobby(round_number)
 			if !bool(lobby_result.get("ok", false)):
 				return lobby_result
@@ -104,7 +106,7 @@ func run(rounds: Array) -> Dictionary:
 		"ok": true,
 		"match_ids": match_ids,
 		"measurement_reports": measurement_reports,
-		"rounds_completed": rounds.size(),
+		"rounds_completed": expanded_rounds.size(),
 	}
 
 
@@ -113,7 +115,8 @@ func _start_round(round: Dictionary, round_number: int) -> Dictionary:
 	if role == "coordinator":
 		if !await _wait_until(Callable(roster, "humans_joined"), "round %d humans" % round_number):
 			return _failure("round %d did not regain all human players" % round_number)
-	room_session_controller.request_ready(true)
+	if !await _ready_local_member(round_number):
+		return _failure("round %d local member did not become ready" % round_number)
 	if role == "coordinator":
 		if !await _wait_until(Callable(roster, "lobby_can_start"), "round %d readiness" % round_number):
 			return _failure("round %d did not become startable" % round_number)
@@ -198,6 +201,23 @@ func _stop_measurement(round_number: int) -> Dictionary:
 			str(export_result.get("error", "unknown error")),
 		])
 	return {"ok": true, "path": ProjectSettings.globalize_path(str(export_result.get("path", "")))}
+
+
+func _ready_local_member(round_number: int) -> bool:
+	var timeout_seconds := maxf(float(scenario.get("setup_timeout_seconds", 30.0)), 1.0)
+	var deadline := Time.get_ticks_msec() + int(timeout_seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		if _connection_is_closed():
+			return false
+		if roster.local_member_ready():
+			return true
+		room_session_controller.request_ready(true)
+		await Engine.get_main_loop().create_timer(0.25).timeout
+	_status("wait_failed", {
+		"description": "round %d local readiness" % round_number,
+		"lobby": room_session_controller.lobby_state_snapshot(),
+	})
+	return false
 
 
 func _wait_until(predicate: Callable, description: String) -> bool:

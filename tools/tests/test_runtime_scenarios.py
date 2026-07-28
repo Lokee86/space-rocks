@@ -11,7 +11,9 @@ if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
 from runtime_scenarios.model import Scenario, ScenarioError
+from runtime_scenarios.phase_markers import phase_markers_for_scenario
 from runtime_scenarios.processes import find_godot
+from runtime_scenarios.rounds import expand_rounds
 
 
 def write_scenario(path: Path, **overrides: object) -> Path:
@@ -76,6 +78,51 @@ def test_loads_valid_match_churn_rounds(tmp_path: Path) -> None:
     assert scenario.raw["rounds"][0]["name"] == "cycle-1"
 
 
+def test_expands_repeated_rounds_and_phase_markers() -> None:
+    payload = {
+        "rounds": [
+            {
+                "name": "soak",
+                "repeat": 3,
+                "phases": [{"name": "pressure", "duration_seconds": 2}],
+            }
+        ]
+    }
+    rounds = expand_rounds(payload["rounds"])
+    markers = phase_markers_for_scenario(payload)
+
+    assert [round_payload["name"] for round_payload in rounds] == [
+        "soak-001",
+        "soak-002",
+        "soak-003",
+    ]
+    assert markers[-1]["round"] == 3
+    assert markers[-1]["end_seconds"] == 6.0
+
+
+def test_rejects_nonpositive_round_repeat(tmp_path: Path) -> None:
+    path = tmp_path / "scenario.json"
+    path.write_text(
+        json.dumps(
+            {
+                "id": "invalid-repeat",
+                "seed": 9,
+                "clients": {"visible": 1, "headless": 0},
+                "rounds": [
+                    {
+                        "name": "cycle",
+                        "repeat": 0,
+                        "phases": [{"name": "pressure", "duration_seconds": 1}],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ScenarioError, match="repeat"):
+        Scenario.load(path)
+
+
 def test_rejects_phases_and_rounds_together(tmp_path: Path) -> None:
     path = write_scenario(
         tmp_path / "scenario.json",
@@ -113,6 +160,7 @@ def test_rejects_negative_phase_bullet_streams(tmp_path: Path) -> None:
     [
         ("network_interest_lifecycle_v1.json", 2, 6, 27072701),
         ("match_churn_2c_6b_v1.json", 2, 6, 27072803),
+        ("match_churn_soak_2c_6b_v1.json", 2, 6, 27072804),
         ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801),
         ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801),
         ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801),

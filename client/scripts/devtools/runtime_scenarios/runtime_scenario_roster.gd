@@ -1,6 +1,8 @@
 extends RefCounted
 class_name RuntimeScenarioRoster
 
+const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
+
 var room_session_controller
 var expected_human_count := 1
 
@@ -16,6 +18,16 @@ func humans_joined() -> bool:
 
 func lobby_can_start() -> bool:
 	return bool(_snapshot().get("can_start_game", false))
+
+
+func local_member_ready() -> bool:
+	var snapshot := _snapshot()
+	var local_player_id := str(snapshot.get("local_player_id", ""))
+	for member in snapshot.get("members", []):
+		if !(member is Dictionary) or str(member.get("player_id", "")) != local_player_id:
+			continue
+		return bool(member.get(Packets.FIELD_READY, member.get(Packets.FIELD_IS_READY, false)))
+	return false
 
 
 func has_bot_count(required_count: int) -> bool:
