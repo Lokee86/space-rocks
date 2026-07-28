@@ -70,6 +70,23 @@ func TestControlPublicMethodsAreSafeDuringConcurrentStepping(t *testing.T) {
 	}
 }
 
+func TestRegisterSimulationStepObserverOnceDeduplicatesWithinGame(t *testing.T) {
+	gameInstance := New()
+	control := NewControl(gameInstance)
+	calls := 0
+	observer := func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool) {
+		calls++
+	}
+
+	control.RegisterSimulationStepObserverOnce("test", observer)
+	control.RegisterSimulationStepObserverOnce("test", observer)
+	gameInstance.Step(1.0 / 60.0)
+
+	if calls != 1 {
+		t.Fatalf("expected one observer call, got %d", calls)
+	}
+}
+
 func TestControlDoesNotExposeLockAssumingObserverMethods(t *testing.T) {
 	typeOfControl := reflect.TypeOf(&Control{})
 	for _, name := range []string{"BulletsCanMoveLocked", "SpawnDebugBulletLocked"} {

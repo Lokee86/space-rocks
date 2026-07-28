@@ -23,44 +23,45 @@ import (
 // Game keeps active runtime participation in playerSessions and durable match
 // facts for everyone who participated in participantRecords.
 type Game struct {
-	mu                        sync.Mutex
-	inputMu                   sync.Mutex
-	pendingPlayerInputs       map[string]runtime.InputState
-	rngSource                 *rng.Source
-	stopSimulation            chan struct{}
-	startSimulationOnce       sync.Once
-	stopSimulationOnce        sync.Once
-	nextID                    int
-	nextPickupID              int
-	nextPresentationEventID   int
-	matchID                   string
-	matchTraceID              string
-	teamStructure             teams.Structure
-	spawner                   *spawning.Spawner
-	scoringPolicy             scoring.Policy
-	dropTables                drops.Tables
-	radialEffects             radial.Store
-	asteroidSpawnElapsed      float64
-	worldSimulationOptions    WorldSimulationOptions
-	collisionShapes           physics.CollisionShapeCatalog
-	entities                  runtime.EntityStore
-	spatialIndex              spatial.Index
-	spatialEntries            []spatial.Entry
-	spatialRefs               []spatial.Ref
-	collisionPlayerIDs        []string
-	collisionProjectileIDs    []string
-	simulationStepObservers   []simulationStepObserver
-	cameraViews               map[string]*runtime.CameraView
-	playerSessions            map[string]*playerSession
-	botControllers            map[string]*bots.Controller
-	participantRecords        map[string]*participantRecord
-	pendingPresentationEvents map[string][]PendingPresentationEvent
-	presentationFrame         *gameplayPresentationFrame
-	presentationDerivedMu     sync.Mutex
-	presentationDerived       map[string][]presentationDerivedEntry
-	runtimeMeasurementMu      sync.RWMutex
-	runtimeMeasurements       map[uint64]measurement.SimulationObserver
-	nextMeasurementObserverID uint64
+	mu                         sync.Mutex
+	inputMu                    sync.Mutex
+	pendingPlayerInputs        map[string]runtime.InputState
+	rngSource                  *rng.Source
+	stopSimulation             chan struct{}
+	startSimulationOnce        sync.Once
+	stopSimulationOnce         sync.Once
+	nextID                     int
+	nextPickupID               int
+	nextPresentationEventID    int
+	matchID                    string
+	matchTraceID               string
+	teamStructure              teams.Structure
+	spawner                    *spawning.Spawner
+	scoringPolicy              scoring.Policy
+	dropTables                 drops.Tables
+	radialEffects              radial.Store
+	asteroidSpawnElapsed       float64
+	worldSimulationOptions     WorldSimulationOptions
+	collisionShapes            physics.CollisionShapeCatalog
+	entities                   runtime.EntityStore
+	spatialIndex               spatial.Index
+	spatialEntries             []spatial.Entry
+	spatialRefs                []spatial.Ref
+	collisionPlayerIDs         []string
+	collisionProjectileIDs     []string
+	simulationStepObservers    []simulationStepObserver
+	simulationStepObserverKeys map[string]struct{}
+	cameraViews                map[string]*runtime.CameraView
+	playerSessions             map[string]*playerSession
+	botControllers             map[string]*bots.Controller
+	participantRecords         map[string]*participantRecord
+	pendingPresentationEvents  map[string][]PendingPresentationEvent
+	presentationFrame          *gameplayPresentationFrame
+	presentationDerivedMu      sync.Mutex
+	presentationDerived        map[string][]presentationDerivedEntry
+	runtimeMeasurementMu       sync.RWMutex
+	runtimeMeasurements        map[uint64]measurement.SimulationObserver
+	nextMeasurementObserverID  uint64
 }
 
 func New() *Game {
@@ -81,24 +82,25 @@ func newGame(source *rng.Source) *Game {
 	}
 
 	game := &Game{
-		rngSource:                 source,
-		pendingPlayerInputs:       make(map[string]runtime.InputState),
-		collisionShapes:           collisionShapes,
-		stopSimulation:            make(chan struct{}),
-		cameraViews:               make(map[string]*runtime.CameraView),
-		playerSessions:            make(map[string]*playerSession),
-		botControllers:            make(map[string]*bots.Controller),
-		participantRecords:        make(map[string]*participantRecord),
-		teamStructure:             teams.StructureFFA,
-		pendingPresentationEvents: make(map[string][]PendingPresentationEvent),
-		presentationDerived:       make(map[string][]presentationDerivedEntry),
-		runtimeMeasurements:       make(map[uint64]measurement.SimulationObserver),
-		spawner:                   spawning.New(source),
-		scoringPolicy:             scoring.NewDefaultPolicy(),
-		dropTables:                drops.GeneratedTables,
-		radialEffects:             radial.NewStore(),
-		entities:                  runtime.NewEntityStore(),
-		spatialIndex:              grid.New(space.DefaultBounds(), defaultSpatialCellSize),
+		rngSource:                  source,
+		pendingPlayerInputs:        make(map[string]runtime.InputState),
+		simulationStepObserverKeys: make(map[string]struct{}),
+		collisionShapes:            collisionShapes,
+		stopSimulation:             make(chan struct{}),
+		cameraViews:                make(map[string]*runtime.CameraView),
+		playerSessions:             make(map[string]*playerSession),
+		botControllers:             make(map[string]*bots.Controller),
+		participantRecords:         make(map[string]*participantRecord),
+		teamStructure:              teams.StructureFFA,
+		pendingPresentationEvents:  make(map[string][]PendingPresentationEvent),
+		presentationDerived:        make(map[string][]presentationDerivedEntry),
+		runtimeMeasurements:        make(map[uint64]measurement.SimulationObserver),
+		spawner:                    spawning.New(source),
+		scoringPolicy:              scoring.NewDefaultPolicy(),
+		dropTables:                 drops.GeneratedTables,
+		radialEffects:              radial.NewStore(),
+		entities:                   runtime.NewEntityStore(),
+		spatialIndex:               grid.New(space.DefaultBounds(), defaultSpatialCellSize),
 	}
 	game.publishPresentationFrameLocked()
 	return game

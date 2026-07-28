@@ -1,38 +1,20 @@
 package devtools
 
-import (
-	"sync"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
-)
+const continuousBulletStreamObserverKey = "devtools.continuous_bullet_streams"
 
-type ObserverRegistry struct {
-	mu         sync.Mutex
-	registered map[any]struct{}
-}
+// ObserverRegistry keeps the registration seam while leaving observer ownership
+// with each target. It must not retain target keys across match lifetimes.
+type ObserverRegistry struct{}
 
 func NewObserverRegistry() *ObserverRegistry {
-	return &ObserverRegistry{
-		registered: make(map[any]struct{}),
-	}
+	return &ObserverRegistry{}
 }
 
 func (registry *ObserverRegistry) RegisterOnce(target StreamTarget, observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool)) {
 	if registry == nil || target == nil || observer == nil {
 		return
 	}
-
-	key := target.ObserverKey()
-	registry.mu.Lock()
-	if registry.registered == nil {
-		registry.registered = make(map[any]struct{})
-	}
-	if _, exists := registry.registered[key]; exists {
-		registry.mu.Unlock()
-		return
-	}
-	registry.registered[key] = struct{}{}
-	registry.mu.Unlock()
-
-	target.RegisterSimulationStepObserver(observer)
+	target.RegisterSimulationStepObserverOnce(continuousBulletStreamObserverKey, observer)
 }

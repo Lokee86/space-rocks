@@ -20,12 +20,16 @@ func (target *Control) SpawnDebugBullet(ownerPlayerID string, origin physics.Vec
 	return ok
 }
 
-func (target *Control) RegisterSimulationStepObserver(observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool)) {
+func (target *Control) RegisterSimulationStepObserverOnce(key string, observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool)) {
 	target.game.mu.Lock()
 	defer target.game.mu.Unlock()
-	if observer == nil {
+	if key == "" || observer == nil {
 		return
 	}
+	if _, registered := target.game.simulationStepObserverKeys[key]; registered {
+		return
+	}
+	target.game.simulationStepObserverKeys[key] = struct{}{}
 
 	target.game.simulationStepObservers = append(target.game.simulationStepObservers, func(delta float64) {
 		observer(delta, func() bool {

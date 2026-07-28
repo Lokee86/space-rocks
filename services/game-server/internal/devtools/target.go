@@ -74,10 +74,9 @@ type ClearTarget interface {
 }
 
 type StreamTarget interface {
-	ObserverKey() any
 	BulletsCanMove() bool
 	SpawnDebugBullet(ownerPlayerID string, origin physics.Vector2, direction physics.Vector2) bool
-	RegisterSimulationStepObserver(observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool))
+	RegisterSimulationStepObserverOnce(key string, observer func(float64, func() bool, func(string, physics.Vector2, physics.Vector2) bool))
 }
 
 type CollisionTelemetryTarget interface {

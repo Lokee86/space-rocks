@@ -100,6 +100,12 @@ def test_expands_repeated_rounds_and_phase_markers() -> None:
     assert markers[-1]["end_seconds"] == 6.0
 
 
+def test_rejects_invalid_heap_profile_round(tmp_path: Path) -> None:
+    path = write_scenario(tmp_path / "scenario.json", heap_profile_rounds=[0])
+    with pytest.raises(ScenarioError, match="heap_profile_rounds"):
+        Scenario.load(path)
+
+
 def test_rejects_nonpositive_round_repeat(tmp_path: Path) -> None:
     path = tmp_path / "scenario.json"
     path.write_text(
@@ -161,6 +167,7 @@ def test_rejects_negative_phase_bullet_streams(tmp_path: Path) -> None:
         ("network_interest_lifecycle_v1.json", 2, 6, 27072701),
         ("match_churn_2c_6b_v1.json", 2, 6, 27072803),
         ("match_churn_soak_2c_6b_v1.json", 2, 6, 27072804),
+        ("match_churn_heap_profile_2c_6b_v1.json", 2, 6, 27072806),
         ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801),
         ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801),
         ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801),

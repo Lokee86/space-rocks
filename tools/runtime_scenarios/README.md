@@ -64,6 +64,18 @@ python tools/runtime_scenarios/soak_summary.py \
   --output .ci-artifacts/runtime-scenarios/match-churn-soak-summary.json
 ```
 
+For memory-retention diagnosis, `heap_profile_rounds` enables runtime-scenario-only Go heap capture after selected completed rounds. The server exposes pprof heap and goroutine routes only when the runner sets its private profiling environment flag; normal server startup leaves the routes disabled. `match_churn_heap_profile_2c_6b_v1` captures forced-GC heap profiles after rounds 1, 10, 20, and 30:
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/match_churn_heap_profile_2c_6b_v1.json \
+  --headless-coordinator
+
+go tool pprof -top \
+  -base .ci-artifacts/runtime-scenarios/<profile-run>/heap-profiles/heap-round-001.pb.gz \
+  .ci-artifacts/runtime-scenarios/<profile-run>/heap-profiles/heap-round-030.pb.gz
+```
+
 ## Receiver-scaling matrix
 
 These scenarios hold the room at eight total participants and use the same seed, phase durations, and bullet-stream pressure. Only the number of real network clients changes:

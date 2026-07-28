@@ -114,6 +114,7 @@ func runWithContext(ctx context.Context) int {
 	}()
 
 	mux := http.NewServeMux()
+	registerRuntimeScenarioPprof(mux)
 	diagnosticService, err := registerDiagnosticAggregator(mux)
 	if err != nil {
 		logging.Emit(observability.Request{

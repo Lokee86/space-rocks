@@ -66,6 +66,16 @@ class Scenario:
         _nonnegative_int(setup, "asteroid_spawns", 0)
         _positive_number(setup, "settle_seconds", 0.0, allow_zero=True)
 
+        heap_profile_rounds = payload.get("heap_profile_rounds", [])
+        if not isinstance(heap_profile_rounds, list):
+            raise ScenarioError("heap_profile_rounds must be an array")
+        for index, round_number in enumerate(heap_profile_rounds, start=1):
+            valid_round = isinstance(round_number, int) and not isinstance(round_number, bool)
+            if not valid_round or round_number <= 0:
+                raise ScenarioError(
+                    f"heap_profile_rounds entry {index} must be a positive integer"
+                )
+
         phases = payload.get("phases")
         rounds = payload.get("rounds")
         if phases is not None and rounds is not None:

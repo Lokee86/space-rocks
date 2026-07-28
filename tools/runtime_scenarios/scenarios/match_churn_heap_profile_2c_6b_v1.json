@@ -1,0 +1,39 @@
+{
+  "id": "match_churn_heap_profile_2c_6b_v1",
+  "seed": 27072806,
+  "timeout_seconds": 900,
+  "setup_timeout_seconds": 60,
+  "heap_profile_rounds": [1, 10, 20, 30],
+  "clients": {
+    "visible": 1,
+    "headless": 1
+  },
+  "bots": 6,
+  "room": {
+    "team_structure": "ffa",
+    "max_players": 8
+  },
+  "rounds": [
+    {
+      "name": "heap-cycle",
+      "repeat": 30,
+      "lives": 2,
+      "phases": [
+        {
+          "name": "warmup",
+          "duration_seconds": 2,
+          "actions_by_role": {
+            "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+            "participant": ["move_forward", "turn_left", "PrimaryFire"]
+          }
+        },
+        {
+          "name": "pressure",
+          "duration_seconds": 5,
+          "bullet_streams": 20,
+          "actions": ["move_forward", "PrimaryFire"]
+        }
+      ]
+    }
+  ]
+}

@@ -24,7 +24,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, and match-churn coverage now spans both a four-round regression and a 90-round soak. The soak completed functionally but exposed persistent server heap and RSS growth across repeated matches. Isolating that retained state, adding multi-room coverage, and defining release thresholds remain.
+Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, and match-churn coverage now spans both a four-round regression and a 90-round soak. Heap profiling isolated and repaired the devtools observer-registry ownership bug exposed by the soak. Multi-room coverage and release thresholds remain.
 
 ## Ownership Boundary
 
@@ -287,9 +287,11 @@ The `match_churn_2c_6b_v1` scenario keeps one room alive across four complete ma
 
 The `match_churn_soak_2c_6b_v1` scenario repeats the same two-client/six-bot lifecycle 90 times in one room. Both clients completed all 90 rounds, observed the same 90 unique match IDs, validated full eight-participant results, returned to the lobby 89 times, and exported one client report per round. The 90 server exports reported zero skipped receiver sends, while both client streams reported zero send failures. The run lasted approximately 18 minutes.
 
-The soak exposed persistent server memory growth. Comparing the first ten rounds with the last ten, current RSS rose from a 33.083 MiB average to 85.898 MiB, Go heap allocated rose from 7.603 MiB to 44.913 MiB, and heap in use rose from 10.566 MiB to 52.206 MiB. The final round reported 88.227 MiB current RSS and 63.312 MiB heap in use. Goroutines remained flat at 84 and GC cycles continued increasing, so this is not explained by accumulating goroutines or by a single missed garbage collection. The exact retained owner is not yet isolated; repeated measurement state was removed from the active controller map and detached normally, making a simple active-run registry leak less likely. This result is a memory-retention warning and should be investigated before repeated-match hosting is treated as release-ready.
+The soak exposed persistent server memory growth. Comparing the first ten rounds with the last ten, current RSS rose from a 33.083 MiB average to 85.898 MiB, Go heap allocated rose from 7.603 MiB to 44.913 MiB, and heap in use rose from 10.566 MiB to 52.206 MiB. Goroutines remained flat at 84 and GC cycles continued increasing, ruling out accumulating goroutines or a single delayed collection.
 
-Timing also drifted modestly but remained well within the tick budget. First-ten versus last-ten server tick average increased from 140.895 us to 195.142 us, and receiver outbound average increased from 0.507 ms to 0.636 ms. Client peak memory increased by 2.729 MiB between the same windows. These timing changes are secondary to the retained server heap finding.
+Forced-GC heap profiles after rounds 1, 10, 20, and 30 isolated the retaining owner. The process-global devtools `ObserverRegistry` deduplicated continuous-bullet-stream simulation observers using the owning `*game.Game` as its map key. Every match that enabled stream pressure therefore left its complete game aggregate reachable after lobby reset, including pending presentation events, spatial-grid state, bots, entities, and presentation frames. The fix moved observer-key ownership into each `Game`; the registry remains as a stateless delegation seam and no longer stores target references.
+
+An identical post-fix 30-round run confirmed the repair. Before the fix, first-five versus last-five current RSS increased by 15.265 MiB and heap in use increased by 10.067 MiB. After the fix, current RSS changed by 1.065 MiB, heap allocated changed by -0.154 MiB, and heap in use changed by 0.066 MiB. The forced-GC round-1-to-round-30 pprof delta no longer contained `Game.broadcastEvent`, `spatial/grid.New`, presentation frames, bots, asteroids, or other old-game allocations; only one 512 KiB Pion transport buffer remained. This exact leak affected matches that exercised the devtools continuous-stream path, including the runtime pressure scenarios, rather than proving an equivalent leak in ordinary production matches.
 
 The `simulation_scale_1c_7b_v1` isolation scenario seeds 192 asteroids before measurement, uses one real headless receiver plus seven bots, and increases continuous projectile streams from 60 to 120. The first run sampled up to 144 surviving asteroids and 518 projectiles. Server tick time remained healthy at 0.280 ms average and 6.554 ms maximum, with 45.2 MiB peak RSS and 0.482 peak CPU cores. Receiver candidate construction averaged 1.345 ms and peaked at 7.811 ms; outbound work averaged 1.637 ms and peaked at 9.436 ms. No sends were skipped and no client send failures occurred. The headless client recorded a 33 ms frame-time p99 and 76.226 ms maximum, so this load does not identify authoritative simulation as the current limit; visible-client rendering and packet-application behavior should be checked separately if high-entity stutter remains.
 
@@ -450,7 +452,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
 2. Use the implemented seeded runtime harness for repeatable multiplayer pressure while retaining manual measurement for exploratory checks.
-3. Investigate the retained server heap exposed by the implemented 90-round soak, then add multi-room pressure as the next distinct scenario.
+3. Use the repaired churn soak as the memory-retention baseline, then add multi-room pressure as the next distinct scenario.
 4. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
 5. Add evidence-based decision thresholds as the scenario baseline grows.
 6. Treat optimization as a follow-on choice after the limiting pressure is measured.
@@ -472,8 +474,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 ## Open decisions
 
-* Which owner retains server heap across repeated match resets, and what cleanup boundary should release it?
-* What multi-room pressure shape should be automated after the churn-retention issue is isolated?
+* What multi-room pressure shape should be automated next?
 * Which runtime signals should appear in the World Telemetry Overlay?
 * Which slow-tick or frame-pressure thresholds should become release gates?
 * Which entity-heavy feature should get the next dedicated load scenario?

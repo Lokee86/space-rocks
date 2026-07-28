@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from runtime_scenarios.heap_profiles import HeapProfileCollector
 from runtime_scenarios.model import Scenario
 from runtime_scenarios.phase_markers import phase_markers_for_scenario
 from runtime_scenarios.server_command import runtime_server_command
@@ -38,8 +39,15 @@ class ScenarioRunner:
         self.status_paths: dict[str, Path] = {}
         self.started_at = datetime.now(timezone.utc)
         self.port = reserve_free_loopback_port()
-        self.health_url = f"http://127.0.0.1:{self.port}/health"
+        self.http_url = f"http://127.0.0.1:{self.port}"
+        self.health_url = f"{self.http_url}/health"
         self.websocket_url = f"ws://127.0.0.1:{self.port}/ws"
+        profile_rounds = self.scenario.raw.get("heap_profile_rounds", [])
+        self.heap_profiles = HeapProfileCollector(
+            [int(value) for value in profile_rounds] if isinstance(profile_rounds, list) else [],
+            self.http_url,
+            self.run_directory,
+        )
 
     def run(self) -> int:
         self.run_directory.mkdir(parents=True, exist_ok=False)
@@ -113,6 +121,7 @@ class ScenarioRunner:
             summary["success"] = True
             summary["room_code"] = room_code
             summary["clients"] = final_statuses
+            summary["heap_profiles"] = self.heap_profiles.summary()
             return 0
         except Exception as exc:  # noqa: BLE001 - CLI boundary records full failure
             summary["error"] = str(exc)
@@ -143,6 +152,8 @@ class ScenarioRunner:
             "SPACE_ROCKS_RUNTIME_SCENARIO_OUTPUT": str(self.run_directory),
             "SPACE_ROCKS_RUNTIME_SCENARIO_PORT": str(self.port),
         }
+        if self.heap_profiles.rounds:
+            runtime_env["SPACE_ROCKS_RUNTIME_SCENARIO_PPROF"] = "1"
         env = os.environ.copy()
         env.update(runtime_env)
         managed = start_process(
@@ -193,6 +204,7 @@ class ScenarioRunner:
         deadline = time.monotonic() + self.scenario.timeout_seconds
         terminal = {"completed", "failed"}
         while time.monotonic() < deadline:
+            self.heap_profiles.capture_available()
             statuses = self._read_all_statuses()
             for client in clients:
                 return_code = client.process.poll()
