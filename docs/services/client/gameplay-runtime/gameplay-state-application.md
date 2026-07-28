@@ -14,7 +14,7 @@ Parent index: [Gameplay Runtime](./!INDEX.md)
 
 This document describes the completed lane-native client gameplay presentation path.
 
-It covers realtime packet routing, lane state ownership, baseline readiness, the applied-state wrapper `RealtimePresentationState`, gameplay composition handoff, local lifecycle reconciliation, event batch application, and the boundary between gameplay runtime orchestration and world rendering.
+It covers realtime packet routing, lane state ownership, coarse player-locator state, baseline readiness, the applied-state wrapper `RealtimePresentationState`, gameplay composition handoff, local lifecycle reconciliation, event batch application, and the boundary between gameplay runtime orchestration and world rendering.
 
 ## Overview
 
@@ -32,6 +32,7 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> no active protocol match: buffer by non-empty match_id without lane or presentation mutation
 -> active protocol match: reject mismatched match_id
 -> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for apply / queue / reject / resync on capacity loss
+-> player_locator updates dedicated PlayerLocatorState through PlayerLocatorApplier
 -> WorldLaneApplier validates accepted lifecycle payloads and mutates WorldLaneState
 -> RealtimePacketPipeline refreshes RealtimePresentationState
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
@@ -50,7 +51,7 @@ NetworkClient or WebRTCTransport receives and decodes packet
 -> DevtoolsLaneStateAdapter builds a separate devtools readmodel
 ```
 
-The client routes lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific routing and state mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow.
+The client routes lane packets through `RealtimePacketPipeline`. The pipeline owns the active `RealtimeRouter` and invokes it for lane-specific routing and state mutation rather than using the retired aggregate `GameplayStateApplyFlow` path or a combined normalized gameplay-state dictionary flow. Detailed world/lifecycle/hot packets mutate `WorldLaneState`; `player_locator` mutates a separate replace-all `PlayerLocatorState` only when its packet-family sequence increases.
 
 `ClientConnectionService` passes decoded transport packets into `ServerPacketDispatcher`; `ClientInboundCoordinator` owns the post-classification realtime consumer binding. `ClientConnectionService` does not choose lane handlers, own lane diagnostics, or re-emit realtime lane signals.
 
@@ -79,12 +80,13 @@ The lane-native client package owns lane state and readiness tracking. Inbound n
 The active client gameplay application path owns:
 
 * Realtime packet-family routing after decode.
-* Maintaining lane state objects for world, overlay, and session data.
+* Maintaining lane state objects for world, coarse player locators, overlay, and session data.
 * Tracking required lane baseline sync before gameplay is considered ready.
 * `PresentationBridge` activation enables scheduling for gameplay-packet presentation.
 * `RealtimePacketPipeline` gameplay readiness gates fanout into presentation targets.
 * Applying matching realtime gameplay packets after protocol match activation, independently of gameplay-session presentation activation.
-* Applying lifecycle and hot movement packets into WorldLaneState.
+* Applying lifecycle and hot movement packets into `WorldLaneState`.
+* Applying increasing-sequence `player_locator` packets into dedicated coarse `PlayerLocatorState`.
 * Routing current lane state into gameplay composition for world, HUD, session, and event presentation.
 * Reconstructing active, pending-respawn, and eliminated local presentation from authoritative world/session state.
 * Keeping devtools gameplay read models separate from primary gameplay presentation.
@@ -146,6 +148,9 @@ Current applied-state fanout roles are:
 WorldPresentationAdapter
 = applies world lane state to WorldSync
 
+PlayerLocatorState handoff
+= PresentationAdapter passes coarse locator state to WorldSync separately from detailed world state
+
 OverlayPresentationAdapter
 = applies overlay lane state to GameplayHudFlow
 
@@ -169,7 +174,7 @@ The event path uses `EventBatchApplier` for `event_batch` delivery. Compact alia
 
 `PresentationAdapter` decodes session state once, passes the decoded state to `SessionPresentationAdapter`, then reuses that decoded session state when it calls `GameplayLocalLifecycleFlow.apply_lane_state(world_lane_state, decoded_session_state, self_id)`. Local lifecycle reconciliation runs after world, overlay, and session lane presentation and before `EventPresentationAdapter` drains event output.
 
-Lane adapter ownership is explicit: `WorldPresentationAdapter` consumes `WorldSync`; overlay and session adapters consume `GameplayHudFlow`; event presentation consumes `GameplayEventLifecycleFlow` and `EventBatchApplier`; local lifecycle presentation consumes `GameplayLocalLifecycleFlow`. `PresentationAdapter` coordinates `RealtimePresentationState` and these typed collaborators.
+Lane adapter ownership is explicit: `WorldPresentationAdapter` consumes `WorldSync`; `PresentationAdapter` also hands `RealtimePresentationState.player_locator_state` directly to `WorldSync.apply_player_locator_state(...)`; overlay and session adapters consume `GameplayHudFlow`; event presentation consumes `GameplayEventLifecycleFlow` and `EventBatchApplier`; local lifecycle presentation consumes `GameplayLocalLifecycleFlow`. `PresentationAdapter` coordinates `RealtimePresentationState` and these typed collaborators.
 
 `GameplayLocalLifecycleFlow` reconstructs the local presentation state from authoritative lane data. It handles active, pending-respawn, and eliminated status without becoming an authority for lifecycle outcomes. Event presentation remains a separate best-effort immediate-effects path.
 
@@ -241,6 +246,10 @@ The active runtime boundary is:
 world lane state
 -> WorldPresentationAdapter
 -> WorldSync.apply_world_lane_state(...)
+
+player locator state
+-> PresentationAdapter
+-> WorldSync.apply_player_locator_state(...)
 ```
 
 `WorldSync` owns entity-family synchronization, interpolation, and rendering behavior after that point.
@@ -264,6 +273,8 @@ Key lane-native files:
 
 * `client/scripts/networking/realtime/` - home of `RealtimePacketPipeline`.
 * `client/scripts/protocol/realtime/world_lane_state.gd`
+* `client/scripts/protocol/realtime/player_locator_state.gd`
+* `client/scripts/protocol/realtime/player_locator_applier.gd`
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - decodes quantized world records, validates lifecycle payloads, and applies full/delta/lifecycle packets into `WorldLaneState` after routing policy accepts them.
 * `client/scripts/protocol/realtime/overlay_lane_state.gd`
 * `client/scripts/protocol/realtime/overlay_lane_applier.gd` - routes overlay full/delta packets into overlay lane state.
@@ -286,6 +297,7 @@ Key lane-native files:
 Relevant client tests include:
 
 * `client/tests/unit/protocol/realtime/test_lane_protocol_routing.gd`
+* `client/tests/unit/protocol/realtime/test_player_locator.gd`
 * `client/tests/unit/protocol/realtime/test_gameplay_readiness.gd`
 * `client/scripts/protocol/realtime/world_lane_applier.gd` - `test_world_delta_treats_missing_sparse_sections_as_empty_noop` covers missing sparse delta section fields as empty/no-op for world lane application.
 * `client/tests/unit/protocol/realtime/test_world_lane_applier.gd` - lifecycle coverage for `apply_ships_lifecycle`, `apply_asteroids_lifecycle`, and `apply_bullets_lifecycle`.
@@ -313,6 +325,8 @@ Relevant client tests include:
 * [Packet Schemas](../../../data/packet-schemas.md)
 * [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 * [Presentation Bridge](presentation-bridge.md)
+* [Network Interest](../../game-server/networking/network-interest.md)
+* [Gameplay Presentation Flow](../presentation-flow/gameplay-presentation-flow.md)
 
 ## Notes
 

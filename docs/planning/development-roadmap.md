@@ -61,7 +61,7 @@ P3A automated verification baseline implemented.
 P3 observability and release-foundation baseline is implemented; remaining work is explicit below.
 ```
 
-Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused ship/asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. General record/entity-level prioritization, interest filtering, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
+Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused ship/asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, and spectate interest anchoring are implemented. General record/entity-level prioritization, deeper interest-policy refinement, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
 
 Network observability and realtime protocol work are architectural blockers for serious gameplay expansion, larger multiplayer, enemies, bullet hell, and richer runtime events.
 
@@ -236,7 +236,7 @@ additional quantization policy refinements
 bit-packing rules
 protobuf
 binary/bitpacking work targets the new lane protocol, not old state
-Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior beyond current candidate-level selection, and record/entity-level prioritization remain future work.
+Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific interest filtering, coarse player locators, and spectate interest anchoring are implemented. Binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget behavior beyond current candidate-level selection, record/entity-level prioritization, and measurement-driven interest refinement remain future work.
 ```
 
 ### Implementation Sequence
@@ -249,7 +249,7 @@ Compact JSON aliases, sparse delta section omission, tuple packing for asteroids
 5. Client protocol/realtime lane caches and lane-native presentation adapters are current.
 6. Shadow encode/measure/parity support remains validation support and must not drain presentation events. Active `event_batch` drains only after socket write/enqueue success.
 7. Lane-native WebRTC gameplay delivery is the current runtime path.
-8. Next phase: codec move plus binary/packed representation, deeper packet-budget work, interest filtering, stronger resync behavior, compatibility/versioning, and record/entity-level prioritization.
+8. Next phase: codec move plus binary/packed representation, deeper packet-budget work, measurement-driven interest refinement, stronger resync behavior, compatibility/versioning, and record/entity-level prioritization. Initial recipient filtering and coarse locator support are current.
 ```
 
 ### Completion Criteria
@@ -271,7 +271,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, and chunker-owned hot-lane hard-size guarding are implemented. Seeded game-owned RNG is already in place as a P3C enabling foundation, but P3C is not complete; the next slice is a scripted/synthetic runtime scenario harness for repeatable player/entity/room pressure. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, and spectate interest anchoring are implemented. Seeded game-owned RNG is already in place as a P3C enabling foundation, but P3C is not complete; the next slice is a scripted/synthetic runtime scenario harness for repeatable player/entity/room pressure. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
 ### Ordered Subphases
 
@@ -828,6 +828,7 @@ Some phases can overlap, but dependency rules should not be violated.
 
 * [Network Observability And Packet Budget](domains/technical/network-observability-and-packet-budget.md)
 * [Realtime Protocol Architecture](protocol/realtime-protocol-architecture.md)
+* [Network Interest](../services/game-server/networking/network-interest.md)
 * [Devlog Static Site](../services/web/devlog-static-site.md)
 * [Website And Web Presence](domains/web/website-and-web-presence.md)
 * [Verification And Quality Gates](domains/technical/verification-and-quality-gates.md)

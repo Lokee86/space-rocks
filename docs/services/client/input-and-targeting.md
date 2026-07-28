@@ -379,9 +379,9 @@ Player-only devtools commands must not treat non-player canonical targets as val
 
 Spectate input is related to camera targeting, but it is not the same as gameplay targeting.
 
-Spectate target selection chooses a presentation/camera subject for a dead or observing player. It does not set canonical gameplay target state and should not send gameplay target selection intent.
+Spectate target selection chooses a presentation/camera subject for a dead or observing player. It does not set canonical gameplay target state and does not send gameplay target selection intent. It does send the separate `set_view_target_request` / `clear_view_target_request` control intent used to align recipient network interest with the selected camera subject.
 
-The spectate menu reads `self_id` from the realtime overlay lane, lifecycle status from the session lane, and currently renderable ships from the world lane. Only active remote ships are offered as spectate targets. When local elimination removes the local ship before a target is selected, world presentation continues updating remote ships against the last valid ViewAnchor.
+The spectate menu reads `self_id` from the realtime overlay lane and lifecycle status from the session lane. Lifecycle-eligible remote players can be offered even when recipient network interest has not yet delivered their detailed ship node. Selecting a target sends a view-target request to the server, which anchors that recipient's interest region around the selected player's coarse locator and forces the selected ship into detailed interest. The client retains the selection and retries local camera focus until the detailed ship presentation arrives. When local elimination removes the local ship before a target is selected, world presentation continues against the last valid ViewAnchor.
 
 The gameplay target system and the spectate camera system may both use synchronized player positions, but they should remain separate ownership seams.
 
@@ -410,6 +410,9 @@ Current implementation paths:
 * `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
 * `client/scripts/session/gameplay_session_controller.gd`
 * `client/scripts/world/world_sync.gd`
+* `client/scripts/gameplay/spectate/gameplay_spectate_context.gd`
+* `client/scripts/gameplay/spectate/gameplay_spectate_flow.gd`
+* `client/scripts/gameplay/spectate/spectate_menu_state.gd`
 * `client/scripts/networking/outbound/client_packet_sender.gd`
 * `client/scripts/networking/outbound/gameplay_client_packets.gd`
 * `client/scripts/networking/outbound/`
@@ -431,11 +434,13 @@ Relevant tests include:
 * `client/tests/unit/test_devtools_target_resolver.gd`
 * `client/tests/unit/test_devtools_player_target_model.gd`
 * `client/tests/unit/boot/test_session_network_target.gd`
+* `client/tests/unit/gameplay/spectate/test_gameplay_spectate_flow.gd`
+* `client/tests/unit/gameplay/spectate/test_spectate_menu_state.gd`
 
 Documentation/test coverage note:
 
-* No additional dedicated spectate-boundary test file was found in the current tree.
-* No dedicated canonical target readback test file was found beyond the existing input and targeting coverage above.
+* Focused spectate coverage verifies target selection, server view-target requests, retry behavior, and reset.
+* No dedicated canonical gameplay-target readback test file was found beyond the existing input and targeting coverage above.
 
 ## Related docs
 
@@ -445,6 +450,8 @@ Documentation/test coverage note:
 * [Realtime Protocol](../../protocol/!INDEX.md)
 * [Data](../../data/!INDEX.md)
 * [Devtools](../../devtools/!INDEX.md)
+* [Spectate Session And Camera Flow](spectate-flow/spectate-session-and-camera-flow.md)
+* [Game Server Network Interest](../game-server/networking/network-interest.md)
 
 ## Notes
 

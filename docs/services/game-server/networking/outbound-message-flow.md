@@ -30,7 +30,7 @@ Active realtime lane packets are built by `services/game-server/internal/protoco
 Queued one-off response producers generally encode packet structs through `packetcodec` before enqueueing bytes, while active realtime lane packets are built and encoded by `services/game-server/internal/protocol/realtime/` before the WebRTC transport writes the encoded bytes.
 Current physical gameplay channels include `sr.world`, `sr.ships`, `sr.asteroids`, `sr.bullets`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, `sr.bullets.lifecycle`, `sr.overlay`, `sr.session`, and `sr.event`. `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` are ordered/reliable lanes, while `sr.ships`, `sr.asteroids`, and `sr.bullets` are unordered/unreliable hot-update lanes.
 
-The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns lane packet construction, baseline policy, candidate selection, quantization, event wire shaping, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy. Projection and readable record building remain readable all the way through `WireLanePacket`.
+The networking layer owns connection/session write mechanics and message delivery. The realtime protocol package owns recipient-specific interest filtering, coarse player-locator construction, lane packet construction, baseline policy, candidate selection, quantization, event wire shaping, and wire-shape assembly. Outbound routing delivers already projected and quantized gameplay lane packets; it does not decide realtime packet schema policy or quantization policy. Projection and readable record building remain readable all the way through `WireLanePacket`.
 
 The WebSocket write loop also drains the typed resync request channel. Each request carries its captured room and receiver context; stale context is discarded without writing or mutating state. For a current request, the loop writes the exact `resync_required` acknowledgment directly over WebSocket first. Only a successful write invalidates that lane's baseline readiness and projection. The next normal planner pass then emits the lane's full recovery candidate over the existing reliable WebRTC lane at the next sequence and a new sequence-backed baseline ID. Recovery control packets are not active lane candidates, and `resync_write_test.go` covers ordering, failure preservation, and stale-request rejection.
 
@@ -162,7 +162,7 @@ When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(sess
 
 1. Writes debug shape catalog output first when eligible.
 2. Resets `session.realtimeState` when the receiver is empty or changes.
-3. Calls `realtime.BuildActiveRealtimeResultForGame()`.
+3. Calls `realtime.BuildActiveRealtimeResultForGame()` with the session's current view-target ID. Realtime resolves the recipient camera, filters detailed world presentation, and builds the coarse locator candidate independently.
 4. Advances `HotLaneTick` and applies the shared chunk-pressure cadence policy independently to ships, asteroids, and bullets: one chunk at 60 Hz, two chunks at 30 Hz, three chunks at 20 Hz, and four or more chunks at the 15 Hz floor. All chunks for an eligible sequence are sent in the same tick; additional pressure increases the parallel in-flight chunk burst rather than reducing cadence below 15 Hz.
 5. Selects included lane candidates from the send plan, including lifecycle candidates before expanded hot chunks when needed.
 6. The typed `RealtimeLanePayload` serializer builds the readable wire map after fail-closed payload, metadata, family, and wire-type validation.
@@ -179,7 +179,7 @@ When eligible, the 60 Hz write loop calls `writeGameplayLaneProtocolMessage(sess
 17. Marks a baseline lane ready after a successful final full packet.
 18. Emits a non-empty per-tick debug summary after packet writes; cadence-suppressed or individually backpressure-skipped lanes produce no successful wire log for that lane.
 
-`BuildActiveRealtimeResultForGame` obtains a receiver-scoped view over the current shared immutable presentation frame. Networking and `protocol/realtime` do not copy the complete entity maps per session. Receiver-specific pending events, realtime session state, baseline/delta state, candidate selection, encoding, and post-write persistence remain per session.
+`BuildActiveRealtimeResultForGame` obtains the current shared immutable presentation frame, then builds recipient-filtered ship, asteroid, bullet, and pickup maps for that session. The underlying authoritative frame remains shared and immutable; the filtered presentation maps, pending events, realtime session state, baseline/delta state, locator projection, candidate selection, encoding, and post-write persistence are per session.
 
 The lane packet construction path lives in `services/game-server/internal/protocol/realtime/`. The physical compact-wire contract lives in `shared/packets/realtime_wire.toml`, with generated reference data in `docs/protocol/generated/realtime-wire-reference.md`. Realtime runtime owns projection, sparse omission, generic descriptor application, scheduling, chunking, and encoded-byte accounting. Generated descriptors own physical aliases, value domains, ID codecs/selectors, record encodings, event layouts, quantization assignments, and decode compatibility alternatives. Networking owns successful WebRTC gameplay delivery, queued WebSocket delivery, event-batch drain-after-success behavior, post-write lane metadata persistence, and successful-write diagnostics. `packetcodec` owns JSON encoding only. `event_batch` remains one ordered batch of pending presentation events; known events use registered layouts, while unknown event maps remain compatibility pass-through records. Sparse delta omission does not implement record-level splitting or entity-level prioritization.
 
@@ -261,7 +261,7 @@ Server outbound encoding uses:
 
 `packetcodec.Encode(packet)` currently wraps `json.Marshal(packet)`.
 
-The outbound routing path does not own the packet schema or wire-format strategy. The current implementation is JSON text over WebSocket for queued one-off packets. For queued one-off packets, networking-side producers often encode packet structs before enqueueing. For active realtime lane packets, the realtime protocol package builds the wire map, applies sparse omission and generated descriptor-driven compact encoding, encodes JSON through `services/game-server/internal/protocol/packetcodec`, and sends encoded bytes to `session.webrtcTransport.SendEncodedLaneJSON()` for WebRTC delivery. Hot ship, asteroid, and bullet lanes remain supersedable. Ship creates/deletes and non-transform state updates are emitted on ordered/reliable `sr.ships.lifecycle`; asteroid and bullet creates/deletes are emitted on `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`. `sr.world` no longer owns those active entity lifecycle/state records.
+The outbound routing path does not own the packet schema or wire-format strategy. The current implementation is JSON text over WebSocket for queued one-off packets. For queued one-off packets, networking-side producers often encode packet structs before enqueueing. For active realtime lane packets, the realtime protocol package builds the wire map, applies sparse omission and generated descriptor-driven compact encoding, encodes JSON through `services/game-server/internal/protocol/packetcodec`, and sends encoded bytes to `session.webrtcTransport.SendEncodedLaneJSON()` for WebRTC delivery. Hot ship, asteroid, and bullet lanes remain supersedable. The ship channel also carries the separate low-cadence `player_locator` packet family. Ship creates/deletes and non-transform state updates are emitted on ordered/reliable `sr.ships.lifecycle`; asteroid and bullet creates/deletes are emitted on `sr.asteroids.lifecycle` and `sr.bullets.lifecycle`. `sr.world` no longer owns those active entity lifecycle/state records.
 
 ## Packet families
 
@@ -295,6 +295,9 @@ Current lane families are:
 
 - `world_full`
 - `world_delta`
+- `ship_delta`
+- `player_locator`
+- `ships_lifecycle`
 - `asteroid_delta`
 - `bullet_delta`
 - `asteroids_lifecycle`
@@ -307,8 +310,10 @@ Current lane families are:
 
 Lane roles at service level are:
 
-- world = ships, pickups, world/match presentation state, full/bootstrap snapshots
-- asteroids.lifecycle = asteroid creates/deletes
+- world = recipient-relevant ships, pickups, world/match presentation state, full/bootstrap snapshots
+- ships.lifecycle = recipient-relevant ship creates/deletes and reliable non-transform state
+- ships = detailed ship movement plus low-cadence coarse `player_locator` snapshots
+- asteroids.lifecycle = recipient-relevant asteroid creates/deletes
 - bullets.lifecycle = bullet/projectile creates/deletes
 - asteroids = asteroid movement updates
 - bullets = bullet/projectile movement updates
@@ -317,7 +322,7 @@ Lane roles at service level are:
 - event = event_batch presentation event delivery
 
 
-ship_delta, asteroid_delta, and bullet_delta are high-priority hot-supersedable movement candidates; lifecycle creates/deletes use required/critical reliable lifecycle lanes.
+`ship_delta`, `asteroid_delta`, and `bullet_delta` are high-priority hot-supersedable movement candidates; lifecycle creates/deletes use required/critical reliable lifecycle lanes. `player_locator` is a lower-cadence supersedable ships-lane candidate with its own sequence/projection, used for coarse distant-player presentation after detailed interest filtering.
 
 Lane packet metadata always carries:
 
@@ -504,6 +509,8 @@ Deeper packet-budget and scheduling work remains planning material elsewhere. Th
 - `services/game-server/internal/networking/outbound/server_message_writer.go` - Writes encoded server messages to the WebSocket.
 - `services/game-server/internal/networking/outbound/debug_status_presentation.go` - Builds encoded debug status packets via Control/Controller projection.
 - `services/game-server/internal/networking/outbound/debug_shape_catalog_presentation.go` - Builds encoded debug shape catalog packets.
+- `services/game-server/internal/protocol/realtime/network_interest.go` - filters the immutable presentation frame for one receiving session before candidate construction.
+- `services/game-server/internal/protocol/realtime/player_locator.go` - builds the low-cadence coarse locator candidate on the ships lane.
 - `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - expands oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` hot movement candidates into bounded real candidate chunks before scheduling and encoding.
 - `services/game-server/internal/protocol/realtime/realtime_hardcap_chunker.go` - expands oversized `world_full`, `ships_lifecycle`, `asteroids_lifecycle`, and `bullets_lifecycle` candidates into bounded real candidate chunks before scheduling and encoding.
 
@@ -572,6 +579,7 @@ The documented focused test paths for outbound routing are:
 - `services/game-server/internal/networking/packetmetrics/*_test.go`
 - `services/game-server/internal/protocol/realtime/*_test.go`
 - `services/game-server/internal/protocol/realtime/quantization_propagation_test.go` - world, overlay, and session quantization error propagation through exported planner and active-result boundaries.
+- `services/game-server/internal/protocol/realtime/network_interest_test.go` - recipient filtering, hysteresis, lifecycle transitions, and always-relevant ship coverage.
 - `services/game-server/internal/protocol/realtime/wire_packets_test.go` - lifecycle wire metadata coverage.
 - `services/game-server/internal/game/presentation_snapshot_test.go` - snapshot-time Unix-millisecond timestamp coverage.
 
@@ -589,3 +597,4 @@ The documented focused test paths for outbound routing are:
 - [Data](../../../data/!INDEX.md)
 - [Realtime Protocol Architecture](../../../planning/protocol/realtime-protocol-architecture.md)
 - [Network Observability And Packet Budget](../../../planning/domains/technical/network-observability-and-packet-budget.md)
+- [Network Interest](network-interest.md)

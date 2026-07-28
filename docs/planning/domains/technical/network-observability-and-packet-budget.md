@@ -7,6 +7,7 @@ policy_exempt: false
 summary: This doc plans the network-visibility and packet-budget seam for future growth in gameplay and realtime state delivery.
 ---
 # Network Observability And Packet Budget
+
 Parent index: [Technical Planning](./!INDEX.md)
 
 ## Purpose
@@ -88,7 +89,7 @@ P1 answers whether the current lane-native realtime architecture can safely supp
 - `event_batch` may be selected alongside other active lane candidates in the same tick.
 - Compact sparse event records reduce that event-tick spike.
 Recent extreme debug bullet-stream stress showed server-side hot-lane delivery sustaining 60 Hz writes with complete same-sequence bullet chunks under the encoded hard cap in that tested configuration. That run used one connected client with server-owned bots; it demonstrated one receiver under high entity and projectile pressure, not equivalent connected-client count, asynchronous network-input safety, or multi-session planner/encoder scale. Historical player counts must therefore be reported separately from connected-client counts. The result does not override the current chunk-pressure cadence policy: `full_owned_60hz`, `full_owned_30hz`, `full_owned_20hz`, and the 15 Hz floor apply independently to each hot lane according to its current encoded chunk count. Client-side projectile rendering anomalies around roughly 450-500 active projectiles are tracked as a stable limitation rather than as active evidence of server packet starvation.
-Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable ship/asteroid/bullet hot movement lanes, dedicated ordered/reliable ship/asteroid/bullet lifecycle lanes, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable `sr.ships`, `sr.asteroids`, and `sr.bullets`.
+Lane-native deltas, mixed-policy physical WebRTC gameplay DataChannels, dedicated unordered/unreliable ship/asteroid/bullet hot movement lanes, dedicated ordered/reliable ship/asteroid/bullet lifecycle lanes, recipient-specific interest filtering, coarse player locators on `sr.ships`, spectate interest anchoring, and asteroid, bullet, ship/player, session player/lifecycle, and known event tuple packing are current implementation facts, not future work. Current mixed policy means ordered/reliable `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle`, plus unordered/unreliable `sr.ships`, `sr.asteroids`, and `sr.bullets`.
 
 ### Future-State Note
 
@@ -189,7 +190,7 @@ These display requirements are deferred until they are useful during active real
 
 ### Phase P1 Decision Gate
 
-Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, full/lifecycle and hot candidate chunking, exact compact-payload encoding, and explicit oversized-record errors are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, interest filtering, stronger resync behavior, future binary representation, and future transport/versioning work.
+Phase P1 uses server-side packet evidence to decide how aggressively remaining realtime protocol evolution should continue. The lane-native realtime protocol, compact aliases, sparse deltas, tuple packing, WebRTC lane split, full/lifecycle and hot candidate chunking, exact compact-payload encoding, and explicit oversized-record errors are current implementation facts. Remaining decisions are about deeper packet-budget policy, record/entity-level prioritization, measurement-driven interest-policy refinement, stronger resync behavior, future binary representation, and future transport/versioning work.
 
 Outcome 1 - Continue remaining realtime protocol evolution aggressively
 
@@ -218,7 +219,7 @@ Outcome 3 - Allow account identity planning to move ahead before deeper protocol
 Remaining validation and protocol evolution families:
 
 - Record/entity-level prioritization, if current whole-candidate selection cannot keep important objects visible under pressure.
-- Interest filtering, if clients should not receive every entity or event in the room.
+- Interest-policy measurement and refinement, if current recipient filtering still leaves excessive bandwidth, locator cadence is too costly or stale, or important entities need priority beyond region inclusion.
 - Deeper packet-budget policy, if current candidate-level send-plan selection and candidate expansion hard-size guarding are not enough.
 - Stronger resync behavior, if baseline mismatch, packet loss, or reconnect behavior needs more explicit recovery.
 - Binary, bit-packed, protobuf, or custom binary representation, if JSON compact aliases and tuple packing are still not enough.
@@ -258,6 +259,7 @@ This support work belongs to remaining realtime protocol validation when it help
 
 - [Planning](../../!INDEX.md)
 - [Realtime Protocol Architecture](../../protocol/realtime-protocol-architecture.md)
+- [Network Interest](../../../services/game-server/networking/network-interest.md)
 - [Devtools And Telemetry](../../devtools/devtools-and-telemetry.md)
 - [Logging And Diagnostics](observability-logging-and-diagnostics.md)
 - [Development Roadmap](../../development-roadmap.md)

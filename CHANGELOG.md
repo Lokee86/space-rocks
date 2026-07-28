@@ -23,6 +23,7 @@ All notable player-facing changes to Space Rocks are recorded here.
 - Bots now remain active when a completed multiplayer game returns to the lobby and starts another match.
 - Team IDs and shader-derived team colours now remain consistent from lobby assignment through gameplay and results.
 - Free-for-all player hues no longer flicker or shift when players die and respawn.
+- Off-screen player indicators keep their distinct player or team colours after detailed ship updates leave network interest.
 - Final player ships finish despawning after game over instead of reappearing behind the results window.
 - Camera zoom input is ignored after game over.
 - Match-result team swatches remain square and use the same base colour and hue-shift rules as player ships.

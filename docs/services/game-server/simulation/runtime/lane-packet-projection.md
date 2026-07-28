@@ -23,11 +23,14 @@ The active flow is:
 
 ```text
 authoritative game state
+-> immutable gameplay presentation snapshot
+-> recipient-specific network-interest filtering
 -> realtime projection / planning
 -> raw lane records
 -> numeric wire quantization into wire-shaped records
 -> lane candidate selection, delta comparison, and hot movement split
--> regular ship movement updates move to dedicated hot-lane delta packets on sr.ships, asteroid movement updates move to sr.asteroids, and bullet movement updates move to sr.bullets
+-> regular detailed ship movement updates move to dedicated hot-lane delta packets on sr.ships, asteroid movement updates move to sr.asteroids, and bullet movement updates move to sr.bullets
+-> coarse player_locator snapshots also use sr.ships at low cadence after recipient filtering
 -> ship/asteroid/bullet creates/deletes split to reliable lifecycle lanes on sr.ships.lifecycle, sr.asteroids.lifecycle, and sr.bullets.lifecycle
 -> oversized ship/asteroid/bullet hot movement update lists expand into real same-sequence candidate chunks using conservative compact-JSON byte estimates
 -> the chunker is the only hard-size guard for ship/asteroid/bullet hot movement packets; scheduler and active encoding consume already-shaped candidates
@@ -51,14 +54,16 @@ services/game-server/internal/networking/websocket_write.go
 services/game-server/internal/networking/webrtc_transport.go
 ```
 
-The realtime package owns candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive ship/asteroid/bullet movement splitting, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot-lane hard-size guarding for ship, asteroid, and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for ship, asteroid, and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
+The realtime package owns recipient-specific network-interest filtering, candidate construction, send-plan records, metadata, wire packet assembly, numeric wire quantization, delta comparison, subtractive ship/asteroid/bullet movement splitting, coarse player-locator projection, sparse omission, generated compact descriptor application, and encoded-byte accounting inputs. Hot-lane hard-size guarding for ship, asteroid, and bullet movement packets belongs to `hot_lane_chunker.go`; scheduler and active encoding must not duplicate that guard. The session write loop owns tick-driven invocation; active gameplay lane delivery uses ordered/reliable WebRTC channels for world, overlay, session, and event traffic, plus unordered/unreliable WebRTC channels for ship, asteroid, and bullet hot movement traffic. Networking owns successful delivery handling, post-write state changes, and the current successful-write debug wire/summary logging. For `event_batch`, the realtime package shapes sparse event-type-specific wire records rather than broad reflected `EventState` output.
 
 ## Responsibilities
 
 The active server projection path owns:
 
-* Projecting authoritative runtime state into lane-native packet families.
-* Keeping world, overlay, session, and event ownership separate.
+* Projecting authoritative runtime state into immutable presentation snapshots and lane-native packet families.
+* Applying recipient-specific world interest before baseline, delta, lifecycle, and hot candidate construction.
+* Producing low-cadence coarse player locators independently from detailed ship interest.
+* Keeping world, ships, overlay, session, and event ownership separate.
 * Producing receiver-specific overlay/session/event output where needed.
 * Preserving explicit event-batch drain semantics.
 * Leaving JSON encode/decode mechanics to packetcodec and WebRTC active gameplay transport/write success handling to networking.
@@ -104,7 +109,8 @@ ships.lifecycle lane
 = ship creates/deletes and reliable non-transform updates such as health, shields, ship type, and target state
 
 ships lane
-= regular ship movement updates
+= regular detailed ship movement updates
+= low-cadence coarse `player_locator` snapshots for all active player identities
 
 asteroids.lifecycle lane
 = asteroid creates/deletes
@@ -127,7 +133,7 @@ event_batch
 = transient presentation events sent separately from baseline/delta lanes
 ```
 
-Ship, asteroid, and bullet lanes produce hot, high-priority, supersedable movement candidates. Lifecycle defines existence. Hot lanes update known entities only.
+Ship, asteroid, and bullet lanes produce supersedable positional candidates. Detailed `ship_delta`, `asteroid_delta`, and `bullet_delta` candidates are hot/high-priority movement updates. `player_locator` is a lower-cadence ships-lane snapshot with its own sequence and projection. Lifecycle defines detailed entity presentation existence; hot movement updates mutate known detailed entities only.
 
 Hot movement cadence is enforced independently for ships, asteroids, and bullets during candidate construction using the per-session 60 Hz cadence tick. Every hot lane uses the same chunk-pressure tiers: one chunk emits at 60 Hz, two chunks at 30 Hz, three chunks at 20 Hz, and four or more chunks at the 15 Hz floor. Cadence never drops below 15 Hz; all chunks for an eligible logical sequence are emitted in one same-tick unordered burst so additional pressure increases parallel in-flight chunk count instead of lowering cadence again.
 
@@ -139,7 +145,7 @@ Lifecycle candidates are required/critical and must not be treated as hot-supers
 
 ## Delta projection behavior
 
-The realtime projection path builds lane records from authoritative game state before delta comparison.
+The realtime projection path first applies recipient-specific interest to the immutable gameplay presentation snapshot, then builds lane records before delta comparison. The receiver ship and selected spectate target are always detailed-interest relevant. Ships, asteroids, bullets, and pickups outside the region are omitted from that recipient's detailed world projection without being removed from authoritative simulation.
 
 Field-delta comparison is current behavior for these update groups:
 
@@ -151,7 +157,8 @@ ships_lifecycle
 = ship creates/deletes and reliable non-transform updates
 
 ships lane
-= regular ship movement updates only
+= regular detailed ship movement updates
+= coarse player locator snapshots in a separate packet family and projection
 
 asteroids_lifecycle
 = asteroid_creates and asteroid_deletes
@@ -228,6 +235,8 @@ Projection, shadow, and inspection paths must not treat event access as an impli
 Relevant active files include:
 
 * `services/game-server/internal/protocol/realtime/` - lane candidates, metadata, send-plan records, baseline/delta planning, wire packets, sparse omission, generated compact descriptor application, encoded-byte accounting inputs, and shadow/parity helpers.
+* `services/game-server/internal/protocol/realtime/network_interest.go` - recipient-specific camera-region filtering, hysteresis, and always-relevant receiver/view-target policy.
+* `services/game-server/internal/protocol/realtime/player_locator.go` - low-cadence coarse player-locator candidate construction and projection.
 * `services/game-server/internal/protocol/realtime/hot_lane_allocator.go` - movement/cold-field classification support for dedicated hot and reliable lifecycle records.
 * `services/game-server/internal/protocol/realtime/hot_lane_projection.go` - independent ship, asteroid, and bullet movement projections, including reliable-world membership synchronization that preserves deferred hot movement.
 * `services/game-server/internal/protocol/realtime/hot_lane_chunker.go` - focused candidate-level chunking for oversized `ship_delta`, `asteroid_delta`, and `bullet_delta` movement update lists; this is the only hard-size guard for hot movement packets.
@@ -271,7 +280,8 @@ Relevant active files include:
 
 Relevant server tests include:
 
-* `services/game-server/internal/protocol/realtime/*_test.go` - lane-native realtime projection coverage, including sparse delta serialization, lifecycle candidate routing/planning, and wire-map omission behavior.
+* `services/game-server/internal/protocol/realtime/*_test.go` - lane-native realtime projection coverage, including recipient interest, coarse locators, sparse delta serialization, lifecycle candidate routing/planning, and wire-map omission behavior.
+* `services/game-server/internal/protocol/realtime/network_interest_test.go` - wrap-aware inclusion, hysteresis, always-relevant ships, and recipient lifecycle transition coverage.
 * `services/game-server/internal/protocol/realtime/quantization_propagation_test.go` - exported planner and active-result coverage for surfaced world, overlay, and session quantization failures.
 * `services/game-server/internal/networking/websocket_write_test.go`
 * `services/game-server/internal/networking/room_snapshot_test.go`
@@ -289,5 +299,6 @@ Relevant server tests include:
 * [Presentation Event Queue](./presentation-event-queue.md)
 * [Packet Schemas](../../../../data/packet-schemas.md)
 * [Realtime WebRTC Gameplay Transport](../../../../protocol/realtime-webrtc-gameplay-transport.md)
+* [Network Interest](../../networking/network-interest.md)
 
 ## Notes

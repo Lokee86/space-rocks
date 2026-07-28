@@ -89,6 +89,7 @@ ClientPacket
 ClientConfig
 InputState
 ShipState
+PlayerLocatorState
 PlayerSessionState
 AsteroidState
 BulletState
@@ -97,9 +98,9 @@ EventState
 PlayerPauseState
 ```
 
-It also owns shared realtime gameplay state shapes such as `ClientPacket`, `ClientConfig`, `InputState`, `ShipState`, `PlayerSessionState`, `AsteroidState`, `BulletState`, `PickupState`, `EventState`, and `PlayerPauseState`.
+It also owns shared realtime gameplay state shapes such as `ClientPacket`, `ClientConfig`, `InputState`, `ShipState`, `PlayerLocatorState`, `PlayerSessionState`, `AsteroidState`, `BulletState`, `PickupState`, `EventState`, and `PlayerPauseState`.
 
-`ClientPacket` includes `lane`, `baseline_id`, `sequence`, and `reason` for resync requests. `resync_request_packet` is the generated selected client builder used by the outbound recovery path; it is a WebSocket control packet, not an active WebRTC lane packet. `resync_required` is the corresponding server acknowledgment.
+`ClientPacket` includes `lane`, `baseline_id`, `sequence`, and `reason` for resync requests, plus `view_target_player_id` for spectate view-target control. The generated client builders include `set_view_target_request_packet` and `clear_view_target_request_packet`; these are WebSocket control intent, not gameplay target selection. `resync_request_packet` is the generated selected client builder used by the outbound recovery path; it is a WebSocket control packet, not an active WebRTC lane packet. `resync_required` is the corresponding server acknowledgment.
 
 `EventState` defines the possible event payload fields. The realtime event wire shaper emits only the relevant fields for known event types, so not every `EventState` field is emitted for every `event_batch` event.
 
@@ -108,6 +109,9 @@ It also owns realtime lane packet type values:
 ```text
 world_full
 world_delta
+ship_delta
+player_locator
+ships_lifecycle
 overlay_full
 overlay_delta
 session_full
@@ -117,6 +121,8 @@ bullets_lifecycle
 asteroid_delta
 bullet_delta
 event_batch
+set_view_target_request
+clear_view_target_request
 resync_request
 resync_required
 ```
@@ -388,7 +394,7 @@ The client consumes generated GDScript packet constants, field constants, and bu
 client/scripts/generated/networking/packets/packets.gd
 ```
 
-The generated client helper includes constants for realtime lane packet types, but client lane routing and application remain owned by the client runtime protocol and networking files.
+The generated client helper includes constants for realtime lane packet types and builders for view-target control packets, but client lane routing, locator application, spectate behavior, and world presentation remain owned by the client runtime protocol, spectate, and networking files.
 
 Primary client packet runtime paths include:
 
@@ -679,6 +685,8 @@ shared/player_data/ owns logical player-data schema.
 * [Game Server](../services/game-server/!INDEX.md)
 * [Client](../services/client/!INDEX.md)
 * [Player Data](../services/player-data/!INDEX.md)
+* [Gameplay Packets](../protocol/gameplay-packets.md)
+* [Network Interest](../services/game-server/networking/network-interest.md)
 
 ## Notes
 

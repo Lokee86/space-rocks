@@ -53,11 +53,13 @@ The protocol is best-effort and session-scoped, but active gameplay output now u
 
 ```text
 world
+ships
 asteroids
 bullets
 overlay
 session
 event
+ships.lifecycle
 asteroids.lifecycle
 bullets.lifecycle
 ```
@@ -72,6 +74,7 @@ The active gameplay packet families are:
 world_full
 world_delta
 ship_delta
+player_locator
 asteroid_delta
 bullet_delta
 ships_lifecycle
@@ -88,7 +91,17 @@ These packets carry current lane snapshots, baseline updates, and event batches 
 
 Every server-built realtime packet carries the authoritative `match_id` metadata (compact wire key `mid`). A `RealtimeSessionState` is bounded by the identity tuple `(ReceiverID, MatchID)`; changing either component starts clean lane, baseline, projection, and hot-lane cohort state.
 
-WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee. The client pipeline expands compact `mid` to readable `match_id` and validates recognized packet types before applying its match boundary. Before an authoritative active match exists, recognized packets with a non-empty `match_id` are buffered by match and do not mutate lane or presentation state; missing IDs are rejected. When the authoritative `InGame` room snapshot activates `begin_realtime_match(match_id)`, the pipeline clears all pending match buckets and replays only that match's packets through normal lane routing. Pending unrelated matches are discarded, and once a match is active, mismatched IDs are rejected. `GameOver` retains the active match until Lobby/session teardown; `end_match`, reset, and connection teardown clear pending packets and protocol state. This applies to all active packet families, including lifecycle and event packets.
+WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee. The client pipeline expands compact `mid` to readable `match_id` and validates recognized packet types before applying its match boundary. Before an authoritative active match exists, recognized packets with a non-empty `match_id` are buffered by match and do not mutate lane or presentation state; missing IDs are rejected. When the authoritative `InGame` room snapshot activates `begin_realtime_match(match_id)`, the pipeline clears all pending match buckets and replays only that match's packets through normal lane routing. Pending unrelated matches are discarded, and once a match is active, mismatched IDs are rejected. `GameOver` retains the active match until Lobby/session teardown; `end_match`, reset, and connection teardown clear pending packets and protocol state. This applies to all active packet families, including lifecycle, locator, and event packets.
+
+## Recipient interest and player locator
+
+Before realtime candidates are built for a session, the server filters the published world presentation for that recipient using a wrap-aware camera region. Ships, asteroids, bullets, and pickups may enter or leave the recipient projection without being created or destroyed in authoritative simulation. Ordinary recipient lifecycle create/delete records represent those presentation-boundary transitions.
+
+The receiver ship and selected spectate target remain detailed-interest relevant regardless of distance. The selected target is supplied by the WebSocket control packets `set_view_target_request` and `clear_view_target_request`.
+
+Distant players remain represented by `player_locator`, a separate ships-lane packet family containing ID, position, velocity, and active state. Locator packets use their own increasing sequence/projection state, run at coarse cadence, and travel on the existing unordered/unreliable `sr.ships` DataChannel. They do not define detailed ship existence or durable player lifecycle.
+
+See [Network Interest](../services/game-server/networking/network-interest.md) for implementation policy and [Realtime WebRTC Gameplay Transport](realtime-webrtc-gameplay-transport.md) for physical channel mapping.
 
 ## Canonical baseline recovery loop
 
@@ -823,7 +836,9 @@ The size policies have three separate meanings: the roughly 1,200 B construction
 ```text
 event_batch = critical/event-once
 world_delta, overlay_delta, ship_delta, asteroid_delta, and bullet_delta = high priority / hot supersedable
+player_locator = low-cadence supersedable coarse player-position snapshot on the ships lane
 ship_delta, asteroid_delta, and bullet_delta = dedicated hot movement candidates with chunker-owned hard-size guarding and unordered/unreliable WebRTC delivery
+ships_lifecycle = required / critical
 asteroids_lifecycle = required / critical
 bullets_lifecycle = required / critical
 session deltas = medium priority / deferrable
@@ -838,6 +853,9 @@ The active path currently schedules whole lane candidates:
 
 ```text
 world_delta = one candidate
+ship_delta = one or more candidates when ship hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
+player_locator = one candidate at coarse cadence or when player membership/active state changes
+ships_lifecycle = one logical candidate when ship creates/deletes or reliable non-transform state changes are present; it may expand before scheduling/encoding
 asteroid_delta = one or more candidates when asteroid hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
 bullet_delta = one or more candidates when bullet hot movement is present; oversized hot movement update lists are split into bounded same-sequence chunks
 asteroids_lifecycle = one logical candidate when asteroid creates/deletes are present; it may expand into one or more hard-capped packet candidates before scheduling/encoding
@@ -1216,7 +1234,7 @@ shared/packets/webrtc.toml
 shared/packets/outputs.toml
 ```
 
-Those files define packet structs, packet type strings, JSON field names, output routing, and selected generated client builders. For gameplay output, `shared/packets/gameplay.toml` and `shared/packets/outputs.toml` now include the generated packet type values `ship_delta`, `ships_lifecycle`, `asteroid_delta`, `asteroids_lifecycle`, `bullet_delta`, and `bullets_lifecycle` alongside the existing gameplay families.
+Those files define packet structs, packet type strings, JSON field names, output routing, and selected generated client builders. For gameplay output, `shared/packets/gameplay.toml` and `shared/packets/outputs.toml` include `ship_delta`, `player_locator`, `ships_lifecycle`, `asteroid_delta`, `asteroids_lifecycle`, `bullet_delta`, and `bullets_lifecycle` alongside the existing gameplay families. The same gameplay schema also defines `set_view_target_request` and `clear_view_target_request` for spectate interest anchoring.
 
 The transport route and runtime connection lifecycle are not sourced from the packet TOML files. They are implemented by the client and game-server networking services.
 

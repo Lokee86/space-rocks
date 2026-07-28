@@ -188,11 +188,23 @@ Run the game-server tests from `services/game-server` with:
 go test -buildvcs=false ./...
 ```
 
-## Future interest boundary
+## Network-interest boundary
 
-Network interest management is future-only and is not implemented by this seam. A future interest system must use a separate immutable, presentation-owned index. It must not repurpose this mutable authoritative collision broad phase.
+Recipient-specific network interest is implemented outside this seam under `internal/protocol/realtime/network_interest.go`. It operates on immutable `GameplayPresentationSnapshot` data and uses the shared wrap-aware camera-region predicate under `internal/game/visibility`.
 
-Quadtree replacement is also future-only. The current uniform grid is the implemented backend behind the generic contract; no quadtree exists in this boundary and no replacement is implied by the interface.
+The current interest implementation does not query or repurpose this mutable authoritative collision broad phase. That separation is intentional:
+
+```text
+simulation spatial index
+= mutable Game-owned broad phase for authoritative collision candidates
+
+network interest
+= recipient-specific policy over published presentation snapshots
+```
+
+A future performance optimization may add a presentation-owned immutable lookup/index, but it must preserve this ownership split and must not read mutable simulation buckets from realtime projection.
+
+Quadtree replacement remains future-only. The current uniform grid is the implemented simulation backend behind the generic contract; no quadtree exists in this boundary and no replacement is implied by the interface.
 
 ## Related docs
 
@@ -201,7 +213,8 @@ Quadtree replacement is also future-only. The current uniform grid is the implem
 - [Collision Shapes](collision-shapes.md)
 - [Game Server Simulation](../!INDEX.md)
 - [Game Server](../../!INDEX.md)
+- [Network Interest](../../networking/network-interest.md)
 
 ## Notes
 
-This document describes implemented behavior only. Future network-interest and quadtree directions are explicitly non-current boundaries.
+This document describes the implemented simulation spatial index. Network interest is also implemented, but remains a separate presentation/realtime boundary and is linked rather than duplicated here. Quadtree replacement remains non-current.

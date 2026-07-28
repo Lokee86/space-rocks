@@ -36,14 +36,14 @@ input / respawn / client_config
 -> require no special target/pause switch
 -> forward to Game.HandlePacket(playerID, packet)
 
-target / pause requests
--> require current room and game player ID
--> adapt request-specific fields into game API calls
+target / view-target / pause / resync requests
+-> require current room, current game player ID, and game context
+-> adapt request-specific fields into game APIs or session-local realtime control state
 ```
 
 For `input`, `respawn`, and `client_config`, a missing room or game player ID is treated as consumed once the packet type is recognized. This prevents those gameplay packets from falling through to other routing paths.
 
-For target and pause request packets, a missing room or game player ID returns `false`, because the adapter cannot prove it owns the packet without an active gameplay context.
+For target, view-target, pause, and resync request packets, a missing room or game player ID returns `false`, because the adapter cannot prove it owns the packet without an active gameplay context.
 
 ## Code root
 
@@ -60,6 +60,9 @@ client_config
 set_target_player_request
 select_target_at_position_request
 clear_target_request
+set_view_target_request
+clear_view_target_request
+resync_request
 pause_request
 ```
 
@@ -79,6 +82,8 @@ The gameplay network adapter owns:
 * requiring an active room and current game player ID before mutating gameplay state
 * forwarding normal gameplay packets to the authoritative game instance
 * adapting target packets into game targeting calls
+* storing or clearing the session-local spectate view target used by recipient network interest
+* validating and enqueueing baseline resync requests
 * forwarding pause requests to the game instance
 * asking the session to enqueue the local player pause state after pause changes
 * keeping networking concerns separate from simulation and targeting rules
@@ -145,6 +150,24 @@ the adapter:
 3. maps request fields into the game targeting API
 4. returns `true` after handing the packet to the game instance
 
+For view-target control packets:
+
+```text
+set_view_target_request
+clear_view_target_request
+```
+
+the adapter:
+
+1. checks the current room and game player ID
+2. checks that a current game instance exists
+3. stores the requested `view_target_player_id` on the WebSocket session, or clears it
+4. returns `true`
+
+This state affects recipient-specific presentation projection only. It does not call gameplay targeting APIs or mutate authoritative simulation.
+
+For `resync_request`, the adapter validates the current match identity and baseline lane, then enqueues a typed session resync request for the write loop.
+
 For `pause_request`, the adapter:
 
 1. checks the current room
@@ -170,6 +193,13 @@ Targeting is a clear example:
 * the adapter reads `TargetID`, `TargetKind`, `X`, and `Y` from the packet
 * the game targeting implementation decides whether the target exists and whether the selected position is valid
 * the adapter does not duplicate those targeting rules
+
+Spectate view targeting is a separate presentation-control example:
+
+* the adapter reads `ViewTargetPlayerID`
+* the session stores the requested ID
+* realtime network-interest projection decides how that ID affects the recipient camera and always-relevant ship policy
+* the adapter does not validate gameplay target authority or move the simulation camera
 
 ## Gameplay mutation handoff
 
@@ -250,6 +280,8 @@ Useful behavioral checks:
 * target-player requests call `SetPlayerTarget`
 * position target requests call `SelectTargetAtPosition`
 * clear-target requests call `ClearTarget`
+* set/clear view-target requests update session-local presentation control state
+* valid resync requests enter the typed resync queue
 * pause requests call `Game.HandlePacket` and enqueue player pause state
 * packets without an active room/player do not mutate gameplay state
 
@@ -257,6 +289,9 @@ Useful behavioral checks:
 
 * [Game Server Networking](./!INDEX.md)
 * [Game Server](../!INDEX.md)
+* [Network Interest](network-interest.md)
+* [Inbound Packet Routing](inbound-packet-routing.md)
+* [Gameplay Packets](../../../protocol/gameplay-packets.md)
 
 ## Notes
 

@@ -35,6 +35,8 @@ outbound message queue
 auth verifier access
 match result reporter access
 per-match first-input and first-respawn diagnostic flags
+session-local spectate view-target ID
+write-loop-owned realtime projection state
 ```
 
 The WebSocket connection itself is session-only. It does not imply room membership, authenticated identity, or an active gameplay player.
@@ -88,6 +90,8 @@ The WebSocket session lifecycle owns:
 * initializing each session with Guest identity
 * retaining the room manager, auth verifier, and match result reporter for session handlers
 * owning the per-session outbound queue and buffered typed resync request channel
+* storing the session-local spectate view target used by recipient-specific realtime projection
+* clearing the view target when the realtime receiver/match identity changes
 * coordinating read, write, and room/game-over lifecycle goroutines
 * reading raw WebSocket text messages
 * handing inbound raw messages to packet routing after envelope decode
@@ -147,6 +151,7 @@ session identity
 current room ID
 `SessionContext.GamePlayerID`
 encoded outbound packet bytes
+session-local view-target player ID
 ```
 
 The current wire format is JSON text over WebSocket. Encoding and decoding mechanics are delegated to the packet codec and packet-family routing seams. For the current outbound send flow, see [Outbound Message Flow](./outbound-message-flow.md) and [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md).
@@ -205,6 +210,8 @@ identity            -> Guest session identity
 authVerifier        -> configured token verifier, possibly nil
 matchResultReporter -> configured reporter or noop reporter
 first-packet state   -> per-match input/respawn diagnostic flags
+viewTargetPlayerID  -> empty until spectate view-target control selects a player
+realtimeState       -> write-loop-owned per-recipient projection/baseline state
 ```
 
 The session starts as Guest even when the client intends to authenticate. Authentication is a later packet-level handshake through `authenticate_request`.
@@ -288,6 +295,7 @@ HandleStartGameRequest
 HandleStartSinglePlayerRequest
 HandleReturnToLobbyRequest
 EnqueuePlayerPauseState
+SetViewTargetPlayerID
 ```
 
 This keeps packet-family routing separate from the full session object.
@@ -324,7 +332,7 @@ constants.ServerTickRate
 Ticker-driven writes include:
 
 ```text
-lane packet delivery
+recipient-specific lane packet delivery, using the current session view target when present
 debug shape catalog, when eligible
 debug status, when eligible
 ```
@@ -595,11 +603,13 @@ SessionContext
 webSocketSession.identity
 webSocketSession.outbound
 webSocketSession.resyncRequests
+webSocketSession.viewTargetPlayerID
+webSocketSession.realtimeState
 webSocketSession first-packet diagnostic state
 room-session registry attachment
 ```
 
-The first-input and first-respawn diagnostic flags are independent, protected by `webSocketSession.mu`, and reset whenever the active match ID changes. Session destruction discards both flags with the rest of the transient session state.
+The first-input and first-respawn diagnostic flags are independent, protected by `webSocketSession.mu`, and reset whenever the active match ID changes. `viewTargetPlayerID` is also protected by `webSocketSession.mu`; inbound control writes it, the write loop reads a snapshot for recipient projection, and realtime identity reset clears it. `realtimeState` remains exclusively write-loop-owned and is intentionally not protected by the session mutex. Session destruction discards both flags with the rest of the transient session state.
 
 It does not own durable player data, Rails auth data, Local Profile storage, account stats, match history storage, or packet schema data.
 
@@ -617,9 +627,9 @@ The session may carry identity and room references that downstream systems use f
 
 * `services/game-server/internal/networking/websocket.go` - WebSocket handler construction, upgrade, connection runtime, room-exit cleanup, and match-result-before-exit helper.
 * `services/game-server/internal/networking/websocket_origin.go` - WebSocket origin allowlist.
-* `services/game-server/internal/networking/websocket_session.go` - Per-connection session state and session construction.
+* `services/game-server/internal/networking/websocket_session.go` - Per-connection session state, view-target synchronization, and session construction.
 * `services/game-server/internal/networking/websocket_read.go` - Raw WebSocket read loop and envelope-decode handoff.
-* `services/game-server/internal/networking/websocket_write.go` - Runs the four-input session write loop, consumes queued bytes and typed resync requests, and triggers active lane writes; active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
+* `services/game-server/internal/networking/websocket_write.go` - Runs the four-input session write loop, consumes queued bytes and typed resync requests, snapshots the view target, and triggers recipient-specific active lane writes; active lane bytes are sent through `services/game-server/internal/networking/webrtc_transport.go`.
 * `services/game-server/internal/networking/websocket_gameplay_tick.go` - Per-session room game-over lifecycle ticker.
 * `services/game-server/internal/networking/websocket_close_logging.go` - Expected and unexpected read/write close logging.
 * `services/game-server/internal/networking/websocket_outbound_queue.go` - Owns the bounded non-blocking session enqueue and disconnect-on-overflow policy.
@@ -715,6 +725,7 @@ cd services/game-server && go test -buildvcs=false ./internal/networking ./inter
 * [Gameplay Network Adapter](./gameplay-network-adapter.md)
 * [Auth Routing](./auth-routing.md)
 * [Realtime WebSocket Protocol](../../../protocol/realtime-websocket-protocol.md)
+* [Network Interest](network-interest.md)
 * [Packet Schema Pipeline](../../../data/packet-schemas.md)
 
 ## Notes

@@ -19,7 +19,7 @@ It covers how decoded server packet dictionaries move from the client WebSocket 
 ## Overview
 
 Inbound packet routing begins after the WebSocket transport or WebRTC DataChannel transport has already decoded raw text into a packet dictionary.
-WebSocket remains the client route for session, control, room, lobby, auth, WebRTC signaling/control, and queued non-tooling packets. Runtime telemetry and developer readouts use the dedicated reliable `sr.tooling` WebRTC DataChannel. In particular, `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_ready`, `webrtc_smoke`, and `webrtc_failed` are signaling/control packets received through WebSocket ingress. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets: `world`, `overlay`, `session`, `event`, ship lifecycle, asteroid lifecycle, and bullet lifecycle packets use the `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` ordered/reliable lifecycle channels, while ship, asteroid, and bullet delta packets use the `sr.ships`, `sr.asteroids`, and `sr.bullets` unordered/unreliable hot-update lanes. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
+WebSocket remains the client route for session, control, room, lobby, auth, WebRTC signaling/control, and queued non-tooling packets. Runtime telemetry and developer readouts use the dedicated reliable `sr.tooling` WebRTC DataChannel. In particular, `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_ready`, `webrtc_smoke`, and `webrtc_failed` are signaling/control packets received through WebSocket ingress. Lane-specific WebRTC gameplay DataChannels are the route for active realtime gameplay packets: `world`, `overlay`, `session`, `event`, ship lifecycle, asteroid lifecycle, and bullet lifecycle packets use the `sr.world`, `sr.overlay`, `sr.session`, `sr.event`, `sr.ships.lifecycle`, `sr.asteroids.lifecycle`, and `sr.bullets.lifecycle` ordered/reliable channels. Ship deltas and coarse `player_locator` snapshots use the `sr.ships` unordered/unreliable channel, while asteroid and bullet deltas use `sr.asteroids` and `sr.bullets`. WebRTC connectivity is established by ICE, not by a WebRTC URL, and deployment must ensure the advertised ICE address can reach the game server directly.
 
 `NetworkClient` owns raw WebSocket polling, text receive, JSON decode, envelope validation, and `packet_received` emission for WebSocket packets. `RealtimeTransportSession` owns the WebRTC transport-session lifecycle and lane-aware dispatch callback. WebSocket packets and gameplay-lane WebRTC packets enter `ServerPacketDispatcher`; `sr.tooling` packets enter `ToolingPacketRouter` directly. `ClientConnectionService` owns the application-facing non-realtime dispatcher bindings, tooling-router signal bridge, and public facade. `ClientInboundCoordinator` owns only the WebRTC control bindings for `webrtc_answer_received`, `webrtc_ice_candidate_received`, `webrtc_ready_received`, `webrtc_smoke_received`, and `webrtc_failed_received`. `RealtimePacketPipeline` owns all gameplay lane dispatcher bindings and typed gameplay entry points.
 
@@ -147,6 +147,9 @@ webrtc_smoke
 webrtc_failed
 world_full
 world_delta
+ship_delta
+player_locator
+ships_lifecycle
 asteroid_delta
 bullet_delta
 asteroids_lifecycle
@@ -179,6 +182,9 @@ webrtc_smoke_received(packet)
 webrtc_failed_received(packet)
 world_full_received(packet)
 world_delta_received(packet)
+ship_delta_received(packet)
+player_locator_received(packet)
+ships_lifecycle_received(packet)
 asteroid_delta_received(packet)
 bullet_delta_received(packet)
 asteroids_lifecycle_received(packet)
@@ -294,7 +300,7 @@ player_pause_state_received
 
 For gameplay application, the controller now follows the semantic presentation handoff instead of connecting separately to each lane-specific packet signal.
 
-Realtime gameplay lane packets enter `RealtimePacketPipeline`, which expands and validates recognized packets before its protocol match gate. WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee, so packets with a non-empty `match_id` are buffered by match before authoritative activation and do not mutate lane or presentation state. The authoritative `InGame` snapshot resets gameplay presentation/composition and calls `begin_realtime_match(match_id)`; the pipeline clears all pending buckets, replays only the matching bucket, and discards unrelated matches. Missing IDs remain rejected, and mismatched IDs remain rejected once active. `GameOver` retains the active match; returning to `Lobby`, reset, or connection teardown clears pending and protocol state. The routed notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
+Realtime gameplay lane packets enter `RealtimePacketPipeline`, which expands and validates recognized packets before its protocol match gate. `player_locator` follows the same dispatcher and pipeline boundary as other gameplay packets, but its applier updates a dedicated coarse locator state rather than `WorldLaneState`. WebSocket room snapshots and WebRTC gameplay packets have no cross-transport ordering guarantee, so packets with a non-empty `match_id` are buffered by match before authoritative activation and do not mutate lane or presentation state. The authoritative `InGame` snapshot resets gameplay presentation/composition and calls `begin_realtime_match(match_id)`; the pipeline clears all pending buckets, replays only the matching bucket, and discards unrelated matches. Missing IDs remain rejected, and mismatched IDs remain rejected once active. `GameOver` retains the active match; returning to `Lobby`, reset, or connection teardown clears pending and protocol state. The routed notification means routing/state refresh completed; it does not prove that a particular lifecycle packet mutated state.
 
 ### Room packet handoff
 
@@ -396,7 +402,7 @@ Unknown packets are not applied to gameplay, room, auth, or telemetry state.
 
 ### Lifecycle routing note
 
-Lifecycle packets use the same dispatcher and pipeline classification path as other gameplay packets:
+Lifecycle packets use the same dispatcher and pipeline classification path as other gameplay packets. `player_locator` also uses the dispatcher/pipeline path, but bypasses `LifecycleLaneGate` and world-lane mutation because it is a replace-all coarse read model with its own increasing sequence:
 
 ```text
 typed lifecycle signal
@@ -406,13 +412,15 @@ typed lifecycle signal
 -> WorldLaneApplier lifecycle validation and WorldLaneState mutation only after acceptance
 ```
 
-After a completed matching `world_full` is applied and recorded, `RealtimeRouter` drains pending lifecycle packets for that world baseline, ordered within each lifecycle lane. There is no ordering contract between the two lifecycle lanes.
+After a completed matching `world_full` is applied and recorded, `RealtimeRouter` drains pending lifecycle packets for that world baseline, ordered within each lifecycle lane. There is no cross-lane ordering contract among the three entity lifecycle lanes. Locator packets remain independent of lifecycle baselines and may be dropped or superseded because they arrive on `sr.ships`.
 
 Reliable/ordered delivery orders messages only within one DataChannel. Cross-lane ordering is not guaranteed between `sr.world` and either lifecycle channel, between the two lifecycle channels, or between lifecycle and unreliable hot lanes. Clients must tolerate hot updates arriving before lifecycle create packets and after lifecycle delete packets; lifecycle packets may also wait for a matching world baseline.
 
 ## Related Docs
 
 * [Presentation Bridge](../gameplay-runtime/presentation-bridge.md)
+* [Game Server Network Interest](../../game-server/networking/network-interest.md)
+* [Gameplay Presentation Flow](../presentation-flow/gameplay-presentation-flow.md)
 
 ## Protocols and APIs
 
@@ -497,6 +505,33 @@ world_delta
 -> world_delta_received(packet)
 -> RealtimePacketPipeline.apply_world_delta(packet)
 -> RealtimeRouter.route_lane_packet(packet)
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
+-> GameplayComposition / runtime presentation flows
+
+ship_delta
+-> ship_delta_received(packet)
+-> RealtimePacketPipeline.apply_ship_delta(packet)
+-> RealtimeRouter.route_lane_packet(packet)
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
+-> GameplayComposition / runtime presentation flows
+
+player_locator
+-> player_locator_received(packet)
+-> RealtimePacketPipeline.apply_player_locator(packet)
+-> PlayerLocatorApplier replaces the accepted coarse locator snapshot
+-> RealtimePresentationState.player_locator_state refreshed
+-> RealtimePacketPipeline.gameplay_packet_applied(packet)
+-> PresentationBridge.handle_gameplay_packet(packet)
+-> WorldSync.apply_player_locator_state(...)
+
+ships_lifecycle
+-> ships_lifecycle_received(packet)
+-> RealtimePacketPipeline.apply_ships_lifecycle(packet)
+-> RealtimeRouter.route_lane_packet(packet)
+-> LifecycleLaneGate apply / queue / reject / resync on capacity loss
+-> WorldLaneApplier validates and mutates only after acceptance
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> GameplayComposition / runtime presentation flows

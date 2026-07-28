@@ -33,7 +33,7 @@ GameplayComposition._configure_gameplay_presentation_flow()
 -> OSIndicatorController.update_indicators(...)
 ```
 
-`GameplayComposition` creates `GameplayPresentationFlow` during gameplay composition. It passes the HUD, local player node, active camera provider, remote player visual position provider, and remote player hue provider.
+`GameplayComposition` creates `GameplayPresentationFlow` during gameplay composition. It passes the HUD, local player node, active camera provider, remote player indicator-position provider, and remote player hue provider.
 
 `GameplayPresentationFlow` then coordinates two presentation paths:
 
@@ -47,12 +47,14 @@ Remote player off-screen presentation
 -> HUD-mounted off-screen indicator nodes
 ```
 
-Remote player position and hue data comes from world sync read models:
+Remote player position and hue data comes from world-sync read models:
 
 ```text
-WorldSync.get_remote_player_visual_positions()
+WorldSync.get_remote_player_indicator_positions()
 WorldSync.get_remote_player_hues()
 ```
+
+`get_remote_player_indicator_positions()` merges detailed rendered-player positions with coarse `player_locator` state. Detailed rendered positions win while a ship is inside interest; locator positions continue the indicator path after detailed ship presentation leaves interest.
 
 The active camera comes from:
 
@@ -76,7 +78,7 @@ Gameplay presentation owns:
 * wiring the HUD reference used for off-screen indicators
 * wiring the local player reference used for local transient presentation
 * wiring the active camera provider
-* wiring remote player visual-position and hue providers
+* wiring remote player indicator-position and hue providers
 * ticking local player presentation after gameplay state has started
 * turning the local player afterburner visual/audio state on and off from local input state
 * hiding local afterburner presentation on reset
@@ -181,6 +183,8 @@ res://scenes/ui/elements/osindicator.tscn
 
 Each indicator's `TextureRect` material receives a hue shift from the remote player hue read model. If a remote hue is unavailable, the fallback hue from generated constants is used.
 
+Detailed render-interest exit removes the remote ship node and its high-rate transform state, but it does not clear the cached player/team hue. That retained hue keeps locator-only indicators visually distinct. Hue state is cleared by gameplay-session reset rather than by ordinary interest exit.
+
 ### Player hue presenter
 
 `PlayerHuePresenter` owns player hue presentation policy.
@@ -206,11 +210,11 @@ Gameplay presentation consumes world-sync read models but does not own them.
 The current remote indicator path reads:
 
 ```text
-WorldSync.get_remote_player_visual_positions()
+WorldSync.get_remote_player_indicator_positions()
 WorldSync.get_remote_player_hues()
 ```
 
-`WorldSync` owns how those values are derived from active player-render state. Gameplay presentation only consumes the result for local visual indicators.
+`WorldSync` owns how detailed player-render positions and coarse locator positions are combined. Nearby rendered positions take precedence. Distant locator positions are extrapolated for a bounded interval and discarded when stale. Gameplay presentation only consumes the merged result for local visual indicators.
 
 ### ViewAnchor camera consumer
 
@@ -314,7 +318,7 @@ local player reference
 HUD reference
 provider callables
 local afterburner visual/audio state on the player node
-remote hue cache inside PlayerHuePresenter
+remote hue cache inside PlayerHuePresenter, retained across detailed render-interest exit
 remote player order inside PlayerHuePresenter
 ```
 
@@ -447,7 +451,7 @@ Relevant focused tests include:
 client/tests/unit/test_player_sync.gd
 ```
 
-That test covers `PlayerHuePresenter` deterministic hue behavior, local hue avoidance, and filtering current self id from remote hue read models.
+That test covers `PlayerHuePresenter` deterministic hue behavior, local hue avoidance, and filtering current self id from remote hue read models. `client/tests/unit/world/player_render/test_player_render_api.gd` verifies that detailed render-interest removal preserves the cached hue used by locator-only indicators.
 
 Adjacent tests cover the world-sync and player-render systems that provide gameplay presentation read models:
 
@@ -476,7 +480,9 @@ local afterburner stops on reset
 remote off-screen indicators appear when remote players leave the visible area
 remote off-screen indicators hide when remote players are visible onscreen
 remote off-screen indicators use remote player hue values
-indicator nodes are removed when remote players disappear
+remote indicators retain distinct player/team hues after detailed ship interest exit
+locator-only indicators continue after detailed ship nodes are removed
+indicator nodes are removed when remote players disappear from both detailed and locator read models
 indicator placement follows the active ViewAnchor camera basis
 ```
 
@@ -496,6 +502,7 @@ indicator placement follows the active ViewAnchor camera basis
 * [Match End Flow](../match-end-flow/!INDEX.md)
 * [Gameplay Menu Flow](../gameplay-menu-flow/!INDEX.md)
 * [Constants pipeline](../../../data/data-sync-and-ssot-pipeline.md)
+* [Game Server Network Interest](../../game-server/networking/network-interest.md)
 
 ## Notes
 
@@ -505,6 +512,6 @@ The afterburner path reads local input state directly for immediate local presen
 
 Off-screen indicators are mounted under the HUD, but their behavior is owned by `OSIndicatorController`. HUD documentation owns HUD state and widgets; this document owns the indicator presentation seam that uses the HUD as a mount parent.
 
-Remote player positions and hues are read models from world sync and player-render code. This document should not duplicate the ViewAnchor, toroidal wrap, player-render lifecycle, or coordinate-conversion rules already documented under world sync.
+Remote player positions and hues are read models from world sync and player-render code. Detailed render positions may disappear when a player leaves recipient interest, while coarse locator positions and cached hues continue to support the indicator. This document should not duplicate the ViewAnchor, toroidal wrap, network-interest, player-render lifecycle, or coordinate-conversion rules documented by their owning docs.
 
 The current `PlayerHuePresenter.REMOTE_PLAYER_HUES` constant array exists but the active `remote_hue_for_player()` path derives ordered remote hues from the local player hue and `REMOTE_HUE_STEP`, falling back to generated constants only when no cached/order-derived hue is available.

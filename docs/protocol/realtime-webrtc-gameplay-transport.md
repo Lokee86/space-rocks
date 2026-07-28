@@ -88,7 +88,7 @@ bullets      | sr.bullets       | 6             | bullet_delta
 asteroids.lifecycle | sr.asteroids.lifecycle | 7 | asteroids_lifecycle
 bullets.lifecycle   | sr.bullets.lifecycle   | 8 | bullets_lifecycle
 tooling             | sr.tooling             | 9 | measurement, telemetry, and migrated tooling packets
-ships        | sr.ships         | 10            | ship_delta
+ships        | sr.ships         | 10            | ship_delta, player_locator
 ships.lifecycle     | sr.ships.lifecycle     | 11 | ships_lifecycle
 ```
 
@@ -98,7 +98,7 @@ The current channel policy is:
 sr.world, sr.overlay, sr.session, sr.event, sr.ships.lifecycle, sr.asteroids.lifecycle, sr.bullets.lifecycle, and sr.tooling are negotiated ordered/reliable channels.
 sr.ships, sr.asteroids, and sr.bullets are negotiated unordered/unreliable channels with maxRetransmits=0.
 sr.tooling is reliable, ordered, bidirectional, and currently carries measurement packets generated from shared/packets/tooling.toml.
-sr.ships carries supersedable ship_updates only.
+sr.ships carries supersedable detailed ship movement (`ship_delta`) and low-cadence coarse player position snapshots (`player_locator`).
 sr.asteroids carries supersedable asteroid_updates only.
 sr.bullets carries supersedable bullet_updates only.
 Entity lifecycle ownership is split by entity family. The world lane owns pickup, world, and full/bootstrap presentation state. `sr.ships.lifecycle` carries ship creates/deletes and reliable non-transform ship updates such as health, shields, ship type, and target state. Asteroid lifecycle packets use `sr.asteroids.lifecycle`. Bullet/projectile lifecycle packets use `sr.bullets.lifecycle`. Hot ship, asteroid, and bullet lanes are unreliable movement/update lanes only and must not create entities implicitly.
@@ -170,7 +170,7 @@ WebRTCTransport receives DataChannel text
       -> PresentationBridge.handle_gameplay_packet(packet)
 ```
 
-The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `ship_delta` → `apply_ship_delta`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `ships_lifecycle` → `apply_ships_lifecycle`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`. Lifecycle routing submits explicit lane, sequence, and world-baseline metadata to `LifecycleLaneGate`; a completed matching `world_full` records the active world baseline and drains pending packets for that baseline, sorted within each lifecycle lane.
+The typed pipeline entry point matches the packet family: `world_full` → `apply_world_full`, `world_delta` → `apply_world_delta`, `ship_delta` → `apply_ship_delta`, `player_locator` → `apply_player_locator`, `ships_lifecycle` → `apply_ships_lifecycle`, `asteroid_delta` → `apply_asteroid_delta`, `bullet_delta` → `apply_bullet_delta`, `asteroids_lifecycle` → `apply_asteroids_lifecycle`, `bullets_lifecycle` → `apply_bullets_lifecycle`, `overlay_full` → `apply_overlay_full`, `overlay_delta` → `apply_overlay_delta`, `session_full` → `apply_session_full`, `session_delta` → `apply_session_delta`, `event_batch` → `apply_event_batch`, `resync_request` → `apply_resync_request`, and `resync_required` → `apply_resync_required`. Lifecycle routing submits explicit lane, sequence, and world-baseline metadata to `LifecycleLaneGate`; a completed matching `world_full` records the active world baseline and drains pending packets for that baseline, sorted within each lifecycle lane.
 
 `RealtimeTransportSession` owns the WebRTC transport lifecycle and transport-originated callbacks. `ClientConnectionService` configures the transport-session dispatch callback but does not inspect or relay each gameplay packet. `ServerPacketDispatcher` emits the typed gameplay signal to `ClientInboundCoordinator`, which invokes the matching typed `RealtimePacketPipeline` apply method. The pipeline expands and validates the packet, refreshes `RealtimePresentationState`, and emits `gameplay_packet_applied(packet)`. `PresentationBridge` consumes that semantic notification with later coalesced flush when ready.
 
@@ -252,6 +252,14 @@ Connection teardown closes the previous session transport. A later connection us
 
 Transport replacement does not replace gameplay protocol state ownership. RealtimePacketPipeline separately owns the active RealtimeRouter, gameplay readiness, packet application, and protocol reset. An unexpected required-channel close preserves the WebSocket session, room membership, and game context, clears only the WebRTC transport, replaces the WebRTC peer, and starts a fresh offer with a 10-second recovery deadline. On replacement readiness, the active-match pipeline preserves the match ID while resetting protocol/baseline/presentation state and requesting fresh world, overlay, and session baselines. If recovery fails or times out, the transport closes and single-player replay becomes unavailable; multiplayer/session state is not reset.
 
+## Coarse Player Locator
+
+Recipient-specific network interest may remove a distant player's detailed ship presentation from world and ship lifecycle/hot output. The client still needs coarse direction data for off-screen indicators, so the server emits `player_locator` snapshots through the existing `sr.ships` channel.
+
+The locator packet contains player ID, position, velocity, and active state. It is emitted at approximately 5 Hz, with immediate eligibility when locator membership or active state changes. It has its own packet-family sequence and projection state; it does not share `ship_delta` sequencing.
+
+`player_locator` uses the same unordered/unreliable transport policy as ship movement because newer location data supersedes older data. It does not create another DataChannel and does not replace durable session/player lifecycle truth. The client bounds extrapolation and discards stale locator-only presentation rather than requesting retransmission.
+
 ## Hot Movement Split
 
 Regular asteroid movement updates are emitted as:
@@ -309,7 +317,7 @@ general-purpose fragmentation for all lane families
 
 Focused hot-lane chunking is implemented for `ship_delta`, `asteroid_delta`, and `bullet_delta` before the WebRTC send boundary. It emits multiple JSON messages on `sr.ships`, `sr.asteroids`, or `sr.bullets` when a hot movement update list would exceed the hard encoded packet cap.
 
-Unordered/unreliable hot-lane delivery is implemented for sr.ships, sr.asteroids, and sr.bullets.
+Unordered/unreliable hot-lane delivery is implemented for `sr.ships`, `sr.asteroids`, and `sr.bullets`. `sr.ships` also carries the low-cadence `player_locator` family; it remains positional, supersedable data rather than reliable lifecycle state.
 
 Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing, and dedicated ship/asteroid/bullet hot movement packets are implemented before the final WebRTC write boundary.
 
@@ -321,5 +329,7 @@ Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing
 * [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md)
 * [Outbound Message Flow](../services/game-server/networking/outbound-message-flow.md)
 * [Lane Packet Projection](../services/game-server/simulation/runtime/lane-packet-projection.md)
+* [Game Server Network Interest](../services/game-server/networking/network-interest.md)
+* [Client Inbound Packet Routing](../services/client/networking-flow/inbound-packet-routing.md)
 
 Lifecycle transport implementation and verification references include `client/scripts/protocol/realtime/lifecycle_lane_gate.gd`, `client/scripts/protocol/realtime/realtime_router.gd`, `client/scripts/networking/realtime/realtime_packet_pipeline.gd`, `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, and the server lifecycle wire metadata tests in `services/game-server/internal/protocol/realtime/wire_packets_test.go`.

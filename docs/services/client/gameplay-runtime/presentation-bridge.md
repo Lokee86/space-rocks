@@ -74,6 +74,7 @@ ServerPacketDispatcher
 -> ClientInboundCoordinator typed realtime binding
 -> RealtimePacketPipeline typed apply entry point
 -> RealtimeRouter routes the packet; lifecycle packets enter LifecycleLaneGate for apply / queue / reject / resync on capacity loss
+-> PlayerLocatorApplier replaces accepted coarse locator state for player_locator packets
 -> WorldLaneApplier validates and mutates accepted lifecycle payloads
 -> RealtimePresentationState is refreshed
 -> RealtimePacketPipeline.gameplay_packet_applied(packet)
@@ -216,7 +217,7 @@ PresentationAdapter
 
 During a successful flush, the bridge resolves:
 
-* World presentation through `GameplayComposition.get_world_sync()`.
+* Detailed world and coarse player-locator presentation through `GameplayComposition.get_world_sync()`.
 * Overlay and session HUD presentation through `GameplayComposition.get_gameplay_hud_flow()`.
 * Applied event presentation through `GameplayComposition.get_event_lifecycle_flow()`.
 * Local lifecycle presentation through `GameplayComposition.get_local_lifecycle_flow()`, delegated through the shell and flow composer.
@@ -228,7 +229,7 @@ The bridge owns the order of these calls, but the target systems own their imple
 
 The session/presentation chain uses concrete contracts for `RealtimePacketPipeline`, `PresentationBridge`, `PresentationAdapter`, `GameplayComposition`, `WorldSync`, the lane adapters, `GameplayReadiness`, and `EventBatchApplier`. Fixed APIs are invoked directly after null checks rather than discovered with `has_method()`. Optional devtools, UI, and other extension boundaries are not implied to be fully typed by this contract hardening.
 
-`PresentationAdapter` receives `RealtimePresentationState`, `WorldSync`, `GameplayHudFlow`, `GameplayEventLifecycleFlow`, and `GameplayLocalLifecycleFlow`. Its event lane receives `EventBatchApplier` and drains accumulated events through `drain_applied_events()`.
+`PresentationAdapter` receives `RealtimePresentationState`, `WorldSync`, `GameplayHudFlow`, `GameplayEventLifecycleFlow`, and `GameplayLocalLifecycleFlow`. It applies detailed world state and dedicated coarse player-locator state to `WorldSync`; its event lane receives `EventBatchApplier` and drains accumulated events through `drain_applied_events()`.
 
 `GameplayLocalLifecycleFlow` is passed as the fifth argument to `PresentationAdapter.fanout_lane_states(...)` during every ready flush. The bridge does not reconstruct local lifecycle state itself.
 
@@ -254,6 +255,8 @@ This ordering is covered by focused bridge and gameplay-session-controller unit 
 * [Runtime processing](./runtime-processing.md)
 * [Inbound packet routing](../networking-flow/inbound-packet-routing.md)
 * [HUD and gameplay UI](../hud-and-gameplay-ui.md)
+* [Network Interest](../../game-server/networking/network-interest.md)
+* [Gameplay Presentation Flow](../presentation-flow/gameplay-presentation-flow.md)
 
 ## Notes
 

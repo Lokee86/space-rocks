@@ -53,6 +53,7 @@ Active server-to-client gameplay packet families are:
 ```text
 world_full / world_delta
 ship_delta
+player_locator
 asteroid_delta
 bullet_delta
 ships_lifecycle
@@ -64,7 +65,7 @@ event_batch
 player_pause_state
 ```
 
-Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `ship_delta`, `asteroid_delta`, and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing entities, they do not create new entities client-side, and lifecycle creates/deletes are handled by `ships_lifecycle`, `asteroids_lifecycle`, and `bullets_lifecycle`. `ship_delta`, `asteroid_delta`, and `bullet_delta` are high-priority, hot-supersedable movement candidates. They are not required lifecycle packets, and they may be dropped or replaced by newer movement state. When a hot movement update list would exceed the encoded packet cap, `ship_delta`, `asteroid_delta`, and `bullet_delta` may be emitted as multiple same-sequence chunks. These chunks still only move existing entities; lifecycle creates/deletes remain on the dedicated lifecycle lanes. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
+Current packet families are lane-native, with `event_batch` carrying transient presentation-event delivery separately from world, overlay, and session state lanes. `player_locator` carries a low-cadence replace-all snapshot of coarse active-player positions for clients whose recipient-specific interest set no longer includes every detailed ship. World, overlay, and session lane packets use server-owned numeric wire quantization before delivery. `event_batch` now also goes through compact output encoding, and the client expands compact aliases and tuple-packed records before normal lane routing. `ship_delta`, `asteroid_delta`, and `bullet_delta` are hot movement packets on unordered/unreliable lanes: they move existing detailed entities, they do not create new entities client-side, and lifecycle creates/deletes are handled by `ships_lifecycle`, `asteroids_lifecycle`, and `bullets_lifecycle`. `player_locator` also uses the unordered/unreliable `sr.ships` transport, but it updates a dedicated coarse locator read model rather than detailed ship state. `ship_delta`, `asteroid_delta`, and `bullet_delta` are high-priority, hot-supersedable movement candidates. They are not required lifecycle packets, and they may be dropped or replaced by newer movement state. When a hot movement update list would exceed the encoded packet cap, `ship_delta`, `asteroid_delta`, and `bullet_delta` may be emitted as multiple same-sequence chunks. These chunks still only move existing entities; lifecycle creates/deletes remain on the dedicated lifecycle lanes. See [Realtime WebSocket Protocol](realtime-websocket-protocol.md) for the quantization details.
 
 Current lane delta behavior:
 
@@ -154,7 +155,11 @@ pause_request
 set_target_player_request
 select_target_at_position_request
 clear_target_request
+set_view_target_request
+clear_view_target_request
 ```
+
+The view-target packets are spectate/control intent. They select the recipient camera anchor used by server network interest and do not mutate canonical gameplay targeting.
 
 These are still schema-driven gameplay packets, and they route alongside the current lane-native output families.
 
@@ -176,7 +181,7 @@ WebRTCTransport receives DataChannel text for active gameplay lane packets
 -> PresentationBridge.handle_gameplay_packet(packet)
 -> EventBatchApplier
 ```
-Realtime lane packets are owned by the realtime inbound pipeline and are not re-emitted through the connection-service shell. `ClientInboundCoordinator` does not mutate gameplay state itself, but it owns dispatcher-consumer bindings for every realtime gameplay family. Those bindings invoke the typed `RealtimePacketPipeline` apply methods for world, asteroid, bullet, lifecycle, overlay, session, event, and resync packets. `RealtimePacketPipeline` and its owned `RealtimeRouter` own packet and lane-state application before `PresentationBridge` handles the semantic applied notification. Lifecycle packets route through `LifecycleLaneGate` for apply/queue/reject decisions, then `WorldLaneApplier` validates the accepted payload and mutates `WorldLaneState`. Presentation flow continues through gameplay composition and `event_batch` application.
+Realtime lane packets are owned by the realtime inbound pipeline and are not re-emitted through the connection-service shell. `ClientInboundCoordinator` does not mutate gameplay state itself, but it owns dispatcher-consumer bindings for every realtime gameplay family. Those bindings invoke the typed `RealtimePacketPipeline` apply methods for world, ship, player-locator, asteroid, bullet, lifecycle, overlay, session, event, and resync packets. `RealtimePacketPipeline` and its owned `RealtimeRouter` own packet and lane-state application before `PresentationBridge` handles the semantic applied notification. Lifecycle packets route through `LifecycleLaneGate` for apply/queue/reject decisions, then `WorldLaneApplier` validates the accepted payload and mutates `WorldLaneState`. Presentation flow continues through gameplay composition and `event_batch` application.
 
 Lifecycle packets are applied through RealtimePacketPipeline and its owned RealtimeRouter before presentation handoff, so entity existence and identity are established before session and presentation handling.
 
@@ -188,7 +193,14 @@ Current packet-family ownership is:
 
 ```text
 world lane
-= ships, pickups, player/world presentation state, and full/bootstrap world snapshots
+= recipient-relevant ships, pickups, player/world presentation state, and full/bootstrap world snapshots
+
+ships lane
+= detailed `ship_delta` movement for recipient-relevant ships
+= coarse `player_locator` snapshots for all active player identities at lower cadence
+
+ships lifecycle lane
+= recipient-relevant ship creates/deletes and reliable non-transform ship state
 
 asteroids lane
 = regular asteroid movement updates on unordered/unreliable hot lane sr.asteroids
@@ -214,7 +226,7 @@ event_batch
 
 `player_pause_state` remains a separate same-session packet and should be treated as a current packet family, not as part of lane event or world-state delivery.
 
-Lifecycle defines existence. Hot lanes update known entities only.
+Lifecycle defines detailed entity presentation existence. Hot lanes update known detailed entities only. `player_locator` is a separate coarse read model: it does not create ship nodes, does not define durable player existence, and remains available when detailed ship presentation leaves recipient interest.
 
 Hot movement packets must never create entities. Unknown hot asteroid updates are ignored. Unknown hot bullet updates are buffered only where the client explicitly supports waiting for lifecycle create; hot updates after delete are ignored and must not resurrect removed entities.
 
@@ -301,7 +313,7 @@ data-sync -push -realtime-wire -go -gds -json -docs
 data-sync -check -realtime-wire -go -gds -json -docs
 ```
 
-Relevant verification areas now include lane-native packet routing/application, lifecycle packet routing/application, `test_lifecycle_lane_gate.gd` coverage for baseline and sequence policy, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, server lifecycle wire metadata coverage in `wire_packets_test.go`, sparse delta omission, quantized wire values, generated descriptor-driven compact encoding/decoding, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
+Relevant verification areas now include lane-native packet routing/application, player-locator routing and increasing-sequence replacement, lifecycle packet routing/application, recipient-interest entry/exit behavior, `test_lifecycle_lane_gate.gd` coverage for baseline and sequence policy, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, server lifecycle wire metadata coverage in `wire_packets_test.go`, sparse delta omission, quantized wire values, generated descriptor-driven compact encoding/decoding, tuple-packed record expansion, lane state application, presentation adapters, lifecycle existence handling, and event_batch behavior.
 
 ## Code map
 
@@ -339,6 +351,8 @@ client/scripts/protocol/realtime/compact_wire_descriptor_decoder.gd
 client/scripts/protocol/realtime/realtime_quantize.gd
 client/scripts/protocol/realtime/lifecycle_lane_gate.gd
 client/scripts/protocol/realtime/baseline_tracker.gd
+client/scripts/protocol/realtime/player_locator_applier.gd
+client/scripts/protocol/realtime/player_locator_state.gd
 client/scripts/protocol/realtime/world_lane_applier.gd
 client/scripts/networking/realtime/realtime_presentation_state.gd
 client/scripts/session/session_network_controller.gd
@@ -357,6 +371,8 @@ services/game-server/internal/networking/webrtc_transport.go
 services/game-server/internal/protocol/realtime/planner.go
 services/game-server/internal/protocol/realtime/lane_candidate_world.go
 services/game-server/internal/protocol/realtime/lane_candidate_lifecycle.go
+services/game-server/internal/protocol/realtime/network_interest.go
+services/game-server/internal/protocol/realtime/player_locator.go
 services/game-server/internal/protocol/realtime/lane_candidate_overlay.go
 services/game-server/internal/protocol/realtime/lane_candidate_session.go
 services/game-server/internal/protocol/realtime/lane_candidate_event.go
@@ -390,6 +406,8 @@ services/game-server/internal/game/
 * [Realtime WebRTC Gameplay Transport](realtime-webrtc-gameplay-transport.md)
 * [Realtime Compact Wire Mapping](../services/game-server/networking/realtime-compact-wire-mapping.md)
 * [Generated Realtime Wire Reference](./generated/realtime-wire-reference.md)
+* [Game Server Network Interest](../services/game-server/networking/network-interest.md)
+* [Client Gameplay Presentation Flow](../services/client/presentation-flow/gameplay-presentation-flow.md)
 
 ## Notes
 

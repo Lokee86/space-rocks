@@ -190,7 +190,7 @@ The underlying source-of-truth constants are generated from shared data, not fro
 
 Normal behavior uses `self_id`.
 
-If a view target is set and that player exists in the current world lane ship state, the view target can become the active anchor for presentation.
+If a view target is set and that player exists in the current detailed world-lane ship state, the view target can become the active anchor for presentation. Spectate selection may be recorded before that detailed ship arrives; the client retries focus while the server re-anchors recipient network interest around the selected player's coarse locator.
 
 When the local ship is absent and no explicit view target has been selected yet, `PlayerRenderApi` retains the last valid ViewAnchor mapping and continues applying remote player state relative to that fixed anchor. This keeps surviving remote players moving after local elimination instead of freezing while the spectate menu is open.
 
@@ -206,7 +206,7 @@ set_view_target_player(player_id)
 clear_view_target_player()
 ```
 
-These calls route through the active player-render API rather than directly manipulating legacy player sync. The gameplay camera remains the `ViewAnchor/Camera2D`; selecting a spectate target changes the render anchor and does not search for or activate a camera under the player scene.
+These calls route through the active player-render API rather than directly manipulating legacy player sync. The gameplay camera remains the `ViewAnchor/Camera2D`; selecting a spectate target changes the intended render anchor and does not search for or activate a camera under the player scene. `set_view_target_player(...)` may precede detailed node availability, while `focus_camera_on_player(...)` succeeds only after the detailed target node enters presentation.
 
 ### Player render API boundary
 
@@ -266,7 +266,7 @@ Shortest wrapped delta: +20
 
 The visual entity should appear slightly to the right of the anchor, not far to the left across the entire world.
 
-This applies to players and to any entity or visual effect whose position is converted relative to ViewAnchor.
+This applies to players and to any entity or visual effect whose position is converted relative to ViewAnchor. Coarse `player_locator` server positions use the same conversion before they are exposed as off-screen indicator positions.
 
 Entity-specific continuity rules for projectiles, asteroids, and pickups are owned by [Entity Sync Owners](entity-sync-owners.md). This document owns the anchor and coordinate model those sync owners rely on.
 
@@ -288,7 +288,7 @@ Target selection itself is not owned here.
 
 ### Spectate
 
-Spectate can change which player presentation follows by setting a view target. Spectate target availability is derived from realtime world-lane ship presence and current session lifecycle state, so eliminated and pending-respawn players are not offered as camera targets. World sync keeps the camera handoff as a presentation anchor concern rather than a server authority concern.
+Spectate can change which player presentation follows by setting a view target. Target availability is derived from session/player lifecycle state rather than requiring an already rendered detailed ship node. Selecting a target sends separate server view-target control so recipient network interest is re-anchored around that player, while world sync retains the local selection and retries camera focus until the detailed ship presentation arrives. Eliminated and pending-respawn players are excluded by spectate lifecycle policy. World sync keeps the camera handoff as a presentation anchor concern rather than gameplay authority.
 
 ### Debug and telemetry
 
@@ -302,6 +302,7 @@ Debug overlays and telemetry that display world positions should respect the sam
 * `client/scripts/world/world_wrap.gd`
 * `client/scripts/protocol/realtime/world_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/world_lane_state.gd`
+* `client/scripts/protocol/realtime/player_locator_state.gd`
 
 ### Active player-render API
 
@@ -363,6 +364,7 @@ Relevant tests include:
 * `client/tests/unit/test_player_sync_state.gd`
 * `client/tests/unit/world/player_render/test_player_render_api.gd`
 * `client/tests/unit/world/player_render/test_view_anchor_sync.gd`
+* `client/tests/unit/world/test_world_sync.gd`
 * `client/tests/unit/gameplay/test_gameplay_event_controller.gd`
 * `client/tests/unit/gameplay/test_gameplay_target_candidate_flow.gd`
 * `client/tests/unit/gameplay/spectate/test_spectate_menu_state.gd`
@@ -384,6 +386,8 @@ The standard client verification path is the Godot headless GUT test suite for `
 * [World authority](../../../systems-design/world/world-authority.md) - world authority design documentation.
 * [Constants pipeline](../../../data/data-sync-and-ssot-pipeline.md) - constants source-of-truth and generated output documentation.
 * [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
+* [Spectate Session And Camera Flow](../spectate-flow/spectate-session-and-camera-flow.md)
+* [Game Server Network Interest](../../game-server/networking/network-interest.md)
 
 ## Notes
 

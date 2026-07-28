@@ -14,7 +14,7 @@ Parent index: [World Sync](./!INDEX.md)
 
 This document describes the client `WorldSync` coordinator.
 
-It explains how the client applies world lane state to world presentation seams, how `WorldSync` delegates entity-family synchronization, how interpolation is coordinated, and how targeting and presentation code access world-sync read models.
+It explains how the client applies world lane state and coarse player-locator state to world presentation seams, how `WorldSync` delegates entity-family synchronization, how interpolation is coordinated, and how targeting and presentation code access world-sync read models.
 
 ## Overview
 
@@ -35,7 +35,7 @@ RealtimeRouter.route_lane_packet(packet)
 -> WorldSync.apply_world_lane_state(world_lane_state)
 ```
 
-`WorldSync` also owns the composition of the target-position read model used by gameplay targeting flows. It exposes `target_source()`, but targeting orchestration stays outside world sync.
+`WorldSync` also owns the composition of the target-position read model used by gameplay targeting flows and the merged remote-player indicator-position read model. It exposes `target_source()`, but targeting orchestration and indicator rendering stay outside world sync.
 
 Per-frame interpolation is triggered by gameplay runtime:
 
@@ -70,7 +70,10 @@ GameplayRuntimeContext.process(delta)
 * Pass active render-anchor visual/server positions into non-player entity sync owners.
 * Set world entity layer z-index values from generated constants.
 * Coordinate interpolation for player rendering, projectiles, asteroids, and pickups.
-* Expose remote player visual positions and hues to presentation consumers.
+* Store the latest accepted coarse `PlayerLocatorState`.
+* Expose detailed remote player visual positions to presentation consumers.
+* Expose merged remote player indicator positions that fall back to coarse locator state.
+* Expose remote player hues to presentation consumers and preserve them across detailed render-interest exit.
 * Expose player-node and remote-player-node lookups to gameplay consumers.
 * Expose camera/view-target helpers used by spectate and presentation flows.
 * Expose server/visual coordinate conversion helpers through the player-render API.
@@ -230,18 +233,25 @@ pickup_sync.interpolate(weight)
 
 World sync does not decide when the frame tick occurs. Gameplay runtime calls world sync through `GameplayRuntimeContext.process(delta)`.
 
+### Player locator application
+
+`WorldSync.apply_player_locator_state(player_locator_state_ref)` stores the latest lane-applied `PlayerLocatorState`. Locator state is separate from `WorldLaneState`; it does not create player nodes or mutate detailed ship presentation.
+
 ### Read-model APIs
 
 `WorldSync` exposes player presentation read models:
 
 ```gdscript
 get_remote_player_visual_positions()
+get_remote_player_indicator_positions()
 get_remote_player_hues()
 remote_player_nodes()
 player_nodes()
 ```
 
-These methods route through `PlayerRenderApi`.
+`get_remote_player_visual_positions()` and the node/hue lookups route through `PlayerRenderApi`.
+
+`get_remote_player_indicator_positions()` starts with detailed rendered-player positions, then fills missing remote players from the current coarse locator state. It ignores the local player, inactive locators, and locator data older than `PLAYER_LOCATOR_STALE_SECONDS`. It extrapolates by locator velocity for at most `PLAYER_LOCATOR_MAX_EXTRAPOLATION_SECONDS`, converts the result through the active ViewAnchor server-to-visual mapping, and never overwrites a detailed rendered position.
 
 ### View-target APIs
 
@@ -305,6 +315,7 @@ Current coordinator state includes:
 * `pickup_sync`
 * `target_position_source`
 * `world_lane_state`
+* `player_locator_state`
 * `view_anchor`
 * `local_player`
 
@@ -325,6 +336,8 @@ Entity-specific node maps, target positions, and interpolation state belong insi
 * `client/scripts/protocol/realtime/world_presentation_adapter.gd`
 * `client/scripts/protocol/realtime/world_lane_state.gd`
 * `client/scripts/protocol/realtime/realtime_router.gd`
+* `client/scripts/protocol/realtime/player_locator_state.gd`
+* `client/scripts/protocol/realtime/player_locator_applier.gd`
 * `client/scripts/gameplay/runtime/gameplay_runtime_context.gd`
 
 ### Legacy or compatibility callers
@@ -368,6 +381,8 @@ Entity-specific node maps, target positions, and interpolation state belong insi
 World-sync coordinator behavior is covered or should be covered by tests around:
 
 * `client/tests/unit/test_world_sync.gd`
+* `client/tests/unit/world/test_world_sync.gd`
+* `client/tests/unit/protocol/realtime/test_player_locator.gd`
 * `client/tests/unit/test_world_wrap.gd`
 * `client/tests/unit/world/player_render/test_player_render_api.gd`
 * `client/tests/unit/world/player_render/test_view_anchor_sync.gd`
@@ -385,8 +400,10 @@ Expected verification should confirm:
 * `WorldSync.apply_world_lane_state` passes the active anchor visual/server basis into non-player sync owners.
 * `WorldSync.interpolate` delegates interpolation to each sync owner.
 * `WorldSync.target_source()` returns a configured target-position source.
+* `WorldSync.get_remote_player_indicator_positions()` prefers detailed render positions and fills missing players from fresh active locator records.
+* Locator extrapolation is bounded and stale locator records do not keep indicators alive indefinitely.
 * `WorldSync.reset()` clears `current_self_id` through `set_current_self_id("")`, which also clears `TargetPositionSource` identity state.
-* `WorldSync.reset()` resets `PlayerRenderApi`, `ProjectileSync`, `AsteroidSync`, and `PickupSync`, clears `world_lane_state`, and clears the view target.
+* `WorldSync.reset()` resets `PlayerRenderApi`, `ProjectileSync`, `AsteroidSync`, and `PickupSync`, clears `world_lane_state` and `player_locator_state`, and clears the view target.
 
 ## Related docs
 
@@ -397,6 +414,8 @@ Expected verification should confirm:
 * [Gameplay packets](../../../protocol/gameplay-packets.md) - gameplay realtime packet documentation.
 * [Toroidal wrap](../../../systems-design/world/toroidal-wrap.md) - toroidal world design documentation.
 * [Input and targeting](../input-and-targeting.md) - Client input and targeting documentation.
+* [Gameplay Presentation Flow](../presentation-flow/gameplay-presentation-flow.md) - Off-screen indicator consumer documentation.
+* [Game Server Network Interest](../../game-server/networking/network-interest.md) - Recipient filtering and coarse locator production.
 
 ## Notes
 
@@ -406,6 +425,6 @@ Detailed ViewAnchor, render-anchor, toroidal wrap, and coordinate-conversion beh
 
 Detailed projectile, asteroid, and pickup node synchronization belongs in [Entity Sync Owners](entity-sync-owners.md).
 
-`WorldSync.reset()` clears the current self identity by calling `set_current_self_id("")`, resets `PlayerRenderApi`, `ProjectileSync`, `AsteroidSync`, and `PickupSync`, clears `world_lane_state`, and clears the view target. Clearing the self identity through the setter also clears the identity held by `TargetPositionSource`.
+`WorldSync.reset()` clears the current self identity by calling `set_current_self_id("")`, resets `PlayerRenderApi`, `ProjectileSync`, `AsteroidSync`, and `PickupSync`, clears `world_lane_state` and `player_locator_state`, and clears the view target. Clearing the self identity through the setter also clears the identity held by `TargetPositionSource`.
 
 `TargetPositionSource.player_positions()` currently reports remote player `server_position` as the same value as `visual_position`; the local player entry uses separate values from `PlayerRenderApi`. Keep targeting documentation aware of that read-model shape.

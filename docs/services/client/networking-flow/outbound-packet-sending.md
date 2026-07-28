@@ -68,7 +68,7 @@ The client outbound packet sending flow owns:
 * Keeping caller code away from raw `WebSocketPeer` usage.
 * Creating generated packet dictionaries through focused packet-family wrappers.
 * Passing already-built packet dictionaries from callers that own context-specific packet construction.
-* Sending gameplay input, respawn, pause, target, lobby, room-entry, viewport config, and auth packets through the WebSocket raw send path.
+* Sending gameplay input, respawn, pause, gameplay-target, spectate view-target, lobby, room-entry, viewport config, and auth packets through the WebSocket raw send path.
 * Sending runtime devtools and telemetry payloads through `ClientConnectionService.send_tooling_packet(packet)` over `sr.tooling`.
 * Reporting missing `ClientPacketSender` and `NetworkClient` dependencies through the owning outbound seams.
 * Letting `NetworkClient` guard sends when the WebSocket is not open.
@@ -196,7 +196,10 @@ Outbound packet construction is split by family:
 
 ```text
 GameplayClientPackets
-= gameplay input, respawn, pause, and target request packet helpers
+= gameplay input, respawn, pause, and gameplay target request packet helpers
+
+GameplaySpectateFlow
+= generated spectate view-target set/clear control packets through the generic sender
 
 LobbyClientPackets
 = room-entry, lobby, ready, start, single-player start, leave, and return-to-lobby packet helpers
@@ -263,6 +266,11 @@ TargetRequestFlow
 -> Packets.clear_target_request_packet()
 -> ClientConnectionService.send_packet(packet)
 
+GameplaySpectateFlow
+-> Packets.set_view_target_request_packet(player_id)
+   or Packets.clear_view_target_request_packet()
+-> ClientConnectionService.send_packet(packet)
+
 ClientViewportConfigFlow
 -> Packets.client_config_packet(width, height)
 -> ClientConnectionService.send_packet(packet)
@@ -327,6 +335,7 @@ respawn
 pause
 target selection
 target clear
+spectate view-target set/clear
 room creation
 room join
 ready state change
@@ -378,6 +387,8 @@ pause_request
 set_target_player_request
 select_target_at_position_request
 clear_target_request
+set_view_target_request
+clear_view_target_request
 client_config
 ```
 
@@ -390,7 +401,7 @@ target_kind
 target_id
 ```
 
-`target_player_id` is devtools/player-only compatibility data and should not become the normal gameplay targeting model.
+`target_player_id` is devtools/player-only compatibility data and should not become the normal gameplay targeting model. `view_target_player_id` is a separate spectate presentation-control field used to re-anchor recipient network interest; it does not become canonical gameplay target state.
 
 ### Lobby and room-entry packets
 
@@ -551,6 +562,20 @@ TargetRequestFlow.deselect_target()
 
 The client sends target intent. Authoritative target state is confirmed later through server-driven gameplay state.
 
+### Spectate view target
+
+Current spectate view-target send path:
+
+```text
+GameplaySpectateFlow begins or cycles target
+-> Packets.set_view_target_request_packet(player_id)
+-> ClientConnectionService.send_packet(packet)
+-> ClientPacketSender.send_packet(packet)
+-> NetworkClient.send_raw_packet(packet)
+```
+
+On spectate reset, the flow sends `Packets.clear_view_target_request_packet()` through the same path. These packets travel over WebSocket control. They request a recipient presentation/interest anchor and do not mutate canonical gameplay target state.
+
 ### Session boot requests
 
 Current boot request send path:
@@ -701,6 +726,7 @@ client/scripts/gameplay/input/gameplay_input_context.gd
 client/scripts/gameplay/input/mouse_action_flow.gd
 client/scripts/gameplay/targeting/gameplay_targeting_context.gd
 client/scripts/gameplay/targeting/target_request_flow.gd
+client/scripts/gameplay/spectate/gameplay_spectate_flow.gd
 ```
 
 ### Session, boot, lobby, and config callers
@@ -753,6 +779,7 @@ client/tests/unit/test_pending_boot_request.gd
 client/tests/unit/boot/test_session_network_target.gd
 client/tests/unit/test_gameplay_input_context.gd
 client/tests/unit/test_target_request_flow.gd
+client/tests/unit/gameplay/spectate/test_gameplay_spectate_flow.gd
 client/tests/unit/lobby/test_lobby_shell_flow.gd
 client/tests/unit/lobby/test_lobby_return_flow.gd
 client/tests/unit/test_room_session_controller.gd
@@ -787,6 +814,8 @@ Lobby tests verify lobby UI intent and return flows that call outbound lobby req
 * [Game Server](../../game-server/!INDEX.md)
 * [Realtime Websocket Protocol](../../../protocol/realtime-websocket-protocol.md) - Realtime Websocket protocol documentation.
 * [Gameplay Packets](../../../protocol/gameplay-packets.md) - Gameplay packet documentation.
+* [Spectate Session And Camera Flow](../spectate-flow/spectate-session-and-camera-flow.md)
+* [Network Interest](../../game-server/networking/network-interest.md)
 * [Lobby Packets](../../../protocol/lobby-packets.md) - Lobby packet documentation.
 * [Devtools Packets](../../../devtools/design/devtools-packet-protocol.md) - Devtools packet protocol documentation.
 * [Packet Schema Pipeline](../../../data/packet-schemas.md) - Packet schema and generated output documentation.

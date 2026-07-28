@@ -127,6 +127,8 @@ HandleStartGameRequest
 HandleStartSinglePlayerRequest
 HandleReturnToLobbyRequest
 EnqueuePlayerPauseState
+EnqueueResyncRequest
+SetViewTargetPlayerID
 ShouldLogFirstInputPacket
 ShouldLogFirstRespawnPacket
 ```
@@ -254,6 +256,9 @@ client_config
 set_target_player_request
 select_target_at_position_request
 clear_target_request
+set_view_target_request
+clear_view_target_request
+resync_request
 pause_request
 ```
 
@@ -273,7 +278,7 @@ context.Room.GameplayContext().Game.HandlePacket(context.GamePlayerID, packet)
 
 For `input` and `respawn`, the handler also requests first-packet diagnostics through the narrow inbound adapter methods `ShouldLogFirstInputPacket(matchID)` and `ShouldLogFirstRespawnPacket(matchID)`. This diagnostic state is session-owned rather than process-global: input and respawn are tracked independently per match ID, both reset on a match transition, and both disappear when the WebSocket session is destroyed.
 
-For target and pause packets, the handler first requires a current room and active game player, then routes by packet type:
+For target, view-target, resync, and pause packets, the handler first requires a current room, active game player, and current game instance, then routes by packet type:
 
 ```text
 set_target_player_request
@@ -285,12 +290,22 @@ select_target_at_position_request
 clear_target_request
 -> Game.ClearTarget(context.GamePlayerID)
 
+set_view_target_request
+-> session.SetViewTargetPlayerID(packet.ViewTargetPlayerID)
+
+clear_view_target_request
+-> session.SetViewTargetPlayerID("")
+
+resync_request
+-> validate active match and baseline lane
+-> session.EnqueueResyncRequest(context, request)
+
 pause_request
 -> Game.HandlePacket(context.GamePlayerID, packet)
 -> session.EnqueuePlayerPauseState()
 ```
 
-Gameplay routing does not own the semantic result of these requests. It only forwards the request to the authoritative game instance and performs the pause-state outbound enqueue required by the current networking/session boundary.
+Gameplay routing does not own the semantic result of these requests. It forwards authoritative gameplay requests to the game instance, stores spectate view-target control on the session, queues validated baseline recovery requests, and performs the pause-state outbound enqueue required by the current networking/session boundary. View-target state affects recipient-specific presentation projection only.
 
 ### Unknown or unhandled packets
 
@@ -392,6 +407,15 @@ select_target_at_position_request
 clear_target_request
 -> Game.ClearTarget
 
+set_view_target_request
+-> session.SetViewTargetPlayerID(view_target_player_id)
+
+clear_view_target_request
+-> session.SetViewTargetPlayerID("")
+
+resync_request
+-> validate match/lane and enqueue typed recovery request
+
 pause_request
 -> Game.HandlePacket
 -> session.EnqueuePlayerPauseState
@@ -418,9 +442,9 @@ input, respawn, client_config
 require current room and active game player to apply
 consume without applying when room/player is missing
 
-target and pause gameplay packets
-require current room and active game player
-fall through unhandled when room/player is missing
+target, view-target, resync, and pause gameplay/control packets
+require current room, active game player, and game context
+fall through unhandled when required context is missing
 ```
 
 The websocket connection itself does not imply room membership, and room membership does not imply an active game player. `context.GamePlayerID` is the networking-owned active game routing state used to target gameplay requests at the current game instance.
@@ -478,7 +502,7 @@ services/game-server/internal/devtools/packets_generated.go
 - `services/game-server/internal/networking/inbound/auth.go` - Authenticate packet classification.
 - `services/game-server/internal/networking/inbound/telemetry.go` - Telemetry ping/pong handling.
 - `services/game-server/internal/networking/inbound/lobby.go` - Lobby packet classification and session method delegation.
-- `services/game-server/internal/networking/inbound/gameplay.go` - Gameplay, target, pause, respawn, input, and client config routing.
+- `services/game-server/internal/networking/inbound/gameplay.go` - Gameplay, target, spectate view-target, resync, pause, respawn, input, and client config routing.
 
 ### Runtime devtools tooling route
 
@@ -549,7 +573,8 @@ Direct unit coverage for `inbound.RouteClientPacket` ordering is currently thin.
 - [Game Server Integrations](../integrations/!INDEX.md)
 - [WebSocket Session Lifecycle](./websocket-session-lifecycle.md) - WebSocket upgrade, session lifecycle, and read/write loop ownership.
 - [Room Network Adapter](./room-network-adapter.md) - Room/session adapter behavior behind lobby packet routing.
-- [Gameplay Network Adapter](./gameplay-network-adapter.md) - Gameplay adapter behavior behind input, respawn, pause, target, and client config routing.
+- [Gameplay Network Adapter](./gameplay-network-adapter.md) - Gameplay adapter behavior behind input, respawn, pause, target, view-target, resync, and client config routing.
+- [Network Interest](./network-interest.md) - Session view-target consumption and recipient filtering.
 - [Auth Routing](./auth-routing.md) - Authenticate packet routing and auth verifier handoff.
 - [Telemetry Packet Routing](./telemetry-packet-routing.md) - Telemetry ping/pong routing.
 - [Outbound Message Flow](./outbound-message-flow.md) - Outbound server message writing and presentation packet flow.
