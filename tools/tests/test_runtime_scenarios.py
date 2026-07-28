@@ -52,6 +52,44 @@ def test_rejects_missing_phases(tmp_path: Path) -> None:
         Scenario.load(path)
 
 
+def test_loads_valid_match_churn_rounds(tmp_path: Path) -> None:
+    path = tmp_path / "scenario.json"
+    path.write_text(
+        json.dumps(
+            {
+                "id": "match_churn",
+                "seed": 8,
+                "clients": {"visible": 1, "headless": 1},
+                "bots": 2,
+                "rounds": [
+                    {
+                        "name": "cycle-1",
+                        "lives": 2,
+                        "phases": [{"name": "pressure", "duration_seconds": 1}],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    scenario = Scenario.load(path)
+    assert scenario.raw["rounds"][0]["name"] == "cycle-1"
+
+
+def test_rejects_phases_and_rounds_together(tmp_path: Path) -> None:
+    path = write_scenario(
+        tmp_path / "scenario.json",
+        rounds=[
+            {
+                "name": "cycle-1",
+                "phases": [{"name": "pressure", "duration_seconds": 1}],
+            }
+        ],
+    )
+    with pytest.raises(ScenarioError, match="phases or rounds"):
+        Scenario.load(path)
+
+
 def test_rejects_negative_setup_asteroid_count(tmp_path: Path) -> None:
     path = write_scenario(
         tmp_path / "scenario.json",
@@ -74,6 +112,7 @@ def test_rejects_negative_phase_bullet_streams(tmp_path: Path) -> None:
     ("filename", "clients", "bots", "seed"),
     [
         ("network_interest_lifecycle_v1.json", 2, 6, 27072701),
+        ("match_churn_2c_6b_v1.json", 2, 6, 27072803),
         ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801),
         ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801),
         ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801),

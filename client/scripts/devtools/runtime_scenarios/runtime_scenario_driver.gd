@@ -4,6 +4,7 @@ class_name RuntimeScenarioDriver
 const StatusWriterScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_status_writer.gd")
 const RosterScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_roster.gd")
 const PhaseRunnerScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_phase_runner.gd")
+const ChurnRunnerScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_churn_runner.gd")
 const GameplayDebugFlowScript := preload("res://scripts/devtools/gameplay_debug_flow.gd")
 const DevConnectionServiceScript := preload("res://scripts/devtools/dev_connection_service.gd")
 const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
@@ -64,10 +65,8 @@ func configure(
 	if connection_service != null and connection_service.has_signal("closed"):
 		connection_service.closed.connect(_on_connection_closed)
 
-
 func start() -> void:
 	call_deferred("_run")
-
 
 func _run() -> void:
 	if !bool(scenario.get("valid", false)):
@@ -93,6 +92,9 @@ func _run() -> void:
 	if role == "coordinator":
 		if !await _prepare_coordinator_lobby():
 			return
+	if _has_churn_rounds():
+		await _run_churn()
+		return
 	room_session_controller.request_ready(true)
 	if role == "coordinator":
 		if !await _wait_until(Callable(roster, "lobby_can_start"), "all members ready", _setup_timeout()):
@@ -163,6 +165,41 @@ func _run() -> void:
 	})
 	get_tree().quit(0)
 
+func _run_churn() -> void:
+	var churn_runner = ChurnRunnerScript.new()
+	churn_runner.configure(
+		scenario,
+		role,
+		client_id,
+		room_session_controller,
+		gameplay_session_controller,
+		connection_service,
+		debug_flow,
+		roster,
+		phase_runner,
+		status_writer,
+		Callable(self, "_connection_is_closed")
+	)
+	var result: Dictionary = await churn_runner.run(scenario.get("rounds", []))
+	if !bool(result.get("ok", false)):
+		_fail(str(result.get("error", "match churn scenario failed")))
+		return
+	_terminal_status_written = true
+	_status("completed", {
+		"scenario_id": _scenario_id(),
+		"room_code": str(room_session_controller.lobby_state_snapshot().get("room_code", "")),
+		"rounds_completed": int(result.get("rounds_completed", 0)),
+		"match_ids": result.get("match_ids", []),
+		"measurement_reports": result.get("measurement_reports", []),
+	})
+	get_tree().quit(0)
+
+func _has_churn_rounds() -> bool:
+	var rounds = scenario.get("rounds", [])
+	return rounds is Array and !rounds.is_empty()
+
+func _connection_is_closed() -> bool:
+	return _connection_closed
 
 func _prepare_coordinator_lobby() -> bool:
 	if !await _wait_until(Callable(roster, "humans_joined"), "real clients to join", _setup_timeout()):
@@ -179,7 +216,6 @@ func _prepare_coordinator_lobby() -> bool:
 			return false
 	return true
 
-
 func _wait_until(predicate: Callable, description: String, timeout_seconds: float) -> bool:
 	var deadline := Time.get_ticks_msec() + int(maxf(timeout_seconds, 0.1) * 1000.0)
 	while Time.get_ticks_msec() < deadline:
@@ -192,25 +228,20 @@ func _wait_until(predicate: Callable, description: String, timeout_seconds: floa
 	_fail("timed out waiting to %s" % description)
 	return false
 
-
 func _is_in_lobby() -> bool:
 	var lobby: Dictionary = room_session_controller.lobby_state_snapshot()
 	return str(lobby.get("room_code", "")) != "" \
 		and str(lobby.get("room_state", "")) == Constants.ROOM_STATE_LOBBY
 
-
 func _is_in_game() -> bool:
 	return room_session_controller.current_room_state() == Constants.ROOM_STATE_IN_GAME \
 		and gameplay_session_controller.is_gameplay_active()
 
-
 func _is_tooling_ready() -> bool:
 	return connection_service != null and connection_service.is_tooling_ready()
 
-
 func _measurement_is_recording() -> bool:
 	return bool(gameplay_session_controller.get_measurement_state().get("recording", false))
-
 
 func _measurement_is_stopped() -> bool:
 	return !bool(gameplay_session_controller.get_measurement_state().get("recording", false))

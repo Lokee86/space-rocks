@@ -1,0 +1,97 @@
+{
+  "id": "match_churn_2c_6b_v1",
+  "seed": 27072803,
+  "timeout_seconds": 240,
+  "setup_timeout_seconds": 60,
+  "clients": {
+    "visible": 1,
+    "headless": 1
+  },
+  "bots": 6,
+  "room": {
+    "team_structure": "ffa",
+    "max_players": 8
+  },
+  "rounds": [
+    {
+      "name": "cycle-1",
+      "lives": 2,
+      "phases": [
+        {
+          "name": "warmup",
+          "duration_seconds": 3,
+          "actions_by_role": {
+            "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+            "participant": ["move_forward", "turn_left", "PrimaryFire"]
+          }
+        },
+        {
+          "name": "pressure",
+          "duration_seconds": 8,
+          "bullet_streams": 20,
+          "actions": ["move_forward", "PrimaryFire"]
+        }
+      ]
+    },
+    {
+      "name": "cycle-2",
+      "lives": 2,
+      "phases": [
+        {
+          "name": "warmup",
+          "duration_seconds": 3,
+          "actions_by_role": {
+            "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+            "participant": ["move_forward", "turn_left", "PrimaryFire"]
+          }
+        },
+        {
+          "name": "pressure",
+          "duration_seconds": 8,
+          "bullet_streams": 20,
+          "actions": ["move_forward", "PrimaryFire"]
+        }
+      ]
+    },
+    {
+      "name": "cycle-3",
+      "lives": 2,
+      "phases": [
+        {
+          "name": "warmup",
+          "duration_seconds": 3,
+          "actions_by_role": {
+            "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+            "participant": ["move_forward", "turn_left", "PrimaryFire"]
+          }
+        },
+        {
+          "name": "pressure",
+          "duration_seconds": 8,
+          "bullet_streams": 20,
+          "actions": ["move_forward", "PrimaryFire"]
+        }
+      ]
+    },
+    {
+      "name": "cycle-4",
+      "lives": 2,
+      "phases": [
+        {
+          "name": "warmup",
+          "duration_seconds": 3,
+          "actions_by_role": {
+            "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+            "participant": ["move_forward", "turn_left", "PrimaryFire"]
+          }
+        },
+        {
+          "name": "pressure",
+          "duration_seconds": 8,
+          "bullet_streams": 20,
+          "actions": ["move_forward", "PrimaryFire"]
+        }
+      ]
+    }
+  ]
+}

@@ -24,7 +24,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, and a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams. Match-churn, soak, multi-room coverage, and release thresholds remain.
+Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, and a four-round match-churn scenario now exercises repeated game-over, result, lobby-reset, readiness, and restart cycles. Soak, multi-room coverage, and release thresholds remain.
 
 ## Ownership Boundary
 
@@ -283,6 +283,8 @@ Chunk planning was then changed from repeated growing-packet measurement to boun
 
 The `receiver_scale_8c_0b_v1` scenario then admitted eight real headless clients with zero bots. All eight clients authenticated, joined, became ready, completed the workload, and exported reports. Server tick time remained healthy at 0.338 ms average and 5.741 ms maximum. Across receivers, candidate construction averaged 1.380 ms and peaked at 22.473 ms; outbound work averaged 1.719 ms and peaked at 24.830 ms. No receiver sends were skipped, no client send failures occurred, and the highest lane buffer was 1,200 bytes. The exact peak candidate tick spent 19.983 ms in snapshot capture, while unrelated snapshot, lane, chunk, and encoding maxima all clustered near 20 ms and the headless client frame p99 reached 100 ms. This pattern indicates shared-host scheduler contention from eight Godot processes rather than one newly dominant server algorithm. The run is strong admission and end-to-end receiver evidence, but not a clean isolated per-receiver CPU benchmark.
 
+The `match_churn_2c_6b_v1` scenario keeps one room alive across four complete matches with two real headless clients and six bots. Both clients completed all four rounds, observed four matching unique match IDs, validated all eight result entries per round, exported one report per match, cleared lobby readiness, and restarted gameplay three times. The coordinator-side server report held peak RSS flat at 34.086 MiB across all four rounds. Server tick average ranged from 149.223 to 175.075 us and ended 14.749 us above round one; maximum tick time stayed below 1.963 ms. Receiver outbound averages ranged from 0.611 to 0.747 ms, with zero skipped sends and zero client send failures. Coordinator peak memory rose 1.105 MiB from the first to fourth short round while average frame time slightly improved. This is a healthy short-churn baseline, not evidence against slower leaks that require a longer soak.
+
 The `simulation_scale_1c_7b_v1` isolation scenario seeds 192 asteroids before measurement, uses one real headless receiver plus seven bots, and increases continuous projectile streams from 60 to 120. The first run sampled up to 144 surviving asteroids and 518 projectiles. Server tick time remained healthy at 0.280 ms average and 6.554 ms maximum, with 45.2 MiB peak RSS and 0.482 peak CPU cores. Receiver candidate construction averaged 1.345 ms and peaked at 7.811 ms; outbound work averaged 1.637 ms and peaked at 9.436 ms. No sends were skipped and no client send failures occurred. The headless client recorded a 33 ms frame-time p99 and 76.226 ms maximum, so this load does not identify authoritative simulation as the current limit; visible-client rendering and packet-application behavior should be checked separately if high-entity stutter remains.
 
 Canonical commands:
@@ -442,7 +444,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
 2. Use the implemented seeded runtime harness for repeatable multiplayer pressure while retaining manual measurement for exploratory checks.
-3. Expand the scenario catalog beyond the implemented simulation-heavy and receiver-heavy cases to cover match churn, soak, and eventually multi-room pressure separately.
+3. Expand the scenario catalog beyond the implemented simulation-heavy, receiver-heavy, and short match-churn cases to cover soak and eventually multi-room pressure separately.
 4. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
 5. Add evidence-based decision thresholds as the scenario baseline grows.
 6. Treat optimization as a follow-on choice after the limiting pressure is measured.
@@ -464,7 +466,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 ## Open decisions
 
-* Which additional scenario should be automated next: match churn, soak, or multi-room pressure?
+* Which additional scenario should be automated next: soak or multi-room pressure?
 * Which runtime signals should appear in the World Telemetry Overlay?
 * Which slow-tick or frame-pressure thresholds should become release gates?
 * Which entity-heavy feature should get the next dedicated load scenario?

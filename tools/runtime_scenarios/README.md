@@ -31,6 +31,26 @@ python tools/runtime_scenarios/main.py \
 
 The pre-measurement `setup` object supports deterministic `asteroid_spawns` and an optional `settle_seconds` delay. Per-phase `bullet_streams` are cumulative until scenario cleanup.
 
+## Match churn
+
+`match_churn_2c_6b_v1` keeps one multiplayer room alive across four complete matches with two real clients and six bots. Every round clears readiness, starts a fresh match ID, runs identical gameplay pressure, reaches an authoritative result, exports one measurement report per client, and returns to the lobby before the next round.
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/match_churn_2c_6b_v1.json \
+  --headless-coordinator
+```
+
+Summarize the coordinator's per-round reports and first-to-last drift:
+
+```bash
+python tools/runtime_scenarios/churn_summary.py \
+  .ci-artifacts/runtime-scenarios/<match-churn-run> \
+  --output .ci-artifacts/runtime-scenarios/match-churn-summary.json
+```
+
+The churn scenario uses a top-level `rounds` array instead of `phases`. Each round owns its `name`, `lives`, optional `setup`, and non-empty `phases` array. Client measurement state is intentionally stopped and exported before each lobby return because normal gameplay reset clears that state.
+
 ## Receiver-scaling matrix
 
 These scenarios hold the room at eight total participants and use the same seed, phase durations, and bullet-stream pressure. Only the number of real network clients changes:

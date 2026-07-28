@@ -67,14 +67,25 @@ class Scenario:
         _positive_number(setup, "settle_seconds", 0.0, allow_zero=True)
 
         phases = payload.get("phases")
-        if not isinstance(phases, list) or not phases:
-            raise ScenarioError("phases must be a non-empty array")
-        for index, phase in enumerate(phases):
-            if not isinstance(phase, dict):
-                raise ScenarioError(f"phase {index} must be an object")
-            _required_text(phase, "name")
-            _positive_number(phase, "duration_seconds", 0.0, allow_zero=True)
-            _nonnegative_int(phase, "bullet_streams", 0)
+        rounds = payload.get("rounds")
+        if phases is not None and rounds is not None:
+            raise ScenarioError("scenario must define phases or rounds, not both")
+        if rounds is not None:
+            if not isinstance(rounds, list) or not rounds:
+                raise ScenarioError("rounds must be a non-empty array")
+            for round_index, round_payload in enumerate(rounds):
+                if not isinstance(round_payload, dict):
+                    raise ScenarioError(f"round {round_index} must be an object")
+                _required_text(round_payload, "name")
+                _positive_int(round_payload, "lives", 2)
+                round_setup = round_payload.get("setup", {})
+                if not isinstance(round_setup, dict):
+                    raise ScenarioError(f"round {round_index} setup must be an object")
+                _nonnegative_int(round_setup, "asteroid_spawns", 0)
+                _positive_number(round_setup, "settle_seconds", 0.0, allow_zero=True)
+                _validate_phases(round_payload.get("phases"), f"round {round_index}")
+        else:
+            _validate_phases(phases, "scenario")
 
         return cls(
             path=resolved,
@@ -99,6 +110,24 @@ def _required_int(payload: dict[str, Any], key: str) -> int:
     value = payload.get(key)
     if isinstance(value, bool) or not isinstance(value, int):
         raise ScenarioError(f"{key} must be an integer")
+    return value
+
+
+def _validate_phases(value: object, owner: str) -> None:
+    if not isinstance(value, list) or not value:
+        raise ScenarioError(f"{owner} phases must be a non-empty array")
+    for index, phase in enumerate(value):
+        if not isinstance(phase, dict):
+            raise ScenarioError(f"{owner} phase {index} must be an object")
+        _required_text(phase, "name")
+        _positive_number(phase, "duration_seconds", 0.0, allow_zero=True)
+        _nonnegative_int(phase, "bullet_streams", 0)
+
+
+def _positive_int(payload: dict[str, Any], key: str, default: int) -> int:
+    value = payload.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ScenarioError(f"{key} must be a positive integer")
     return value
 
 
