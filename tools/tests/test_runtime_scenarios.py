@@ -52,6 +52,24 @@ def test_rejects_missing_phases(tmp_path: Path) -> None:
         Scenario.load(path)
 
 
+def test_rejects_negative_setup_asteroid_count(tmp_path: Path) -> None:
+    path = write_scenario(
+        tmp_path / "scenario.json",
+        setup={"asteroid_spawns": -1},
+    )
+    with pytest.raises(ScenarioError, match="asteroid_spawns"):
+        Scenario.load(path)
+
+
+def test_rejects_negative_phase_bullet_streams(tmp_path: Path) -> None:
+    path = write_scenario(
+        tmp_path / "scenario.json",
+        phases=[{"name": "pressure", "duration_seconds": 1, "bullet_streams": -1}],
+    )
+    with pytest.raises(ScenarioError, match="bullet_streams"):
+        Scenario.load(path)
+
+
 @pytest.mark.parametrize(
     ("filename", "clients", "bots", "seed"),
     [
@@ -59,6 +77,7 @@ def test_rejects_missing_phases(tmp_path: Path) -> None:
         ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801),
         ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801),
         ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801),
+        ("simulation_scale_1c_7b_v1.json", 1, 7, 27072802),
     ],
 )
 def test_repository_scenarios_are_valid(

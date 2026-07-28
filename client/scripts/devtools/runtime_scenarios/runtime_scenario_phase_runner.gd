@@ -2,6 +2,10 @@ extends RefCounted
 class_name RuntimeScenarioPhaseRunner
 
 const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
+
+const ASTEROID_SPAWN_BATCH_SIZE := 24
+const ASTEROID_SPAWN_MARGIN := 500.0
 
 const KNOWN_ACTIONS := [
 	&"move_forward",
@@ -39,6 +43,21 @@ func configure(
 	status_writer = status_writer_ref
 
 
+func prepare(setup: Dictionary) -> Dictionary:
+	var asteroid_spawns := maxi(int(setup.get("asteroid_spawns", 0)), 0)
+	var settle_seconds := maxf(float(setup.get("settle_seconds", 0.0)), 0.0)
+	_status("setup_started", {
+		"asteroid_spawns": asteroid_spawns,
+		"settle_seconds": settle_seconds,
+	})
+	if role == "coordinator":
+		await _spawn_asteroids(asteroid_spawns)
+	if settle_seconds > 0.0:
+		await Engine.get_main_loop().create_timer(settle_seconds).timeout
+	_status("setup_completed", {"asteroid_spawns": asteroid_spawns})
+	return {"ok": true}
+
+
 func run(phase: Dictionary) -> Dictionary:
 	var phase_name := str(phase.get("name", "phase"))
 	_status("phase_started", {"phase": phase_name})
@@ -72,6 +91,32 @@ func run(phase: Dictionary) -> Dictionary:
 func release_actions() -> void:
 	for action in KNOWN_ACTIONS:
 		Input.action_release(action)
+
+
+func _spawn_asteroids(count: int) -> void:
+	var spawn_count := maxi(count, 0)
+	if spawn_count == 0:
+		return
+	var columns := maxi(int(ceil(sqrt(float(spawn_count)))), 1)
+	var rows := maxi(int(ceil(float(spawn_count) / float(columns))), 1)
+	var usable_width := Constants.WORLD_WIDTH - ASTEROID_SPAWN_MARGIN * 2.0
+	var usable_height := Constants.WORLD_HEIGHT - ASTEROID_SPAWN_MARGIN * 2.0
+	for index in range(spawn_count):
+		var column := index % columns
+		var row := index / columns
+		var position := Vector2(
+			ASTEROID_SPAWN_MARGIN + usable_width * (float(column) + 0.5) / float(columns),
+			ASTEROID_SPAWN_MARGIN + usable_height * (float(row) + 0.5) / float(rows),
+		)
+		var angle := TAU * float(index) / float(spawn_count)
+		dev_connection_service.send_spawn_from_placement_result({
+			"action_name": &"spawn_asteroid",
+			"server_position": position,
+			"direction": Vector2(cos(angle), sin(angle)),
+			"has_direction": true,
+		})
+		if (index + 1) % ASTEROID_SPAWN_BATCH_SIZE == 0:
+			await Engine.get_main_loop().process_frame
 
 
 func _start_bullet_streams(count: int) -> void:

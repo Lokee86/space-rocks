@@ -60,6 +60,12 @@ class Scenario:
         if clients.total < 1:
             raise ScenarioError("at least one client is required")
 
+        setup = payload.get("setup", {})
+        if not isinstance(setup, dict):
+            raise ScenarioError("setup must be an object")
+        _nonnegative_int(setup, "asteroid_spawns", 0)
+        _positive_number(setup, "settle_seconds", 0.0, allow_zero=True)
+
         phases = payload.get("phases")
         if not isinstance(phases, list) or not phases:
             raise ScenarioError("phases must be a non-empty array")
@@ -68,6 +74,7 @@ class Scenario:
                 raise ScenarioError(f"phase {index} must be an object")
             _required_text(phase, "name")
             _positive_number(phase, "duration_seconds", 0.0, allow_zero=True)
+            _nonnegative_int(phase, "bullet_streams", 0)
 
         return cls(
             path=resolved,

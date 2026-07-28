@@ -24,7 +24,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix now holds eight total participants constant while varying one, two, and four real clients. Simulation-heavy, soak, multi-room coverage, and release thresholds remain.
+Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, and four real clients, and a simulation-heavy isolation scenario now holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams. Match-churn, soak, multi-room coverage, and release thresholds remain.
 
 ## Ownership Boundary
 
@@ -280,6 +280,8 @@ Two post-fix four-client runs confirmed the improvement under differing world pr
 
 Chunk planning was then changed from repeated growing-packet measurement to bounded planning. Hot movement lanes now account for compact-record bytes in one pass. Full-world and lifecycle candidates first measure the complete normalized packet once; packets that already fit no longer rebuild and encode every prefix. Oversized packets use binary range packing, followed by the existing final encoded-size hard-cap validation. In a four-client rerun with up to 127 asteroids and 189 projectiles, chunk-planning average fell from 0.533 ms to 0.069 ms and its peak fell from 25.051 ms to 2.502 ms. Total candidate-build average fell to 0.631 ms and its peak to 4.637 ms. No receiver sends were skipped and no hard-cap or delivery failures occurred.
 
+The `simulation_scale_1c_7b_v1` isolation scenario seeds 192 asteroids before measurement, uses one real headless receiver plus seven bots, and increases continuous projectile streams from 60 to 120. The first run sampled up to 144 surviving asteroids and 518 projectiles. Server tick time remained healthy at 0.280 ms average and 6.554 ms maximum, with 45.2 MiB peak RSS and 0.482 peak CPU cores. Receiver candidate construction averaged 1.345 ms and peaked at 7.811 ms; outbound work averaged 1.637 ms and peaked at 9.436 ms. No sends were skipped and no client send failures occurred. The headless client recorded a 33 ms frame-time p99 and 76.226 ms maximum, so this load does not identify authoritative simulation as the current limit; visible-client rendering and packet-application behavior should be checked separately if high-entity stutter remains.
+
 Canonical commands:
 
 ```bash
@@ -437,7 +439,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
 2. Use the implemented seeded runtime harness for repeatable multiplayer pressure while retaining manual measurement for exploratory checks.
-3. Expand the scenario catalog to cover simulation-heavy, receiver-heavy, match-churn, soak, and eventually multi-room pressure separately.
+3. Expand the scenario catalog beyond the implemented simulation-heavy and receiver-heavy cases to cover match churn, soak, and eventually multi-room pressure separately.
 4. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
 5. Add evidence-based decision thresholds as the scenario baseline grows.
 6. Treat optimization as a follow-on choice after the limiting pressure is measured.
@@ -459,7 +461,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 ## Open decisions
 
-* Which additional scenarios should be automated next: simulation-heavy, receiver-heavy, match churn, soak, or multi-room pressure?
+* Which additional scenario should be automated next: match churn, soak, or multi-room pressure?
 * Which runtime signals should appear in the World Telemetry Overlay?
 * Which slow-tick or frame-pressure thresholds should become release gates?
 * Which entity-heavy feature should get the next dedicated load scenario?

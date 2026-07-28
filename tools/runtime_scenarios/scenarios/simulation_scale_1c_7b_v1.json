@@ -1,0 +1,38 @@
+{
+  "id": "simulation_scale_1c_7b_v1",
+  "seed": 27072802,
+  "timeout_seconds": 210,
+  "setup_timeout_seconds": 60,
+  "clients": {
+    "visible": 1,
+    "headless": 0
+  },
+  "bots": 7,
+  "room": {
+    "team_structure": "ffa",
+    "max_players": 8
+  },
+  "setup": {
+    "asteroid_spawns": 192,
+    "settle_seconds": 5
+  },
+  "phases": [
+    {
+      "name": "simulation_warmup",
+      "duration_seconds": 15,
+      "actions": ["move_forward", "turn_right", "PrimaryFire"]
+    },
+    {
+      "name": "sustained_collision_pressure",
+      "duration_seconds": 40,
+      "bullet_streams": 60,
+      "actions": ["move_forward", "PrimaryFire"]
+    },
+    {
+      "name": "peak_collision_pressure",
+      "duration_seconds": 40,
+      "bullet_streams": 60,
+      "actions": ["move_forward", "turn_left", "PrimaryFire"]
+    }
+  ]
+}

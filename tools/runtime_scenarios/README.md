@@ -17,6 +17,20 @@ python tools/runtime_scenarios/main.py \
   tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json
 ```
 
+## Simulation-heavy isolation
+
+`simulation_scale_1c_7b_v1` holds receiver count to one real client while pre-seeding 192 asteroids before measurement and increasing continuous projectile streams from 60 to 120. This emphasizes authoritative movement, collision, fragmentation, spawning, and entity-lifecycle cost without multiplying per-receiver networking work.
+
+Run it headlessly to reduce client rendering contention:
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/simulation_scale_1c_7b_v1.json \
+  --headless-coordinator
+```
+
+The pre-measurement `setup` object supports deterministic `asteroid_spawns` and an optional `settle_seconds` delay. Per-phase `bullet_streams` are cumulative until scenario cleanup.
+
 ## Receiver-scaling matrix
 
 These scenarios hold the room at eight total participants and use the same seed, phase durations, and bullet-stream pressure. Only the number of real network clients changes:

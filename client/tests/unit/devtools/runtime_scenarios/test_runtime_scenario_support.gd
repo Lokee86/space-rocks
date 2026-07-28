@@ -3,6 +3,7 @@ extends GutTest
 const ConfigScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_config.gd")
 const RosterScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_roster.gd")
 const StatusWriterScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_status_writer.gd")
+const PhaseRunnerScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_phase_runner.gd")
 
 const SCENARIO_PATH := "user://runtime_scenario_support_test.json"
 const STATUS_PATH := "user://runtime_scenario_support_status.json"
@@ -13,6 +14,21 @@ class FakeRoomSessionController:
 
 	func lobby_state_snapshot() -> Dictionary:
 		return snapshot.duplicate(true)
+
+
+class FakeDevConnectionService:
+	var spawn_results: Array[Dictionary] = []
+
+	func send_spawn_from_placement_result(result: Dictionary) -> void:
+		spawn_results.append(result.duplicate(true))
+
+
+class FakeStatusWriter:
+	var states: Array[String] = []
+
+	func write(state: String, _fields: Dictionary = {}) -> bool:
+		states.append(state)
+		return true
 
 
 func after_each() -> void:
@@ -67,6 +83,27 @@ func test_status_writer_persists_terminal_state() -> void:
 	assert_eq(payload.get("state"), "completed")
 	assert_eq(payload.get("client_id"), "participant-1")
 	assert_eq(payload.get("measurement_report"), "report.json")
+
+
+func test_phase_runner_prepares_deterministic_asteroid_pressure() -> void:
+	var service := FakeDevConnectionService.new()
+	var writer := FakeStatusWriter.new()
+	var runner = PhaseRunnerScript.new()
+	runner.role = "coordinator"
+	runner.dev_connection_service = service
+	runner.status_writer = writer
+
+	var result: Dictionary = await runner.prepare({
+		"asteroid_spawns": 3,
+		"settle_seconds": 0.0,
+	})
+
+	assert_true(bool(result.get("ok", false)))
+	assert_eq(service.spawn_results.size(), 3)
+	assert_eq(service.spawn_results[0].get("action_name"), &"spawn_asteroid")
+	assert_true(service.spawn_results[0].get("server_position") is Vector2)
+	assert_true(service.spawn_results[0].get("direction") is Vector2)
+	assert_eq(writer.states, ["setup_started", "setup_completed"])
 
 
 func test_roster_counts_humans_bots_and_other_player() -> void:

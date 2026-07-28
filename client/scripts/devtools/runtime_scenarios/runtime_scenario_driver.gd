@@ -106,6 +106,13 @@ func _run() -> void:
 		debug_flow.set_lives(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 99)
 		await get_tree().create_timer(0.5).timeout
 
+	var setup_value = scenario.get("setup", {})
+	var setup: Dictionary = setup_value if setup_value is Dictionary else {}
+	var setup_result: Dictionary = await phase_runner.prepare(setup)
+	if !bool(setup_result.get("ok", false)):
+		_fail(str(setup_result.get("error", "runtime scenario setup failed")))
+		return
+
 	var measurement_request: String = gameplay_session_controller.start_measurement(
 		_scenario_id(),
 		{
