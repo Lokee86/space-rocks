@@ -110,6 +110,32 @@ func test_apply_state_updates_remote_players_from_last_anchor_when_self_is_missi
 	assert_eq(api.server_position(), Vector2(100.0, 200.0))
 
 
+func test_remove_missing_preserves_remote_hue_for_locator_indicators() -> void:
+	var self_id := "player-1"
+	var remote_id := "player-2"
+	var self_state := {
+		Packets.FIELD_X: 100.0,
+		Packets.FIELD_Y: 200.0,
+		Packets.FIELD_ROTATION: 0.0,
+	}
+	api.apply_state(self_id, {
+		self_id: self_state,
+		remote_id: {
+			Packets.FIELD_X: 300.0,
+			Packets.FIELD_Y: 200.0,
+			Packets.FIELD_ROTATION: 0.0,
+			Packets.FIELD_TEAM_ID: "team_2",
+		}
+	})
+	var hue_before_interest_loss: float = api.get_remote_player_hues(self_id)[remote_id]
+
+	api.remove_missing({self_id: self_state}, self_id)
+
+	var hues_after_interest_loss: Dictionary = api.get_remote_player_hues(self_id)
+	assert_true(hues_after_interest_loss.has(remote_id))
+	assert_eq(hues_after_interest_loss[remote_id], hue_before_interest_loss)
+
+
 func test_focus_camera_on_player_selects_existing_remote_render_anchor() -> void:
 	var self_id := "player-1"
 	var target_id := "player-2"
