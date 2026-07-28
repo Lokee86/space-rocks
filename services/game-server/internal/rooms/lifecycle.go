@@ -1,7 +1,5 @@
 package rooms
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
-
 func (manager *RoomManager) StartRoomGame(roomID string, sessionID string) (*Room, *RoomDomainError) {
 	roomID = NormalizeRoomID(roomID)
 
@@ -15,7 +13,7 @@ func (manager *RoomManager) StartRoomGame(roomID string, sessionID string) (*Roo
 		}
 	}
 
-	if roomErr := room.StartGameForSession(sessionID, game.New); roomErr != nil {
+	if roomErr := room.StartGameForSession(sessionID, manager.newGame); roomErr != nil {
 		return nil, roomErr
 	}
 
@@ -31,7 +29,7 @@ func (manager *RoomManager) CreateStartedSinglePlayerRoom(sessionID string) (*Ro
 		}
 	}
 
-	if roomErr := room.StartSinglePlayerGame(game.New); roomErr != nil {
+	if roomErr := room.StartSinglePlayerGame(manager.newGame); roomErr != nil {
 		return nil, roomErr
 	}
 

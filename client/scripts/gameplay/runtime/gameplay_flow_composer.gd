@@ -203,6 +203,16 @@ func get_latest_measurement_export_result() -> Dictionary:
 	return client_measurement_coordinator.get_latest_export_result()
 
 
+func configure_measurement_report_directory(path: String) -> void:
+	if client_measurement_report_writer != null:
+		client_measurement_report_writer.base_directory = path
+
+
+func request_spectate_target(player_id: String) -> void:
+	if spectate_context != null:
+		spectate_context.request_target(player_id)
+
+
 func apply_devtools_gameplay_state(state: Dictionary) -> void:
 	if devtools_context != null:
 		devtools_context.apply_gameplay_state(state)

@@ -10,6 +10,9 @@ import (
 )
 
 func buildAuthVerifierFromEnv(startupTraceID string) networking.TokenVerifier {
+	if verifier := runtimeScenarioAuthVerifierFromEnv(); verifier != nil {
+		return verifier
+	}
 	baseURL := os.Getenv("API_SERVER_BASE_URL")
 	internalToken := os.Getenv("GAME_SERVER_INTERNAL_TOKEN")
 	if baseURL == "" || internalToken == "" {

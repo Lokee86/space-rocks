@@ -124,6 +124,37 @@ func current_max_players() -> int:
 	return int(lobby_flow.current_state().max_players)
 
 
+func lobby_state_snapshot() -> Dictionary:
+	if lobby_flow == null:
+		return {}
+	var state = lobby_flow.current_state()
+	return {
+		"room_code": state.room_code,
+		"room_state": state.room_state,
+		"local_player_id": state.local_player_id,
+		"owner_id": state.owner_id,
+		"max_players": state.max_players,
+		"members": state.members.duplicate(true),
+		"all_members_ready": state.all_members_ready(),
+		"can_start_game": state.can_start_game(),
+	}
+
+
+func request_ready(ready: bool) -> void:
+	if lobby_network_actions != null:
+		lobby_network_actions.send_ready_requested(ready)
+
+
+func request_add_bot() -> void:
+	if lobby_network_actions != null:
+		lobby_network_actions.send_add_bot_requested()
+
+
+func request_start_game() -> void:
+	if lobby_network_actions != null:
+		lobby_network_actions.send_start_game_requested()
+
+
 func handle_room_error(packet: Dictionary) -> void:
 	var error_code := str(packet.get(Packets.FIELD_ERROR_CODE, ""))
 	var packet_trace_id := str(packet.get(Packets.FIELD_TRACE_ID, ""))

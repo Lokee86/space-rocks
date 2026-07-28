@@ -101,6 +101,40 @@ func get_client_measurement_context():
 		return null
 	return flow_composer.get_client_measurement_context()
 
+
+func start_measurement(scenario_label: String = "", metadata: Dictionary = {}) -> String:
+	if flow_composer == null:
+		return ""
+	return flow_composer.start_measurement(scenario_label, metadata)
+
+
+func stop_measurement() -> String:
+	if flow_composer == null:
+		return ""
+	return flow_composer.stop_measurement()
+
+
+func get_measurement_state() -> Dictionary:
+	if flow_composer == null:
+		return {}
+	return flow_composer.get_measurement_state()
+
+
+func get_latest_measurement_export_result() -> Dictionary:
+	if flow_composer == null:
+		return {}
+	return flow_composer.get_latest_measurement_export_result()
+
+
+func configure_measurement_report_directory(path: String) -> void:
+	if flow_composer != null:
+		flow_composer.configure_measurement_report_directory(path)
+
+
+func request_spectate_target(player_id: String) -> void:
+	if flow_composer != null:
+		flow_composer.request_spectate_target(player_id)
+
 func apply_player_pause_state_packet(packet: Dictionary) -> void:
 	if gameplay_pause_state_flow == null:
 		return

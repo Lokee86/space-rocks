@@ -124,12 +124,21 @@ func runWithContext(ctx context.Context) int {
 		return 1
 	}
 	defer closeDiagnosticAggregator(diagnosticService, shutdownTraceID)
-	rooms := networking.NewRoomManager()
+	gameFactory, err := runtimeScenarioGameFactoryFromEnv()
+	if err != nil {
+		logging.Emit(observability.Request{
+			Event:   observability.EventNameConfigurationInvalid,
+			Context: observability.Context{TraceID: startupTraceID},
+			Fields:  observability.Fields{"configuration_key": runtimeScenarioSeedEnv, "failure_mode": "invalid_value"},
+		})
+		return 1
+	}
+	rooms := networking.NewRoomManagerWithGameFactory(gameFactory)
 	defer rooms.StopAll()
 	measurementController := servertooling.NewController(servertooling.Dependencies{
 		Rooms:        rooms,
 		BuildVersion: gameIdentity.Version,
-		ReportWriter: measurement.NewReportWriter(runtimePath("measurement-results/game-server")),
+		ReportWriter: measurement.NewReportWriter(runtimeScenarioMeasurementPath(runtimePath("measurement-results/game-server"))),
 	})
 
 	webRTCTransportConfig := buildWebRTCTransportConfigFromEnv()

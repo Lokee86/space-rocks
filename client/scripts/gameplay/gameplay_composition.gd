@@ -115,6 +115,40 @@ func get_client_measurement_context():
 		return null
 	return gameplay_shell_flow.get_client_measurement_context()
 
+
+func start_measurement(scenario_label: String = "", metadata: Dictionary = {}) -> String:
+	if gameplay_shell_flow == null:
+		return ""
+	return gameplay_shell_flow.start_measurement(scenario_label, metadata)
+
+
+func stop_measurement() -> String:
+	if gameplay_shell_flow == null:
+		return ""
+	return gameplay_shell_flow.stop_measurement()
+
+
+func get_measurement_state() -> Dictionary:
+	if gameplay_shell_flow == null:
+		return {}
+	return gameplay_shell_flow.get_measurement_state()
+
+
+func get_latest_measurement_export_result() -> Dictionary:
+	if gameplay_shell_flow == null:
+		return {}
+	return gameplay_shell_flow.get_latest_measurement_export_result()
+
+
+func configure_measurement_report_directory(path: String) -> void:
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.configure_measurement_report_directory(path)
+
+
+func request_spectate_target(player_id: String) -> void:
+	if gameplay_shell_flow != null:
+		gameplay_shell_flow.request_spectate_target(player_id)
+
 func get_world_sync() -> WorldSync:
 	return world_sync
 

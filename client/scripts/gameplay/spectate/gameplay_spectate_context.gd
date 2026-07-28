@@ -54,5 +54,10 @@ func request_cycle_target() -> void:
 		spectate_flow.request_cycle_target()
 
 
+func request_target(player_id: String) -> void:
+	if spectate_flow != null:
+		spectate_flow.request_target(player_id)
+
+
 func _on_spectate_requested() -> void:
 	begin_spectating()

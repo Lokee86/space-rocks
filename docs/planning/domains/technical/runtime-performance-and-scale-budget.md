@@ -24,7 +24,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning. Deterministic game-owned RNG is implemented and benchmark foundations exist. The scripted/synthetic runtime scenario harness is not implemented.
+Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix now holds eight total participants constant while varying one, two, and four real clients. Simulation-heavy, soak, multi-room coverage, and release thresholds remain.
 
 ## Ownership Boundary
 
@@ -49,7 +49,7 @@ General testing policy belongs in verification and quality-gates planning. This 
 
 Runtime-heavy features should not be considered safe to expand until Space Rocks can measure their server tick cost, client frame cost, entity-count pressure, and memory/resource impact.
 
-The first goal is not to measure everything. The first goal is to establish stable runtime signals that reveal when gameplay growth, multiplayer growth, or release-shaped builds are becoming unsafe. Runtime measurement stays centered on server tick, client frame, entity counts, room/player scale, memory/resource growth, lifecycle churn, and soak behavior; the scripted/synthetic scenario harness is the next slice that will exercise those signals repeatably.
+The first goal is not to measure everything. The first goal is to establish stable runtime signals that reveal when gameplay growth, multiplayer growth, or release-shaped builds are becoming unsafe. Runtime measurement stays centered on server tick, client frame, entity counts, room/player scale, memory/resource growth, lifecycle churn, and soak behavior. The implemented scripted runtime harness now exercises those signals repeatably; the next work is broader scenario coverage and evidence-based thresholds.
 
 Initial runtime measurement should focus on:
 
@@ -206,6 +206,91 @@ Client frame health and server tick health are separate gates. A feature can be 
 
 Manual measurement is acceptable early. Release-shaped builds should move toward repeatable scenarios so runtime readiness is not judged only by feel.
 
+## Implemented Runtime Scenario Harness
+
+The initial harness lives under `tools/runtime_scenarios/` and runs the real client/server product path rather than a separate simulation.
+
+The canonical lifecycle regression scenario is `network_interest_lifecycle_v1`. It currently uses:
+
+* one coordinator client,
+* one additional real headless client,
+* six server-owned bots,
+* a fixed simulation seed,
+* normal authenticated room create/join/ready/start flow,
+* real WebRTC gameplay and tooling channels,
+* sustained continuous-bullet-stream pressure,
+* scripted movement and firing,
+* interest-transition pressure,
+* authoritative death and spectate targeting,
+* existing client/server runtime measurement exporters.
+
+The runner reserves an isolated loopback port, starts the current game-server source through WSL `go run` on Windows or direct `go run` on non-Windows hosts, enables harness-only authentication and deterministic seed injection through process environment, starts the configured clients, collects status and measurement artifacts, and terminates the complete process trees it started. Run artifacts are written under `.ci-artifacts/runtime-scenarios/`.
+
+The coordinator is visible by default so its client report can measure actual rendering pressure. `--headless-coordinator` is available for unattended orchestration and network/lifecycle verification, but a headless run is not a client render-performance baseline.
+
+Complete server sample history is persisted to the server report on disk. Server measurement report version 6 records per-receiver candidate-build, encoding, and total outbound duration; exclusive candidate-build timing for snapshot capture, pending-event copying, interest filtering, lane-candidate assembly, chunk planning, and scheduling; nested lane-candidate timing for hot-tick state advancement, world/hot/lifecycle construction, player locators, overlay, session, event, and candidate finalization; the complete phase breakdown from the exact peak candidate-build tick; receiver skipped-send ticks; per-lane current and peak DataChannel buffered bytes; and per-lane skipped-send counts. The final `measurement_stopped` tooling response carries a bounded summary plus the export path rather than embedding the entire sample history in one control message. Scenario summaries and `phase-markers.json` preserve configured phase boundaries for later correlation with samples and logs.
+
+Runtime-scenario clients run the source project through the Godot editor executable. Scenario startup skips the bundled local-alpha server, so packaged/exported Space Rocks executables are not launched. On Windows, the harness starts the current server source through WSL `go run ./cmd/game-server`, keeping the server as a Linux process instead of allowing native Windows `go run` to create a temporary `game-server.exe`. Non-Windows hosts use direct `go run`.
+
+The receiver-scaling matrix uses the same seed, eight total participants, matching phase durations, and matching 30-stream pressure:
+
+```text
+receiver_scale_1c_7b_v1: one real client and seven bots
+receiver_scale_2c_6b_v1: two real clients and six bots
+receiver_scale_4c_4b_v1: four real clients and four bots
+```
+
+`tools/runtime_scenarios/matrix_summary.py` aggregates the resulting client and server reports into one receiver-scaling summary. Headless runs remain useful for network, packet-application, process, and lifecycle pressure, but their frame values are not render-performance baselines.
+
+### Initial receiver-scaling evidence
+
+The current local headless matrix was recorded on 2026-07-28 with Godot 4.6.3 clients and the game server running through WSL. All clients and the server ran on the same development machine, so client-process and cross-VM host contention remain part of the result.
+
+| Real clients | Bots | Server tick avg | Server tick max | Candidate build avg | Candidate build max | Encode avg | Outbound avg | Outbound max |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 7 | 209.9 us | 8.22 ms | 1.285 ms | 7.80 ms | 0.187 ms | 1.554 ms | 8.28 ms |
+| 2 | 6 | 262.8 us | 4.13 ms | 1.698 ms | 10.43 ms | 0.236 ms | 2.038 ms | 11.60 ms |
+| 4 | 4 | 366.2 us | 27.76 ms | 2.856 ms | 43.42 ms | 0.298 ms | 3.281 ms | 44.27 ms |
+
+| Real clients | Receiver bytes | Skipped receiver ticks | Highest lane buffer | Mean headless frame | Worst headless p99 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 11.0 MB | 0 | 1,199 B | 7.05 ms | 16 ms |
+| 2 | 21.9 MB | 0 | 1,200 B | 7.94 ms | 33 ms |
+| 4 | 41.7 MB | 0 | 1,200 B | 12.66 ms | 100 ms |
+
+Receiver bytes scale approximately with real-client count. No client reported a send failure, no receiver tick was skipped for backpressure, and the largest observed lane buffer was 1,200 bytes against the 32 KiB server backpressure boundary. DataChannel congestion is therefore not the current receiver-scale limit in this scenario.
+
+Within the measured receiver pipeline, candidate construction is the dominant cost. Encoding remains comparatively small, while average candidate-build time rises from 1.285 ms with one receiver to 2.856 ms with four. The four-client receiver maximum of 44.27 ms is almost entirely explained by its 43.42 ms candidate-build maximum. The older 173.9 ms server-tick maximum did not reproduce; the controlled rerun recorded 27.76 ms. Because all clients and the WSL server share one host, these results do not yet separate candidate-path algorithmic contention from OS scheduling and client-process contention.
+
+A follow-up report-v4 matrix split candidate construction into exclusive phases. Average candidate time was dominated by lane-candidate assembly, with chunk planning second:
+
+| Real clients | Snapshot | Events | Interest | Lane candidates | Chunk planning | Scheduling |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 0.004 ms | 0.003 ms | 0.080 ms | 1.359 ms | 0.583 ms | 0.015 ms |
+| 2 | 0.007 ms | 0.003 ms | 0.089 ms | 1.780 ms | 0.741 ms | 0.016 ms |
+| 4 | 0.005 ms | 0.002 ms | 0.094 ms | 1.994 ms | 0.785 ms | 0.018 ms |
+
+Report version 5 then preserved the phase breakdown from the exact worst candidate-build tick. In the correlated four-client rerun, the peak candidate build was 37.432 ms: 35.369 ms of lane-candidate assembly, 1.328 ms of chunk planning, 0.625 ms of snapshot capture, 0.090 ms of interest filtering, 0.004 ms of event copying, and 0.014 ms of scheduling. Lane-candidate assembly therefore accounted for 94.5% of that exact peak.
+
+Report version 6 split lane-candidate assembly itself. In the correlated four-client run, average lane-candidate construction was 2.066 ms: 1.952 ms for world/hot/lifecycle construction, 0.084 ms for session construction, 0.016 ms for overlay, 0.007 ms for player locators, 0.003 ms for events, and negligible state-advance/finalization work. The exact 42.642 ms peak candidate-build tick contained 42.594 ms of lane-candidate assembly, of which 42.513 ms was world/hot/lifecycle construction. That path therefore accounted for 99.7% of the exact peak candidate build and 95.2% of average lane-candidate construction.
+
+The implemented fix now caches one immutable quantized full-world projection per published `Game` presentation generation. Adjacent generations are retained because receiver write loops can briefly overlap frames. Receiver-specific interest filtering, baselines, sequences, cadence, hot-route state, lifecycle selection, and deltas remain isolated. This removes repeated entity-ID sorting, record construction, and float quantization from each receiver path.
+
+Two post-fix four-client runs confirmed the improvement under differing world pressure. World/hot/lifecycle average fell from 1.952 ms to 1.067 ms and 1.298 ms. Its peak fell from 42.513 ms to 5.849 ms and 15.903 ms. Total candidate-build average fell from 3.038 ms to 1.722 ms and 1.990 ms. The heavier confirmation run moved its largest candidate-build outlier to chunk planning: 25.051 ms of a 29.377 ms peak, while world/hot/lifecycle used 3.943 ms on that exact tick. The repeated per-receiver world projection problem was therefore materially reduced.
+
+Chunk planning was then changed from repeated growing-packet measurement to bounded planning. Hot movement lanes now account for compact-record bytes in one pass. Full-world and lifecycle candidates first measure the complete normalized packet once; packets that already fit no longer rebuild and encode every prefix. Oversized packets use binary range packing, followed by the existing final encoded-size hard-cap validation. In a four-client rerun with up to 127 asteroids and 189 projectiles, chunk-planning average fell from 0.533 ms to 0.069 ms and its peak fell from 25.051 ms to 2.502 ms. Total candidate-build average fell to 0.631 ms and its peak to 4.637 ms. No receiver sends were skipped and no hard-cap or delivery failures occurred.
+
+Canonical commands:
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json \
+  --validate-only
+
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json
+```
+
 ## Launch-Shape Runtime Expectations
 
 | Build Or Environment   | Runtime Expectation                                                                                                |
@@ -351,10 +436,11 @@ Possible future optimization areas may include simulation cost, collision cost, 
 ## Implementation sequence
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
-2. Use manual measurement and devtools overlays first, then grow toward repeatable runtime scenarios with seeded scenario configuration.
-3. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
-4. Add decision states and load scenarios as the evidence base grows.
-5. Treat optimization as a follow-on choice after the limiting pressure is measured.
+2. Use the implemented seeded runtime harness for repeatable multiplayer pressure while retaining manual measurement for exploratory checks.
+3. Expand the scenario catalog to cover simulation-heavy, receiver-heavy, match-churn, soak, and eventually multi-room pressure separately.
+4. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
+5. Add evidence-based decision thresholds as the scenario baseline grows.
+6. Treat optimization as a follow-on choice after the limiting pressure is measured.
 
 ## Related Docs
 
@@ -373,10 +459,10 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 ## Open decisions
 
-* Which first runtime scenarios should be automated versus manual?
+* Which additional scenarios should be automated next: simulation-heavy, receiver-heavy, match churn, soak, or multi-room pressure?
 * Which runtime signals should appear in the World Telemetry Overlay?
 * Which slow-tick or frame-pressure thresholds should become release gates?
-* Which entity-heavy feature should get the first dedicated load scenario?
+* Which entity-heavy feature should get the next dedicated load scenario?
 * When should multi-room process scale become a gate instead of single-room health?
 * Which competitive modes require stricter runtime thresholds?
 * What minimum runtime coverage is required before hosted staging can promote to production?

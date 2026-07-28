@@ -15,6 +15,10 @@ func NewRoomManager() *rooms.RoomManager {
 	return rooms.NewRoomManager()
 }
 
+func NewRoomManagerWithGameFactory(gameFactory rooms.GameFactory) *rooms.RoomManager {
+	return rooms.NewRoomManagerWithGameFactory(gameFactory)
+}
+
 func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *rooms.RoomManager {
 	return rooms.NewRoomManagerWithCleanupDelay(cleanupDelay)
 }

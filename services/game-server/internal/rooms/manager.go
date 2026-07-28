@@ -15,6 +15,7 @@ type RoomManager struct {
 	mu           sync.Mutex
 	rooms        map[string]*Room
 	cleanupDelay time.Duration
+	gameFactory  GameFactory
 }
 
 var stopRoomForCleanup = func(room *Room) { room.StopGameIfPresent() }
@@ -39,16 +40,23 @@ func (err *RoomDomainError) Error() string {
 }
 
 func NewRoomManager() *RoomManager {
-	return NewRoomManagerWithCleanupDelay(RoomCleanupGraceTime)
+	return NewRoomManagerWithCleanupDelayAndGameFactory(RoomCleanupGraceTime, nil)
+}
+
+func NewRoomManagerWithGameFactory(gameFactory GameFactory) *RoomManager {
+	return NewRoomManagerWithCleanupDelayAndGameFactory(RoomCleanupGraceTime, gameFactory)
 }
 
 func NewRoomManagerWithCleanupDelay(cleanupDelay time.Duration) *RoomManager {
-	manager := &RoomManager{
+	return NewRoomManagerWithCleanupDelayAndGameFactory(cleanupDelay, nil)
+}
+
+func NewRoomManagerWithCleanupDelayAndGameFactory(cleanupDelay time.Duration, gameFactory GameFactory) *RoomManager {
+	return &RoomManager{
 		rooms:        make(map[string]*Room),
 		cleanupDelay: cleanupDelay,
+		gameFactory:  normalizeGameFactory(gameFactory),
 	}
-
-	return manager
 }
 
 func (manager *RoomManager) Find(roomID string) (*Room, bool) {

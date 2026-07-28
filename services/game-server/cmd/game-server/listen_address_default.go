@@ -3,5 +3,5 @@
 package main
 
 func serverListenAddress() string {
-	return ":8080"
+	return runtimeScenarioListenAddress(":8080")
 }

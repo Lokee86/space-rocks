@@ -10,6 +10,23 @@ const ObservabilityContract := preload("res://scripts/generated/observability/co
 const TEST_TOKEN_PATH := "user://test_auth_session_controller_token.json"
 
 var _auth_state_change_count := 0
+
+
+func test_initialize_ephemeral_session_works_before_ready() -> void:
+	var controller := AuthSessionController.new()
+	watch_signals(controller)
+	controller.initialize_ephemeral_session("runtime-scenario:client-1", {
+		"id": "client-1",
+		"display_name": "Scenario client-1",
+	})
+
+	assert_true(controller.get_session().is_signed_in())
+	assert_eq(controller.get_session().token, "runtime-scenario:client-1")
+	assert_eq(controller.get_session().display_name, "Scenario client-1")
+	assert_signal_emitted(controller, "auth_state_changed")
+	controller.free()
+
+
 class InMemoryAuthCredentialStore:
 	extends "res://scripts/auth/auth_credential_store.gd"
 

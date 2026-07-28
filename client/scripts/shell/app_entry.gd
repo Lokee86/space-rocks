@@ -20,6 +20,8 @@ const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const GameplayCameraControllerScript := preload("res://scripts/gameplay/camera/gameplay_camera_controller.gd")
+const RuntimeScenarioConfigScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_config.gd")
+const RuntimeScenarioDriverScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_driver.gd")
 
 @onready var main_menu: Control = %MainMenu
 @onready var user_interface: CanvasLayer = $UserInterface
@@ -52,6 +54,7 @@ var background_controller
 var menu_flow_controller
 var multiplayer_entry_flow
 var gameplay_camera_controller
+var runtime_scenario_driver
 
 func _ready() -> void:
 	var logger_callable := Callable(ClientLogger, "shell_info")
@@ -66,9 +69,13 @@ func _ready() -> void:
 
 	get_tree().set_auto_accept_quit(false)
 
-	local_server_process = LocalServerProcessScript.new()
-	add_child(local_server_process)
-	var local_server_start_error: Error = local_server_process.start()
+	var runtime_scenario_config := RuntimeScenarioConfigScript.from_command_line()
+	var runtime_scenario_enabled := bool(runtime_scenario_config.get("enabled", false))
+	var local_server_start_error: Error = OK
+	if !runtime_scenario_enabled:
+		local_server_process = LocalServerProcessScript.new()
+		add_child(local_server_process)
+		local_server_start_error = local_server_process.start()
 	var smoke_phase := _local_alpha_smoke_phase()
 	if local_server_start_error != OK:
 		ClientLogger.emit_canonical(
@@ -214,9 +221,13 @@ func _ready() -> void:
 
 	_connect_main_menu_signals()
 	_connect_auth_signals()
-	auth_session_controller.initialize_from_saved_token()
+	if bool(runtime_scenario_config.get("enabled", false)):
+		_configure_runtime_scenario_auth(runtime_scenario_config)
+	else:
+		auth_session_controller.initialize_from_saved_token()
 	_make_view_anchor_camera_current()
 	ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_STARTED)
+	_start_runtime_scenario(runtime_scenario_config)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -247,6 +258,34 @@ func _local_alpha_smoke_phase() -> String:
 		if argument.begins_with("--local-alpha-smoke="):
 			return argument.trim_prefix("--local-alpha-smoke=")
 	return ""
+
+
+func _configure_runtime_scenario_auth(config: Dictionary) -> void:
+	var server_url := str(config.get("server_url", ""))
+	if !server_url.is_empty():
+		session_boot_controller.set_websocket_url_override(server_url)
+	var runtime_client_id := str(config.get("client_id", "runtime-client"))
+	var token := "runtime-scenario:%s" % runtime_client_id
+	auth_session_controller.initialize_ephemeral_session(token, {
+		"id": runtime_client_id,
+		"display_name": "Scenario %s" % runtime_client_id,
+	})
+	session_boot_controller.get_connection_service().set_ephemeral_websocket_auth_token(token)
+
+
+func _start_runtime_scenario(config: Dictionary) -> void:
+	if !bool(config.get("enabled", false)):
+		return
+	runtime_scenario_driver = RuntimeScenarioDriverScript.new()
+	add_child(runtime_scenario_driver)
+	runtime_scenario_driver.configure(
+		config,
+		main_menu_session_controller,
+		room_session_controller,
+		gameplay_session_controller,
+		session_boot_controller.get_connection_service()
+	)
+	runtime_scenario_driver.start()
 
 
 func _setup_boot_and_config(logger_callable: Callable) -> void:

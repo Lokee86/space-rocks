@@ -1,0 +1,39 @@
+{
+  "id": "receiver_scale_2c_6b_v1",
+  "seed": 27072801,
+  "timeout_seconds": 150,
+  "setup_timeout_seconds": 45,
+  "clients": {
+    "visible": 1,
+    "headless": 1
+  },
+  "bots": 6,
+  "room": {
+    "team_structure": "ffa",
+    "max_players": 8
+  },
+  "phases": [
+    {
+      "name": "warmup",
+      "duration_seconds": 12,
+      "actions_by_role": {
+        "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+        "participant": ["move_forward", "turn_left", "PrimaryFire"]
+      }
+    },
+    {
+      "name": "steady_receiver_pressure",
+      "duration_seconds": 35,
+      "bullet_streams": 30,
+      "actions": ["move_forward", "PrimaryFire"]
+    },
+    {
+      "name": "interest_transitions",
+      "duration_seconds": 35,
+      "actions_by_role": {
+        "coordinator": ["move_forward", "turn_right", "PrimaryFire"],
+        "participant": ["move_forward", "turn_left", "PrimaryFire"]
+      }
+    }
+  ]
+}

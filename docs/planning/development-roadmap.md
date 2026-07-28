@@ -271,7 +271,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, and spectate interest anchoring are implemented. Seeded game-owned RNG is already in place as a P3C enabling foundation, but P3C is not complete; the next slice is a scripted/synthetic runtime scenario harness for repeatable player/entity/room pressure. Future work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, spectate interest anchoring, seeded game-owned RNG, and the initial deterministic scripted runtime scenario harness are implemented. Remaining P3C work is broader scenario coverage, operational thresholds, and release-shaped verification. Future protocol work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
 ### Ordered Subphases
 
@@ -293,12 +293,13 @@ Implemented:
 - bounded diagnostic-aggregator intake/storage
 - completed targeted workflow migrations
 - game-server canonical-only migration
+- initial deterministic scripted runtime scenario harness
 
 Remaining:
 - product diagnostic producers/uploads
 - diagnostic bundles and copy diagnostics
 - compatibility bridge cleanup
-- P3C scripted/synthetic runtime scenarios
+- expanded runtime scenario coverage
 - operational thresholds and release verification
 - P3D release/environment/compatibility gates
 ```
@@ -321,11 +322,11 @@ observability, logging, and diagnostics
 ```text
 1. P3A verification and architecture gates (implemented).
 2. Observability SSoT, emitters, service runtimes, and bounded aggregator (implemented).
-3. P3C runtime measurement and operational readiness (scripted/synthetic scenarios remain).
+3. P3C runtime measurement and operational readiness (initial harness implemented; expanded scenarios and thresholds remain).
 4. P3D build/release/environment/compatibility gates (remaining).
 ```
 
-The implemented observability baseline includes the SSoT, canonical envelope, generated consumers, service-owned rolling runtimes, cross-service workflow correlation, bounded aggregator intake/storage, redaction, recovery, compression, retention, and non-fatal logging degradation. Remaining P3 work is product diagnostics, bundles/copy diagnostics, compatibility cleanup, scripted/synthetic runtime scenarios, operational thresholds, hosted release verification, and P3D environment/compatibility gates. Production-scale dashboards, alerting, OpenTelemetry-style tracing, optional centralized collection, and long-term hosted retention remain deferred.
+The implemented observability baseline includes the SSoT, canonical envelope, generated consumers, service-owned rolling runtimes, cross-service workflow correlation, bounded aggregator intake/storage, redaction, recovery, compression, retention, non-fatal logging degradation, and an initial deterministic runtime scenario harness. Remaining P3 work is product diagnostics, bundles/copy diagnostics, compatibility cleanup, expanded runtime scenarios, operational thresholds, hosted release verification, and P3D environment/compatibility gates. Production-scale dashboards, alerting, OpenTelemetry-style tracing, optional centralized collection, and long-term hosted retention remain deferred.
 
 ### Completion Criteria
 

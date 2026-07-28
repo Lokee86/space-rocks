@@ -53,6 +53,10 @@ func begin_spectating() -> void:
 	_set_target(spectate_menu_state.begin_spectating())
 
 
+func request_target(next_target_player_id: String) -> void:
+	_set_target(next_target_player_id)
+
+
 func _set_target(next_target_player_id: String) -> void:
 	if next_target_player_id.is_empty():
 		return

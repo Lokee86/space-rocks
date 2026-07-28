@@ -54,6 +54,7 @@ var _realtime_replay_available := true
 
 var has_started_connection := false
 var auth_session_controller: AuthSessionController
+var ephemeral_websocket_auth_token := ""
 var websocket_auth_authenticated := false
 const NO_WEBSOCKET_AUTH_USER_ID := -1
 var websocket_auth_user_id: int = NO_WEBSOCKET_AUTH_USER_ID
@@ -211,6 +212,10 @@ func close_gracefully() -> void:
 
 func set_auth_session_controller(auth_session_controller_ref: AuthSessionController) -> void:
 	auth_session_controller = auth_session_controller_ref
+
+
+func set_ephemeral_websocket_auth_token(token: String) -> void:
+	ephemeral_websocket_auth_token = token
 
 
 func send_start_single_player_request(local_profile_id := "") -> void:
@@ -692,12 +697,14 @@ func _set_realtime_replay_available(available: bool) -> void:
 
 
 func _send_authenticate_request_if_token_exists() -> void:
-	if auth_session_controller == null:
-		return
-	var auth_session: AuthSession = auth_session_controller.get_session()
-	if auth_session == null:
-		return
-	var token: String = auth_session.token
+	var token := ephemeral_websocket_auth_token
+	if token.is_empty():
+		if auth_session_controller == null:
+			return
+		var auth_session: AuthSession = auth_session_controller.get_session()
+		if auth_session == null:
+			return
+		token = auth_session.token
 	if token.is_empty():
 		return
 	if _can_send_outbound():

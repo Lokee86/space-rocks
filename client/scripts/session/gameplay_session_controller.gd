@@ -175,6 +175,40 @@ func refresh_match_end_state() -> void:
 func refresh_game_over_menu_state() -> void:
 	refresh_match_end_state()
 
+
+func start_measurement(scenario_label: String = "", metadata: Dictionary = {}) -> String:
+	if gameplay_composition == null:
+		return ""
+	return gameplay_composition.start_measurement(scenario_label, metadata)
+
+
+func stop_measurement() -> String:
+	if gameplay_composition == null:
+		return ""
+	return gameplay_composition.stop_measurement()
+
+
+func get_measurement_state() -> Dictionary:
+	if gameplay_composition == null:
+		return {}
+	return gameplay_composition.get_measurement_state()
+
+
+func get_latest_measurement_export_result() -> Dictionary:
+	if gameplay_composition == null:
+		return {}
+	return gameplay_composition.get_latest_measurement_export_result()
+
+
+func configure_measurement_report_directory(path: String) -> void:
+	if gameplay_composition != null:
+		gameplay_composition.configure_measurement_report_directory(path)
+
+
+func request_spectate_target(player_id: String) -> void:
+	if gameplay_composition != null:
+		gameplay_composition.request_spectate_target(player_id)
+
 func _on_gameplay_started() -> void:
 	if main_menu != null:
 		main_menu.hide()

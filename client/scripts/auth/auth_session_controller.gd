@@ -48,6 +48,13 @@ func get_session() -> AuthSession:
 	return auth_session
 
 
+func initialize_ephemeral_session(token: String, user_payload: Dictionary) -> void:
+	_ensure_auth_objects()
+	_cancel_auth_operation()
+	auth_session.set_signed_in(token, user_payload)
+	auth_state_changed.emit()
+
+
 func initialize_from_saved_token() -> void:
 	if auth_session == null:
 		auth_session = AuthSessionScript.new()

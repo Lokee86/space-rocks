@@ -10,6 +10,7 @@ var connection_service
 var shell_boot_flow
 var session_context
 var websocket_url := Constants.MULTIPLAYER_WS_URL
+var websocket_url_override := ""
 var logger: Callable
 
 
@@ -24,25 +25,35 @@ func _ready() -> void:
 	shell_boot_flow = ShellBootFlow.new(connection_service, websocket_url, logger)
 
 
+func set_websocket_url_override(url: String) -> void:
+	websocket_url_override = url.strip_edges()
+
+
 func request_single_player(local_profile_id := "") -> void:
 	session_context.request_single_player()
 	shell_boot_flow.request_single_player(local_profile_id)
-	shell_boot_flow.set_websocket_url(SessionNetworkTargetScript.websocket_url_for_mode(Constants.SESSION_MODE_SINGLE_PLAYER))
+	shell_boot_flow.set_websocket_url(_websocket_url_for_mode(Constants.SESSION_MODE_SINGLE_PLAYER))
 	shell_boot_flow.connect_to_game_server("single player")
 
 
 func request_create_room(config: Dictionary = {}) -> void:
 	session_context.request_multiplayer()
 	shell_boot_flow.request_create_room(config)
-	shell_boot_flow.set_websocket_url(SessionNetworkTargetScript.websocket_url_for_mode(Constants.SESSION_MODE_MULTIPLAYER))
+	shell_boot_flow.set_websocket_url(_websocket_url_for_mode(Constants.SESSION_MODE_MULTIPLAYER))
 	shell_boot_flow.connect_to_game_server("multiplayer create")
 
 
 func request_join_room(room_code: String) -> void:
 	session_context.request_multiplayer()
 	shell_boot_flow.request_join_room(room_code)
-	shell_boot_flow.set_websocket_url(SessionNetworkTargetScript.websocket_url_for_mode(Constants.SESSION_MODE_MULTIPLAYER))
+	shell_boot_flow.set_websocket_url(_websocket_url_for_mode(Constants.SESSION_MODE_MULTIPLAYER))
 	shell_boot_flow.connect_to_game_server("multiplayer join: %s" % room_code)
+
+
+func _websocket_url_for_mode(mode: String) -> String:
+	if !websocket_url_override.is_empty():
+		return websocket_url_override
+	return SessionNetworkTargetScript.websocket_url_for_mode(mode)
 
 
 func get_connection_service():

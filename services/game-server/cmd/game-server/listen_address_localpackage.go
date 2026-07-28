@@ -19,5 +19,5 @@ func serverListenAddress() string {
 	if err != nil || parsed < 1 || parsed > 65535 {
 		port = "8080"
 	}
-	return "127.0.0.1:" + port
+	return runtimeScenarioListenAddress("127.0.0.1:" + port)
 }
