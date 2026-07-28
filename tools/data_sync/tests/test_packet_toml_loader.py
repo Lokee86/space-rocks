@@ -57,6 +57,7 @@ def test_loads_migrated_packet_schema_outputs(tmp_path: Path) -> None:
         "world_full",
         "world_delta",
         "ship_delta",
+        "player_locator",
         "ships_lifecycle",
         "overlay_full",
         "overlay_delta",
