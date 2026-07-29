@@ -22,14 +22,22 @@ def test_pitlord_policy_composes_repository_and_semantic_rules() -> None:
 
     assert {"forbid_content", "require_path", "forbid_path"} <= repository_types
     assert {"forbid_dependency", "require_ownership", "forbid_area_cycles"} <= semantic_types
-    assert semantic["areas"]
+    area_ids = {area["id"] for area in semantic["areas"]}
+    assert {"client-teams", "game-server-matchresults", "game-server-playerinventory"} <= area_ids
 
 
 def test_go_semantic_areas_cover_source_and_normalized_package_paths() -> None:
     semantic = load_json("semantic.json")
     areas = {area["id"]: area for area in semantic["areas"]}
 
-    for area_id in ("game-server-game", "game-server-networking", "game-server-protocol", "shared-go"):
+    for area_id in (
+        "game-server-game",
+        "game-server-matchresults",
+        "game-server-networking",
+        "game-server-playerinventory",
+        "game-server-protocol",
+        "shared-go",
+    ):
         paths = areas[area_id]["paths"]
         assert any(not path.startswith("@internal/") for path in paths)
         assert any(path.startswith("@internal/") for path in paths)

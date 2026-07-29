@@ -50,6 +50,14 @@
       ]
     },
     {
+      "id": "game-server-matchresults",
+      "description": "Game-server internal matchresults ownership area",
+      "paths": [
+        "services/game-server/internal/matchresults",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/matchresults"
+      ]
+    },
+    {
       "id": "game-server-measurement",
       "description": "Game-server internal measurement ownership area",
       "paths": [
@@ -87,6 +95,14 @@
       "paths": [
         "services/game-server/internal/playerids",
         "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/playerids"
+      ]
+    },
+    {
+      "id": "game-server-playerinventory",
+      "description": "Game-server internal playerinventory ownership area",
+      "paths": [
+        "services/game-server/internal/playerinventory",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/playerinventory"
       ]
     },
     {
@@ -240,6 +256,13 @@
       ]
     },
     {
+      "id": "client-teams",
+      "description": "Client teams ownership area",
+      "paths": [
+        "client/scripts/teams"
+      ]
+    },
+    {
       "id": "client-ui",
       "description": "Client ui ownership area",
       "paths": [
@@ -344,8 +367,10 @@
         "game-server-authclient",
         "game-server-devtools",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-networking",
         "game-server-playerdata",
+        "game-server-playerinventory",
         "game-server-rooms",
         "game-server-tooling"
       ],
@@ -380,11 +405,13 @@
         "game-server-game",
         "game-server-logging",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-measurement",
         "game-server-networking",
         "game-server-observability",
         "game-server-playerdata",
         "game-server-playerids",
+        "game-server-playerinventory",
         "game-server-protocol",
         "game-server-rooms",
         "game-server-tooling"
@@ -407,11 +434,13 @@
         "game-server-game",
         "game-server-logging",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-measurement",
         "game-server-networking",
         "game-server-observability",
         "game-server-playerdata",
         "game-server-playerids",
+        "game-server-playerinventory",
         "game-server-protocol",
         "game-server-rooms",
         "game-server-tooling",
@@ -437,11 +466,13 @@
         "game-server-game",
         "game-server-logging",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-measurement",
         "game-server-networking",
         "game-server-observability",
         "game-server-playerdata",
         "game-server-playerids",
+        "game-server-playerinventory",
         "game-server-protocol",
         "game-server-rooms",
         "game-server-tooling",
@@ -466,11 +497,13 @@
         "game-server-game",
         "game-server-logging",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-measurement",
         "game-server-networking",
         "game-server-observability",
         "game-server-playerdata",
         "game-server-playerids",
+        "game-server-playerinventory",
         "game-server-protocol",
         "game-server-rooms",
         "game-server-tooling",
@@ -492,11 +525,13 @@
         "game-server-game",
         "game-server-logging",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-measurement",
         "game-server-networking",
         "game-server-observability",
         "game-server-playerdata",
         "game-server-playerids",
+        "game-server-playerinventory",
         "game-server-protocol",
         "game-server-rooms",
         "game-server-tooling"
@@ -521,6 +556,7 @@
         "client-profile",
         "client-protocol",
         "client-session",
+        "client-teams",
         "client-world"
       ],
       "to_areas": [
@@ -542,11 +578,13 @@
         "game-server-game",
         "game-server-logging",
         "game-server-matchreporting",
+        "game-server-matchresults",
         "game-server-measurement",
         "game-server-networking",
         "game-server-observability",
         "game-server-playerdata",
         "game-server-playerids",
+        "game-server-playerinventory",
         "game-server-protocol",
         "game-server-rooms",
         "game-server-tooling"
