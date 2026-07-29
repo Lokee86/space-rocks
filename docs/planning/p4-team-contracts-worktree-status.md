@@ -4,35 +4,35 @@ created: "2026-07-19"
 document_id: 019f7d55-fb2c-7249-b36c-1a66c47768d5
 document_type: general
 policy_exempt: false
-summary: This note records the current state of the isolated P4 Player Experience Foundation implementation while P3 work continues on main.
+summary: This note records the completed integration of the P4 Player Experience Foundation and the remaining content and presentation work.
 ---
-# P4 Team Contracts Worktree Status
+# P4 Team Contracts Integration Status
 
 Parent index: [Planning](./!INDEX.md)
 
 ## Purpose
 
-This note records the current state of the isolated P4 Player Experience Foundation implementation while P3 work continues on `main`.
+This note records the completed integration of the P4 Player Experience Foundation into `main`.
 
-It is a branch handoff and integration note, not current implementation authority. The canonical implementation documentation currently lives on the P4 branch and should replace older conflicting P4 documentation when the branch is integrated.
+It is an integration record and remaining-work note, not current implementation authority. Canonical implementation behavior belongs in the gameplay, game-server, client, and data documentation linked from their indexes.
 
-## Worktree
+## Current State
 
-As of July 18, 2026:
+As of July 28, 2026:
 
 ```text
-worktree: D:\!bin\space-rocks\.worktrees\p4-team-contracts
-branch: codex/p4-team-contracts
-latest commit: a1657237 docs(gameplay): document P4 owner systems
-merge base with main: d9d01a72
-branch commits not on main: 18
-main commits not on branch: 23
-worktree state: clean
+integration target: main
+integration state: complete
+server owner-system foundation: integrated
+client presentation and lobby integration: integrated
+working tree: clean at the completion checkpoint
 ```
 
-## Completed Foundation
+The former `codex/p4-team-contracts` worktree and branch were temporary isolation mechanisms. Their old path, merge base, and branch-only commit counts are no longer current project state.
 
-The branch contains the server-side P4 owner-system foundation for:
+## Integrated Foundation
+
+The current integrated path contains:
 
 ```text
 team identity, assignment, configuration, and membership
@@ -46,78 +46,37 @@ modes and resolved match rules
 match decisions, outcomes, summaries, and result projections
 hangar inventory across guest, local-profile, and account routes
 player build eligibility, loadout validation, and resolved runtime builds
+multiplayer lobby team configuration and bot controls
+team-aware gameplay, HUD, player colours, and match-result presentation
+client loadout and gameplay integration through the current P4 path
 ```
 
-The final implementation and documentation commits are:
-
-```text
-a1657237 docs(gameplay): document P4 owner systems
-ca9bc2a8 feat(game): add player builds and loadouts
-11ad7536 feat(game): add inventory and hangar ownership
-904f8b33 feat(game): add modes and match rules
-a29486ff feat(game): add match outcomes and results
-36b681a2 feat(game): add objective foundation
-160177d3 feat(game): add gameplay awards and counters
-a72736e4 feat(game): add damage and healing rules
-60f02b39 feat(game): add encounter spawn profiles
-675a11a0 feat(game): add encounter lifecycle ownership
-e739298a feat(game): close out P4 lives lifecycle
-```
-
-Earlier commits on the same branch establish team contracts, team assignment, participant history, and room-team integration.
+The final client reconciliation is represented on current history by `83b601b3 fix(gameplay): finish P4 client rebase integration`. Earlier P4 implementation commits were rebased and integrated into the current `main` history.
 
 ## Verification State
 
-The branch was left clean after:
+The integrated state has been exercised through focused server/client tests, architecture/tooling checks, multiplayer lifecycle scenarios, repeated-match churn and soak coverage, and simultaneous multi-room functional runs. Runtime-capacity calibration remains a separate controlled-host activity rather than an integration prerequisite.
+
+## Remaining P4 Work
+
+Remaining P4 work is content and presentation expansion rather than branch integration or a missing authoritative owner seam:
 
 ```text
-game-server focused and complete Go test passes
-game-server nodevtools test pass
-architecture/tooling suite: 26 passed
-documentation audit: pass
-relative-link and index checks: pass
-git diff --check: pass
+expand the production ship, weapon, ammunition, shield, and module catalog
+add enough distinct loadout choices to exercise eligibility and selection meaningfully
+continue player-facing hangar and loadout presentation polish
+extend mode, objective, encounter, and result content
+refine tutorials, explanations, and error presentation around build selection
 ```
 
-Verification should be repeated after the branch is brought onto the then-current `main`.
-
-## Integration Sequence
-
-Do not merge this branch while P3 is still moving heavily on `main`.
-
-When P3 is stable enough to integrate P4:
-
-1. Bring `codex/p4-team-contracts` onto the current `main` history.
-2. Resolve implementation conflicts without weakening the P4 ownership boundaries.
-3. For P4 documentation conflicts, keep the P4 branch's canonical current implementation docs and preserve newer unrelated P3 documentation from `main`.
-4. Regenerate synchronized data or protocol artifacts if conflict resolution changes their sources.
-5. Rerun game-server, player-data, API, tooling, documentation, and relevant client verification.
-6. Integrate the reconciled branch into `main` and confirm both worktrees are clean.
-
-A rebase followed by fast-forward integration is preferred when practical. A merge is acceptable if preserving the existing P4 commit chain is safer.
-
-## Next P4 Work
-
-The remaining P4 work is integration, presentation, and content expansion rather than another standalone owner system:
-
-```text
-load the player's hangar inventory during room or lobby preparation
-send authoritative eligible build options to the client
-provide client ship, weapon, and module selection UI
-submit and validate the selected loadout
-apply ResolvedPlayerBuild at match start
-reflect equipped weapons, ammunition, shields, and modules in the HUD
-return cleanly from match results to lobby or hangar state
-add enough ships, weapons, and modules to exercise the system meaningfully
-```
-
-The current production catalog remains intentionally narrow: `v_wing`, `pulse` mapped to `basic_cannon`, and no selectable production modules.
+The current production catalog remains intentionally narrow and should expand only through the existing inventory, eligibility, loadout, and resolved-build seams.
 
 ## Related Docs
 
 - [Development Roadmap](development-roadmap.md)
 - [Gameplay Planning](domains/gameplay/!INDEX.md)
+- [Runtime Performance And Scale Budget](domains/technical/runtime-performance-and-scale-budget.md)
 
 ## Notes
 
-The P4 branch is not yet on `main`. Earlier P4 planning documents on `main` do not imply that the implementation commits listed above have already been integrated.
+Do not use the former worktree state as evidence that P4 is still isolated. P4 integration is complete; future work should modify the current integrated owner systems directly.

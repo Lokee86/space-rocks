@@ -49,7 +49,7 @@ General testing policy belongs in verification and quality-gates planning. This 
 
 Runtime-heavy features should not be considered safe to expand until Space Rocks can measure their server tick cost, client frame cost, entity-count pressure, and memory/resource impact.
 
-The first goal is not to measure everything. The first goal is to establish stable runtime signals that reveal when gameplay growth, multiplayer growth, or release-shaped builds are becoming unsafe. Runtime measurement stays centered on server tick, client frame, entity counts, room/player scale, memory/resource growth, lifecycle churn, and soak behavior. The implemented scripted runtime harness now exercises those signals repeatably; the next work is broader scenario coverage and evidence-based thresholds.
+The first goal is not to measure everything. The first goal is to establish stable runtime signals that reveal when gameplay growth, multiplayer growth, or release-shaped builds are becoming unsafe. Runtime measurement stays centered on server tick, client frame, entity counts, room/player scale, memory/resource growth, lifecycle churn, and soak behavior. The implemented scripted runtime harness now exercises those signals through lifecycle, receiver-scaling, simulation-heavy, churn, soak, heap-profile, and multi-room scenarios. The next work is controlled-host execution and evidence-based thresholds; that is calibration work rather than missing harness implementation.
 
 Initial runtime measurement should focus on:
 
@@ -208,7 +208,7 @@ Manual measurement is acceptable early. Release-shaped builds should move toward
 
 ## Implemented Runtime Scenario Harness
 
-The initial harness lives under `tools/runtime_scenarios/` and runs the real client/server product path rather than a separate simulation.
+The harness lives under `tools/runtime_scenarios/` and runs the real client/server product path rather than a separate simulation. The operational runbook, scenario inventory, commands, host-control flags, artifact layout, and summary tools are documented canonically in [`tools/runtime_scenarios/README.md`](../../../../tools/runtime_scenarios/README.md); this planning document owns measurement policy and recorded evidence.
 
 The canonical lifecycle regression scenario is `network_interest_lifecycle_v1`. It currently uses:
 

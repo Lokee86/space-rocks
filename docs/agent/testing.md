@@ -177,6 +177,55 @@ The client runner uses Godot 4.6.3 in CI, checks out LFS assets, performs a 1200
 
 The packaged gate now covers WebSocket/realtime connection, single-player admission, authoritative match completion, resolved results, local persistence, and restart behavior. Manual smoke remains appropriate for visible rendering, ordinary player controls, asteroid/shooting/effects presentation, pause/debug presentation, and the human-played gameplay loop.
 
+## Runtime scenario checks
+
+The deterministic runtime harness lives under `tools/runtime_scenarios/`. Its complete scenario inventory, artifact layout, and summary commands are documented in [`tools/runtime_scenarios/README.md`](../../tools/runtime_scenarios/README.md).
+
+Validate one scenario without starting processes:
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json \
+  --validate-only
+```
+
+Run the complete runtime-scenario tooling test selection:
+
+```bash
+pytest -q \
+  tools/tests/test_runtime_scenarios.py \
+  tools/tests/test_runtime_scenario_churn_summary.py \
+  tools/tests/test_runtime_scenario_heap_profiles.py \
+  tools/tests/test_runtime_scenario_matrix_summary.py \
+  tools/tests/test_runtime_scenario_multi_room.py \
+  tools/tests/test_runtime_scenario_multi_room_matrix.py \
+  tools/tests/test_runtime_scenario_server_command.py \
+  tools/tests/test_runtime_scenario_soak_summary.py
+```
+
+The implemented scenarios cover the canonical multiplayer lifecycle, receiver scaling, simulation-heavy isolation, repeated-match churn, a 90-round soak, forced-GC heap profiles, simultaneous multi-room operation, and a one/two/three/four-room matrix.
+
+Validate the multi-room matrix manifest without running it:
+
+```bash
+python tools/runtime_scenarios/multi_room_matrix.py \
+  tools/runtime_scenarios/scenarios/multi_room_matrix_v1.json \
+  --validate-only
+```
+
+Run the matrix as performance evidence only on a controlled host:
+
+```bash
+python tools/runtime_scenarios/multi_room_matrix.py \
+  tools/runtime_scenarios/scenarios/multi_room_matrix_v1.json \
+  --controlled-host \
+  --host-note "dedicated idle host; hardware and OS details"
+```
+
+Local runs performed while the server, Godot clients, development tools, or unrelated workloads share one machine remain valid functional/lifecycle evidence, but they are not clean capacity evidence. The matrix summary reports `functional_pass` separately from `performance_eligible` and requires every point to carry the controlled-host declaration before performance comparison is accepted.
+
+Run artifacts are written under `.ci-artifacts/runtime-scenarios/`. Do not commit generated run artifacts.
+
 ## Data-sync checks
 
 Observability contract generation/drift checks:

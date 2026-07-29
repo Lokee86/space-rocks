@@ -24,7 +24,7 @@ This doc keeps verification and release gates aligned so code, docs, contracts, 
 
 ## Current status
 
-The current automated CI baseline and native local-packaged-alpha gate are implemented. Release-shaped planning remains active for dev-hosted multiplayer, hosted staging, production candidate, runtime-heavy feature, migration/compatibility, and operational readiness gates.
+The current automated CI baseline and native local-packaged-alpha gate are implemented. Runtime-scenario verification now covers deterministic lifecycle, receiver scaling, simulation-heavy isolation, repeated-match churn, long soak, heap-profile diagnosis, simultaneous multi-room operation, and a controlled one/two/three/four-room matrix. Functional success is reported separately from performance eligibility, and clean capacity evidence requires an explicitly controlled host. Release-shaped planning remains active for dev-hosted multiplayer, hosted staging, production candidate, migration/compatibility, and operational readiness gates.
 
 ## Current automated baseline
 

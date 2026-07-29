@@ -27,7 +27,7 @@ This folder owns the planning index for work that has not yet become current doc
 
 - [development-roadmap.md](development-roadmap.md) - High-level roadmap planning.
 - [domain-backlog.md](domain-backlog.md) - Cross-domain planning triage and routing.
-- [p4-team-contracts-worktree-status.md](p4-team-contracts-worktree-status.md) - Isolated P4 implementation status, integration sequence, and next steps.
+- [p4-team-contracts-worktree-status.md](p4-team-contracts-worktree-status.md) - Completed P4 branch integration record and remaining content/presentation work.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

@@ -58,7 +58,7 @@ Current technical sequencing is:
 P1 initial measurement checkpoint complete.
 P2 active protocol baseline established; remaining advanced work is evidence-driven.
 P3A automated verification baseline implemented.
-P3 observability and release-foundation baseline is implemented; remaining work is explicit below.
+P3 technical release foundation is complete. Controlled-host capacity calibration and later hosted-release gates remain ongoing release work, not unfinished P3 implementation.
 ```
 
 Compact JSON aliases, sparse delta omission, tuple packing, lane-native WebRTC channels, focused ship/asteroid/bullet hot-lane chunking, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, and spectate interest anchoring are implemented. General record/entity-level prioritization, deeper interest-policy refinement, and binary/protobuf representation remain future work. Lifecycle lanes are part of the implemented lane set.
@@ -271,7 +271,7 @@ event_batch duplicate suppression and control-path/event-drain ordering are defi
 
 ### Goal
 
-Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, spectate interest anchoring, seeded game-owned RNG, and the initial deterministic scripted runtime scenario harness are implemented. Remaining P3C work is broader scenario coverage, operational thresholds, and release-shaped verification. Future protocol work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
+Make future work release-shaped instead of only editor/dev-runner-shaped. Compact JSON aliases, sparse delta section omission, tuple packing for asteroids, bullets, world ships/player records, session players, session lifecycle, and known event records, candidate-level scheduling, estimated byte-budget selection, chunker-owned hot-lane hard-size guarding, recipient-specific network interest, coarse player locators, spectate interest anchoring, seeded game-owned RNG, the deterministic scripted runtime scenario harness, repeated-match soak coverage, heap-profile diagnosis, simultaneous multi-room coverage, and the controlled one/two/three/four-room matrix are implemented. Phase P3 is complete. Controlled-host capacity calibration, evidence-based release thresholds, hosted environment gates, and later product-facing diagnostic surfaces remain follow-on release and operations work rather than missing P3 implementation. Future protocol work stays on binary/bit-packed representation, protobuf/custom binary representation, deeper packet-budget work beyond current candidate-level selection, and record/entity-level prioritization.
 
 ### Ordered Subphases
 
@@ -285,23 +285,26 @@ P3D. Build, release, environment, and compatibility gates.
 P3 state is:
 
 ```text
-Implemented:
-- P3A automated verification baseline
+Completed:
+- P3A automated verification and architecture-gate baseline
 - observability SSoT and generated consumers
 - service-owned rolling runtimes
 - canonical cross-language emitters
 - bounded diagnostic-aggregator intake/storage
 - completed targeted workflow migrations
 - game-server canonical-only migration
-- initial deterministic scripted runtime scenario harness
+- deterministic runtime scenario harness
+- lifecycle, receiver-scaling, simulation-heavy, churn, soak, heap-profile, and multi-room scenarios
+- repaired repeated-match memory baseline
+- controlled-host evidence metadata and one/two/three/four-room matrix
+- native local packaged-alpha release gate and build/environment policy baseline
 
-Remaining:
-- product diagnostic producers/uploads
-- diagnostic bundles and copy diagnostics
-- compatibility bridge cleanup
-- expanded runtime scenario coverage
-- operational thresholds and release verification
-- P3D release/environment/compatibility gates
+Deferred beyond P3:
+- product-triggered diagnostic uploads and client-facing copy-diagnostics surfaces
+- broader diagnostic bundle product UX
+- remaining compatibility bridge retirement
+- hosted staging and production-specific gate activation
+- controlled-host capacity calibration and evidence-based thresholds
 ```
 
 P3D is the release gate for local-profile schema changes that ship in public packaged alpha, beta, release candidate, or launch builds. Disposable local development and testing profiles do not need backup or migration protection. Before a public packaged alpha, beta, release candidate, or launch build introduces or ships a local-profile schema change, the gate requires schema versioning, a forward migration path, automatic pre-migration backup, validation, visible safe failure, preservation of the original data, and migration tests.
@@ -320,36 +323,35 @@ observability, logging, and diagnostics
 ### Priority Order
 
 ```text
-1. P3A verification and architecture gates (implemented).
-2. Observability SSoT, emitters, service runtimes, and bounded aggregator (implemented).
-3. P3C runtime measurement and operational readiness (initial harness implemented; expanded scenarios and thresholds remain).
-4. P3D build/release/environment/compatibility gates (remaining).
+1. P3A verification and architecture gates (completed).
+2. Observability SSoT, emitters, service runtimes, and bounded aggregator (completed baseline).
+3. P3C runtime measurement and operational readiness (completed implementation; controlled-host calibration remains external evidence work).
+4. P3D build/release/environment/compatibility foundation (completed for the current local packaged-alpha and policy boundary; hosted gates activate when those environments exist).
 ```
 
-The implemented observability baseline includes the SSoT, canonical envelope, generated consumers, service-owned rolling runtimes, cross-service workflow correlation, bounded aggregator intake/storage, redaction, recovery, compression, retention, non-fatal logging degradation, and an initial deterministic runtime scenario harness. Remaining P3 work is product diagnostics, bundles/copy diagnostics, compatibility cleanup, expanded runtime scenarios, operational thresholds, hosted release verification, and P3D environment/compatibility gates. Production-scale dashboards, alerting, OpenTelemetry-style tracing, optional centralized collection, and long-term hosted retention remain deferred.
+The completed P3 baseline includes the SSoT, canonical envelope, generated consumers, service-owned rolling runtimes, cross-service workflow correlation, bounded aggregator intake/storage, redaction, recovery, compression, retention, non-fatal logging degradation, deterministic runtime scenarios, receiver and simulation isolation, repeated-match churn and soak coverage, heap-profile diagnosis, multi-room orchestration, and controlled-host evidence gating. Product-triggered diagnostic UX, remaining compatibility cleanup, hosted release verification, capacity calibration, and operational thresholds remain later release/operations work. Production-scale dashboards, alerting, OpenTelemetry-style tracing, optional centralized collection, and long-term hosted retention remain deferred.
 
 ### Completion Criteria
 
 ```text
-local development sanity gate exists
-documentation and contract gate exists
-local packaged single-player alpha gate exists
-dev-hosted multiplayer gate exists
-hosted staging gate requires validated hosted observability and diagnostic verification; continuous centralized log collection remains optional future work
+local development sanity and documentation/contract gates exist
+native local packaged single-player alpha gate exists
+build and environment policy separates local, dev-hosted, staging, and production shapes
 production candidate blockers are explicit
 runtime-heavy features require measurement before release-shaped expansion
 shared observability contract and canonical envelope exist
-minimal aggregator accepts and validates batched events
+minimal aggregator accepts, validates, stores, and retrieves bounded reports
 correlation survives the client/game-server/API/player-data chain
 unsafe fields are rejected or redacted
 aggregator outage does not block gameplay
-diagnostic bundles can reconstruct a correlated failure chain
-delivery drop/reject/redaction accounting is visible
 each product service retains independently useful bounded local structured JSONL logs
-service-owned rolling segments support age/size rotation, completed-segment compression, crash recovery, age/byte retention, and non-fatal logging failure
-long-running file guards exist for the game-server and API-server
-API-server active files are per-worker/process-owned, avoid shared-file writes, and use coordinated retention cleanup
-implementation follows the documented observability flows and call-site inventory through a gap matrix and workflow-based rollout
+service-owned rolling segments support rotation, compression, crash recovery, retention, and non-fatal logging failure
+long-running file guards and process-owned active files exist where required
+deterministic runtime scenarios exercise real product paths
+receiver, simulation, repeated-match, soak, heap-profile, and multi-room pressure are covered
+repeated-match retention has a repaired 90-round baseline
+controlled-host declarations separate functional evidence from performance evidence
+remaining hosted, product-diagnostic, and threshold work is explicitly routed outside the completed phase
 ```
 
 ## Phase P4 - Player Experience Foundation
@@ -362,7 +364,7 @@ The server-side P4 owner-system foundation is implemented through Player Builds 
 
 Define what a match is, how rules are resolved, how results are finalized, and how player builds enter a match.
 
-The isolated `codex/p4-team-contracts` branch now contains the server-side P4 owner-system foundation through inventory, builds, and loadouts. It is not yet integrated into `main`; P3 should stabilize before the branch is reconciled and merged. See [P4 Team Contracts Worktree Status](p4-team-contracts-worktree-status.md) for the exact branch state, integration sequence, and remaining client-facing work.
+The P4 owner-system foundation and client integration are now on `main`. Modes, match rules, teams, outcomes, results, inventory, builds, loadouts, lobby presentation, gameplay state, HUD presentation, and result presentation share the current integrated path. See [P4 Team Contracts Integration Status](p4-team-contracts-worktree-status.md) for the completed integration record and remaining content/presentation work.
 
 ### Priority Order
 
