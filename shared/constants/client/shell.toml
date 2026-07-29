@@ -1,7 +1,7 @@
 [constants.client.shell.network]
 single_player_ws_url = "ws://localhost:8080/ws"
-multiplayer_ws_url = "ws://localhost:8080/ws"
-multiplayer_ws_origin = "https://space-rocks-client.local"
+multiplayer_ws_url = "wss://space-rocks.laughingskull.ca/game/ws"
+multiplayer_ws_origin = "https://space-rocks.laughingskull.ca"
 network_poll_process_priority = -100
 webrtc_ice_servers = []
 

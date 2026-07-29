@@ -1,8 +1,8 @@
 class_name ApiConfig
 extends RefCounted
 
-const RAILS_API_BASE_URL := "http://localhost:3000"
-const DATA_HANDLER_API_BASE_URL := "http://localhost:8080"
+const RAILS_API_BASE_URL := "https://space-rocks.laughingskull.ca"
+const DATA_HANDLER_API_BASE_URL := "https://space-rocks.laughingskull.ca/game"
 const LOCAL_PACKAGED_ALPHA_FEATURE := "local_packaged_alpha"
 const LOCAL_SERVER_PORT_ENV := "SPACE_ROCKS_LOCAL_SERVER_PORT"
 const DEFAULT_LOCAL_SERVER_PORT := 8080
