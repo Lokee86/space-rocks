@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 from runtime_scenarios.heap_profiles import HeapProfileCollector
 from runtime_scenarios.model import Scenario
@@ -33,6 +34,21 @@ class RunOptions:
     headless_coordinator: bool = False
     controlled_host: bool = False
     host_note: str = ""
+    server_url: str | None = None
+
+
+def deployment_server_urls(raw_url: str) -> tuple[str, str]:
+    parsed = urlparse(raw_url.strip())
+    if parsed.scheme not in {"http", "https", "ws", "wss"} or not parsed.netloc:
+        raise ValueError("server URL must use http, https, ws, or wss and include a host")
+    websocket_scheme = "wss" if parsed.scheme in {"https", "wss"} else "ws"
+    http_scheme = "https" if parsed.scheme in {"https", "wss"} else "http"
+    websocket_path = parsed.path if parsed.path not in {"", "/"} else "/ws"
+    websocket_url = urlunparse(
+        (websocket_scheme, parsed.netloc, websocket_path, "", parsed.query, "")
+    )
+    health_url = urlunparse((http_scheme, parsed.netloc, "/health", "", "", ""))
+    return websocket_url, health_url
 
 class ScenarioRunner:
     def __init__(self, scenario: Scenario, options: RunOptions) -> None:
@@ -42,10 +58,19 @@ class ScenarioRunner:
         self.processes: list[ManagedProcess] = []
         self.status_paths: dict[str, Path] = {}
         self.started_at = datetime.now(timezone.utc)
-        self.port = reserve_free_loopback_port()
-        self.http_url = f"http://127.0.0.1:{self.port}"
-        self.health_url = f"{self.http_url}/health"
-        self.websocket_url = f"ws://127.0.0.1:{self.port}/ws"
+        self.external_server = bool(options.server_url)
+        if options.server_url:
+            self.websocket_url, self.health_url = deployment_server_urls(options.server_url)
+            parsed_health = urlparse(self.health_url)
+            self.http_url = urlunparse(
+                (parsed_health.scheme, parsed_health.netloc, "", "", "", "")
+            ).rstrip("/")
+            self.port = None
+        else:
+            self.port = reserve_free_loopback_port()
+            self.http_url = f"http://127.0.0.1:{self.port}"
+            self.health_url = f"{self.http_url}/health"
+            self.websocket_url = f"ws://127.0.0.1:{self.port}/ws"
         profile_rounds = self.scenario.raw.get("heap_profile_rounds", [])
         self.heap_profiles = HeapProfileCollector(
             [int(value) for value in profile_rounds] if isinstance(profile_rounds, list) else [],
@@ -87,14 +112,21 @@ class ScenarioRunner:
                 "packaged_client_started": False,
                 "bundled_local_server_started": False,
                 "server_launch": (
-                    "WSL go run ./cmd/game-server"
-                    if os.name == "nt"
-                    else "go run ./cmd/game-server"
+                    "external deployment"
+                    if self.external_server
+                    else (
+                        "WSL go run ./cmd/game-server"
+                        if os.name == "nt"
+                        else "go run ./cmd/game-server"
+                    )
                 ),
+                "server_url": self.websocket_url,
+                "health_url": self.health_url,
                 "harness_server_binary_created": False,
                 "windows_game_server_executable_started": False,
             }
-            self._start_server()
+            if not self.external_server:
+                self._start_server()
             wait_for_health(self.health_url, self.scenario.setup_timeout_seconds)
 
             room_groups = launch_room_groups(
@@ -145,6 +177,8 @@ class ScenarioRunner:
             print(json.dumps(summary, indent=2), file=sys.stdout)
 
     def _start_server(self) -> None:
+        if self.port is None:
+            raise RuntimeError("external deployment mode cannot launch a local server")
         server_root = self.options.repo_root / "services" / "game-server"
         runtime_env = {
             "BUILD_VERSION": "runtime-scenario",

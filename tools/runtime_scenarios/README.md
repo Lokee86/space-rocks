@@ -17,6 +17,21 @@ python tools/runtime_scenarios/main.py \
   tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json
 ```
 
+## Test a deployed server
+
+Pass `--server-url` to run the normal scenario clients against an already running container or remote alpha deployment. The runner checks the deployment health endpoint, does not launch or stop a game-server process, and writes client logs, status files, phase markers, and summaries locally.
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json \
+  --server-url https://alpha.example.com \
+  --headless-coordinator
+```
+
+`http://` and `https://` inputs automatically target `/ws`; explicit `ws://` and `wss://` URLs are also accepted. The deployment must be started with the scenario settings required by the selected test, including `SPACE_ROCKS_RUNTIME_SCENARIO_AUTH=1` for harness identities and a fixed `SPACE_ROCKS_RUNTIME_SCENARIO_SEED` when deterministic replay is required. These switches belong only on an isolated alpha or staging deployment, never on an unrestricted public server.
+
+Server-side logs and measurement files remain inside the deployed container, so mount its runtime output directories when those artifacts are required. Heap-profile scenarios additionally require `SPACE_ROCKS_RUNTIME_SCENARIO_PPROF=1`; the harness retrieves profiles through the deployment URL.
+
 ## Simulation-heavy isolation
 
 `simulation_scale_1c_7b_v1` holds receiver count to one real client while pre-seeding 192 asteroids before measurement and increasing continuous projectile streams from 60 to 120. This emphasizes authoritative movement, collision, fragmentation, spawning, and entity-lifecycle cost without multiplying per-receiver networking work.

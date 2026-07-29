@@ -43,6 +43,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="describe host isolation, hardware, or known contention for this run",
     )
+    parser.add_argument(
+        "--server-url",
+        help=(
+            "use an already deployed game server instead of launching one; "
+            "accepts ws://, wss://, http://, or https://"
+        ),
+    )
     return parser
 
 
@@ -75,6 +82,7 @@ def main() -> int:
             headless_coordinator=args.headless_coordinator,
             controlled_host=args.controlled_host,
             host_note=args.host_note,
+            server_url=args.server_url,
         ),
     )
     return runner.run()
