@@ -7,7 +7,16 @@ import (
 
 func (game *Game) HandlePacket(playerID string, packet ClientPacket) {
 	if packet.Type == PacketTypeInput {
-		game.enqueuePlayerInput(playerID, packet.Input)
+		game.mu.Lock()
+		player, ok := game.entities.Players[playerID]
+		accepted := ok && player != nil && game.playerCanReceiveInput(playerID, player)
+		if accepted {
+			game.participationRuntime.RecordAction(playerID)
+		}
+		game.mu.Unlock()
+		if accepted {
+			game.enqueuePlayerInput(playerID, packet.Input)
+		}
 		return
 	}
 

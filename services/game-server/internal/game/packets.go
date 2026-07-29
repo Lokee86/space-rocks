@@ -79,9 +79,6 @@ type ClientPacket struct {
 	Lane                   string               `json:"lane"`
 	BaselineID             string               `json:"baseline_id"`
 	Reason                 string               `json:"reason"`
-	ClientSentMsec         int                  `json:"client_sent_msec"`
-	ServerReceivedMsec     int                  `json:"server_received_msec"`
-	ServerSentMsec         int                  `json:"server_sent_msec"`
 }
 
 type PlayerLocatorState struct {

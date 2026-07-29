@@ -53,6 +53,7 @@ func (MatchSummaryDispatcher) Dispatch(summary MatchSummary) DispatchSlices {
 	for _, participant := range summary.Participants {
 		persistencePlayers = append(persistencePlayers, playerdata.PlayerMatchSummary{
 			GamePlayerID:   participant.PlayerRef.GamePlayerID,
+			TeamID:         string(participant.TeamID),
 			AccountID:      participant.PlayerRef.AccountID,
 			LocalProfileID: participant.PlayerRef.LocalProfileID,
 			IsBot:          participant.PlayerRef.IsBot,

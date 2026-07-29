@@ -18,7 +18,7 @@ func (game *Game) AddBotWithTeam(teamID teams.ID) string {
 		teamID = teams.NoTeam
 	}
 
-	playerID := game.addPlayerLocked(teamID)
+	playerID := game.addPlayerLocked(teamID, nil)
 	game.enableBotPlayerLocked(playerID)
 	return playerID
 }
@@ -47,11 +47,9 @@ func (game *Game) stepBots() {
 	for playerID, controller := range game.botControllers {
 		ship, ok := game.entities.Players[playerID]
 		if !ok || ship == nil {
-			session := game.playerSessions[playerID]
-			if session == nil || !session.CanRespawn() {
+			if game.playerSessions[playerID] == nil || !game.respawnPlayer(playerID) {
 				continue
 			}
-			game.respawnPlayer(playerID)
 			ship = game.entities.Players[playerID]
 		}
 		if ship == nil || !game.playerCanReceiveInput(playerID, ship) {

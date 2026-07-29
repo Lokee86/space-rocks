@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
@@ -103,12 +104,13 @@ func TestBotRespawnsAfterNormalCooldown(t *testing.T) {
 
 	gameInstance.mu.Lock()
 	delete(gameInstance.entities.Players, botID)
-	session := gameInstance.playerSessions[botID]
-	session.Lives = 1
-	session.RespawnCooldown = 0
+	death := gameInstance.lifeRuntime.ApplyDeath(lives.DeathInput{PlayerID: botID})
 	gameInstance.mu.Unlock()
+	if !death.Accepted {
+		t.Fatalf("expected bot death transition, got %+v", death)
+	}
 
-	gameInstance.Step(1.0 / 60.0)
+	gameInstance.Step(gameInstance.lifeRuntime.Policy().RespawnDelay + 0.01)
 
 	gameInstance.mu.Lock()
 	ship := gameInstance.entities.Players[botID]

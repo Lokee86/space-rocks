@@ -7,12 +7,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-<<<<<<< HEAD
 	"github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
-=======
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
->>>>>>> 1d4ace21 (feat(gameplay): complete P4 player loadout integration)
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	toolingrouter "github.com/Lokee86/space-rocks/services/game-server/internal/networking/tooling"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/realtime"

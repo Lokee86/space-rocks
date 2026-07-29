@@ -68,7 +68,6 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStr
 	addSessionMember(room, session.sessionID, session)
 	session.bindRoom(room)
 	session.preparePlayerBuildForRoom(room, "", playerdata.PlayModeMultiplayer, traceID)
-	session.resetDebugShapeCatalogSent()
 	session.EnqueueRoomSnapshot(room)
 }
 
@@ -95,7 +94,6 @@ func (session *webSocketSession) handleJoinRoomRequest(roomCode string, traceID 
 	}
 	session.bindRoom(room)
 	session.preparePlayerBuildForRoom(room, "", playerdata.PlayModeMultiplayer, traceID)
-	session.resetDebugShapeCatalogSent()
 	BroadcastRoomSnapshot(room)
 }
 
@@ -197,7 +195,6 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 	})
 	attachRoomSession(room, session.sessionID, session)
 	session.bindRoom(room)
-	session.resetDebugShapeCatalogSent()
 	if localProfileID != "" {
 		room.SetMemberLocalProfileIDForSession(session.sessionID, localProfileID)
 	}

@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/constants"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/lives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
@@ -33,10 +32,10 @@ func (game *Game) addPlayerWithTeamAndBuild(teamID teams.ID, build *playerbuild.
 		teamID = teams.NoTeam
 	}
 
-	return game.addPlayerLocked(teamID)
+	return game.addPlayerLocked(teamID, build)
 }
 
-func (game *Game) addPlayerLocked(teamID teams.ID) string {
+func (game *Game) addPlayerLocked(teamID teams.ID, build *playerbuild.ResolvedPlayerBuild) string {
 	playerIndex := game.nextID
 	game.nextID++
 

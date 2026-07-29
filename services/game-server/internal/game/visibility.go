@@ -14,7 +14,6 @@ func (game *Game) randomAsteroidSpawnPosition(targetView *runtime.CameraView, re
 		if !game.isInsideAsteroidSpawnClearanceForAnyCamera(spawn) {
 			return spawn, true
 		}
-		}
 		if attempt > 0 && attempt%16 == 0 {
 			margin += constants.AsteroidSpawnMargin
 		}
