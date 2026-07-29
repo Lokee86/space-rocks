@@ -1,0 +1,15 @@
+**
+
+!services/
+services/*
+!services/diagnostic-aggregator/
+!services/diagnostic-aggregator/**
+
+!shared/
+shared/*
+!shared/go/
+shared/go/*
+!shared/go/observabilityevent/
+!shared/go/observabilityevent/**
+!shared/go/servicelog/
+!shared/go/servicelog/**
