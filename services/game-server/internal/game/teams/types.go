@@ -18,15 +18,6 @@ const (
 	Team6  TeamID = "team_6"
 	Team7  TeamID = "team_7"
 	Team8  TeamID = "team_8"
-
-	Team1ID = Team1
-	Team2ID = Team2
-	Team3ID = Team3
-	Team4ID = Team4
-	Team5ID = Team5
-	Team6ID = Team6
-	Team7ID = Team7
-	Team8ID = Team8
 )
 
 type Structure string
@@ -34,13 +25,8 @@ type Structure string
 const (
 	StructureFFA          Structure = "ffa"
 	StructureCoOp         Structure = "co_op"
-	StructureCoop                   = StructureCoOp
 	StructureCustom       Structure = "custom"
 	StructureAutoBalanced Structure = "auto_balanced"
-	FFA                             = StructureFFA
-	CoOp                            = StructureCoOp
-	Custom                          = StructureCustom
-	AutoBalanced                    = StructureAutoBalanced
 )
 
 type AssignmentMode string

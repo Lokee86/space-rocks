@@ -3,7 +3,6 @@ package playerbuild
 import (
 	"fmt"
 
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
@@ -33,7 +32,7 @@ func applyModule(build *ResolvedPlayerBuild, profile ModuleProfile, hardwired bo
 	}
 }
 
-func resolveHardwired(build *ResolvedPlayerBuild, equipment []protocol.HardwiredEquipment, catalog Catalog, policy HardwiredPolicy) {
+func resolveHardwired(build *ResolvedPlayerBuild, equipment []HardwiredEquipment, catalog Catalog, policy HardwiredPolicy) {
 	if policy == HardwiredDisabled {
 		return
 	}

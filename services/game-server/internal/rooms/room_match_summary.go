@@ -4,7 +4,6 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchresults"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
 func buildEndOfMatchInput(capture gameOverCapture, state game.FinalMatchState, endReason string) matchresults.BuildInput {
@@ -47,15 +46,4 @@ func buildEndOfMatchInput(capture gameOverCapture, state game.FinalMatchState, e
 		TeamStructure: structure, LockedDecision: state.Decision, EndReason: endReason,
 		Participants: participants, Objectives: objectiveResolutions,
 	}
-}
-
-// buildMatchResultSummary preserves the legacy helper through the new summary/dispatcher path.
-func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFact) playerdata.MatchResultSummary {
-	input := buildEndOfMatchInput(capture, game.FinalMatchState{ModeID: "arcade_survival", TeamStructure: teams.StructureFFA, Players: facts}, "simulation_complete")
-	flow := matchresults.NewEndOfMatchFlow()
-	summary, _, err := flow.Run(input)
-	if err != nil {
-		return playerdata.MatchResultSummary{TraceID: capture.TraceID, MatchID: capture.MatchID}
-	}
-	return (matchresults.MatchSummaryDispatcher{}).Dispatch(summary).Persistence
 }

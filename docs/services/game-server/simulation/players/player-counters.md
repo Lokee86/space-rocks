@@ -261,23 +261,24 @@ The game-owned score application flow is:
 
 ```text
 projectile destroys asteroid
--> game.applyProjectileAsteroidDestruction
 -> scoring.Policy.Evaluate
--> game.awardScore
--> playerCanReceiveScore gate
--> addPlayerScoreLocked
--> score stored on playerSession
+-> game.applyDestructionAwardsLocked
+-> playerCanReceiveDestructionAwardLocked
+-> game.applyAwardMutationsLocked
+-> awards.Runtime
+-> player counter projection
 ```
 
-`game.awardScore` rejects awards when:
+`applyDestructionAwardsLocked` rejects awards when:
 
 ```text
+award player ID is empty
 award points <= 0
-player has no active ship
-player cannot receive score
+player cannot receive gameplay awards
+an active ship cannot receive score
 ```
 
-`playerCanReceiveScore` requires the player session to exist and rejects suspended or invulnerable players. This keeps score mutation outside the pure scoring policy package while still letting the game layer enforce current gameplay gates.
+The gameplay-awards runtime owns idempotence, combo and assist handling, and authoritative counter mutation. The game layer still owns the current participation and ship-state eligibility gates.
 
 ## Lives flow
 
@@ -359,7 +360,7 @@ Gameplay code calls locked helpers while already inside authoritative simulation
 Examples:
 
 ```text
-game.awardScore
+game.applyDestructionAwardsLocked
 game.applyFatalPlayerDamage
 game.applyPickupEffectIntentLocked
 ```

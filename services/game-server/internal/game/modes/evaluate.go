@@ -15,17 +15,26 @@ func EvaluateMatch(resolved ResolvedMatchRules, facts MatchFacts) rules.MatchDec
 }
 
 func evaluateArcadeSurvival(facts MatchFacts) rules.MatchDecision {
-	snapshot := rules.MatchSnapshot{HadParticipants: facts.HadParticipants}
-	for _, fact := range facts.Players {
-		if !fact.Active {
-			continue
+	players := append([]PlayerFact(nil), facts.Players...)
+	sort.Slice(players, func(left, right int) bool { return players[left].ID < players[right].ID })
+
+	active := false
+	decision := rules.MatchDecision{}
+	for _, fact := range players {
+		if fact.Active && fact.Status != playerstate.StatusEliminated {
+			active = true
 		}
-		snapshot.Players = append(snapshot.Players, rules.PlayerSnapshot{ID: fact.ID, Status: fact.Status})
+		decision.Players = append(decision.Players, rules.PlayerDecision{ID: fact.ID, Status: fact.Status})
 	}
-	decision := rules.EvaluateMatch(snapshot)
-	if decision.IsOver {
-		decision.TerminalStatus = rules.TerminalCompleted
-		decision.EndReason = string(EndNoActivePlayers)
+	if !facts.HadParticipants || active {
+		return decision
+	}
+
+	decision.IsOver = true
+	decision.TerminalStatus = rules.TerminalCompleted
+	decision.EndReason = string(EndNoActivePlayers)
+	for index := range decision.Players {
+		decision.Players[index].Outcome = rules.OutcomeCompleted
 	}
 	return decision
 }

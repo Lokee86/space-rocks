@@ -3,6 +3,7 @@ package matchresults
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
@@ -13,6 +14,15 @@ func TestEndOfMatchFlowRunsOnceAndLocksSummary(t *testing.T) {
 		Participants: []ParticipantFact{
 			{PlayerRef: PlayerRef{GamePlayerID: "player-1"}, Score: 10},
 			{PlayerRef: PlayerRef{GamePlayerID: "player-2"}, Score: 20},
+		},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus:   rules.TerminalCompleted,
+			EndReason:        "simulation_complete",
+			WinningPlayerIDs: []string{"player-2"},
+			Players: []rules.PlayerDecision{
+				{ID: "player-1", Outcome: rules.OutcomeLost, Placement: 2},
+				{ID: "player-2", Outcome: rules.OutcomeWon, Placement: 1},
+			},
 		},
 	}
 	first, emitted, err := flow.Run(input)
@@ -34,49 +44,70 @@ func TestEndOfMatchFlowRunsOnceAndLocksSummary(t *testing.T) {
 	}
 }
 
-func TestResolveDecisionSupportsWinnerDrawAndPlacements(t *testing.T) {
+func TestResolveDecisionCopiesLockedOutcomesAndPlacements(t *testing.T) {
 	decision, err := ResolveDecision(BuildInput{
 		Session: SessionMultiplayer,
 		Participants: []ParticipantFact{
 			{PlayerRef: PlayerRef{GamePlayerID: "low"}, Score: 5},
 			{PlayerRef: PlayerRef{GamePlayerID: "high"}, Score: 10},
 		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if decision.Participants[0].Outcome != OutcomeWon || decision.Participants[0].Placement != 1 ||
-		decision.Participants[1].Outcome != OutcomeLost || decision.Participants[1].Placement != 2 {
-		t.Fatalf("unexpected decision: %+v", decision.Participants)
-	}
-
-	draw, err := ResolveDecision(BuildInput{
-		Session: SessionMultiplayer,
-		Participants: []ParticipantFact{
-			{PlayerRef: PlayerRef{GamePlayerID: "a"}, Score: 10},
-			{PlayerRef: PlayerRef{GamePlayerID: "b"}, Score: 10},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus:   rules.TerminalCompleted,
+			EndReason:        "resolved_by_mode",
+			WinningPlayerIDs: []string{"low"},
+			Players: []rules.PlayerDecision{
+				{ID: "low", Outcome: rules.OutcomeWon, Placement: 1},
+				{ID: "high", Outcome: rules.OutcomeLost, Placement: 2},
+			},
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, participant := range draw.Participants {
-		if participant.Outcome != OutcomeDraw || participant.Placement != 1 {
-			t.Fatalf("unexpected draw participant: %+v", participant)
-		}
+	low := participantResult(t, decision, "low")
+	high := participantResult(t, decision, "high")
+	if low.Outcome != OutcomeWon || low.Placement != 1 || high.Outcome != OutcomeLost || high.Placement != 2 {
+		t.Fatalf("locked decision was not preserved: %+v", decision.Participants)
 	}
-	if len(draw.WinningPlayerRefs) != 0 {
-		t.Fatalf("draw has winners: %+v", draw.WinningPlayerRefs)
+	if len(decision.WinningPlayerRefs) != 1 || decision.WinningPlayerRefs[0].GamePlayerID != "low" {
+		t.Fatalf("unexpected winners: %+v", decision.WinningPlayerRefs)
 	}
 }
 
-func TestResolveDecisionProducesTeamResults(t *testing.T) {
+func TestResolveDecisionRejectsIncompleteLockedDecision(t *testing.T) {
+	_, err := ResolveDecision(BuildInput{
+		Session: SessionMultiplayer,
+		Participants: []ParticipantFact{
+			{PlayerRef: PlayerRef{GamePlayerID: "a"}, Score: 10},
+			{PlayerRef: PlayerRef{GamePlayerID: "b"}, Score: 10},
+		},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus: rules.TerminalCompleted,
+			EndReason:      "incomplete",
+			Players:        []rules.PlayerDecision{{ID: "a", Outcome: rules.OutcomeDraw}},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected incomplete locked decision to fail")
+	}
+}
+
+func TestResolveDecisionProducesTeamResultsFromLockedOutcomes(t *testing.T) {
 	decision, err := ResolveDecision(BuildInput{
 		Session: SessionMultiplayer, TeamStructure: teams.StructureCustom,
 		Participants: []ParticipantFact{
 			{PlayerRef: PlayerRef{GamePlayerID: "a"}, TeamID: teams.Team1, Score: 4},
 			{PlayerRef: PlayerRef{GamePlayerID: "b"}, TeamID: teams.Team1, Score: 6},
 			{PlayerRef: PlayerRef{GamePlayerID: "c"}, TeamID: teams.Team2, Score: 8},
+		},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus: rules.TerminalCompleted,
+			EndReason:      "resolved_by_mode",
+			Players: []rules.PlayerDecision{
+				{ID: "a", Outcome: rules.OutcomeWon},
+				{ID: "b", Outcome: rules.OutcomeWon},
+				{ID: "c", Outcome: rules.OutcomeLost},
+			},
 		},
 	})
 	if err != nil {

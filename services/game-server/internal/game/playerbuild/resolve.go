@@ -1,11 +1,8 @@
 package playerbuild
 
-import (
-	"github.com/Lokee86/space-rocks/player-data/protocol"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
-)
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 
-func Resolve(selection LoadoutSelection, inventory protocol.HangarInventory, catalog Catalog, rawRules Rules) (ResolvedPlayerBuild, error) {
+func Resolve(selection LoadoutSelection, inventory Inventory, catalog Catalog, rawRules Rules) (ResolvedPlayerBuild, error) {
 	if err := catalog.Validate(); err != nil {
 		return ResolvedPlayerBuild{}, err
 	}
@@ -38,17 +35,13 @@ func Resolve(selection LoadoutSelection, inventory protocol.HangarInventory, cat
 	for point, ownedID := range selection.SelectedWeaponsByPoint {
 		option, _ := eligibleWeapon(options, point, ownedID)
 		profile := catalog.Weapons[option.WeaponID]
-		startingAmmo := profile.StartingAmmo
-		if selectedAmmo, ok := selection.StartingAmmoByPoint[point]; ok && selectedAmmo > 0 {
-			startingAmmo = selectedAmmo
-		}
 		resolved := ResolvedWeapon{
 			OwnedWeaponID: ownedID,
 			CatalogID:     profile.ID,
 			RuntimeID:     profile.RuntimeID,
 			Point:         point,
 			AmmoPolicy:    profile.AmmoPolicy,
-			StartingAmmo:  startingAmmo,
+			StartingAmmo:  profile.StartingAmmo,
 		}
 		build.EquippedWeapons[point] = resolved
 		applyWeaponToRuntime(&build, resolved)
@@ -76,10 +69,10 @@ func Resolve(selection LoadoutSelection, inventory protocol.HangarInventory, cat
 
 func DefaultResolvedBuild(playerID string) ResolvedPlayerBuild {
 	catalog := DefaultCatalog()
-	inventory := protocol.HangarInventory{
+	inventory := Inventory{
 		InventoryVersion:   0,
-		OwnedShips:         []protocol.OwnedShip{{OwnedShipID: "runtime_default_ship", ShipID: ShipVWing, State: "normal"}},
-		OwnedWeapons:       []protocol.OwnedWeapon{{OwnedWeaponID: "runtime_default_weapon", WeaponID: WeaponPulse, State: "normal"}},
+		OwnedShips:         []OwnedShip{{OwnedShipID: "runtime_default_ship", ShipID: ShipVWing, State: "normal"}},
+		OwnedWeapons:       []OwnedWeapon{{OwnedWeaponID: "runtime_default_weapon", WeaponID: WeaponPulse, State: "normal"}},
 		DefaultOwnedShipID: "runtime_default_ship",
 	}
 	options := ComputeEligibility(playerID, inventory, catalog, Rules{})

@@ -3,7 +3,6 @@ package playerbuild
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
 
@@ -59,7 +58,7 @@ func TestResolveNormalizesHardwiredWithoutApplyingPower(t *testing.T) {
 
 func TestResolveCompilesLimitedSecondaryAmmoAndActiveModule(t *testing.T) {
 	inventory := testInventory()
-	inventory.OwnedWeapons = append(inventory.OwnedWeapons, protocol.OwnedWeapon{
+	inventory.OwnedWeapons = append(inventory.OwnedWeapons, OwnedWeapon{
 		OwnedWeaponID: "weapon-secondary",
 		WeaponID:      "torpedo_owned",
 		State:         "normal",
@@ -68,7 +67,7 @@ func TestResolveCompilesLimitedSecondaryAmmoAndActiveModule(t *testing.T) {
 	options := ComputeEligibility("player-1", inventory, catalog, Rules{})
 	selection := options.FallbackLoadout
 	selection.SelectedWeaponsByPoint[Secondary1] = "weapon-secondary"
-	selection.StartingAmmoByPoint[Secondary1] = 5
+	selection.StartingAmmoByPoint[Secondary1] = 3
 	selection.SelectedModulesBySlot[UtilityMod] = "module-active"
 
 	build, err := Resolve(selection, inventory, catalog, Rules{})
@@ -78,26 +77,44 @@ func TestResolveCompilesLimitedSecondaryAmmoAndActiveModule(t *testing.T) {
 	if build.PlayerArmory.Secondary.ID != weapons.Torpedo {
 		t.Fatalf("expected torpedo runtime weapon, got %q", build.PlayerArmory.Secondary.ID)
 	}
-	if build.StartingEquipmentState.SecondaryAmmo != 5 {
-		t.Fatalf("expected selected starting ammo 5, got %d", build.StartingEquipmentState.SecondaryAmmo)
+	if build.StartingEquipmentState.SecondaryAmmo != 3 {
+		t.Fatalf("expected catalog starting ammo 3, got %d", build.StartingEquipmentState.SecondaryAmmo)
 	}
 	if len(build.ActiveModuleDeclarations) != 1 || build.ActiveModuleDeclarations[0] != "scanner_pulse" {
 		t.Fatalf("expected active module declaration, got %#v", build.ActiveModuleDeclarations)
 	}
 }
 
+func TestResolveRejectsClientStartingAmmoOverride(t *testing.T) {
+	inventory := testInventory()
+	inventory.OwnedWeapons = append(inventory.OwnedWeapons, OwnedWeapon{
+		OwnedWeaponID: "weapon-secondary",
+		WeaponID:      "torpedo_owned",
+		State:         "normal",
+	})
+	catalog := testCatalog()
+	options := ComputeEligibility("player-1", inventory, catalog, Rules{})
+	selection := options.FallbackLoadout
+	selection.SelectedWeaponsByPoint[Secondary1] = "weapon-secondary"
+	selection.StartingAmmoByPoint[Secondary1] = 999
+
+	if _, err := Resolve(selection, inventory, catalog, Rules{}); err == nil {
+		t.Fatal("expected client starting-ammo override rejection")
+	}
+}
+
 func TestDefaultCatalogResolvesSelectableScoutTorpedoAndModules(t *testing.T) {
-	inventory := protocol.HangarInventory{
+	inventory := Inventory{
 		InventoryVersion: 2,
-		OwnedShips: []protocol.OwnedShip{
+		OwnedShips: []OwnedShip{
 			{OwnedShipID: "ship-standard", ShipID: ShipVWing, State: "normal"},
 			{OwnedShipID: "ship-scout", ShipID: ShipVWingScout, State: "normal"},
 		},
-		OwnedWeapons: []protocol.OwnedWeapon{
+		OwnedWeapons: []OwnedWeapon{
 			{OwnedWeaponID: "weapon-pulse", WeaponID: WeaponPulse, State: "normal"},
 			{OwnedWeaponID: "weapon-torpedo", WeaponID: WeaponTorpedo, State: "normal"},
 		},
-		OwnedModules: []protocol.OwnedModule{
+		OwnedModules: []OwnedModule{
 			{OwnedModuleID: "module-shield", ModuleID: ModuleShieldCapacitor, State: "normal"},
 			{OwnedModuleID: "module-engine", ModuleID: ModuleEngineOverdrive, State: "normal"},
 		},

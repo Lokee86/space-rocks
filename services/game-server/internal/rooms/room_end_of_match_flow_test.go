@@ -3,6 +3,7 @@ package rooms
 import (
 	"testing"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/matchresults"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
@@ -16,6 +17,11 @@ func TestRoomMatchEndOfMatchFlowRunsOnceAndPreservesPresetPersistence(t *testing
 		Participants: []matchresults.ParticipantFact{{
 			PlayerRef: matchresults.PlayerRef{GamePlayerID: "player-1"}, Score: 10,
 		}},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus: rules.TerminalCompleted,
+			EndReason:      "simulation_complete",
+			Players:        []rules.PlayerDecision{{ID: "player-1", Outcome: rules.OutcomeCompleted}},
+		},
 	}
 
 	first, dispatch, emitted, err := roomMatch.ResolveEndOfMatch(input)

@@ -3,8 +3,6 @@ package playerbuild
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/player-data/playerdata"
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
 
@@ -37,7 +35,23 @@ func TestDefaultCatalogValidates(t *testing.T) {
 }
 
 func TestDefaultCatalogCoversStarterInventory(t *testing.T) {
-	inventory := playerdata.StarterHangarInventory(protocol.PlayerDataIdentity{IdentityKind: playerdata.IdentityKindGuest})
+	inventory := Inventory{
+		OwnedShips: []OwnedShip{
+			{OwnedShipID: "starter-standard", ShipID: ShipVWing, State: "normal"},
+			{OwnedShipID: "starter-scout", ShipID: ShipVWingScout, State: "normal"},
+		},
+		OwnedWeapons: []OwnedWeapon{
+			{OwnedWeaponID: "starter-pulse", WeaponID: WeaponPulse, State: "normal"},
+			{OwnedWeaponID: "starter-torpedo", WeaponID: WeaponTorpedo, State: "normal"},
+		},
+		OwnedModules: []OwnedModule{
+			{OwnedModuleID: "starter-shield", ModuleID: ModuleShieldCapacitor, State: "normal"},
+			{OwnedModuleID: "starter-armor", ModuleID: ModuleReinforcedHull, State: "normal"},
+			{OwnedModuleID: "starter-engine", ModuleID: ModuleEngineOverdrive, State: "normal"},
+			{OwnedModuleID: "starter-utility", ModuleID: ModuleFlightStabilizer, State: "normal"},
+		},
+		DefaultOwnedShipID: "starter-standard",
+	}
 	options := ComputeEligibility("player-1", inventory, DefaultCatalog(), Rules{})
 	if len(options.BlockedOptions) != 0 {
 		t.Fatalf("starter catalog contains blocked inventory: %#v", options.BlockedOptions)

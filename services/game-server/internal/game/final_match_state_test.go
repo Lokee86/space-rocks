@@ -4,7 +4,27 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/awards"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
+
+func TestForceLockFinalMatchStateAbortsUnfinishedParticipants(t *testing.T) {
+	gameInstance := NewWithSeed(43)
+	playerID := gameInstance.AddPlayer()
+	if playerID == "" {
+		t.Fatal("add player")
+	}
+
+	locked, ok := gameInstance.ForceLockFinalMatchState("manual_game_over")
+	if !ok {
+		t.Fatal("expected forced final match state")
+	}
+	if locked.Decision.TerminalStatus != rules.TerminalAdministrativelyTerminated || locked.Decision.EndReason != "manual_game_over" {
+		t.Fatalf("unexpected forced decision: %+v", locked.Decision)
+	}
+	if len(locked.Decision.Players) != 1 || locked.Decision.Players[0].ID != playerID || locked.Decision.Players[0].Outcome != rules.OutcomeAborted {
+		t.Fatalf("unexpected forced player outcome: %+v", locked.Decision.Players)
+	}
+}
 
 func TestFinalMatchStateLocksOnceAndRejectsGameplayMutation(t *testing.T) {
 	gameInstance := NewWithSeed(44)

@@ -6,6 +6,43 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 )
 
+func TestResolveDecisionRejectsUnsetParticipantOutcome(t *testing.T) {
+	_, err := ResolveDecision(BuildInput{
+		Session: SessionMultiplayer,
+		Participants: []ParticipantFact{
+			{PlayerRef: PlayerRef{GamePlayerID: "player-1"}, Score: 20},
+			{PlayerRef: PlayerRef{GamePlayerID: "player-2"}, Score: 10},
+		},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus: rules.TerminalCompleted,
+			EndReason:      "incomplete",
+			Players: []rules.PlayerDecision{
+				{ID: "player-1", Outcome: rules.OutcomeWon},
+				{ID: "player-2"},
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected unset participant outcome to fail")
+	}
+}
+
+func TestResolveDecisionRejectsInconsistentWinner(t *testing.T) {
+	_, err := ResolveDecision(BuildInput{
+		Session:      SessionMultiplayer,
+		Participants: []ParticipantFact{{PlayerRef: PlayerRef{GamePlayerID: "player-1"}}},
+		LockedDecision: rules.MatchDecision{
+			TerminalStatus:   rules.TerminalCompleted,
+			EndReason:        "invalid_winner",
+			WinningPlayerIDs: []string{"player-1"},
+			Players:          []rules.PlayerDecision{{ID: "player-1", Outcome: rules.OutcomeLost}},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected inconsistent winner to fail")
+	}
+}
+
 func TestResolveDecisionUsesLockedScoreAttackResult(t *testing.T) {
 	decision, err := ResolveDecision(BuildInput{
 		ModeID: "score_attack", Session: SessionMultiplayer,

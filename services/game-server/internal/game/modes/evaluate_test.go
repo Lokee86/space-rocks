@@ -8,6 +8,25 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
+func TestArcadeSurvivalLocksCompleteNonCompetitiveOutcomes(t *testing.T) {
+	resolved, _ := Resolve(RoomModeConfig{PresetID: PresetArcadeSurvival, StartingLives: 3}, teams.Config{Structure: teams.StructureFFA})
+	decision := EvaluateMatch(resolved, MatchFacts{HadParticipants: true, Players: []PlayerFact{
+		{ID: "player-b", Status: playerstate.StatusEliminated, Score: 20},
+		{ID: "player-a", Status: playerstate.StatusEliminated, Score: 10},
+	}})
+	if !decision.IsOver || decision.TerminalStatus != rules.TerminalCompleted || decision.EndReason != string(EndNoActivePlayers) {
+		t.Fatalf("decision = %+v", decision)
+	}
+	if len(decision.Players) != 2 || decision.Players[0].ID != "player-a" || decision.Players[1].ID != "player-b" {
+		t.Fatalf("players = %+v", decision.Players)
+	}
+	for _, player := range decision.Players {
+		if player.Outcome != rules.OutcomeCompleted || player.Placement != 0 {
+			t.Fatalf("arcade survival invented competitive result: %+v", player)
+		}
+	}
+}
+
 func TestScoreAttackLocksFirstSuccessfulParticipant(t *testing.T) {
 	resolved, _ := Resolve(RoomModeConfig{PresetID: PresetScoreAttack, StartingLives: 3, TargetScore: 100}, teams.Config{Structure: teams.StructureFFA})
 	decision := EvaluateMatch(resolved, MatchFacts{HadParticipants: true, Players: []PlayerFact{

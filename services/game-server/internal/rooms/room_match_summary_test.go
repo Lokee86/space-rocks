@@ -123,7 +123,7 @@ func TestSinglePlayerResolvedMatchSummaryCopiesLocalProfileID(t *testing.T) {
 	room.GameInstance().Stop()
 }
 
-func TestMultiplayerResolvedMatchSummarySelectsUniqueWinner(t *testing.T) {
+func TestArcadeSurvivalSummaryDoesNotInventCompetitiveWinner(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
 	owner := room.AddMember(NewRoomMember("session-owner"))
 	owner.SetReady(true)
@@ -181,8 +181,8 @@ func TestMultiplayerResolvedMatchSummarySelectsUniqueWinner(t *testing.T) {
 	if playerSummary2.Score != 250 {
 		t.Fatalf("expected score 250 for %q, got %d", peer.PlayerID, playerSummary2.Score)
 	}
-	if !playerSummary2.Won {
-		t.Fatalf("expected %q to win", peer.PlayerID)
+	if playerSummary2.Won {
+		t.Fatalf("arcade survival should not invent a winner for %q", peer.PlayerID)
 	}
 
 	room.GameInstance().Stop()

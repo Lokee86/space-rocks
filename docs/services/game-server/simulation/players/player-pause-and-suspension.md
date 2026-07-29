@@ -367,9 +367,9 @@ This gate only controls whether asteroid collision damage applies to the player.
 
 ## Score eligibility gate
 
-Score awards are applied through `game.awardScore`.
+Destruction score awards are applied through `game.applyDestructionAwardsLocked` and the gameplay-awards runtime.
 
-Before mutating score, the game server checks `playerCanReceiveScore`.
+Before emitting score mutations, the game server checks `playerCanReceiveDestructionAwardLocked`, which includes the `playerCanReceiveScore` gate for active ships.
 
 The gate requires:
 

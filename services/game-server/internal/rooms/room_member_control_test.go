@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
 func TestOwnerCanAddReadyBot(t *testing.T) {
@@ -19,6 +20,22 @@ func TestOwnerCanAddReadyBot(t *testing.T) {
 	}
 	if bot.SessionID == "" || bot.PlayerID == "" {
 		t.Fatalf("bot must have stable room identity: %+v", bot)
+	}
+}
+
+func TestOwnerCannotAddBotPastConfiguredCapacity(t *testing.T) {
+	room, err := NewRoomWithConfig("ROOM01", RoomStateLobby, nil, RoomCreationConfig{
+		TeamConfig: teams.Config{Structure: teams.StructureFFA},
+		MaxPlayers: 1,
+	})
+	if err != nil {
+		t.Fatalf("create room: %v", err)
+	}
+	owner := room.AddMemberSessionID("owner-session")
+
+	_, roomErr := room.AddBotForOwnerSession(owner.SessionID)
+	if roomErr == nil || roomErr.Code != RoomErrorRoomFull {
+		t.Fatalf("expected configured room-full error, got %+v", roomErr)
 	}
 }
 
@@ -53,6 +70,31 @@ func TestOwnerCanRemoveBotAndGuestButNotOwner(t *testing.T) {
 	_, roomErr = room.RemoveMemberForOwnerSession(owner.SessionID, owner.PlayerID)
 	if roomErr == nil || roomErr.Code != RoomErrorCannotRemoveOwner {
 		t.Fatalf("expected cannot-remove-owner error, got %+v", roomErr)
+	}
+}
+
+func TestOwnerRemovalPurgesTeamAssignment(t *testing.T) {
+	room, err := NewRoomWithConfig("ROOM01", RoomStateLobby, nil, RoomCreationConfig{
+		TeamConfig: teams.Config{Structure: teams.StructureCustom, AssignmentMode: teams.AssignmentOwnerAssigned},
+		MaxPlayers: 4,
+	})
+	if err != nil {
+		t.Fatalf("create room: %v", err)
+	}
+	owner := room.AddMemberSessionID("owner-session")
+	guest := room.AddMemberSessionID("guest-session")
+	if roomErr := room.SetTeamAssignment(owner.SessionID, owner.PlayerID, teams.Team1); roomErr != nil {
+		t.Fatalf("assign owner: %v", roomErr)
+	}
+	if roomErr := room.SetTeamAssignment(owner.SessionID, guest.PlayerID, teams.Team2); roomErr != nil {
+		t.Fatalf("assign guest: %v", roomErr)
+	}
+
+	if _, roomErr := room.RemoveMemberForOwnerSession(owner.SessionID, guest.PlayerID); roomErr != nil {
+		t.Fatalf("remove guest: %v", roomErr)
+	}
+	if _, exists := room.TeamAssignmentsSnapshot()[guest.MemberID]; exists {
+		t.Fatal("removed guest retained a team assignment")
 	}
 }
 
@@ -101,6 +143,25 @@ func TestLobbyResetKeepsBotsReady(t *testing.T) {
 	}
 	if !botOK || !botAfter.Ready {
 		t.Fatalf("expected bot to remain ready, got %+v", botAfter)
+	}
+}
+
+func TestLastHumanLeavePurgesBotTeamAssignments(t *testing.T) {
+	room := NewRoom("ROOM01", RoomStateLobby, nil)
+	owner := room.AddMemberSessionID("owner-session")
+	bot, roomErr := room.AddBotForOwnerSession(owner.SessionID)
+	if roomErr != nil {
+		t.Fatalf("add bot: %v", roomErr)
+	}
+	if _, _, ok := room.RemoveMemberForSession(owner.SessionID); !ok {
+		t.Fatal("remove owner")
+	}
+	removed := room.RemoveBotsIfNoHumans()
+	if len(removed) != 1 || removed[0].MemberID != bot.MemberID {
+		t.Fatalf("unexpected removed bots: %+v", removed)
+	}
+	if assignments := room.TeamAssignmentsSnapshot(); len(assignments) != 0 {
+		t.Fatalf("bot assignments remained after cleanup: %+v", assignments)
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
 
@@ -109,13 +110,20 @@ func TestLifecycleStopCanReadRoomWithoutLock(t *testing.T) {
 func TestLifecycleDecisionCanReadRoomWithoutLock(t *testing.T) {
 	room := newStartedLifecycleTestRoom(t)
 	originalDecisionCall := matchDecisionCall
+	originalFinalStateCall := finalMatchStateCall
 	matchDecisionCall = func(*game.Game) bool {
 		if room.GameplayContext().State != RoomStateInGame {
 			t.Error("decision callback observed unexpected state")
 		}
 		return true
 	}
-	t.Cleanup(func() { matchDecisionCall = originalDecisionCall })
+	finalMatchStateCall = func(*game.Game) (game.FinalMatchState, bool) {
+		return lifecycleFinalState(nil), true
+	}
+	t.Cleanup(func() {
+		matchDecisionCall = originalDecisionCall
+		finalMatchStateCall = originalFinalStateCall
+	})
 
 	if !room.MarkGameOverIfComplete() {
 		t.Fatal("expected game-over transition")
@@ -174,13 +182,17 @@ func TestConcurrentMarkGameOverIfCompleteTransitionsOnce(t *testing.T) {
 	room := newStartedLifecycleTestRoom(t)
 	originalDecisionCall := matchDecisionCall
 	originalFactsCall := playerMatchFactsCall
+	originalFinalStateCall := finalMatchStateCall
+	facts := []game.PlayerMatchFact{{GamePlayerID: "player-1", Score: 4}}
 	matchDecisionCall = func(*game.Game) bool { return true }
-	playerMatchFactsCall = func(*game.Game) []game.PlayerMatchFact {
-		return []game.PlayerMatchFact{{GamePlayerID: "player-1", Score: 4}}
+	playerMatchFactsCall = func(*game.Game) []game.PlayerMatchFact { return facts }
+	finalMatchStateCall = func(*game.Game) (game.FinalMatchState, bool) {
+		return lifecycleFinalState(facts), true
 	}
 	t.Cleanup(func() {
 		matchDecisionCall = originalDecisionCall
 		playerMatchFactsCall = originalFactsCall
+		finalMatchStateCall = originalFinalStateCall
 	})
 
 	var successfulTransitions atomic.Int32
@@ -219,8 +231,15 @@ func TestMarkGameOverIfCompletePreservesExistingSummary(t *testing.T) {
 	room.match.SetResolvedSummary(presetSummary)
 	room.mu.Unlock()
 	originalDecisionCall := matchDecisionCall
+	originalFinalStateCall := finalMatchStateCall
 	matchDecisionCall = func(*game.Game) bool { return true }
-	t.Cleanup(func() { matchDecisionCall = originalDecisionCall })
+	finalMatchStateCall = func(*game.Game) (game.FinalMatchState, bool) {
+		return lifecycleFinalState(nil), true
+	}
+	t.Cleanup(func() {
+		matchDecisionCall = originalDecisionCall
+		finalMatchStateCall = originalFinalStateCall
+	})
 
 	if !room.MarkGameOverIfComplete() {
 		t.Fatal("expected transition")
@@ -246,6 +265,21 @@ func TestMarkGameOverNilGameTransitions(t *testing.T) {
 	if _, ok := room.ResolvedMatchSummary(); ok {
 		t.Fatal("nil-game transition created a resolved summary")
 	}
+}
+
+func lifecycleFinalState(players []game.PlayerMatchFact) game.FinalMatchState {
+	decision := rules.MatchDecision{
+		IsOver:         true,
+		TerminalStatus: rules.TerminalCompleted,
+		EndReason:      "simulation_complete",
+		Players:        make([]rules.PlayerDecision, 0, len(players)),
+	}
+	for _, player := range players {
+		decision.Players = append(decision.Players, rules.PlayerDecision{
+			ID: player.GamePlayerID, Outcome: rules.OutcomeCompleted,
+		})
+	}
+	return game.FinalMatchState{Decision: decision, Players: players}
 }
 
 type blockingMatchResultReporter struct {

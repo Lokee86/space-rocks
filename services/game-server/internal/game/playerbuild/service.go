@@ -1,17 +1,13 @@
 package playerbuild
 
-import (
-	"fmt"
-
-	"github.com/Lokee86/space-rocks/player-data/protocol"
-)
+import "fmt"
 
 type InventoryLoader interface {
-	Load(identity protocol.PlayerDataIdentity, context protocol.PlayerDataRequestContext) (protocol.PlayerDataLoadHangarInventoryResult, error)
+	Load(identity InventoryIdentity, context InventoryLoadRequest) (InventoryLoadResult, error)
 }
 
 type LoadedBuildContext struct {
-	InventoryLoad protocol.PlayerDataLoadHangarInventoryResult
+	InventoryLoad InventoryLoadResult
 	Rules         Rules
 	Options       EligibleBuildOptions
 }
@@ -31,7 +27,7 @@ func NewService(loader InventoryLoader, catalog Catalog) (*Service, error) {
 	return &Service{loader: loader, catalog: catalog}, nil
 }
 
-func (service *Service) LoadOptions(playerID string, identity protocol.PlayerDataIdentity, context protocol.PlayerDataRequestContext, rules Rules) (LoadedBuildContext, error) {
+func (service *Service) LoadOptions(playerID string, identity InventoryIdentity, context InventoryLoadRequest, rules Rules) (LoadedBuildContext, error) {
 	if err := ValidateRules(rules); err != nil {
 		return LoadedBuildContext{}, err
 	}

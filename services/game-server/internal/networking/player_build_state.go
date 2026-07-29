@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
@@ -17,7 +16,7 @@ const (
 )
 
 type sessionBuildState struct {
-	identity  protocol.PlayerDataIdentity
+	identity  playerbuild.InventoryIdentity
 	playMode  string
 	context   playerbuild.LoadedBuildContext
 	selection playerbuild.LoadoutSelection
@@ -130,7 +129,7 @@ func (session *webSocketSession) loadPlayerBuildOptions(localProfileID, playMode
 	loaded, err := service.LoadOptions(
 		session.sessionID,
 		identity,
-		protocol.PlayerDataRequestContext{PlayMode: playMode, TraceID: traceID},
+		playerbuild.InventoryLoadRequest{PlayMode: playMode, TraceID: traceID},
 		playerbuild.Rules{ModeID: modeID},
 	)
 	if err != nil {
@@ -161,18 +160,18 @@ func (session *webSocketSession) loadPlayerBuildOptions(localProfileID, playMode
 	return resolveErr
 }
 
-func (session *webSocketSession) playerDataIdentity(playMode, localProfileID string) protocol.PlayerDataIdentity {
+func (session *webSocketSession) playerDataIdentity(playMode, localProfileID string) playerbuild.InventoryIdentity {
 	if playMode == playerdata.PlayModeSinglePlayer {
 		if localProfileID != "" {
-			return protocol.PlayerDataIdentity{IdentityKind: playerdata.IdentityKindLocalProfile, LocalProfileID: localProfileID}
+			return playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityLocalProfile, LocalProfileID: localProfileID}
 		}
-		return protocol.PlayerDataIdentity{IdentityKind: playerdata.IdentityKindGuest}
+		return playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest}
 	}
 	identity := session.SessionIdentity()
 	if identity.IsAuthenticatedAccount() {
-		return protocol.PlayerDataIdentity{IdentityKind: playerdata.IdentityKindAuthenticatedAccount, AccountID: identity.AccountID}
+		return playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityAuthenticatedAccount, AccountID: identity.AccountID}
 	}
-	return protocol.PlayerDataIdentity{IdentityKind: playerdata.IdentityKindGuest}
+	return playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest}
 }
 
 func (session *webSocketSession) setBuildError(code, message string) {

@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/player-data/codec"
+	"github.com/Lokee86/space-rocks/player-data/playerdata"
 	"github.com/Lokee86/space-rocks/player-data/protocol"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerinventory"
 )
 
@@ -24,12 +26,28 @@ func (s *recordingSink) HandlePlayerDataCommand(payload []byte) ([]byte, error) 
 func TestRuntimeClientLoadsInventoryForAllIdentityRoutes(t *testing.T) {
 	tests := []struct {
 		name     string
-		identity protocol.PlayerDataIdentity
+		identity playerbuild.InventoryIdentity
+		expected protocol.PlayerDataIdentity
 		playMode string
 	}{
-		{name: "guest", identity: protocol.PlayerDataIdentity{IdentityKind: "guest"}, playMode: "single_player"},
-		{name: "local profile", identity: protocol.PlayerDataIdentity{IdentityKind: "local_profile", LocalProfileID: "local-1"}, playMode: "single_player"},
-		{name: "authenticated account", identity: protocol.PlayerDataIdentity{IdentityKind: "authenticated_account", AccountID: "account-1"}, playMode: "multiplayer"},
+		{
+			name:     "guest",
+			identity: playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest},
+			expected: protocol.PlayerDataIdentity{IdentityKind: playerbuild.InventoryIdentityGuest},
+			playMode: "single_player",
+		},
+		{
+			name:     "local profile",
+			identity: playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityLocalProfile, LocalProfileID: "local-1"},
+			expected: protocol.PlayerDataIdentity{IdentityKind: playerbuild.InventoryIdentityLocalProfile, LocalProfileID: "local-1"},
+			playMode: "single_player",
+		},
+		{
+			name:     "authenticated account",
+			identity: playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityAuthenticatedAccount, AccountID: "account-1"},
+			expected: protocol.PlayerDataIdentity{IdentityKind: playerbuild.InventoryIdentityAuthenticatedAccount, AccountID: "account-1"},
+			playMode: "multiplayer",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -37,7 +55,20 @@ func TestRuntimeClientLoadsInventoryForAllIdentityRoutes(t *testing.T) {
 				Type:      protocol.PacketTypePlayerDataLoadHangarInventoryResult,
 				Found:     true,
 				Persisted: true,
-				Inventory: protocol.HangarInventory{SchemaVersion: 1, PlayerRef: test.identity.IdentityKind},
+				Inventory: protocol.HangarInventory{
+					InventoryVersion:   7,
+					DefaultOwnedShipID: "ship-1",
+					OwnedShips: []protocol.OwnedShip{{
+						OwnedShipID: "ship-1",
+						ShipID:      "v_wing",
+						State:       "normal",
+						HardwiredEquipment: []protocol.HardwiredEquipment{{
+							HardwiredID: "hardwired-1", EquipmentID: "reinforced_hull", State: "normal",
+						}},
+					}},
+					OwnedWeapons: []protocol.OwnedWeapon{{OwnedWeaponID: "weapon-1", WeaponID: "pulse", State: "normal"}},
+					OwnedModules: []protocol.OwnedModule{{OwnedModuleID: "module-1", ModuleID: "shield_capacitor", State: "normal"}},
+				},
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -47,21 +78,53 @@ func TestRuntimeClientLoadsInventoryForAllIdentityRoutes(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			result, err := client.Load(test.identity, protocol.PlayerDataRequestContext{PlayMode: test.playMode, TraceID: "trace-1"})
+			result, err := client.Load(test.identity, playerbuild.InventoryLoadRequest{PlayMode: test.playMode, TraceID: "trace-1"})
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !result.Found || !result.Persisted {
+			if !result.Found || !result.Persisted || result.Inventory.InventoryVersion != 7 {
 				t.Fatalf("unexpected result: %#v", result)
+			}
+			if len(result.Inventory.OwnedShips) != 1 || len(result.Inventory.OwnedShips[0].HardwiredEquipment) != 1 ||
+				len(result.Inventory.OwnedWeapons) != 1 || len(result.Inventory.OwnedModules) != 1 {
+				t.Fatalf("inventory projection lost owned equipment: %#v", result.Inventory)
 			}
 			var command protocol.PlayerDataLoadHangarInventory
 			if err := json.Unmarshal(sink.payload, &command); err != nil {
 				t.Fatal(err)
 			}
-			if command.Type != protocol.PacketTypePlayerDataLoadHangarInventory || command.Identity != test.identity || command.Context.PlayMode != test.playMode {
+			if command.Type != protocol.PacketTypePlayerDataLoadHangarInventory || command.Identity != test.expected || command.Context.PlayMode != test.playMode {
 				t.Fatalf("unexpected command: %#v", command)
 			}
 		})
+	}
+}
+
+func TestRuntimeClientProjectsStarterInventoryIntoBuildEligibility(t *testing.T) {
+	identity := protocol.PlayerDataIdentity{IdentityKind: playerdata.IdentityKindGuest}
+	response, err := codec.Encode(protocol.PlayerDataLoadHangarInventoryResult{
+		Type:      protocol.PacketTypePlayerDataLoadHangarInventoryResult,
+		Found:     true,
+		Persisted: true,
+		Inventory: playerdata.StarterHangarInventory(identity),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := playerinventory.NewRuntimeClient(&recordingSink{response: response})
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := client.Load(
+		playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest},
+		playerbuild.InventoryLoadRequest{PlayMode: playerdata.PlayModeSinglePlayer},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := playerbuild.ComputeEligibility("player-1", loaded.Inventory, playerbuild.DefaultCatalog(), playerbuild.Rules{})
+	if len(options.BlockedOptions) != 0 || len(options.EligibleShips) != 2 {
+		t.Fatalf("starter inventory projection is incompatible with build catalog: %+v", options)
 	}
 }
 
@@ -80,7 +143,10 @@ func TestRuntimeClientPreservesFallbackLoadState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := client.Load(protocol.PlayerDataIdentity{IdentityKind: "guest"}, protocol.PlayerDataRequestContext{PlayMode: "single_player"})
+	result, err := client.Load(
+		playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest},
+		playerbuild.InventoryLoadRequest{PlayMode: "single_player"},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,8 +205,15 @@ func TestRuntimeClientRejectsPlayerDataFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.Load(protocol.PlayerDataIdentity{IdentityKind: "guest"}, protocol.PlayerDataRequestContext{PlayMode: "single_player"}); err == nil {
+	result, loadErr := client.Load(
+		playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest},
+		playerbuild.InventoryLoadRequest{PlayMode: "single_player"},
+	)
+	if loadErr == nil {
 		t.Fatal("expected rejected load")
+	}
+	if result.ErrorCode != "inventory_load_failed" {
+		t.Fatalf("error code was not preserved: %+v", result)
 	}
 }
 
@@ -149,7 +222,10 @@ func TestRuntimeClientPropagatesSinkFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.Load(protocol.PlayerDataIdentity{IdentityKind: "guest"}, protocol.PlayerDataRequestContext{PlayMode: "single_player"}); err == nil {
+	if _, err := client.Load(
+		playerbuild.InventoryIdentity{Kind: playerbuild.InventoryIdentityGuest},
+		playerbuild.InventoryLoadRequest{PlayMode: "single_player"},
+	); err == nil {
 		t.Fatal("expected sink failure")
 	}
 }

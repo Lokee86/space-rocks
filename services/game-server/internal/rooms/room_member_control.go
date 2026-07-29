@@ -14,7 +14,7 @@ func (room *Room) AddBotForOwnerSession(sessionID string) (RoomMember, *RoomDoma
 	if requester.PlayerID != room.membership.ownerIDValue() {
 		return RoomMember{}, &RoomDomainError{Code: RoomErrorNotRoomOwner, Message: "Only the room owner can add bots."}
 	}
-	if room.membership.memberCount() >= MaxPlayersPerRoom {
+	if room.membership.memberCount() >= room.MaxPlayers {
 		return RoomMember{}, &RoomDomainError{Code: RoomErrorRoomFull, Message: "Room is full."}
 	}
 
@@ -44,7 +44,9 @@ func (room *Room) RemoveMemberForOwnerSession(sessionID string, targetPlayerID s
 		return RoomMember{}, &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
 	}
 
-	removed := *target
-	room.membership.removeMember(targetPlayerID)
+	removed, ok := room.removeMemberLocked(target.PlayerID)
+	if !ok {
+		return RoomMember{}, &RoomDomainError{Code: RoomErrorNotInRoom, Message: "Member is not in the room."}
+	}
 	return removed, nil
 }

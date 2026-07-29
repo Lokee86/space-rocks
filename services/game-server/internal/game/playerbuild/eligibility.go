@@ -1,12 +1,8 @@
 package playerbuild
 
-import (
-	"sort"
+import "sort"
 
-	"github.com/Lokee86/space-rocks/player-data/protocol"
-)
-
-func ComputeEligibility(playerID string, inventory protocol.HangarInventory, catalog Catalog, rawRules Rules) EligibleBuildOptions {
+func ComputeEligibility(playerID string, inventory Inventory, catalog Catalog, rawRules Rules) EligibleBuildOptions {
 	rules := NormalizeRules(rawRules)
 	options := EligibleBuildOptions{
 		ModeID:         rules.ModeID,

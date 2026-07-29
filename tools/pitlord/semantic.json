@@ -371,13 +371,14 @@
         "game-server-networking",
         "game-server-playerdata",
         "game-server-playerinventory",
+        "service-player-data",
         "game-server-rooms",
         "game-server-tooling"
       ],
       "relations": [
         "imports"
       ],
-      "message": "authoritative game code must not import orchestration, transport, devtools, or persistence adapters"
+      "message": "authoritative game code must not import orchestration, transport, devtools, persistence adapters, or service-owned data models"
     },
     {
       "id": "protocol-must-not-depend-on-networking",

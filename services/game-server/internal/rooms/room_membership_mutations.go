@@ -1,5 +1,7 @@
 package rooms
 
+import "sort"
+
 type RoomPopulation struct {
 	Members       int
 	ActivePlayers int
@@ -81,12 +83,8 @@ func (room *Room) RemoveMemberForSession(sessionID string) (removed RoomMember, 
 	if !ok {
 		return RoomMember{}, room.membership.memberCount(), false
 	}
-	removed = *member
-	room.match.RememberParticipantIdentity(removed)
-	delete(room.roomTeams.assignments, member.MemberID)
-	room.membership.removeMember(member.PlayerID)
-	_ = room.rebalanceAutoBalancedLocked()
-	return removed, room.membership.memberCount(), true
+	removed, ok = room.removeMemberLocked(member.PlayerID)
+	return removed, room.membership.memberCount(), ok
 }
 
 func (room *Room) RemoveBotsIfNoHumans() []RoomMember {
@@ -96,7 +94,21 @@ func (room *Room) RemoveBotsIfNoHumans() []RoomMember {
 	if room.membership.humanMemberCount() != 0 {
 		return nil
 	}
-	return room.membership.removeBots()
+
+	botPlayerIDs := make([]string, 0)
+	for playerID, member := range room.membership.members {
+		if member.IsBot {
+			botPlayerIDs = append(botPlayerIDs, playerID)
+		}
+	}
+	sort.Strings(botPlayerIDs)
+	removed := make([]RoomMember, 0, len(botPlayerIDs))
+	for _, playerID := range botPlayerIDs {
+		if member, ok := room.removeMemberLocked(playerID); ok {
+			removed = append(removed, member)
+		}
+	}
+	return removed
 }
 
 func (room *Room) memberForSessionLocked(sessionID string) (*RoomMember, bool) {

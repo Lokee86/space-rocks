@@ -7,6 +7,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/objectives"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rules"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 )
 
 func (game *Game) IsGameOver() bool {
@@ -25,6 +26,34 @@ func (game *Game) LockFinalMatchState() (FinalMatchState, bool) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 	return game.lockFinalMatchStateLocked()
+}
+
+func (game *Game) ForceLockFinalMatchState(endReason string) (FinalMatchState, bool) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
+	if game.lockedFinalMatchState != nil {
+		return cloneFinalMatchState(*game.lockedFinalMatchState), true
+	}
+	if endReason == "" {
+		endReason = "administratively_terminated"
+	}
+	if decision := game.evaluateMatchDecisionLocked(); decision.IsOver {
+		return game.lockFinalMatchStateForDecisionLocked(decision)
+	}
+
+	facts := game.modeMatchFactsLocked()
+	decision := rules.MatchDecision{
+		IsOver:         true,
+		TerminalStatus: rules.TerminalAdministrativelyTerminated,
+		EndReason:      endReason,
+		Players:        make([]rules.PlayerDecision, 0, len(facts.Players)),
+	}
+	for _, fact := range facts.Players {
+		decision.Players = append(decision.Players, rules.PlayerDecision{
+			ID: fact.ID, Status: fact.Status, Outcome: rules.OutcomeAborted,
+		})
+	}
+	return game.lockFinalMatchStateForDecisionLocked(decision)
 }
 
 func (game *Game) LockedFinalMatchState() (FinalMatchState, bool) {
@@ -120,26 +149,38 @@ func (game *Game) lockFinalMatchStateForDecisionLocked(decision rules.MatchDecis
 }
 
 func (game *Game) playerMatchFactsLocked() []PlayerMatchFact {
-	playerIDs := make([]string, 0, len(game.participantRecords))
+	playerSet := make(map[string]struct{}, len(game.participantRecords)+len(game.playerSessions))
 	for playerID := range game.participantRecords {
+		playerSet[playerID] = struct{}{}
+	}
+	for playerID := range game.playerSessions {
+		playerSet[playerID] = struct{}{}
+	}
+	playerIDs := make([]string, 0, len(playerSet))
+	for playerID := range playerSet {
 		playerIDs = append(playerIDs, playerID)
 	}
 	sort.Strings(playerIDs)
 
 	facts := make([]PlayerMatchFact, 0, len(playerIDs))
 	for _, playerID := range playerIDs {
-		record := game.participantRecords[playerID]
-		if record == nil {
-			continue
+		teamID := teams.NoTeam
+		score := 0
+		if record := game.participantRecords[playerID]; record != nil {
+			teamID = record.TeamID
+			score = record.Score
+		} else if session := game.playerSessions[playerID]; session != nil {
+			teamID = session.TeamID
+			score = session.Score
 		}
 		deathCount := 0
-		if history, ok := game.lifeRuntime.DeathHistory(record.ID); ok {
+		if history, ok := game.lifeRuntime.DeathHistory(playerID); ok {
 			deathCount = len(history)
 		}
 		facts = append(facts, PlayerMatchFact{
-			GamePlayerID: record.ID,
-			TeamID:       record.TeamID,
-			Score:        record.Score,
+			GamePlayerID: playerID,
+			TeamID:       teamID,
+			Score:        score,
 			ShipDeaths:   deathCount,
 		})
 	}

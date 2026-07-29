@@ -93,26 +93,6 @@ func (membership *roomMembership) humanMemberCount() int {
 	return count
 }
 
-func (membership *roomMembership) removeBots() []RoomMember {
-	botPlayerIDs := make([]string, 0)
-	for playerID, member := range membership.members {
-		if member.IsBot {
-			botPlayerIDs = append(botPlayerIDs, playerID)
-		}
-	}
-
-	removed := make([]RoomMember, 0, len(botPlayerIDs))
-	for _, playerID := range botPlayerIDs {
-		member, ok := membership.members[playerID]
-		if !ok {
-			continue
-		}
-		removed = append(removed, *member)
-		membership.removeMember(playerID)
-	}
-	return removed
-}
-
 func (membership *roomMembership) membersSnapshot() []RoomMember {
 	members := make([]RoomMember, 0, len(membership.members))
 	for _, member := range membership.members {

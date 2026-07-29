@@ -3,11 +3,14 @@ package rooms
 import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 var (
-	startGameCall        = func(instance *game.Game) { instance.Start() }
-	stopGameCall         = func(instance *game.Game) { instance.Stop() }
-	matchDecisionCall    = func(instance *game.Game) bool { return instance.MatchDecision().IsOver }
-	playerMatchFactsCall = func(instance *game.Game) []game.PlayerMatchFact { return instance.PlayerMatchFacts() }
-	finalMatchStateCall  = func(instance *game.Game) (game.FinalMatchState, bool) { return instance.LockFinalMatchState() }
+	startGameCall             = func(instance *game.Game) { instance.Start() }
+	stopGameCall              = func(instance *game.Game) { instance.Stop() }
+	matchDecisionCall         = func(instance *game.Game) bool { return instance.MatchDecision().IsOver }
+	playerMatchFactsCall      = func(instance *game.Game) []game.PlayerMatchFact { return instance.PlayerMatchFacts() }
+	finalMatchStateCall       = func(instance *game.Game) (game.FinalMatchState, bool) { return instance.LockFinalMatchState() }
+	forcedFinalMatchStateCall = func(instance *game.Game, endReason string) (game.FinalMatchState, bool) {
+		return instance.ForceLockFinalMatchState(endReason)
+	}
 )
 
 func (room *Room) StartGameForMember(playerID string, newGame func() *game.Game) *RoomDomainError {
@@ -152,10 +155,9 @@ func (room *Room) MarkGameOver() *RoomDomainError {
 	if err != nil {
 		return err
 	}
-	facts := playerMatchFactsCall(capture.Game)
-	finalState, locked := finalMatchStateCall(capture.Game)
+	finalState, locked := forcedFinalMatchStateCall(capture.Game, "manual_game_over")
 	if !locked {
-		finalState = game.FinalMatchState{Players: facts}
+		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Could not lock final match state."}
 	}
 	input := buildEndOfMatchInput(capture, finalState, "manual_game_over")
 	room.mu.Lock()

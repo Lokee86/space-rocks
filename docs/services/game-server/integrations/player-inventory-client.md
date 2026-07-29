@@ -9,15 +9,16 @@ This document describes the game-server adapter that loads hangar inventory and 
 ## Overview
 
 ```text
-game or playerbuild service
+networking composition
+-> playerbuild.InventoryLoader
 -> playerinventory.RuntimeClient
 -> generated player-data command
 -> PlayerDataSink.HandlePlayerDataCommand
--> generated result
--> inventory/build consumer
+-> generated player-data result
+-> game-owned playerbuild.InventoryLoadResult
 ```
 
-The adapter keeps player-data protocol encoding out of game simulation packages and satisfies the inventory-loader interface used by `playerbuild.Service`.
+The adapter keeps player-data protocol encoding and service DTOs out of game simulation packages. It satisfies the inventory-loader interface used by `playerbuild.Service` and translates player-data responses into the game-owned inventory contract before returning them.
 
 ## Code root
 
@@ -63,13 +64,13 @@ type PlayerDataSink interface {
 }
 
 func NewRuntimeClient(sink PlayerDataSink) (*RuntimeClient, error)
-func (client *RuntimeClient) Load(identity protocol.PlayerDataIdentity, context protocol.PlayerDataRequestContext) (protocol.PlayerDataLoadHangarInventoryResult, error)
+func (client *RuntimeClient) Load(identity playerbuild.InventoryIdentity, request playerbuild.InventoryLoadRequest) (playerbuild.InventoryLoadResult, error)
 func (client *RuntimeClient) ApplyGrant(command protocol.PlayerDataApplyInventoryGrant) (protocol.PlayerDataApplyInventoryGrantResult, error)
 ```
 
 ## Data ownership
 
-The adapter owns no inventory state. It passes generated command/result values across the service boundary. The returned inventory snapshot remains player-data-owned until the build service captures it in a `LoadedBuildContext` for one resolution flow.
+The adapter owns no inventory state. Player-data owns the persisted inventory and generated wire contract. `playerinventory.RuntimeClient` projects the returned service DTO into `playerbuild.InventoryLoadResult`; the build domain captures that game-owned projection in a `LoadedBuildContext` for one resolution flow.
 
 ## Code map
 

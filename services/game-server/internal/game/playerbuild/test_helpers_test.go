@@ -1,29 +1,25 @@
 package playerbuild
 
-import (
-	"github.com/Lokee86/space-rocks/player-data/protocol"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
-)
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 
-func testInventory() protocol.HangarInventory {
-	return protocol.HangarInventory{
+func testInventory() Inventory {
+	return Inventory{
 		InventoryVersion: 7,
-		PlayerRef:        "local_profile:pilot-1",
-		OwnedShips: []protocol.OwnedShip{
+		OwnedShips: []OwnedShip{
 			{
 				OwnedShipID: "ship-1",
 				ShipID:      ShipVWing,
 				State:       "normal",
-				HardwiredEquipment: []protocol.HardwiredEquipment{
+				HardwiredEquipment: []HardwiredEquipment{
 					{HardwiredID: "hardwired-1", EquipmentID: "armor_plate", State: "normal"},
 				},
 			},
 		},
-		OwnedWeapons: []protocol.OwnedWeapon{
+		OwnedWeapons: []OwnedWeapon{
 			{OwnedWeaponID: "weapon-1", WeaponID: WeaponPulse, State: "normal"},
 			{OwnedWeaponID: "weapon-unknown", WeaponID: "unknown", State: "normal"},
 		},
-		OwnedModules: []protocol.OwnedModule{
+		OwnedModules: []OwnedModule{
 			{OwnedModuleID: "module-1", ModuleID: "shield_booster", State: "normal"},
 			{OwnedModuleID: "module-active", ModuleID: "active_scanner", State: "normal"},
 		},

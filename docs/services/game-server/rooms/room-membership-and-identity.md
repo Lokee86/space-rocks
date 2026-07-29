@@ -200,7 +200,7 @@ RoomSnapshot.owner_id
 RoomSnapshot.current_match_id
 ```
 
-Membership identity is also used when building resolved match summaries. `buildMatchResultSummary` matches game player facts back to room members by `GamePlayerID` / member `PlayerID`, copies `AccountID` or `LocalProfileID`, and marks bot rows. Bots remain part of winner resolution and visible match results, but the match-reporting mapper omits bot rows so they cannot mutate guest, local-profile, or authenticated-account statistics.
+Membership identity is also used when building resolved match summaries. `buildEndOfMatchInput` matches final game player facts back to captured room participant identities by `GamePlayerID`, copies `AccountID` or `LocalProfileID`, and marks bot rows. Bots remain part of winner resolution and visible match results, but the match-reporting mapper omits bot rows so they cannot mutate guest, local-profile, or authenticated-account statistics.
 
 ## Data ownership
 

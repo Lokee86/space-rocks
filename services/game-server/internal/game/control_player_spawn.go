@@ -16,6 +16,9 @@ func (target *Control) EnsurePlayerSession(playerID string, spawnPosition physic
 	if playerID == "" {
 		return false
 	}
+	if target.game.lockedFinalMatchState != nil {
+		return false
+	}
 	if err := target.game.lifeRuntime.RegisterParticipant(lives.ParticipantRegistration{PlayerID: playerID}); err != nil {
 		return false
 	}

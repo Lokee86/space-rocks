@@ -22,6 +22,8 @@ def test_pitlord_policy_composes_repository_and_semantic_rules() -> None:
 
     assert {"forbid_content", "require_path", "forbid_path"} <= repository_types
     assert {"forbid_dependency", "require_ownership", "forbid_area_cycles"} <= semantic_types
+    game_core_rule = next(rule for rule in semantic["rules"] if rule["id"] == "game-core-must-not-depend-on-orchestration")
+    assert "service-player-data" in game_core_rule["to_areas"]
     area_ids = {area["id"] for area in semantic["areas"]}
     assert {"client-teams", "game-server-matchresults", "game-server-playerinventory"} <= area_ids
 

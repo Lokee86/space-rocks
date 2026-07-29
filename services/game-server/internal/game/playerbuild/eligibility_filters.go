@@ -1,9 +1,6 @@
 package playerbuild
 
-import (
-	"github.com/Lokee86/space-rocks/player-data/protocol"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
-)
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 
 const (
 	ReasonUnavailableState    = "unavailable_state"
@@ -26,7 +23,7 @@ const (
 	ReasonActiveModuleBlocked = "active_module_not_allowed"
 )
 
-func shipBlockReason(owned protocol.OwnedShip, variant ShipVariant, found bool, rules Rules) string {
+func shipBlockReason(owned OwnedShip, variant ShipVariant, found bool, rules Rules) string {
 	if owned.State != "normal" {
 		return ReasonUnavailableState
 	}
@@ -45,7 +42,7 @@ func shipBlockReason(owned protocol.OwnedShip, variant ShipVariant, found bool, 
 	return ""
 }
 
-func weaponBlockReason(owned protocol.OwnedWeapon, profile WeaponProfile, found bool, rules Rules) string {
+func weaponBlockReason(owned OwnedWeapon, profile WeaponProfile, found bool, rules Rules) string {
 	if owned.State != "normal" {
 		return ReasonUnavailableState
 	}
@@ -78,7 +75,7 @@ func weaponBlockReason(owned protocol.OwnedWeapon, profile WeaponProfile, found 
 	return ""
 }
 
-func moduleBlockReason(owned protocol.OwnedModule, profile ModuleProfile, found bool, rules Rules) string {
+func moduleBlockReason(owned OwnedModule, profile ModuleProfile, found bool, rules Rules) string {
 	if owned.State != "normal" {
 		return ReasonUnavailableState
 	}

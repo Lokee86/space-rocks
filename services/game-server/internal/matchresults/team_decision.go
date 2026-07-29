@@ -45,55 +45,6 @@ func mergeTeamOutcome(current Outcome, next Outcome) Outcome {
 	return current
 }
 
-func resolveTeamOutcomes(structure teams.Structure, participants []ParticipantFact) ([]TeamResult, []teams.ID) {
-	if structure == teams.StructureFFA || len(participants) == 0 {
-		return nil, nil
-	}
-	totals := make(map[teams.ID]int)
-	for _, participant := range participants {
-		if participant.TeamID != teams.NoTeam {
-			totals[participant.TeamID] += participant.Score
-		}
-	}
-	if len(totals) == 0 {
-		return nil, nil
-	}
-	ids := sortedTeamIDs(totals)
-	sort.Slice(ids, func(left, right int) bool {
-		if totals[ids[left]] != totals[ids[right]] {
-			return totals[ids[left]] > totals[ids[right]]
-		}
-		return ids[left] < ids[right]
-	})
-	results := make([]TeamResult, len(ids))
-	if structure == teams.StructureCoOp {
-		for index, id := range ids {
-			results[index] = TeamResult{TeamID: id, Outcome: OutcomeCompleted, Placement: 1, FinalScore: totals[id]}
-		}
-		return results, append([]teams.ID(nil), ids...)
-	}
-	maxScore := totals[ids[0]]
-	maxCount := 0
-	for _, id := range ids {
-		if totals[id] == maxScore {
-			maxCount++
-		}
-	}
-	placements := teamPlacements(ids, totals)
-	winners := make([]teams.ID, 0, 1)
-	for index, id := range ids {
-		outcome := OutcomeLost
-		if maxCount != 1 {
-			outcome = OutcomeDraw
-		} else if totals[id] == maxScore {
-			outcome = OutcomeWon
-			winners = append(winners, id)
-		}
-		results[index] = TeamResult{TeamID: id, Outcome: outcome, Placement: placements[index], FinalScore: totals[id]}
-	}
-	return results, winners
-}
-
 func sortedTeamIDs(totals map[teams.ID]int) []teams.ID {
 	ids := make([]teams.ID, 0, len(totals))
 	for id := range totals {
@@ -101,18 +52,4 @@ func sortedTeamIDs(totals map[teams.ID]int) []teams.ID {
 	}
 	sort.Slice(ids, func(left, right int) bool { return ids[left] < ids[right] })
 	return ids
-}
-
-func teamPlacements(ids []teams.ID, totals map[teams.ID]int) []int {
-	placements := make([]int, len(ids))
-	placement := 0
-	lastScore := 0
-	for index, id := range ids {
-		if index == 0 || totals[id] != lastScore {
-			placement = index + 1
-			lastScore = totals[id]
-		}
-		placements[index] = placement
-	}
-	return placements
 }

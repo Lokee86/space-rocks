@@ -31,19 +31,11 @@ func TestTeamIDValues(t *testing.T) {
 	}
 }
 
-func TestIDCompatibilityAlias(t *testing.T) {
+func TestIDAliasUsesCanonicalTeamID(t *testing.T) {
 	var canonical TeamID = Team1
-	var compatibility ID = canonical
-	if compatibility != canonical {
-		t.Fatalf("ID alias value = %q, want %q", compatibility, canonical)
-	}
-
-	compatibilityIDs := []ID{Team1ID, Team2ID, Team3ID, Team4ID, Team5ID, Team6ID, Team7ID, Team8ID}
-	canonicalIDs := []TeamID{Team1, Team2, Team3, Team4, Team5, Team6, Team7, Team8}
-	for index := range canonicalIDs {
-		if compatibilityIDs[index] != canonicalIDs[index] {
-			t.Fatalf("compatibility ID at index %d = %q, want %q", index, compatibilityIDs[index], canonicalIDs[index])
-		}
+	var id ID = canonical
+	if id != canonical {
+		t.Fatalf("ID alias value = %q, want %q", id, canonical)
 	}
 }
 

@@ -3,11 +3,10 @@ package playerbuild
 import (
 	"fmt"
 
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/weapons"
 )
 
-func FallbackSelection(inventory protocol.HangarInventory, options EligibleBuildOptions) LoadoutSelection {
+func FallbackSelection(inventory Inventory, options EligibleBuildOptions) LoadoutSelection {
 	selection := LoadoutSelection{
 		PlayerID:               options.PlayerID,
 		ModeID:                 options.ModeID,
@@ -40,7 +39,7 @@ func FallbackSelection(inventory protocol.HangarInventory, options EligibleBuild
 	return selection
 }
 
-func ValidateSelection(selection LoadoutSelection, inventory protocol.HangarInventory, catalog Catalog, options EligibleBuildOptions) error {
+func ValidateSelection(selection LoadoutSelection, inventory Inventory, catalog Catalog, options EligibleBuildOptions) error {
 	if selection.PlayerID == "" || selection.PlayerID != options.PlayerID {
 		return fmt.Errorf("loadout player ID does not match eligible options")
 	}
@@ -73,8 +72,13 @@ func ValidateSelection(selection LoadoutSelection, inventory protocol.HangarInve
 		if pointSlot(point) != profile.Slot {
 			return fmt.Errorf("weapon %q is incompatible with point %q", option.WeaponID, point)
 		}
-		if ammo := selection.StartingAmmoByPoint[point]; ammo < 0 {
-			return fmt.Errorf("starting ammo for %q cannot be negative", point)
+		if ammo, supplied := selection.StartingAmmoByPoint[point]; supplied && ammo != profile.StartingAmmo {
+			return fmt.Errorf("starting ammo for %q is server controlled", point)
+		}
+	}
+	for point := range selection.StartingAmmoByPoint {
+		if _, selected := selection.SelectedWeaponsByPoint[point]; !selected {
+			return fmt.Errorf("starting ammo references unselected weapon point %q", point)
 		}
 	}
 
@@ -125,13 +129,13 @@ func eligibleModule(options EligibleBuildOptions, slot ModuleSlot, ownedID strin
 	return EligibleModuleOption{}, false
 }
 
-func findOwnedShip(inventory protocol.HangarInventory, ownedID string) (protocol.OwnedShip, bool) {
+func findOwnedShip(inventory Inventory, ownedID string) (OwnedShip, bool) {
 	for _, owned := range inventory.OwnedShips {
 		if owned.OwnedShipID == ownedID {
 			return owned, true
 		}
 	}
-	return protocol.OwnedShip{}, false
+	return OwnedShip{}, false
 }
 
 func pointSlot(point WeaponPoint) weapons.Slot {

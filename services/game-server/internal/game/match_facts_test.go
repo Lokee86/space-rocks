@@ -183,8 +183,8 @@ func TestRemoveLastPlayerCompletesMatchAndRepeatedRemovalIsStable(t *testing.T) 
 	if snapshot := game.matchSnapshot(); len(snapshot.Players) != 0 || !snapshot.HadParticipants {
 		t.Fatalf("match snapshot = %+v, want no active players with historical participation", snapshot)
 	}
-	if decision := game.MatchDecision(); !decision.IsOver || len(decision.Players) != 0 {
-		t.Fatalf("match decision = %+v, want completed match with no active players", decision)
+	if decision := game.MatchDecision(); !decision.IsOver || len(decision.Players) != 1 || decision.Players[0].ID != playerID {
+		t.Fatalf("match decision = %+v, want completed match with the removed participant retained", decision)
 	}
 
 	facts := game.PlayerMatchFacts()
@@ -194,8 +194,8 @@ func TestRemoveLastPlayerCompletesMatchAndRepeatedRemovalIsStable(t *testing.T) 
 
 	game.RemovePlayer(playerID)
 
-	if decision := game.MatchDecision(); !decision.IsOver || len(decision.Players) != 0 {
-		t.Fatalf("decision after repeated removal = %+v, want stable completed match", decision)
+	if decision := game.MatchDecision(); !decision.IsOver || len(decision.Players) != 1 || decision.Players[0].ID != playerID {
+		t.Fatalf("decision after repeated removal = %+v, want stable completed participant result", decision)
 	}
 	repeatedFacts := game.PlayerMatchFacts()
 	if len(repeatedFacts) != 1 || repeatedFacts[0] != facts[0] {

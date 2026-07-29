@@ -4,27 +4,26 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/player-data/playerdata"
-	"github.com/Lokee86/space-rocks/player-data/protocol"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/playerbuild"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
 type testInventoryLoader struct {
-	inventory protocol.HangarInventory
+	inventory playerbuild.Inventory
 }
 
-func (loader testInventoryLoader) Load(protocol.PlayerDataIdentity, protocol.PlayerDataRequestContext) (protocol.PlayerDataLoadHangarInventoryResult, error) {
-	return protocol.PlayerDataLoadHangarInventoryResult{Found: true, Inventory: loader.inventory}, nil
+func (loader testInventoryLoader) Load(playerbuild.InventoryIdentity, playerbuild.InventoryLoadRequest) (playerbuild.InventoryLoadResult, error) {
+	return playerbuild.InventoryLoadResult{Found: true, Inventory: loader.inventory}, nil
 }
 
 func TestLoadPlayerBuildOptionsResolvesFallbackSelection(t *testing.T) {
-	inventory := protocol.HangarInventory{
+	inventory := playerbuild.Inventory{
 		InventoryVersion: 3,
-		OwnedShips: []protocol.OwnedShip{{
+		OwnedShips: []playerbuild.OwnedShip{{
 			OwnedShipID: "owned-v-wing", ShipID: playerbuild.ShipVWing, State: "normal",
 		}},
-		OwnedWeapons: []protocol.OwnedWeapon{{
+		OwnedWeapons: []playerbuild.OwnedWeapon{{
 			OwnedWeaponID: "owned-pulse", WeaponID: playerbuild.WeaponPulse, State: "normal",
 		}},
 		DefaultOwnedShipID: "owned-v-wing",
@@ -55,9 +54,9 @@ func TestLoadPlayerBuildOptionsResolvesFallbackSelection(t *testing.T) {
 }
 
 func TestLoadoutSubmissionIsLockedAfterMatchStart(t *testing.T) {
-	inventory := protocol.HangarInventory{
-		OwnedShips:         []protocol.OwnedShip{{OwnedShipID: "owned-v-wing", ShipID: playerbuild.ShipVWing, State: "normal"}},
-		OwnedWeapons:       []protocol.OwnedWeapon{{OwnedWeaponID: "owned-pulse", WeaponID: playerbuild.WeaponPulse, State: "normal"}},
+	inventory := playerbuild.Inventory{
+		OwnedShips:         []playerbuild.OwnedShip{{OwnedShipID: "owned-v-wing", ShipID: playerbuild.ShipVWing, State: "normal"}},
+		OwnedWeapons:       []playerbuild.OwnedWeapon{{OwnedWeaponID: "owned-pulse", WeaponID: playerbuild.WeaponPulse, State: "normal"}},
 		DefaultOwnedShipID: "owned-v-wing",
 	}
 	service, err := playerbuild.NewService(testInventoryLoader{inventory: inventory}, playerbuild.DefaultCatalog())
@@ -78,9 +77,9 @@ func TestLoadoutSubmissionIsLockedAfterMatchStart(t *testing.T) {
 }
 
 func TestInvalidLoadoutKeepsLastResolvedBuild(t *testing.T) {
-	inventory := protocol.HangarInventory{
-		OwnedShips:         []protocol.OwnedShip{{OwnedShipID: "owned-v-wing", ShipID: playerbuild.ShipVWing, State: "normal"}},
-		OwnedWeapons:       []protocol.OwnedWeapon{{OwnedWeaponID: "owned-pulse", WeaponID: playerbuild.WeaponPulse, State: "normal"}},
+	inventory := playerbuild.Inventory{
+		OwnedShips:         []playerbuild.OwnedShip{{OwnedShipID: "owned-v-wing", ShipID: playerbuild.ShipVWing, State: "normal"}},
+		OwnedWeapons:       []playerbuild.OwnedWeapon{{OwnedWeaponID: "owned-pulse", WeaponID: playerbuild.WeaponPulse, State: "normal"}},
 		DefaultOwnedShipID: "owned-v-wing",
 	}
 	service, err := playerbuild.NewService(testInventoryLoader{inventory: inventory}, playerbuild.DefaultCatalog())
