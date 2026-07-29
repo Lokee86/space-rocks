@@ -24,7 +24,7 @@ This doc tracks runtime pressure, measurement coverage, and release-shaped perfo
 
 ## Current status
 
-Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, and match-churn coverage now spans both a four-round regression and a 90-round soak. Heap profiling isolated and repaired the devtools observer-registry ownership bug exposed by the soak, and the complete 90-round workload now passes with stable server heap. Multi-room coverage and release thresholds remain.
+Active planning. Deterministic game-owned RNG, runtime measurement capture, and the scripted runtime scenario harness are implemented. The lifecycle regression scenario exercises real multiplayer admission, WebRTC delivery, server-owned bots, sustained bullet pressure, interest transitions, death, and spectating. A receiver-scaling matrix holds eight total participants constant while varying one, two, four, and eight real clients, a simulation-heavy isolation scenario holds receiver count to one while pre-seeding asteroid pressure and increasing projectile streams, match-churn coverage spans both a four-round regression and a repaired 90-round soak, and the first simultaneous three-room process baseline is recorded. A broader multi-room matrix and release thresholds remain.
 
 ## Ownership Boundary
 
@@ -295,6 +295,8 @@ An identical post-fix 30-round run confirmed the repair. Before the fix, first-f
 
 The full post-fix 90-round soak then repeated the original workload for approximately 18 minutes. Both clients completed all 90 matches, all match IDs and eight-participant results validated, and the run reported zero skipped receiver sends and zero client send failures. Comparing the first ten rounds with the last ten, current RSS changed by only 0.969 MiB, heap allocated decreased by 0.344 MiB, heap in use decreased by 0.264 MiB, and goroutines remained effectively flat. Server tick average improved by 3.491 us and receiver outbound average improved by 53.111 us between the same windows. Server peak RSS remained between 33.012 MiB and 33.941 MiB. This establishes the repaired 90-round run as the current repeated-match memory baseline. The headless coordinator's peak memory rose 2.575 MiB between windows, similar to the original client-side drift; that small client-process increase is not attributed to a leak without client heap ownership evidence.
 
+The `multi_room_3x1c_7b_v1` scenario runs three independent rooms concurrently in one server process. Each room contains one real headless coordinator and seven bots, seeds 24 asteroid spawns, runs 20 continuous projectile streams, reaches game over, and validates a distinct eight-participant result. Two complete runs produced unique room codes and match IDs with zero skipped receiver sends and zero client send failures. Process peak RSS ranged from 54.250 to 57.699 MiB and peak CPU use ranged from 1.145 to 1.153 measured cores. Mean room tick average was 1.121 ms and 1.444 ms; the worst room tick was 18.517 ms and 36.925 ms. Mean receiver outbound average was 1.773 ms and 1.335 ms; the worst receiver outbound tick was 19.971 ms and 65.681 ms. The confirmation run's outbound peaks were almost entirely candidate-construction peaks, which reached 39.808, 56.728, and 65.522 ms across its three receivers. Per-room entity maxima varied by run and are not summed into a simultaneous process count. This is a functional three-room baseline with warning-level timing outliers, not a production room-capacity limit. A controlled one/two/three/four-room matrix is required to separate room-count scaling from shared-host scheduling and cross-room contention.
+
 The `simulation_scale_1c_7b_v1` isolation scenario seeds 192 asteroids before measurement, uses one real headless receiver plus seven bots, and increases continuous projectile streams from 60 to 120. The first run sampled up to 144 surviving asteroids and 518 projectiles. Server tick time remained healthy at 0.280 ms average and 6.554 ms maximum, with 45.2 MiB peak RSS and 0.482 peak CPU cores. Receiver candidate construction averaged 1.345 ms and peaked at 7.811 ms; outbound work averaged 1.637 ms and peaked at 9.436 ms. No sends were skipped and no client send failures occurred. The headless client recorded a 33 ms frame-time p99 and 76.226 ms maximum, so this load does not identify authoritative simulation as the current limit; visible-client rendering and packet-application behavior should be checked separately if high-entity stutter remains.
 
 Canonical commands:
@@ -454,7 +456,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 1. Keep the initial runtime signals lightweight and focused on server tick, client frame, entity-count, and memory pressure.
 2. Use the implemented seeded runtime harness for repeatable multiplayer pressure while retaining manual measurement for exploratory checks.
-3. Use the repaired churn soak as the memory-retention baseline, then add multi-room pressure as the next distinct scenario.
+3. Use the repaired churn soak as the memory-retention baseline and extend the initial three-room point into a controlled multi-room matrix.
 4. Apply the launch-shape coverage matrix to local packaged alpha, dev-hosted multiplayer, hosted staging, and hosted production.
 5. Add evidence-based decision thresholds as the scenario baseline grows.
 6. Treat optimization as a follow-on choice after the limiting pressure is measured.
@@ -476,7 +478,7 @@ Possible future optimization areas may include simulation cost, collision cost, 
 
 ## Open decisions
 
-* What multi-room pressure shape should be automated next?
+* How far should the initial one/two/three/four-room matrix scale before hosted hardware testing?
 * Which runtime signals should appear in the World Telemetry Overlay?
 * Which slow-tick or frame-pressure thresholds should become release gates?
 * Which entity-heavy feature should get the next dedicated load scenario?

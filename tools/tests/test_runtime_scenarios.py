@@ -12,7 +12,7 @@ if str(TOOLS_ROOT) not in sys.path:
 
 from runtime_scenarios.model import Scenario, ScenarioError
 from runtime_scenarios.phase_markers import phase_markers_for_scenario
-from runtime_scenarios.processes import find_godot
+from runtime_scenarios.processes import find_godot, prepare_godot_project
 from runtime_scenarios.rounds import expand_rounds
 
 
@@ -36,6 +36,7 @@ def test_loads_valid_runtime_scenario(tmp_path: Path) -> None:
     assert scenario.scenario_id == "test_scenario"
     assert scenario.seed == 7
     assert scenario.clients.total == 2
+    assert scenario.room_count == 1
     assert scenario.bots == 2
 
 
@@ -162,21 +163,22 @@ def test_rejects_negative_phase_bullet_streams(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("filename", "clients", "bots", "seed"),
+    ("filename", "clients", "bots", "seed", "room_count"),
     [
-        ("network_interest_lifecycle_v1.json", 2, 6, 27072701),
-        ("match_churn_2c_6b_v1.json", 2, 6, 27072803),
-        ("match_churn_soak_2c_6b_v1.json", 2, 6, 27072804),
-        ("match_churn_heap_profile_2c_6b_v1.json", 2, 6, 27072806),
-        ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801),
-        ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801),
-        ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801),
-        ("receiver_scale_8c_0b_v1.json", 8, 0, 27072801),
-        ("simulation_scale_1c_7b_v1.json", 1, 7, 27072802),
+        ("network_interest_lifecycle_v1.json", 2, 6, 27072701, 1),
+        ("match_churn_2c_6b_v1.json", 2, 6, 27072803, 1),
+        ("match_churn_soak_2c_6b_v1.json", 2, 6, 27072804, 1),
+        ("match_churn_heap_profile_2c_6b_v1.json", 2, 6, 27072806, 1),
+        ("multi_room_3x1c_7b_v1.json", 1, 7, 27072901, 3),
+        ("receiver_scale_1c_7b_v1.json", 1, 7, 27072801, 1),
+        ("receiver_scale_2c_6b_v1.json", 2, 6, 27072801, 1),
+        ("receiver_scale_4c_4b_v1.json", 4, 4, 27072801, 1),
+        ("receiver_scale_8c_0b_v1.json", 8, 0, 27072801, 1),
+        ("simulation_scale_1c_7b_v1.json", 1, 7, 27072802, 1),
     ],
 )
 def test_repository_scenarios_are_valid(
-    filename: str, clients: int, bots: int, seed: int
+    filename: str, clients: int, bots: int, seed: int, room_count: int
 ) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     scenario = Scenario.load(
@@ -185,7 +187,64 @@ def test_repository_scenarios_are_valid(
     assert scenario.clients.total == clients
     assert scenario.bots == bots
     assert scenario.seed == seed
+    assert scenario.room_count == room_count
     assert scenario.clients.total + scenario.bots == 8
+
+
+def test_prepare_godot_project_runs_headless_editor_scan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeProcess:
+        def wait(self, timeout: float) -> int:
+            captured["timeout"] = timeout
+            return 0
+
+    class FakeManaged:
+        def __init__(self) -> None:
+            self.process = FakeProcess()
+            self.closed = False
+
+        def close_log(self) -> None:
+            self.closed = True
+
+    managed = FakeManaged()
+
+    def fake_start_process(
+        name: str,
+        command: list[str],
+        cwd: Path,
+        log_path: Path,
+        **_kwargs: object,
+    ) -> FakeManaged:
+        captured.update(
+            name=name,
+            command=command,
+            cwd=cwd,
+            log_path=log_path,
+        )
+        return managed
+
+    monkeypatch.setattr("runtime_scenarios.processes.start_process", fake_start_process)
+    godot = tmp_path / "Godot.exe"
+    project = tmp_path / "client"
+    log = tmp_path / "scan.log"
+
+    prepare_godot_project(godot, project, log)
+
+    assert captured["name"] == "godot-project-scan"
+    assert captured["command"] == [
+        str(godot),
+        "--headless",
+        "--editor",
+        "--path",
+        str(project),
+        "--quit",
+    ]
+    assert captured["cwd"] == project
+    assert captured["log_path"] == log
+    assert managed.closed is True
 
 
 def test_find_godot_accepts_editor_executable(tmp_path: Path) -> None:

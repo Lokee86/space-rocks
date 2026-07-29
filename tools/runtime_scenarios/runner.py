@@ -12,10 +12,12 @@ from typing import Any
 from runtime_scenarios.heap_profiles import HeapProfileCollector
 from runtime_scenarios.model import Scenario
 from runtime_scenarios.phase_markers import phase_markers_for_scenario
+from runtime_scenarios.room_groups import launch_room_groups
 from runtime_scenarios.server_command import runtime_server_command
 from runtime_scenarios.processes import (
     ManagedProcess,
     find_godot,
+    prepare_godot_project,
     reserve_free_loopback_port,
     start_process,
     stop_processes,
@@ -64,10 +66,18 @@ class ScenarioRunner:
         }
         try:
             godot = find_godot(self.options.godot)
+            client_root = self.options.repo_root / "client"
+            prepare_godot_project(
+                godot,
+                client_root,
+                self.run_directory / "godot-project-scan.log",
+            )
             summary["execution"] = {
                 "godot_editor": str(godot),
-                "source_project": str(self.options.repo_root / "client"),
+                "source_project": str(client_root),
+                "godot_project_scan": True,
                 "coordinator_headless": self.options.headless_coordinator,
+                "room_count": self.scenario.room_count,
                 "packaged_client_started": False,
                 "bundled_local_server_started": False,
                 "server_launch": (
@@ -81,34 +91,18 @@ class ScenarioRunner:
             self._start_server()
             wait_for_health(self.health_url, self.scenario.setup_timeout_seconds)
 
-            coordinator = self._start_client(
+            room_groups = launch_room_groups(
+                scenario=self.scenario,
                 godot=godot,
-                client_id="coordinator-1",
-                role="coordinator",
-                headless=self.options.headless_coordinator,
+                headless_coordinator=self.options.headless_coordinator,
+                start_client=self._start_client,
+                wait_for_status=self._wait_for_status,
             )
-            room_status = self._wait_for_status(
-                coordinator,
-                accepted={"room_ready"},
-                timeout=self.scenario.setup_timeout_seconds,
-            )
-            room_code = str(room_status.get("room_code", "")).strip()
-            if not room_code:
-                raise RuntimeError("coordinator did not publish a room code")
-
-            participants: list[ManagedProcess] = []
-            for index in range(self.scenario.clients.headless):
-                participants.append(
-                    self._start_client(
-                        godot=godot,
-                        client_id=f"participant-{index + 1}",
-                        role="participant",
-                        headless=True,
-                        room_code=room_code,
-                    )
-                )
-
-            client_processes = [coordinator, *participants]
+            client_processes = [
+                client
+                for room_group in room_groups
+                for client in room_group.clients
+            ]
             final_statuses = self._wait_for_completion(client_processes)
             failures = {
                 name: status
@@ -119,7 +113,9 @@ class ScenarioRunner:
                 raise RuntimeError(f"one or more clients failed: {failures}")
 
             summary["success"] = True
-            summary["room_code"] = room_code
+            summary["rooms"] = [room_group.summary() for room_group in room_groups]
+            if len(room_groups) == 1:
+                summary["room_code"] = room_groups[0].room_code
             summary["clients"] = final_statuses
             summary["heap_profiles"] = self.heap_profiles.summary()
             return 0

@@ -48,6 +48,38 @@ def find_godot(explicit: str | None) -> Path:
     )
 
 
+def prepare_godot_project(
+    godot: Path,
+    project_root: Path,
+    log_path: Path,
+    timeout_seconds: float = 120.0,
+) -> None:
+    managed = start_process(
+        "godot-project-scan",
+        [
+            str(godot),
+            "--headless",
+            "--editor",
+            "--path",
+            str(project_root),
+            "--quit",
+        ],
+        project_root,
+        log_path,
+    )
+    try:
+        return_code = managed.process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as exc:
+        _force_stop_process_tree(managed.process)
+        raise TimeoutError("Godot project class scan timed out") from exc
+    finally:
+        managed.close_log()
+    if return_code != 0:
+        raise RuntimeError(
+            f"Godot project class scan failed with code {return_code}; see {log_path}"
+        )
+
+
 def start_process(
     name: str,
     command: Sequence[str],

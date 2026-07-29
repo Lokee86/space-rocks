@@ -27,6 +27,7 @@ class Scenario:
     seed: int
     timeout_seconds: float
     setup_timeout_seconds: float
+    room_count: int
     bots: int
     clients: ClientPlan
     raw: dict[str, Any]
@@ -47,6 +48,7 @@ class Scenario:
         seed = _required_int(payload, "seed")
         timeout_seconds = _positive_number(payload, "timeout_seconds", 180.0)
         setup_timeout_seconds = _positive_number(payload, "setup_timeout_seconds", 45.0)
+        room_count = _positive_int(payload, "room_count", 1)
         bots = _nonnegative_int(payload, "bots", 0)
 
         clients_payload = payload.get("clients", {})
@@ -104,6 +106,7 @@ class Scenario:
             seed=seed,
             timeout_seconds=timeout_seconds,
             setup_timeout_seconds=setup_timeout_seconds,
+            room_count=room_count,
             bots=bots,
             clients=clients,
             raw=payload,
