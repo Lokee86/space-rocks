@@ -33,6 +33,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="run the coordinator headlessly for unattended orchestration verification",
     )
+    parser.add_argument(
+        "--server-url",
+        help=(
+            "use an already deployed game server instead of launching one; "
+            "accepts ws://, wss://, http://, or https://"
+        ),
+    )
     return parser
 
 
@@ -63,6 +70,7 @@ def main() -> int:
             output_root=output_root,
             godot=args.godot,
             headless_coordinator=args.headless_coordinator,
+            server_url=args.server_url,
         ),
     )
     return runner.run()

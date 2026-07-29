@@ -17,6 +17,21 @@ python tools/runtime_scenarios/main.py \
   tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json
 ```
 
+## Test a deployed server
+
+Pass `--server-url` to run the normal scenario clients against an already running container or remote alpha deployment. The runner checks the deployment health endpoint, does not launch or stop a game-server process, and writes client logs, status files, phase markers, and summaries locally.
+
+```bash
+python tools/runtime_scenarios/main.py \
+  tools/runtime_scenarios/scenarios/network_interest_lifecycle_v1.json \
+  --server-url https://alpha.example.com \
+  --headless-coordinator
+```
+
+`http://` and `https://` inputs automatically target `/ws`; explicit `ws://` and `wss://` URLs are also accepted. The deployment must be started with the scenario settings required by the selected test, including `SPACE_ROCKS_RUNTIME_SCENARIO_AUTH=1` for harness identities and a fixed `SPACE_ROCKS_RUNTIME_SCENARIO_SEED` when deterministic replay is required. These switches belong only on an isolated alpha or staging deployment, never on an unrestricted public server.
+
+Server-side logs and measurement files remain inside the deployed container, so mount its runtime output directories when those artifacts are required. Heap-profile scenarios additionally require `SPACE_ROCKS_RUNTIME_SCENARIO_PPROF=1`; the harness retrieves profiles through the deployment URL.
+
 ## Simulation-heavy isolation
 
 `simulation_scale_1c_7b_v1` holds receiver count to one real client while pre-seeding 192 asteroids before measurement and increasing continuous projectile streams from 60 to 120. This emphasizes authoritative movement, collision, fragmentation, spawning, and entity-lifecycle cost without multiplying per-receiver networking work.
@@ -87,7 +102,7 @@ receiver_scale_4c_4b_v1  4 real clients + 4 bots
 receiver_scale_8c_0b_v1  8 real clients + 0 bots
 ```
 
-Run each scenario independently so every run receives its own server process, loopback port, logs, and measurement reports.
+Run each scenario independently. Local mode gives every run its own server process and loopback port. Deployment mode reuses the supplied server and therefore requires an isolated deployment with no unrelated rooms or clients.
 
 After the runs complete, summarize them together:
 
@@ -112,11 +127,11 @@ Scenario clients always run the source project through the Godot editor executab
 
 The runner:
 
-1. Reserves a free loopback port for the run.
-2. Starts the current game-server source with WSL `go run ./cmd/game-server` on Windows, or direct `go run` on non-Windows hosts, using harness-only deterministic seed, authentication, output, and listen settings.
+1. Uses `--server-url` for a deployed server, or reserves a loopback port and starts the current game-server source in local mode.
+2. Checks the selected server's `/health` endpoint before starting clients.
 3. Starts the source project through one editor-based coordinator and the configured editor-based headless participants.
 4. Waits for client status files and combined measurement exports.
-5. Stops only the processes it started.
+5. Stops only the local processes it started; deployed servers are never stopped by the harness.
 6. Writes logs, configured `phase-markers.json`, and `summary.json` under `.ci-artifacts/runtime-scenarios/`.
 
 Do not use native Windows `go run`, `go build -o`, a packaged executable, or another direct Windows server launch in this harness. Native Windows `go run` still creates a temporary `game-server.exe`, which triggers firewall/UAC approval and breaks unattended remote testing. The Windows harness must keep the server inside WSL.

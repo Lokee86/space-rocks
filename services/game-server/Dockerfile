@@ -27,7 +27,7 @@ RUN mkdir -p \
         /out/app/measurement-results/game-server \
     && cd services/game-server \
     && CGO_ENABLED=0 GOOS=linux go build \
-        -tags=nodevtools,noembeddedsqlite \
+        -tags=noembeddedsqlite \
         -trimpath \
         -buildvcs=false \
         -ldflags='-s -w' \
