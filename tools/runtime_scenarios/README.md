@@ -92,6 +92,34 @@ python tools/runtime_scenarios/multi_room_summary.py \
 
 A positive top-level `room_count` repeats the configured client plan and bot count per room while keeping all rooms on the same server process. Multi-room client IDs are room-scoped. Existing one-room scenarios retain the original `coordinator-1` and `participant-N` IDs.
 
+The controlled matrix manifest contains matching one, two, three, and four-room points:
+
+```text
+multi_room_1x1c_7b_v1  1 room  x (1 real client + 7 bots)
+multi_room_2x1c_7b_v1  2 rooms x (1 real client + 7 bots)
+multi_room_3x1c_7b_v1  3 rooms x (1 real client + 7 bots)
+multi_room_4x1c_7b_v1  4 rooms x (1 real client + 7 bots)
+```
+
+Validate the complete manifest without starting processes:
+
+```bash
+python tools/runtime_scenarios/multi_room_matrix.py \
+  tools/runtime_scenarios/scenarios/multi_room_matrix_v1.json \
+  --validate-only
+```
+
+Run the complete matrix only when unrelated host activity is controlled:
+
+```bash
+python tools/runtime_scenarios/multi_room_matrix.py \
+  tools/runtime_scenarios/scenarios/multi_room_matrix_v1.json \
+  --controlled-host \
+  --host-note "dedicated idle host; hardware and OS details"
+```
+
+The matrix runner executes the four points sequentially, writes each scenario beneath one timestamped matrix directory, and creates `matrix-run.json` plus `matrix-summary.json`. The summary reports `functional_pass` separately from `performance_eligible`. Performance eligibility requires all four points to pass and every run to carry `--controlled-host`; uncontrolled local runs remain valid only for lifecycle and integration checks. `--host-note` records hardware, isolation, or known contention. The standalone `multi_room_matrix_summary.py` aggregator can also combine four existing run directories and supports `--require-controlled-host`.
+
 Before starting server or client processes, the runner performs one headless Godot editor scan of the source project. This refreshes the ignored global-script-class cache and prevents multiple source-project clients from starting against a stale or incomplete cache. The scan log is stored as `godot-project-scan.log` in the run directory. Coordinators are then started sequentially to avoid concurrent writes to that shared project cache; their matches still overlap.
 
 ## Receiver-scaling matrix

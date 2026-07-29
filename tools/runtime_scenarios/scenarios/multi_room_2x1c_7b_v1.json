@@ -1,0 +1,39 @@
+{
+  "id": "multi_room_2x1c_7b_v1",
+  "seed": 27072901,
+  "timeout_seconds": 240,
+  "setup_timeout_seconds": 60,
+  "room_count": 2,
+  "clients": {
+    "visible": 1,
+    "headless": 0
+  },
+  "bots": 7,
+  "room": {
+    "team_structure": "ffa",
+    "max_players": 8
+  },
+  "rounds": [
+    {
+      "name": "simultaneous-room-cycle",
+      "lives": 2,
+      "setup": {
+        "asteroid_spawns": 24,
+        "settle_seconds": 1
+      },
+      "phases": [
+        {
+          "name": "warmup",
+          "duration_seconds": 10,
+          "actions": ["move_forward", "turn_right", "PrimaryFire"]
+        },
+        {
+          "name": "pressure",
+          "duration_seconds": 45,
+          "bullet_streams": 20,
+          "actions": ["move_forward", "PrimaryFire"]
+        }
+      ]
+    }
+  ]
+}

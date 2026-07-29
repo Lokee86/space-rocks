@@ -31,6 +31,8 @@ class RunOptions:
     output_root: Path
     godot: str | None = None
     headless_coordinator: bool = False
+    controlled_host: bool = False
+    host_note: str = ""
 
 class ScenarioRunner:
     def __init__(self, scenario: Scenario, options: RunOptions) -> None:
@@ -62,6 +64,10 @@ class ScenarioRunner:
             "run_directory": str(self.run_directory),
             "phase_markers": phase_markers,
             "phase_markers_path": str(self.run_directory / "phase-markers.json"),
+            "host_control": {
+                "controlled": self.options.controlled_host,
+                "note": self.options.host_note.strip(),
+            },
             "success": False,
         }
         try:

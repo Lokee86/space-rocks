@@ -33,6 +33,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="run the coordinator headlessly for unattended orchestration verification",
     )
+    parser.add_argument(
+        "--controlled-host",
+        action="store_true",
+        help="declare that unrelated host activity was controlled for performance evidence",
+    )
+    parser.add_argument(
+        "--host-note",
+        default="",
+        help="describe host isolation, hardware, or known contention for this run",
+    )
     return parser
 
 
@@ -63,6 +73,8 @@ def main() -> int:
             output_root=output_root,
             godot=args.godot,
             headless_coordinator=args.headless_coordinator,
+            controlled_host=args.controlled_host,
+            host_note=args.host_note,
         ),
     )
     return runner.run()
