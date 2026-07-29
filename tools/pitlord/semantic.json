@@ -1,0 +1,560 @@
+{
+  "version": 1,
+  "areas": [
+    {
+      "id": "game-server-authclient",
+      "description": "Game-server internal authclient ownership area",
+      "paths": [
+        "services/game-server/internal/authclient",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/authclient"
+      ]
+    },
+    {
+      "id": "game-server-constants",
+      "description": "Game-server internal constants ownership area",
+      "paths": [
+        "services/game-server/internal/constants",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/constants"
+      ]
+    },
+    {
+      "id": "game-server-devtools",
+      "description": "Game-server internal devtools ownership area",
+      "paths": [
+        "services/game-server/internal/devtools",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/devtools"
+      ]
+    },
+    {
+      "id": "game-server-game",
+      "description": "Game-server internal game ownership area",
+      "paths": [
+        "services/game-server/internal/game",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/game"
+      ]
+    },
+    {
+      "id": "game-server-logging",
+      "description": "Game-server internal logging ownership area",
+      "paths": [
+        "services/game-server/internal/logging",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/logging"
+      ]
+    },
+    {
+      "id": "game-server-matchreporting",
+      "description": "Game-server internal matchreporting ownership area",
+      "paths": [
+        "services/game-server/internal/matchreporting",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/matchreporting"
+      ]
+    },
+    {
+      "id": "game-server-measurement",
+      "description": "Game-server internal measurement ownership area",
+      "paths": [
+        "services/game-server/internal/measurement",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/measurement"
+      ]
+    },
+    {
+      "id": "game-server-networking",
+      "description": "Game-server internal networking ownership area",
+      "paths": [
+        "services/game-server/internal/networking",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/networking"
+      ]
+    },
+    {
+      "id": "game-server-observability",
+      "description": "Game-server internal observability ownership area",
+      "paths": [
+        "services/game-server/internal/observability",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/observability"
+      ]
+    },
+    {
+      "id": "game-server-playerdata",
+      "description": "Game-server internal playerdata ownership area",
+      "paths": [
+        "services/game-server/internal/playerdata",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
+      ]
+    },
+    {
+      "id": "game-server-playerids",
+      "description": "Game-server internal playerids ownership area",
+      "paths": [
+        "services/game-server/internal/playerids",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/playerids"
+      ]
+    },
+    {
+      "id": "game-server-protocol",
+      "description": "Game-server internal protocol ownership area",
+      "paths": [
+        "services/game-server/internal/protocol",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/protocol"
+      ]
+    },
+    {
+      "id": "game-server-rooms",
+      "description": "Game-server internal rooms ownership area",
+      "paths": [
+        "services/game-server/internal/rooms",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
+      ]
+    },
+    {
+      "id": "game-server-tooling",
+      "description": "Game-server internal tooling ownership area",
+      "paths": [
+        "services/game-server/internal/tooling",
+        "@internal/github.com/Lokee86/space-rocks/services/game-server/internal/tooling"
+      ]
+    },
+    {
+      "id": "client-api",
+      "description": "Client api ownership area",
+      "paths": [
+        "client/scripts/api"
+      ]
+    },
+    {
+      "id": "client-auth",
+      "description": "Client auth ownership area",
+      "paths": [
+        "client/scripts/auth"
+      ]
+    },
+    {
+      "id": "client-boot",
+      "description": "Client boot ownership area",
+      "paths": [
+        "client/scripts/boot"
+      ]
+    },
+    {
+      "id": "client-config",
+      "description": "Client config ownership area",
+      "paths": [
+        "client/scripts/config"
+      ]
+    },
+    {
+      "id": "client-devtools",
+      "description": "Client devtools ownership area",
+      "paths": [
+        "client/scripts/devtools"
+      ]
+    },
+    {
+      "id": "client-entities",
+      "description": "Client entities ownership area",
+      "paths": [
+        "client/scripts/entities"
+      ]
+    },
+    {
+      "id": "client-gameplay",
+      "description": "Client gameplay ownership area",
+      "paths": [
+        "client/scripts/gameplay"
+      ]
+    },
+    {
+      "id": "client-generated",
+      "description": "Client generated ownership area",
+      "paths": [
+        "client/scripts/generated"
+      ]
+    },
+    {
+      "id": "client-lobby",
+      "description": "Client lobby ownership area",
+      "paths": [
+        "client/scripts/lobby"
+      ]
+    },
+    {
+      "id": "client-logging",
+      "description": "Client logging ownership area",
+      "paths": [
+        "client/scripts/logging"
+      ]
+    },
+    {
+      "id": "client-main-menu",
+      "description": "Client main_menu ownership area",
+      "paths": [
+        "client/scripts/main_menu"
+      ]
+    },
+    {
+      "id": "client-networking",
+      "description": "Client networking ownership area",
+      "paths": [
+        "client/scripts/networking"
+      ]
+    },
+    {
+      "id": "client-observability",
+      "description": "Client observability ownership area",
+      "paths": [
+        "client/scripts/observability"
+      ]
+    },
+    {
+      "id": "client-presentation",
+      "description": "Client presentation ownership area",
+      "paths": [
+        "client/scripts/presentation"
+      ]
+    },
+    {
+      "id": "client-profile",
+      "description": "Client profile ownership area",
+      "paths": [
+        "client/scripts/profile"
+      ]
+    },
+    {
+      "id": "client-protocol",
+      "description": "Client protocol ownership area",
+      "paths": [
+        "client/scripts/protocol"
+      ]
+    },
+    {
+      "id": "client-session",
+      "description": "Client session ownership area",
+      "paths": [
+        "client/scripts/session"
+      ]
+    },
+    {
+      "id": "client-shell",
+      "description": "Client shell ownership area",
+      "paths": [
+        "client/scripts/shell"
+      ]
+    },
+    {
+      "id": "client-ui",
+      "description": "Client ui ownership area",
+      "paths": [
+        "client/scripts/ui"
+      ]
+    },
+    {
+      "id": "client-world",
+      "description": "Client world ownership area",
+      "paths": [
+        "client/scripts/world"
+      ]
+    },
+    {
+      "id": "service-player-data",
+      "description": "Standalone player-data service",
+      "paths": [
+        "services/player-data",
+        "@internal/github.com/Lokee86/space-rocks/player-data",
+        "@internal/github.com/Lokee86/space-rocks/services/player-data"
+      ]
+    },
+    {
+      "id": "service-diagnostic-aggregator",
+      "description": "Standalone diagnostic-aggregator service",
+      "paths": [
+        "services/diagnostic-aggregator",
+        "@internal/github.com/Lokee86/space-rocks/diagnostic-aggregator",
+        "@internal/github.com/Lokee86/space-rocks/services/diagnostic-aggregator"
+      ]
+    },
+    {
+      "id": "service-api-server",
+      "description": "Rails API service",
+      "paths": [
+        "services/api-server"
+      ]
+    },
+    {
+      "id": "shared-go",
+      "description": "Shared Go contracts and infrastructure",
+      "paths": [
+        "shared/go",
+        "@internal/github.com/Lokee86/space-rocks/shared/go"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "game-server-internal-files-require-owner",
+      "type": "require_ownership",
+      "scope_paths": [
+        "services/game-server/internal"
+      ],
+      "source_kinds": [
+        "file"
+      ],
+      "message": "every game-server internal source file must belong to exactly one declared ownership area"
+    },
+    {
+      "id": "client-script-files-require-owner",
+      "type": "require_ownership",
+      "scope_paths": [
+        "client/scripts"
+      ],
+      "source_kinds": [
+        "file"
+      ],
+      "message": "every client script must belong to exactly one declared ownership area"
+    },
+    {
+      "id": "service-source-files-require-owner",
+      "type": "require_ownership",
+      "scope_paths": [
+        "services/player-data",
+        "services/diagnostic-aggregator",
+        "services/api-server"
+      ],
+      "source_kinds": [
+        "file"
+      ],
+      "message": "standalone service source files must belong to exactly one declared ownership area"
+    },
+    {
+      "id": "shared-go-files-require-owner",
+      "type": "require_ownership",
+      "scope_paths": [
+        "shared/go"
+      ],
+      "source_kinds": [
+        "file"
+      ],
+      "message": "shared Go source files must belong to the shared-go ownership area"
+    },
+    {
+      "id": "game-core-must-not-depend-on-orchestration",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "game-server-game"
+      ],
+      "to_areas": [
+        "game-server-authclient",
+        "game-server-devtools",
+        "game-server-matchreporting",
+        "game-server-networking",
+        "game-server-playerdata",
+        "game-server-rooms",
+        "game-server-tooling"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "authoritative game code must not import orchestration, transport, devtools, or persistence adapters"
+    },
+    {
+      "id": "protocol-must-not-depend-on-networking",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "game-server-protocol"
+      ],
+      "to_areas": [
+        "game-server-networking"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "protocol packages must remain below networking and must not import networking-owned packages"
+    },
+    {
+      "id": "constants-must-remain-foundational",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "game-server-constants"
+      ],
+      "to_areas": [
+        "game-server-authclient",
+        "game-server-devtools",
+        "game-server-game",
+        "game-server-logging",
+        "game-server-matchreporting",
+        "game-server-measurement",
+        "game-server-networking",
+        "game-server-observability",
+        "game-server-playerdata",
+        "game-server-playerids",
+        "game-server-protocol",
+        "game-server-rooms",
+        "game-server-tooling"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "game-server constants must not depend on higher-level runtime packages"
+    },
+    {
+      "id": "shared-go-must-not-depend-on-services",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "shared-go"
+      ],
+      "to_areas": [
+        "game-server-authclient",
+        "game-server-constants",
+        "game-server-devtools",
+        "game-server-game",
+        "game-server-logging",
+        "game-server-matchreporting",
+        "game-server-measurement",
+        "game-server-networking",
+        "game-server-observability",
+        "game-server-playerdata",
+        "game-server-playerids",
+        "game-server-protocol",
+        "game-server-rooms",
+        "game-server-tooling",
+        "service-player-data",
+        "service-diagnostic-aggregator",
+        "service-api-server"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "shared Go contracts must not import service implementations"
+    },
+    {
+      "id": "player-data-must-not-depend-on-host-services",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "service-player-data"
+      ],
+      "to_areas": [
+        "game-server-authclient",
+        "game-server-constants",
+        "game-server-devtools",
+        "game-server-game",
+        "game-server-logging",
+        "game-server-matchreporting",
+        "game-server-measurement",
+        "game-server-networking",
+        "game-server-observability",
+        "game-server-playerdata",
+        "game-server-playerids",
+        "game-server-protocol",
+        "game-server-rooms",
+        "game-server-tooling",
+        "service-diagnostic-aggregator",
+        "service-api-server"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "player-data must remain independent of game-server internals and other service implementations"
+    },
+    {
+      "id": "diagnostic-aggregator-must-not-depend-on-host-services",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "service-diagnostic-aggregator"
+      ],
+      "to_areas": [
+        "game-server-authclient",
+        "game-server-constants",
+        "game-server-devtools",
+        "game-server-game",
+        "game-server-logging",
+        "game-server-matchreporting",
+        "game-server-measurement",
+        "game-server-networking",
+        "game-server-observability",
+        "game-server-playerdata",
+        "game-server-playerids",
+        "game-server-protocol",
+        "game-server-rooms",
+        "game-server-tooling",
+        "service-player-data",
+        "service-api-server"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "diagnostic-aggregator must remain independent of its host services"
+    },
+    {
+      "id": "game-server-internals-must-not-host-diagnostic-aggregator",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "game-server-authclient",
+        "game-server-constants",
+        "game-server-devtools",
+        "game-server-game",
+        "game-server-logging",
+        "game-server-matchreporting",
+        "game-server-measurement",
+        "game-server-networking",
+        "game-server-observability",
+        "game-server-playerdata",
+        "game-server-playerids",
+        "game-server-protocol",
+        "game-server-rooms",
+        "game-server-tooling"
+      ],
+      "to_areas": [
+        "service-diagnostic-aggregator"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "only the game-server composition root may host diagnostic-aggregator"
+    },
+    {
+      "id": "client-runtime-must-not-depend-on-devtools",
+      "type": "forbid_dependency",
+      "from_areas": [
+        "client-auth",
+        "client-entities",
+        "client-gameplay",
+        "client-networking",
+        "client-presentation",
+        "client-profile",
+        "client-protocol",
+        "client-session",
+        "client-world"
+      ],
+      "to_areas": [
+        "client-devtools"
+      ],
+      "relations": [
+        "imports",
+        "extends"
+      ],
+      "message": "client runtime domains must not depend on devtools implementation"
+    },
+    {
+      "id": "game-server-area-imports-must-be-acyclic",
+      "type": "forbid_area_cycles",
+      "areas": [
+        "game-server-authclient",
+        "game-server-constants",
+        "game-server-devtools",
+        "game-server-game",
+        "game-server-logging",
+        "game-server-matchreporting",
+        "game-server-measurement",
+        "game-server-networking",
+        "game-server-observability",
+        "game-server-playerdata",
+        "game-server-playerids",
+        "game-server-protocol",
+        "game-server-rooms",
+        "game-server-tooling"
+      ],
+      "relations": [
+        "imports"
+      ],
+      "message": "game-server internal ownership areas must not form import cycles"
+    }
+  ]
+}

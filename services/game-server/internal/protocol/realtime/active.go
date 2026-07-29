@@ -6,7 +6,7 @@ import (
 	"time"
 
 	game "github.com/Lokee86/space-rocks/services/game-server/internal/game"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetmetrics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetcodec"
 )
 

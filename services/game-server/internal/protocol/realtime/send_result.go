@@ -1,6 +1,6 @@
 package realtime
 
-import "github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
+import "github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetmetrics"
 
 type LaneSendResult struct {
 	PacketsBuilt              int

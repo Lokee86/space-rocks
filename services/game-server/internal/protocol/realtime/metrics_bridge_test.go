@@ -3,7 +3,7 @@ package realtime
 import (
 	"testing"
 
-	"github.com/Lokee86/space-rocks/services/game-server/internal/networking/packetmetrics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/protocol/packetmetrics"
 )
 
 func TestSendPlanSummaryToPacketMetricRecordMapsPacketFamilyAndLane(t *testing.T) {

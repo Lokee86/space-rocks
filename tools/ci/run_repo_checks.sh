@@ -8,7 +8,7 @@ DATA_SYNC=("$PYTHON" tools/data_sync/main.py)
 export PYTHONDONTWRITEBYTECODE=1
 
 "$PYTHON" -m pytest tests tools/tests tools/data_sync/tests
-pitlord check --repo . --policy tools/pitlord/policy.json
+bash tools/pitlord/run.sh
 "${DATA_SYNC[@]}" -validate
 "${DATA_SYNC[@]}" -check -constants -go -gds
 "${DATA_SYNC[@]}" -check -packets -go -gds

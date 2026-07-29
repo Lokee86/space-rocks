@@ -30,7 +30,7 @@ The current automated CI baseline and native local-packaged-alpha gate are imple
 
 GitHub Actions runs the three baseline jobs—repository checks, Go tests, and Godot/GUT client tests—plus a separate native local-alpha workflow with Windows and macOS package jobs. The shared local/CI runners are the operational entry points; exact commands and environment variables are maintained in [Agent Testing Rules](../../../agent/testing.md).
 
-* Repository checks run the Python suite, data-sync drift checks, and the declarative Pitlord architecture policy at `tools/pitlord/policy.json`.
+* Repository checks run the Python suite, data-sync drift checks, and the composed Pitlord architecture gate. That gate refreshes Lexicon facts, synchronizes an Arcana graph, then evaluates repository and semantic ownership/dependency rules from `tools/pitlord/policy.json`.
 * Go tests run the credential helper, player-data, and game-server default, `nodevtools`, and `localpackage` variants.
 * Client tests run the Godot 4.6.3 clean-runner sequence: editor bootstrap, headless import, and GUT, with logs and bounded stage timeouts.
 
@@ -134,7 +134,7 @@ Before a new high-risk seam is treated as complete, its enforcement evidence mus
 * the owner and the forbidden bypass or reach-through behavior being checked; and
 * a narrow, configuration-driven static architecture rule when the violation can be checked reliably.
 
-Pitlord runs in repository checks against `tools/pitlord/policy.json`, but it does not prove all architecture automatically. Existing rules are intentionally incomplete and should expand when concrete risk justifies them. If recurring cleanup findings or regressions expose the same ownership violation, reach-through, forbidden dependency, or duplicated authority, strengthen the focused tests or Pitlord rules instead of relying on memory or documentation alone.
+Pitlord runs in repository checks through `tools/pitlord/run.sh`. Repository rules detect exact source and path invariants, while Lexicon and Arcana provide semantic ownership, dependency, and area-cycle evidence. The configured graph gate covers declared high-confidence boundaries; it is not a claim that every possible architectural defect is statically decidable. If recurring cleanup findings or regressions expose the same ownership violation, reach-through, forbidden dependency, or duplicated authority, strengthen the focused tests or Pitlord rules instead of relying on memory or documentation alone.
 
 Do not require a static guard when detection would be vague, noisy, speculative, brittle, or easy to evade. Use the smallest reliable proof: a focused test, a static rule, or both when each verifies a distinct part of the invariant. Ordinary features do not require speculative architecture rules.
 

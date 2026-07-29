@@ -48,7 +48,7 @@ For each new high-risk seam, document:
 - focused behavioral or contract tests for the seam; and
 - whether the invariant is statically detectable and should receive a configuration-driven architecture-guard rule.
 
-Architecture guards should be narrow and evidence-based, not speculative or brittle. Existing guards are intentionally incomplete; expand them when concrete risk justifies it rather than requiring a guard for every ordinary feature. When future cleanup repeatedly finds the same ownership violation, reach-through, forbidden dependency, or duplicated authority, the cleanup should normally add or strengthen a focused guard or test so that class of drift does not return.
+Architecture guards should be narrow and evidence-based, not speculative or brittle. Pitlord evaluates exact repository rules plus Lexicon/Arcana ownership, dependency, and area-cycle rules from the composed policy under `tools/pitlord/`. Expand that policy when concrete risk justifies it rather than requiring a guard for every ordinary feature. When future cleanup repeatedly finds the same ownership violation, reach-through, forbidden dependency, or duplicated authority, the cleanup should normally add or strengthen a focused guard or test so that class of drift does not return.
 
 Line-count guardrails for handwritten production files:
 
