@@ -6,6 +6,7 @@ const DebugShapeIdResolver := preload("res://scripts/devtools/hitboxes/debug_sha
 func test_resolver_returns_player_shape_id() -> void:
 	assert_eq(DebugShapeIdResolver.player_shape_id({"ship_type": ""}), "player:v_wing")
 	assert_eq(DebugShapeIdResolver.player_shape_id({"ship_type": "v_wing"}), "player:v_wing")
+	assert_eq(DebugShapeIdResolver.player_shape_id({"ship_type": "v_wing_scout"}), "player:v_wing")
 
 
 func test_resolver_returns_asteroid_shape_id() -> void:

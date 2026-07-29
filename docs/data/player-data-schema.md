@@ -61,7 +61,7 @@ local_profile -> local_hangar_inventories in embedded SQLite
 authenticated_account -> player_inventories JSONB through Rails/Postgres
 ```
 
-The starter inventory is one `v_wing`, the current `pulse` primary weapon, no optional modules, and no hardwired equipment. Missing inventory is initialized on first profile load. Corrupt or unavailable inventory returns a playable synthesized fallback; controlled repair is attempted when the failure is safe to overwrite.
+The starter inventory now exposes a small selectable catalog: `v_wing`, the lighter/faster `v_wing_scout` configuration, `pulse`, a three-round `torpedo` secondary, and one passive module for each shield, armor, engine, and utility slot. No hardwired equipment is included. Existing V1 inventories are normalized once to add missing baseline catalog instances while preserving their default ship and prior ownership; the persisted inventory version advances when that upgrade is stored. Missing inventory is initialized on first profile load. Corrupt or unavailable inventory returns a playable synthesized fallback; controlled repair is attempted when the failure is safe to overwrite.
 
 The normalized `POST /api/player-data/profile` response includes the hangar inventory and persistence/fallback status. Authenticated-account persistence uses:
 

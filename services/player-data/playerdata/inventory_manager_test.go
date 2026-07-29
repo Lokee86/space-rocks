@@ -18,14 +18,14 @@ func TestStarterHangarInventoryIsPlayableAndStable(t *testing.T) {
 	if first.SchemaVersion != HangarInventorySchemaVersion {
 		t.Fatalf("unexpected schema version %d", first.SchemaVersion)
 	}
-	if len(first.OwnedShips) != 1 || first.OwnedShips[0].ShipID != StarterShipID {
+	if len(first.OwnedShips) != 2 || first.OwnedShips[0].ShipID != StarterShipID || first.OwnedShips[1].ShipID != StarterScoutShipID {
 		t.Fatalf("unexpected starter ships: %#v", first.OwnedShips)
 	}
-	if len(first.OwnedWeapons) != 1 || first.OwnedWeapons[0].WeaponID != StarterPrimaryWeaponID {
+	if len(first.OwnedWeapons) != 2 || first.OwnedWeapons[0].WeaponID != StarterPrimaryWeaponID || first.OwnedWeapons[1].WeaponID != StarterSecondaryWeaponID {
 		t.Fatalf("unexpected starter weapons: %#v", first.OwnedWeapons)
 	}
-	if len(first.OwnedModules) != 0 {
-		t.Fatalf("starter inventory should not contain modules")
+	if len(first.OwnedModules) != 4 {
+		t.Fatalf("unexpected starter modules: %#v", first.OwnedModules)
 	}
 	if len(first.OwnedShips[0].HardwiredEquipment) != 0 {
 		t.Fatalf("starter ship should not contain hardwired equipment")
@@ -69,6 +69,57 @@ func TestInventoryManagerInitializesMissingInventoryDurably(t *testing.T) {
 	}
 }
 
+func TestInventoryManagerUpgradesLegacyStarterCatalogOnce(t *testing.T) {
+	store := NewMemoryStore()
+	identity := protocol.PlayerDataIdentity{IdentityKind: IdentityKindLocalProfile, LocalProfileID: "legacy-1"}
+	legacy := protocol.HangarInventory{
+		SchemaVersion: HangarInventorySchemaVersion,
+		PlayerRef:     IdentityKey(identity),
+		OwnedShips: []protocol.OwnedShip{{
+			OwnedShipID: stableOwnedID("s", IdentityKey(identity), "starter", StarterShipID),
+			ShipID:      StarterShipID, HardwiredEquipment: []protocol.HardwiredEquipment{}, State: InventoryStateNormal,
+		}},
+		OwnedWeapons: []protocol.OwnedWeapon{{
+			OwnedWeaponID: stableOwnedID("w", IdentityKey(identity), "starter", StarterPrimaryWeaponID),
+			WeaponID:      StarterPrimaryWeaponID, State: InventoryStateNormal,
+		}},
+		OwnedModules:       []protocol.OwnedModule{},
+		UnlockedContent:    []string{StarterShipID, StarterPrimaryWeaponID},
+		StackableItems:     []protocol.StackableInventoryItem{},
+		DefaultOwnedShipID: stableOwnedID("s", IdentityKey(identity), "starter", StarterShipID),
+		AppliedGrantIds:    []string{},
+	}
+	stored, err := store.StoreHangarInventory(identity, legacy, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	first, err := NewInventoryManager(store).Load(identity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !first.Persisted || first.Inventory.InventoryVersion != stored.InventoryVersion+1 {
+		t.Fatalf("legacy catalog upgrade was not persisted once: %#v", first)
+	}
+	if len(first.Inventory.OwnedShips) != 2 || len(first.Inventory.OwnedWeapons) != 2 || len(first.Inventory.OwnedModules) != 4 {
+		t.Fatalf("legacy catalog was not expanded: %#v", first.Inventory)
+	}
+	if first.Inventory.DefaultOwnedShipID != legacy.DefaultOwnedShipID {
+		t.Fatalf("catalog upgrade changed the default ship")
+	}
+
+	second, err := NewInventoryManager(store).Load(identity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.Inventory.InventoryVersion != first.Inventory.InventoryVersion {
+		t.Fatalf("catalog upgrade repeated: first=%d second=%d", first.Inventory.InventoryVersion, second.Inventory.InventoryVersion)
+	}
+	if len(second.Inventory.OwnedModules) != 4 {
+		t.Fatalf("catalog upgrade duplicated modules: %#v", second.Inventory.OwnedModules)
+	}
+}
+
 func TestInventoryManagerRepairsInvalidPersistedInventory(t *testing.T) {
 	store := NewMemoryStore()
 	identity := protocol.PlayerDataIdentity{IdentityKind: IdentityKindLocalProfile, LocalProfileID: "local-1"}
@@ -106,8 +157,8 @@ func TestInventoryManagerGuestStorageIsTransient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(updated.OwnedModules) != 1 {
-		t.Fatalf("expected transient module grant")
+	if len(updated.OwnedModules) != 5 {
+		t.Fatalf("expected starter modules plus transient grant")
 	}
 
 	secondManager := NewInventoryManager(NewGuestMemoryStore())
@@ -115,8 +166,8 @@ func TestInventoryManagerGuestStorageIsTransient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(fresh.Inventory.OwnedModules) != 0 {
-		t.Fatalf("guest inventory leaked across stores")
+	if len(fresh.Inventory.OwnedModules) != 4 {
+		t.Fatalf("guest inventory leaked across stores or lost starter modules")
 	}
 	if fresh.Inventory.OwnedShips[0].OwnedShipID != loaded.Inventory.OwnedShips[0].OwnedShipID {
 		t.Fatalf("starter identity should remain deterministic")
@@ -136,10 +187,10 @@ func TestInventoryGrantIsIdempotentAndUsesStableOwnedIDs(t *testing.T) {
 	if duplicate {
 		t.Fatalf("first grant was duplicate")
 	}
-	if len(first.OwnedWeapons) != 2 {
-		t.Fatalf("expected starter plus granted weapon, got %d", len(first.OwnedWeapons))
+	if len(first.OwnedWeapons) != 3 {
+		t.Fatalf("expected starter weapons plus granted weapon, got %d", len(first.OwnedWeapons))
 	}
-	ownedID := first.OwnedWeapons[1].OwnedWeaponID
+	ownedID := first.OwnedWeapons[2].OwnedWeaponID
 
 	second, duplicate, err := manager.ApplyGrant(command)
 	if err != nil {
@@ -148,7 +199,7 @@ func TestInventoryGrantIsIdempotentAndUsesStableOwnedIDs(t *testing.T) {
 	if !duplicate {
 		t.Fatalf("replayed grant was not duplicate")
 	}
-	if len(second.OwnedWeapons) != 2 || second.OwnedWeapons[1].OwnedWeaponID != ownedID {
+	if len(second.OwnedWeapons) != 3 || second.OwnedWeapons[2].OwnedWeaponID != ownedID {
 		t.Fatalf("duplicate grant changed ownership")
 	}
 }
@@ -160,7 +211,7 @@ func TestUnlockGrantDoesNotCreateOwnership(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(inventory.OwnedWeapons) != 1 {
+	if len(inventory.OwnedWeapons) != 2 {
 		t.Fatalf("unlock created ownership")
 	}
 	if !containsString(inventory.UnlockedContent, "weapon.railgun") {

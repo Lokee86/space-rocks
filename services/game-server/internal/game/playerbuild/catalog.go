@@ -8,40 +8,78 @@ import (
 )
 
 const (
-	ShipVWing   = "v_wing"
-	WeaponPulse = "pulse"
+	ShipVWing      = "v_wing"
+	ShipVWingScout = "v_wing_scout"
+
+	WeaponPulse   = "pulse"
+	WeaponTorpedo = "torpedo"
+
+	ModuleShieldCapacitor  = "shield_capacitor"
+	ModuleReinforcedHull   = "reinforced_hull"
+	ModuleEngineOverdrive  = "engine_overdrive"
+	ModuleFlightStabilizer = "flight_stabilizer"
 )
 
 func DefaultCatalog() Catalog {
+	standardStats := runtime.ResolveShipStats(runtime.DefaultShipTypeID)
+	scoutStats := standardStats
+	scoutStats.MaxHealth = scoutStats.MaxHealth * 3 / 4
+	scoutStats.RotationSpeed *= 1.20
+	scoutStats.ThrustForce *= 1.15
+	scoutStats.MaxSpeed *= 1.15
+	scoutStats.Damping *= 1.10
+
+	standardPoints := map[WeaponPoint]PointKind{
+		Primary1:   PointHardpoint,
+		Primary2:   PointNone,
+		Secondary1: PointHardpoint,
+		Secondary2: PointNone,
+	}
+	standardModules := []ModuleSlot{ShieldMod, ArmorMod, EngineMod, UtilityMod}
+
 	return Catalog{
 		Ships: map[string]ShipVariant{
 			ShipVWing: {
-				ID:          ShipVWing,
-				WeightClass: WeightStandard,
-				Stats:       runtime.ResolveShipStats(runtime.DefaultShipTypeID),
-				WeaponPoints: map[WeaponPoint]PointKind{
-					Primary1:   PointHardpoint,
-					Primary2:   PointNone,
-					Secondary1: PointHardpoint,
-					Secondary2: PointNone,
-				},
-				ModuleSlots:            []ModuleSlot{ShieldMod, ArmorMod, EngineMod, UtilityMod},
+				ID: ShipVWing, WeightClass: WeightStandard, Stats: standardStats,
+				WeaponPoints: clonePointLayout(standardPoints), ModuleSlots: append([]ModuleSlot(nil), standardModules...),
+				DefaultPrimaryWeaponID: WeaponPulse,
+			},
+			ShipVWingScout: {
+				ID: ShipVWingScout, WeightClass: WeightLight, Stats: scoutStats,
+				WeaponPoints: clonePointLayout(standardPoints), ModuleSlots: append([]ModuleSlot(nil), standardModules...),
 				DefaultPrimaryWeaponID: WeaponPulse,
 			},
 		},
 		Weapons: map[string]WeaponProfile{
 			WeaponPulse: {
-				ID:              WeaponPulse,
-				RuntimeID:       weapons.BasicCannon,
-				Slot:            weapons.Primary,
-				Size:            WeaponStandard,
-				DeliveryClass:   "ballistic",
-				TargetingPolicy: "skill_shot",
-				EffectFlags:     []EffectFlag{"direct"},
-				AmmoPolicy:      weapons.InfiniteAmmo,
+				ID: WeaponPulse, RuntimeID: weapons.BasicCannon, Slot: weapons.Primary, Size: WeaponStandard,
+				DeliveryClass: "ballistic", TargetingPolicy: "skill_shot", EffectFlags: []EffectFlag{"direct"},
+				AmmoPolicy: weapons.InfiniteAmmo,
+			},
+			WeaponTorpedo: {
+				ID: WeaponTorpedo, RuntimeID: weapons.Torpedo, Slot: weapons.Secondary, Size: WeaponStandard,
+				DeliveryClass: "missile", TargetingPolicy: "skill_shot", EffectFlags: []EffectFlag{"direct", "area"},
+				AmmoPolicy: weapons.LimitedAmmo, StartingAmmo: 3,
 			},
 		},
-		Modules: map[string]ModuleProfile{},
+		Modules: map[string]ModuleProfile{
+			ModuleShieldCapacitor: {
+				ID: ModuleShieldCapacitor, Slot: ShieldMod, Class: "defense", Activation: ModulePassive,
+				Adjustment: ShipStatAdjustment{MaxShieldsDelta: 50, MaxSpeedMultiplier: 0.95},
+			},
+			ModuleReinforcedHull: {
+				ID: ModuleReinforcedHull, Slot: ArmorMod, Class: "defense", Activation: ModulePassive,
+				Adjustment: ShipStatAdjustment{MaxHealthDelta: 50, ThrustMultiplier: 0.90},
+			},
+			ModuleEngineOverdrive: {
+				ID: ModuleEngineOverdrive, Slot: EngineMod, Class: "mobility", Activation: ModulePassive,
+				Adjustment: ShipStatAdjustment{MaxHealthDelta: -15, ThrustMultiplier: 1.15, MaxSpeedMultiplier: 1.10},
+			},
+			ModuleFlightStabilizer: {
+				ID: ModuleFlightStabilizer, Slot: UtilityMod, Class: "handling", Activation: ModulePassive,
+				Adjustment: ShipStatAdjustment{RotationMultiplier: 1.15, MaxSpeedMultiplier: 0.95, DampingMultiplier: 1.15},
+			},
+		},
 	}
 }
 

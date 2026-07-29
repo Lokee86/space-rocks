@@ -78,14 +78,14 @@ func TestProfileHandlerReturnsDurableStarterInventoryAcrossIdentityRoutes(t *tes
 			if !first.Profile.InventoryPersisted || first.Profile.InventorySynthesizedFallback || first.Profile.InventoryRepairAttempted {
 				t.Fatalf("unexpected inventory state: %#v", first.Profile)
 			}
-			if len(first.Profile.Inventory.OwnedShips) != 1 || first.Profile.Inventory.OwnedShips[0].ShipID != playerdata.StarterShipID {
-				t.Fatalf("starter ship missing: %#v", first.Profile.Inventory)
+			if len(first.Profile.Inventory.OwnedShips) != 2 || first.Profile.Inventory.OwnedShips[0].ShipID != playerdata.StarterShipID || first.Profile.Inventory.OwnedShips[1].ShipID != playerdata.StarterScoutShipID {
+				t.Fatalf("starter ships missing: %#v", first.Profile.Inventory)
 			}
-			if len(first.Profile.Inventory.OwnedWeapons) != 1 || first.Profile.Inventory.OwnedWeapons[0].WeaponID != playerdata.StarterPrimaryWeaponID {
-				t.Fatalf("starter weapon missing: %#v", first.Profile.Inventory)
+			if len(first.Profile.Inventory.OwnedWeapons) != 2 || first.Profile.Inventory.OwnedWeapons[0].WeaponID != playerdata.StarterPrimaryWeaponID || first.Profile.Inventory.OwnedWeapons[1].WeaponID != playerdata.StarterSecondaryWeaponID {
+				t.Fatalf("starter weapons missing: %#v", first.Profile.Inventory)
 			}
-			if len(first.Profile.Inventory.OwnedModules) != 0 || len(first.Profile.Inventory.OwnedShips[0].HardwiredEquipment) != 0 {
-				t.Fatalf("starter inventory contains optional equipment: %#v", first.Profile.Inventory)
+			if len(first.Profile.Inventory.OwnedModules) != 4 || len(first.Profile.Inventory.OwnedShips[0].HardwiredEquipment) != 0 {
+				t.Fatalf("starter catalog mismatch: %#v", first.Profile.Inventory)
 			}
 
 			second := requestInventoryProfile(t, handler, test.body, test.authorization)

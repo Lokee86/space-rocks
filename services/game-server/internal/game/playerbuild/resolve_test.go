@@ -86,6 +86,49 @@ func TestResolveCompilesLimitedSecondaryAmmoAndActiveModule(t *testing.T) {
 	}
 }
 
+func TestDefaultCatalogResolvesSelectableScoutTorpedoAndModules(t *testing.T) {
+	inventory := protocol.HangarInventory{
+		InventoryVersion: 2,
+		OwnedShips: []protocol.OwnedShip{
+			{OwnedShipID: "ship-standard", ShipID: ShipVWing, State: "normal"},
+			{OwnedShipID: "ship-scout", ShipID: ShipVWingScout, State: "normal"},
+		},
+		OwnedWeapons: []protocol.OwnedWeapon{
+			{OwnedWeaponID: "weapon-pulse", WeaponID: WeaponPulse, State: "normal"},
+			{OwnedWeaponID: "weapon-torpedo", WeaponID: WeaponTorpedo, State: "normal"},
+		},
+		OwnedModules: []protocol.OwnedModule{
+			{OwnedModuleID: "module-shield", ModuleID: ModuleShieldCapacitor, State: "normal"},
+			{OwnedModuleID: "module-engine", ModuleID: ModuleEngineOverdrive, State: "normal"},
+		},
+		DefaultOwnedShipID: "ship-standard",
+	}
+	catalog := DefaultCatalog()
+	options := ComputeEligibility("player-1", inventory, catalog, Rules{})
+	selection := options.FallbackLoadout
+	selection.SelectedOwnedShipID = "ship-scout"
+	selection.SelectedWeaponsByPoint[Secondary1] = "weapon-torpedo"
+	selection.SelectedModulesBySlot[ShieldMod] = "module-shield"
+	selection.SelectedModulesBySlot[EngineMod] = "module-engine"
+
+	build, err := Resolve(selection, inventory, catalog, Rules{})
+	if err != nil {
+		t.Fatalf("resolve failed: %v", err)
+	}
+	if build.ShipID != ShipVWingScout || build.PlayerArmory.Secondary.ID != weapons.Torpedo {
+		t.Fatalf("unexpected selected runtime build: %#v", build)
+	}
+	if build.StartingEquipmentState.SecondaryAmmo != 3 {
+		t.Fatalf("expected three starting torpedoes, got %d", build.StartingEquipmentState.SecondaryAmmo)
+	}
+	if build.ShipStats.MaxShields != 50 || build.ShieldPolicy.MaxShields != 50 {
+		t.Fatalf("shield module did not reach runtime shield policy: %#v", build.ShieldPolicy)
+	}
+	if build.ShipStats.MaxSpeed <= catalog.Ships[ShipVWingScout].Stats.MaxSpeed {
+		t.Fatal("engine module did not increase scout max speed")
+	}
+}
+
 func TestResolvedBuildCloneOwnsCollections(t *testing.T) {
 	build := DefaultResolvedBuild("player-1")
 	clone := build.Clone()

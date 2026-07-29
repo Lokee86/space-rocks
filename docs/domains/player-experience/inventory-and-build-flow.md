@@ -133,4 +133,4 @@ This document does not define:
 
 ## Notes
 
-The authority chain is now implemented from identity and inventory loading through pregame/lobby selection, atomic match-start application, realtime projection, HUD presentation, and lobby return. The intentionally narrow V1 catalog remains the primary limitation: `v_wing`, the `pulse` catalog weapon mapped to `basic_cannon`, and no production module entries.
+The authority chain is implemented from identity and inventory loading through pregame/lobby selection, atomic match-start application, realtime projection, HUD presentation, and lobby return. The first meaningful selectable catalog now exercises that chain with `v_wing`, the lighter/faster `v_wing_scout` configuration, `pulse`, a limited-ammunition `torpedo` secondary, and one passive module for each persistent module slot. Both ship configurations currently share the same V-Wing visual and collision-shape presentation; distinct ship art and a broader equipment catalog remain presentation/content work.

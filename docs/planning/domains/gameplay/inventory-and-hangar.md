@@ -488,13 +488,13 @@ Starter inventory should be sufficient to produce a playable fallback build.
 Baseline starter inventory should include:
 
 ```text
-one default OwnedShip for the baseline ship
-default primary weapon access or ownership
+one default baseline OwnedShip plus the initial selectable ship configuration
+default primary weapon ownership plus the initial optional secondary weapon
+one initial passive module for each persistent module slot
 no hardwired equipment
-no optional modules unless intentionally granted
 ```
 
-The implemented starter inventory is one `v_wing`, the current default `pulse` primary weapon, no optional modules, and no hardwired equipment.
+The implemented starter inventory contains `v_wing`, the lighter/faster `v_wing_scout` configuration, `pulse`, a three-round `torpedo` secondary, and the passive `shield_capacitor`, `reinforced_hull`, `engine_overdrive`, and `flight_stabilizer` modules. `v_wing` remains the default ship and no hardwired equipment is included. Existing V1 inventories receive missing baseline instances once through normal inventory normalization and persistence.
 
 The architecture requirement is that missing, corrupt, incomplete, or unavailable inventory/API data must not make the game unplayable.
 

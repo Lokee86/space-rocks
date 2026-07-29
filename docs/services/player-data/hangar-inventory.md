@@ -17,7 +17,7 @@ PlayerDataIdentity
 -> normalized player-data result
 ```
 
-Every valid identity receives a playable inventory. Missing or unusable inventory data falls back to a stable starter `v_wing` and `pulse` inventory. The manager attempts to persist or repair that fallback without making profile loading unusable when the repair write fails.
+Every valid identity receives a playable inventory. Missing or unusable inventory data falls back to the stable starter catalog: `v_wing`, `v_wing_scout`, `pulse`, `torpedo`, and one passive module for each persistent module slot. The manager attempts to persist or repair that fallback without making profile loading unusable when the repair write fails.
 
 ## Code root
 
@@ -32,7 +32,7 @@ This boundary owns:
 
 - canonical hangar inventory validation and normalization
 - stable owned-instance IDs for starter and granted items
-- starter inventory synthesis
+- starter inventory synthesis and one-time baseline catalog normalization
 - inventory schema and inventory version handling
 - guest, local-profile, and authenticated-account routing
 - optimistic compare-and-store semantics
@@ -67,7 +67,7 @@ Identity routing is fixed:
 | `local_profile` | Embedded SQLite |
 | `authenticated_account` | Rails/API-backed account store |
 
-The starter inventory has schema version 1, one owned `v_wing`, one owned `pulse`, no modules, both catalog entries unlocked, and the owned V-Wing selected as default.
+The starter inventory has schema version 1, owned `v_wing` and `v_wing_scout` configurations, owned `pulse` and `torpedo` weapons, owned `shield_capacitor`, `reinforced_hull`, `engine_overdrive`, and `flight_stabilizer` modules, every baseline catalog entry unlocked, and the owned V-Wing selected as default. Existing valid V1 inventories are normalized to add missing baseline instances once; the default ship and existing ownership are preserved, and a successful upgrade store advances `inventory_version`.
 
 A load distinguishes persisted inventory from a synthesized fallback and reports whether repair was attempted. Corrupt embedded or account data does not become authoritative merely because it exists; validation occurs before the result is returned as playable.
 
@@ -123,6 +123,7 @@ Every successful store increments `inventory_version`. A nonnegative `expectedVe
 shared/player_data/hangar_inventory.toml
 shared/packets/player_data.toml
 services/player-data/playerdata/inventory_contract.go
+services/player-data/playerdata/starter_inventory.go
 services/player-data/playerdata/inventory_manager.go
 services/player-data/playerdata/inventory_storage.go
 services/player-data/playerdata/store_router.go

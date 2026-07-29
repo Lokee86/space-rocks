@@ -70,27 +70,39 @@ It consumes a trusted inventory snapshot and resolved rules from those owners.
 
 ## Domain roles
 
-The current production catalog contains one ship and one weapon:
+The current production catalog is intentionally compact but exercises every implemented loadout category:
 
 ```text
 v_wing
-- weight: standard
-- primary_1: hardpoint
-- secondary_1: hardpoint
+- weight: standard baseline
+
+v_wing_scout
+- weight: light
+- 25% lower maximum health
+- higher rotation, thrust, maximum speed, and damping
+- currently reuses the V-Wing collision shape and client visual
+
+both ships
+- primary_1 and secondary_1: hardpoints
 - primary_2 and secondary_2: unavailable
 - shield, armor, engine, and utility module slots
 
 pulse
 - runtime mapping: basic_cannon
-- slot: primary
-- size: standard
-- delivery: ballistic
-- targeting: skill_shot
-- effect: direct
-- ammunition: infinite
+- primary, ballistic, skill_shot, direct, infinite ammunition
+
+torpedo
+- runtime mapping: torpedo
+- secondary, missile, skill_shot, direct + area, limited ammunition
+- default starting ammunition: 3
+
+shield_capacitor: shield_mod, +50 maximum shields, -5% maximum speed
+reinforced_hull: armor_mod, +50 maximum health, -10% thrust
+engine_overdrive: engine_mod, +15% thrust, +10% maximum speed, -15 maximum health
+flight_stabilizer: utility_mod, +15% rotation and damping, -5% maximum speed
 ```
 
-The module and hardwired contracts are fully modeled, but the default catalog has no selectable modules yet.
+Secondary weapons and modules are optional in `LoadoutSelection`; `primary_1` remains required. The client loadout surface provides explicit `NONE` choices for optional equipment.
 
 Eligibility can allow or ban ship IDs, weight classes, weapon IDs, runtime slots, sizes, delivery classes, targeting policies, required effect flags, module IDs/classes/slots, active modules, and hardwired behavior. Options are keyed by owned inventory instance, not only catalog ID.
 
@@ -174,4 +186,4 @@ services/game-server/internal/game/player_builds_test.go
 
 ## Notes
 
-The authoritative owner system is implemented. Remaining work is player-facing selection, saved-loadout persistence, broader catalog content, module content, and richer runtime presentation.
+The authoritative owner system, player-facing selection, and first selectable ship/weapon/module catalog are implemented. Remaining work is saved-loadout persistence, broader catalog content, distinct ship presentation, richer equipment explanations, and additional runtime presentation.

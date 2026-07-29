@@ -18,7 +18,7 @@ It is an integration record and remaining-work note, not current implementation 
 
 ## Current State
 
-As of July 28, 2026:
+As of July 29, 2026:
 
 ```text
 integration target: main
@@ -49,6 +49,8 @@ player build eligibility, loadout validation, and resolved runtime builds
 multiplayer lobby team configuration and bot controls
 team-aware gameplay, HUD, player colours, and match-result presentation
 client loadout and gameplay integration through the current P4 path
+selectable two-ship, primary/secondary weapon, and four-module starter catalog
+legacy V1 inventory normalization that adds missing baseline catalog instances once
 ```
 
 The final client reconciliation is represented on current history by `83b601b3 fix(gameplay): finish P4 client rebase integration`. Earlier P4 implementation commits were rebased and integrated into the current `main` history.
@@ -62,14 +64,14 @@ The integrated state has been exercised through focused server/client tests, arc
 Remaining P4 work is content and presentation expansion rather than branch integration or a missing authoritative owner seam:
 
 ```text
-expand the production ship, weapon, ammunition, shield, and module catalog
-add enough distinct loadout choices to exercise eligibility and selection meaningfully
+expand beyond the first two-ship, two-weapon, four-module production catalog
+add distinct ship art and presentation for chassis configurations that currently share V-Wing visuals
 continue player-facing hangar and loadout presentation polish
 extend mode, objective, encounter, and result content
-refine tutorials, explanations, and error presentation around build selection
+refine tutorials, stat comparisons, explanations, and error presentation around build selection
 ```
 
-The current production catalog remains intentionally narrow and should expand only through the existing inventory, eligibility, loadout, and resolved-build seams.
+The first meaningful catalog slice is implemented through the existing inventory, eligibility, loadout, and resolved-build seams. Further content expansion should continue through those same boundaries rather than adding alternate equipment authority.
 
 ## Related Docs
 

@@ -57,7 +57,7 @@ func TestDispatcherAppliesInventoryGrantIdempotently(t *testing.T) {
 		if err := json.Unmarshal(response, &result); err != nil {
 			t.Fatal(err)
 		}
-		if !result.Accepted || len(result.Inventory.OwnedModules) != 1 {
+		if !result.Accepted || len(result.Inventory.OwnedModules) != 5 {
 			t.Fatalf("unexpected result: %#v", result)
 		}
 		if (attempt == 1) != result.Duplicate {

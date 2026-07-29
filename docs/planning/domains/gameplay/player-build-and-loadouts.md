@@ -15,7 +15,7 @@ This doc is the authoritative P4 planning owner for the player-build seam: ship 
 
 ## Implementation Status
 
-The P4 owner-system foundation and its first end-to-end client integration are implemented on the P4 completion branch.
+The P4 owner-system foundation, end-to-end client integration, and first meaningful selectable content catalog are implemented on `main`.
 
 Implemented flow:
 
@@ -30,14 +30,25 @@ HangarInventory
 -> player session / RuntimeEquipmentState
 ```
 
-The current real catalog baseline is deliberately small:
+The current real catalog baseline is deliberately small but now exercises actual selection:
 
 ```text
-ship: v_wing
-primary weapon catalog ref: pulse
-runtime weapon: basic_cannon
-modules: contract supported; default catalog currently empty
+ships:
+- v_wing: standard baseline
+- v_wing_scout: light, lower health, higher rotation/thrust/speed/damping
+
+weapons:
+- pulse -> primary basic_cannon, infinite ammunition
+- torpedo -> secondary torpedo runtime, limited ammunition, starts with 3
+
+passive modules:
+- shield_capacitor -> +50 maximum shields, -5% maximum speed
+- reinforced_hull -> +50 maximum health, -10% thrust
+- engine_overdrive -> +15% thrust and +10% maximum speed, -15 maximum health
+- flight_stabilizer -> +15% rotation and damping, -5% maximum speed
 ```
+
+The two ship configurations currently share the V-Wing visual and collision shape. Distinct presentation remains future content work rather than a missing authoritative build seam.
 
 The implementation includes machine-readable blocked reasons, owned-instance validation, required `primary_1`, hardpoint/module-slot compatibility, starting-ammo compilation, passive and active module declarations, hardwired allowed/disabled/normalized policy, shield compilation, immutable clone boundaries, inventory loading through the player-data inventory client, and rejection of post-lobby build changes.
 

@@ -51,7 +51,7 @@ func (m *InventoryManager) Load(identity protocol.PlayerDataIdentity) (Inventory
 		return InventoryLoad{Inventory: starter, Found: true, SynthesizedFallback: true, RepairAttempted: true, Message: storeErr.Error()}, nil
 	}
 
-	inventory = NormalizeHangarInventory(identity, inventory)
+	inventory, normalized := normalizeHangarInventory(identity, inventory)
 	if err := ValidateHangarInventory(identity, inventory); err != nil {
 		fallback := StarterHangarInventory(identity)
 		stored, storeErr := m.store.StoreHangarInventory(identity, fallback, inventory.InventoryVersion)
@@ -59,6 +59,16 @@ func (m *InventoryManager) Load(identity protocol.PlayerDataIdentity) (Inventory
 			return InventoryLoad{Inventory: stored, Found: true, Persisted: true, SynthesizedFallback: true, RepairAttempted: true, Message: err.Error()}, nil
 		}
 		return InventoryLoad{Inventory: fallback, Found: true, SynthesizedFallback: true, RepairAttempted: true, Message: err.Error()}, nil
+	}
+	if normalized {
+		stored, storeErr := m.store.StoreHangarInventory(identity, inventory, inventory.InventoryVersion)
+		if storeErr == nil {
+			return InventoryLoad{Inventory: stored, Found: true, Persisted: true}, nil
+		}
+		if errors.Is(storeErr, ErrInventoryConflict) {
+			return m.Load(identity)
+		}
+		return InventoryLoad{Inventory: inventory, Found: true, Message: storeErr.Error()}, nil
 	}
 	return InventoryLoad{Inventory: inventory, Found: true, Persisted: true}, nil
 }
