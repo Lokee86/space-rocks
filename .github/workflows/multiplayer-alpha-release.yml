@@ -2,19 +2,12 @@ name: Multiplayer Alpha Release
 
 on:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: Existing release tag to replace
-        required: true
-        default: v0.2.0
   push:
     branches:
-      - fix/v0.2.0-hosted-client-2
-    tags:
-      - 'v*'
+      - release/p3-multiplayer-stable
 
 env:
-  RELEASE_TAG: ${{ inputs.release_tag || (github.ref_type == 'tag' && github.ref_name) || 'v0.2.0' }}
+  RELEASE_TAG: v0.2.0
 
 concurrency:
   group: multiplayer-alpha-${{ github.ref }}
@@ -25,167 +18,107 @@ permissions:
 
 jobs:
   windows:
-    name: Windows multiplayer alpha
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           lfs: true
-      - name: Setup Godot with export templates
-        uses: chickensoft-games/setup-godot@v2
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.3'
+      - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.3
           use-dotnet: false
           include-templates: true
-      - name: Verify multiplayer endpoint sources
-        run: python tools/release/verify_multiplayer_endpoints.py
-      - name: Export Windows client
-        shell: pwsh
-        run: |
-          $project = Join-Path $env:GITHUB_WORKSPACE 'client'
-          $directory = Join-Path $env:GITHUB_WORKSPACE 'dist/multiplayer-alpha/windows'
-          $output = Join-Path $directory 'SpaceRocks.exe'
-
-          Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $directory | Out-Null
-
-          $godot = (Get-Command godot -ErrorAction Stop).Source
-          $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-          $startInfo.FileName = $godot
-          $startInfo.UseShellExecute = $false
-          $startInfo.ArgumentList.Add('--headless')
-          $startInfo.ArgumentList.Add('--path')
-          $startInfo.ArgumentList.Add($project)
-          $startInfo.ArgumentList.Add('--export-release')
-          $startInfo.ArgumentList.Add('Windows Multiplayer Alpha')
-          $startInfo.ArgumentList.Add($output)
-
-          $process = [System.Diagnostics.Process]::Start($startInfo)
-          $process.WaitForExit()
-          if ($process.ExitCode -ne 0) { exit $process.ExitCode }
-          if (-not (Test-Path -LiteralPath $output)) { throw "Godot did not create $output" }
-          if (-not (Get-ChildItem -LiteralPath $directory -File)) { throw "Godot created no Windows export files in $directory" }
-      - name: Upload Windows client files
-        uses: actions/upload-artifact@v7
+      - name: Build complete Windows package
+        run: >-
+          python tools/release/package_local_alpha.py
+          --platform windows
+          --preset "Windows Multiplayer Alpha"
+          --version 0.2.0
+          --output-root dist/release-package
+      - uses: actions/upload-artifact@v7
         with:
-          name: windows-client
-          path: dist/multiplayer-alpha/windows/*
+          name: windows-package
+          path: dist/release-package/windows/*
           if-no-files-found: error
 
   macos:
-    name: macOS multiplayer alpha
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           lfs: true
-      - name: Setup Godot with export templates
-        uses: chickensoft-games/setup-godot@v2
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.3'
+      - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.3
           use-dotnet: false
           include-templates: true
-      - name: Verify multiplayer endpoint sources
-        run: python3 tools/release/verify_multiplayer_endpoints.py
-      - name: Export macOS client
+      - name: Build complete macOS package
+        run: >-
+          python3 tools/release/package_local_alpha.py
+          --platform macos
+          --preset "macOS Multiplayer Alpha"
+          --version 0.2.0
+          --output-root dist/release-package
+          --adhoc-sign
+      - name: Archive macOS package
         run: |
-          mkdir -p dist/multiplayer-alpha/macos
-          godot --headless --path client --export-release "macOS Multiplayer Alpha"
-      - name: Create macOS archive payload
-        run: |
-          archive="dist/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.zip"
-          payload="dist/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.payload"
-          ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "$archive"
-          mv "$archive" "$payload"
-          test -s "$payload"
-      - name: Upload macOS archive payload
-        uses: actions/upload-artifact@v7
+          cd dist/release-package/macos
+          zip -qry "../../space-rocks-${RELEASE_TAG}-macos-universal.zip" .
+      - uses: actions/upload-artifact@v7
         with:
-          name: macos-payload
-          path: dist/space-rocks-multiplayer-${{ env.RELEASE_TAG }}-macos-universal.payload
+          name: macos-package
+          path: dist/release-package/space-rocks-${{ env.RELEASE_TAG }}-macos-universal.zip
           if-no-files-found: error
 
   publish:
-    name: Publish multiplayer alpha prerelease
-    needs:
-      - windows
-      - macos
+    needs: [windows, macos]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       actions: read
       contents: write
     steps:
-      - name: Download Windows client files
-        uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v8
         with:
-          name: windows-client
-          path: release/windows-client
-      - name: Download macOS archive payload
-        uses: actions/download-artifact@v8
+          name: windows-package
+          path: release/windows
+      - uses: actions/download-artifact@v8
         with:
-          name: macos-payload
-          path: release/macos-payload
-      - name: Package release artifacts
+          name: macos-package
+          path: release/macos
+      - name: Build release archives
         run: |
-          test -f release/windows-client/SpaceRocks.exe
-          (cd release/windows-client && zip -rq "../space-rocks-multiplayer-${RELEASE_TAG}-windows-x86_64.zip" .)
-
-          mac_payload="release/macos-payload/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.payload"
-          mac_archive="release/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.zip"
-          test -s "$mac_payload"
-          mv "$mac_payload" "$mac_archive"
-          test -s "$mac_archive"
-      - name: Verify release archives
-        run: |
-          test -s "release/space-rocks-multiplayer-${RELEASE_TAG}-windows-x86_64.zip"
-          test -s "release/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.zip"
-          python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile
-
-          archives = sorted(Path('release').glob('space-rocks-multiplayer-*.zip'))
-          if len(archives) != 2:
-              raise SystemExit(f'expected 2 release archives, found: {archives}')
-          for archive in archives:
-              with ZipFile(archive) as bundle:
-                  bad_member = bundle.testzip()
-                  if bad_member is not None:
-                      raise SystemExit(f'{archive} has a corrupt member: {bad_member}')
-                  if not bundle.namelist():
-                      raise SystemExit(f'{archive} is empty')
-          PY
-      - name: Publish GitHub prerelease
+          (cd release/windows && zip -qry "../space-rocks-${RELEASE_TAG}-windows-x86_64.zip" .)
+          mv release/macos/*.zip "release/space-rocks-${RELEASE_TAG}-macos-universal.zip"
+          test -s "release/space-rocks-${RELEASE_TAG}-windows-x86_64.zip"
+          test -s "release/space-rocks-${RELEASE_TAG}-macos-universal.zip"
+      - name: Replace v0.2.0 release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > release-notes.md <<EOF
-          Hosted multiplayer alpha clients for Space Rocks ${RELEASE_TAG}.
+          Space Rocks v0.2.0 alpha.
 
-          Built from commit ${GITHUB_SHA}.
+          This upgrade includes hosted multiplayer and retains packaged single-player support.
 
-          Windows: extract the ZIP and run SpaceRocks.exe.
-          macOS: extract the ZIP and open Space Rocks.app. The app is unsigned and not notarized.
+          Windows: extract the ZIP and run install.ps1.
+          macOS: extract the ZIP and run install.command. The app is unsigned and not notarized.
+
+          Included in both packages:
+          - Hosted multiplayer client
+          - Packaged single-player server
+          - Installer script
+          - CHANGELOG.md
+
+          Privacy notice: Discord authentication currently retains only the email address returned by Discord. No other Discord-provided personally identifying data is intentionally retained.
           EOF
-          release_exists=false
-          for attempt in 1 2 3 4 5; do
-            if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
-              release_exists=true
-              break
-            fi
-            sleep 2
-          done
-
-          if [ "$release_exists" = true ]; then
-            gh release upload "$RELEASE_TAG" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Multiplayer Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
-          else
-            if ! gh release create "$RELEASE_TAG" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false; then
-              gh release upload "$RELEASE_TAG" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
-              gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Multiplayer Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
-            fi
-          fi
+          gh release upload "$RELEASE_TAG" release/space-rocks-${RELEASE_TAG}-*.zip --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
