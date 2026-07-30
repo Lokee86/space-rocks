@@ -119,8 +119,21 @@ jobs:
         run: |
           test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
           test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
-          unzip -tq "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
-          unzip -tq "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          archives = sorted(Path('release').glob('space-rocks-multiplayer-*.zip'))
+          if len(archives) != 2:
+              raise SystemExit(f'expected 2 release archives, found: {archives}')
+          for archive in archives:
+              with ZipFile(archive) as bundle:
+                  bad_member = bundle.testzip()
+                  if bad_member is not None:
+                      raise SystemExit(f'{archive} has a corrupt member: {bad_member}')
+                  if not bundle.namelist():
+                      raise SystemExit(f'{archive} is empty')
+          PY
       - name: Publish GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
