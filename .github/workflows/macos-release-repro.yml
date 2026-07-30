@@ -1,0 +1,57 @@
+name: macOS Release Reproduction
+
+on:
+  pull_request:
+    branches:
+      - release/p3-multiplayer-stable
+
+permissions:
+  contents: read
+
+jobs:
+  macos-release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.3'
+          cache-dependency-path: services/game-server/go.sum
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Show release environment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          printf 'PATH=%s\n' "$PATH"
+          printf 'GODOT=%s\n' "${GODOT:-}"
+          printf 'GODOT4=%s\n' "${GODOT4:-}"
+          command -v godot
+          godot --version
+          python3 --version
+          go version
+      - name: Build and smoke complete macOS package
+        run: >-
+          python3 tools/release/package_local_alpha.py
+          --platform macos
+          --preset "macOS Multiplayer Alpha"
+          --version 0.2.0
+          --output-root dist/release-package
+          --adhoc-sign
+      - name: Upload smoke diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-release-repro-diagnostics
+          path: |
+            dist/release-package
+            **/release_gate_smoke_result.json
+            **/*.log
+            **/*.jsonl
+          if-no-files-found: warn
