@@ -29,6 +29,8 @@ jobs:
           version: 4.6.3
           use-dotnet: false
           include-templates: true
+      - name: Verify multiplayer endpoint sources
+        run: python tools/release/verify_multiplayer_endpoints.py
       - name: Export Windows client
         shell: pwsh
         run: |
@@ -68,10 +70,12 @@ jobs:
           version: 4.6.3
           use-dotnet: false
           include-templates: true
+      - name: Verify multiplayer endpoint sources
+        run: python3 tools/release/verify_multiplayer_endpoints.py
       - name: Export macOS client
         run: |
           mkdir -p dist/multiplayer-alpha/macos
-          godot --headless --path client --export-release "macOS Multiplayer Alpha" "../dist/multiplayer-alpha/macos/Space Rocks.app"
+          godot --headless --path client --export-release "macOS Multiplayer Alpha"
       - name: Create macOS archive
         run: ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
       - name: Upload macOS archive
