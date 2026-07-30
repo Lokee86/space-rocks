@@ -124,9 +124,21 @@ jobs:
           Windows: extract the ZIP and run SpaceRocks.exe.
           macOS: extract the ZIP and open Space Rocks.app. The app is unsigned and not notarized.
           EOF
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          release_exists=false
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+              release_exists=true
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$release_exists" = true ]; then
             gh release upload "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
           else
-            gh release create "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+            if ! gh release create "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false; then
+              gh release upload "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
+              gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+            fi
           fi
