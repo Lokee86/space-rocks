@@ -9,9 +9,11 @@ import (
 )
 
 const (
-	webRTCAdvertisedIPsEnv = "SPACE_ROCKS_WEBRTC_ADVERTISED_IPS"
-	webRTCUDPPortMinEnv    = "SPACE_ROCKS_WEBRTC_UDP_PORT_MIN"
-	webRTCUDPPortMaxEnv    = "SPACE_ROCKS_WEBRTC_UDP_PORT_MAX"
+	webRTCAdvertisedIPsEnv        = "SPACE_ROCKS_WEBRTC_ADVERTISED_IPS"
+	webRTCUDPPortMinEnv           = "SPACE_ROCKS_WEBRTC_UDP_PORT_MIN"
+	webRTCUDPPortMaxEnv           = "SPACE_ROCKS_WEBRTC_UDP_PORT_MAX"
+	webRTCAdvertisedUDPPortMinEnv = "SPACE_ROCKS_WEBRTC_ADVERTISED_UDP_PORT_MIN"
+	webRTCAdvertisedUDPPortMaxEnv = "SPACE_ROCKS_WEBRTC_ADVERTISED_UDP_PORT_MAX"
 )
 
 func buildWebRTCTransportConfigFromEnv() networking.WebRTCTransportConfig {
@@ -19,6 +21,8 @@ func buildWebRTCTransportConfigFromEnv() networking.WebRTCTransportConfig {
 	config.AdvertisedIPs = parseCommaSeparatedEnvList(os.Getenv(webRTCAdvertisedIPsEnv))
 	config.UDPPortMin = parseOptionalUint16Env(webRTCUDPPortMinEnv)
 	config.UDPPortMax = parseOptionalUint16Env(webRTCUDPPortMaxEnv)
+	config.AdvertisedUDPPortMin = parseOptionalUint16Env(webRTCAdvertisedUDPPortMinEnv)
+	config.AdvertisedUDPPortMax = parseOptionalUint16Env(webRTCAdvertisedUDPPortMaxEnv)
 	return config
 }
 

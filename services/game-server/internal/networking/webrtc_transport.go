@@ -66,9 +66,11 @@ type WebRTCSignalHooks struct {
 }
 
 type WebRTCTransportConfig struct {
-	AdvertisedIPs []string
-	UDPPortMin    uint16
-	UDPPortMax    uint16
+	AdvertisedIPs        []string
+	UDPPortMin           uint16
+	UDPPortMax           uint16
+	AdvertisedUDPPortMin uint16
+	AdvertisedUDPPortMax uint16
 }
 
 var webRTCTransportConfig WebRTCTransportConfig
@@ -314,7 +316,8 @@ func (p *WebRTCTransport) attachPeerHandlers() {
 		if candidate == nil || p.hooks.OnLocalICECandidate == nil {
 			return
 		}
-		init := candidate.ToJSON()
+		advertisedCandidate := advertisedWebRTCCandidate(candidate, webRTCTransportConfig)
+		init := advertisedCandidate.ToJSON()
 		index := 0
 		if init.SDPMLineIndex != nil {
 			index = int(*init.SDPMLineIndex)
