@@ -37,7 +37,7 @@ jobs:
           $project = Join-Path $env:GITHUB_WORKSPACE 'client'
           $directory = Join-Path $env:RUNNER_TEMP 'space-rocks-windows'
           $output = Join-Path $directory 'SpaceRocks.exe'
-          $archive = Join-Path $env:GITHUB_WORKSPACE 'dist/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip'
+          $archive = Join-Path $env:RUNNER_TEMP 'space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip'
 
           Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $directory | Out-Null
@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
-          path: dist/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
+          path: ${{ runner.temp }}/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
           archive: false
           if-no-files-found: error
 
