@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
+	"strings"
 	"sync"
 
+	"github.com/pion/logging"
 	"github.com/pion/webrtc/v4"
 )
 
@@ -66,9 +70,11 @@ type WebRTCSignalHooks struct {
 }
 
 type WebRTCTransportConfig struct {
-	AdvertisedIPs []string
-	UDPPortMin    uint16
-	UDPPortMax    uint16
+	AdvertisedIPs        []string
+	UDPPortMin           uint16
+	UDPPortMax           uint16
+	AdvertisedUDPPortMin uint16
+	AdvertisedUDPPortMax uint16
 }
 
 var webRTCTransportConfig WebRTCTransportConfig
@@ -78,14 +84,104 @@ var newWebRTCPeerConnectionAPI = func(config WebRTCTransportConfig) (*webrtc.API
 	if len(config.AdvertisedIPs) > 0 {
 		settingEngine.SetNAT1To1IPs(config.AdvertisedIPs, webrtc.ICECandidateTypeHost)
 	}
-	if config.UDPPortMin != 0 && config.UDPPortMax != 0 {
-		settingEngine.SetEphemeralUDPPortRange(uint16(config.UDPPortMin), uint16(config.UDPPortMax))
-	}
 	return webrtc.NewAPI(webrtc.WithSettingEngine(settingEngine)), nil
+}
+
+type sharedWebRTCAPIPool struct {
+	mu      sync.Mutex
+	config  WebRTCTransportConfig
+	apis    []*webrtc.API
+	closers []interface{ Close() error }
+	next    uint64
+	err     error
+}
+
+var webRTCAPIPool sharedWebRTCAPIPool
+
+func (pool *sharedWebRTCAPIPool) reset(config WebRTCTransportConfig) {
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
+	for _, closer := range pool.closers {
+		_ = closer.Close()
+	}
+	pool.config = config
+	pool.apis = nil
+	pool.closers = nil
+	pool.next = 0
+	pool.err = nil
+}
+
+func (pool *sharedWebRTCAPIPool) nextAPI() (*webrtc.API, error) {
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
+
+	if pool.config.UDPPortMin == 0 || pool.config.UDPPortMax == 0 {
+		return newWebRTCPeerConnectionAPI(pool.config)
+	}
+	if err := validateWebRTCUDPPortRanges(pool.config); err != nil {
+		return nil, err
+	}
+	if pool.apis == nil && pool.err == nil {
+		pool.apis, pool.closers, pool.err = buildSharedWebRTCAPIs(pool.config)
+	}
+	if pool.err != nil {
+		return nil, pool.err
+	}
+	api := pool.apis[pool.next%uint64(len(pool.apis))]
+	pool.next++
+	return api, nil
+}
+
+func validateWebRTCUDPPortRanges(config WebRTCTransportConfig) error {
+	if config.UDPPortMax < config.UDPPortMin {
+		return fmt.Errorf("invalid WebRTC UDP port range %d-%d", config.UDPPortMin, config.UDPPortMax)
+	}
+	if config.AdvertisedUDPPortMin == 0 && config.AdvertisedUDPPortMax == 0 {
+		return nil
+	}
+	if config.AdvertisedUDPPortMin == 0 || config.AdvertisedUDPPortMax < config.AdvertisedUDPPortMin {
+		return fmt.Errorf("invalid advertised WebRTC UDP port range %d-%d", config.AdvertisedUDPPortMin, config.AdvertisedUDPPortMax)
+	}
+	localCount := uint32(config.UDPPortMax) - uint32(config.UDPPortMin)
+	advertisedCount := uint32(config.AdvertisedUDPPortMax) - uint32(config.AdvertisedUDPPortMin)
+	if localCount != advertisedCount {
+		return fmt.Errorf("WebRTC local and advertised UDP port ranges must contain the same number of ports")
+	}
+	return nil
+}
+
+func buildSharedWebRTCAPIs(config WebRTCTransportConfig) ([]*webrtc.API, []interface{ Close() error }, error) {
+	logger := logging.NewDefaultLoggerFactory().NewLogger("webrtc-ice-udp-mux")
+	apiCount := int(config.UDPPortMax-config.UDPPortMin) + 1
+	apis := make([]*webrtc.API, 0, apiCount)
+	closers := make([]interface{ Close() error }, 0, apiCount)
+
+	for port := config.UDPPortMin; ; port++ {
+		conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: int(port)})
+		if err != nil {
+			for _, closer := range closers {
+				_ = closer.Close()
+			}
+			return nil, nil, fmt.Errorf("listen for WebRTC UDP mux on port %d: %w", port, err)
+		}
+		mux := webrtc.NewICEUDPMux(logger, conn)
+		settingEngine := webrtc.SettingEngine{}
+		if len(config.AdvertisedIPs) > 0 {
+			settingEngine.SetNAT1To1IPs(config.AdvertisedIPs, webrtc.ICECandidateTypeHost)
+		}
+		settingEngine.SetICEUDPMux(mux)
+		apis = append(apis, webrtc.NewAPI(webrtc.WithSettingEngine(settingEngine)))
+		closers = append(closers, mux)
+		if port == config.UDPPortMax {
+			break
+		}
+	}
+	return apis, closers, nil
 }
 
 func SetWebRTCTransportConfig(config WebRTCTransportConfig) {
 	webRTCTransportConfig = config
+	webRTCAPIPool.reset(config)
 }
 
 func SetWebRTCTransportConfigForTests(config WebRTCTransportConfig) func() {
@@ -153,7 +249,7 @@ func (adapter *pionPeerAdapter) Close() error {
 }
 
 var newWebRTCPeerConnection = func() (webRTCPeer, error) {
-	api, err := newWebRTCPeerConnectionAPI(webRTCTransportConfig)
+	api, err := webRTCAPIPool.nextAPI()
 	if err != nil {
 		return nil, err
 	}
@@ -315,6 +411,7 @@ func (p *WebRTCTransport) attachPeerHandlers() {
 			return
 		}
 		init := candidate.ToJSON()
+		init.Candidate = rewriteICECandidatePort(init.Candidate, webRTCTransportConfig)
 		index := 0
 		if init.SDPMLineIndex != nil {
 			index = int(*init.SDPMLineIndex)
@@ -325,6 +422,23 @@ func (p *WebRTCTransport) attachPeerHandlers() {
 		}
 		p.hooks.OnLocalICECandidate(media, index, init.Candidate)
 	})
+}
+
+func rewriteICECandidatePort(candidate string, config WebRTCTransportConfig) string {
+	if config.AdvertisedUDPPortMin == 0 || config.AdvertisedUDPPortMax == 0 {
+		return candidate
+	}
+	fields := strings.Fields(candidate)
+	if len(fields) < 8 || !strings.EqualFold(fields[2], "udp") {
+		return candidate
+	}
+	localPort, err := strconv.ParseUint(fields[5], 10, 16)
+	if err != nil || uint16(localPort) < config.UDPPortMin || uint16(localPort) > config.UDPPortMax {
+		return candidate
+	}
+	advertisedPort := uint32(config.AdvertisedUDPPortMin) + uint32(uint16(localPort)-config.UDPPortMin)
+	fields[5] = strconv.FormatUint(uint64(advertisedPort), 10)
+	return strings.Join(fields, " ")
 }
 
 func (p *WebRTCTransport) createNegotiatedChannels() error {
