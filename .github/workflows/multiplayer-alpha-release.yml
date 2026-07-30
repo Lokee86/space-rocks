@@ -41,8 +41,20 @@ jobs:
           Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $directory | Out-Null
 
-          & godot --headless --path $project --export-release 'Windows Multiplayer Alpha' $output
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $godot = (Get-Command godot -ErrorAction Stop).Source
+          $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+          $startInfo.FileName = $godot
+          $startInfo.UseShellExecute = $false
+          $startInfo.ArgumentList.Add('--headless')
+          $startInfo.ArgumentList.Add('--path')
+          $startInfo.ArgumentList.Add($project)
+          $startInfo.ArgumentList.Add('--export-release')
+          $startInfo.ArgumentList.Add('Windows Multiplayer Alpha')
+          $startInfo.ArgumentList.Add($output)
+
+          $process = [System.Diagnostics.Process]::Start($startInfo)
+          $process.WaitForExit()
+          if ($process.ExitCode -ne 0) { exit $process.ExitCode }
           if (-not (Test-Path -LiteralPath $output)) { throw "Godot did not create $output" }
           if (-not (Get-ChildItem -LiteralPath $directory -File)) { throw "Godot created no Windows export files in $directory" }
       - name: Upload Windows client files
