@@ -71,8 +71,8 @@ const PLAYER_LOCATOR_STALE_SECONDS := 2.0
 
 # data-sync:start constants.client.shell.network
 const SINGLE_PLAYER_WS_URL := "ws://localhost:8080/ws"
-const MULTIPLAYER_WS_URL := "ws://localhost:8080/ws"
-const MULTIPLAYER_WS_ORIGIN := "https://space-rocks-client.local"
+const MULTIPLAYER_WS_URL := "wss://game.laughingskull.ca/ws"
+const MULTIPLAYER_WS_ORIGIN := "https://space-rocks.laughingskull.ca"
 const NETWORK_POLL_PROCESS_PRIORITY := -100
 const WEBRTC_ICE_SERVERS := []
 # data-sync:end constants.client.shell.network

@@ -29,8 +29,8 @@ def test_local_alpha_workflow_publishes_native_release_archives() -> None:
     assert "actions/artifacts/$macos_artifact_id/zip" in workflow
     assert "gh run download" not in workflow
     assert "unzip -tq" in workflow
-    assert "startsWith(github.ref, 'refs/tags/v')" in workflow
-    assert 'expected_tag="v$RELEASE_VERSION"' in workflow
+    assert "startsWith(github.ref, 'refs/tags/local-v')" in workflow
+    assert 'expected_tag="local-v$RELEASE_VERSION"' in workflow
     assert 'release_tag="$GITHUB_REF_NAME"' in workflow
     assert "--repo \"$GITHUB_REPOSITORY\"" in workflow
     assert "gh release create" in workflow

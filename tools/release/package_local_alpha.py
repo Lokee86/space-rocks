@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--godot")
     parser.add_argument("--version")
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
+    parser.add_argument("--preset", help="Override the default local-alpha Godot export preset")
     parser.add_argument("--skip-smoke", action="store_true")
     parser.add_argument("--keep-output", action="store_true")
     parser.add_argument("--adhoc-sign", action="store_true", help="Ad-hoc sign the macOS app and helpers")
@@ -73,6 +74,8 @@ def main() -> int:
     version = args.version or default_version(dirty=bool(worktree_changes))
     output_root = args.output_root.resolve()
     output_dir, client_executable, server_output, preset = platform_layout(args.platform, output_root)
+    if args.preset:
+        preset = args.preset
     helper_output = credential_helper_path(args.platform, output_dir)
 
     if output_dir.exists() and not args.keep_output:
@@ -85,6 +88,8 @@ def main() -> int:
     build_credential_helper(args.platform, helper_output)
     collision_shapes_output = package_collision_shapes(server_output)
     installer_output = package_installer(args.platform, output_dir)
+    changelog_output = output_dir / "CHANGELOG.md"
+    shutil.copy2(Path(__file__).resolve().parents[2] / "CHANGELOG.md", changelog_output)
 
     if args.platform == "macos":
         server_output.chmod(0o755)
@@ -92,7 +97,14 @@ def main() -> int:
         if args.adhoc_sign:
             ad_hoc_sign_macos(output_dir)
 
-    required_files = [client_executable, server_output, helper_output, collision_shapes_output, installer_output]
+    required_files = [
+        client_executable,
+        server_output,
+        helper_output,
+        collision_shapes_output,
+        installer_output,
+        changelog_output,
+    ]
     missing = [path for path in required_files if not path.is_file()]
     if missing:
         raise ReleaseGateError(f"package is missing required files: {missing}")

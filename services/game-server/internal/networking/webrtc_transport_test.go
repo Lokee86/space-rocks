@@ -144,35 +144,21 @@ func TestWebRTCTransportPeerConnectionUsesDefaultConfigPath(t *testing.T) {
 	}
 }
 
-func TestWebRTCTransportPeerConnectionAcceptsAdvertisedIPsAndUDPPortRange(t *testing.T) {
-	oldBuilder := newWebRTCPeerConnectionAPI
-	defer func() { newWebRTCPeerConnectionAPI = oldBuilder }()
-
-	var captured WebRTCTransportConfig
-	newWebRTCPeerConnectionAPI = func(config WebRTCTransportConfig) (*webrtc.API, error) {
-		captured = config
-		return webrtc.NewAPI(), nil
-	}
-
-	restore := SetWebRTCTransportConfigForTests(WebRTCTransportConfig{
+func TestWebRTCTransportConfiguresSharedUDPPortPool(t *testing.T) {
+	config := WebRTCTransportConfig{
 		AdvertisedIPs: []string{"198.51.100.10", "203.0.113.25"},
 		UDPPortMin:    40000,
-		UDPPortMax:    40010,
-	})
+		UDPPortMax:    40003,
+	}
+	restore := SetWebRTCTransportConfigForTests(config)
 	defer restore()
 
-	peer, err := newWebRTCPeerConnection()
-	if err != nil {
-		t.Fatalf("newWebRTCPeerConnection returned error: %v", err)
-	}
-	if peer == nil {
-		t.Fatal("expected peer to be created")
-	}
-	if !reflect.DeepEqual(captured.AdvertisedIPs, []string{"198.51.100.10", "203.0.113.25"}) {
-		t.Fatalf("expected advertised IPs to be forwarded, got %#v", captured.AdvertisedIPs)
-	}
-	if captured.UDPPortMin != 40000 || captured.UDPPortMax != 40010 {
-		t.Fatalf("expected UDP port range to be forwarded, got %#v", captured)
+	webRTCAPIPool.mu.Lock()
+	configured := webRTCAPIPool.config
+	webRTCAPIPool.mu.Unlock()
+
+	if !reflect.DeepEqual(configured, config) {
+		t.Fatalf("expected shared UDP pool config %#v, got %#v", config, configured)
 	}
 }
 

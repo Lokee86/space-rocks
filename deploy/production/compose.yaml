@@ -1,0 +1,99 @@
+name: space-rocks
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api-server:
+    image: ghcr.io/lokee86/space-rocks-api-server:${SPACE_ROCKS_IMAGE_TAG:-p3-hosted}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      RACK_ENV: production
+      PORT: "3000"
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      SPACE_ROCKS_API_DATABASE_USERNAME: ${POSTGRES_USER}
+      SPACE_ROCKS_API_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPACE_ROCKS_API_DATABASE_HOST: postgres
+      SPACE_ROCKS_API_DATABASE_PORT: "5432"
+      GAME_SERVER_INTERNAL_TOKEN: ${GAME_SERVER_INTERNAL_TOKEN}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+      RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
+    ports:
+      - "127.0.0.1:8082:3000"
+    healthcheck:
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit(Net::HTTP.get_response(URI('http://127.0.0.1:3000/up')).is_a?(Net::HTTPSuccess) ? 0 : 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  diagnostic-aggregator:
+    image: ghcr.io/lokee86/space-rocks-diagnostic-aggregator:${SPACE_ROCKS_IMAGE_TAG:-p3-hosted}
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      ENVIRONMENT: production
+      BUILD_VERSION: ${BUILD_VERSION:-p3-hosted}
+      DIAGNOSTIC_AGGREGATOR_ENABLED: "true"
+      DIAGNOSTIC_AGGREGATOR_TOKEN: ${DIAGNOSTIC_AGGREGATOR_TOKEN}
+      DIAGNOSTIC_AGGREGATOR_STORAGE_ROOT: /data/reports
+      DIAGNOSTIC_AGGREGATOR_LOG_ROOT: /data/logs
+    volumes:
+      - diagnostic-data:/data
+    ports:
+      - "127.0.0.1:8083:8080"
+
+  game-server:
+    image: ghcr.io/lokee86/space-rocks-game-server:${SPACE_ROCKS_IMAGE_TAG:-p3-hosted}
+    restart: unless-stopped
+    depends_on:
+      api-server:
+        condition: service_healthy
+      diagnostic-aggregator:
+        condition: service_started
+    environment:
+      ENVIRONMENT: production
+      BUILD_VERSION: ${BUILD_VERSION:-p3-hosted}
+      API_SERVER_BASE_URL: http://api-server:3000
+      GAME_SERVER_INTERNAL_TOKEN: ${GAME_SERVER_INTERNAL_TOKEN}
+      PLAYER_DATA_RAILS_BASE_URL: http://api-server:3000
+      PLAYER_DATA_RAILS_INTERNAL_TOKEN: ${GAME_SERVER_INTERNAL_TOKEN}
+      SPACE_ROCKS_WEBRTC_ADVERTISED_IPS: ${SPACE_ROCKS_WEBRTC_ADVERTISED_IPS}
+      SPACE_ROCKS_WEBRTC_UDP_PORT_MIN: ${SPACE_ROCKS_WEBRTC_UDP_PORT_MIN}
+      SPACE_ROCKS_WEBRTC_UDP_PORT_MAX: ${SPACE_ROCKS_WEBRTC_UDP_PORT_MAX}
+      SPACE_ROCKS_WEBRTC_ADVERTISED_UDP_PORT_MIN: ${SPACE_ROCKS_WEBRTC_ADVERTISED_UDP_PORT_MIN}
+      SPACE_ROCKS_WEBRTC_ADVERTISED_UDP_PORT_MAX: ${SPACE_ROCKS_WEBRTC_ADVERTISED_UDP_PORT_MAX}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS: ${SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS}
+      WEBRTC_ICE_SERVERS: ${WEBRTC_ICE_SERVERS:-}
+    ports:
+      - "127.0.0.1:8081:8080"
+      - "${SPACE_ROCKS_WEBRTC_UDP_PORT_MIN}-${SPACE_ROCKS_WEBRTC_UDP_PORT_MAX}:${SPACE_ROCKS_WEBRTC_UDP_PORT_MIN}-${SPACE_ROCKS_WEBRTC_UDP_PORT_MAX}/udp"
+
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:1.0.5
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      SECRET_KEY: ${PLAYIT_SECRET_KEY}
+
+volumes:
+  postgres-data:
+  diagnostic-data:

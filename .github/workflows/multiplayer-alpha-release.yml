@@ -1,0 +1,126 @@
+name: Multiplayer Alpha Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release/p3-multiplayer-stable
+
+env:
+  RELEASE_TAG: v0.2.0
+
+concurrency:
+  group: multiplayer-alpha-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.3'
+          cache-dependency-path: services/game-server/go.sum
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Build complete Windows package
+        run: >-
+          python tools/release/package_local_alpha.py
+          --platform windows
+          --preset "Windows Multiplayer Alpha"
+          --version 0.2.0
+          --output-root dist/release-package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-package
+          path: dist/release-package/windows/*
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.3'
+          cache-dependency-path: services/game-server/go.sum
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Build complete macOS package
+        run: >-
+          python3 tools/release/package_local_alpha.py
+          --platform macos
+          --preset "macOS Multiplayer Alpha"
+          --version 0.2.0
+          --output-root dist/release-package
+          --adhoc-sign
+      - name: Archive macOS package
+        run: |
+          cd dist/release-package/macos
+          zip -qry "../../space-rocks-${RELEASE_TAG}-macos-universal.zip" .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos-package
+          path: dist/release-package/space-rocks-${{ env.RELEASE_TAG }}-macos-universal.zip
+          if-no-files-found: error
+
+  publish:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-package
+          path: release/windows
+      - uses: actions/download-artifact@v8
+        with:
+          name: macos-package
+          path: release/macos
+      - name: Build release archives
+        run: |
+          (cd release/windows && zip -qry "../space-rocks-${RELEASE_TAG}-windows-x86_64.zip" .)
+          mv release/macos/*.zip "release/space-rocks-${RELEASE_TAG}-macos-universal.zip"
+          test -s "release/space-rocks-${RELEASE_TAG}-windows-x86_64.zip"
+          test -s "release/space-rocks-${RELEASE_TAG}-macos-universal.zip"
+      - name: Replace v0.2.0 release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > release-notes.md <<EOF
+          Space Rocks v0.2.0 alpha.
+
+          This upgrade includes hosted multiplayer and retains packaged single-player support.
+
+          Windows: extract the ZIP and run install.ps1.
+          macOS: extract the ZIP and run install.command. The app is unsigned and not notarized.
+
+          Included in both packages:
+          - Hosted multiplayer client
+          - Packaged single-player server
+          - Installer script
+          - CHANGELOG.md
+
+          Privacy notice: Discord authentication currently retains only the email address returned by Discord. No other Discord-provided personally identifying data is intentionally retained.
+          EOF
+          gh release upload "$RELEASE_TAG" release/space-rocks-${RELEASE_TAG}-*.zip --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false

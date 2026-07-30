@@ -1,0 +1,104 @@
+name: Publish Hosted Images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - deploy/p3-hosted-stack
+    paths:
+      - '.github/workflows/publish-hosted-images.yml'
+      - 'deploy/production/**'
+      - 'services/game-server/**'
+      - 'services/api-server/**'
+      - 'services/diagnostic-aggregator/**'
+      - 'services/player-data/**'
+      - 'shared/**'
+
+concurrency:
+  group: publish-hosted-images-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  validate-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate production Compose file
+        working-directory: deploy/production
+        run: |
+          cat > .env <<'EOF'
+          SPACE_ROCKS_IMAGE_TAG=p3-hosted
+          BUILD_VERSION=p3-hosted
+          POSTGRES_USER=space_rocks
+          POSTGRES_PASSWORD=validation-only
+          RAILS_MASTER_KEY=validation-only
+          SECRET_KEY_BASE=validation-only
+          GAME_SERVER_INTERNAL_TOKEN=validation-only
+          DISCORD_CLIENT_ID=validation-only
+          DISCORD_CLIENT_SECRET=validation-only
+          DISCORD_REDIRECT_URI=https://api.space-rocks.laughingskull.ca/api/auth/discord/callback
+          DIAGNOSTIC_AGGREGATOR_TOKEN=validation-only
+          SPACE_ROCKS_WEBRTC_ADVERTISED_IPS=127.0.0.1
+          SPACE_ROCKS_WEBRTC_UDP_PORT_MIN=50000
+          SPACE_ROCKS_WEBRTC_UDP_PORT_MAX=50019
+          PLAYIT_SECRET_KEY=validation-only
+          EOF
+          docker compose --env-file .env -f compose.yaml config --quiet
+          rm .env
+
+  publish:
+    needs: validate-deployment
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: space-rocks-game-server
+            context: .
+            dockerfile: services/game-server/Dockerfile
+          - image: space-rocks-api-server
+            context: services/api-server
+            dockerfile: services/api-server/Dockerfile
+          - image: space-rocks-diagnostic-aggregator
+            context: .
+            dockerfile: services/diagnostic-aggregator/Dockerfile
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish ${{ matrix.image }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/lokee86/${{ matrix.image }}:p3-hosted
+            ghcr.io/lokee86/${{ matrix.image }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deployment-bundle:
+    needs: validate-deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Package server-only deployment payload
+        run: tar -C deploy -czf space-rocks-p3-hosted-deploy.tar.gz production
+      - uses: actions/upload-artifact@v7
+        with:
+          name: space-rocks-p3-hosted-deploy
+          path: space-rocks-p3-hosted-deploy.tar.gz
+          if-no-files-found: error

@@ -3,19 +3,31 @@ class_name SessionNetworkTarget
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const LOCAL_PACKAGED_ALPHA_FEATURE := "local_packaged_alpha"
+const MULTIPLAYER_ALPHA_FEATURE := "multiplayer_alpha"
+const HOSTED_MULTIPLAYER_WS_URL := "wss://game.laughingskull.ca/ws"
 const LOCAL_SERVER_PORT_ENV := "SPACE_ROCKS_LOCAL_SERVER_PORT"
 const DEFAULT_LOCAL_SERVER_PORT := 8080
 
 
 static func websocket_url_for_mode(mode: String) -> String:
-	return websocket_url_for_runtime(mode, OS.has_feature(LOCAL_PACKAGED_ALPHA_FEATURE))
+	return websocket_url_for_runtime(
+		mode,
+		OS.has_feature(LOCAL_PACKAGED_ALPHA_FEATURE),
+		OS.has_feature(MULTIPLAYER_ALPHA_FEATURE)
+	)
 
 
-static func websocket_url_for_runtime(mode: String, local_packaged_alpha: bool) -> String:
+static func websocket_url_for_runtime(
+	mode: String,
+	local_packaged_alpha: bool,
+	multiplayer_alpha: bool = false
+) -> String:
 	match mode:
 		Constants.SESSION_MODE_SINGLE_PLAYER:
 			return _single_player_websocket_url(local_packaged_alpha)
 		Constants.SESSION_MODE_MULTIPLAYER:
+			if multiplayer_alpha:
+				return HOSTED_MULTIPLAYER_WS_URL
 			return Constants.MULTIPLAYER_WS_URL
 		_:
 			return ""

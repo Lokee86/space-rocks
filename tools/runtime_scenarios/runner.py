@@ -13,12 +13,10 @@ from urllib.parse import urlparse, urlunparse
 from runtime_scenarios.heap_profiles import HeapProfileCollector
 from runtime_scenarios.model import Scenario
 from runtime_scenarios.phase_markers import phase_markers_for_scenario
-from runtime_scenarios.room_groups import launch_room_groups
 from runtime_scenarios.server_command import runtime_server_command
 from runtime_scenarios.processes import (
     ManagedProcess,
     find_godot,
-    prepare_godot_project,
     reserve_free_loopback_port,
     start_process,
     stop_processes,
@@ -32,8 +30,6 @@ class RunOptions:
     output_root: Path
     godot: str | None = None
     headless_coordinator: bool = False
-    controlled_host: bool = False
-    host_note: str = ""
     server_url: str | None = None
 
 
@@ -89,26 +85,14 @@ class ScenarioRunner:
             "run_directory": str(self.run_directory),
             "phase_markers": phase_markers,
             "phase_markers_path": str(self.run_directory / "phase-markers.json"),
-            "host_control": {
-                "controlled": self.options.controlled_host,
-                "note": self.options.host_note.strip(),
-            },
             "success": False,
         }
         try:
             godot = find_godot(self.options.godot)
-            client_root = self.options.repo_root / "client"
-            prepare_godot_project(
-                godot,
-                client_root,
-                self.run_directory / "godot-project-scan.log",
-            )
             summary["execution"] = {
                 "godot_editor": str(godot),
-                "source_project": str(client_root),
-                "godot_project_scan": True,
+                "source_project": str(self.options.repo_root / "client"),
                 "coordinator_headless": self.options.headless_coordinator,
-                "room_count": self.scenario.room_count,
                 "packaged_client_started": False,
                 "bundled_local_server_started": False,
                 "server_launch": (
@@ -129,18 +113,34 @@ class ScenarioRunner:
                 self._start_server()
             wait_for_health(self.health_url, self.scenario.setup_timeout_seconds)
 
-            room_groups = launch_room_groups(
-                scenario=self.scenario,
+            coordinator = self._start_client(
                 godot=godot,
-                headless_coordinator=self.options.headless_coordinator,
-                start_client=self._start_client,
-                wait_for_status=self._wait_for_status,
+                client_id="coordinator-1",
+                role="coordinator",
+                headless=self.options.headless_coordinator,
             )
-            client_processes = [
-                client
-                for room_group in room_groups
-                for client in room_group.clients
-            ]
+            room_status = self._wait_for_status(
+                coordinator,
+                accepted={"room_ready"},
+                timeout=self.scenario.setup_timeout_seconds,
+            )
+            room_code = str(room_status.get("room_code", "")).strip()
+            if not room_code:
+                raise RuntimeError("coordinator did not publish a room code")
+
+            participants: list[ManagedProcess] = []
+            for index in range(self.scenario.clients.headless):
+                participants.append(
+                    self._start_client(
+                        godot=godot,
+                        client_id=f"participant-{index + 1}",
+                        role="participant",
+                        headless=True,
+                        room_code=room_code,
+                    )
+                )
+
+            client_processes = [coordinator, *participants]
             final_statuses = self._wait_for_completion(client_processes)
             failures = {
                 name: status
@@ -151,9 +151,7 @@ class ScenarioRunner:
                 raise RuntimeError(f"one or more clients failed: {failures}")
 
             summary["success"] = True
-            summary["rooms"] = [room_group.summary() for room_group in room_groups]
-            if len(room_groups) == 1:
-                summary["room_code"] = room_groups[0].room_code
+            summary["room_code"] = room_code
             summary["clients"] = final_statuses
             summary["heap_profiles"] = self.heap_profiles.summary()
             return 0

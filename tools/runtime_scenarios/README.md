@@ -91,52 +91,6 @@ go tool pprof -top \
   .ci-artifacts/runtime-scenarios/<profile-run>/heap-profiles/heap-round-030.pb.gz
 ```
 
-## Multi-room pressure
-
-`multi_room_3x1c_7b_v1` runs three independent rooms against one game-server process. Each room owns one real headless coordinator, seven bots, one complete match lifecycle, 24 seeded asteroid spawns, and 20 continuous bullet streams. The three coordinators create distinct rooms and validate distinct eight-participant results.
-
-```bash
-python tools/runtime_scenarios/main.py \
-  tools/runtime_scenarios/scenarios/multi_room_3x1c_7b_v1.json \
-  --headless-coordinator
-
-python tools/runtime_scenarios/multi_room_summary.py \
-  .ci-artifacts/runtime-scenarios/<multi-room-run> \
-  --output .ci-artifacts/runtime-scenarios/multi-room-summary.json
-```
-
-A positive top-level `room_count` repeats the configured client plan and bot count per room while keeping all rooms on the same server process. Multi-room client IDs are room-scoped. Existing one-room scenarios retain the original `coordinator-1` and `participant-N` IDs.
-
-The controlled matrix manifest contains matching one, two, three, and four-room points:
-
-```text
-multi_room_1x1c_7b_v1  1 room  x (1 real client + 7 bots)
-multi_room_2x1c_7b_v1  2 rooms x (1 real client + 7 bots)
-multi_room_3x1c_7b_v1  3 rooms x (1 real client + 7 bots)
-multi_room_4x1c_7b_v1  4 rooms x (1 real client + 7 bots)
-```
-
-Validate the complete manifest without starting processes:
-
-```bash
-python tools/runtime_scenarios/multi_room_matrix.py \
-  tools/runtime_scenarios/scenarios/multi_room_matrix_v1.json \
-  --validate-only
-```
-
-Run the complete matrix only when unrelated host activity is controlled:
-
-```bash
-python tools/runtime_scenarios/multi_room_matrix.py \
-  tools/runtime_scenarios/scenarios/multi_room_matrix_v1.json \
-  --controlled-host \
-  --host-note "dedicated idle host; hardware and OS details"
-```
-
-The matrix runner executes the four points sequentially, writes each scenario beneath one timestamped matrix directory, and creates `matrix-run.json` plus `matrix-summary.json`. The summary reports `functional_pass` separately from `performance_eligible`. Performance eligibility requires all four points to pass and every run to carry `--controlled-host`; uncontrolled local runs remain valid only for lifecycle and integration checks. `--host-note` records hardware, isolation, or known contention. The standalone `multi_room_matrix_summary.py` aggregator can also combine four existing run directories and supports `--require-controlled-host`.
-
-Before starting server or client processes, the runner performs one headless Godot editor scan of the source project. This refreshes the ignored global-script-class cache and prevents multiple source-project clients from starting against a stale or incomplete cache. The scan log is stored as `godot-project-scan.log` in the run directory. Coordinators are then started sequentially to avoid concurrent writes to that shared project cache; their matches still overlap.
-
 ## Receiver-scaling matrix
 
 These scenarios hold the room at eight total participants and use the same seed, phase durations, and bullet-stream pressure. Only the number of real network clients changes:
@@ -148,7 +102,7 @@ receiver_scale_4c_4b_v1  4 real clients + 4 bots
 receiver_scale_8c_0b_v1  8 real clients + 0 bots
 ```
 
-Run each scenario independently so every run receives its own server process, loopback port, logs, and measurement reports.
+Run each scenario independently. Local mode gives every run its own server process and loopback port. Deployment mode reuses the supplied server and therefore requires an isolated deployment with no unrelated rooms or clients.
 
 After the runs complete, summarize them together:
 
@@ -173,13 +127,12 @@ Scenario clients always run the source project through the Godot editor executab
 
 The runner:
 
-1. Reserves a free loopback port for the run.
-2. Refreshes the source project's Godot global-class cache through one headless editor scan.
-3. Starts the current game-server source with WSL `go run ./cmd/game-server` on Windows, or direct `go run` on non-Windows hosts, using harness-only deterministic seed, authentication, output, and listen settings.
-4. Starts one source-project coordinator per room and the configured editor-based headless participants.
-5. Waits for client status files and combined measurement exports.
-6. Stops only the processes it started.
-7. Writes logs, configured `phase-markers.json`, and `summary.json` under `.ci-artifacts/runtime-scenarios/`.
+1. Uses `--server-url` for a deployed server, or reserves a loopback port and starts the current game-server source in local mode.
+2. Checks the selected server's `/health` endpoint before starting clients.
+3. Starts the source project through one editor-based coordinator and the configured editor-based headless participants.
+4. Waits for client status files and combined measurement exports.
+5. Stops only the local processes it started; deployed servers are never stopped by the harness.
+6. Writes logs, configured `phase-markers.json`, and `summary.json` under `.ci-artifacts/runtime-scenarios/`.
 
 Do not use native Windows `go run`, `go build -o`, a packaged executable, or another direct Windows server launch in this harness. Native Windows `go run` still creates a temporary `game-server.exe`, which triggers firewall/UAC approval and breaks unattended remote testing. The Windows harness must keep the server inside WSL.
 

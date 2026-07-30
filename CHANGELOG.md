@@ -2,7 +2,7 @@
 
 All notable player-facing changes to Space Rocks are recorded here.
 
-## [0.1.2] - Unreleased
+## [0.2.0] - 2026-07-30
 
 ### Added
 
@@ -17,6 +17,10 @@ All notable player-facing changes to Space Rocks are recorded here.
 - Refined the multiplayer lobby, team selectors, player rows, action buttons, and match-results layout to match the transmission-screen interface.
 - Devtools commands now immediately return authoritative debug status after applying a state change.
 - Moved client log maintenance out of the startup-critical path.
+
+### Privacy notice
+
+- Discord authentication currently retains only the email address returned by Discord. No other Discord-provided personally identifying data is intentionally retained.
 
 ### Fixed
 
