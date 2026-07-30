@@ -1,31 +1,40 @@
 class_name ApiConfig
 extends RefCounted
 
-const RAILS_API_BASE_URL := "https://api.laughingskull.ca"
-const DATA_HANDLER_API_BASE_URL := "https://game.laughingskull.ca"
+const DEVELOPMENT_RAILS_API_BASE_URL := "http://localhost:3000"
+const MULTIPLAYER_RAILS_API_BASE_URL := "https://api.laughingskull.ca"
+const DEVELOPMENT_DATA_HANDLER_API_BASE_URL := "http://localhost:8080"
+const MULTIPLAYER_DATA_HANDLER_API_BASE_URL := "https://game.laughingskull.ca"
+const MULTIPLAYER_ALPHA_FEATURE := "multiplayer_alpha"
 const LOCAL_PACKAGED_ALPHA_FEATURE := "local_packaged_alpha"
 const LOCAL_SERVER_PORT_ENV := "SPACE_ROCKS_LOCAL_SERVER_PORT"
 const DEFAULT_LOCAL_SERVER_PORT := 8080
 
 
+static func rails_api_base_url() -> String:
+	if OS.has_feature(MULTIPLAYER_ALPHA_FEATURE):
+		return MULTIPLAYER_RAILS_API_BASE_URL
+	return DEVELOPMENT_RAILS_API_BASE_URL
+
+
 static func auth_me_path() -> String:
-	return "%s/api/auth/me" % RAILS_API_BASE_URL
+	return "%s/api/auth/me" % rails_api_base_url()
 
 
 static func auth_logout_path() -> String:
-	return "%s/api/auth/logout" % RAILS_API_BASE_URL
+	return "%s/api/auth/logout" % rails_api_base_url()
 
 
 static func discord_login_sessions_path() -> String:
-	return "%s/api/auth/discord/login_sessions" % RAILS_API_BASE_URL
+	return "%s/api/auth/discord/login_sessions" % rails_api_base_url()
 
 
 static func discord_login_session_exchange_path(login_session_id: String) -> String:
-	return "%s/api/auth/discord/login_sessions/%s/exchange" % [RAILS_API_BASE_URL, login_session_id]
+	return "%s/api/auth/discord/login_sessions/%s/exchange" % [rails_api_base_url(), login_session_id]
 
 
 static func player_stats_path() -> String:
-	return "%s/api/player/stats" % RAILS_API_BASE_URL
+	return "%s/api/player/stats" % rails_api_base_url()
 
 
 static func player_data_base_url() -> String:
@@ -40,7 +49,9 @@ static func player_data_base_url_for_runtime(local_packaged_alpha: bool) -> Stri
 			return "http://127.0.0.1:%d" % parsed_port
 	if local_packaged_alpha:
 		return "http://127.0.0.1:%d" % DEFAULT_LOCAL_SERVER_PORT
-	return DATA_HANDLER_API_BASE_URL
+	if OS.has_feature(MULTIPLAYER_ALPHA_FEATURE):
+		return MULTIPLAYER_DATA_HANDLER_API_BASE_URL
+	return DEVELOPMENT_DATA_HANDLER_API_BASE_URL
 
 
 static func player_data_profile_path() -> String:
