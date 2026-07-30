@@ -73,7 +73,7 @@ jobs:
       - name: Archive macOS package
         run: |
           cd dist/release-package/macos
-          zip -qry "../../space-rocks-${RELEASE_TAG}-macos-universal.zip" .
+          zip -qry "../space-rocks-${RELEASE_TAG}-macos-universal.zip" .
       - uses: actions/upload-artifact@v7
         with:
           name: macos-package
