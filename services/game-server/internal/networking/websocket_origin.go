@@ -10,6 +10,7 @@ const websocketAllowedOriginsEnv = "SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS"
 
 var defaultWebSocketOrigins = []string{
 	"https://space-rocks-client.local",
+	"https://space-rocks.laughingskull.ca",
 	"http://localhost:8080",
 	"http://127.0.0.1:8080",
 	"http://[::1]:8080",

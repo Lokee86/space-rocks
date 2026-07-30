@@ -29,13 +29,23 @@ def native_architectures(platform_name: str) -> tuple[str, str]:
 
 
 def godot_binary(explicit: str | None) -> str:
-    if explicit:
-        return explicit
-    if value := os.environ.get("GODOT_BIN"):
-        return value
+    for candidate in (
+        explicit,
+        os.environ.get("GODOT_BIN"),
+        os.environ.get("GODOT4"),
+        os.environ.get("GODOT"),
+    ):
+        if not candidate:
+            continue
+        path = Path(candidate)
+        if path.exists():
+            return str(path.resolve())
+        if resolved := shutil.which(candidate):
+            return resolved
+        return candidate
     if os.name == "nt" and Path(r"C:\Godot.exe").exists():
         return r"C:\Godot.exe"
-    return "godot"
+    return shutil.which("godot") or "godot"
 
 
 def platform_layout(platform_name: str, output_root: Path) -> tuple[Path, Path, Path, str]:

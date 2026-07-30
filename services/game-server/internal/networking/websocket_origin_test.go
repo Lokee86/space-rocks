@@ -20,7 +20,8 @@ func TestWebSocketOriginPolicy(t *testing.T) {
 		origin   string
 		want     bool
 	}{
-		{name: "default", origin: "https://space-rocks-client.local", want: true},
+		{name: "default development client", origin: "https://space-rocks-client.local", want: true},
+		{name: "default official client", origin: "https://space-rocks.laughingskull.ca", want: true},
 		{name: "empty origin rejected", origin: "", want: false},
 		{name: "unapproved origin rejected", origin: "https://evil.example", want: false},
 		{name: "replacement", envSet: true, envValue: " https://allowed.example, ,http://localhost:9000 ", origin: "https://allowed.example", want: true},
