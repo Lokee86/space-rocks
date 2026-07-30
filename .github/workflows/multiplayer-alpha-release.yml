@@ -31,34 +31,25 @@ jobs:
           include-templates: true
       - name: Verify multiplayer endpoint sources
         run: python tools/release/verify_multiplayer_endpoints.py
-      - name: Export and archive Windows client
+      - name: Export Windows client
         shell: pwsh
         run: |
           $project = Join-Path $env:GITHUB_WORKSPACE 'client'
-          $directory = Join-Path $env:RUNNER_TEMP 'space-rocks-windows'
+          $directory = Join-Path $env:GITHUB_WORKSPACE 'dist/multiplayer-alpha/windows'
           $output = Join-Path $directory 'SpaceRocks.exe'
-          $archive = Join-Path $env:RUNNER_TEMP 'space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip'
 
           Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $directory | Out-Null
-          New-Item -ItemType Directory -Force -Path (Split-Path $archive) | Out-Null
 
           & godot --headless --path $project --export-release 'Windows Multiplayer Alpha' $output
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          $files = Get-ChildItem -LiteralPath $directory -File
-          if (-not $files) { throw "Godot created no Windows export files in $directory" }
           if (-not (Test-Path -LiteralPath $output)) { throw "Godot did not create $output" }
-
-          Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
-          Compress-Archive -LiteralPath $files.FullName -DestinationPath $archive -CompressionLevel Optimal
-          if (-not (Test-Path -LiteralPath $archive)) { throw "Archive was not created: $archive" }
-      - name: Upload Windows archive
+          if (-not (Get-ChildItem -LiteralPath $directory -File)) { throw "Godot created no Windows export files in $directory" }
+      - name: Upload Windows client files
         uses: actions/upload-artifact@v7
         with:
-          name: space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
-          path: ${{ runner.temp }}/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
-          archive: false
+          name: windows-client
+          path: dist/multiplayer-alpha/windows/*
           if-no-files-found: error
 
   macos:
@@ -103,13 +94,15 @@ jobs:
       actions: read
       contents: write
     steps:
-      - name: Download release archives
+      - name: Download and package release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir release
           gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir release
-          find release -type f -name '*.zip' -exec mv '{}' release/ \;
+          test -f release/windows-client/SpaceRocks.exe
+          (cd release/windows-client && zip -rq "../space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip" .)
+          find release -mindepth 2 -type f -name '*.zip' -exec mv '{}' release/ \;
       - name: Verify release archives
         run: |
           test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
