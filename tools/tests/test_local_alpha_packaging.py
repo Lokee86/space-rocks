@@ -26,15 +26,15 @@ from tools.release.local_alpha_smoke import (
 )
 
 
-def test_release_version_is_0_2_0() -> None:
-    assert release_version() == "0.2.0"
+def test_release_version_is_0_2_1() -> None:
+    assert release_version() == "0.2.1"
 
 
 def test_dirty_default_version_is_visibly_marked(monkeypatch) -> None:
-    monkeypatch.setattr("tools.release.local_alpha_manifest.release_version", lambda: "0.2.0")
+    monkeypatch.setattr("tools.release.local_alpha_manifest.release_version", lambda: "0.2.1")
 
-    assert default_version() == "0.2.0"
-    assert default_version(dirty=True) == "0.2.0-dirty"
+    assert default_version() == "0.2.1"
+    assert default_version(dirty=True) == "0.2.1-dirty"
 
 
 def test_native_architecture_mapping(monkeypatch) -> None:

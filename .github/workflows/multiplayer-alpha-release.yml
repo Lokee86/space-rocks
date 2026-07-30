@@ -7,7 +7,7 @@ on:
       - release/p3-multiplayer-stable
 
 env:
-  RELEASE_TAG: v0.2.0
+  RELEASE_TAG: v0.2.1
 
 concurrency:
   group: multiplayer-alpha-${{ github.ref }}
@@ -38,7 +38,7 @@ jobs:
           python tools/release/package_local_alpha.py
           --platform windows
           --preset "Windows Multiplayer Alpha"
-          --version 0.2.0
+          --version 0.2.1
           --output-root dist/release-package
       - uses: actions/upload-artifact@v7
         with:
@@ -67,7 +67,7 @@ jobs:
           python3 tools/release/package_local_alpha.py
           --platform macos
           --preset "macOS Multiplayer Alpha"
-          --version 0.2.0
+          --version 0.2.1
           --output-root dist/release-package
           --adhoc-sign
       - name: Archive macOS package
@@ -102,12 +102,12 @@ jobs:
           mv release/macos/*.zip "release/space-rocks-${RELEASE_TAG}-macos-universal.zip"
           test -s "release/space-rocks-${RELEASE_TAG}-windows-x86_64.zip"
           test -s "release/space-rocks-${RELEASE_TAG}-macos-universal.zip"
-      - name: Replace v0.2.0 release assets
+      - name: Publish v0.2.1 release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > release-notes.md <<EOF
-          Space Rocks v0.2.0 alpha.
+          Space Rocks v0.2.1 alpha.
 
           This upgrade includes hosted multiplayer and retains packaged single-player support.
 
@@ -122,5 +122,9 @@ jobs:
 
           Privacy notice: Discord authentication currently retains only the email address returned by Discord. No other Discord-provided personally identifying data is intentionally retained.
           EOF
-          gh release upload "$RELEASE_TAG" release/space-rocks-${RELEASE_TAG}-*.zip --repo "$GITHUB_REPOSITORY" --clobber
-          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/space-rocks-${RELEASE_TAG}-*.zip --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
+          else
+            gh release create "$RELEASE_TAG" release/space-rocks-${RELEASE_TAG}-*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
+          fi

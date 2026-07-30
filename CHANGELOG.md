@@ -2,6 +2,13 @@
 
 All notable player-facing changes to Space Rocks are recorded here.
 
+## [0.2.1] - 2026-07-30
+
+### Fixed
+
+- Corrected and revalidated the native macOS release packaging workflow.
+- Rolled multiplayer alpha release packaging and artifact names forward to v0.2.1.
+
 ## [0.2.0] - 2026-07-30
 
 ### Added
