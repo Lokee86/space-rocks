@@ -27,6 +27,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: '1.26.3'
+          cache-dependency-path: services/game-server/go.sum
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.3
@@ -55,6 +56,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: '1.26.3'
+          cache-dependency-path: services/game-server/go.sum
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.3
