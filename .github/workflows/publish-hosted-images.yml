@@ -62,7 +62,7 @@ jobs:
             dockerfile: services/game-server/Dockerfile
           - image: space-rocks-api-server
             context: services/api-server
-            dockerfile: Dockerfile
+            dockerfile: services/api-server/Dockerfile
           - image: space-rocks-diagnostic-aggregator
             context: .
             dockerfile: services/diagnostic-aggregator/Dockerfile
