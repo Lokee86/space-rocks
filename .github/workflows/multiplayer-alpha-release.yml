@@ -2,9 +2,17 @@ name: Multiplayer Alpha Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to replace
+        required: true
+        default: v0.2.0
   push:
     tags:
       - 'v*'
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 concurrency:
   group: multiplayer-alpha-${{ github.ref }}
@@ -87,8 +95,8 @@ jobs:
           godot --headless --path client --export-release "macOS Multiplayer Alpha"
       - name: Create macOS archive payload
         run: |
-          archive="dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
-          payload="dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.payload"
+          archive="dist/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.zip"
+          payload="dist/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.payload"
           ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "$archive"
           mv "$archive" "$payload"
           test -s "$payload"
@@ -96,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: macos-payload
-          path: dist/space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.payload
+          path: dist/space-rocks-multiplayer-${{ env.RELEASE_TAG }}-macos-universal.payload
           if-no-files-found: error
 
   publish:
@@ -123,17 +131,17 @@ jobs:
       - name: Package release artifacts
         run: |
           test -f release/windows-client/SpaceRocks.exe
-          (cd release/windows-client && zip -rq "../space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip" .)
+          (cd release/windows-client && zip -rq "../space-rocks-multiplayer-${RELEASE_TAG}-windows-x86_64.zip" .)
 
-          mac_payload="release/macos-payload/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.payload"
-          mac_archive="release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+          mac_payload="release/macos-payload/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.payload"
+          mac_archive="release/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.zip"
           test -s "$mac_payload"
           mv "$mac_payload" "$mac_archive"
           test -s "$mac_archive"
       - name: Verify release archives
         run: |
-          test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
-          test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+          test -s "release/space-rocks-multiplayer-${RELEASE_TAG}-windows-x86_64.zip"
+          test -s "release/space-rocks-multiplayer-${RELEASE_TAG}-macos-universal.zip"
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
@@ -154,14 +162,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cat > release-notes.md <<EOF
-          Hosted multiplayer alpha clients for Space Rocks ${GITHUB_REF_NAME}.
+          Hosted multiplayer alpha clients for Space Rocks ${RELEASE_TAG}.
+
+          Built from commit ${GITHUB_SHA}.
 
           Windows: extract the ZIP and run SpaceRocks.exe.
           macOS: extract the ZIP and open Space Rocks.app. The app is unsigned and not notarized.
           EOF
           release_exists=false
           for attempt in 1 2 3 4 5; do
-            if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
               release_exists=true
               break
             fi
@@ -169,11 +179,11 @@ jobs:
           done
 
           if [ "$release_exists" = true ]; then
-            gh release upload "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+            gh release upload "$RELEASE_TAG" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Multiplayer Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
           else
-            if ! gh release create "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false; then
-              gh release upload "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
-              gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+            if ! gh release create "$RELEASE_TAG" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false; then
+              gh release upload "$RELEASE_TAG" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
+              gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Multiplayer Alpha ${RELEASE_TAG}" --notes-file release-notes.md --prerelease --latest=false
             fi
           fi

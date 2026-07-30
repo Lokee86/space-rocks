@@ -13,7 +13,7 @@ FORBIDDEN = (
     b"space-rocks.laughingskull.ca/game",
 )
 SOURCE_FILES = (
-    Path("client/scripts/generated/constants/constants.gd"),
+    Path("client/scripts/boot/session_network_target.gd"),
     Path("client/scripts/api/api_config.gd"),
 )
 PRESET_REQUIREMENTS = (
