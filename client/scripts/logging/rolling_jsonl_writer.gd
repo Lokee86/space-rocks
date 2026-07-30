@@ -127,6 +127,8 @@ func _process_id_from_active_path(active_path: String) -> int:
 
 
 func _is_process_running(process_id: int) -> bool:
+	if OS.get_name() == "Linux":
+		return DirAccess.dir_exists_absolute("/proc/%d" % process_id)
 	return OS.is_process_running(process_id)
 
 

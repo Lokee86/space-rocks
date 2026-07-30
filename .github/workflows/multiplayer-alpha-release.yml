@@ -33,7 +33,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist/multiplayer-alpha/windows | Out-Null
-          & $env:GODOT --headless --path client --export-release "Windows Multiplayer Alpha"
+          & $env:GODOT --headless --path client --export-release "Windows Multiplayer Alpha" "dist/multiplayer-alpha/windows/SpaceRocks.exe"
       - name: Create Windows archive
         shell: pwsh
         run: Compress-Archive -Path 'dist/multiplayer-alpha/windows/*' -DestinationPath 'dist/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip' -Force
@@ -63,7 +63,7 @@ jobs:
       - name: Export macOS client
         run: |
           mkdir -p dist/multiplayer-alpha/macos
-          godot --headless --path client --export-release "macOS Multiplayer Alpha"
+          godot --headless --path client --export-release "macOS Multiplayer Alpha" "dist/multiplayer-alpha/macos/Space Rocks.app"
       - name: Create macOS archive
         run: ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
       - name: Upload macOS archive
