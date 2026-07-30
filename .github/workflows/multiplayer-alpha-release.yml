@@ -114,7 +114,7 @@ jobs:
       - name: Download macOS archive
         uses: actions/download-artifact@v8
         with:
-          name: macos-archive
+          name: space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
           path: release/macos-archive
       - name: Package release artifacts
         run: |
