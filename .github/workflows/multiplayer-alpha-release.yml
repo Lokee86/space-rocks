@@ -90,7 +90,7 @@ jobs:
       - name: Upload macOS archive
         uses: actions/upload-artifact@v7
         with:
-          name: space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
+          name: macos-archive
           path: dist/space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
           archive: false
           if-no-files-found: error
