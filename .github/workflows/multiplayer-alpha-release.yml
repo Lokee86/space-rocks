@@ -35,7 +35,7 @@ jobs:
           $project = Join-Path $env:GITHUB_WORKSPACE 'client'
           $output = Join-Path $env:GITHUB_WORKSPACE 'dist/multiplayer-alpha/windows/SpaceRocks.exe'
           New-Item -ItemType Directory -Force -Path (Split-Path $output) | Out-Null
-          & "$env:GODOT" --headless --path $project --export-release "Windows Multiplayer Alpha" $output
+          & godot --headless --path $project --export-release "Windows Multiplayer Alpha" $output
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path $output)) { throw "Godot did not create $output" }
       - name: Create Windows archive
