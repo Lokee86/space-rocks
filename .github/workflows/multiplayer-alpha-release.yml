@@ -106,27 +106,25 @@ jobs:
       actions: read
       contents: write
     steps:
-      - name: Download and package release artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Download Windows client files
+        uses: actions/download-artifact@v8
+        with:
+          name: windows-client
+          path: release/windows-client
+      - name: Download macOS archive
+        uses: actions/download-artifact@v8
+        with:
+          name: macos-archive
+          path: release/macos-archive
+      - name: Package release artifacts
         run: |
-          mkdir release
-          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir release
           test -f release/windows-client/SpaceRocks.exe
           (cd release/windows-client && zip -rq "../space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip" .)
 
+          mac_source="release/macos-archive/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
           mac_archive="release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
-          mapfile -t mac_candidates < <(find release -type f -name '*macos-universal.zip')
-          if [ "${#mac_candidates[@]}" -ne 1 ]; then
-            printf 'Expected exactly one macOS archive, found %s:\n' "${#mac_candidates[@]}" >&2
-            printf '  %s\n' "${mac_candidates[@]}" >&2
-            exit 1
-          fi
-          mac_source="${mac_candidates[0]}"
-          if [ "$mac_source" != "$mac_archive" ]; then
-            rm -rf "$mac_archive"
-            mv "$mac_source" "$mac_archive"
-          fi
+          test -f "$mac_source"
+          mv "$mac_source" "$mac_archive"
           test -f "$mac_archive"
       - name: Verify release archives
         run: |
