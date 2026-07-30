@@ -85,14 +85,18 @@ jobs:
         run: |
           mkdir -p dist/multiplayer-alpha/macos
           godot --headless --path client --export-release "macOS Multiplayer Alpha"
-      - name: Create macOS archive
-        run: ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
-      - name: Upload macOS archive
+      - name: Create macOS archive payload
+        run: |
+          archive="dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+          payload="dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.payload"
+          ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "$archive"
+          mv "$archive" "$payload"
+          test -s "$payload"
+      - name: Upload macOS archive payload
         uses: actions/upload-artifact@v7
         with:
-          name: macos-archive
-          path: dist/space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
-          archive: false
+          name: macos-payload
+          path: dist/space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.payload
           if-no-files-found: error
 
   publish:
@@ -111,25 +115,21 @@ jobs:
         with:
           name: windows-client
           path: release/windows-client
-      - name: Download macOS archive
+      - name: Download macOS archive payload
         uses: actions/download-artifact@v8
         with:
-          name: space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
-          path: release/macos-archive
+          name: macos-payload
+          path: release/macos-payload
       - name: Package release artifacts
         run: |
           test -f release/windows-client/SpaceRocks.exe
           (cd release/windows-client && zip -rq "../space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip" .)
 
+          mac_payload="release/macos-payload/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.payload"
           mac_archive="release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
-          mapfile -t mac_candidates < <(find release/macos-archive -type f -name '*.zip')
-          if [ "${#mac_candidates[@]}" -ne 1 ]; then
-            printf 'Expected one downloaded macOS ZIP, found %s:\n' "${#mac_candidates[@]}" >&2
-            find release/macos-archive -maxdepth 3 -print >&2
-            exit 1
-          fi
-          mv "${mac_candidates[0]}" "$mac_archive"
-          test -f "$mac_archive"
+          test -s "$mac_payload"
+          mv "$mac_payload" "$mac_archive"
+          test -s "$mac_archive"
       - name: Verify release archives
         run: |
           test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
