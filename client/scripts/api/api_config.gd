@@ -12,7 +12,11 @@ const DEFAULT_LOCAL_SERVER_PORT := 8080
 
 
 static func rails_api_base_url() -> String:
-	if OS.has_feature(MULTIPLAYER_ALPHA_FEATURE):
+	return rails_api_base_url_for_runtime(OS.has_feature(MULTIPLAYER_ALPHA_FEATURE))
+
+
+static func rails_api_base_url_for_runtime(multiplayer_alpha: bool) -> String:
+	if multiplayer_alpha:
 		return MULTIPLAYER_RAILS_API_BASE_URL
 	return DEVELOPMENT_RAILS_API_BASE_URL
 
@@ -38,10 +42,13 @@ static func player_stats_path() -> String:
 
 
 static func player_data_base_url() -> String:
-	return player_data_base_url_for_runtime(OS.has_feature(LOCAL_PACKAGED_ALPHA_FEATURE))
+	return player_data_base_url_for_runtime(
+		OS.has_feature(LOCAL_PACKAGED_ALPHA_FEATURE),
+		OS.has_feature(MULTIPLAYER_ALPHA_FEATURE)
+	)
 
 
-static func player_data_base_url_for_runtime(local_packaged_alpha: bool) -> String:
+static func player_data_base_url_for_runtime(local_packaged_alpha: bool, multiplayer_alpha: bool = false) -> String:
 	var port := OS.get_environment(LOCAL_SERVER_PORT_ENV).strip_edges()
 	if port.is_valid_int():
 		var parsed_port := port.to_int()
@@ -49,7 +56,7 @@ static func player_data_base_url_for_runtime(local_packaged_alpha: bool) -> Stri
 			return "http://127.0.0.1:%d" % parsed_port
 	if local_packaged_alpha:
 		return "http://127.0.0.1:%d" % DEFAULT_LOCAL_SERVER_PORT
-	if OS.has_feature(MULTIPLAYER_ALPHA_FEATURE):
+	if multiplayer_alpha:
 		return MULTIPLAYER_DATA_HANDLER_API_BASE_URL
 	return DEVELOPMENT_DATA_HANDLER_API_BASE_URL
 

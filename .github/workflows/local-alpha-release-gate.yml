@@ -6,7 +6,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - 'local-v*'
     paths:
       - '.github/workflows/local-alpha-release-gate.yml'
       - 'client/**'
@@ -131,7 +131,7 @@ jobs:
 
   publish-local-alpha:
     name: Publish versioned local alpha prerelease
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/local-v')
     needs:
       - windows-local-alpha
       - macos-local-alpha
@@ -173,7 +173,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.release_version.outputs.version }}
         run: |
-          expected_tag="v$RELEASE_VERSION"
+          expected_tag="local-v$RELEASE_VERSION"
           release_tag="$GITHUB_REF_NAME"
           test "$release_tag" = "$expected_tag"
           release_title="Space Rocks $RELEASE_VERSION"

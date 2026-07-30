@@ -1,0 +1,116 @@
+name: Multiplayer Alpha Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: multiplayer-alpha-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows multiplayer alpha
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Setup Godot with export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Export Windows client
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/multiplayer-alpha/windows | Out-Null
+          & $env:GODOT --headless --path client --export-release "Windows Multiplayer Alpha"
+      - name: Create Windows archive
+        shell: pwsh
+        run: Compress-Archive -Path 'dist/multiplayer-alpha/windows/*' -DestinationPath 'dist/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip' -Force
+      - name: Upload Windows archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
+          path: dist/space-rocks-multiplayer-${{ github.ref_name }}-windows-x86_64.zip
+          archive: false
+          if-no-files-found: error
+
+  macos:
+    name: macOS multiplayer alpha
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Setup Godot with export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Export macOS client
+        run: |
+          mkdir -p dist/multiplayer-alpha/macos
+          godot --headless --path client --export-release "macOS Multiplayer Alpha"
+      - name: Create macOS archive
+        run: ditto -c -k --sequesterRsrc --keepParent "dist/multiplayer-alpha/macos/Space Rocks.app" "dist/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+      - name: Upload macOS archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
+          path: dist/space-rocks-multiplayer-${{ github.ref_name }}-macos-universal.zip
+          archive: false
+          if-no-files-found: error
+
+  publish:
+    name: Publish multiplayer alpha prerelease
+    needs:
+      - windows
+      - macos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download release archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir release
+          find release -type f -name '*.zip' -exec mv '{}' release/ \;
+      - name: Verify release archives
+        run: |
+          test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
+          test -s "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+          unzip -tq "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-windows-x86_64.zip"
+          unzip -tq "release/space-rocks-multiplayer-${GITHUB_REF_NAME}-macos-universal.zip"
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > release-notes.md <<EOF
+          Hosted multiplayer alpha clients for Space Rocks ${GITHUB_REF_NAME}.
+
+          Windows: extract the ZIP and run SpaceRocks.exe.
+          macOS: extract the ZIP and open Space Rocks.app. The app is unsigned and not notarized.
+          EOF
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+          else
+            gh release create "$GITHUB_REF_NAME" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Space Rocks Multiplayer Alpha ${GITHUB_REF_NAME}" --notes-file release-notes.md --prerelease --latest=false
+          fi
