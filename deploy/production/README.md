@@ -4,7 +4,7 @@ This directory is the complete server deployment payload. The server does not ne
 
 The GHCR packages are private when first published. Before the first pull, either make the three packages public in GitHub Packages or run `docker login ghcr.io` on the server with a token that has `read:packages`.
 
-Create `/opt/space-rocks/.env` with:
+Copy the top-level `.env.multiplayer-production.example` to `/opt/space-rocks/.env`, then fill in the real values:
 
 ```dotenv
 SPACE_ROCKS_IMAGE_TAG=p3-hosted
