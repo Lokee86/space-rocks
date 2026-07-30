@@ -8,11 +8,13 @@ on:
         required: true
         default: v0.2.0
   push:
+    branches:
+      - fix/v0.2.0-hosted-client-2
     tags:
       - 'v*'
 
 env:
-  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+  RELEASE_TAG: ${{ inputs.release_tag || (github.ref_type == 'tag' && github.ref_name) || 'v0.2.0' }}
 
 concurrency:
   group: multiplayer-alpha-${{ github.ref }}
