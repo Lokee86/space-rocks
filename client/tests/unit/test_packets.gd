@@ -116,8 +116,12 @@ func test_initial_room_packet_builders_carry_trace_id() -> void:
 	var join_packet := Packets.join_room_request_packet("TEST", trace_id)
 	assert_eq(join_packet[Packets.FIELD_TRACE_ID], trace_id)
 
-	var single_player_packet := Packets.start_single_player_request_packet("profile-1", trace_id)
+	var single_player_packet := Packets.start_single_player_request_packet("profile-1", trace_id, "score_attack", 5, false, 2500)
 	assert_eq(single_player_packet[Packets.FIELD_TRACE_ID], trace_id)
+	assert_eq(single_player_packet[Packets.FIELD_PRESET_ID], "score_attack")
+	assert_eq(single_player_packet[Packets.FIELD_STARTING_LIVES], 5)
+	assert_eq(single_player_packet[Packets.FIELD_INFINITE_LIVES], false)
+	assert_eq(single_player_packet[Packets.FIELD_TARGET_SCORE], 2500)
 
 	var empty_trace_packet := Packets.create_room_request_packet("", "", "ffa", "", 0, 0, "arcade_survival", 0, false, 0)
 	assert_true(empty_trace_packet.has(Packets.FIELD_TRACE_ID))

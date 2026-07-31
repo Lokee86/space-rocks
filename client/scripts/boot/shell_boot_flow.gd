@@ -27,8 +27,8 @@ func set_websocket_url(url: String) -> void:
 	websocket_url = url
 
 
-func request_single_player(local_profile_id := "") -> void:
-	pending_boot_request.request_single_player(local_profile_id)
+func request_single_player(local_profile_id := "", config: Dictionary = {}) -> void:
+	pending_boot_request.request_single_player(local_profile_id, config)
 
 
 func request_create_room(config: Dictionary = {}) -> void:
@@ -82,7 +82,10 @@ func send_pending_boot_request() -> void:
 		connection_service.begin_room_operation(request_type, trace_id)
 
 	if request_type == Constants.BOOT_REQUEST_SINGLE_PLAYER:
-		connection_service.send_start_single_player_request(local_profile_id)
+		if connection_service.has_method("send_configured_start_single_player_request"):
+			connection_service.send_configured_start_single_player_request(local_profile_id, room_creation_config)
+		else:
+			connection_service.send_start_single_player_request(local_profile_id)
 	elif request_type == Constants.BOOT_REQUEST_CREATE_ROOM:
 		if connection_service.has_method("send_configured_create_room_request"):
 			connection_service.send_configured_create_room_request(room_creation_config)

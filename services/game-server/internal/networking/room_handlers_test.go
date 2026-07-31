@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
@@ -16,7 +17,7 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 		outbound:          make(chan []byte, 1),
 	}
 
-	session.handleStartSinglePlayerRequest("", "")
+	session.handleStartSinglePlayerRequest("", "", "", 0, false, 0)
 
 	if session.sessionContext().RoomID == "" {
 		t.Fatal("expected room to be created")
@@ -26,6 +27,34 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 	}
 	if session.sessionContext().Room.State != rooms.RoomStateInGame {
 		t.Fatalf("expected room state %q, got %q", rooms.RoomStateInGame, session.sessionContext().Room.State)
+	}
+	assertNoQueuedRoomErrorPacket(t, session.outbound)
+}
+
+func TestHandleStartSinglePlayerRequestAppliesSelectedMode(t *testing.T) {
+	session := &webSocketSession{
+		sessionID:         "session-1",
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440034",
+		rooms:             rooms.NewRoomManagerWithCleanupDelay(0),
+		outbound:          make(chan []byte, 4),
+	}
+
+	session.handleStartSinglePlayerRequest("pilot-1", "", string(modes.PresetScoreAttack), 5, false, 2500)
+
+	room := session.sessionContext().Room
+	if room == nil {
+		t.Fatal("expected room to be created")
+	}
+	config := room.ModeConfig()
+	if config.PresetID != modes.PresetScoreAttack || config.StartingLives != 5 || config.InfiniteLives || config.TargetScore != 2500 {
+		t.Fatalf("unexpected room mode config: %+v", config)
+	}
+	resolved, ok := room.ResolvedMatchRules()
+	if !ok {
+		t.Fatal("expected match rules to resolve at single-player start")
+	}
+	if resolved.ModeID != modes.ModeScoreAttack || resolved.ObjectivePolicy.TargetScore != 2500 || resolved.LivesPolicy.StartingLives != 5 {
+		t.Fatalf("unexpected resolved match rules: %+v", resolved)
 	}
 	assertNoQueuedRoomErrorPacket(t, session.outbound)
 }

@@ -202,34 +202,42 @@ func test_back_returns_to_main_menu_when_no_active_transmission() -> void:
 	assert_eq(return_probe.calls, 1)
 
 
-func test_play_endless_requested_calls_start_single_player_when_single_player_mode() -> void:
+func test_single_player_create_opens_setup_then_starts_configured_game() -> void:
 	var menu := FakePregameMenu.new()
 	var profile_context_provider := FakeProfileContextProvider.new()
 	var flow := PregameMenuFlow.new()
-	var start_probe := StartSinglePlayerProbe.new()
+	var start_probe := ConfigProbe.new()
+	var transmission_flow := FakeTransmissionFlow.new()
 
 	add_child_autofree(menu)
-	flow.configure(menu, Callable(), Callable(start_probe, "mark_called"), Callable(), Callable(), Callable(), Callable(), profile_context_provider)
+	flow.configure(
+		menu,
+		Callable(),
+		Callable(start_probe, "mark_called"),
+		Callable(),
+		Callable(),
+		Callable(),
+		Callable(),
+		profile_context_provider,
+		null,
+		transmission_flow)
 	await flow.show_single_player()
 
-	menu.play_endless_requested.emit()
+	menu.create_game_requested.emit()
+
+	assert_not_null(transmission_flow.mounted_primary)
+	var config := {
+		"preset_id": "score_attack",
+		"starting_lives": 5,
+		"infinite_lives": false,
+		"target_score": 2500,
+	}
+	transmission_flow.mounted_primary.emit_signal("create_requested", config)
 
 	assert_eq(start_probe.calls, 1)
-
-
-func test_play_endless_requested_does_not_call_start_single_player_when_multiplayer_mode() -> void:
-	var menu := FakePregameMenu.new()
-	var profile_context_provider := FakeProfileContextProvider.new()
-	var flow := PregameMenuFlow.new()
-	var start_probe := StartSinglePlayerProbe.new()
-
-	add_child_autofree(menu)
-	flow.configure(menu, Callable(), Callable(start_probe, "mark_called"), Callable(), Callable(), Callable(), Callable(), profile_context_provider)
-	flow.show_multiplayer()
-
-	menu.play_endless_requested.emit()
-
-	assert_eq(start_probe.calls, 0)
+	assert_eq(start_probe.last_config, config)
+	transmission_flow.mounted_primary.free()
+	transmission_flow.mounted_primary = null
 
 
 func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void:
@@ -260,6 +268,10 @@ func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void
 	assert_eq(clear_probe.calls, 0)
 	assert_eq(create_probe.calls, 0)
 	var config := {
+		"preset_id": "score_attack",
+		"starting_lives": 3,
+		"infinite_lives": false,
+		"target_score": 1000,
 		"team_structure": "auto_balanced",
 		"team_assignment_mode": "",
 		"team_count": 3,
@@ -354,31 +366,6 @@ func test_multiplayer_logout_calls_logout_and_return_to_main() -> void:
 
 	assert_eq(logout_probe.calls, 1)
 	assert_eq(return_probe.calls, 1)
-
-
-func test_multiplayer_create_does_nothing_in_single_player_mode() -> void:
-	var menu := FakePregameMenu.new()
-	var profile_context_provider := FakeProfileContextProvider.new()
-	var flow := PregameMenuFlow.new()
-	var clear_probe := Probe.new()
-	var create_probe := Probe.new()
-
-	add_child_autofree(menu)
-	flow.configure(
-		menu,
-		Callable(),
-		Callable(),
-		Callable(create_probe, "mark_called"),
-		Callable(),
-		Callable(),
-		Callable(clear_probe, "mark_called"),
-		profile_context_provider)
-	await flow.show_single_player()
-
-	menu.create_game_requested.emit()
-
-	assert_eq(clear_probe.calls, 0)
-	assert_eq(create_probe.calls, 0)
 
 
 func test_multiplayer_join_does_nothing_in_single_player_mode() -> void:

@@ -758,3 +758,33 @@ func test_active_room_operation_trace_reaches_room_packet() -> void:
 
 	assert_eq(fake_network.sent_packets.size(), 1)
 	assert_eq(fake_network.sent_packets[0]["trace_id"], trace_id)
+
+
+func test_configured_room_requests_forward_mode_fields() -> void:
+	var trace_id := "00000000-0000-4000-8000-000000000027"
+	var fake_network := _new_fake_network_client()
+	var service := _new_service()
+	service.client_packet_sender = ClientPacketSender.new(fake_network)
+	service.begin_room_operation("create_room", trace_id)
+	var config := {
+		"preset_id": "score_attack",
+		"starting_lives": 5,
+		"infinite_lives": false,
+		"target_score": 2500,
+		"team_structure": "co_op",
+		"max_players": 4,
+	}
+
+	service.send_configured_create_room_request(config)
+	service.send_configured_start_single_player_request("pilot-1", config)
+
+	assert_eq(fake_network.sent_packets.size(), 2)
+	for packet in fake_network.sent_packets:
+		assert_eq(packet["preset_id"], "score_attack")
+		assert_eq(packet["starting_lives"], 5)
+		assert_eq(packet["infinite_lives"], false)
+		assert_eq(packet["target_score"], 2500)
+	assert_eq(fake_network.sent_packets[0]["team_structure"], "co_op")
+	assert_eq(fake_network.sent_packets[0]["max_players"], 4)
+	assert_eq(fake_network.sent_packets[1]["local_profile_id"], "pilot-1")
+	assert_eq(fake_network.sent_packets[1]["trace_id"], trace_id)

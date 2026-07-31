@@ -569,11 +569,15 @@ static func remove_room_member_request_packet(player_id) -> Dictionary:
 	packet[FIELD_PLAYER_ID] = player_id
 	return packet
 
-static func start_single_player_request_packet(local_profile_id, trace_id) -> Dictionary:
+static func start_single_player_request_packet(local_profile_id, trace_id, preset_id, starting_lives, infinite_lives, target_score) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_single_player_request"
 	packet[FIELD_LOCAL_PROFILE_ID] = local_profile_id
 	packet[FIELD_TRACE_ID] = trace_id
+	packet[FIELD_PRESET_ID] = preset_id
+	packet[FIELD_STARTING_LIVES] = starting_lives
+	packet[FIELD_INFINITE_LIVES] = infinite_lives
+	packet[FIELD_TARGET_SCORE] = target_score
 	return packet
 
 static func return_to_lobby_request_packet() -> Dictionary:

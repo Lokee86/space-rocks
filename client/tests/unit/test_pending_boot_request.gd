@@ -58,12 +58,21 @@ func test_join_room_request_is_multiplayer_without_consuming() -> void:
 
 func test_single_player_request_is_single_player_without_consuming() -> void:
 	var pending := PendingBootRequest.new()
-	pending.request_single_player()
+	var config := {
+		"preset_id": "score_attack",
+		"starting_lives": 5,
+		"infinite_lives": false,
+		"target_score": 2500,
+	}
+	pending.request_single_player("pilot-1", config)
 
 	assert_eq(pending.current_type(), Constants.BOOT_REQUEST_SINGLE_PLAYER)
 	assert_true(pending.is_single_player_request())
 	assert_false(pending.is_multiplayer_request())
 	assert_true(pending.has_request())
+	var request := pending.consume_request()
+	assert_eq(request["local_profile_id"], "pilot-1")
+	assert_eq(request["room_creation_config"], config)
 
 func test_consume_returns_trace_and_clear_removes_pending_context() -> void:
 	var factory := Callable(TraceFactory.new([

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
@@ -103,6 +104,18 @@ func (manager *RoomManager) CreateLobbyRoomWithConfig(creation RoomCreationConfi
 }
 
 func (manager *RoomManager) CreateSinglePlayerRoom(sessionID string) (*Room, error) {
+	return manager.CreateSinglePlayerRoomWithModeConfig(sessionID, modes.DefaultRoomModeConfig())
+}
+
+func (manager *RoomManager) CreateSinglePlayerRoomWithModeConfig(sessionID string, modeConfig modes.RoomModeConfig) (*Room, error) {
+	creation := DefaultRoomCreationConfig()
+	creation.ModeConfig = modeConfig
+	creation.MaxPlayers = 1
+	creation = normalizeRoomCreationConfig(creation)
+	if err := validateRoomCreationConfig(creation); err != nil {
+		return nil, err
+	}
+
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
@@ -115,7 +128,10 @@ func (manager *RoomManager) CreateSinglePlayerRoom(sessionID string) (*Room, err
 			continue
 		}
 
-		room := NewRoom(roomID, RoomStateLobby, nil)
+		room, err := NewRoomWithConfig(roomID, RoomStateLobby, nil, creation)
+		if err != nil {
+			return nil, err
+		}
 		room.SetJoinable(false)
 		room.AddMemberSessionID(sessionID)
 		manager.rooms[roomID] = room

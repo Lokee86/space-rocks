@@ -38,7 +38,7 @@ Create-room packets and room snapshots expose selected mode configuration and lo
 Existing room creation paths default to Arcade Survival.
 ```
 
-This slice deliberately does not import the later P4 awards, objective runtime, encounter ownership, progression, inventory, or expanded result-orchestration systems. Full preset-selection UI, durable final-decision/result integration, and additional modes remain separate measured feature slices.
+This slice deliberately does not import the later P4 awards, objective runtime, encounter ownership, progression, inventory, or expanded result-orchestration systems. The single-player and multiplayer Create flows now expose Arcade Survival and Score Attack, finite or infinite lives, and Score Attack target-score selection; multiplayer additionally exposes team configuration. Durable final-decision/result presentation and additional modes remain separate measured feature slices.
 
 ## Ownership Boundary
 

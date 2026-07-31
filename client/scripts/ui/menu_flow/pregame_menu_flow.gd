@@ -48,8 +48,6 @@ func configure(
 	if pregame_menu != null:
 		if not pregame_menu.back_requested.is_connected(_on_back_requested):
 			pregame_menu.back_requested.connect(_on_back_requested)
-		if not pregame_menu.play_endless_requested.is_connected(_on_play_endless_requested):
-			pregame_menu.play_endless_requested.connect(_on_play_endless_requested)
 		if not pregame_menu.create_game_requested.is_connected(_on_create_game_requested):
 			pregame_menu.create_game_requested.connect(_on_create_game_requested)
 		if not pregame_menu.join_game_requested.is_connected(_on_join_game_requested):
@@ -94,27 +92,28 @@ func _on_back_requested() -> void:
 		return_to_main_menu.call()
 
 
-func _on_play_endless_requested() -> void:
-	if current_mode != PregameMenuMode.SINGLE_PLAYER:
-		return
-	if start_single_player_callable.is_valid():
-		start_single_player_callable.call()
-
-
 func _on_create_game_requested() -> void:
-	if current_mode != PregameMenuMode.MULTIPLAYER or transmission_flow == null:
+	if transmission_flow == null:
 		return
 	room_setup = transmission_flow.mount_primary(MultiplayerRoomSetupScene) as MultiplayerRoomSetupReadout
 	if room_setup == null:
 		return
+	if current_mode == PregameMenuMode.SINGLE_PLAYER:
+		room_setup.configure_single_player()
+	else:
+		room_setup.configure_multiplayer()
 	room_setup.connect("create_requested", Callable(self, "_on_room_setup_create_requested"))
 	room_setup.connect("cancel_requested", Callable(self, "_on_room_setup_cancel_requested"))
 
 
 func _on_room_setup_create_requested(config: Dictionary) -> void:
 	if room_setup != null:
-		room_setup.set_status("Creating room...")
+		room_setup.set_status("Starting game..." if current_mode == PregameMenuMode.SINGLE_PLAYER else "Creating room...")
 		room_setup.set_pending(true)
+	if current_mode == PregameMenuMode.SINGLE_PLAYER:
+		if start_single_player_callable.is_valid():
+			start_single_player_callable.call(config)
+		return
 	if create_room_callable.is_valid():
 		create_room_callable.call(config)
 

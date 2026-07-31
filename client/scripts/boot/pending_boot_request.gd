@@ -15,10 +15,11 @@ func _init(operation_trace_factory: Callable = Callable()) -> void:
 	_operation_trace_factory = operation_trace_factory
 
 
-func request_single_player(local_profile_id_value := "") -> void:
+func request_single_player(local_profile_id_value := "", config: Dictionary = {}) -> void:
 	request_type = Constants.BOOT_REQUEST_SINGLE_PLAYER
 	join_room_code = ""
 	local_profile_id = local_profile_id_value
+	room_creation_config = config.duplicate(true)
 	trace_id = _new_trace_id("start_single_player")
 
 

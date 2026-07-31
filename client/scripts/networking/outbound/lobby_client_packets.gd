@@ -57,8 +57,22 @@ static func remove_room_member_request_packet(player_id: String) -> Dictionary:
 	return Packets.remove_room_member_request_packet(player_id)
 
 
-static func start_single_player_request_packet(local_profile_id := "", trace_id := "") -> Dictionary:
-	return Packets.start_single_player_request_packet(local_profile_id, trace_id)
+static func start_single_player_request_packet(
+		local_profile_id := "",
+		trace_id := "",
+		preset_id := "arcade_survival",
+		starting_lives := 0,
+		infinite_lives := false,
+		target_score := 0
+) -> Dictionary:
+	return Packets.start_single_player_request_packet(
+		local_profile_id,
+		trace_id,
+		preset_id,
+		starting_lives,
+		infinite_lives,
+		target_score
+	)
 
 
 static func return_to_lobby_request_packet() -> Dictionary:

@@ -21,7 +21,7 @@ func TestHandleStartSinglePlayerRequestEmitsRoomCreated(t *testing.T) {
 		outbound:  make(chan []byte, 16),
 	}
 	traceID := "550e8400-e29b-41d4-a716-446655440021"
-	session.handleStartSinglePlayerRequest("", traceID)
+	session.handleStartSinglePlayerRequest("", traceID, "", 0, false, 0)
 	roomID := session.sessionContext().RoomID
 	if roomID == "" {
 		t.Fatal("expected single-player room to be created")

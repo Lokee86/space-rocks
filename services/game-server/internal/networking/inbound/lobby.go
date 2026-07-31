@@ -11,7 +11,7 @@ type lobbySession interface {
 	HandleStartGameRequest()
 	HandleAddBotRequest()
 	HandleRemoveRoomMemberRequest(playerID string)
-	HandleStartSinglePlayerRequest(localProfileID string, traceID string)
+	HandleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int)
 	HandleReturnToLobbyRequest()
 }
 
@@ -42,7 +42,7 @@ func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 		session.HandleRemoveRoomMemberRequest(packet.PlayerID)
 		return true
 	case game.PacketTypeStartSinglePlayerRequest:
-		session.HandleStartSinglePlayerRequest(packet.LocalProfileID, packet.TraceID)
+		session.HandleStartSinglePlayerRequest(packet.LocalProfileID, packet.TraceID, packet.PresetID, packet.StartingLives, packet.InfiniteLives, packet.TargetScore)
 		return true
 	case game.PacketTypeReturnToLobbyRequest:
 		session.HandleReturnToLobbyRequest()

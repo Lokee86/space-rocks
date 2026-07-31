@@ -29,9 +29,9 @@ func set_websocket_url_override(url: String) -> void:
 	websocket_url_override = url.strip_edges()
 
 
-func request_single_player(local_profile_id := "") -> void:
+func request_single_player(local_profile_id := "", config: Dictionary = {}) -> void:
 	session_context.request_single_player()
-	shell_boot_flow.request_single_player(local_profile_id)
+	shell_boot_flow.request_single_player(local_profile_id, config)
 	shell_boot_flow.set_websocket_url(_websocket_url_for_mode(Constants.SESSION_MODE_SINGLE_PLAYER))
 	shell_boot_flow.connect_to_game_server("single player")
 

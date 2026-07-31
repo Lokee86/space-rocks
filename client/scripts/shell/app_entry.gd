@@ -407,7 +407,7 @@ func _on_gameplay_replay_requested() -> void:
 	_start_single_player_from_pregame()
 
 
-func _start_single_player_from_pregame() -> void:
+func _start_single_player_from_pregame(config: Dictionary = {}) -> void:
 	var local_profile_id := ""
 	if menu_flow_controller != null:
 		var single_player_context: Dictionary = menu_flow_controller.get_single_player_context()
@@ -416,7 +416,7 @@ func _start_single_player_from_pregame() -> void:
 	if menu_flow_controller != null:
 		menu_flow_controller.clear_for_gameplay()
 	if main_menu_session_controller != null:
-		main_menu_session_controller.request_single_player(local_profile_id)
+		main_menu_session_controller.request_single_player(local_profile_id, config)
 
 
 func _request_create_room_from_pregame(config: Dictionary = {}) -> void:

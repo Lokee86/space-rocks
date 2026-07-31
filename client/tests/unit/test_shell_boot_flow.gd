@@ -10,12 +10,18 @@ class FakeConnectionService:
 
 	var sent_single_player := 0
 	var last_local_profile_id := ""
+	var last_single_player_config := {}
 	var sent_create_room := 0
 	var sent_join_room_codes: Array[String] = []
 	var room_operations: Array = []
 
 	func send_start_single_player_request(local_profile_id := "") -> void:
 		last_local_profile_id = local_profile_id
+		sent_single_player += 1
+
+	func send_configured_start_single_player_request(local_profile_id: String, config: Dictionary) -> void:
+		last_local_profile_id = local_profile_id
+		last_single_player_config = config.duplicate(true)
 		sent_single_player += 1
 
 	func send_create_room_request() -> void:
@@ -35,7 +41,8 @@ func test_send_pending_single_player_request_consumes_and_sends() -> void:
 	var connection := FakeConnectionService.new()
 	var flow := ShellBootFlow.new(connection, "ws://example", Callable())
 
-	flow.request_single_player()
+	var config := {"preset_id": "score_attack", "starting_lives": 5, "infinite_lives": false, "target_score": 2500}
+	flow.request_single_player("pilot-1", config)
 	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_SINGLE_PLAYER)
 	assert_true(flow.pending_request_is_single_player())
 	assert_false(flow.pending_request_is_multiplayer())
@@ -43,7 +50,8 @@ func test_send_pending_single_player_request_consumes_and_sends() -> void:
 	flow.send_pending_boot_request()
 
 	assert_eq(connection.sent_single_player, 1)
-	assert_eq(connection.last_local_profile_id, "")
+	assert_eq(connection.last_local_profile_id, "pilot-1")
+	assert_eq(connection.last_single_player_config, config)
 	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
 
 

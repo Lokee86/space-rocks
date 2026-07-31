@@ -133,6 +133,10 @@ type StartSinglePlayerRequest struct {
 	Type           string `json:"type"`
 	TraceID        string `json:"trace_id"`
 	LocalProfileID string `json:"local_profile_id"`
+	PresetID       string `json:"preset_id"`
+	StartingLives  int    `json:"starting_lives"`
+	InfiniteLives  bool   `json:"infinite_lives"`
+	TargetScore    int    `json:"target_score"`
 }
 
 type ReturnToLobbyRequest struct {

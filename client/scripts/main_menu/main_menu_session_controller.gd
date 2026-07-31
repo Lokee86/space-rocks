@@ -20,8 +20,8 @@ func configure(
 	multiplayer_dialog_status_presenter = MultiplayerDialogStatusPresenter.new()
 
 
-func request_single_player(local_profile_id := "") -> void:
-	session_boot_controller.request_single_player(local_profile_id)
+func request_single_player(local_profile_id := "", config: Dictionary = {}) -> void:
+	session_boot_controller.request_single_player(local_profile_id, config)
 
 
 func request_create_room(config: Dictionary = {}) -> void:

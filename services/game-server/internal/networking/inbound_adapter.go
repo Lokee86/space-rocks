@@ -82,8 +82,8 @@ func (a inboundSessionAdapter) HandleRemoveRoomMemberRequest(playerID string) {
 	a.session.handleRemoveRoomMemberRequest(playerID)
 }
 
-func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string, traceID string) {
-	a.session.handleStartSinglePlayerRequest(localProfileID, traceID)
+func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int) {
+	a.session.handleStartSinglePlayerRequest(localProfileID, traceID, presetID, startingLives, infiniteLives, targetScore)
 }
 
 func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {

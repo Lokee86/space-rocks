@@ -220,8 +220,19 @@ func set_ephemeral_websocket_auth_token(token: String) -> void:
 
 
 func send_start_single_player_request(local_profile_id := "") -> void:
+	send_configured_start_single_player_request(local_profile_id, {})
+
+
+func send_configured_start_single_player_request(local_profile_id: String, config: Dictionary) -> void:
 	if _can_send_outbound():
-		client_packet_sender.send_start_single_player_request(local_profile_id, _active_room_operation_trace_id)
+		client_packet_sender.send_start_single_player_request(
+			local_profile_id,
+			_active_room_operation_trace_id,
+			str(config.get("preset_id", "arcade_survival")),
+			int(config.get("starting_lives", 0)),
+			bool(config.get("infinite_lives", false)),
+			int(config.get("target_score", 0))
+		)
 
 
 func send_create_room_request() -> void:
@@ -236,7 +247,11 @@ func send_configured_create_room_request(config: Dictionary) -> void:
 			str(config.get("team_structure", "ffa")),
 			str(config.get("team_assignment_mode", "")),
 			int(config.get("team_count", 0)),
-			int(config.get("max_players", 0))
+			int(config.get("max_players", 0)),
+			str(config.get("preset_id", "arcade_survival")),
+			int(config.get("starting_lives", 0)),
+			bool(config.get("infinite_lives", false)),
+			int(config.get("target_score", 0))
 		)
 
 

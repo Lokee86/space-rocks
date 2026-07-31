@@ -1,5 +1,7 @@
 package rooms
 
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
+
 func (manager *RoomManager) StartRoomGame(roomID string, sessionID string) (*Room, *RoomDomainError) {
 	roomID = NormalizeRoomID(roomID)
 
@@ -21,7 +23,11 @@ func (manager *RoomManager) StartRoomGame(roomID string, sessionID string) (*Roo
 }
 
 func (manager *RoomManager) CreateStartedSinglePlayerRoom(sessionID string) (*Room, *RoomDomainError) {
-	room, err := manager.CreateSinglePlayerRoom(sessionID)
+	return manager.CreateStartedSinglePlayerRoomWithModeConfig(sessionID, modes.DefaultRoomModeConfig())
+}
+
+func (manager *RoomManager) CreateStartedSinglePlayerRoomWithModeConfig(sessionID string, modeConfig modes.RoomModeConfig) (*Room, *RoomDomainError) {
+	room, err := manager.CreateSinglePlayerRoomWithModeConfig(sessionID, modeConfig)
 	if err != nil {
 		return nil, &RoomDomainError{
 			Code:    RoomErrorInvalidRoomState,

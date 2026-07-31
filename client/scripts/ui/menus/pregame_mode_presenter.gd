@@ -13,8 +13,8 @@ func apply_mode(menu: Control, mode: String) -> void:
 
 func _apply_single_player(menu: Control) -> void:
 	_set_label_text(menu, "%ModeLabel", "SINGLE PLAYER")
-	_set_label_visible(menu, "%EndlessLabel", true)
-	_set_label_visible(menu, "%CreateLabel", false)
+	_set_label_visible(menu, "%EndlessLabel", false)
+	_set_label_visible(menu, "%CreateLabel", true)
 	_set_label_visible(menu, "%CampaignLabel", true)
 	_set_label_visible(menu, "%JoinLabel", false)
 	_set_label_visible(menu, "%SelectPilotLabel", true)

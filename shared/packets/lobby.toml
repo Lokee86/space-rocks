@@ -164,6 +164,26 @@ go_name = "LocalProfileID"
 json = "local_profile_id"
 type = "string"
 
+[[structs.fields]]
+name = "preset_id"
+json = "preset_id"
+type = "string"
+
+[[structs.fields]]
+name = "starting_lives"
+json = "starting_lives"
+type = "int"
+
+[[structs.fields]]
+name = "infinite_lives"
+json = "infinite_lives"
+type = "bool"
+
+[[structs.fields]]
+name = "target_score"
+json = "target_score"
+type = "int"
+
 [[structs]]
 id = "ReturnToLobbyRequest"
 
@@ -606,12 +626,16 @@ player_id = "$player_id"
 
 [[builders]]
 id = "start_single_player_request_packet"
-args = ["local_profile_id", "trace_id"]
+args = ["local_profile_id", "trace_id", "preset_id", "starting_lives", "infinite_lives", "target_score"]
 
 [builders.body]
 type = "start_single_player_request"
 local_profile_id = "$local_profile_id"
 trace_id = "$trace_id"
+preset_id = "$preset_id"
+starting_lives = "$starting_lives"
+infinite_lives = "$infinite_lives"
+target_score = "$target_score"
 
 [[builders]]
 id = "return_to_lobby_request_packet"

@@ -9,8 +9,8 @@ func test_show_single_player_mode_sets_single_player_labels() -> void:
 	menu.show_single_player_mode()
 
 	assert_eq((menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
-	assert_true((menu.get_node_or_null("%EndlessLabel") as Control).visible)
-	assert_false((menu.get_node_or_null("%CreateLabel") as Control).visible)
+	assert_false((menu.get_node_or_null("%EndlessLabel") as Control).visible)
+	assert_true((menu.get_node_or_null("%CreateLabel") as Control).visible)
 	assert_true((menu.get_node_or_null("%CampaignLabel") as Control).visible)
 	assert_false((menu.get_node_or_null("%JoinLabel") as Control).visible)
 	assert_true((menu.get_node_or_null("%SelectPilotLabel") as Control).visible)
@@ -70,7 +70,7 @@ func test_single_player_future_buttons_are_disabled() -> void:
 		assert_true(rankings_button.disabled)
 
 
-func test_play_endless_button_emits_play_endless_requested_in_single_player_mode() -> void:
+func test_create_button_emits_create_game_requested_in_single_player_mode() -> void:
 	var menu := await _create_menu()
 
 	menu.show_single_player_mode()
@@ -78,19 +78,7 @@ func test_play_endless_button_emits_play_endless_requested_in_single_player_mode
 
 	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
 
-	assert_signal_emitted(menu, "play_endless_requested")
-	assert_signal_not_emitted(menu, "create_game_requested")
-
-
-func test_play_endless_button_does_not_emit_in_multiplayer_mode() -> void:
-	var menu := await _create_menu()
-
-	menu.show_multiplayer_mode()
-	watch_signals(menu)
-
-	(menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
-
-	assert_signal_not_emitted(menu, "play_endless_requested")
+	assert_signal_emitted(menu, "create_game_requested")
 
 
 func test_create_button_emits_create_game_requested_in_multiplayer_mode() -> void:
