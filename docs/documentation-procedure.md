@@ -45,6 +45,7 @@ Protocol
 Data
 Systems Design
 Devtools
+Development
 Planning
 Limits
 Agent
@@ -63,6 +64,7 @@ Protocol        = communication/message flow
 Data            = source-of-truth, schema, generated output, pipeline usage/config
 Systems Design  = conceptual mechanics, boundaries, invariants
 Devtools        = debug/development tooling
+Development     = contributor workflow, coverage, behavioral contracts, tests, fixtures, and release gates
 Planning        = future, unresolved, proposed, or not-yet-current work
 Limits          = temporary issues, blockers, dev-blocked work
 Agent           = editing/testing/workflow rules
@@ -85,6 +87,7 @@ Protocol        -> docs/protocol/
 Data            -> docs/data/
 Systems Design  -> docs/systems-design/
 Devtools        -> docs/devtools/
+Development     -> docs/development/
 Planning        -> docs/planning/
 Limits          -> docs/limits/
 Agent           -> docs/agent/
@@ -442,6 +445,23 @@ Related docs
 Notes
 ```
 
+## Development Doc Shape
+
+Use for contributor workflows, implementation coverage, behavioral contracts, tests, fixtures, release gates, generated artifacts, and safe extension procedures.
+
+Required sections:
+
+```text
+Purpose
+Overview
+Workflow, coverage, or contract boundary
+Commands or mappings
+Failure modes when applicable
+Code map when implementation-facing
+Related docs
+Notes
+```
+
 ## Planning Doc Shape
 
 Use for future, unresolved, proposed, or not-yet-current work.
@@ -559,6 +579,7 @@ protocol/ when implementation paths are covered
 data/
 devtools/server/
 devtools/client/
+development/ when implementation ownership is covered
 ```
 
 Not required for:
@@ -718,6 +739,7 @@ The doc has Purpose, Overview, Related docs, and Notes.
 Agent docs do not duplicate canonical current-system facts.
 The doc has the required type-specific sections.
 Implementation docs have code maps where required.
+Implementation coverage and behavioral-contract maps were updated when ownership or invariants changed.
 Domain docs link to system `!INDEX.md` indexes, not code.
 Active issues link to sorted limits backlog headings.
 Planning docs were updated if planned work became current.

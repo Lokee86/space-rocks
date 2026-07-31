@@ -1,0 +1,665 @@
+{
+  "findings": [
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../devtools/server/collision-body-telemetry.md",
+      "path": "docs/data/collision-shape-data.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: account-and-identity-current-state.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: account-and-identity-systems.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: account-backed-profile-flow.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: current-system-limits.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: domains/platform/!INDEX.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: gameplay-session-flow.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: local-pilot-profile-flow.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: match-end-and-results-flow.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: match-result-reporting.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: match-result-sinks.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: player-data-routing-flow.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: player-stats-and-match-results.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: realtime-client-server-flow.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: runtime-and-store-routing.md",
+      "path": "docs/domains/platform/security-and-admin/trust-and-eligibility-policy.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../../limits/current-system-limits.md",
+      "path": "docs/services/game-server/integrations/auth-verifier-integration.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../../limits/current-system-limits.md#architecture--networking",
+      "path": "docs/services/game-server/integrations/auth-verifier-integration.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../api-server/auth-and-oauth.md",
+      "path": "docs/services/game-server/integrations/auth-verifier-integration.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../api-server/internal-api-surface.md",
+      "path": "docs/services/game-server/integrations/auth-verifier-integration.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../client/auth-session-flow.md",
+      "path": "docs/services/game-server/integrations/auth-verifier-integration.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../player-data/!INDEX.md",
+      "path": "docs/services/game-server/integrations/auth-verifier-integration.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../api-server/player-stats-and-match-results.md",
+      "path": "docs/services/game-server/integrations/match-result-reporting.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../player-data/!INDEX.md",
+      "path": "docs/services/game-server/integrations/match-result-reporting.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../player-data/!INDEX.md",
+      "path": "docs/services/game-server/integrations/player-data-http-hosting.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../services/game-server/networking/realtime-compact-wire-mapping.md",
+      "path": "docs/services/game-server/simulation/pickups/pickup-effects.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../devtools/server/game-control-devtools-adapter.md",
+      "path": "docs/services/game-server/simulation/players/player-camera-view-state.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../devtools/server/game-control-devtools-adapter.md",
+      "path": "docs/services/game-server/simulation/players/player-counters.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../services/game-server/networking/realtime-compact-wire-mapping.md",
+      "path": "docs/services/game-server/simulation/players/player-counters.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../devtools/server/game-control-devtools-adapter.md",
+      "path": "docs/services/game-server/simulation/players/player-death-and-despawn.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../services/game-server/networking/realtime-compact-wire-mapping.md",
+      "path": "docs/services/game-server/simulation/players/player-death-and-despawn.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../devtools/server/game-control-devtools-adapter.md",
+      "path": "docs/services/game-server/simulation/players/player-pause-and-suspension.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../devtools/server/game-control-devtools-adapter.md",
+      "path": "docs/services/game-server/simulation/players/player-respawn.md"
+    },
+    {
+      "code": "broken-link",
+      "message": "target does not exist: ../../../services/game-server/networking/realtime-compact-wire-mapping.md",
+      "path": "docs/services/game-server/simulation/players/player-respawn.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/agent/mcp-servers.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/agent/mcp-servers.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/agent/mcp-servers.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/data/observability-contract.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/data/observability-contract.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Purpose",
+      "path": "docs/data/observability-contract.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/devtools/client/runtime-measurement.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/devtools/client/runtime-measurement.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/devtools/client/runtime-measurement.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/devtools/design/tooling-channel-migration-contract.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/devtools/design/tooling-channel-migration-contract.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/devtools/diagnostic-aggregator/bruno-smoke-tests.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/devtools/diagnostic-aggregator/bruno-smoke-tests.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/devtools/server/debug-shape-catalog-output.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/devtools/server/debug-shape-catalog-output.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/devtools/server/debug-status-output.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/devtools/server/debug-status-output.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/documentation-policy.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/documentation-policy.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/documentation-policy.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/documentation-procedure.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/observability/canonical-event-emission.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/observability/canonical-event-emission.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/observability/canonical-event-emission.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/development-roadmap.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domain-backlog.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domain-backlog.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Purpose",
+      "path": "docs/planning/domain-backlog.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/planning/domain-backlog.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/achievements-and-milestones.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/achievements-and-milestones.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/damage-and-healing-rules.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/damage-and-healing-rules.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/encounter-lifecycle-and-despawn.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/encounter-lifecycle-and-despawn.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/encounter-spawn-profiles.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/encounter-spawn-profiles.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/enemies-bosses-and-encounters.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/enemies-bosses-and-encounters.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/gameplay-awards-and-counters.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/gameplay-awards-and-counters.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/inventory-and-hangar.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/inventory-and-hangar.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/levels-missions-and-content-structure.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/levels-missions-and-content-structure.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/lives-death-elimination-and-respawn.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/lives-death-elimination-and-respawn.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/match-outcomes-and-results.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/match-outcomes-and-results.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/modes-and-match-rules.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/modes-and-match-rules.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/objectives-and-objective-runtime.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/objectives-and-objective-runtime.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/participation-and-joining.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/participation-and-joining.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/player-build-and-loadouts.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/player-build-and-loadouts.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/player-experience-systems.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/player-experience-systems.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/player-spawn-profiles.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/player-spawn-profiles.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/progression-and-rewards.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/progression-and-rewards.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/shop-commerce-and-economy.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/shop-commerce-and-economy.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/gameplay/teams-and-team-rules.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/gameplay/teams-and-team-rules.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/planning/domains/technical/observability-logging-and-diagnostics.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/domains/technical/observability-logging-and-diagnostics.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/planning/domains/technical/observability-logging-and-diagnostics.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/p4-team-contracts-worktree-status.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/protocol/realtime-protocol-architecture.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/planning/web/devlog-static-site.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/protocol/realtime-webrtc-gameplay-transport.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/protocol/realtime-webrtc-gameplay-transport.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/api-server/observability-and-logging.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/api-server/observability-and-logging.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/services/api-server/observability-and-logging.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/client/app-shell-and-session/hosted-webrtc-connectivity.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/client/app-shell-and-session/hosted-webrtc-connectivity.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/client/client-logging.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/client/client-logging.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/client/gameplay-runtime/presentation-bridge.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Purpose",
+      "path": "docs/services/client/gameplay-runtime/presentation-bridge.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/client/networking-flow/inbound-packet-routing.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/game-server/networking/outbound-message-flow.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/game-server/networking/realtime-compact-wire-mapping.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/game-server/networking/realtime-compact-wire-mapping.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Related docs",
+      "path": "docs/services/game-server/networking/realtime-compact-wire-mapping.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/game-server/process/route-composition.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/game-server/process/route-composition.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/game-server/process/service-shutdown.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/game-server/process/service-shutdown.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/game-server/process/service-startup.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/game-server/process/service-startup.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/game-server/simulation/runtime/deterministic-gameplay-rng.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/game-server/simulation/runtime/deterministic-gameplay-rng.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Notes",
+      "path": "docs/services/player-data/observability-and-logging.md"
+    },
+    {
+      "code": "missing-section",
+      "message": "missing section: Overview",
+      "path": "docs/services/player-data/observability-and-logging.md"
+    }
+  ],
+  "version": 1
+}

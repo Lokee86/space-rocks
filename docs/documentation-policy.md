@@ -46,6 +46,7 @@ Protocol
 Data
 Systems Design
 Devtools
+Development
 Planning
 Limits
 Agent
@@ -272,6 +273,19 @@ relationship to real gameplay implementation areas
 Devtools must not document or encourage parallel debug-only gameplay logic that bypasses real game systems.
 
 Devtools implementation docs should include code maps.
+
+## Development Documentation Policy
+
+Development documentation covers contributor-facing cross-repository ownership, implementation coverage, behavioral contracts, build and test workflows, release gates, fixtures, generated artifacts, and safe extension procedures.
+
+Development docs should explain both the command or map and the reason it exists. They must not replace current service, protocol, data, systems-design, domain, or devtools owners.
+
+Development docs should include code maps when they describe implementation ownership. Complex stateful products should maintain:
+
+```text
+implementation-to-document coverage
+critical behavioral contracts mapped to focused tests and gates
+```
 
 ## Planning Documentation Policy
 
@@ -643,6 +657,7 @@ protocol/ when implementation paths are covered
 data/
 devtools/server/
 devtools/client/
+development/ when implementation ownership is covered
 ```
 
 Code maps are not required for:

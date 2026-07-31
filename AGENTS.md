@@ -24,6 +24,13 @@ For normal workflow:
 
 - `docs/developer.md`
 
+For documentation work:
+
+- `docs/documentation-policy.md`
+- `docs/documentation-procedure.md`
+- `docs/development/documentation-coverage.md`
+- `docs/development/behavioral-contract-matrix.md`
+
 For project memory and recent volatile context:
 
 - `docs/agent/current-context.md`
@@ -241,6 +248,12 @@ Shared schema/generation:
 - `tools/data_sync/!README.md`
 - `tools/data_sync/main.py`
 
+## Documentation Discipline
+
+Documentation is part of the implementation.
+
+Update affected canonical service, protocol, data, systems-design, domain, devtools, development, planning, and limits documentation in the same change. Update implementation coverage when ownership changes and the behavioral-contract matrix when a durable invariant or protecting test changes. Do not report documentation as complete or current unless configured checks pass and known semantic gaps are disclosed.
+
 ## Agent Behavior Notes
 
 - Open/read only the files needed for the requested edit.
@@ -263,6 +276,13 @@ Shared schema/generation:
 ## Default Agent Report
 
 ```text
+Documentation impact:
+- Inspected:
+- Updated:
+- Not affected:
+- Compliance check:
+- Known documentation gaps:
+
 Changed files:
 - ...
 

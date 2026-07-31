@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "profile": "game",
+  "capabilities": ["service", "ui", "protocol", "data-pipeline", "stateful"],
+  "docs_root": "docs",
+  "root_index": "docs/!INDEX.md",
+  "folder_index": "!INDEX.md",
+  "required_paths": [
+    "README.md",
+    "AGENTS.md",
+    "docs/!INDEX.md",
+    "docs/documentation-policy.md",
+    "docs/documentation-procedure.md",
+    "docs/planning/development-roadmap.md",
+    "docs/limits/current-system-limits.md",
+    "docs/development/documentation-coverage.md",
+    "docs/development/behavioral-contract-matrix.md"
+  ],
+  "index_exempt_directories": ["stubs", "generated"],
+  "section_exemptions": [
+    "docs/!INDEX.md",
+    "docs/**/!INDEX.md",
+    "docs/notes.md",
+    "docs/observability/generated/**",
+    "docs/protocol/generated/**"
+  ],
+  "required_sections": ["Purpose", "Overview", "Related docs", "Notes"],
+  "baseline": "docs-standard.baseline.json",
+  "coverage": [
+    {
+      "paths": ["client/**", "services/**", "shared/**", "tools/**"],
+      "docs": ["docs/development/documentation-coverage.md"]
+    }
+  ],
+  "change_rules": [
+    {
+      "paths": ["client/**", "services/**"],
+      "docs": ["docs/services/**", "docs/protocol/**", "docs/development/documentation-coverage.md"]
+    },
+    {
+      "paths": ["shared/**", "tools/data_sync/**"],
+      "docs": ["docs/data/**", "docs/protocol/**", "docs/development/behavioral-contract-matrix.md"]
+    }
+  ]
+}
