@@ -37,6 +37,9 @@ func (game *Game) Step(delta float64) {
 		defer game.publishPresentationFrameLocked()
 
 		bounds := space.DefaultBounds()
+		if delta > 0 && !game.isMatchOverLocked() {
+			game.matchElapsed += delta
+		}
 
 		game.applyPendingPlayerInputsLocked()
 		game.stepPlayerSessions(delta)

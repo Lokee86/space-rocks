@@ -151,6 +151,8 @@ const FIELD_MEMBERS := "members"
 const FIELD_MESSAGE := "message"
 const FIELD_METRICS := "metrics"
 const FIELD_MODE := "mode"
+const FIELD_MODE_ID := "mode_id"
+const FIELD_MODE_LOCKED := "mode_locked"
 const FIELD_NAME := "name"
 const FIELD_ORIGIN := "origin"
 const FIELD_OWNER_ID := "owner_id"
@@ -164,6 +166,7 @@ const FIELD_PLAYER_FROZEN := "player_frozen"
 const FIELD_PLAYER_ID := "player_id"
 const FIELD_PLAYERS := "players"
 const FIELD_POINTS := "points"
+const FIELD_PRESET_ID := "preset_id"
 const FIELD_PRIMARY_AMMO_POLICY := "primary_ammo_policy"
 const FIELD_PRIMARY_AMMO_REMAINING := "primary_ammo_remaining"
 const FIELD_PRIMARY_COOLDOWN_REMAINING := "primary_cooldown_remaining"
@@ -206,12 +209,14 @@ const FIELD_SOURCE_TYPE := "source_type"
 const FIELD_SPAWN_X := "spawn_x"
 const FIELD_SPAWN_Y := "spawn_y"
 const FIELD_SPAWNING_FROZEN := "spawning_frozen"
+const FIELD_STARTING_LIVES := "starting_lives"
 const FIELD_STATS := "stats"
 const FIELD_TABLE_ID := "table_id"
 const FIELD_TARGET_ID := "target_id"
 const FIELD_TARGET_KIND := "target_kind"
 const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TARGET_SCOPE := "target_scope"
+const FIELD_TARGET_SCORE := "target_score"
 const FIELD_TEAM_ASSIGNMENT_MODE := "team_assignment_mode"
 const FIELD_TEAM_ASSIGNMENTS_LOCKED := "team_assignments_locked"
 const FIELD_TEAM_COUNT := "team_count"
@@ -508,7 +513,7 @@ static func client_config_packet(visible_world_width, visible_world_height) -> D
 	packet[FIELD_CONFIG] = packet_config
 	return packet
 
-static func create_room_request_packet(trace_id, local_profile_id, team_structure, team_assignment_mode, team_count, max_players) -> Dictionary:
+static func create_room_request_packet(trace_id, local_profile_id, team_structure, team_assignment_mode, team_count, max_players, preset_id, starting_lives, infinite_lives, target_score) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "create_room_request"
 	packet[FIELD_TRACE_ID] = trace_id
@@ -517,6 +522,10 @@ static func create_room_request_packet(trace_id, local_profile_id, team_structur
 	packet[FIELD_TEAM_ASSIGNMENT_MODE] = team_assignment_mode
 	packet[FIELD_TEAM_COUNT] = team_count
 	packet[FIELD_MAX_PLAYERS] = max_players
+	packet[FIELD_PRESET_ID] = preset_id
+	packet[FIELD_STARTING_LIVES] = starting_lives
+	packet[FIELD_INFINITE_LIVES] = infinite_lives
+	packet[FIELD_TARGET_SCORE] = target_score
 	return packet
 
 static func join_room_request_packet(room_code, trace_id) -> Dictionary:

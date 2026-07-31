@@ -37,6 +37,26 @@ name = "max_players"
 json = "max_players"
 type = "int"
 
+[[structs.fields]]
+name = "preset_id"
+json = "preset_id"
+type = "string"
+
+[[structs.fields]]
+name = "starting_lives"
+json = "starting_lives"
+type = "int"
+
+[[structs.fields]]
+name = "infinite_lives"
+json = "infinite_lives"
+type = "bool"
+
+[[structs.fields]]
+name = "target_score"
+json = "target_score"
+type = "int"
+
 [[structs]]
 id = "JoinRoomRequest"
 
@@ -359,6 +379,36 @@ json = "max_players"
 type = "int"
 
 [[structs.fields]]
+name = "preset_id"
+json = "preset_id"
+type = "string"
+
+[[structs.fields]]
+name = "mode_id"
+json = "mode_id"
+type = "string"
+
+[[structs.fields]]
+name = "mode_locked"
+json = "mode_locked"
+type = "bool"
+
+[[structs.fields]]
+name = "starting_lives"
+json = "starting_lives"
+type = "int"
+
+[[structs.fields]]
+name = "infinite_lives"
+json = "infinite_lives"
+type = "bool"
+
+[[structs.fields]]
+name = "target_score"
+json = "target_score"
+type = "int"
+
+[[structs.fields]]
 name = "team_structure"
 json = "team_structure"
 type = "string"
@@ -487,7 +537,7 @@ value = "room_error"
 
 [[builders]]
 id = "create_room_request_packet"
-args = ["trace_id", "local_profile_id", "team_structure", "team_assignment_mode", "team_count", "max_players"]
+args = ["trace_id", "local_profile_id", "team_structure", "team_assignment_mode", "team_count", "max_players", "preset_id", "starting_lives", "infinite_lives", "target_score"]
 
 [builders.body]
 type = "create_room_request"
@@ -497,6 +547,10 @@ team_structure = "$team_structure"
 team_assignment_mode = "$team_assignment_mode"
 team_count = "$team_count"
 max_players = "$max_players"
+preset_id = "$preset_id"
+starting_lives = "$starting_lives"
+infinite_lives = "$infinite_lives"
+target_score = "$target_score"
 
 [[builders]]
 id = "join_room_request_packet"

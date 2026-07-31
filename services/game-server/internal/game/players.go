@@ -30,6 +30,7 @@ func (game *Game) addPlayerLocked(teamID teams.ID) string {
 	spawnPosition := spawnPlan.Position
 	session := newPlayerSession(playerID, spawnPosition)
 	session.TeamID = teamID
+	game.applyResolvedMatchRulesToSessionLocked(session)
 	player := session.NewShip(spawnPosition)
 	game.playerSessions[playerID] = session
 	game.participantRecords[playerID] = &participantRecord{ID: playerID, TeamID: teamID}

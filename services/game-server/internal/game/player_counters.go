@@ -1,5 +1,7 @@
 package game
 
+import "github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
+
 type PlayerCounterChange struct {
 	PlayerID string
 	Found    bool
@@ -57,6 +59,9 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	if !found {
 		return PlayerCounterChange{PlayerID: playerID}
 	}
+	if game.resolvedMatchRules.ModeID == modes.ModeScoreAttack && game.matchDecisionLocked().IsOver {
+		return PlayerCounterChange{PlayerID: playerID, Found: true, Before: before, After: before}
+	}
 
 	after := clampPlayerCounter(score)
 	if session, ok := game.playerSessions[playerID]; ok {
@@ -65,6 +70,7 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	if record, ok := game.participantRecords[playerID]; ok && record != nil {
 		record.Score = after
 	}
+	game.recordScoreAttackSuccessLocked(playerID, after)
 
 	return PlayerCounterChange{
 		PlayerID: playerID,

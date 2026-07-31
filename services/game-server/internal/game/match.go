@@ -40,7 +40,7 @@ func (game *Game) PlayerMatchFacts() []PlayerMatchFact {
 }
 
 func (game *Game) matchDecisionLocked() rules.MatchDecision {
-	return rules.EvaluateMatch(game.matchSnapshot())
+	return game.evaluateMatchDecisionLocked()
 }
 
 func (game *Game) matchSnapshot() rules.MatchSnapshot {

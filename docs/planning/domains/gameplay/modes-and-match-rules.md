@@ -19,6 +19,27 @@ It preserves the current gameplay direction while making the room-mode boundary 
 
 This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Modes And Match Rules.
 
+## Current Implementation Status
+
+The first isolated P4 slice is implemented on `feature/p4-modes-match-rules` from the deployed P3 baseline.
+
+```text
+RoomModeConfig and ResolvedMatchRules are separate contracts.
+Room creation validates and stores preset-approved mode options.
+Room mode configuration resolves and locks at match start.
+Gameplay consumes ResolvedMatchRules rather than raw room options.
+Arcade Survival is the explicit compatibility baseline.
+Score Attack is a real second mode with a target-score finish condition.
+Score Attack records the first valid success and ranks it by completion time.
+Target-score success takes precedence over no-active-participant failure.
+Finite and infinite lives apply through the existing player-session life controls.
+Team configuration composes independently through the existing team owner.
+Create-room packets and room snapshots expose selected mode configuration and lock state.
+Existing room creation paths default to Arcade Survival.
+```
+
+This slice deliberately does not import the later P4 awards, objective runtime, encounter ownership, progression, inventory, or expanded result-orchestration systems. Full preset-selection UI, durable final-decision/result integration, and additional modes remain separate measured feature slices.
+
 ## Ownership Boundary
 
 This doc owns planning for `ModePreset`, `RoomModeConfig`, `ResolvedMatchRules`, and the policy pieces they compose.

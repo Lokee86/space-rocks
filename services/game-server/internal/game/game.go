@@ -6,6 +6,7 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/bots"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/drops"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/effects/radial"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/rng"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
@@ -35,6 +36,12 @@ type Game struct {
 	nextPresentationEventID    int
 	matchID                    string
 	matchTraceID               string
+	modeID                     string
+	resolvedMatchRules         modes.ResolvedMatchRules
+	matchElapsed               float64
+	scoreCompletionTimes       map[string]float64
+	scoreSuccessOrders         map[string]int
+	nextScoreSuccessOrder      int
 	teamStructure              teams.Structure
 	spawner                    *spawning.Spawner
 	scoringPolicy              scoring.Policy
@@ -81,6 +88,8 @@ func newGame(source *rng.Source) *Game {
 		})
 	}
 
+	resolvedRules, _ := modes.Resolve(modes.DefaultRoomModeConfig(), teams.Config{Structure: teams.StructureFFA})
+
 	game := &Game{
 		rngSource:                  source,
 		pendingPlayerInputs:        make(map[string]runtime.InputState),
@@ -91,7 +100,11 @@ func newGame(source *rng.Source) *Game {
 		playerSessions:             make(map[string]*playerSession),
 		botControllers:             make(map[string]*bots.Controller),
 		participantRecords:         make(map[string]*participantRecord),
-		teamStructure:              teams.StructureFFA,
+		modeID:                     string(resolvedRules.ModeID),
+		resolvedMatchRules:         modes.CloneResolvedMatchRules(resolvedRules),
+		scoreCompletionTimes:       make(map[string]float64),
+		scoreSuccessOrders:         make(map[string]int),
+		teamStructure:              resolvedRules.TeamConfig.Structure,
 		pendingPresentationEvents:  make(map[string][]PendingPresentationEvent),
 		presentationDerived:        make(map[string][]presentationDerivedEntry),
 		runtimeMeasurements:        make(map[uint64]measurement.SimulationObserver),

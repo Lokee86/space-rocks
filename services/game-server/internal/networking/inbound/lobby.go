@@ -3,7 +3,7 @@ package inbound
 import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 type lobbySession interface {
-	HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int)
+	HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int)
 	HandleJoinRoomRequest(roomCode string, traceID string)
 	HandleLeaveRoomRequest()
 	HandleSetReadyRequest(ready bool)
@@ -18,7 +18,7 @@ type lobbySession interface {
 func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 	switch packet.Type {
 	case game.PacketTypeCreateRoomRequest:
-		session.HandleCreateRoomRequest(packet.TraceID, packet.TeamStructure, packet.TeamAssignmentMode, packet.TeamCount, packet.MaxPlayers)
+		session.HandleCreateRoomRequest(packet.TraceID, packet.TeamStructure, packet.TeamAssignmentMode, packet.TeamCount, packet.MaxPlayers, packet.PresetID, packet.StartingLives, packet.InfiniteLives, packet.TargetScore)
 		return true
 	case game.PacketTypeJoinRoomRequest:
 		session.HandleJoinRoomRequest(packet.RoomCode, packet.TraceID)

@@ -59,9 +59,23 @@ func (room *Room) finishStart(reservedGame *game.Game, newGame func() *game.Game
 		if room.State == RoomStateStarting && room.match.Game() == reservedGame {
 			room.State = RoomStateLobby
 			room.unlockTeamAssignmentsLocked()
+			room.roomMode.clearMatchResolution()
 		}
 		room.mu.Unlock()
 		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Could not create game."}
+	}
+	room.mu.Lock()
+	resolvedRules, resolveErr := room.roomMode.resolve(room.roomTeams.rules)
+	room.mu.Unlock()
+	if resolveErr != nil || startedGame.ConfigureMatchRules(resolvedRules) != nil {
+		room.mu.Lock()
+		if room.State == RoomStateStarting && room.match.Game() == reservedGame {
+			room.State = RoomStateLobby
+			room.unlockTeamAssignmentsLocked()
+			room.roomMode.clearMatchResolution()
+		}
+		room.mu.Unlock()
+		return &RoomDomainError{Code: RoomErrorInvalidRoomState, Message: "Could not resolve match rules."}
 	}
 	startGameCall(startedGame)
 
@@ -80,6 +94,7 @@ func (room *Room) finishStart(reservedGame *game.Game, newGame func() *game.Game
 		ownedActive := room.State == RoomStateInGame && room.match.Game() == startedGame
 		if room.State == RoomStateStarting && room.match.Game() == reservedGame {
 			room.unlockTeamAssignmentsLocked()
+			room.roomMode.clearMatchResolution()
 		}
 		room.mu.Unlock()
 		if !ownedActive {
@@ -264,6 +279,7 @@ func (room *Room) resetToLobbyLocked(playerID string) (*game.Game, *RoomDomainEr
 	room.match.ClearGame()
 	room.match.SetActivePlayers(0)
 	room.unlockTeamAssignmentsLocked()
+	room.roomMode.clearMatchResolution()
 	room.State = RoomStateLobby
 	return oldGame, nil
 }

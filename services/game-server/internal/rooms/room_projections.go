@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
@@ -37,6 +38,9 @@ type RoomSnapshot struct {
 	Members               []RoomMember
 	LocalPlayerID         string
 	OwnerID               string
+	ModeConfig            modes.RoomModeConfig
+	ResolvedModeID        string
+	ModeLocked            bool
 	TeamConfig            teams.Config
 	TeamAssignments       teams.Assignments
 	TeamAssignmentsLocked bool
@@ -54,6 +58,11 @@ func (room *Room) SnapshotForSession(sessionID string) RoomSnapshot {
 	if hasResolvedMatch {
 		resolvedSummary.Players = append([]playerdata.PlayerMatchSummary(nil), resolvedSummary.Players...)
 	}
+	resolvedModeID := ""
+	modeLocked := room.roomMode.resolved != nil
+	if modeLocked {
+		resolvedModeID = string(room.roomMode.resolved.ModeID)
+	}
 	return RoomSnapshot{
 		RoomID:                room.ID,
 		State:                 room.State,
@@ -61,6 +70,9 @@ func (room *Room) SnapshotForSession(sessionID string) RoomSnapshot {
 		Members:               room.membership.membersSnapshot(),
 		LocalPlayerID:         localPlayerID,
 		OwnerID:               room.membership.ownerIDValue(),
+		ModeConfig:            room.roomMode.config,
+		ResolvedModeID:        resolvedModeID,
+		ModeLocked:            modeLocked,
 		TeamConfig:            room.roomTeams.rules,
 		TeamAssignments:       copyTeamAssignments(room.roomTeams.assignments),
 		TeamAssignmentsLocked: room.roomTeams.locked,

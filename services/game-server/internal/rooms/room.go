@@ -14,6 +14,7 @@ type Room struct {
 	Joinable   bool
 	MaxPlayers int
 	roomTeams  roomTeams
+	roomMode   roomMode
 	cleanup    *roomCleanup
 	mu         sync.Mutex
 }
@@ -36,6 +37,7 @@ func NewRoomWithConfig(roomID string, state RoomState, gameInstance *game.Game, 
 		Joinable:   true,
 		MaxPlayers: creation.MaxPlayers,
 		roomTeams:  newRoomTeams(creation.TeamConfig),
+		roomMode:   newRoomMode(creation.ModeConfig),
 		cleanup:    newRoomCleanup(),
 	}, nil
 }

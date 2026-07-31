@@ -73,6 +73,26 @@ json = "max_players"
 type = "int"
 
 [[structs.fields]]
+name = "preset_id"
+json = "preset_id"
+type = "string"
+
+[[structs.fields]]
+name = "starting_lives"
+json = "starting_lives"
+type = "int"
+
+[[structs.fields]]
+name = "infinite_lives"
+json = "infinite_lives"
+type = "bool"
+
+[[structs.fields]]
+name = "target_score"
+json = "target_score"
+type = "int"
+
+[[structs.fields]]
 
 name = "target_player_id"
 json = "target_player_id"
