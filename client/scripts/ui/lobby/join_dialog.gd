@@ -6,13 +6,14 @@ signal cancel_requested
 
 var room_code_input: LineEdit
 var status_label: Label
+var join_button: BaseButton
 
 
 func _ready() -> void:
 	room_code_input = get_node_or_null("%RoomCodeInput") as LineEdit
 	status_label = get_node_or_null("%StatusLabel") as Label
 
-	var join_button := get_node_or_null("%JoinButton") as BaseButton
+	join_button = get_node_or_null("%JoinButton") as BaseButton
 	if join_button != null:
 		join_button.pressed.connect(_on_join_pressed)
 
@@ -39,3 +40,10 @@ func set_status(message: String) -> void:
 
 func clear_status() -> void:
 	set_status("")
+
+
+func set_pending(pending: bool) -> void:
+	if join_button != null:
+		join_button.disabled = pending
+	if room_code_input != null:
+		room_code_input.editable = !pending

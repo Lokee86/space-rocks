@@ -16,6 +16,7 @@ var profile_context_provider: ProfileContextProvider
 var profile_flow: ProfileFlow
 var transmission_flow: TransmissionFlow
 var local_pilot_flow: LocalPilotFlow
+var room_setup: MultiplayerRoomSetupReadout
 var current_mode := ""
 
 
@@ -103,16 +104,17 @@ func _on_play_endless_requested() -> void:
 func _on_create_game_requested() -> void:
 	if current_mode != PregameMenuMode.MULTIPLAYER or transmission_flow == null:
 		return
-	var setup: Control = transmission_flow.mount_primary(MultiplayerRoomSetupScene)
-	if setup == null:
+	room_setup = transmission_flow.mount_primary(MultiplayerRoomSetupScene) as MultiplayerRoomSetupReadout
+	if room_setup == null:
 		return
-	setup.connect("create_requested", Callable(self, "_on_room_setup_create_requested"))
-	setup.connect("cancel_requested", Callable(self, "_on_room_setup_cancel_requested"))
+	room_setup.connect("create_requested", Callable(self, "_on_room_setup_create_requested"))
+	room_setup.connect("cancel_requested", Callable(self, "_on_room_setup_cancel_requested"))
 
 
 func _on_room_setup_create_requested(config: Dictionary) -> void:
-	if clear_for_room_transition_callable.is_valid():
-		clear_for_room_transition_callable.call()
+	if room_setup != null:
+		room_setup.set_status("Creating room...")
+		room_setup.set_pending(true)
 	if create_room_callable.is_valid():
 		create_room_callable.call(config)
 
@@ -120,6 +122,14 @@ func _on_room_setup_create_requested(config: Dictionary) -> void:
 func _on_room_setup_cancel_requested() -> void:
 	if transmission_flow != null:
 		transmission_flow.clear_primary()
+	room_setup = null
+
+
+func show_room_setup_status(message: String) -> void:
+	if room_setup == null or not is_instance_valid(room_setup):
+		return
+	room_setup.set_pending(false)
+	room_setup.set_status(message)
 
 
 func _on_join_game_requested() -> void:

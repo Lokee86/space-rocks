@@ -12,6 +12,7 @@ signal cancel_requested
 @onready var max_players_select = %MaxPlayersSelect
 @onready var create_button: BaseButton = %CreateButton
 @onready var cancel_button: BaseButton = %CancelButton
+@onready var status_label: Label = %StatusLabel
 
 
 func _ready() -> void:
@@ -67,6 +68,26 @@ func _refresh_visibility() -> void:
 
 func _on_create_pressed() -> void:
 	create_requested.emit(current_config())
+
+
+func set_status(message: String) -> void:
+	if status_label != null:
+		status_label.text = message
+
+
+func set_pending(pending: bool) -> void:
+	if create_button != null:
+		create_button.disabled = pending
+	if cancel_button != null:
+		cancel_button.disabled = pending
+	if mode_select != null:
+		mode_select.disabled = pending
+	if assignment_select != null:
+		assignment_select.disabled = pending
+	if team_count_select != null:
+		team_count_select.disabled = pending
+	if max_players_select != null:
+		max_players_select.disabled = pending
 
 
 func _on_cancel_pressed() -> void:

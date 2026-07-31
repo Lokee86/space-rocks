@@ -27,6 +27,8 @@ var lobby_return_flow
 var lobby_shell_flow
 var multiplayer_lobby_presenter
 var multiplayer_dialog_status_presenter
+var room_transition_completed: Callable
+var room_operation_failed: Callable
 
 
 func configure(
@@ -68,12 +70,23 @@ func configure_client_config_sender(sender: Callable) -> void:
 	client_config_sender = sender
 
 
+func configure_room_transition_completed(callback: Callable) -> void:
+	room_transition_completed = callback
+
+
+func configure_room_operation_failed(callback: Callable) -> void:
+	room_operation_failed = callback
+
+
 func configure_lobby_leave_return_destination(destination: Callable) -> void:
 	if lobby_return_flow != null:
 		lobby_return_flow.configure_return_destination(destination)
 
 
 func handle_room_snapshot(packet: Dictionary) -> void:
+	var operation := _active_initial_room_operation()
+	if !operation.is_empty() and room_transition_completed.is_valid():
+		room_transition_completed.call()
 	lobby_shell_flow.apply_room_snapshot(packet)
 	var state = lobby_flow.current_state()
 	latest_room_state = state.room_state
@@ -165,6 +178,7 @@ func handle_room_error(packet: Dictionary) -> void:
 		if connection_service.has_method("active_room_operation_trace_id"):
 			active_trace_id = str(connection_service.active_room_operation_trace_id())
 	var trace_id := packet_trace_id if !packet_trace_id.is_empty() else active_trace_id
+	var matches_active_operation := packet_trace_id.is_empty() || packet_trace_id == active_trace_id
 	if _is_initial_room_operation(operation):
 		ClientLogger.emit_canonical(
 			ObservabilityContract.EVENT_ROOM_OPERATION_FAILED,
@@ -172,13 +186,21 @@ func handle_room_error(packet: Dictionary) -> void:
 			{"trace_id": trace_id, "error_code": error_code},
 			{"operation": operation}
 		)
-		if connection_service != null \
-				&& connection_service.has_method("clear_room_operation_context") \
-				&& (packet_trace_id.is_empty() || packet_trace_id == active_trace_id):
-			connection_service.clear_room_operation_context()
+		if matches_active_operation:
+			if connection_service != null and connection_service.has_method("clear_room_operation_context"):
+				connection_service.clear_room_operation_context()
+			var friendly_message: String = multiplayer_dialog_status_presenter.friendly_room_error_message(
+				error_code,
+				str(packet.get(Packets.FIELD_MESSAGE, ""))
+			)
+			if room_operation_failed.is_valid():
+				room_operation_failed.call(operation, friendly_message)
+			else:
+				multiplayer_dialog_status_presenter.show_status(main_menu, friendly_message)
 	if error_code == "removed_by_owner" && lobby_return_flow != null:
 		lobby_return_flow.return_after_leave()
-	multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
+	elif !_is_initial_room_operation(operation):
+		multiplayer_dialog_status_presenter.show_room_error(main_menu, packet)
 
 
 func _on_lobby_left_room() -> void:
@@ -199,6 +221,13 @@ func _clear_room_operation_after_snapshot() -> void:
 		return
 	if connection_service.has_method("clear_room_operation_context"):
 		connection_service.clear_room_operation_context()
+
+
+func _active_initial_room_operation() -> String:
+	if connection_service == null or !connection_service.has_method("active_room_operation_type"):
+		return ""
+	var operation := _canonical_room_operation(str(connection_service.active_room_operation_type()))
+	return operation if _is_initial_room_operation(operation) else ""
 
 
 func _canonical_room_operation(operation: String) -> String:

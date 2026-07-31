@@ -8,9 +8,13 @@ class FakeJoinDialog:
 	extends JoinDialog
 
 	var status_text := ""
+	var pending := false
 
 	func set_status(message: String) -> void:
 		status_text = message
+
+	func set_pending(value: bool) -> void:
+		pending = value
 
 
 class Probe:
@@ -86,7 +90,7 @@ func test_whitespace_join_code_sets_status_and_does_not_clear_or_join() -> void:
 	assert_eq(join_probe.calls, 0)
 
 
-func test_valid_join_code_calls_clear_and_join_with_stripped_code() -> void:
+func test_valid_join_code_keeps_dialog_visible_and_joins_with_stripped_code() -> void:
 	var dialog := FakeJoinDialog.new()
 	var flow := JoinDialogFlow.new()
 	var clear_probe := Probe.new()
@@ -101,7 +105,8 @@ func test_valid_join_code_calls_clear_and_join_with_stripped_code() -> void:
 
 	dialog.join_requested.emit("  ABCD  ")
 
-	assert_eq(dialog.status_text, "")
-	assert_eq(clear_probe.calls, 1)
+	assert_eq(dialog.status_text, "Joining room...")
+	assert_true(dialog.pending)
+	assert_eq(clear_probe.calls, 0)
 	assert_eq(join_probe.calls, 1)
 	assert_eq(join_probe.last_room_code, "ABCD")

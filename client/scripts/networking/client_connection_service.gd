@@ -15,6 +15,7 @@ const ClientLogger := preload("res://scripts/logging/logger.gd")
 
 signal connected
 signal closed
+signal connection_failed(error_code: String)
 signal packet_parse_failed(text: String)
 signal room_snapshot_received(packet: Dictionary)
 signal websocket_auth_result_received(packet: Dictionary)
@@ -434,6 +435,8 @@ func _finalize_connection_close(emit_closed_signal: bool) -> void:
 	websocket_auth_authenticated = false
 	websocket_auth_user_id = NO_WEBSOCKET_AUTH_USER_ID
 	websocket_auth_display_name = ""
+	if !was_expected:
+		connection_failed.emit("connection_lost" if ever_connected else "server_unavailable")
 	if emit_closed_signal:
 		closed.emit()
 	_connection_trace = null
@@ -750,4 +753,5 @@ func _emit_connection_failed(error: Error) -> void:
 	if !trace_id.is_empty():
 		ClientLogger.emit_canonical(ObservabilityContract.EVENT_CLIENT_CONNECTION_FAILED, "", {"trace_id": trace_id}, {"error_code": "connect_error_%d" % int(error), "failure_mode": "connect_immediate", "connection_stage": "socket_connect"})
 	_closed_event_attempt_epoch = _connection_attempt_epoch
+	connection_failed.emit("server_unavailable")
 	_connection_trace = null

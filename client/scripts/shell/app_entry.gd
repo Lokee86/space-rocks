@@ -23,6 +23,9 @@ const GameplayCameraControllerScript := preload("res://scripts/gameplay/camera/g
 const RuntimeScenarioConfigScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_config.gd")
 const RuntimeScenarioDriverScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_driver.gd")
 
+const GAME_SERVER_UNAVAILABLE_MESSAGE := "Could not contact the game server. Please try again."
+const GAME_SERVER_AUTH_FAILED_MESSAGE := "Game server authentication failed. Sign in again and retry."
+
 @onready var main_menu: Control = %MainMenu
 @onready var user_interface: CanvasLayer = $UserInterface
 @onready var gameplay_user_interface: Control = %GameplayUserInterface
@@ -165,6 +168,7 @@ func _ready() -> void:
 		{}
 	)
 	session_network_controller.connect_connection_signals()
+	session_network_controller.initial_room_operation_failed.connect(_on_initial_room_operation_failed)
 	session_network_controller.configure_gameplay_session_controller(gameplay_session_controller)
 	session_network_controller.connect_gameplay_signals()
 
@@ -214,6 +218,12 @@ func _ready() -> void:
 	)
 	room_session_controller.configure_lobby_leave_return_destination(
 		Callable(menu_flow_controller, "show_multiplayer_pregame")
+	)
+	room_session_controller.configure_room_transition_completed(
+		Callable(menu_flow_controller, "clear_for_room_transition")
+	)
+	room_session_controller.configure_room_operation_failed(
+		Callable(menu_flow_controller, "show_multiplayer_operation_error")
 	)
 
 	multiplayer_entry_flow = MultiplayerEntryFlowScript.new()
@@ -437,6 +447,13 @@ func _on_auth_state_changed() -> void:
 
 func _on_auth_error(_message: String) -> void:
 	pass
+
+
+func _on_initial_room_operation_failed(operation: String, error_code: String) -> void:
+	if menu_flow_controller == null:
+		return
+	var message := GAME_SERVER_AUTH_FAILED_MESSAGE if error_code == "authentication_failed" else GAME_SERVER_UNAVAILABLE_MESSAGE
+	menu_flow_controller.show_multiplayer_operation_error(operation, message)
 
 
 func _make_view_anchor_camera_current() -> void:

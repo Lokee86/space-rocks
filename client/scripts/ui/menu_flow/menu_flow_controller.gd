@@ -164,6 +164,22 @@ func clear_for_room_transition() -> void:
 	current_route = ""
 
 
+func show_multiplayer_operation_error(operation: String, message: String) -> void:
+	if operation == "join_room":
+		if join_dialog == null or not is_instance_valid(join_dialog):
+			show_join_dialog()
+		if join_dialog != null:
+			join_dialog.set_pending(false)
+			join_dialog.set_status(message)
+		return
+
+	if operation == "create_room":
+		if pregame_menu == null or not is_instance_valid(pregame_menu):
+			show_multiplayer_pregame()
+		if pregame_menu_flow != null:
+			pregame_menu_flow.show_room_setup_status(message)
+
+
 func _show_pregame() -> void:
 	_clear_sign_in_screen()
 	_clear_join_dialog()

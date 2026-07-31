@@ -511,7 +511,7 @@ func test_clear_for_room_transition_clears_pregame_sign_in_join_and_hides_main()
 	assert_false(is_instance_valid(join_dialog))
 
 
-func test_join_dialog_valid_code_calls_join_callback_and_clears_ui() -> void:
+func test_join_dialog_valid_code_keeps_pending_dialog_visible() -> void:
 	var controller := await _create_controller()
 	var join_probe := JoinProbe.new()
 
@@ -532,9 +532,48 @@ func test_join_dialog_valid_code_calls_join_callback_and_clears_ui() -> void:
 
 	assert_eq(join_probe.calls, 1)
 	assert_eq(join_probe.last_room_code, "ROOM42")
-	assert_null(controller.get_join_dialog())
-	assert_null(controller.get_pregame_menu())
+	assert_not_null(controller.get_join_dialog())
+	assert_not_null(controller.get_pregame_menu())
+	assert_eq((controller.get_join_dialog().get_node_or_null("%StatusLabel") as Label).text, "Joining room...")
+	assert_true((controller.get_join_dialog().get_node_or_null("%JoinButton") as BaseButton).disabled)
 	assert_false(controller.main_menu.visible)
+
+
+func test_join_room_error_reenables_dialog_and_shows_message() -> void:
+	var controller := await _create_controller()
+
+	controller.show_multiplayer_pregame()
+	await get_tree().process_frame
+	controller.show_join_dialog()
+	await get_tree().process_frame
+	var join_dialog := controller.get_join_dialog()
+	join_dialog.set_pending(true)
+
+	controller.show_multiplayer_operation_error("join_room", "Room not found.")
+
+	assert_eq((join_dialog.get_node_or_null("%StatusLabel") as Label).text, "Room not found.")
+	assert_false((join_dialog.get_node_or_null("%JoinButton") as BaseButton).disabled)
+	assert_true((join_dialog.get_node_or_null("%RoomCodeInput") as LineEdit).editable)
+
+
+func test_create_room_error_reenables_setup_and_shows_message() -> void:
+	var controller := await _create_controller()
+
+	controller.show_multiplayer_pregame()
+	await get_tree().process_frame
+	var pregame_menu := controller.get_pregame_menu()
+	(pregame_menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	var setup := pregame_menu.find_child("MultiplayerRoomSetupReadout", true, false) as Control
+	assert_not_null(setup)
+	(setup.get_node_or_null("%CreateButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+
+	controller.show_multiplayer_operation_error("create_room", "Could not contact the game server. Please try again.")
+
+	assert_eq((setup.get_node_or_null("%StatusLabel") as Label).text, "Could not contact the game server. Please try again.")
+	assert_false((setup.get_node_or_null("%CreateButton") as BaseButton).disabled)
+	assert_false((setup.get_node_or_null("%CancelButton") as BaseButton).disabled)
 
 
 func test_join_dialog_empty_code_shows_status_and_stays_open() -> void:

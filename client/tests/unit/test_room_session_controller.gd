@@ -73,6 +73,20 @@ class Probe:
 	func mark_called() -> void:
 		calls += 1
 
+
+class OperationProbe:
+	extends RefCounted
+
+	var calls := 0
+	var operation := ""
+	var message := ""
+
+	func capture(operation_value: String, message_value: String) -> void:
+		calls += 1
+		operation = operation_value
+		message = message_value
+
+
 class FakeWriter:
 	extends RefCounted
 
@@ -232,8 +246,10 @@ func test_handle_room_snapshot_clears_match_result_when_field_missing() -> void:
 	assert_eq(setup.controller.current_match_result(), {})
 
 
-func test_initial_room_snapshot_clears_active_room_operation() -> void:
+func test_initial_room_snapshot_clears_transition_ui_and_active_room_operation() -> void:
 	var setup := _create_controller()
+	var transition_probe := Probe.new()
+	setup.controller.configure_room_transition_completed(Callable(transition_probe, "mark_called"))
 	setup.connection_service.active_operation_type = Constants.BOOT_REQUEST_JOIN_ROOM
 	setup.connection_service.active_operation_trace_id = "trace-join"
 
@@ -244,6 +260,7 @@ func test_initial_room_snapshot_clears_active_room_operation() -> void:
 		Packets.FIELD_MEMBERS: [],
 	})
 
+	assert_eq(transition_probe.calls, 1)
 	assert_eq(setup.connection_service.clear_room_operation_calls, 1)
 	assert_eq(setup.connection_service.active_operation_trace_id, "")
 
@@ -252,6 +269,8 @@ func test_room_error_emits_bounded_failure_and_clears_matching_operation() -> vo
 	var writer := FakeWriter.new()
 	ClientLogger._set_file_writer_for_tests(writer)
 	var setup := _create_controller()
+	var operation_probe := OperationProbe.new()
+	setup.controller.configure_room_operation_failed(Callable(operation_probe, "capture"))
 	setup.connection_service.active_operation_type = Constants.BOOT_REQUEST_CREATE_ROOM
 	var trace_id := "00000000-0000-4000-8000-000000000022"
 	setup.connection_service.active_operation_trace_id = trace_id
@@ -265,6 +284,9 @@ func test_room_error_emits_bounded_failure_and_clears_matching_operation() -> vo
 	})
 
 	assert_eq(setup.connection_service.clear_room_operation_calls, 1)
+	assert_eq(operation_probe.calls, 1)
+	assert_eq(operation_probe.operation, "create_room")
+	assert_eq(operation_probe.message, "Room is full.")
 	assert_eq(writer.written_lines.size(), 1)
 	var record = JSON.parse_string(writer.written_lines[0])
 	assert_eq(record["event"], ObservabilityContract.EVENT_ROOM_OPERATION_FAILED)

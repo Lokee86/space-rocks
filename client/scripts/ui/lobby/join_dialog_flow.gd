@@ -37,7 +37,8 @@ func _on_join_requested(room_code: String) -> void:
 		if join_dialog != null:
 			join_dialog.set_status(Constants.DIALOG_STATUS_MUST_ENTER_ID)
 		return
-	if clear_for_room_transition_callable.is_valid():
-		clear_for_room_transition_callable.call()
+	if join_dialog != null:
+		join_dialog.set_status(Constants.DIALOG_STATUS_JOINING_ROOM)
+		join_dialog.set_pending(true)
 	if join_room_callable.is_valid():
 		join_room_callable.call(stripped_room_code)

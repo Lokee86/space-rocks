@@ -3,7 +3,7 @@ class_name SessionNetworkController
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
-
+signal initial_room_operation_failed(operation: String, error_code: String)
 
 var connection_service: ClientConnectionService
 var shell_boot_flow
@@ -35,6 +35,7 @@ func configure_gameplay_session_controller(gameplay_session_controller_ref: Game
 func connect_connection_signals() -> void:
 	_connect_connection_signal("connected", Callable(self, "_on_connection_connected"))
 	_connect_connection_signal("closed", Callable(self, "_on_connection_closed"))
+	_connect_connection_signal("connection_failed", Callable(self, "_on_connection_failed"))
 	_connect_connection_signal("websocket_auth_result_received", Callable(self, "_on_websocket_auth_result_received"))
 	_connect_connection_signal("realtime_transport_ready", Callable(self, "_on_realtime_transport_ready"))
 
@@ -75,7 +76,34 @@ func _on_connection_closed() -> void:
 		connection_service.end_realtime_match()
 
 
+func _on_connection_failed(error_code: String) -> void:
+	_fail_initial_room_operation(error_code)
 
+
+func _fail_initial_room_operation(error_code: String) -> void:
+	var operation := _active_initial_room_operation()
+	if operation.is_empty():
+		return
+	if shell_boot_flow != null and shell_boot_flow.has_method("clear"):
+		shell_boot_flow.clear()
+	if connection_service != null and connection_service.has_method("clear_room_operation_context"):
+		connection_service.clear_room_operation_context()
+	initial_room_operation_failed.emit(operation, error_code)
+
+
+func _active_initial_room_operation() -> String:
+	var operation := ""
+	if connection_service != null and connection_service.has_method("active_room_operation_type"):
+		operation = str(connection_service.active_room_operation_type())
+	if operation.is_empty() and shell_boot_flow != null and shell_boot_flow.has_method("pending_request_type"):
+		operation = str(shell_boot_flow.pending_request_type())
+	match operation:
+		Constants.BOOT_REQUEST_CREATE_ROOM:
+			return "create_room"
+		Constants.BOOT_REQUEST_JOIN_ROOM:
+			return "join_room"
+		_:
+			return ""
 
 
 func _on_realtime_transport_ready() -> void:
@@ -109,7 +137,7 @@ func _on_websocket_auth_result_received(packet: Dictionary) -> void:
 		if error_code == "token_verification_unavailable":
 			shell_boot_flow.send_pending_boot_request()
 		else:
-			pass
+			_fail_initial_room_operation("authentication_failed")
 
 
 func _on_room_snapshot_received(packet: Dictionary) -> void:

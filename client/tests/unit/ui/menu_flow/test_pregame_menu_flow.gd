@@ -267,7 +267,7 @@ func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void
 	}
 	transmission_flow.mounted_primary.emit_signal("create_requested", config)
 
-	assert_eq(clear_probe.calls, 1)
+	assert_eq(clear_probe.calls, 0)
 	assert_eq(create_probe.calls, 1)
 	assert_eq(create_probe.last_config, config)
 	transmission_flow.mounted_primary.free()

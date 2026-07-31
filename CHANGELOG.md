@@ -8,6 +8,7 @@ All notable player-facing changes to Space Rocks are recorded here.
 
 - Corrected and revalidated the native macOS release packaging workflow.
 - Rolled multiplayer alpha release packaging and artifact names forward to v0.2.1.
+- Multiplayer room creation and joining now remain on a responsive status screen and display recoverable errors when the game server or requested room is unavailable.
 
 ## [0.2.0] - 2026-07-30
 

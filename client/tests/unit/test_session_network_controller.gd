@@ -50,6 +50,9 @@ class FakeConnectionService extends ClientConnectionService:
 	func emit_closed() -> void:
 		closed.emit()
 
+	func emit_connection_failed(error_code: String) -> void:
+		connection_failed.emit(error_code)
+
 
 class FakeRoomSessionController:
 	extends RefCounted
@@ -129,6 +132,9 @@ class FakeShellBootFlow:
 		if pending_request == Constants.BOOT_REQUEST_JOIN_ROOM:
 			pending_request = Constants.BOOT_REQUEST_NONE
 
+	func clear() -> void:
+		pending_request = Constants.BOOT_REQUEST_NONE
+
 
 
 
@@ -178,18 +184,23 @@ func test_connection_sends_create_room_after_websocket_auth_success() -> void:
 	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
 
 
-func test_connection_does_not_send_create_room_after_websocket_auth_failure() -> void:
+func test_connection_auth_failure_restores_pending_room_operation() -> void:
 	var connection := FakeConnectionService.new()
 	add_child_autofree(connection)
 	var flow := FakeShellBootFlow.new()
 	flow.request_create_room()
 	var controller := _create_controller(connection, flow)
+	var failures: Array[Dictionary] = []
+	controller.initial_room_operation_failed.connect(func(operation: String, error_code: String) -> void:
+		failures.append({"operation": operation, "error_code": error_code})
+	)
 
 	connection.emit_connected()
 	connection.emit_websocket_auth_result(false)
 
 	assert_eq(flow.send_calls, 0)
-	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_CREATE_ROOM)
+	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
+	assert_eq(failures, [{"operation": "create_room", "error_code": "authentication_failed"}])
 
 
 func test_connection_sends_create_room_after_websocket_auth_unavailable() -> void:
@@ -209,12 +220,16 @@ func test_connection_sends_create_room_after_websocket_auth_unavailable() -> voi
 	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
 
 
-func test_connection_does_not_send_create_room_after_invalid_token_auth_failure() -> void:
+func test_invalid_token_auth_failure_reports_room_operation_failure() -> void:
 	var connection := FakeConnectionService.new()
 	add_child_autofree(connection)
 	var flow := FakeShellBootFlow.new()
 	flow.request_create_room()
 	var controller := _create_controller(connection, flow)
+	var failures: Array[Dictionary] = []
+	controller.initial_room_operation_failed.connect(func(operation: String, error_code: String) -> void:
+		failures.append({"operation": operation, "error_code": error_code})
+	)
 
 	connection.emit_connected()
 	connection.websocket_auth_result_received.emit({
@@ -223,7 +238,25 @@ func test_connection_does_not_send_create_room_after_invalid_token_auth_failure(
 	})
 
 	assert_eq(flow.send_calls, 0)
-	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_CREATE_ROOM)
+	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
+	assert_eq(failures, [{"operation": "create_room", "error_code": "authentication_failed"}])
+
+
+func test_connection_failure_reports_join_operation_and_clears_pending_request() -> void:
+	var connection := FakeConnectionService.new()
+	add_child_autofree(connection)
+	var flow := FakeShellBootFlow.new()
+	flow.request_join_room("ROOM1")
+	var controller := _create_controller(connection, flow)
+	var failures: Array[Dictionary] = []
+	controller.initial_room_operation_failed.connect(func(operation: String, error_code: String) -> void:
+		failures.append({"operation": operation, "error_code": error_code})
+	)
+
+	connection.emit_connection_failed("server_unavailable")
+
+	assert_eq(flow.pending_request_type(), Constants.BOOT_REQUEST_NONE)
+	assert_eq(failures, [{"operation": "join_room", "error_code": "server_unavailable"}])
 
 
 func _create_controller(connection: FakeConnectionService, flow: FakeShellBootFlow) -> SessionNetworkController:

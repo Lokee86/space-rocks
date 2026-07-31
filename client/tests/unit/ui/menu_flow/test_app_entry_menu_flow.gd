@@ -180,7 +180,7 @@ func test_successful_auth_from_login_window_routes_to_multiplayer_pregame() -> v
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "MULTIPLAYER")
 
 
-func test_multiplayer_pregame_create_clears_menu_and_requests_create_room() -> void:
+func test_multiplayer_pregame_create_keeps_setup_visible_while_requesting_room() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
 	var multiplayer_button := main_menu.get_node("%MultiplayerButton") as BaseButton
@@ -204,8 +204,10 @@ func test_multiplayer_pregame_create_clears_menu_and_requests_create_room() -> v
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	assert_null(_find_pregame_menu(canvas_layer))
+	assert_not_null(_find_pregame_menu(canvas_layer))
 	assert_false(main_menu.visible)
+	assert_eq((setup.get_node("%StatusLabel") as Label).text, "Creating room...")
+	assert_true((setup.get_node("%CreateButton") as BaseButton).disabled)
 	var shell_boot_flow = game.session_boot_controller.get_shell_boot_flow()
 	assert_eq(shell_boot_flow.pending_request_type(), Constants.BOOT_REQUEST_CREATE_ROOM)
 	assert_true(shell_boot_flow.pending_request_is_multiplayer())
@@ -234,7 +236,7 @@ func test_multiplayer_pregame_join_opens_join_dialog() -> void:
 	assert_not_null(_find_pregame_menu(canvas_layer))
 
 
-func test_join_dialog_valid_code_clears_menu_and_requests_join_room() -> void:
+func test_join_dialog_valid_code_keeps_dialog_visible_while_requesting_room() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
 	var multiplayer_button := main_menu.get_node("%MultiplayerButton") as BaseButton
@@ -259,9 +261,11 @@ func test_join_dialog_valid_code_clears_menu_and_requests_join_room() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	assert_null(_find_join_dialog(canvas_layer))
-	assert_null(_find_pregame_menu(canvas_layer))
+	assert_not_null(_find_join_dialog(canvas_layer))
+	assert_not_null(_find_pregame_menu(canvas_layer))
 	assert_false(main_menu.visible)
+	assert_eq((join_dialog.get_node("%StatusLabel") as Label).text, "Joining room...")
+	assert_true((join_dialog.get_node("%JoinButton") as BaseButton).disabled)
 	var shell_boot_flow = game.session_boot_controller.get_shell_boot_flow()
 	assert_eq(shell_boot_flow.pending_request_type(), Constants.BOOT_REQUEST_JOIN_ROOM)
 	assert_true(shell_boot_flow.pending_request_is_multiplayer())
