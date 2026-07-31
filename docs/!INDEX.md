@@ -31,6 +31,7 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 
 - [Agent](agent/!INDEX.md) - Agent workflow and documentation support notes.
 - [data](data/!INDEX.md) - Data documentation.
+- [Decisions](decisions/!INDEX.md) - Consequential architectural decisions and their status.
 - [devtools](devtools/!INDEX.md) - Devtools documentation.
 - [Development](development/!INDEX.md) - Contributor-facing implementation coverage and behavioral contracts.
 - [domains](domains/!INDEX.md) - Domains documentation.

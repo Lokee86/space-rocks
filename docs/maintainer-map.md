@@ -33,6 +33,7 @@ Use this map when the owning service, domain, protocol, data source, or verifica
 | Logging, diagnostics, telemetry, and diagnostic aggregation | [Observability](observability/!INDEX.md), [Devtools](devtools/!INDEX.md), [Diagnostic aggregator](services/diagnostic-aggregator/!INDEX.md) | `services/log-aggregator/`, service logging adapters, `client/` devtools | Observability contracts and runtime measurement scenarios |
 | Build, packaging, deployment, environment, and release | [Developer workflow](developer.md), [Technical planning](planning/domains/technical/!INDEX.md) | `.github/workflows/`, deployment files, installer and release scripts | CI, packaged-client, compose, and server smoke checks |
 | Product rules, authority, and future gameplay or platform work | [Domains](domains/!INDEX.md), [Systems design](systems-design/!INDEX.md), [Planning](planning/!INDEX.md) | Owning client, server, API, shared, or web boundary | Behavioral-contract matrix and owning subsystem tests |
+| Consequential authority, protocol, persistence, process, migration, and standards-exception decisions | [Architecture decisions](decisions/!INDEX.md) and affected current-state owners | `docs/decisions/` plus owning implementation boundaries | ADR review, current docs, focused tests, and Pitlord where statically detectable |
 
 ## Boundaries
 

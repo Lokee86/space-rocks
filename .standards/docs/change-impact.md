@@ -1,6 +1,6 @@
 # Change-Impact Rules
 
-Parent index: [Documentation Standards](INDEX.md)
+Parent index: [Engineering Standards](INDEX.md)
 
 ## Purpose
 

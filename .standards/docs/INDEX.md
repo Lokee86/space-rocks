@@ -1,16 +1,18 @@
-# Documentation Standards
+# Engineering Standards
 
-Parent index: [Engineering Standards](../README.md)
+Parent index: [Engineering Standards Repository](../README.md)
 
 ## Purpose
 
-This index is the entry point for the shared documentation standard.
+This index is the entry point for shared documentation and architectural standards.
 
 ## Overview
 
-The standard governs documentation ownership, document types, structure, implementation coverage, change impact, agent behavior, compliance checks, and the language used when reporting documentation status.
+The documentation standard governs knowledge ownership, document types, structure, implementation coverage, change impact, agent behavior, compliance checks, and status claims.
 
-## Direct files
+The architecture standard governs responsibility ownership, dependency direction, seams, state, lifecycle, processes, protocols, failure handling, observability, repository structure, verification, migration, architectural decisions, and Pitlord enforcement.
+
+## Documentation standards
 
 - [Documentation standard](documentation-standard.md) — Normative rules for documentation ownership, taxonomy, shape, coverage, and lifecycle.
 - [Documentation procedure](documentation-procedure.md) — Required workflow for creating, changing, moving, graduating, and removing documentation.
@@ -20,10 +22,14 @@ The standard governs documentation ownership, document types, structure, impleme
 - [Completeness and status claims](completeness.md) — Evidence required before calling documentation complete, current, or compliant.
 - [Adoption and enforcement](adoption.md) — Repository configuration, Demon Docs, Pitlord, CI, and rollout responsibilities.
 
+## Architecture standards
+
+- [Architecture standards](architecture/INDEX.md) — Core architectural rules and focused standards for ownership, seams, state, protocols, operations, structure, verification, evolution, and Pitlord enforcement.
+
 ## Related docs
 
-Space Rocks and Demon Docs are the reference implementations used to derive this standard. Their repository-local documentation policies remain owned by those repositories rather than linked through workspace-relative paths.
+Repository-specific architecture and documentation remain owned by each product repository. This repository defines shared judgment, procedure, and expected enforcement rather than centralizing every product's current design.
 
 ## Notes
 
-Space Rocks and Demon Docs are reference implementations, not exceptions to the shared standard.
+The documentation standard has shared deterministic enforcement. Pitlord is the expected deterministic architecture-enforcement mechanism, with repository-specific semantic policy adopted through explicit repository rollout.
