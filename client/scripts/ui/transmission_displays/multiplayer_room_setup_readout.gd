@@ -9,12 +9,16 @@ const SESSION_MULTIPLAYER := "multiplayer"
 const PRESET_ARCADE_SURVIVAL := "arcade_survival"
 const PRESET_SCORE_ATTACK := "score_attack"
 const LIVES_INFINITE := "infinite"
+const TARGET_CUSTOM := "custom"
+const CUSTOM_TARGET_ERROR := "ENTER A POSITIVE CUSTOM TARGET"
 
 @onready var title_label: Label = %Title
 @onready var game_mode_select = %GameModeSelect
 @onready var lives_select = %LivesSelect
 @onready var target_score_row: Control = %TargetScoreRow
 @onready var target_score_select = %TargetScoreSelect
+@onready var custom_target_score_row: Control = %CustomTargetScoreRow
+@onready var custom_target_score_input: LineEdit = %CustomTargetScoreInput
 @onready var team_structure_row: Control = %TeamStructureRow
 @onready var team_structure_select = %TeamStructureSelect
 @onready var assignment_row: Control = %AssignmentRow
@@ -29,6 +33,7 @@ const LIVES_INFINITE := "infinite"
 @onready var status_label: Label = %StatusLabel
 
 var session_mode := SESSION_MULTIPLAYER
+var is_pending := false
 
 
 func _ready() -> void:
@@ -44,11 +49,14 @@ func _ready() -> void:
 		{"label": "INFINITE", "value": LIVES_INFINITE},
 	], 3)
 	target_score_select.replace_items([
-		{"label": "500", "value": 500},
-		{"label": "1,000", "value": 1000},
-		{"label": "2,500", "value": 2500},
-		{"label": "5,000", "value": 5000},
-	], 1000)
+		{"label": "25,000", "value": 25000},
+		{"label": "50,000", "value": 50000},
+		{"label": "75,000", "value": 75000},
+		{"label": "100,000", "value": 100000},
+		{"label": "125,000", "value": 125000},
+		{"label": "150,000", "value": 150000},
+		{"label": "CUSTOM", "value": TARGET_CUSTOM},
+	], 25000)
 	team_structure_select.replace_items([
 		{"label": "FREE-FOR-ALL", "value": "ffa"},
 		{"label": "CO-OP", "value": "co_op"},
@@ -68,7 +76,9 @@ func _ready() -> void:
 		max_player_items.append({"label": "%d PLAYERS" % count, "value": count})
 	max_players_select.replace_items(max_player_items, 8)
 	game_mode_select.item_selected.connect(_on_selection_changed)
+	target_score_select.item_selected.connect(_on_selection_changed)
 	team_structure_select.item_selected.connect(_on_selection_changed)
+	custom_target_score_input.text_changed.connect(_on_custom_target_score_changed)
 	create_button.pressed.connect(_on_create_pressed)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	_apply_session_mode()
@@ -97,7 +107,7 @@ func current_config() -> Dictionary:
 		"preset_id": preset_id,
 		"starting_lives": 0 if infinite_lives else int(lives_value),
 		"infinite_lives": infinite_lives,
-		"target_score": int(target_score_select.selected_value(1000)) if preset_id == PRESET_SCORE_ATTACK else 0,
+		"target_score": _selected_target_score(),
 	}
 	if session_mode == SESSION_SINGLE_PLAYER:
 		return config
@@ -114,6 +124,10 @@ func _on_selection_changed(_index: int) -> void:
 	_refresh_visibility()
 
 
+func _on_custom_target_score_changed(_value: String) -> void:
+	_refresh_create_state()
+
+
 func _apply_session_mode() -> void:
 	var single_player := session_mode == SESSION_SINGLE_PLAYER
 	title_label.text = "SINGLE PLAYER CONFIGURATION" if single_player else "MATCH CONFIGURATION"
@@ -124,16 +138,56 @@ func _apply_session_mode() -> void:
 
 func _refresh_visibility() -> void:
 	var preset_id := str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL))
-	target_score_row.visible = preset_id == PRESET_SCORE_ATTACK
+	var score_attack := preset_id == PRESET_SCORE_ATTACK
+	target_score_row.visible = score_attack
+	custom_target_score_row.visible = score_attack and str(target_score_select.selected_value(25000)) == TARGET_CUSTOM
 	var multiplayer := session_mode == SESSION_MULTIPLAYER
 	var structure := str(team_structure_select.selected_value("ffa"))
 	team_structure_row.visible = multiplayer
 	assignment_row.visible = multiplayer and structure == "custom"
 	team_count_row.visible = multiplayer and structure == "auto_balanced"
 	max_players_row.visible = multiplayer
+	_refresh_create_state()
+
+
+func _refresh_create_state() -> void:
+	var target_valid := _has_valid_target_score()
+	create_button.disabled = is_pending or not target_valid
+	if not target_valid:
+		status_label.text = CUSTOM_TARGET_ERROR
+	elif status_label.text == CUSTOM_TARGET_ERROR:
+		status_label.text = ""
+
+
+func _has_valid_target_score() -> bool:
+	if str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL)) != PRESET_SCORE_ATTACK:
+		return true
+	if str(target_score_select.selected_value(25000)) != TARGET_CUSTOM:
+		return int(target_score_select.selected_value(25000)) > 0
+	return _custom_target_score() > 0
+
+
+func _selected_target_score() -> int:
+	if str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL)) != PRESET_SCORE_ATTACK:
+		return 0
+	var selected_target = target_score_select.selected_value(25000)
+	if str(selected_target) != TARGET_CUSTOM:
+		return int(selected_target)
+	return _custom_target_score()
+
+
+func _custom_target_score() -> int:
+	var normalized := custom_target_score_input.text.strip_edges().replace(",", "").replace("_", "").replace(" ", "")
+	if not normalized.is_valid_int():
+		return 0
+	var target := int(normalized)
+	return target if target > 0 else 0
 
 
 func _on_create_pressed() -> void:
+	if not _has_valid_target_score():
+		_refresh_create_state()
+		return
 	create_requested.emit(current_config())
 
 
@@ -143,13 +197,15 @@ func set_status(message: String) -> void:
 
 
 func set_pending(pending: bool) -> void:
-	if create_button != null:
-		create_button.disabled = pending
+	is_pending = pending
 	if cancel_button != null:
 		cancel_button.disabled = pending
 	for selector in [game_mode_select, lives_select, target_score_select, team_structure_select, assignment_select, team_count_select, max_players_select]:
 		if selector != null:
 			selector.disabled = pending
+	if custom_target_score_input != null:
+		custom_target_score_input.editable = not pending
+	_refresh_create_state()
 
 
 func _on_cancel_pressed() -> void:

@@ -6,6 +6,8 @@
 [ext_resource type="StyleBox" uid="uid://dhpjbvxx7l27g" path="res://assets/ui/FlatBoxStyles/transmission_box.tres" id="4_normal"]
 [ext_resource type="StyleBox" uid="uid://dax63si7q02k8" path="res://assets/ui/FlatBoxStyles/transmission_pressed.tres" id="5_pressed"]
 [ext_resource type="StyleBox" uid="uid://dia0oanl1ge75" path="res://assets/ui/FlatBoxStyles/transmission_focus.tres" id="6_focus"]
+[ext_resource type="FontFile" uid="uid://bfm68hnrr05tl" path="res://assets/fonts/DigitalNormal-xO6j.otf" id="7_font"]
+[ext_resource type="StyleBox" uid="uid://beiopa8e3wrau" path="res://assets/ui/FlatBoxStyles/transmission_input.tres" id="8_input"]
 
 [node name="MultiplayerRoomSetupReadout" type="VBoxContainer"]
 layout_mode = 3
@@ -94,6 +96,36 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="CustomTargetScoreRow" type="PanelContainer" parent="Content/Fields"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = ExtResource("4_normal")
+[node name="Row" type="HBoxContainer" parent="Content/Fields/CustomTargetScoreRow"]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="Label" type="Label" parent="Content/Fields/CustomTargetScoreRow/Row"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "CUSTOM TARGET"
+label_settings = ExtResource("3_label")
+vertical_alignment = 1
+[node name="CustomTargetScoreInput" type="LineEdit" parent="Content/Fields/CustomTargetScoreRow/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 1, 1, 1)
+theme_override_colors/caret_color = Color(0.57778305, 0.9999991, 0.99591404, 1)
+theme_override_colors/selection_color = Color(5.7756904e-07, 0.34921336, 0.34930328, 1)
+theme_override_constants/caret_width = 4
+theme_override_fonts/font = ExtResource("7_font")
+theme_override_styles/normal = ExtResource("8_input")
+theme_override_styles/focus = ExtResource("6_focus")
+placeholder_text = "ENTER SCORE"
+alignment = 1
+max_length = 12
+caret_blink = true
 
 [node name="TeamStructureRow" type="PanelContainer" parent="Content/Fields"]
 unique_name_in_owner = true

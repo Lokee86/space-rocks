@@ -13,7 +13,8 @@ func _ready() -> void:
 
 func select_value(value: Variant) -> bool:
 	for index in range(item_count):
-		if get_item_metadata(index) == value:
+		var metadata = get_item_metadata(index)
+		if typeof(metadata) == typeof(value) and metadata == value:
 			select(index)
 			return true
 	return false
