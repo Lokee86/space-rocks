@@ -12,9 +12,11 @@ class StartSinglePlayerProbe:
 	extends RefCounted
 
 	var calls := 0
+	var last_config := {}
 
-	func mark_called() -> void:
+	func mark_called(config: Dictionary) -> void:
 		calls += 1
+		last_config = config.duplicate(true)
 
 
 class Probe:
@@ -625,7 +627,7 @@ func test_sign_in_discord_button_reaches_auth_callback() -> void:
 	assert_eq(probe.calls, 1)
 
 
-func test_play_endless_from_single_player_pregame_calls_start_single_player_callback() -> void:
+func test_single_player_create_confirms_setup_before_starting_callback() -> void:
 	var controller := await _create_controller()
 	var start_probe := StartSinglePlayerProbe.new()
 
@@ -635,8 +637,15 @@ func test_play_endless_from_single_player_pregame_calls_start_single_player_call
 
 	var pregame_menu := controller.get_pregame_menu()
 	(pregame_menu.get_node_or_null("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	var setup := pregame_menu.find_child("MultiplayerRoomSetupReadout", true, false) as Control
+
+	assert_not_null(setup)
+	assert_eq(start_probe.calls, 0)
+	(setup.get_node("%CreateButton") as BaseButton).emit_signal("pressed")
 
 	assert_eq(start_probe.calls, 1)
+	assert_eq(start_probe.last_config.get("preset_id", ""), "arcade_survival")
 
 
 func test_play_endless_from_multiplayer_pregame_does_not_call_start_single_player_callback() -> void:

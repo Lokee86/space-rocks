@@ -9,6 +9,9 @@ var is_dead := false
 var is_game_over := false
 var can_respawn := false
 var current_score := 0
+var match_elapsed_seconds := 0.0
+var match_timer_running := false
+var match_timer_started := false
 var respawn_countdown_remaining := 0.0
 var respawn_timer_template := ""
 var loadout_display_flow := LoadoutDisplayFlow.new()
@@ -20,6 +23,7 @@ func configure(hud_ref: Control) -> void:
 	var respawn_timer_label := _respawn_timer_label()
 	if respawn_timer_label != null:
 		respawn_timer_template = respawn_timer_label.text
+	_reset_match_timer()
 	set_alive()
 
 
@@ -31,7 +35,10 @@ func show_gameplay() -> void:
 		return
 
 	hud.show()
-	_hide_hud_child("RoomID")
+	_show_hud_child("MatchTimer")
+	if not match_timer_started:
+		match_timer_started = true
+		match_timer_running = true
 
 
 func apply_overlay_lane_state(overlay_lane_state) -> void:
@@ -75,6 +82,7 @@ func apply_session_lane_state(session_lane_state, self_id := "") -> void:
 			show_gameplay()
 func reset() -> void:
 	hidden_for_match_over = false
+	_reset_match_timer()
 	if hud != null:
 		set_alive()
 		loadout_display_flow.clear()
@@ -82,6 +90,10 @@ func reset() -> void:
 
 
 func update(delta: float) -> void:
+	if match_timer_running:
+		match_elapsed_seconds += maxf(delta, 0.0)
+		_refresh_match_timer_label()
+
 	if !is_dead || is_game_over || can_respawn:
 		return
 
@@ -101,6 +113,7 @@ func can_request_respawn() -> bool:
 
 func hide_for_match_over() -> void:
 	hidden_for_match_over = true
+	match_timer_running = false
 	if hud != null:
 		hud.hide()
 
@@ -151,10 +164,32 @@ func set_game_over() -> void:
 	is_dead = false
 	is_game_over = true
 	can_respawn = false
+	match_timer_running = false
 	respawn_countdown_remaining = 0.0
 	_hide_hud_child("CenterContainer/VBoxContainer2")
 	_show_hud_child("CenterContainer/GameOverContainer")
 	_show_hud_child("CenterContainer/GameOverContainer/MarginContainer")
+
+
+func _reset_match_timer() -> void:
+	match_elapsed_seconds = 0.0
+	match_timer_running = false
+	match_timer_started = false
+	_refresh_match_timer_label()
+
+
+func _refresh_match_timer_label() -> void:
+	var timer_label := _get_hud_child("MatchTimer") as Label
+	if timer_label != null:
+		timer_label.text = _match_timer_text(match_elapsed_seconds)
+
+
+func _match_timer_text(elapsed_seconds: float) -> String:
+	var total_centiseconds := maxi(floori(maxf(elapsed_seconds, 0.0) * 100.0 + 0.0001), 0)
+	var minutes := total_centiseconds / 6000
+	var seconds := (total_centiseconds / 100) % 60
+	var centiseconds := total_centiseconds % 100
+	return "TIME: %02d:%02d.%02d" % [minutes, seconds, centiseconds]
 
 
 func apply_score(score_value: int) -> void:

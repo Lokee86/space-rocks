@@ -8,10 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://cvvmd6ho6fl74" path="res://scenes/ui/dialogs/game_menu.tscn" id="6_oj5la"]
 [ext_resource type="Shader" uid="uid://dc654jrmmxind" path="res://shaders/player_hue_shift.gdshader" id="7_hue"]
 
-[sub_resource type="LabelSettings" id="LabelSettings_faiu6"]
-font_size = 25
-font_color = Color(1, 0.983333, 0, 1)
-
 [sub_resource type="ShaderMaterial" id="LivesHueMaterial"]
 shader = ExtResource("7_hue")
 shader_parameter/hue_shift = 0.0
@@ -145,16 +141,16 @@ horizontal_alignment = 1
 [node name="GameMenu" parent="CenterContainer/GameOverContainer/MarginContainer2" unique_id=1437660651 instance=ExtResource("6_oj5la")]
 layout_mode = 2
 
-[node name="RoomID" type="Label" parent="." unique_id=1769209780]
+[node name="MatchTimer" type="Label" parent="." unique_id=1769209780]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -23.0
-offset_right = 40.0
+offset_top = -55.0
+offset_right = 360.0
 grow_vertical = 0
-text = "ROOMID: 00000"
-label_settings = SubResource("LabelSettings_faiu6")
+text = "TIME: 00:00.00"
+label_settings = ExtResource("1_diql1")
 
 [node name="LoadoutDisplay" type="CenterContainer" parent="." unique_id=1423075844]
 layout_mode = 1

@@ -24,7 +24,7 @@ func test_single_player_button_routes_to_single_player_pregame() -> void:
 	_assert_callsign_label_matches_single_player_context(pregame_menu, game.menu_flow_controller)
 
 
-func test_single_player_pregame_play_endless_starts_game() -> void:
+func test_single_player_pregame_create_opens_setup_then_starts_game() -> void:
 	var game := await _create_game()
 	var main_menu := game.get_node("%MainMenu") as Control
 	var single_player_button := main_menu.get_node("%SinglePlayerButton") as BaseButton
@@ -39,6 +39,12 @@ func test_single_player_pregame_play_endless_starts_game() -> void:
 	assert_eq((pregame_menu.get_node_or_null("%ModeLabel") as Label).text, "SINGLE PLAYER")
 
 	(pregame_menu.get_node("%EndlessCreateButton") as BaseButton).emit_signal("pressed")
+	await get_tree().process_frame
+	var setup := pregame_menu.find_child("MultiplayerRoomSetupReadout", true, false) as Control
+	assert_not_null(setup)
+	assert_not_null(_find_pregame_menu(canvas_layer))
+
+	(setup.get_node("%CreateButton") as BaseButton).emit_signal("pressed")
 	await get_tree().process_frame
 	await get_tree().process_frame
 	await get_tree().process_frame

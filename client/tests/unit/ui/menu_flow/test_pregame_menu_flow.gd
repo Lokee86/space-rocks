@@ -226,18 +226,18 @@ func test_single_player_create_opens_setup_then_starts_configured_game() -> void
 	menu.create_game_requested.emit()
 
 	assert_not_null(transmission_flow.mounted_primary)
+	add_child_autofree(transmission_flow.mounted_primary)
+	await get_tree().process_frame
 	var config := {
 		"preset_id": "score_attack",
 		"starting_lives": 5,
 		"infinite_lives": false,
-		"target_score": 2500,
+		"target_score": 50000,
 	}
 	transmission_flow.mounted_primary.emit_signal("create_requested", config)
 
 	assert_eq(start_probe.calls, 1)
 	assert_eq(start_probe.last_config, config)
-	transmission_flow.mounted_primary.free()
-	transmission_flow.mounted_primary = null
 
 
 func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void:
@@ -265,13 +265,15 @@ func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void
 	menu.create_game_requested.emit()
 
 	assert_not_null(transmission_flow.mounted_primary)
+	add_child_autofree(transmission_flow.mounted_primary)
+	await get_tree().process_frame
 	assert_eq(clear_probe.calls, 0)
 	assert_eq(create_probe.calls, 0)
 	var config := {
 		"preset_id": "score_attack",
 		"starting_lives": 3,
 		"infinite_lives": false,
-		"target_score": 1000,
+		"target_score": 50000,
 		"team_structure": "auto_balanced",
 		"team_assignment_mode": "",
 		"team_count": 3,
@@ -282,8 +284,6 @@ func test_multiplayer_create_opens_setup_then_confirms_configured_room() -> void
 	assert_eq(clear_probe.calls, 0)
 	assert_eq(create_probe.calls, 1)
 	assert_eq(create_probe.last_config, config)
-	transmission_flow.mounted_primary.free()
-	transmission_flow.mounted_primary = null
 
 
 func test_multiplayer_join_calls_show_join_dialog() -> void:
