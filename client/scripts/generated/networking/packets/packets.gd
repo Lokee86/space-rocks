@@ -571,12 +571,15 @@ static func remove_room_member_request_packet(player_id) -> Dictionary:
 	packet[FIELD_PLAYER_ID] = player_id
 	return packet
 
-static func start_single_player_request_packet(local_profile_id, trace_id, max_players, preset_id, starting_lives, infinite_lives, target_score, target_kills) -> Dictionary:
+static func start_single_player_request_packet(local_profile_id, trace_id, max_players, team_structure, team_assignment_mode, team_count, preset_id, starting_lives, infinite_lives, target_score, target_kills) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_single_player_request"
 	packet[FIELD_LOCAL_PROFILE_ID] = local_profile_id
 	packet[FIELD_TRACE_ID] = trace_id
 	packet[FIELD_MAX_PLAYERS] = max_players
+	packet[FIELD_TEAM_STRUCTURE] = team_structure
+	packet[FIELD_TEAM_ASSIGNMENT_MODE] = team_assignment_mode
+	packet[FIELD_TEAM_COUNT] = team_count
 	packet[FIELD_PRESET_ID] = preset_id
 	packet[FIELD_STARTING_LIVES] = starting_lives
 	packet[FIELD_INFINITE_LIVES] = infinite_lives

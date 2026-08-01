@@ -41,6 +41,29 @@ func TestRoomStoresAndLocksResolvedScoreAttackRulesAtStart(t *testing.T) {
 	room.GameInstance().Stop()
 }
 
+func TestSinglePlayerTeamDeathmatchModeConfigDefaultsToTwoBalancedTeams(t *testing.T) {
+	manager := NewRoomManagerWithCleanupDelay(0)
+	room, roomErr := manager.CreateStartedSinglePlayerRoomWithModeConfig(
+		"session-owner",
+		modes.RoomModeConfig{PresetID: modes.PresetTeamDeathmatch, TargetKills: 10},
+	)
+	if roomErr != nil {
+		t.Fatal(roomErr)
+	}
+	resolved, ok := room.ResolvedMatchRules()
+	if !ok || resolved.TeamConfig.Structure != teams.StructureAutoBalanced || resolved.TeamConfig.AutoTeamCount != 2 {
+		t.Fatalf("resolved = %+v, ok = %v", resolved, ok)
+	}
+	if members := room.MembersSnapshot(); len(members) != 2 {
+		t.Fatalf("single-player team deathmatch members = %d, want one human and one bot", len(members))
+	}
+	teamSnapshot, ok := room.TeamStartSnapshot()
+	if !ok || len(teamSnapshot.Assignments) != 2 {
+		t.Fatalf("team start snapshot = %+v, ok = %v", teamSnapshot, ok)
+	}
+	room.GameInstance().Stop()
+}
+
 func TestRoomCreationRejectsInvalidModeOptions(t *testing.T) {
 	_, err := NewRoomWithConfig("room", RoomStateLobby, nil, RoomCreationConfig{
 		ModeConfig: modes.RoomModeConfig{PresetID: modes.PresetArcadeSurvival, StartingLives: 3, TargetScore: 10},

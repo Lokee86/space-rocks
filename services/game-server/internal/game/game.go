@@ -41,6 +41,8 @@ type Game struct {
 	matchElapsed               float64
 	scoreCompletionTimes       map[string]float64
 	scoreSuccessOrders         map[string]int
+	teamScoreCompletionTimes   map[teams.ID]float64
+	teamScoreSuccessOrders     map[teams.ID]int
 	nextScoreSuccessOrder      int
 	teamStructure              teams.Structure
 	spawner                    *spawning.Spawner
@@ -104,6 +106,8 @@ func newGame(source *rng.Source) *Game {
 		resolvedMatchRules:         modes.CloneResolvedMatchRules(resolvedRules),
 		scoreCompletionTimes:       make(map[string]float64),
 		scoreSuccessOrders:         make(map[string]int),
+		teamScoreCompletionTimes:   make(map[teams.ID]float64),
+		teamScoreSuccessOrders:     make(map[teams.ID]int),
 		teamStructure:              resolvedRules.TeamConfig.Structure,
 		pendingPresentationEvents:  make(map[string][]PendingPresentationEvent),
 		presentationDerived:        make(map[string][]presentationDerivedEntry),

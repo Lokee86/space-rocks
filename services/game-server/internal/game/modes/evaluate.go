@@ -94,6 +94,10 @@ func evaluateScoreAttack(resolved ResolvedMatchRules, facts MatchFacts) rules.Ma
 }
 
 func evaluateDeathmatch(resolved ResolvedMatchRules, facts MatchFacts) rules.MatchDecision {
+	if resolved.TeamScoreEnabled {
+		return evaluateTeamDeathmatch(resolved, facts)
+	}
+
 	players := append([]PlayerFact(nil), facts.Players...)
 	sort.Slice(players, func(left, right int) bool { return players[left].ID < players[right].ID })
 
@@ -123,6 +127,67 @@ func evaluateDeathmatch(resolved ResolvedMatchRules, facts MatchFacts) rules.Mat
 			decision.Players = append(decision.Players, rules.PlayerDecision{
 				ID: player.ID, Status: player.Status, Outcome: outcome, Placement: placement,
 				CompletionTime: player.CompletionTime, TargetValue: float64(resolved.ObjectivePolicy.TargetKills),
+			})
+		}
+		return decision
+	}
+
+	active := false
+	decision := rules.MatchDecision{}
+	for _, player := range players {
+		if player.Active && player.Status != rules.PlayerEliminated {
+			active = true
+		}
+		decision.Players = append(decision.Players, rules.PlayerDecision{
+			ID: player.ID, Status: player.Status, TargetValue: float64(resolved.ObjectivePolicy.TargetKills),
+		})
+	}
+	if facts.HadParticipants && !active {
+		decision.IsOver = true
+		decision.TerminalStatus = rules.TerminalFailed
+		decision.EndReason = string(EndNoActivePlayers)
+		for index := range decision.Players {
+			decision.Players[index].Outcome = rules.OutcomeFailed
+		}
+	}
+	return decision
+}
+
+func evaluateTeamDeathmatch(resolved ResolvedMatchRules, facts MatchFacts) rules.MatchDecision {
+	players := append([]PlayerFact(nil), facts.Players...)
+	sort.Slice(players, func(left, right int) bool { return players[left].ID < players[right].ID })
+	teamFacts := append([]TeamFact(nil), facts.Teams...)
+	sort.Slice(teamFacts, func(left, right int) bool { return teamFacts[left].ID < teamFacts[right].ID })
+
+	winnerIndex := -1
+	for index, team := range teamFacts {
+		if team.SuccessOrder <= 0 || team.Score < resolved.ObjectivePolicy.TargetKills {
+			continue
+		}
+		if winnerIndex < 0 || team.SuccessOrder < teamFacts[winnerIndex].SuccessOrder {
+			winnerIndex = index
+		}
+	}
+	if winnerIndex >= 0 {
+		winnerID := teamFacts[winnerIndex].ID
+		decision := rules.MatchDecision{
+			IsOver:         true,
+			TerminalStatus: rules.TerminalCompleted,
+			EndReason:      string(EndTargetKillsReached),
+		}
+		for _, player := range players {
+			outcome := rules.OutcomeLost
+			placement := 0
+			completionTime := 0.0
+			if player.TeamID == winnerID {
+				outcome = rules.OutcomeWon
+				placement = 1
+				completionTime = teamFacts[winnerIndex].CompletionTime
+				decision.WinningPlayerIDs = append(decision.WinningPlayerIDs, player.ID)
+			}
+			decision.Players = append(decision.Players, rules.PlayerDecision{
+				ID: player.ID, Status: player.Status, Outcome: outcome, Placement: placement,
+				CompletionTime: completionTime, TargetValue: float64(resolved.ObjectivePolicy.TargetKills),
 			})
 		}
 		return decision

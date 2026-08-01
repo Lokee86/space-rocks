@@ -790,4 +790,7 @@ func test_configured_room_requests_forward_mode_fields() -> void:
 	assert_eq(fake_network.sent_packets[0]["max_players"], 4)
 	assert_eq(fake_network.sent_packets[1]["local_profile_id"], "pilot-1")
 	assert_eq(fake_network.sent_packets[1]["max_players"], 4)
+	assert_eq(fake_network.sent_packets[1]["team_structure"], "co_op")
+	assert_eq(fake_network.sent_packets[1]["team_assignment_mode"], "")
+	assert_eq(fake_network.sent_packets[1]["team_count"], 0)
 	assert_eq(fake_network.sent_packets[1]["trace_id"], trace_id)

@@ -108,12 +108,13 @@ func (manager *RoomManager) CreateSinglePlayerRoom(sessionID string) (*Room, err
 }
 
 func (manager *RoomManager) CreateSinglePlayerRoomWithModeConfig(sessionID string, modeConfig modes.RoomModeConfig) (*Room, error) {
-	return manager.CreateSinglePlayerRoomWithConfig(sessionID, modeConfig, 1)
+	return manager.CreateSinglePlayerRoomWithConfig(sessionID, modeConfig, defaultSinglePlayerTeamConfig(modeConfig), 1)
 }
 
-func (manager *RoomManager) CreateSinglePlayerRoomWithConfig(sessionID string, modeConfig modes.RoomModeConfig, maxPlayers int) (*Room, error) {
+func (manager *RoomManager) CreateSinglePlayerRoomWithConfig(sessionID string, modeConfig modes.RoomModeConfig, teamConfig teams.Config, maxPlayers int) (*Room, error) {
 	creation := DefaultRoomCreationConfig()
 	creation.ModeConfig = modeConfig
+	creation.TeamConfig = teamConfig
 	creation.MaxPlayers = singlePlayerRoomCapacity(modeConfig, maxPlayers)
 	creation = normalizeRoomCreationConfig(creation)
 	if err := validateRoomCreationConfig(creation); err != nil {
@@ -146,9 +147,16 @@ func (manager *RoomManager) CreateSinglePlayerRoomWithConfig(sessionID string, m
 	return nil, fmt.Errorf("generate unique room code")
 }
 
+func defaultSinglePlayerTeamConfig(modeConfig modes.RoomModeConfig) teams.Config {
+	if modes.NormalizeRoomModeConfig(modeConfig).PresetID == modes.PresetTeamDeathmatch {
+		return teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2}
+	}
+	return teams.Config{Structure: teams.StructureFFA}
+}
+
 func singlePlayerRoomCapacity(modeConfig modes.RoomModeConfig, requested int) int {
 	normalized := modes.NormalizeRoomModeConfig(modeConfig)
-	if normalized.PresetID != modes.PresetDeathmatch {
+	if normalized.PresetID != modes.PresetDeathmatch && normalized.PresetID != modes.PresetTeamDeathmatch {
 		return 1
 	}
 	if requested < 2 {

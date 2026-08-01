@@ -35,6 +35,34 @@ func TestDeathmatchLocksFirstPlayerToKillTarget(t *testing.T) {
 	}
 }
 
+func TestTeamDeathmatchAwardsEveryMemberOfFirstTeamToTarget(t *testing.T) {
+	resolved, _ := Resolve(
+		RoomModeConfig{PresetID: PresetTeamDeathmatch, TargetKills: 10},
+		teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
+	)
+	decision := EvaluateMatch(resolved, MatchFacts{
+		HadParticipants: true,
+		Players: []PlayerFact{
+			{ID: "blue-a", TeamID: teams.Team1, Active: true, Status: rules.PlayerActive, Score: 6},
+			{ID: "blue-b", TeamID: teams.Team1, Active: true, Status: rules.PlayerActive, Score: 4},
+			{ID: "red-a", TeamID: teams.Team2, Active: true, Status: rules.PlayerActive, Score: 9},
+		},
+		Teams: []TeamFact{
+			{ID: teams.Team1, Score: 10, CompletionTime: 7, SuccessOrder: 1},
+			{ID: teams.Team2, Score: 9},
+		},
+	})
+	if !decision.IsOver || len(decision.WinningPlayerIDs) != 2 {
+		t.Fatalf("decision = %+v", decision)
+	}
+	if decision.WinningPlayerIDs[0] != "blue-a" || decision.WinningPlayerIDs[1] != "blue-b" {
+		t.Fatalf("winning players = %+v", decision.WinningPlayerIDs)
+	}
+	if decision.Players[0].Outcome != rules.OutcomeWon || decision.Players[1].Outcome != rules.OutcomeWon || decision.Players[2].Outcome != rules.OutcomeLost {
+		t.Fatalf("player outcomes = %+v", decision.Players)
+	}
+}
+
 func TestScoreAttackFailsWhenNoActiveParticipantsReachTarget(t *testing.T) {
 	resolved, _ := Resolve(RoomModeConfig{PresetID: PresetScoreAttack, StartingLives: 3, TargetScore: 100}, teams.Config{Structure: teams.StructureFFA})
 	decision := EvaluateMatch(resolved, MatchFacts{HadParticipants: true, Players: []PlayerFact{{ID: "player-a", Status: rules.PlayerEliminated, Score: 90}}})

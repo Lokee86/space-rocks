@@ -51,6 +51,29 @@ func TestResolveDeathmatchOwnsFFAInfiniteRespawnsAndKillTarget(t *testing.T) {
 	}
 }
 
+func TestResolveTeamDeathmatchOwnsTeamKillAggregation(t *testing.T) {
+	resolved, err := Resolve(
+		RoomModeConfig{PresetID: PresetTeamDeathmatch, TargetKills: 25},
+		teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved.ModeID != ModeDeathmatch || !resolved.TeamScoreEnabled || resolved.RankingMetric != RankingTeamKills {
+		t.Fatalf("resolved = %+v", resolved)
+	}
+	if resolved.ResultPolicy != ResultTeamDeathmatch || resolved.ObjectivePolicy.TargetKills != 25 {
+		t.Fatalf("team deathmatch policies = %+v", resolved)
+	}
+}
+
+func TestResolveTeamDeathmatchRejectsFFA(t *testing.T) {
+	_, err := Resolve(RoomModeConfig{PresetID: PresetTeamDeathmatch, TargetKills: 10}, teams.Config{Structure: teams.StructureFFA})
+	if err == nil {
+		t.Fatal("expected team deathmatch to reject FFA")
+	}
+}
+
 func TestResolveDeathmatchDefaultsToTenKills(t *testing.T) {
 	resolved, err := Resolve(RoomModeConfig{PresetID: PresetDeathmatch}, teams.Config{Structure: teams.StructureFFA})
 	if err != nil {

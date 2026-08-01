@@ -40,6 +40,8 @@ func (game *Game) ConfigureMatchRules(resolved modes.ResolvedMatchRules) error {
 	game.matchElapsed = 0
 	game.scoreCompletionTimes = make(map[string]float64)
 	game.scoreSuccessOrders = make(map[string]int)
+	game.teamScoreCompletionTimes = make(map[teams.ID]float64)
+	game.teamScoreSuccessOrders = make(map[teams.ID]int)
 	game.nextScoreSuccessOrder = 0
 	return nil
 }
@@ -64,6 +66,11 @@ func (game *Game) applyResolvedMatchRulesToSessionLocked(session *playerSession)
 }
 
 func (game *Game) recordModeScoreSuccessLocked(playerID string, score int) {
+	if game.resolvedMatchRules.ModeID == modes.ModeDeathmatch && game.resolvedMatchRules.TeamScoreEnabled {
+		game.recordTeamDeathmatchScoreSuccessLocked(playerID)
+		return
+	}
+
 	target := 0
 	switch game.resolvedMatchRules.ModeID {
 	case modes.ModeScoreAttack:
@@ -82,4 +89,32 @@ func (game *Game) recordModeScoreSuccessLocked(playerID string, score int) {
 	game.nextScoreSuccessOrder++
 	game.scoreSuccessOrders[playerID] = game.nextScoreSuccessOrder
 	game.scoreCompletionTimes[playerID] = game.matchElapsed
+}
+
+func (game *Game) recordTeamDeathmatchScoreSuccessLocked(playerID string) {
+	teamID := teams.NoTeam
+	if session := game.playerSessions[playerID]; session != nil {
+		teamID = session.TeamID
+	} else if record := game.participantRecords[playerID]; record != nil {
+		teamID = record.TeamID
+	}
+	if teamID == teams.NoTeam || game.teamScoreLocked(teamID) < game.resolvedMatchRules.ObjectivePolicy.TargetKills {
+		return
+	}
+	if _, exists := game.teamScoreSuccessOrders[teamID]; exists {
+		return
+	}
+	game.nextScoreSuccessOrder++
+	game.teamScoreSuccessOrders[teamID] = game.nextScoreSuccessOrder
+	game.teamScoreCompletionTimes[teamID] = game.matchElapsed
+}
+
+func (game *Game) teamScoreLocked(teamID teams.ID) int {
+	total := 0
+	for _, record := range game.participantRecords {
+		if record != nil && record.TeamID == teamID {
+			total += record.Score
+		}
+	}
+	return total
 }

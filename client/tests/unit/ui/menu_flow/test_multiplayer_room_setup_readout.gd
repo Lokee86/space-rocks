@@ -132,6 +132,46 @@ func test_deathmatch_forces_ffa_infinite_respawns_and_kill_target() -> void:
 	})
 
 
+func test_team_deathmatch_defaults_to_two_auto_balanced_teams() -> void:
+	var setup := await _create_setup()
+	var game_mode_select = setup.get_node("%GameModeSelect")
+	var target_select = setup.get_node("%TargetScoreSelect")
+	var max_players_select = setup.get_node("%MaxPlayersSelect")
+	game_mode_select.select_value("team_deathmatch")
+	game_mode_select.emit_signal("item_selected", game_mode_select.selected)
+	target_select.select_value(25)
+	max_players_select.select_value(6)
+
+	assert_true((setup.get_node("%TeamStructureRow") as Control).visible)
+	assert_true((setup.get_node("%TeamCountRow") as Control).visible)
+	assert_false((setup.get_node("%AssignmentRow") as Control).visible)
+	assert_eq(setup.current_config(), {
+		"preset_id": "team_deathmatch",
+		"starting_lives": 0,
+		"infinite_lives": true,
+		"target_score": 0,
+		"target_kills": 25,
+		"team_structure": "auto_balanced",
+		"team_assignment_mode": "",
+		"team_count": 2,
+		"max_players": 6,
+	})
+
+
+func test_team_deathmatch_allows_custom_multiplayer_teams() -> void:
+	var setup := await _create_setup()
+	var game_mode_select = setup.get_node("%GameModeSelect")
+	var team_structure_select = setup.get_node("%TeamStructureSelect")
+	game_mode_select.select_value("team_deathmatch")
+	game_mode_select.emit_signal("item_selected", game_mode_select.selected)
+	team_structure_select.select_value("custom")
+	team_structure_select.emit_signal("item_selected", team_structure_select.selected)
+
+	assert_true((setup.get_node("%AssignmentRow") as Control).visible)
+	assert_false((setup.get_node("%TeamCountRow") as Control).visible)
+	assert_eq(setup.current_config().team_structure, "custom")
+
+
 func test_auto_balanced_selection_exposes_team_count() -> void:
 	var setup := await _create_setup()
 	var team_structure_select = setup.get_node("%TeamStructureSelect")
@@ -201,6 +241,35 @@ func test_single_player_deathmatch_exposes_bot_combatant_count() -> void:
 		"target_score": 0,
 		"target_kills": 15,
 		"max_players": 4,
+	})
+
+
+func test_single_player_team_deathmatch_exposes_team_and_combatant_counts() -> void:
+	var setup := await _create_setup()
+	setup.configure_single_player()
+	var game_mode_select = setup.get_node("%GameModeSelect")
+	var target_select = setup.get_node("%TargetScoreSelect")
+	var team_count_select = setup.get_node("%TeamCountSelect")
+	var max_players_select = setup.get_node("%MaxPlayersSelect")
+	game_mode_select.select_value("team_deathmatch")
+	game_mode_select.emit_signal("item_selected", game_mode_select.selected)
+	target_select.select_value(15)
+	team_count_select.select_value(2)
+	max_players_select.select_value(4)
+
+	assert_false((setup.get_node("%TeamStructureRow") as Control).visible)
+	assert_true((setup.get_node("%TeamCountRow") as Control).visible)
+	assert_true((setup.get_node("%MaxPlayersRow") as Control).visible)
+	assert_eq(setup.current_config(), {
+		"preset_id": "team_deathmatch",
+		"starting_lives": 0,
+		"infinite_lives": true,
+		"target_score": 0,
+		"target_kills": 15,
+		"max_players": 4,
+		"team_structure": "auto_balanced",
+		"team_assignment_mode": "",
+		"team_count": 2,
 	})
 
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/rooms"
 )
 
@@ -17,7 +18,7 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 		outbound:          make(chan []byte, 1),
 	}
 
-	session.handleStartSinglePlayerRequest("", "", 1, "", 0, false, 0, 0)
+	session.handleStartSinglePlayerRequest("", "", 1, "", "", 0, "", 0, false, 0, 0)
 
 	if session.sessionContext().RoomID == "" {
 		t.Fatal("expected room to be created")
@@ -39,7 +40,7 @@ func TestHandleStartSinglePlayerRequestAppliesSelectedMode(t *testing.T) {
 		outbound:          make(chan []byte, 4),
 	}
 
-	session.handleStartSinglePlayerRequest("pilot-1", "", 1, string(modes.PresetScoreAttack), 5, false, 2500, 0)
+	session.handleStartSinglePlayerRequest("pilot-1", "", 1, "", "", 0, string(modes.PresetScoreAttack), 5, false, 2500, 0)
 
 	room := session.sessionContext().Room
 	if room == nil {
@@ -67,7 +68,7 @@ func TestHandleStartSinglePlayerDeathmatchCreatesBotOpponents(t *testing.T) {
 		outbound:          make(chan []byte, 8),
 	}
 
-	session.handleStartSinglePlayerRequest("pilot-1", "", 4, string(modes.PresetDeathmatch), 0, true, 0, 10)
+	session.handleStartSinglePlayerRequest("pilot-1", "", 4, string(teams.StructureFFA), "", 0, string(modes.PresetDeathmatch), 0, true, 0, 10)
 
 	room := session.sessionContext().Room
 	if room == nil {
@@ -95,6 +96,42 @@ func TestHandleStartSinglePlayerDeathmatchCreatesBotOpponents(t *testing.T) {
 	}
 	if facts := room.GameInstance().PlayerMatchFacts(); len(facts) != 4 {
 		t.Fatalf("active match facts = %d, want 4", len(facts))
+	}
+	assertNoQueuedRoomErrorPacket(t, session.outbound)
+}
+
+func TestHandleStartSinglePlayerTeamDeathmatchCreatesBalancedBotTeams(t *testing.T) {
+	session := &webSocketSession{
+		sessionID:         "session-1",
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440036",
+		rooms:             rooms.NewRoomManagerWithCleanupDelay(0),
+		outbound:          make(chan []byte, 8),
+	}
+
+	session.handleStartSinglePlayerRequest(
+		"pilot-1", "", 4,
+		string(teams.StructureAutoBalanced), "", 2,
+		string(modes.PresetTeamDeathmatch), 0, true, 0, 10,
+	)
+
+	room := session.sessionContext().Room
+	if room == nil {
+		t.Fatal("expected team deathmatch room to be created")
+	}
+	resolved, ok := room.ResolvedMatchRules()
+	if !ok || !resolved.TeamScoreEnabled || resolved.TeamConfig.Structure != teams.StructureAutoBalanced {
+		t.Fatalf("resolved = %+v, ok = %v", resolved, ok)
+	}
+	facts := room.GameInstance().PlayerMatchFacts()
+	if len(facts) != 4 {
+		t.Fatalf("active match facts = %d, want 4", len(facts))
+	}
+	teamCounts := map[teams.ID]int{}
+	for _, fact := range facts {
+		teamCounts[fact.TeamID]++
+	}
+	if teamCounts[teams.Team1] != 2 || teamCounts[teams.Team2] != 2 {
+		t.Fatalf("team counts = %+v", teamCounts)
 	}
 	assertNoQueuedRoomErrorPacket(t, session.outbound)
 }

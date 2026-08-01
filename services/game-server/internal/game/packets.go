@@ -132,15 +132,18 @@ type RemoveRoomMemberRequest struct {
 }
 
 type StartSinglePlayerRequest struct {
-	Type           string `json:"type"`
-	TraceID        string `json:"trace_id"`
-	LocalProfileID string `json:"local_profile_id"`
-	MaxPlayers     int    `json:"max_players"`
-	PresetID       string `json:"preset_id"`
-	StartingLives  int    `json:"starting_lives"`
-	InfiniteLives  bool   `json:"infinite_lives"`
-	TargetScore    int    `json:"target_score"`
-	TargetKills    int    `json:"target_kills"`
+	Type               string `json:"type"`
+	TraceID            string `json:"trace_id"`
+	LocalProfileID     string `json:"local_profile_id"`
+	MaxPlayers         int    `json:"max_players"`
+	TeamStructure      string `json:"team_structure"`
+	TeamAssignmentMode string `json:"team_assignment_mode"`
+	TeamCount          int    `json:"team_count"`
+	PresetID           string `json:"preset_id"`
+	StartingLives      int    `json:"starting_lives"`
+	InfiniteLives      bool   `json:"infinite_lives"`
+	TargetScore        int    `json:"target_score"`
+	TargetKills        int    `json:"target_kills"`
 }
 
 type ReturnToLobbyRequest struct {

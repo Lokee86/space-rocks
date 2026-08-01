@@ -9,6 +9,7 @@ const SESSION_MULTIPLAYER := "multiplayer"
 const PRESET_ARCADE_SURVIVAL := "arcade_survival"
 const PRESET_SCORE_ATTACK := "score_attack"
 const PRESET_DEATHMATCH := "deathmatch"
+const PRESET_TEAM_DEATHMATCH := "team_deathmatch"
 const LIVES_INFINITE := "infinite"
 const TARGET_CUSTOM := "custom"
 const CUSTOM_TARGET_ERROR := "ENTER A POSITIVE CUSTOM TARGET"
@@ -38,6 +39,7 @@ const CUSTOM_TARGET_ERROR := "ENTER A POSITIVE CUSTOM TARGET"
 var session_mode := SESSION_MULTIPLAYER
 var is_pending := false
 var target_options_preset := ""
+var team_options_key := ""
 
 
 func _ready() -> void:
@@ -49,12 +51,7 @@ func _ready() -> void:
 		{"label": "5 LIVES", "value": 5},
 		{"label": "INFINITE", "value": LIVES_INFINITE},
 	], 3)
-	team_structure_select.replace_items([
-		{"label": "FREE-FOR-ALL", "value": "ffa"},
-		{"label": "CO-OP", "value": "co_op"},
-		{"label": "CUSTOM TEAMS", "value": "custom"},
-		{"label": "AUTO-BALANCED", "value": "auto_balanced"},
-	], "ffa")
+	_configure_team_options(PRESET_ARCADE_SURVIVAL)
 	assignment_select.replace_items([
 		{"label": "OWNER ASSIGNED", "value": "owner_assigned"},
 		{"label": "PLAYER SELECTED", "value": "player_selected"},
@@ -94,8 +91,10 @@ func configure_multiplayer() -> void:
 func current_config() -> Dictionary:
 	var preset_id := str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL))
 	var deathmatch := preset_id == PRESET_DEATHMATCH
+	var team_deathmatch := preset_id == PRESET_TEAM_DEATHMATCH
+	var combat_mode := deathmatch or team_deathmatch
 	var lives_value = lives_select.selected_value(3)
-	var infinite_lives := deathmatch or str(lives_value) == LIVES_INFINITE
+	var infinite_lives := combat_mode or str(lives_value) == LIVES_INFINITE
 	var config := {
 		"preset_id": preset_id,
 		"starting_lives": 0 if infinite_lives else int(lives_value),
@@ -104,8 +103,12 @@ func current_config() -> Dictionary:
 		"target_kills": _selected_target_kills(),
 	}
 	if session_mode == SESSION_SINGLE_PLAYER:
-		if deathmatch:
+		if combat_mode:
 			config["max_players"] = int(max_players_select.selected_value(8))
+		if team_deathmatch:
+			config["team_structure"] = "auto_balanced"
+			config["team_assignment_mode"] = ""
+			config["team_count"] = int(team_count_select.selected_value(2))
 		return config
 
 	var structure := "ffa" if deathmatch else str(team_structure_select.selected_value("ffa"))
@@ -128,6 +131,7 @@ func _apply_session_mode() -> void:
 	var single_player := session_mode == SESSION_SINGLE_PLAYER
 	title_label.text = "SINGLE PLAYER CONFIGURATION" if single_player else "MATCH CONFIGURATION"
 	create_action_label.text = "START GAME" if single_player else "CREATE ROOM"
+	team_options_key = ""
 	_refresh_game_mode_options()
 
 
@@ -139,6 +143,7 @@ func _refresh_game_mode_options() -> void:
 		{"label": "ARCADE SURVIVAL", "value": PRESET_ARCADE_SURVIVAL},
 		{"label": "SCORE ATTACK", "value": PRESET_SCORE_ATTACK},
 		{"label": "DEATHMATCH", "value": PRESET_DEATHMATCH},
+		{"label": "TEAM DEATHMATCH", "value": PRESET_TEAM_DEATHMATCH},
 	]
 	game_mode_select.replace_items(items, selected)
 
@@ -147,29 +152,32 @@ func _refresh_visibility() -> void:
 	var preset_id := str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL))
 	var score_attack := preset_id == PRESET_SCORE_ATTACK
 	var deathmatch := preset_id == PRESET_DEATHMATCH
-	var has_target := score_attack or deathmatch
+	var team_deathmatch := preset_id == PRESET_TEAM_DEATHMATCH
+	var combat_mode := deathmatch or team_deathmatch
+	var has_target := score_attack or combat_mode
 	_configure_target_options(preset_id)
-	lives_row.visible = not deathmatch
+	_configure_team_options(preset_id)
+	lives_row.visible = not combat_mode
 	target_score_row.visible = has_target
 	custom_target_score_row.visible = has_target and str(target_score_select.selected_value(_default_target(preset_id))) == TARGET_CUSTOM
 	var multiplayer := session_mode == SESSION_MULTIPLAYER
 	var structure := str(team_structure_select.selected_value("ffa"))
 	team_structure_row.visible = multiplayer and not deathmatch
-	assignment_row.visible = multiplayer and not deathmatch and structure == "custom"
-	team_count_row.visible = multiplayer and not deathmatch and structure == "auto_balanced"
-	max_players_row.visible = multiplayer or (session_mode == SESSION_SINGLE_PLAYER and deathmatch)
+	assignment_row.visible = multiplayer and structure == "custom"
+	team_count_row.visible = structure == "auto_balanced" and (multiplayer or team_deathmatch)
+	max_players_row.visible = multiplayer or (session_mode == SESSION_SINGLE_PLAYER and combat_mode)
 	_refresh_create_state()
 
 
 func _configure_target_options(preset_id: String) -> void:
-	if preset_id != PRESET_SCORE_ATTACK and preset_id != PRESET_DEATHMATCH:
+	if preset_id != PRESET_SCORE_ATTACK and preset_id != PRESET_DEATHMATCH and preset_id != PRESET_TEAM_DEATHMATCH:
 		target_options_preset = ""
 		return
 	if target_options_preset == preset_id:
 		return
 	target_options_preset = preset_id
 	custom_target_score_input.clear()
-	if preset_id == PRESET_DEATHMATCH:
+	if preset_id == PRESET_DEATHMATCH or preset_id == PRESET_TEAM_DEATHMATCH:
 		target_label.text = "KILL TARGET"
 		custom_target_score_input.placeholder_text = "ENTER KILLS"
 		target_score_select.replace_items([
@@ -194,8 +202,34 @@ func _configure_target_options(preset_id: String) -> void:
 	], 25000)
 
 
+func _configure_team_options(preset_id: String) -> void:
+	if team_structure_select == null:
+		return
+	var key := "%s:%s" % [preset_id, session_mode]
+	if team_options_key == key:
+		return
+	team_options_key = key
+	if preset_id == PRESET_TEAM_DEATHMATCH:
+		if session_mode == SESSION_SINGLE_PLAYER:
+			team_structure_select.replace_items([
+				{"label": "AUTO-BALANCED", "value": "auto_balanced"},
+			], "auto_balanced")
+			return
+		team_structure_select.replace_items([
+			{"label": "CUSTOM TEAMS", "value": "custom"},
+			{"label": "AUTO-BALANCED", "value": "auto_balanced"},
+		], "auto_balanced")
+		return
+	team_structure_select.replace_items([
+		{"label": "FREE-FOR-ALL", "value": "ffa"},
+		{"label": "CO-OP", "value": "co_op"},
+		{"label": "CUSTOM TEAMS", "value": "custom"},
+		{"label": "AUTO-BALANCED", "value": "auto_balanced"},
+	], "ffa")
+
+
 func _default_target(preset_id: String) -> int:
-	return 10 if preset_id == PRESET_DEATHMATCH else 25000
+	return 10 if preset_id == PRESET_DEATHMATCH or preset_id == PRESET_TEAM_DEATHMATCH else 25000
 
 
 func _refresh_create_state() -> void:
@@ -209,7 +243,7 @@ func _refresh_create_state() -> void:
 
 func _has_valid_target() -> bool:
 	var preset_id := str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL))
-	if preset_id != PRESET_SCORE_ATTACK and preset_id != PRESET_DEATHMATCH:
+	if preset_id != PRESET_SCORE_ATTACK and preset_id != PRESET_DEATHMATCH and preset_id != PRESET_TEAM_DEATHMATCH:
 		return true
 	var selected_target = target_score_select.selected_value(_default_target(preset_id))
 	if str(selected_target) != TARGET_CUSTOM:
@@ -224,9 +258,10 @@ func _selected_target_score() -> int:
 
 
 func _selected_target_kills() -> int:
-	if str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL)) != PRESET_DEATHMATCH:
+	var preset_id := str(game_mode_select.selected_value(PRESET_ARCADE_SURVIVAL))
+	if preset_id != PRESET_DEATHMATCH and preset_id != PRESET_TEAM_DEATHMATCH:
 		return 0
-	return _selected_target_value(PRESET_DEATHMATCH)
+	return _selected_target_value(preset_id)
 
 
 func _selected_target_value(preset_id: String) -> int:

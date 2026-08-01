@@ -27,6 +27,7 @@ func (game *Game) modeMatchFactsLocked() modes.MatchFacts {
 	sort.Strings(playerIDs)
 
 	facts := modes.MatchFacts{HadParticipants: len(playerIDs) > 0, Elapsed: game.matchElapsed}
+	teamScores := make(map[teams.ID]int)
 	for _, playerID := range playerIDs {
 		status := rules.PlayerEliminated
 		session, active := game.playerSessions[playerID]
@@ -55,6 +56,24 @@ func (game *Game) modeMatchFactsLocked() modes.MatchFacts {
 			CompletionTime: game.scoreCompletionTimes[playerID],
 			SuccessOrder:   game.scoreSuccessOrders[playerID],
 		})
+		if teamID != teams.NoTeam {
+			teamScores[teamID] += score
+		}
+	}
+	if game.resolvedMatchRules.TeamScoreEnabled {
+		teamIDs := make([]teams.ID, 0, len(teamScores))
+		for teamID := range teamScores {
+			teamIDs = append(teamIDs, teamID)
+		}
+		sort.Slice(teamIDs, func(left, right int) bool { return teamIDs[left] < teamIDs[right] })
+		for _, teamID := range teamIDs {
+			facts.Teams = append(facts.Teams, modes.TeamFact{
+				ID:             teamID,
+				Score:          teamScores[teamID],
+				CompletionTime: game.teamScoreCompletionTimes[teamID],
+				SuccessOrder:   game.teamScoreSuccessOrders[teamID],
+			})
+		}
 	}
 	return facts
 }

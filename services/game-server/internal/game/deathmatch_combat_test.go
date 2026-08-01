@@ -124,6 +124,80 @@ func TestDeathmatchBotTargetsOpposingPlayerWithoutAsteroids(t *testing.T) {
 	}
 }
 
+func TestTeamDeathmatchAggregatesKillsAndAwardsWinningTeam(t *testing.T) {
+	game := New()
+	resolved, err := modes.Resolve(
+		modes.RoomModeConfig{PresetID: modes.PresetTeamDeathmatch, TargetKills: 2},
+		teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := game.ConfigureMatchRules(resolved); err != nil {
+		t.Fatal(err)
+	}
+
+	teamOneA := game.AddPlayerWithTeam(teams.Team1)
+	teamOneB := game.AddPlayerWithTeam(teams.Team1)
+	game.AddPlayerWithTeam(teams.Team2)
+
+	game.AddPlayerScore(teamOneA, 1)
+	if decision := game.MatchDecision(); decision.IsOver {
+		t.Fatalf("match ended before team reached target: %+v", decision)
+	}
+	game.AddPlayerScore(teamOneB, 1)
+
+	decision := game.MatchDecision()
+	if !decision.IsOver || len(decision.WinningPlayerIDs) != 2 {
+		t.Fatalf("decision = %+v", decision)
+	}
+	if decision.WinningPlayerIDs[0] != teamOneA || decision.WinningPlayerIDs[1] != teamOneB {
+		t.Fatalf("winning players = %+v", decision.WinningPlayerIDs)
+	}
+	if displayScore := game.playerSessionStateLocked(game.playerSessions[teamOneA]).Score; displayScore != 2 {
+		t.Fatalf("team display score = %d, want 2", displayScore)
+	}
+}
+
+func TestTeamDeathmatchProjectileCannotDamageTeammate(t *testing.T) {
+	game := New()
+	resolved, err := modes.Resolve(
+		modes.RoomModeConfig{PresetID: modes.PresetTeamDeathmatch, TargetKills: 10},
+		teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := game.ConfigureMatchRules(resolved); err != nil {
+		t.Fatal(err)
+	}
+
+	attackerID := game.AddPlayerWithTeam(teams.Team1)
+	teammateID := game.AddPlayerWithTeam(teams.Team1)
+	attacker := game.entities.Players[attackerID]
+	teammate := game.entities.Players[teammateID]
+	teammate.X = attacker.X
+	teammate.Y = attacker.Y
+	before := teammate.Health
+	game.entities.Projectiles["friendly-shot"] = runtime.NewBullet(
+		"friendly-shot",
+		attackerID,
+		teammate.Position(),
+		0,
+		physics.Vector2{},
+		1,
+	)
+
+	game.handleBulletPlayerCollisions()
+
+	if teammate.Health != before {
+		t.Fatalf("teammate health = %d, want unchanged %d", teammate.Health, before)
+	}
+	if game.entities.Projectiles["friendly-shot"].IsPendingDespawn() {
+		t.Fatal("friendly projectile should not be consumed by a teammate")
+	}
+}
+
 func TestArcadeSurvivalDoesNotEnableProjectilePlayerDamage(t *testing.T) {
 	game := New()
 	attackerID := game.AddPlayer()

@@ -21,6 +21,15 @@ func buildMatchResultSummary(capture gameOverCapture, facts []game.PlayerMatchFa
 		players = append(players, summary)
 	}
 	summary := playerdata.BuildMatchResultSummary(capture.MatchID, mode, players)
+	if mode == playerdata.MatchModeMultiplayer && capture.Game != nil && capture.Game.ResolvedMatchRules().TeamScoreEnabled {
+		winningPlayers := make(map[string]struct{})
+		for _, playerID := range capture.Game.MatchDecision().WinningPlayerIDs {
+			winningPlayers[playerID] = struct{}{}
+		}
+		for index := range summary.Players {
+			_, summary.Players[index].Won = winningPlayers[summary.Players[index].GamePlayerID]
+		}
+	}
 	summary.TraceID = capture.TraceID
 	return summary
 }

@@ -33,14 +33,15 @@ Score Attack is a real second mode with a target-score finish condition.
 Score Attack records the first valid success and ranks it by completion time.
 Target-score success takes precedence over no-active-participant failure.
 FFA Deathmatch now resolves through the same mode seam with infinite respawns, a configurable kill target, player damage enabled, and asteroid encounter spawning disabled.
-Direct and radial projectile damage use authoritative team relationships; valid opposing-player kills increment the killer's mode score and lock the match at the kill target.
+Team Deathmatch resolves through the same combat mode with custom or auto-balanced teams, team-aggregated kill targets, and winning-team result resolution.
+Direct and radial projectile damage use authoritative team relationships; valid opposing-player kills increment the killer's authoritative count, while Team Deathmatch presents and evaluates the aggregate team count.
 Finite and infinite lives apply through the existing player-session life controls.
 Team configuration composes independently through the existing team owner.
 Create-room packets and room snapshots expose selected mode configuration and lock state.
 Existing room creation paths default to Arcade Survival.
 ```
 
-This slice deliberately does not import the later P4 awards, objective runtime, progression, inventory, or expanded result-orchestration systems. The single-player and multiplayer Create flows expose Arcade Survival and Score Attack, finite or infinite lives, and Score Attack targets from 25,000 through 150,000 in 25,000-point increments plus a validated custom positive target. Both flows also expose FFA Deathmatch with 5, 10, 15, 25, 50, or custom positive kill targets. Single-player Deathmatch supports 2-8 total combatants, fills every non-human slot with a bot, and enables bot pursuit and firing against opposing players. Deathmatch currently reuses the existing score field as authoritative kill count; dedicated kills/deaths HUD labeling, assists, spawn protection, team deathmatch, and time-limit/tie resolution remain later slices.
+This slice deliberately does not import the later P4 awards, objective runtime, progression, inventory, or expanded result-orchestration systems. The single-player and multiplayer Create flows expose Arcade Survival and Score Attack, finite or infinite lives, and Score Attack targets from 25,000 through 150,000 in 25,000-point increments plus a validated custom positive target. Both flows also expose FFA Deathmatch and Team Deathmatch with 5, 10, 15, 25, 50, or custom positive kill targets. Single-player combat modes support 2-8 total combatants and fill every non-human slot with a bot. Team Deathmatch uses auto-balanced teams in single player and custom or auto-balanced teams in multiplayer; friendly fire remains disabled, bots target only opponents, team kills aggregate authoritatively, and every member of the winning team receives the win result. Deathmatch currently reuses the existing score field as authoritative kill count; dedicated kills/deaths HUD labeling, assists, spawn protection, and time-limit/tie resolution remain later slices.
 
 ## Ownership Boundary
 

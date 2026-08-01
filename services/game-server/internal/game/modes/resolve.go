@@ -18,7 +18,7 @@ func NormalizeRoomModeConfig(config RoomModeConfig) RoomModeConfig {
 	if config.PresetID == "" {
 		config.PresetID = PresetArcadeSurvival
 	}
-	if config.PresetID == PresetDeathmatch {
+	if config.PresetID == PresetDeathmatch || config.PresetID == PresetTeamDeathmatch {
 		config.InfiniteLives = true
 		config.StartingLives = 0
 	} else if !config.InfiniteLives && config.StartingLives == 0 {
@@ -27,7 +27,7 @@ func NormalizeRoomModeConfig(config RoomModeConfig) RoomModeConfig {
 	if config.PresetID == PresetScoreAttack && config.TargetScore == 0 {
 		config.TargetScore = DefaultScoreAttackTarget
 	}
-	if config.PresetID == PresetDeathmatch && config.TargetKills == 0 {
+	if (config.PresetID == PresetDeathmatch || config.PresetID == PresetTeamDeathmatch) && config.TargetKills == 0 {
 		config.TargetKills = DefaultDeathmatchTargetKills
 	}
 	return config
@@ -50,7 +50,7 @@ func ValidateRoomModeConfig(config RoomModeConfig) error {
 		if config.TargetKills != 0 {
 			return fmt.Errorf("score_attack does not accept target_kills")
 		}
-	case PresetDeathmatch:
+	case PresetDeathmatch, PresetTeamDeathmatch:
 		if config.TargetKills <= 0 {
 			return fmt.Errorf("deathmatch target_kills must be positive")
 		}
@@ -79,7 +79,10 @@ func Resolve(config RoomModeConfig, teamConfig teams.Config) (ResolvedMatchRules
 		return ResolvedMatchRules{}, fmt.Errorf("invalid team configuration: %w", err)
 	}
 	if config.PresetID == PresetDeathmatch && teamConfig.Structure != teams.StructureFFA {
-		return ResolvedMatchRules{}, fmt.Errorf("deathmatch currently requires free-for-all teams")
+		return ResolvedMatchRules{}, fmt.Errorf("deathmatch requires free-for-all teams")
+	}
+	if config.PresetID == PresetTeamDeathmatch && teamConfig.Structure != teams.StructureCustom && teamConfig.Structure != teams.StructureAutoBalanced {
+		return ResolvedMatchRules{}, fmt.Errorf("team deathmatch requires custom or auto-balanced teams")
 	}
 
 	resolved := ResolvedMatchRules{
@@ -105,7 +108,7 @@ func Resolve(config RoomModeConfig, teamConfig teams.Config) (ResolvedMatchRules
 		resolved.RankingMetric = RankingCompletionTime
 		resolved.MatchEndPrecedence = []MatchEndCondition{EndTargetScoreReached, EndNoActivePlayers}
 		resolved.ResultPolicy = ResultScoreAttack
-	case PresetDeathmatch:
+	case PresetDeathmatch, PresetTeamDeathmatch:
 		resolved.ModeID = ModeDeathmatch
 		resolved.LivesPolicy = LivesPolicy{InfiniteLives: true}
 		resolved.ObjectivePolicy = ObjectivePolicy{DefinitionID: "deathmatch_kill_target_v1", TargetKills: config.TargetKills}
@@ -114,6 +117,12 @@ func Resolve(config RoomModeConfig, teamConfig teams.Config) (ResolvedMatchRules
 		resolved.ResultPolicy = ResultDeathmatch
 		resolved.PlayerDamageEnabled = true
 		resolved.EncounterSpawnProfileIDs = nil
+		if config.PresetID == PresetTeamDeathmatch {
+			resolved.ObjectivePolicy.DefinitionID = "team_deathmatch_kill_target_v1"
+			resolved.RankingMetric = RankingTeamKills
+			resolved.ResultPolicy = ResultTeamDeathmatch
+			resolved.TeamScoreEnabled = true
+		}
 	}
 	return CloneResolvedMatchRules(resolved), nil
 }

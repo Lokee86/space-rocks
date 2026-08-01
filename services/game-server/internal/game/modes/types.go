@@ -13,6 +13,7 @@ const (
 	PresetArcadeSurvival PresetID = "arcade_survival"
 	PresetScoreAttack    PresetID = "score_attack"
 	PresetDeathmatch     PresetID = "deathmatch"
+	PresetTeamDeathmatch PresetID = "team_deathmatch"
 
 	ModeArcadeSurvival ModeID = "arcade_survival"
 	ModeScoreAttack    ModeID = "score_attack"
@@ -50,6 +51,7 @@ const (
 	RankingNone           RankingMetric = "none"
 	RankingCompletionTime RankingMetric = "completion_time"
 	RankingKills          RankingMetric = "kills"
+	RankingTeamKills      RankingMetric = "team_kills"
 )
 
 type MatchEndCondition string
@@ -63,9 +65,10 @@ const (
 type ResultPolicy string
 
 const (
-	ResultFinalFacts  ResultPolicy = "final_facts"
-	ResultScoreAttack ResultPolicy = "score_attack"
-	ResultDeathmatch  ResultPolicy = "deathmatch"
+	ResultFinalFacts     ResultPolicy = "final_facts"
+	ResultScoreAttack    ResultPolicy = "score_attack"
+	ResultDeathmatch     ResultPolicy = "deathmatch"
+	ResultTeamDeathmatch ResultPolicy = "team_deathmatch"
 )
 
 type ResolvedMatchRules struct {
@@ -79,6 +82,7 @@ type ResolvedMatchRules struct {
 	MatchEndPrecedence       []MatchEndCondition
 	ResultPolicy             ResultPolicy
 	PlayerDamageEnabled      bool
+	TeamScoreEnabled         bool
 	PlayerSpawnProfileID     string
 	EncounterSpawnProfileIDs []string
 	InGameJoiningAllowed     bool
@@ -96,8 +100,16 @@ type PlayerFact struct {
 	SuccessOrder   int
 }
 
+type TeamFact struct {
+	ID             teams.ID
+	Score          int
+	CompletionTime float64
+	SuccessOrder   int
+}
+
 type MatchFacts struct {
 	Players         []PlayerFact
+	Teams           []TeamFact
 	HadParticipants bool
 	Elapsed         float64
 }

@@ -6,8 +6,43 @@ import (
 	"time"
 
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/modes"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/playerdata"
 )
+
+func TestTeamDeathmatchSummaryMarksEveryWinningTeammate(t *testing.T) {
+	gameInstance := game.New()
+	resolved, err := modes.Resolve(
+		modes.RoomModeConfig{PresetID: modes.PresetTeamDeathmatch, TargetKills: 2},
+		teams.Config{Structure: teams.StructureAutoBalanced, AutoTeamCount: 2},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := gameInstance.ConfigureMatchRules(resolved); err != nil {
+		t.Fatal(err)
+	}
+	teamOneA := gameInstance.AddPlayerWithTeam(teams.Team1)
+	teamOneB := gameInstance.AddPlayerWithTeam(teams.Team1)
+	teamTwo := gameInstance.AddPlayerWithTeam(teams.Team2)
+	gameInstance.AddPlayerScore(teamOneA, 1)
+	gameInstance.AddPlayerScore(teamOneB, 1)
+
+	summary := buildMatchResultSummary(gameOverCapture{
+		Game:     gameInstance,
+		MatchID:  "match-team-deathmatch",
+		Joinable: true,
+	}, gameInstance.PlayerMatchFacts())
+
+	wonByID := map[string]bool{}
+	for _, player := range summary.Players {
+		wonByID[player.GamePlayerID] = player.Won
+	}
+	if !wonByID[teamOneA] || !wonByID[teamOneB] || wonByID[teamTwo] {
+		t.Fatalf("winner flags = %+v", wonByID)
+	}
+}
 
 func TestGuestSinglePlayerResolvedMatchSummary(t *testing.T) {
 	room := NewRoom("room", RoomStateLobby, nil)
