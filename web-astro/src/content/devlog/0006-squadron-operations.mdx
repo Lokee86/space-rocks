@@ -1,0 +1,155 @@
+---
+title: "Devlog 006: Squadron Operations"
+date: 2026-08-01
+summary: |
+  **Mobilization Status**: The Ranger tactical network is online. Space Rocks! now supports hosted multiplayer rooms, team assignments, server-controlled pilots, and repeated-match field testing.
+socialImage: "/media/devlog/0006-squadron-operations/squadron_fight.png"
+socialImageAlt: "Ranger squadrons exchange fire while weaving through a dense asteroid field."
+heroLine1: "RANGER SQUADRONS FORMING"
+heroLine2: "TACTICAL NETWORK ONLINE"
+heroLine3: "FIELD OPERATIONS ACTIVE"
+heroMediaKind: "youtube"
+heroImages: []
+heroYoutubeUrl: "https://www.youtube.com/watch?v=FAo29d2RNfQ"
+heroVideoSrc: ""
+heroVideoAutoPlay: false
+heroVideoMuted: true
+heroVideoLoop: false
+heroMediaAlt: "Space Rocks multiplayer bots operating in a live match."
+articleLabel: "Devlog Entry - 006"
+articleTitle: "Squadron Operations"
+intro: |
+  The reserve pilots activated in the last report are no longer waiting in the hangar.
+
+  Space Rocks! has crossed another major line: complete multiplayer matches can now be created, joined, played, ended, and restarted through services running beyond the development machine. Teams and server-controlled pilots have joined the fight, while a new tactical-network layer keeps distant players visible without trying to transmit the entire battlefield to everyone at once.
+
+  - [Ranger Mobilization Order 06-Alpha](#ranger-mobilization-order-06-alpha)
+  - [The Server Is Out There](#the-server-is-out-there)
+  - [Pick a Side](#pick-a-side)
+  - [Keeping the Battle Together](#keeping-the-battle-together)
+  - [Ninety Sorties Later](#ninety-sorties-later)
+  - [What’s Next](#whats-next)
+articleMediaKind: "images"
+articleImages:
+  - "/media/devlog/0006-squadron-operations/squadron_fight.png"
+articleYoutubeUrl: ""
+articleMediaAlt: "Ranger squadrons exchange fire while weaving through a dense asteroid field."
+finishedTitle: "Hosted Multiplayer"
+finishedBody: "Remote rooms, teams, bots, and repeated matches are operational."
+nowTitle: "Field Trials"
+nowBody: "Putting the multiplayer alpha under real players and heavier combat load."
+comingUpTitle: "Combat Modes"
+comingUpBody: "Structured matches with objectives beyond basic survival."
+utilityTitle: "Mobilization Status"
+utilityText: |
+  **Mobilization Status**: Ranger squadrons are forming across Xenobia. Hosted multiplayer, team operations, autonomous training pilots, and tactical tracking are now active in the controlled alpha.
+finePrint: >
+  Space Rocks! is an active development project. All media, features, names, and content
+  are work in progress and subject to change before final release.
+---
+
+## Ranger Mobilization Order 06-Alpha
+
+**XENOBIAN RANGER COMMAND**  
+**EMERGENCY MOBILIZATION DIRECTIVE**  
+**CLEARANCE: ACTIVE FLIGHT PERSONNEL**
+
+Effective immediately, newly activated Ranger pilots are to be organized into operational squadrons and assigned to the expanding outer-system response network.
+
+Individual patrols are no longer considered sufficient.
+
+Unscheduled asteroid fields continue to divide established routes, disrupt long-range sensors, and isolate vessels from direct support. Pirate formations have adapted quickly, using the debris to conceal movement and attack ships separated from their escorts. Unidentified transmissions remain active in multiple sectors, and several Ranger probes have failed to return from the Gideon exclusion zone.
+
+All deployed interceptors will now carry synchronized tactical identifiers. Squadron colours, pilot positions, confirmed losses, and emergency locator signals will be relayed through the Ranger command network wherever communications permit.
+
+Pilots are reminded that a missing tactical marker does not necessarily indicate a destroyed vessel.
+
+It may indicate sensor interference, communications failure, unauthorized equipment modification, navigational incompetence, or a destroyed vessel.
+
+Reserve personnel will begin accelerated formation training alongside autonomous Ranger craft. These units are authorized to manoeuvre, engage targets, suffer catastrophic damage, return to service, and receive mission credit under the same operational rules as human pilots.
+
+They are not authorized to complain about assignment balance.
+
+Squadron commanders may divide available pilots into opposing teams for combat exercises. Team identification remains fixed for the duration of an operation. Weapons fire will continue to damage only hostile vessels until Ranger Command determines that recruits can be trusted with anything more complicated.
+
+Remote launch authorization is now active for selected field stations.
+
+Ranger pilots cleared for the current controlled deployment may establish a room, assemble a squadron, assign teams, add autonomous pilots, and begin operations through the hosted tactical network.
+
+This is not a general civilian service. It is not a production deployment. It is an emergency field trial conducted with unfinished equipment under combat conditions.
+
+In other words, standard Ranger procedure.
+
+## The Server Is Out There
+
+Devlog 005 marked the first time Space Rocks! could be packaged, moved to another computer, and launched without the source project or development tools.
+
+This time, the important machine is the one the game is **not** running on.
+
+The game-server, account API, database, and diagnostic services now have a hosted deployment stack. Multiplayer alpha builds can connect to those remote services, authenticate, create or join rooms, establish realtime WebRTC connections, and play complete matches without quietly falling back to a server running on the player’s own computer.
+
+That does not make this production infrastructure. It is still a controlled development environment with limited operational guarantees and plenty of sharp edges. It does, however, prove the real shape of online Space Rocks!: a client connecting through the internet to an authoritative game simulation running somewhere else.
+
+The release pipeline was updated around that target as well. Windows and macOS multiplayer builds now carry the hosted endpoints they need, package through their own release path, and fail more cleanly when a room or service is unavailable. The result is still an alpha, but it is now an alpha that can be tested as an online game rather than a collection of local processes pretending to be one.
+
+## Pick a Side
+
+Multiplayer rooms now support team play from creation through final results.
+
+Players can choose their team in the lobby, see those assignments carried into the match, identify allies through consistent ship and interface colours, and receive results grouped by team when the fighting ends. Team identity is owned by the server, so a ship does not forget which side it belongs to when it is destroyed, respawned, temporarily outside another player’s view, or returned to the lobby for another round.
+
+The room owner can also add server-controlled pilots.
+
+These bots are not fake entries added only to fill a scoreboard. They fly inside the authoritative simulation, shoot, collide, die, respawn, score, join teams, appear in results, and return for the next match. They make it possible to pressure the same gameplay and networking systems used by real players without finding seven volunteers every time a test needs a crowded battlefield.
+
+That matters for development, but it also makes the game immediately more useful. A single player can create a multiplayer-shaped match, add opponents or teammates, experiment with team configurations, and start fighting without waiting for a full room.
+
+The lobby and results screens received another pass to support all of this. Team selectors, roster rows, controls, colour markers, and final standings now follow the same battered transmission-screen presentation as the rest of the interface instead of looking like temporary developer forms bolted onto the side.
+
+## Keeping the Battle Together
+
+A multiplayer asteroid field can become enormous very quickly.
+
+Every player may be moving in a different direction while asteroids split, bullets cross the world, ships die and respawn, and spectators change which fight they are watching. Sending every detail about every object to every player forever would be simple, wasteful, and increasingly expensive as rooms grow.
+
+Space Rocks! now builds a different view of the battlefield for each connected player.
+
+Objects near the active camera receive detailed movement and lifecycle updates. Distant ships can fall out of that detailed region, but the client retains coarse locator information so off-screen indicators still point toward them and spectators can select a pilot who is not currently rendered. When the camera changes targets, the server shifts that player’s detailed interest region toward the selected ship.
+
+The result is a battlefield that can be larger than one screen without making distant players disappear from the match entirely.
+
+The realtime lanes carrying ships, asteroids, bullets, lifecycle changes, session state, and locator updates were also reworked under multiplayer load. Large bursts can spread across controlled cadence tiers instead of overwhelming a single update, while important reliable state continues moving even when the hottest movement lanes are under pressure.
+
+Camera zoom now works with that larger view as well. Players can pull back for situational awareness or move closer to the immediate fight, with the starfield and world presentation scaling together instead of exposing the illusion behind the background.
+
+Most of this work should be invisible during a healthy match. Ships should move, indicators should remain useful, colours should stay stable, cooldowns should sweep smoothly, and the game should continue to make sense even when eight participants are scattered across the field.
+
+That invisibility is the point.
+
+## Ninety Sorties Later
+
+Online systems rarely fail only during the first match.
+
+They fail after players leave and return. After the room resets. After the same ship has died several hundred times. After an old object remains referenced somewhere it should have been released. After one more match begins on top of the remains of the previous eighty-nine.
+
+The runtime scenario system now drives the real client and server through repeatable multiplayer operations. It can create rooms, authenticate clients, add server-controlled pilots, start matches, generate sustained combat pressure, force deaths and spectator transitions, collect measurements, return everyone to the lobby, and do it again.
+
+One test held eight participants in the same room—two real headless clients and six bots—and repeated the complete match lifecycle ninety times.
+
+The first long run found a genuine problem. A development observer used by the pressure test was retaining every finished game, causing server memory to climb as the room cycled through matches. The ownership error was isolated, repaired, and the same ninety-match workload was run again.
+
+The repaired run completed all ninety matches in roughly eighteen minutes. Both clients agreed on every match identifier and every eight-player result set. No client send failures were reported, no receiver updates were skipped, goroutine count remained effectively flat, and server memory stayed within a narrow range from the beginning of the run to the end.
+
+That test does not prove the multiplayer alpha is finished. It proves something more useful: the project can now create a difficult, repeatable failure, measure it, find the retaining owner, fix it, and rerun the same workload to verify the repair.
+
+## What’s Next
+
+The immediate job is to put this system in front of more actual pilots.
+
+Hosted room creation, joining, authentication, realtime connectivity, team selection, bots, match restarts, results, and failure handling all need experience from different machines, networks, and operating systems. Controlled tests have already exposed problems that local play could not, and the next round will find more.
+
+Gameplay is also moving beyond the current survival-shaped match. The team and match foundations are now strong enough to support structured combat modes, including free-for-all and team-based score competition, followed by objectives that give squadrons something more specific to accomplish than remaining alive near an unreasonable quantity of rocks.
+
+The reserves have launched.
+
+Now we find out whether they can fight together.
