@@ -1,7 +1,18 @@
 [constants.client.shell.network]
 single_player_ws_url = "ws://localhost:8080/ws"
+local_packaged_single_player_ws_url = "ws://127.0.0.1:8080/ws"
 multiplayer_ws_url = "wss://game.laughingskull.ca/ws"
 multiplayer_ws_origin = "https://space-rocks.laughingskull.ca"
+development_rails_api_base_url = "http://localhost:3000"
+multiplayer_rails_api_base_url = "https://api.laughingskull.ca"
+development_player_data_api_base_url = "http://localhost:8080"
+local_packaged_player_data_api_base_url = "http://127.0.0.1:8080"
+multiplayer_player_data_api_base_url = "https://game.laughingskull.ca"
+single_player_ws_url_env = "SPACE_ROCKS_SINGLE_PLAYER_WS_URL"
+multiplayer_ws_url_env = "SPACE_ROCKS_MULTIPLAYER_WS_URL"
+multiplayer_ws_origin_env = "SPACE_ROCKS_MULTIPLAYER_WS_ORIGIN"
+rails_api_base_url_env = "SPACE_ROCKS_RAILS_API_BASE_URL"
+player_data_api_base_url_env = "SPACE_ROCKS_PLAYER_DATA_API_BASE_URL"
 network_poll_process_priority = -100
 webrtc_ice_servers = []
 

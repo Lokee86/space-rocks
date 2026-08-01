@@ -71,8 +71,19 @@ const PLAYER_LOCATOR_STALE_SECONDS := 2.0
 
 # data-sync:start constants.client.shell.network
 const SINGLE_PLAYER_WS_URL := "ws://localhost:8080/ws"
+const LOCAL_PACKAGED_SINGLE_PLAYER_WS_URL := "ws://127.0.0.1:8080/ws"
 const MULTIPLAYER_WS_URL := "wss://game.laughingskull.ca/ws"
 const MULTIPLAYER_WS_ORIGIN := "https://space-rocks.laughingskull.ca"
+const DEVELOPMENT_RAILS_API_BASE_URL := "http://localhost:3000"
+const MULTIPLAYER_RAILS_API_BASE_URL := "https://api.laughingskull.ca"
+const DEVELOPMENT_PLAYER_DATA_API_BASE_URL := "http://localhost:8080"
+const LOCAL_PACKAGED_PLAYER_DATA_API_BASE_URL := "http://127.0.0.1:8080"
+const MULTIPLAYER_PLAYER_DATA_API_BASE_URL := "https://game.laughingskull.ca"
+const SINGLE_PLAYER_WS_URL_ENV := "SPACE_ROCKS_SINGLE_PLAYER_WS_URL"
+const MULTIPLAYER_WS_URL_ENV := "SPACE_ROCKS_MULTIPLAYER_WS_URL"
+const MULTIPLAYER_WS_ORIGIN_ENV := "SPACE_ROCKS_MULTIPLAYER_WS_ORIGIN"
+const RAILS_API_BASE_URL_ENV := "SPACE_ROCKS_RAILS_API_BASE_URL"
+const PLAYER_DATA_API_BASE_URL_ENV := "SPACE_ROCKS_PLAYER_DATA_API_BASE_URL"
 const NETWORK_POLL_PROCESS_PRIORITY := -100
 const WEBRTC_ICE_SERVERS := []
 # data-sync:end constants.client.shell.network

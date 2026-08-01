@@ -1,7 +1,7 @@
 extends Node
 class_name LocalAlphaProfileSmoke
 
-const LOCAL_SERVER_PORT_ENV := "SPACE_ROCKS_LOCAL_SERVER_PORT"
+const ApiConfig := preload("res://scripts/api/api_config.gd")
 const HEALTH_ATTEMPTS := 50
 const CONDITION_ATTEMPTS := 150
 const CLEANUP_ATTEMPTS := 20
@@ -186,10 +186,7 @@ func _parse_json_dictionary(text: String) -> Dictionary:
 
 
 func _base_url() -> String:
-	var port := OS.get_environment(LOCAL_SERVER_PORT_ENV).strip_edges()
-	if !port.is_valid_int() || port.to_int() < 1 || port.to_int() > 65535:
-		port = "8080"
-	return "http://127.0.0.1:%s" % port
+	return ApiConfig.player_data_base_url()
 
 
 func _failure(message: String) -> Dictionary:

@@ -2,7 +2,11 @@ extends GutTest
 
 const NetworkClient := preload("res://scripts/networking/network_client.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
+const Constants := preload("res://scripts/generated/constants/constants.gd")
 const ObservabilityContract := preload("res://scripts/generated/observability/contract_generated.gd")
+
+var _had_original_origin := false
+var _original_origin := ""
 
 
 class FakeSocket:
@@ -54,10 +58,17 @@ class FakeWriter extends RefCounted:
 
 func before_each() -> void:
 	ClientLogger.reset_for_tests()
+	_had_original_origin = OS.has_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV)
+	_original_origin = OS.get_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV)
+	OS.unset_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV)
 
 
 func after_each() -> void:
 	ClientLogger.reset_for_tests()
+	if _had_original_origin:
+		OS.set_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV, _original_origin)
+	else:
+		OS.unset_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV)
 
 
 func _trace_id() -> String:
@@ -66,9 +77,11 @@ func _trace_id() -> String:
 
 func _last_record(writer: FakeWriter) -> Dictionary:
 	return JSON.parse_string(writer.written_lines.back())
+
+
 func test_connect_uses_local_client_origin_for_insecure_websocket_target() -> void:
 	var client := NetworkClient.new()
-	autofree(client)
+	add_child_autofree(client)
 	var fake_socket := FakeSocket.new()
 	client.set_socket_for_tests(fake_socket)
 
@@ -81,7 +94,7 @@ func test_connect_uses_local_client_origin_for_insecure_websocket_target() -> vo
 
 func test_connect_uses_host_only_origin_for_custom_loopback_port() -> void:
 	var client := NetworkClient.new()
-	autofree(client)
+	add_child_autofree(client)
 	var fake_socket := FakeSocket.new()
 	client.set_socket_for_tests(fake_socket)
 
@@ -94,15 +107,27 @@ func test_connect_uses_host_only_origin_for_custom_loopback_port() -> void:
 
 func test_connect_uses_official_client_origin_for_secure_websocket_target() -> void:
 	var client := NetworkClient.new()
-	autofree(client)
+	add_child_autofree(client)
 	var fake_socket := FakeSocket.new()
 	client.set_socket_for_tests(fake_socket)
 
-	assert_eq(client.connect_to_server("wss://game.laughingskull.ca/ws"), OK)
+	assert_eq(client.connect_to_server(Constants.MULTIPLAYER_WS_URL), OK)
 	assert_eq(
 		fake_socket.handshake_headers,
-		PackedStringArray(["Origin: https://space-rocks.laughingskull.ca"])
+		PackedStringArray(["Origin: %s" % Constants.MULTIPLAYER_WS_ORIGIN])
 	)
+
+
+func test_connect_accepts_full_websocket_origin_environment_override() -> void:
+	OS.set_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV, " https://client.example.test/ ")
+	var client := NetworkClient.new()
+	add_child_autofree(client)
+	var fake_socket := FakeSocket.new()
+	client.set_socket_for_tests(fake_socket)
+
+	client.connect_to_server(Constants.MULTIPLAYER_WS_URL)
+
+	assert_eq(fake_socket.handshake_headers, PackedStringArray(["Origin: https://client.example.test"]))
 
 
 func test_network_metrics_snapshot_reports_default_transport_with_fake_socket() -> void:

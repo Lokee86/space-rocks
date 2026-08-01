@@ -39,7 +39,7 @@ func connect_to_server(url: String) -> Error:
 	closed_notified = false
 	close_result_notified = false
 	socket.handshake_headers = PackedStringArray([
-		"Origin: %s" % websocket_origin_for_url(url)
+		"Origin: %s" % _websocket_origin(url)
 	])
 	var err: Error = socket.connect_to_url(url)
 	return err
@@ -222,6 +222,13 @@ func _connection_trace_id() -> String:
 	if !_connection_trace_provider.is_valid():
 		return ""
 	return str(_connection_trace_provider.call())
+
+
+func _websocket_origin(url: String) -> String:
+	var override_origin := OS.get_environment(Constants.MULTIPLAYER_WS_ORIGIN_ENV).strip_edges().trim_suffix("/")
+	if !override_origin.is_empty():
+		return override_origin
+	return websocket_origin_for_url(url)
 
 
 func _close_code() -> int:
