@@ -17,7 +17,7 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 		outbound:          make(chan []byte, 1),
 	}
 
-	session.handleStartSinglePlayerRequest("", "", "", 0, false, 0, 0)
+	session.handleStartSinglePlayerRequest("", "", 1, "", 0, false, 0, 0)
 
 	if session.sessionContext().RoomID == "" {
 		t.Fatal("expected room to be created")
@@ -39,7 +39,7 @@ func TestHandleStartSinglePlayerRequestAppliesSelectedMode(t *testing.T) {
 		outbound:          make(chan []byte, 4),
 	}
 
-	session.handleStartSinglePlayerRequest("pilot-1", "", string(modes.PresetScoreAttack), 5, false, 2500, 0)
+	session.handleStartSinglePlayerRequest("pilot-1", "", 1, string(modes.PresetScoreAttack), 5, false, 2500, 0)
 
 	room := session.sessionContext().Room
 	if room == nil {
@@ -55,6 +55,46 @@ func TestHandleStartSinglePlayerRequestAppliesSelectedMode(t *testing.T) {
 	}
 	if resolved.ModeID != modes.ModeScoreAttack || resolved.ObjectivePolicy.TargetScore != 2500 || resolved.LivesPolicy.StartingLives != 5 {
 		t.Fatalf("unexpected resolved match rules: %+v", resolved)
+	}
+	assertNoQueuedRoomErrorPacket(t, session.outbound)
+}
+
+func TestHandleStartSinglePlayerDeathmatchCreatesBotOpponents(t *testing.T) {
+	session := &webSocketSession{
+		sessionID:         "session-1",
+		connectionTraceID: "550e8400-e29b-41d4-a716-446655440035",
+		rooms:             rooms.NewRoomManagerWithCleanupDelay(0),
+		outbound:          make(chan []byte, 8),
+	}
+
+	session.handleStartSinglePlayerRequest("pilot-1", "", 4, string(modes.PresetDeathmatch), 0, true, 0, 10)
+
+	room := session.sessionContext().Room
+	if room == nil {
+		t.Fatal("expected deathmatch room to be created")
+	}
+	members := room.MembersSnapshot()
+	if len(members) != 4 {
+		t.Fatalf("members = %d, want 4 combatants", len(members))
+	}
+	bots := 0
+	for _, member := range members {
+		if member.IsBot {
+			bots++
+		}
+	}
+	if bots != 3 {
+		t.Fatalf("bots = %d, want 3", bots)
+	}
+	if room.MaxPlayers != 4 {
+		t.Fatalf("max players = %d, want 4", room.MaxPlayers)
+	}
+	resolved, ok := room.ResolvedMatchRules()
+	if !ok || resolved.ModeID != modes.ModeDeathmatch {
+		t.Fatalf("resolved = %+v, ok = %v", resolved, ok)
+	}
+	if facts := room.GameInstance().PlayerMatchFacts(); len(facts) != 4 {
+		t.Fatalf("active match facts = %d, want 4", len(facts))
 	}
 	assertNoQueuedRoomErrorPacket(t, session.outbound)
 }

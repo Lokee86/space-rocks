@@ -94,6 +94,36 @@ func TestDeathmatchProjectileCannotDamageOwner(t *testing.T) {
 	}
 }
 
+func TestDeathmatchBotTargetsOpposingPlayerWithoutAsteroids(t *testing.T) {
+	game := New()
+	resolved, err := modes.Resolve(
+		modes.RoomModeConfig{PresetID: modes.PresetDeathmatch, TargetKills: 10},
+		teams.Config{Structure: teams.StructureFFA},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := game.ConfigureMatchRules(resolved); err != nil {
+		t.Fatal(err)
+	}
+
+	humanID := game.AddPlayer()
+	botID := game.AddBot()
+	human := game.entities.Players[humanID]
+	bot := game.entities.Players[botID]
+	bot.X = 100
+	bot.Y = 100
+	bot.Rotation = 0
+	human.X = 100
+	human.Y = 20
+
+	game.stepBots()
+
+	if !bot.Input.PrimaryFire || !bot.Input.Forward || bot.Input.Left || bot.Input.Right {
+		t.Fatalf("bot input = %+v, want aligned pursuit and fire", bot.Input)
+	}
+}
+
 func TestArcadeSurvivalDoesNotEnableProjectilePlayerDamage(t *testing.T) {
 	game := New()
 	attackerID := game.AddPlayer()

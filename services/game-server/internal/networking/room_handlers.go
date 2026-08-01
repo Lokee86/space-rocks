@@ -147,7 +147,7 @@ func (session *webSocketSession) handleStartGameRequest() {
 	BroadcastRoomSnapshot(room)
 }
 
-func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int) {
+func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string, traceID string, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int) {
 	context := session.sessionContext()
 	if traceID == "" {
 		traceID = session.connectionTraceID
@@ -158,10 +158,10 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 		return
 	}
 
-	room, roomErr := session.rooms.CreateStartedSinglePlayerRoomWithModeConfig(session.sessionID, modes.RoomModeConfig{
+	room, roomErr := session.rooms.CreateStartedSinglePlayerRoomWithConfig(session.sessionID, modes.RoomModeConfig{
 		PresetID: modes.PresetID(presetID), StartingLives: startingLives,
 		InfiniteLives: infiniteLives, TargetScore: targetScore, TargetKills: targetKills,
-	})
+	}, maxPlayers)
 	if roomErr != nil {
 		failureTraceID := traceID
 		if failureTraceID == "" {

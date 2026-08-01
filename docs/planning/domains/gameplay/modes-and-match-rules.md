@@ -40,7 +40,7 @@ Create-room packets and room snapshots expose selected mode configuration and lo
 Existing room creation paths default to Arcade Survival.
 ```
 
-This slice deliberately does not import the later P4 awards, objective runtime, progression, inventory, or expanded result-orchestration systems. The single-player and multiplayer Create flows expose Arcade Survival and Score Attack, finite or infinite lives, and Score Attack targets from 25,000 through 150,000 in 25,000-point increments plus a validated custom positive target. Multiplayer also exposes an initial FFA Deathmatch path with 5, 10, 15, 25, 50, or custom positive kill targets. Deathmatch currently reuses the existing score field as authoritative kill count; dedicated kills/deaths HUD labeling, bot PvP targeting, assists, spawn protection, team deathmatch, and time-limit/tie resolution remain later slices.
+This slice deliberately does not import the later P4 awards, objective runtime, progression, inventory, or expanded result-orchestration systems. The single-player and multiplayer Create flows expose Arcade Survival and Score Attack, finite or infinite lives, and Score Attack targets from 25,000 through 150,000 in 25,000-point increments plus a validated custom positive target. Both flows also expose FFA Deathmatch with 5, 10, 15, 25, 50, or custom positive kill targets. Single-player Deathmatch supports 2-8 total combatants, fills every non-human slot with a bot, and enables bot pursuit and firing against opposing players. Deathmatch currently reuses the existing score field as authoritative kill count; dedicated kills/deaths HUD labeling, assists, spawn protection, team deathmatch, and time-limit/tie resolution remain later slices.
 
 ## Ownership Boundary
 

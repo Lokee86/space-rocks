@@ -64,6 +64,15 @@ func (game *Game) stepBots() {
 			Velocity:  ship.Velocity,
 			Rotation:  ship.Rotation,
 			Asteroids: make([]bots.AsteroidObservation, 0),
+			Players:   make([]bots.PlayerObservation, 0),
+		}
+		if game.resolvedMatchRules.PlayerDamageEnabled {
+			for targetID, target := range game.entities.Players {
+				if target == nil || target.IsPendingDespawn() || !game.projectileCanDamagePlayerLocked(playerID, targetID) {
+					continue
+				}
+				observation.Players = append(observation.Players, bots.PlayerObservation{Position: target.Position()})
+			}
 		}
 		for _, asteroid := range game.entities.Asteroids {
 			if asteroid == nil || asteroid.PendingDespawn {

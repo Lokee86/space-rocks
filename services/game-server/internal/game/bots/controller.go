@@ -23,11 +23,16 @@ type AsteroidObservation struct {
 	Size     int
 }
 
+type PlayerObservation struct {
+	Position physics.Vector2
+}
+
 type Observation struct {
 	Position  physics.Vector2
 	Velocity  physics.Vector2
 	Rotation  float64
 	Asteroids []AsteroidObservation
+	Players   []PlayerObservation
 }
 
 type Controller struct{}
@@ -37,11 +42,23 @@ func NewController() *Controller {
 }
 
 func (controller *Controller) Decide(observation Observation) runtime.InputState {
-	if len(observation.Asteroids) == 0 {
+	targetDelta := physics.Vector2{}
+	targetDistance := math.MaxFloat64
+	for _, player := range observation.Players {
+		delta := space.Delta(observation.Position, player.Position)
+		distance := delta.Length()
+		if distance < targetDistance {
+			targetDelta = delta
+			targetDistance = distance
+		}
+	}
+	if targetDistance == math.MaxFloat64 {
+		targetDelta, targetDistance = nearestAsteroid(observation)
+	}
+	if targetDistance == math.MaxFloat64 {
 		return runtime.InputState{Forward: true}
 	}
 
-	targetDelta, targetDistance := nearestAsteroid(observation)
 	desiredDelta := targetDelta
 	if avoidanceDelta, avoiding := imminentAvoidance(observation); avoiding {
 		desiredDelta = avoidanceDelta

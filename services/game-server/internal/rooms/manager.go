@@ -108,9 +108,13 @@ func (manager *RoomManager) CreateSinglePlayerRoom(sessionID string) (*Room, err
 }
 
 func (manager *RoomManager) CreateSinglePlayerRoomWithModeConfig(sessionID string, modeConfig modes.RoomModeConfig) (*Room, error) {
+	return manager.CreateSinglePlayerRoomWithConfig(sessionID, modeConfig, 1)
+}
+
+func (manager *RoomManager) CreateSinglePlayerRoomWithConfig(sessionID string, modeConfig modes.RoomModeConfig, maxPlayers int) (*Room, error) {
 	creation := DefaultRoomCreationConfig()
 	creation.ModeConfig = modeConfig
-	creation.MaxPlayers = 1
+	creation.MaxPlayers = singlePlayerRoomCapacity(modeConfig, maxPlayers)
 	creation = normalizeRoomCreationConfig(creation)
 	if err := validateRoomCreationConfig(creation); err != nil {
 		return nil, err
@@ -140,6 +144,17 @@ func (manager *RoomManager) CreateSinglePlayerRoomWithModeConfig(sessionID strin
 	}
 
 	return nil, fmt.Errorf("generate unique room code")
+}
+
+func singlePlayerRoomCapacity(modeConfig modes.RoomModeConfig, requested int) int {
+	normalized := modes.NormalizeRoomModeConfig(modeConfig)
+	if normalized.PresetID != modes.PresetDeathmatch {
+		return 1
+	}
+	if requested < 2 {
+		return 2
+	}
+	return requested
 }
 
 func (manager *RoomManager) JoinRoom(sessionID string, roomCode string) (*Room, *RoomDomainError) {

@@ -181,6 +181,29 @@ func test_single_player_hides_multiplayer_rows_and_returns_mode_config() -> void
 	assert_eq((setup.get_node("%Title") as Label).text, "SINGLE PLAYER CONFIGURATION")
 
 
+func test_single_player_deathmatch_exposes_bot_combatant_count() -> void:
+	var setup := await _create_setup()
+	setup.configure_single_player()
+	var game_mode_select = setup.get_node("%GameModeSelect")
+	var target_select = setup.get_node("%TargetScoreSelect")
+	var max_players_select = setup.get_node("%MaxPlayersSelect")
+	game_mode_select.select_value("deathmatch")
+	game_mode_select.emit_signal("item_selected", game_mode_select.selected)
+	target_select.select_value(15)
+	max_players_select.select_value(4)
+
+	assert_true((setup.get_node("%MaxPlayersRow") as Control).visible)
+	assert_false((setup.get_node("%TeamStructureRow") as Control).visible)
+	assert_eq(setup.current_config(), {
+		"preset_id": "deathmatch",
+		"starting_lives": 0,
+		"infinite_lives": true,
+		"target_score": 0,
+		"target_kills": 15,
+		"max_players": 4,
+	})
+
+
 func _create_setup() -> Control:
 	var setup := RoomSetupScene.instantiate()
 	add_child_autofree(setup)

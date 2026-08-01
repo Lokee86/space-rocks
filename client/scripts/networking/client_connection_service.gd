@@ -228,6 +228,7 @@ func send_configured_start_single_player_request(local_profile_id: String, confi
 		client_packet_sender.send_start_single_player_request(
 			local_profile_id,
 			_active_room_operation_trace_id,
+			int(config.get("max_players", 1)),
 			str(config.get("preset_id", "arcade_survival")),
 			int(config.get("starting_lives", 0)),
 			bool(config.get("infinite_lives", false)),

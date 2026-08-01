@@ -117,8 +117,9 @@ func test_initial_room_packet_builders_carry_trace_id() -> void:
 	var join_packet := Packets.join_room_request_packet("TEST", trace_id)
 	assert_eq(join_packet[Packets.FIELD_TRACE_ID], trace_id)
 
-	var single_player_packet := Packets.start_single_player_request_packet("profile-1", trace_id, "score_attack", 5, false, 2500, 0)
+	var single_player_packet := Packets.start_single_player_request_packet("profile-1", trace_id, 4, "score_attack", 5, false, 2500, 0)
 	assert_eq(single_player_packet[Packets.FIELD_TRACE_ID], trace_id)
+	assert_eq(single_player_packet[Packets.FIELD_MAX_PLAYERS], 4)
 	assert_eq(single_player_packet[Packets.FIELD_PRESET_ID], "score_attack")
 	assert_eq(single_player_packet[Packets.FIELD_STARTING_LIVES], 5)
 	assert_eq(single_player_packet[Packets.FIELD_INFINITE_LIVES], false)

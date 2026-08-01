@@ -27,11 +27,24 @@ func (manager *RoomManager) CreateStartedSinglePlayerRoom(sessionID string) (*Ro
 }
 
 func (manager *RoomManager) CreateStartedSinglePlayerRoomWithModeConfig(sessionID string, modeConfig modes.RoomModeConfig) (*Room, *RoomDomainError) {
-	room, err := manager.CreateSinglePlayerRoomWithModeConfig(sessionID, modeConfig)
+	return manager.CreateStartedSinglePlayerRoomWithConfig(sessionID, modeConfig, 1)
+}
+
+func (manager *RoomManager) CreateStartedSinglePlayerRoomWithConfig(sessionID string, modeConfig modes.RoomModeConfig, maxPlayers int) (*Room, *RoomDomainError) {
+	capacity := singlePlayerRoomCapacity(modeConfig, maxPlayers)
+	room, err := manager.CreateSinglePlayerRoomWithConfig(sessionID, modeConfig, capacity)
 	if err != nil {
 		return nil, &RoomDomainError{
 			Code:    RoomErrorInvalidRoomState,
 			Message: "Could not create room.",
+		}
+	}
+
+	if modes.NormalizeRoomModeConfig(modeConfig).PresetID == modes.PresetDeathmatch {
+		for botIndex := 1; botIndex < capacity; botIndex++ {
+			if _, roomErr := room.AddBotForOwnerSession(sessionID); roomErr != nil {
+				return nil, roomErr
+			}
 		}
 	}
 

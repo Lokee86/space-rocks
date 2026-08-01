@@ -173,6 +173,7 @@ func send_remove_room_member_request(player_id: String) -> void:
 func send_start_single_player_request(
 		local_profile_id := "",
 		trace_id := "",
+		max_players := 1,
 		preset_id := "arcade_survival",
 		starting_lives := 0,
 		infinite_lives := false,
@@ -182,6 +183,7 @@ func send_start_single_player_request(
 	send_packet(LobbyClientPackets.start_single_player_request_packet(
 		local_profile_id,
 		trace_id,
+		max_players,
 		preset_id,
 		starting_lives,
 		infinite_lives,

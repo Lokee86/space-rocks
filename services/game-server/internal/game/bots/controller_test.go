@@ -25,6 +25,19 @@ func TestControllerTurnsAndFiresTowardAsteroid(t *testing.T) {
 	}
 }
 
+func TestControllerTurnsAndFiresTowardPlayerWithoutAsteroids(t *testing.T) {
+	controller := NewController()
+	input := controller.Decide(Observation{
+		Position: physics.Vector2{X: 100, Y: 100},
+		Rotation: 0,
+		Players:  []PlayerObservation{{Position: physics.Vector2{X: 100, Y: 20}}},
+	})
+
+	if !input.Forward || !input.PrimaryFire || input.Left || input.Right {
+		t.Fatalf("expected aligned player pursuit and fire, got %+v", input)
+	}
+}
+
 func TestControllerAvoidsImminentCollision(t *testing.T) {
 	controller := NewController()
 	input := controller.Decide(Observation{

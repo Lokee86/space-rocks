@@ -104,6 +104,8 @@ func current_config() -> Dictionary:
 		"target_kills": _selected_target_kills(),
 	}
 	if session_mode == SESSION_SINGLE_PLAYER:
+		if deathmatch:
+			config["max_players"] = int(max_players_select.selected_value(8))
 		return config
 
 	var structure := "ffa" if deathmatch else str(team_structure_select.selected_value("ffa"))
@@ -136,13 +138,9 @@ func _refresh_game_mode_options() -> void:
 	var items := [
 		{"label": "ARCADE SURVIVAL", "value": PRESET_ARCADE_SURVIVAL},
 		{"label": "SCORE ATTACK", "value": PRESET_SCORE_ATTACK},
+		{"label": "DEATHMATCH", "value": PRESET_DEATHMATCH},
 	]
-	if session_mode == SESSION_MULTIPLAYER:
-		items.append({"label": "DEATHMATCH", "value": PRESET_DEATHMATCH})
-	var selection := selected
-	if session_mode == SESSION_SINGLE_PLAYER and selected == PRESET_DEATHMATCH:
-		selection = PRESET_ARCADE_SURVIVAL
-	game_mode_select.replace_items(items, selection)
+	game_mode_select.replace_items(items, selected)
 
 
 func _refresh_visibility() -> void:
@@ -159,7 +157,7 @@ func _refresh_visibility() -> void:
 	team_structure_row.visible = multiplayer and not deathmatch
 	assignment_row.visible = multiplayer and not deathmatch and structure == "custom"
 	team_count_row.visible = multiplayer and not deathmatch and structure == "auto_balanced"
-	max_players_row.visible = multiplayer
+	max_players_row.visible = multiplayer or (session_mode == SESSION_SINGLE_PLAYER and deathmatch)
 	_refresh_create_state()
 
 
