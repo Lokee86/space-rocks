@@ -35,6 +35,37 @@ func projectileAsteroidDamageRequest(
 	}
 }
 
+func projectilePlayerDamageRequest(
+	collision ProjectilePlayerCollision,
+	bullet *runtime.Bullet,
+	player *runtime.Ship,
+) damage.DamageResolutionRequest {
+	spec := bullet.DamageSpec
+	if spec.Amount == 0 {
+		spec = damage.DamageSpec{
+			Amount: bullet.Damage,
+			Type:   damage.DamageTypeKinetic,
+			Cause:  damage.DamageCauseProjectile,
+		}
+	}
+
+	return damage.DamageResolutionRequest{
+		Source: damage.DamageSource{
+			EntityID:   collision.ProjectileID,
+			EntityType: damage.EntityTypeProjectile,
+			Cause:      damage.DamageCauseProjectile,
+		},
+		Target: damage.DamageTarget{
+			EntityID:   collision.PlayerID,
+			EntityType: damage.EntityTypePlayer,
+			Health:     player.Health,
+			Shield:     player.Shields,
+			Modifiers:  player.DamageModifiers,
+		},
+		Spec: spec,
+	}
+}
+
 func playerAsteroidDamageRequest(
 	collision PlayerAsteroidCollision,
 	asteroidID string,
@@ -61,4 +92,3 @@ func playerAsteroidDamageRequest(
 		},
 	}
 }
-

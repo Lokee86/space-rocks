@@ -13,7 +13,8 @@ static func create_room_request_packet(
 		preset_id := "arcade_survival",
 		starting_lives := 0,
 		infinite_lives := false,
-		target_score := 0
+		target_score := 0,
+		target_kills := 0
 ) -> Dictionary:
 	return Packets.create_room_request_packet(
 		trace_id,
@@ -25,7 +26,8 @@ static func create_room_request_packet(
 		preset_id,
 		starting_lives,
 		infinite_lives,
-		target_score
+		target_score,
+		target_kills
 	)
 
 
@@ -63,7 +65,8 @@ static func start_single_player_request_packet(
 		preset_id := "arcade_survival",
 		starting_lives := 0,
 		infinite_lives := false,
-		target_score := 0
+		target_score := 0,
+		target_kills := 0
 ) -> Dictionary:
 	return Packets.start_single_player_request_packet(
 		local_profile_id,
@@ -71,7 +74,8 @@ static func start_single_player_request_packet(
 		preset_id,
 		starting_lives,
 		infinite_lives,
-		target_score
+		target_score,
+		target_kills
 	)
 
 

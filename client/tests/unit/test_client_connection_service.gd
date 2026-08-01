@@ -771,6 +771,7 @@ func test_configured_room_requests_forward_mode_fields() -> void:
 		"starting_lives": 5,
 		"infinite_lives": false,
 		"target_score": 2500,
+		"target_kills": 0,
 		"team_structure": "co_op",
 		"max_players": 4,
 	}
@@ -784,6 +785,7 @@ func test_configured_room_requests_forward_mode_fields() -> void:
 		assert_eq(packet["starting_lives"], 5)
 		assert_eq(packet["infinite_lives"], false)
 		assert_eq(packet["target_score"], 2500)
+		assert_eq(packet["target_kills"], 0)
 	assert_eq(fake_network.sent_packets[0]["team_structure"], "co_op")
 	assert_eq(fake_network.sent_packets[0]["max_players"], 4)
 	assert_eq(fake_network.sent_packets[1]["local_profile_id"], "pilot-1")

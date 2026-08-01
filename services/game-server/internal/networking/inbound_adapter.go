@@ -50,8 +50,8 @@ func (a inboundSessionAdapter) HandleAuthenticateRequest(token string, traceID s
 	a.session.handleAuthenticateRequest(token, traceID)
 }
 
-func (a inboundSessionAdapter) HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int) {
-	a.session.handleCreateRoomRequest(traceID, teamStructure, teamAssignmentMode, teamCount, maxPlayers, presetID, startingLives, infiniteLives, targetScore)
+func (a inboundSessionAdapter) HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int) {
+	a.session.handleCreateRoomRequest(traceID, teamStructure, teamAssignmentMode, teamCount, maxPlayers, presetID, startingLives, infiniteLives, targetScore, targetKills)
 }
 
 func (a inboundSessionAdapter) HandleJoinRoomRequest(roomCode string, traceID string) {
@@ -82,8 +82,8 @@ func (a inboundSessionAdapter) HandleRemoveRoomMemberRequest(playerID string) {
 	a.session.handleRemoveRoomMemberRequest(playerID)
 }
 
-func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int) {
-	a.session.handleStartSinglePlayerRequest(localProfileID, traceID, presetID, startingLives, infiniteLives, targetScore)
+func (a inboundSessionAdapter) HandleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int) {
+	a.session.handleStartSinglePlayerRequest(localProfileID, traceID, presetID, startingLives, infiniteLives, targetScore, targetKills)
 }
 
 func (a inboundSessionAdapter) HandleReturnToLobbyRequest() {

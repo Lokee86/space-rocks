@@ -43,6 +43,7 @@ func BuildRoomSnapshot(room *rooms.Room, localSessionID string) game.RoomSnapsho
 		StartingLives:         projection.ModeConfig.StartingLives,
 		InfiniteLives:         projection.ModeConfig.InfiniteLives,
 		TargetScore:           projection.ModeConfig.TargetScore,
+		TargetKills:           projection.ModeConfig.TargetKills,
 		TeamStructure:         string(projection.TeamConfig.Structure),
 		TeamAssignmentMode:    string(projection.TeamConfig.AssignmentMode),
 		TeamCount:             rooms.TeamCountForConfig(projection.TeamConfig),

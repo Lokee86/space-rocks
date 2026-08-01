@@ -57,6 +57,11 @@ name = "target_score"
 json = "target_score"
 type = "int"
 
+[[structs.fields]]
+name = "target_kills"
+json = "target_kills"
+type = "int"
+
 [[structs]]
 id = "JoinRoomRequest"
 
@@ -182,6 +187,11 @@ type = "bool"
 [[structs.fields]]
 name = "target_score"
 json = "target_score"
+type = "int"
+
+[[structs.fields]]
+name = "target_kills"
+json = "target_kills"
 type = "int"
 
 [[structs]]
@@ -429,6 +439,11 @@ json = "target_score"
 type = "int"
 
 [[structs.fields]]
+name = "target_kills"
+json = "target_kills"
+type = "int"
+
+[[structs.fields]]
 name = "team_structure"
 json = "team_structure"
 type = "string"
@@ -557,7 +572,7 @@ value = "room_error"
 
 [[builders]]
 id = "create_room_request_packet"
-args = ["trace_id", "local_profile_id", "team_structure", "team_assignment_mode", "team_count", "max_players", "preset_id", "starting_lives", "infinite_lives", "target_score"]
+args = ["trace_id", "local_profile_id", "team_structure", "team_assignment_mode", "team_count", "max_players", "preset_id", "starting_lives", "infinite_lives", "target_score", "target_kills"]
 
 [builders.body]
 type = "create_room_request"
@@ -571,6 +586,7 @@ preset_id = "$preset_id"
 starting_lives = "$starting_lives"
 infinite_lives = "$infinite_lives"
 target_score = "$target_score"
+target_kills = "$target_kills"
 
 [[builders]]
 id = "join_room_request_packet"
@@ -626,7 +642,7 @@ player_id = "$player_id"
 
 [[builders]]
 id = "start_single_player_request_packet"
-args = ["local_profile_id", "trace_id", "preset_id", "starting_lives", "infinite_lives", "target_score"]
+args = ["local_profile_id", "trace_id", "preset_id", "starting_lives", "infinite_lives", "target_score", "target_kills"]
 
 [builders.body]
 type = "start_single_player_request"
@@ -636,6 +652,7 @@ preset_id = "$preset_id"
 starting_lives = "$starting_lives"
 infinite_lives = "$infinite_lives"
 target_score = "$target_score"
+target_kills = "$target_kills"
 
 [[builders]]
 id = "return_to_lobby_request_packet"

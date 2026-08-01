@@ -79,6 +79,13 @@ func (game *Game) applyRadialHitToEnemy(hit radial.Hit, enemy *runtime.Ship) {
 }
 
 func (game *Game) applyRadialHitToPlayer(hit radial.Hit, player *runtime.Ship) {
+	if !game.resolvedMatchRules.PlayerDamageEnabled {
+		return
+	}
+	if !game.projectileCanDamagePlayerLocked(hit.SourcePlayerID, player.ID) {
+		return
+	}
+
 	damageResult := damage.ResolveSingle(radialDamageRequestFromHitAndPlayer(hit, player))
 	applyDamageResultToPlayer(player, damageResult)
 	if event, ok := damageAppliedEventForResult(damageResult, hit.TargetPosition.X, hit.TargetPosition.Y); ok {
@@ -86,5 +93,6 @@ func (game *Game) applyRadialHitToPlayer(hit radial.Hit, player *runtime.Ship) {
 	}
 	if damageResult.Fatal {
 		game.applyFatalPlayerDamage(player.ID, player, "radial_effect")
+		game.addPlayerScoreLocked(hit.SourcePlayerID, 1)
 	}
 }

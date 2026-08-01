@@ -8,7 +8,7 @@ import (
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
 
-func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int) {
+func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int) {
 	if !requireAuthenticatedAccount(session, traceID) {
 		return
 	}
@@ -22,7 +22,7 @@ func (session *webSocketSession) handleCreateRoomRequest(traceID string, teamStr
 	room, err := session.rooms.CreateLobbyRoomWithConfig(rooms.RoomCreationConfig{
 		ModeConfig: modes.RoomModeConfig{
 			PresetID: modes.PresetID(presetID), StartingLives: startingLives,
-			InfiniteLives: infiniteLives, TargetScore: targetScore,
+			InfiniteLives: infiniteLives, TargetScore: targetScore, TargetKills: targetKills,
 		},
 		TeamConfig: teams.Config{
 			Structure:      teams.Structure(teamStructure),
@@ -147,7 +147,7 @@ func (session *webSocketSession) handleStartGameRequest() {
 	BroadcastRoomSnapshot(room)
 }
 
-func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int) {
+func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int) {
 	context := session.sessionContext()
 	if traceID == "" {
 		traceID = session.connectionTraceID
@@ -160,7 +160,7 @@ func (session *webSocketSession) handleStartSinglePlayerRequest(localProfileID s
 
 	room, roomErr := session.rooms.CreateStartedSinglePlayerRoomWithModeConfig(session.sessionID, modes.RoomModeConfig{
 		PresetID: modes.PresetID(presetID), StartingLives: startingLives,
-		InfiniteLives: infiniteLives, TargetScore: targetScore,
+		InfiniteLives: infiniteLives, TargetScore: targetScore, TargetKills: targetKills,
 	})
 	if roomErr != nil {
 		failureTraceID := traceID

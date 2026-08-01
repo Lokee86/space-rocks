@@ -12,14 +12,17 @@ type ModeID string
 const (
 	PresetArcadeSurvival PresetID = "arcade_survival"
 	PresetScoreAttack    PresetID = "score_attack"
+	PresetDeathmatch     PresetID = "deathmatch"
 
 	ModeArcadeSurvival ModeID = "arcade_survival"
 	ModeScoreAttack    ModeID = "score_attack"
+	ModeDeathmatch     ModeID = "deathmatch"
 
-	DefaultScoreAttackTarget = 1000
-	EncounterAsteroidsV1     = "playercentric_asteroids_v1"
-	DefaultSpawnProfileID    = "baseline"
-	StandardAwardPolicyID    = "standard"
+	DefaultScoreAttackTarget     = 1000
+	DefaultDeathmatchTargetKills = 10
+	EncounterAsteroidsV1         = "playercentric_asteroids_v1"
+	DefaultSpawnProfileID        = "baseline"
+	StandardAwardPolicyID        = "standard"
 )
 
 type RoomModeConfig struct {
@@ -27,6 +30,7 @@ type RoomModeConfig struct {
 	StartingLives int
 	InfiniteLives bool
 	TargetScore   int
+	TargetKills   int
 }
 
 type LivesPolicy struct {
@@ -37,6 +41,7 @@ type LivesPolicy struct {
 type ObjectivePolicy struct {
 	DefinitionID string
 	TargetScore  int
+	TargetKills  int
 }
 
 type RankingMetric string
@@ -44,12 +49,14 @@ type RankingMetric string
 const (
 	RankingNone           RankingMetric = "none"
 	RankingCompletionTime RankingMetric = "completion_time"
+	RankingKills          RankingMetric = "kills"
 )
 
 type MatchEndCondition string
 
 const (
 	EndTargetScoreReached MatchEndCondition = "target_score_reached"
+	EndTargetKillsReached MatchEndCondition = "target_kills_reached"
 	EndNoActivePlayers    MatchEndCondition = "no_active_participants"
 )
 
@@ -58,6 +65,7 @@ type ResultPolicy string
 const (
 	ResultFinalFacts  ResultPolicy = "final_facts"
 	ResultScoreAttack ResultPolicy = "score_attack"
+	ResultDeathmatch  ResultPolicy = "deathmatch"
 )
 
 type ResolvedMatchRules struct {

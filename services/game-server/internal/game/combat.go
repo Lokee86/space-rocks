@@ -5,9 +5,73 @@ import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/damage"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/events"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/teams"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/logging"
 	observability "github.com/Lokee86/space-rocks/shared/go/observabilityevent"
 )
+
+func (game *Game) handleBulletPlayerCollisions() {
+	if !game.resolvedMatchRules.PlayerDamageEnabled {
+		return
+	}
+
+	for _, bulletID := range game.collisionProjectileIDsSorted() {
+		bullet := game.entities.Projectiles[bulletID]
+		if bullet == nil || bullet.IsPendingDespawn() {
+			continue
+		}
+
+		for _, playerID := range game.collisionPlayerIDsSorted() {
+			player := game.entities.Players[playerID]
+			if player == nil || player.IsPendingDespawn() {
+				continue
+			}
+			if !game.playerCanTakeCollisionDamage(playerID, player) {
+				continue
+			}
+			if !game.projectileCanDamagePlayerLocked(bullet.OwnerID, playerID) {
+				continue
+			}
+
+			collision, ok := detectProjectilePlayerCollision(bullet, playerID, player, game.collisionShapes)
+			if !ok {
+				continue
+			}
+
+			damageResult := damage.ResolveSingle(projectilePlayerDamageRequest(collision, bullet, player))
+			applyDamageResultToPlayer(player, damageResult)
+			if event, ok := damageAppliedEventForResult(damageResult, collision.ImpactPosition.X, collision.ImpactPosition.Y); ok {
+				game.recordDomainEvent(event)
+			}
+			bullet.MarkPendingDespawn(constants.CollisionDespawnDelay)
+			game.spawnRadialEffectFromBullet(bullet, bullet.OwnerID, collision.ImpactPosition)
+			if damageResult.Fatal {
+				game.applyFatalPlayerDamage(playerID, player, "projectile")
+				game.addPlayerScoreLocked(bullet.OwnerID, 1)
+				if game.isMatchOverLocked() {
+					return
+				}
+			}
+			break
+		}
+	}
+}
+
+func (game *Game) projectileCanDamagePlayerLocked(ownerID string, targetID string) bool {
+	owner, ownerOK := game.playerSessions[ownerID]
+	target, targetOK := game.playerSessions[targetID]
+	if !ownerOK || owner == nil || !targetOK || target == nil {
+		return false
+	}
+	relationship, err := teams.RelationshipBetween(
+		game.resolvedMatchRules.TeamConfig.Structure,
+		ownerID,
+		owner.TeamID,
+		targetID,
+		target.TeamID,
+	)
+	return err == nil && relationship == teams.RelationshipOpposing
+}
 
 func (game *Game) handleBulletAsteroidCollisions() {
 	hitBullets := map[string]bool{}

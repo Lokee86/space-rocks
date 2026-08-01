@@ -17,7 +17,7 @@ func TestHandleStartSinglePlayerRequestCreatesRoom(t *testing.T) {
 		outbound:          make(chan []byte, 1),
 	}
 
-	session.handleStartSinglePlayerRequest("", "", "", 0, false, 0)
+	session.handleStartSinglePlayerRequest("", "", "", 0, false, 0, 0)
 
 	if session.sessionContext().RoomID == "" {
 		t.Fatal("expected room to be created")
@@ -39,7 +39,7 @@ func TestHandleStartSinglePlayerRequestAppliesSelectedMode(t *testing.T) {
 		outbound:          make(chan []byte, 4),
 	}
 
-	session.handleStartSinglePlayerRequest("pilot-1", "", string(modes.PresetScoreAttack), 5, false, 2500)
+	session.handleStartSinglePlayerRequest("pilot-1", "", string(modes.PresetScoreAttack), 5, false, 2500, 0)
 
 	room := session.sessionContext().Room
 	if room == nil {

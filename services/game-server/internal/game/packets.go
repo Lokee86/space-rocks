@@ -56,6 +56,7 @@ type ClientPacket struct {
 	StartingLives      int                  `json:"starting_lives"`
 	InfiniteLives      bool                 `json:"infinite_lives"`
 	TargetScore        int                  `json:"target_score"`
+	TargetKills        int                  `json:"target_kills"`
 	TargetPlayerID     string               `json:"target_player_id"`
 	ViewTargetPlayerID string               `json:"view_target_player_id"`
 	TeamID             string               `json:"team_id"`
@@ -93,6 +94,7 @@ type CreateRoomRequest struct {
 	StartingLives      int    `json:"starting_lives"`
 	InfiniteLives      bool   `json:"infinite_lives"`
 	TargetScore        int    `json:"target_score"`
+	TargetKills        int    `json:"target_kills"`
 }
 
 type JoinRoomRequest struct {
@@ -137,6 +139,7 @@ type StartSinglePlayerRequest struct {
 	StartingLives  int    `json:"starting_lives"`
 	InfiniteLives  bool   `json:"infinite_lives"`
 	TargetScore    int    `json:"target_score"`
+	TargetKills    int    `json:"target_kills"`
 }
 
 type ReturnToLobbyRequest struct {
@@ -196,6 +199,7 @@ type RoomSnapshot struct {
 	StartingLives         int                    `json:"starting_lives"`
 	InfiniteLives         bool                   `json:"infinite_lives"`
 	TargetScore           int                    `json:"target_score"`
+	TargetKills           int                    `json:"target_kills"`
 	TeamStructure         string                 `json:"team_structure"`
 	TeamAssignmentMode    string                 `json:"team_assignment_mode"`
 	TeamCount             int                    `json:"team_count"`

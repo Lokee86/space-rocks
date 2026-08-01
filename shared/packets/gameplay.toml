@@ -93,6 +93,11 @@ json = "target_score"
 type = "int"
 
 [[structs.fields]]
+name = "target_kills"
+json = "target_kills"
+type = "int"
+
+[[structs.fields]]
 
 name = "target_player_id"
 json = "target_player_id"

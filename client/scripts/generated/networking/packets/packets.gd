@@ -213,6 +213,7 @@ const FIELD_STARTING_LIVES := "starting_lives"
 const FIELD_STATS := "stats"
 const FIELD_TABLE_ID := "table_id"
 const FIELD_TARGET_ID := "target_id"
+const FIELD_TARGET_KILLS := "target_kills"
 const FIELD_TARGET_KIND := "target_kind"
 const FIELD_TARGET_PLAYER_ID := "target_player_id"
 const FIELD_TARGET_SCOPE := "target_scope"
@@ -513,7 +514,7 @@ static func client_config_packet(visible_world_width, visible_world_height) -> D
 	packet[FIELD_CONFIG] = packet_config
 	return packet
 
-static func create_room_request_packet(trace_id, local_profile_id, team_structure, team_assignment_mode, team_count, max_players, preset_id, starting_lives, infinite_lives, target_score) -> Dictionary:
+static func create_room_request_packet(trace_id, local_profile_id, team_structure, team_assignment_mode, team_count, max_players, preset_id, starting_lives, infinite_lives, target_score, target_kills) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "create_room_request"
 	packet[FIELD_TRACE_ID] = trace_id
@@ -526,6 +527,7 @@ static func create_room_request_packet(trace_id, local_profile_id, team_structur
 	packet[FIELD_STARTING_LIVES] = starting_lives
 	packet[FIELD_INFINITE_LIVES] = infinite_lives
 	packet[FIELD_TARGET_SCORE] = target_score
+	packet[FIELD_TARGET_KILLS] = target_kills
 	return packet
 
 static func join_room_request_packet(room_code, trace_id) -> Dictionary:
@@ -569,7 +571,7 @@ static func remove_room_member_request_packet(player_id) -> Dictionary:
 	packet[FIELD_PLAYER_ID] = player_id
 	return packet
 
-static func start_single_player_request_packet(local_profile_id, trace_id, preset_id, starting_lives, infinite_lives, target_score) -> Dictionary:
+static func start_single_player_request_packet(local_profile_id, trace_id, preset_id, starting_lives, infinite_lives, target_score, target_kills) -> Dictionary:
 	var packet := {}
 	packet[FIELD_TYPE] = "start_single_player_request"
 	packet[FIELD_LOCAL_PROFILE_ID] = local_profile_id
@@ -578,6 +580,7 @@ static func start_single_player_request_packet(local_profile_id, trace_id, prese
 	packet[FIELD_STARTING_LIVES] = starting_lives
 	packet[FIELD_INFINITE_LIVES] = infinite_lives
 	packet[FIELD_TARGET_SCORE] = target_score
+	packet[FIELD_TARGET_KILLS] = target_kills
 	return packet
 
 static func return_to_lobby_request_packet() -> Dictionary:

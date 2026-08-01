@@ -59,7 +59,7 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	if !found {
 		return PlayerCounterChange{PlayerID: playerID}
 	}
-	if game.resolvedMatchRules.ModeID == modes.ModeScoreAttack && game.matchDecisionLocked().IsOver {
+	if (game.resolvedMatchRules.ModeID == modes.ModeScoreAttack || game.resolvedMatchRules.ModeID == modes.ModeDeathmatch) && game.matchDecisionLocked().IsOver {
 		return PlayerCounterChange{PlayerID: playerID, Found: true, Before: before, After: before}
 	}
 
@@ -70,7 +70,7 @@ func (game *Game) setPlayerScoreLocked(playerID string, score int) PlayerCounter
 	if record, ok := game.participantRecords[playerID]; ok && record != nil {
 		record.Score = after
 	}
-	game.recordScoreAttackSuccessLocked(playerID, after)
+	game.recordModeScoreSuccessLocked(playerID, after)
 
 	return PlayerCounterChange{
 		PlayerID: playerID,

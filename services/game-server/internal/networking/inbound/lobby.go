@@ -3,7 +3,7 @@ package inbound
 import "github.com/Lokee86/space-rocks/services/game-server/internal/game"
 
 type lobbySession interface {
-	HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int)
+	HandleCreateRoomRequest(traceID string, teamStructure string, teamAssignmentMode string, teamCount int, maxPlayers int, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int)
 	HandleJoinRoomRequest(roomCode string, traceID string)
 	HandleLeaveRoomRequest()
 	HandleSetReadyRequest(ready bool)
@@ -11,14 +11,14 @@ type lobbySession interface {
 	HandleStartGameRequest()
 	HandleAddBotRequest()
 	HandleRemoveRoomMemberRequest(playerID string)
-	HandleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int)
+	HandleStartSinglePlayerRequest(localProfileID string, traceID string, presetID string, startingLives int, infiniteLives bool, targetScore int, targetKills int)
 	HandleReturnToLobbyRequest()
 }
 
 func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 	switch packet.Type {
 	case game.PacketTypeCreateRoomRequest:
-		session.HandleCreateRoomRequest(packet.TraceID, packet.TeamStructure, packet.TeamAssignmentMode, packet.TeamCount, packet.MaxPlayers, packet.PresetID, packet.StartingLives, packet.InfiniteLives, packet.TargetScore)
+		session.HandleCreateRoomRequest(packet.TraceID, packet.TeamStructure, packet.TeamAssignmentMode, packet.TeamCount, packet.MaxPlayers, packet.PresetID, packet.StartingLives, packet.InfiniteLives, packet.TargetScore, packet.TargetKills)
 		return true
 	case game.PacketTypeJoinRoomRequest:
 		session.HandleJoinRoomRequest(packet.RoomCode, packet.TraceID)
@@ -42,7 +42,7 @@ func HandleLobbyPacket(session lobbySession, packet game.ClientPacket) bool {
 		session.HandleRemoveRoomMemberRequest(packet.PlayerID)
 		return true
 	case game.PacketTypeStartSinglePlayerRequest:
-		session.HandleStartSinglePlayerRequest(packet.LocalProfileID, packet.TraceID, packet.PresetID, packet.StartingLives, packet.InfiniteLives, packet.TargetScore)
+		session.HandleStartSinglePlayerRequest(packet.LocalProfileID, packet.TraceID, packet.PresetID, packet.StartingLives, packet.InfiniteLives, packet.TargetScore, packet.TargetKills)
 		return true
 	case game.PacketTypeReturnToLobbyRequest:
 		session.HandleReturnToLobbyRequest()

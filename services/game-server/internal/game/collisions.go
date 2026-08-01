@@ -2,14 +2,20 @@ package game
 
 import (
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/entities/pickups"
-	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/physics"
+	"github.com/Lokee86/space-rocks/services/game-server/internal/game/runtime"
 	"github.com/Lokee86/space-rocks/services/game-server/internal/game/space"
 )
 
 type ProjectileAsteroidCollision struct {
 	ProjectileID   string
 	AsteroidID     string
+	ImpactPosition physics.Vector2
+}
+
+type ProjectilePlayerCollision struct {
+	ProjectileID   string
+	PlayerID       string
 	ImpactPosition physics.Vector2
 }
 
@@ -49,6 +55,35 @@ func detectProjectileAsteroidCollision(
 	return ProjectileAsteroidCollision{
 		ProjectileID:   bullet.ID,
 		AsteroidID:     asteroid.ID,
+		ImpactPosition: bullet.Position(),
+	}, true
+}
+
+func detectProjectilePlayerCollision(
+	bullet *runtime.Bullet,
+	playerID string,
+	player *runtime.Ship,
+	catalog physics.CollisionShapeCatalog,
+) (ProjectilePlayerCollision, bool) {
+	bulletBody, ok := bullet.CollisionBody(catalog)
+	if !ok {
+		return ProjectilePlayerCollision{}, false
+	}
+
+	playerBody, ok := player.CollisionBody(catalog)
+	if !ok {
+		return ProjectilePlayerCollision{}, false
+	}
+	delta := space.Delta(bullet.Position(), player.Position())
+	playerBody.Position = bullet.Position().Add(delta)
+
+	if _, ok := physics.DetectCollision(bulletBody, playerBody); !ok {
+		return ProjectilePlayerCollision{}, false
+	}
+
+	return ProjectilePlayerCollision{
+		ProjectileID:   bullet.ID,
+		PlayerID:       playerID,
 		ImpactPosition: bullet.Position(),
 	}, true
 }

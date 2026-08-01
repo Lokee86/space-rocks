@@ -32,6 +32,42 @@ func TestResolveScoreAttackOverrides(t *testing.T) {
 	}
 }
 
+func TestResolveDeathmatchOwnsFFAInfiniteRespawnsAndKillTarget(t *testing.T) {
+	resolved, err := Resolve(RoomModeConfig{PresetID: PresetDeathmatch, TargetKills: 25}, teams.Config{Structure: teams.StructureFFA})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved.ModeID != ModeDeathmatch || resolved.ObjectivePolicy.TargetKills != 25 || resolved.RankingMetric != RankingKills {
+		t.Fatalf("resolved = %+v", resolved)
+	}
+	if !resolved.LivesPolicy.InfiniteLives || resolved.LivesPolicy.StartingLives != 0 || !resolved.PlayerDamageEnabled {
+		t.Fatalf("deathmatch policies = %+v", resolved)
+	}
+	if len(resolved.EncounterSpawnProfileIDs) != 0 {
+		t.Fatalf("deathmatch encounter profiles = %+v, want none", resolved.EncounterSpawnProfileIDs)
+	}
+	if got := resolved.MatchEndPrecedence; len(got) != 2 || got[0] != EndTargetKillsReached {
+		t.Fatalf("precedence = %+v", got)
+	}
+}
+
+func TestResolveDeathmatchDefaultsToTenKills(t *testing.T) {
+	resolved, err := Resolve(RoomModeConfig{PresetID: PresetDeathmatch}, teams.Config{Structure: teams.StructureFFA})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved.ObjectivePolicy.TargetKills != DefaultDeathmatchTargetKills {
+		t.Fatalf("target kills = %d, want %d", resolved.ObjectivePolicy.TargetKills, DefaultDeathmatchTargetKills)
+	}
+}
+
+func TestResolveDeathmatchRejectsNonFFA(t *testing.T) {
+	_, err := Resolve(RoomModeConfig{PresetID: PresetDeathmatch, TargetKills: 10}, teams.Config{Structure: teams.StructureCoOp})
+	if err == nil {
+		t.Fatal("expected deathmatch to reject non-FFA structure")
+	}
+}
+
 func TestResolveInfiniteLives(t *testing.T) {
 	resolved, err := Resolve(RoomModeConfig{PresetID: PresetArcadeSurvival, InfiniteLives: true}, teams.Config{Structure: teams.StructureCoOp})
 	if err != nil {

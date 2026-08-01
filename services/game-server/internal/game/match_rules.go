@@ -17,7 +17,7 @@ func (game *Game) ConfigureMatchRules(resolved modes.ResolvedMatchRules) error {
 	if err := teams.ValidateConfig(resolved.TeamConfig); err != nil {
 		return fmt.Errorf("invalid resolved team configuration: %w", err)
 	}
-	if resolved.ModeID != modes.ModeArcadeSurvival && resolved.ModeID != modes.ModeScoreAttack {
+	if resolved.ModeID != modes.ModeArcadeSurvival && resolved.ModeID != modes.ModeScoreAttack && resolved.ModeID != modes.ModeDeathmatch {
 		return fmt.Errorf("unsupported resolved mode %q", resolved.ModeID)
 	}
 	if resolved.LivesPolicy.InfiniteLives {
@@ -29,6 +29,9 @@ func (game *Game) ConfigureMatchRules(resolved modes.ResolvedMatchRules) error {
 	}
 	if resolved.ModeID == modes.ModeScoreAttack && resolved.ObjectivePolicy.TargetScore <= 0 {
 		return fmt.Errorf("score attack target must be positive")
+	}
+	if resolved.ModeID == modes.ModeDeathmatch && resolved.ObjectivePolicy.TargetKills <= 0 {
+		return fmt.Errorf("deathmatch kill target must be positive")
 	}
 
 	game.resolvedMatchRules = modes.CloneResolvedMatchRules(resolved)
@@ -60,8 +63,17 @@ func (game *Game) applyResolvedMatchRulesToSessionLocked(session *playerSession)
 	session.Lives = policy.StartingLives
 }
 
-func (game *Game) recordScoreAttackSuccessLocked(playerID string, score int) {
-	if game.resolvedMatchRules.ModeID != modes.ModeScoreAttack || score < game.resolvedMatchRules.ObjectivePolicy.TargetScore {
+func (game *Game) recordModeScoreSuccessLocked(playerID string, score int) {
+	target := 0
+	switch game.resolvedMatchRules.ModeID {
+	case modes.ModeScoreAttack:
+		target = game.resolvedMatchRules.ObjectivePolicy.TargetScore
+	case modes.ModeDeathmatch:
+		target = game.resolvedMatchRules.ObjectivePolicy.TargetKills
+	default:
+		return
+	}
+	if score < target {
 		return
 	}
 	if _, exists := game.scoreSuccessOrders[playerID]; exists {

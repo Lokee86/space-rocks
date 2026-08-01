@@ -82,6 +82,7 @@ func (game *Game) stepCollisions() {
 	if game.worldSimulationOptions.CanRunCollisions() {
 		game.rebuildAsteroidSpatialIndex()
 		game.handleShipAsteroidCollisions()
+		game.handleBulletPlayerCollisions()
 		game.handleBulletAsteroidCollisions()
 		game.rebuildPickupSpatialIndex()
 		game.handlePlayerPickupCollisions()
