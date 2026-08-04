@@ -77,12 +77,12 @@ Verification evidence:
 
 - shared full documentation checker: passed with zero findings, zero baselined findings, and zero stale baseline entries;
 - shared changed-from documentation-impact checker against `main`: passed with zero findings;
-- Pitlord `v0.1.1`: passed 25 repository policy rules with no violations;
+- Pitlord `v0.1.3`: passed the repository policy plus the included shared documentation policy with no violations;
 - Python repository/tooling suite: 343 passed;
 - data-sync source validation: passed;
 - generated constants, packet, realtime-wire, and drop-table checks: passed.
 
-The generated shared Pitlord documentation policy currently contains a `require_content` rule that is unsupported by Pitlord `v0.1.0`, `v0.1.1`, `v0.1.2`, and the reachable remote `main`. Space Rocks therefore mirrors the supported required-path rules in its local policy, keeps the required `AGENTS.md` language in source, and uses the shared Python checker as the authoritative documentation gate. The exact content assertion can move back into the included shared policy when a compatible Pitlord release exists.
+Pitlord `v0.1.3` adds released support for the shared policy's `require_content` rule. Space Rocks now includes the generated shared documentation policy directly and no longer mirrors its required-path rules locally.
 
 ## Related docs
 
