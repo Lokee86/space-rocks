@@ -36,6 +36,7 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - [domains](domains/!INDEX.md) - Domains documentation.
 - [Limits](limits/!INDEX.md) - Current constraints, known gaps, transitional limitations, and accepted stable system ceilings.
 - [observability](observability/!INDEX.md) - Observability documentation.
+- [operations](operations/!INDEX.md) - Production deployment and hosted release operations.
 - [Planning](planning/!INDEX.md) - Future, unresolved, or not-yet-current documentation.
 - [protocol](protocol/!INDEX.md) - Protocol documentation.
 - [services](services/!INDEX.md) - Services documentation.

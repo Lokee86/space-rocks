@@ -1,5 +1,7 @@
 ## Space Rocks P3 hosted deployment
 
+Canonical operator documentation: [Production operations](../../docs/operations/!INDEX.md).
+
 This directory is the complete server deployment payload. The server does not need a Git clone or project source files.
 
 The GHCR packages are private when first published. Before the first pull, either make the three packages public in GitHub Packages or run `docker login ghcr.io` on the server with a token that has `read:packages`.
