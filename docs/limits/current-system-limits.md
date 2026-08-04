@@ -65,7 +65,7 @@ Accepted practical ceilings that are not active bugs or roadmap work belong in [
 - The Rails API/auth path exists, but broader account product surfaces and durable progression systems are incomplete.
 - Player-data schema generation is not fully implemented as a separate pipeline domain.
 - Generated migration skeletons are not implemented.
-- Player-data contract tests for schema drift enforcement are not implemented.
+- Focused stats and match-result TOML-to-Go contract tests exist, but generated player-data schema outputs and broader multi-language schema drift enforcement are not implemented.
 - Live progression grants are not implemented.
 - Currency, ship parts, unlocks, achievements, and loadout persistence are not implemented.
 - V1 stats payloads do not include currency, ship parts, unlocks, loadouts, achievements, or match history yet.

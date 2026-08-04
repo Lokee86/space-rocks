@@ -15,6 +15,10 @@ This doc remains the authoritative planning owner for team structure and team-ru
 
 It defines how room team configuration becomes authoritative membership, how team relationships affect participation and damage, and what team facts are handed to spawning, match rules, and results.
 
+## Overview
+
+The initial team configuration, assignment, membership, relationship, room-lock, and client presentation seams are implemented on `main`. This plan now owns only the remaining team-aware mode policies, joining and switching rules, spawning, damage behavior, objectives, elimination, forfeiture, results, and richer presentation work.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -299,6 +303,10 @@ team modes emit standard team results and individual player results
 in-game joiners receive Auto-balanced or mode-controlled assignment before activation
 single-player does not require product-significant team representation
 ```
+
+## Notes
+
+Implemented facts must remain in the linked current service documents. This plan should be reduced as additional team mechanics become current rather than serving as a duplicate runtime owner.
 
 ## Related Docs
 

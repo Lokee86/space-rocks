@@ -10,6 +10,14 @@ summary: Current client team configuration controls and team presentation mappin
 
 Parent index: [Client](./!INDEX.md)
 
+## Purpose
+
+This document defines the current client-owned team configuration controls and presentation mapping.
+
+## Overview
+
+The client exposes room team configuration choices, sends team-related requests, and formats server-resolved team facts for presentation. The server remains authoritative for configuration validation, assignment, roster membership, lock state, and participant relationships.
+
 ## Status And Boundary
 
 This document covers the implemented client-side team slice. The server remains authoritative for team configuration, assignment, roster, lock state, and relationships. The client formats configuration choices, sends requests, and presents resolved team facts; it does not validate or assign teams authoritatively.
@@ -43,3 +51,7 @@ The client does not own team validation, canonical roster ordering, assignment b
 - [Client](./!INDEX.md)
 - [Game-Server Teams And Team Membership](../game-server/simulation/teams-and-team-membership.md)
 - [Teams And Team Rules](../../planning/domains/gameplay/teams-and-team-rules.md)
+
+## Notes
+
+Future team HUD, roster, objective, and mode-specific presentation must extend this client boundary without recreating server team authority.

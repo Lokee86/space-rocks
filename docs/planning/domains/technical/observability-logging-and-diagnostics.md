@@ -14,6 +14,10 @@ Parent index: [Technical Planning](./!INDEX.md)
 
 This document owns remaining future work for observability, logging, and diagnostics. Current contract, emitter, service runtime, and diagnostic-aggregator behavior belongs in current data/service documents linked below.
 
+## Overview
+
+The canonical event contract, generated bindings, service-owned rolling log runtimes, and bounded diagnostic-report service are implemented. This plan is limited to future product-triggered report creation, client-facing diagnostic workflows, resilient producer transport, bundle correlation, remaining compatibility retirement, stronger release verification, optional collection, and audit-domain durability.
+
 ## Current baseline (implemented)
 
 The current baseline is not a design proposal:
@@ -81,6 +85,17 @@ Plan stronger durability and retention for audit-domain events where product/sec
 - Do not make the diagnostic aggregator the only diagnostic source.
 - Do not turn ordinary observability into an unbounded telemetry stream.
 - Do not make logging failure block gameplay, HTTP request handling, or player-data persistence.
+
+## Related docs
+
+- [Canonical event emission](../../../observability/canonical-event-emission.md)
+- [Observability contract](../../../data/observability-contract.md)
+- [Diagnostic aggregator runtime](../../../services/diagnostic-aggregator/runtime-and-report-flow.md)
+- [Operations](../../../operations/!INDEX.md)
+
+## Notes
+
+Current operational and service behavior belongs in the linked current owners. Future work should extend those seams without turning this planning document into a second contract or runtime authority.
 
 ## Related planning
 

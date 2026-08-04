@@ -59,13 +59,30 @@ Generated, vendored, addon, scene, and large test files are legitimate size and 
 
 ## Status
 
-The audit remains active until the final branch verification records:
+The repository-wide remediation is complete on `docs/full-audit`.
 
-- structural checker result;
-- changed-from change-impact result;
-- Pitlord result;
-- repository test result appropriate to documentation/tooling changes;
-- corrected factual owners and any explicitly retained documentation debt.
+Completed work includes:
+
+- synchronized the canonical engineering-standards snapshot into `.standards/`;
+- added `docs-standard.json`, a maintainer map, implementation coverage, a behavioral-contract matrix, and this audit owner;
+- wired the shared structural checker and pull-request change-impact checker into CI;
+- corrected the diagnostic-aggregator from a false hosted-only model to its actual standalone-plus-hosted-adapter architecture;
+- added canonical production topology, image publishing, deployment, verification, update, rollback, and recovery documentation;
+- graduated implemented server/client team ownership out of planning while leaving unmerged P4 mechanics in planning;
+- corrected broken relative links, stale agent guidance, universal section debt, and the Bruno collection's nonexistent request inventory;
+- corrected the stale player-data contract-test limitation;
+- retained no documentation baseline suppressions.
+
+Verification evidence:
+
+- shared full documentation checker: passed with zero findings, zero baselined findings, and zero stale baseline entries;
+- shared changed-from documentation-impact checker against `main`: passed with zero findings;
+- Pitlord `v0.1.1`: passed 25 repository policy rules with no violations;
+- Python repository/tooling suite: 343 passed;
+- data-sync source validation: passed;
+- generated constants, packet, realtime-wire, and drop-table checks: passed.
+
+The generated shared Pitlord documentation policy currently contains a `require_content` rule that is unsupported by Pitlord `v0.1.0`, `v0.1.1`, `v0.1.2`, and the reachable remote `main`. Space Rocks therefore mirrors the supported required-path rules in its local policy, keeps the required `AGENTS.md` language in source, and uses the shared Python checker as the authoritative documentation gate. The exact content assertion can move back into the included shared policy when a compatible Pitlord release exists.
 
 ## Related docs
 

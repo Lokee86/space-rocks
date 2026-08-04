@@ -10,6 +10,14 @@ summary: Current game-server team configuration, assignment, roster, relationshi
 
 Parent index: [Game Server Simulation](./!INDEX.md)
 
+## Purpose
+
+This document defines the current game-server ownership of team configuration, assignment, roster normalization, membership, relationships, and lifecycle handoff.
+
+## Overview
+
+The focused team package resolves deterministic team facts, rooms own lobby-scoped configuration and assignment locking, networking routes requests and activation handoff, and the game stores durable player-to-team membership. Mode-specific damage, spawning, objectives, elimination, and result policy remain separate consumers or planning work.
+
 ## Status
 
 This is the canonical current-service document for the implemented team-system slice on main. It documents server behavior only; future mode mechanics remain in [Teams And Team Rules](../../../planning/domains/gameplay/teams-and-team-rules.md).
@@ -88,3 +96,7 @@ Current coverage includes team type/config validation, canonical rosters, baseli
 - [Game Server Simulation](./!INDEX.md)
 - [Teams And Team Rules](../../../planning/domains/gameplay/teams-and-team-rules.md)
 - [Client Team Presentation And Configuration](../../client/team-presentation-and-configuration.md)
+
+## Notes
+
+The current owner provides normalized membership facts and relationships. It does not silently acquire mode, damage, spawn, objective, or result authority as those systems are implemented.
