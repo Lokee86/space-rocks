@@ -32,6 +32,7 @@ This folder owns docs for the client runtime and its implementation responsibili
 - [hud-and-gameplay-ui.md](hud-and-gameplay-ui.md) - Client HUD and gameplay UI documentation.
 - [input-and-targeting.md](input-and-targeting.md) - Client input and targeting documentation.
 - [menu-flow.md](menu-flow.md) - Client high-level menu flow documentation.
+- [team-presentation-and-configuration.md](team-presentation-and-configuration.md) - Client team configuration controls and resolved team presentation.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
 <!-- doc-ledger:folders:start -->

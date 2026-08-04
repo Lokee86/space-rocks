@@ -11,7 +11,7 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 ## Purpose
 
-This doc is the authoritative P4 planning owner for team structure and team-rule semantics.
+This doc remains the authoritative planning owner for team structure and team-rule semantics that are not yet implemented. The initial server team configuration, assignment, roster, relationship, and lifecycle handoff slice is implemented on main and documented in [Game-Server Teams And Team Membership](../../../services/game-server/simulation/teams-and-team-membership.md). Client configuration and presentation are documented in [Client Team Presentation And Configuration](../../../services/client/team-presentation-and-configuration.md).
 
 It defines how room team configuration becomes authoritative membership, how team relationships affect participation and damage, and what team facts are handed to spawning, match rules, and results.
 
@@ -48,7 +48,22 @@ client UI layout
 packet or storage schemas
 ```
 
-Modes and match rules select the team structure and related policy references as part of resolved rules. The team system validates team configuration, resolves authoritative membership, and exposes normalized team facts. Owning systems consume those facts rather than redefining team semantics.
+Modes and match rules are intended to select the team structure and related policy references as part of resolved rules. The implemented team system validates room team configuration, resolves authoritative lobby membership, locks the start snapshot, and exposes game-owned team facts and relationships. Owning systems should consume those facts rather than redefining team semantics. The remaining mode, damage, spawning, objective, elimination, forfeiture, and result policy below stays planning-only unless marked as implemented in the current service document.
+
+## Implementation Status
+
+Implemented on main:
+
+- FFA, Co-op, Custom, and Auto-balanced structure identifiers and configuration validation.
+- Canonical participant roster validation and deterministic FFA, Co-op, Custom, and size-only Auto-balanced assignment.
+- Custom player-selected and owner-assigned lobby permissions, readiness effects, and room assignment locking.
+- Room start snapshot handoff into game player and bot membership, game relationship queries, respawn preservation, and historical membership facts.
+- Client room setup controls, request routing, and basic team names/colors/structure labels.
+
+Not implemented on main and retained as planning:
+
+- In-game joining assignment policy, mid-match switching or rebalancing, team-aware spawning, team objectives/aggregation, elimination, forfeiture, team result contracts, and team-specific damage policy.
+- Product-level team HUD/roster presentation and future reconnect grace-period behavior.
 
 ## Settled Product Model
 

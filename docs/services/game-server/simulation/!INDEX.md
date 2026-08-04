@@ -26,6 +26,8 @@ This folder owns authoritative game runtime behavior for the game server.
 
 ## Direct Files
 <!-- doc-ledger:files:start -->
+
+- [teams-and-team-membership.md](teams-and-team-membership.md) - Current server team configuration, assignment, roster, relationship, and lifecycle ownership.
 <!-- doc-ledger:files:end -->
 ## Stub Files
 <!-- doc-ledger:stubs:start -->
