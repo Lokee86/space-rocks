@@ -16,6 +16,10 @@ This document explains realtime compact-wire architecture and ownership only. Th
 
 Do not reproduce aliases, tuple orders, event layouts, ID tags, quantization tables, or packet metadata here. Those details belong to the contract and generated reference.
 
+## Overview
+
+This document describes the current Realtime Compact Wire Mapping behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Ownership
 
 - Logical packet types, struct fields, and JSON names belong to the configured `shared/packets/*.toml` packet schema.
@@ -131,3 +135,11 @@ Top-level `data-sync -validate` also validates the realtime-wire domain.
 - Server `realtime_wire_fixture_test.go` and `compact_wire_descriptor_test.go`.
 - Client `test_realtime_wire_fixtures.gd`, descriptor ID/record/decoder tests, compact lane packet tests, and generated quantization tests.
 - Data-sync realtime-wire tests and `test_realtime_wire_enemy_extensibility.py`.
+
+## Related docs
+
+- [Game Server Networking](./!INDEX.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

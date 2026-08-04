@@ -17,6 +17,10 @@ It defines how authoritative gameplay events become attributed awards, counter m
 
 This document is a planning specification. It does not claim that the described systems or implementation already exist.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Gameplay Awards And Counters.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -527,3 +531,7 @@ Visibility is mode-defined and may be hidden, HUD, scoreboard, results-only, tea
 
 The final snapshot is clean and not persistence-specific; result, ranking, progression, objective, match-end, and presentation systems retain their ownership boundaries.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

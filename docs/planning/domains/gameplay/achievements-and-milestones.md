@@ -17,6 +17,10 @@ Achievements and milestones consume authoritative domain events directly.
 
 There is no separate trusted-fact emitter for gameplay achievements. Evaluator-local facts are projections, not another emitted gameplay stream.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Achievements And Milestones.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -753,3 +757,7 @@ routing and trust
 * Achievements and milestones emit reward intents only.
 * Progression and Rewards builds `GrantAward`.
 * Devtools can exercise progress and completion unless trust policy later blocks it.
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

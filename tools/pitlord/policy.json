@@ -1,5 +1,8 @@
 {
   "version": 1,
+  "includes": [
+    "../../.standards/policies/documentation-core.json"
+  ],
   "rules": [
     {
       "id": "client-no-server-owned-constants",

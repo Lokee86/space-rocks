@@ -9,6 +9,14 @@ summary: This file tracks unscheduled, cross-domain, or not-yet-routed planning 
 # Domain Backlog
 Parent index: [Planning](./!INDEX.md)
 
+## Purpose
+
+This file tracks unscheduled, cross-domain, or not-yet-routed planning items.
+
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Domain Backlog.
+
 ## Role
 
 This file tracks unscheduled, cross-domain, or not-yet-routed planning items.
@@ -98,3 +106,11 @@ Do not use this file to accumulate feature ideas, implementation notes, or detai
 | Network observability and packet budget | [network-observability-and-packet-budget.md](domains/technical/network-observability-and-packet-budget.md) | Route packet sizing, measurement, and observability work here. |
 | Testing and smoke strategy | [Verification And Quality Gates](domains/technical/verification-and-quality-gates.md) | Keep smoke-test and verification planning in the owner doc. |
 | Build Release And Environment Matrix | [Build Release And Environment Matrix](domains/technical/build-release-and-environment-matrix.md) | Route packaging and deployment details here. |
+
+## Related docs
+
+- [Planning](./!INDEX.md)
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

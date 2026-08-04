@@ -175,7 +175,7 @@ amount
 lives_after
 ```
 
-The event is queued into each player session's pending presentation events and is drained into that player's next `event_batch` after successful active write. The packet-facing event values are a source shape; the runtime wire shaper later emits the compact sparse record for the known event type. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
+The event is queued into each player session's pending presentation events and is drained into that player's next `event_batch` after successful active write. The packet-facing event values are a source shape; the runtime wire shaper later emits the compact sparse record for the known event type. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../networking/realtime-compact-wire-mapping.md).
 
 ## Current effect intents
 

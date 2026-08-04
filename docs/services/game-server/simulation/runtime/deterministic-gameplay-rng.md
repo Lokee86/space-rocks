@@ -16,6 +16,10 @@ This document describes the authoritative game-server runtime RNG seam used for 
 
 It covers ownership of the single game-local random source, the supported construction paths, the current seeded call sites, the synchronization contract around random access, the current determinism evidence, and the limits of what this seam does not guarantee.
 
+## Overview
+
+This document describes the current Deterministic Gameplay RNG Runtime behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Ownership
 
 The `game.Game` aggregate owns deterministic gameplay randomness for one match instance.
@@ -314,3 +318,7 @@ This seam does not own:
 - non-RNG gameplay ownership such as scoring, collisions, physics, or lifecycle policy
 
 Those belong to their respective simulation or observability boundaries.
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

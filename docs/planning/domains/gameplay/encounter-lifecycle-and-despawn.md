@@ -15,6 +15,10 @@ This doc is the authoritative P4 planning owner for non-player encounter retirem
 
 It defines how spawned encounter entities remain eligible, become softly or hard-retired, and hand off cleanup without claiming that the implementation already exists. It keeps retirement policy separate from encounter scheduling, entity behavior, player spawning, objectives, match-end policy, and scene reset ownership.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Encounter Lifecycle And Despawn.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -360,3 +364,7 @@ Equal cleanup candidates resolve deterministically.
 
 There are no remaining product-level Encounter Lifecycle/Despawn decisions blocking P4 planning.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

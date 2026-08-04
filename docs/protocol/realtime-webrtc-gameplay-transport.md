@@ -16,6 +16,10 @@ This document defines the current transport boundary between gameplay data deliv
 
 It is the canonical protocol doc for physical realtime DataChannels, lane-to-channel mapping, active gameplay readiness, server send routing, lane-aware client receive routing, transport recovery, and the current mixed WebRTC gameplay channel policy.
 
+## Overview
+
+This document describes the current this boundary contract, participating systems, authority, message flow, compatibility behavior, and validation surfaces.
+
 ## Ownership
 
 This document owns:
@@ -333,3 +337,7 @@ Compact JSON aliases, sparse delta omission, numeric quantization, tuple packing
 * [Client Inbound Packet Routing](../services/client/networking-flow/inbound-packet-routing.md)
 
 Lifecycle transport implementation and verification references include `client/scripts/protocol/realtime/lifecycle_lane_gate.gd`, `client/scripts/protocol/realtime/realtime_router.gd`, `client/scripts/networking/realtime/realtime_packet_pipeline.gd`, `client/tests/unit/protocol/realtime/test_lifecycle_lane_gate.gd`, `client/tests/unit/networking/realtime/test_realtime_packet_pipeline.gd` reset coverage, and the server lifecycle wire metadata tests in `services/game-server/internal/protocol/realtime/wire_packets_test.go`.
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

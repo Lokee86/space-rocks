@@ -17,6 +17,10 @@ The goal is to make hostile and hazardous content authored and sequenced through
 
 Asteroids are included in this plan. They may remain a separate runtime entity type, but they are encounter hazards and must be coordinated with enemy and boss spawning for balance, pacing, and threat pressure.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Enemies, Bosses, And Encounters.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -869,3 +873,7 @@ The fake boss exists only to prove the boss seam, not to define real boss conten
 
 Match-over stops all encounter-driven spawning.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

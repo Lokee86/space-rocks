@@ -10,6 +10,14 @@ summary: Observability is an active tools/datasync source-of-truth domain. The e
 
 Parent index: [Data](./!INDEX.md)
 
+## Purpose
+
+Observability is an active tools/datasync source-of-truth domain. The editable contract is the TOML source set below. data-sync validates the cross-file model and generates all language/runtime metadata and the generated contract...
+
+## Overview
+
+This document describes the source of truth, generated or persisted data, consumers, validation, and failure behavior for Observability Contract.
+
 ## Purpose and ownership
 
 Observability is an active `tools/data_sync` source-of-truth domain. The editable contract is the TOML source set below. `data-sync` validates the cross-file model and generates all language/runtime metadata and the generated contract reference. Runtime emitters consume generated metadata; generated outputs are never edited manually.
@@ -127,3 +135,7 @@ tools/data_sync/tests/test_observability_emission_guards.py
 - [Source-of-truth map](source-of-truth-map.md)
 - [Canonical event emission](../observability/canonical-event-emission.md)
 - [Generated contract reference](../observability/generated/contract-reference.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

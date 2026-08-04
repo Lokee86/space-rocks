@@ -527,7 +527,7 @@ cd services/api-server && bundle exec rails test test/controllers/internal/auth/
 
 ## Active issues
 
-* `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. The intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet. See [Current System Limits](../../../../limits/current-system-limits.md#architecture--networking).
+* `start_single_player_request` does not currently reject an already-authenticated WebSocket session at the server boundary. The intended identity model is still Guest or Local Profile for local single-player, and player-data mode validation rejects `single_player + authenticated_account`, but the WebSocket start-single-player path does not enforce that rejection directly yet. See [Current System Limits](../../../limits/current-system-limits.md#architecture--networking).
 
 ## Related docs
 
@@ -535,14 +535,14 @@ cd services/api-server && bundle exec rails test test/controllers/internal/auth/
 * [Game Server](../../!INDEX.md)
 * [Game Server Networking](../networking/!INDEX.md)
 * [Game Server Rooms](../rooms/!INDEX.md)
-* [Client Auth Session Flow](../../../client/auth-session-flow.md)
-* [API-server auth and OAuth](../../../api-server/auth-and-oauth.md)
-* [API-server internal API surface](../../../api-server/internal-api-surface.md)
-* [Player Data](../../../player-data/!INDEX.md)
+* [Client Auth Session Flow](../../client/auth-session-flow.md)
+* [API-server auth and OAuth](../../api-server/auth-and-oauth.md)
+* [API-server internal API surface](../../api-server/internal-api-surface.md)
+* [Player Data](../../player-data/!INDEX.md)
 * [HTTP Contract Enforcement](../../../protocol/http-contract-enforcement.md)
 * [Account And Identity Current State](../../../domains/platform/account-and-identity-current-state.md)
 * [Account And Identity Systems planning](../../../planning/domains/platform/account-and-identity-systems.md)
-* [Current System Limits](../../../../limits/current-system-limits.md)
+* [Current System Limits](../../../limits/current-system-limits.md)
 
 ## Notes
 

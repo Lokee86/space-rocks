@@ -14,6 +14,10 @@ Parent index: [Game Server Process](./!INDEX.md)
 
 This document describes the current game-server HTTP route table, hosted diagnostic-report surface, middleware chain, dependency order, and listener/serve boundary.
 
+## Overview
+
+This document describes the current Route Composition behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Composition order
 
 The process composes one mux and one `:8080` listener:
@@ -114,3 +118,7 @@ cd services/diagnostic-aggregator && go test ./...
 - [Player-data observability and logging](../../player-data/observability-and-logging.md)
 - [Diagnostic aggregator runtime and report flow](../../diagnostic-aggregator/runtime-and-report-flow.md)
 - [Diagnostic aggregator hosting](../integrations/diagnostic-aggregator-hosting.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

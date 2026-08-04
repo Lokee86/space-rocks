@@ -15,6 +15,10 @@ This doc plans the match-rule seam for turning a selected mode into a resolved s
 
 It preserves the current gameplay direction while making the room-mode boundary explicit enough for `ModePreset`, `RoomModeConfig`, and `ResolvedMatchRules` to stay separate.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Modes And Match Rules.
+
 ## Ownership Boundary
 
 This doc owns planning for `ModePreset`, `RoomModeConfig`, `ResolvedMatchRules`, and the policy pieces they compose.
@@ -464,3 +468,7 @@ Rooms consume the locked decision and never reconstruct match end or winners.
 session_context remains separate from gameplay mode_id.
 No gameplay system should read raw room config directly.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

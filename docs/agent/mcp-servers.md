@@ -13,6 +13,10 @@ Parent index: [Agent](./!INDEX.md)
 
 The MCP server is maintained as its own sibling repository rather than inside Space Rocks.
 
+## Overview
+
+This document explains the stable agent workflow and repository boundaries for Workspace MCP.
+
 ## Location
 
 - Local repository: `D:\\!bin\\workspace-mcp`
@@ -35,3 +39,11 @@ For server architecture, tool contracts, startup instructions, and tests, use th
 - MCP read/write tools are the primary implementation path.
 - Hermes is reserved for delegated sub-agent work and parallel independent workstreams.
 - Space Rocks documentation should describe how the project consumes the MCP, not duplicate the MCP implementation documentation.
+
+## Related docs
+
+- [Agent](./!INDEX.md)
+
+## Notes
+
+Keep volatile project status in the designated current-context owner rather than expanding stable agent guidance.

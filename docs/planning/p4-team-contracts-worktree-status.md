@@ -16,6 +16,10 @@ This note records the current state of the isolated P4 Player Experience Foundat
 
 It is a branch handoff and integration note, not current implementation authority. The canonical implementation documentation currently lives on the P4 branch and should replace older conflicting P4 documentation when the branch is integrated.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for P4 Team Contracts Worktree Status.
+
 ## Worktree
 
 As of July 18, 2026:

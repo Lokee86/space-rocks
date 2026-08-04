@@ -18,7 +18,7 @@ It covers the server-side `CameraView` model used for viewport-sized spawning, v
 
 ## Overview
 
-See also: [Game Control Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
 
 The game server keeps a camera-view record per simulation player in:
 

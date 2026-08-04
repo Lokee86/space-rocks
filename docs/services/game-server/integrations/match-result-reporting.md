@@ -334,8 +334,8 @@ Related API-server tests:
 * [Game Server](../../!INDEX.md)
 * [Game Server Rooms](../rooms/!INDEX.md)
 * [Game Server Networking](../networking/!INDEX.md)
-* [Player Data](../../../player-data/!INDEX.md)
-* [Player Stats And Match Results](../../../api-server/player-stats-and-match-results.md)
+* [Player Data](../../player-data/!INDEX.md)
+* [Player Stats And Match Results](../../api-server/player-stats-and-match-results.md)
 * [Trust And Eligibility Policy](../../../domains/platform/security-and-admin/trust-and-eligibility-policy.md)
 
 ## Notes

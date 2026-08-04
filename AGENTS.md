@@ -4,13 +4,17 @@ Guidance for Codex and other coding agents working in this repository.
 
 This file is the short, always-read operating manual. Keep it practical and stable. For deeper or more temporary context, read the linked docs only when the task needs them.
 
+Documentation is part of the implementation. Changes to behavior, ownership, state, public contracts, operations, packaging, or recovery must update their canonical documentation and coverage in the same work.
+
 ## Project Snapshot
 
 Space Rocks is an Asteroids-inspired game in active development.
 
 - Godot client: `client/`
 - Go real-time game server: `services/game-server/`
-- Planned API/business server placeholder: `services/api-server/`
+- Rails API/business server: `services/api-server/`
+- Player-data service: `services/player-data/`
+- Diagnostic report service: `services/diagnostic-aggregator/`
 - Shared generated data sources: `shared/`
 - Project docs: `docs/`
 - Packet/constants sync tool: `tools/data_sync/`
@@ -64,7 +68,7 @@ github.com/Lokee86/space-rocks/services/game-server
 
 The module path matches the `services/game-server/` directory. Import paths inside the Go server use `github.com/Lokee86/space-rocks/services/game-server/...`.
 
-`services/api-server/` exists as a Ruby/Rails API-only scaffold. Do not put account, persistence, matchmaking metadata, leaderboard, or other business/backend concerns into the Go game server unless the user explicitly changes that direction.
+`services/api-server/` is the Ruby/Rails API service for authenticated accounts, OAuth, internal token verification, account-backed player statistics, and match-result persistence. Do not put those business/backend concerns into the Go game server unless the user explicitly changes that direction.
 
 ## Generated Files
 
@@ -121,7 +125,7 @@ Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.
 
 Tunable/game-data constants belong in the split constants SoT files under `shared/constants/` and generated scripts under `client/scripts/generated/constants/`. Client constants use nested subcategory sections under `constants.client.presentation.*`, `constants.client.shell.*`, and `constants.client.lobby.*`. Do not create local constants files elsewhere; change generated constants through the data source/regeneration path, not manual edits.
 
-Packet schema changes should be made in the relevant split packet TOML under `shared/packets/` and pushed with `tools/data_sync`. Edit `shared/packets/outputs.toml` only when changing output routing. Packet pull is intentionally unsupported.
+Packet schema changes should be made in the relevant split packet TOML under `shared/packets/` and pushed with `tools/data_sync`. Edit `shared/packets/outputs.toml` only when changing output routing. Packet pull is intentionally unsupported. HTTP API request and response shapes are owned by `shared/contracts/http/openapi.yaml` and the service/controller contract tests that consume it.
 
 ## Skills
 
@@ -143,7 +147,7 @@ Use only the relevant skill for the current task. Do not load every skill for ev
 - Keep server inbound packet handlers in `services/game-server/internal/networking/inbound`.
 - Keep server outbound packet/write helpers in `services/game-server/internal/networking/outbound`.
 - Keep reusable game simulation in `services/game-server/internal/game`, not `services/game-server/cmd/game-server/main.go`.
-- Keep API/business logic out of the Go game server; it belongs in the planned `services/api-server/`.
+- Keep API/business logic out of the Go game server; it belongs in `services/api-server/`.
 - Use `shared/constants/server_constants.toml`, `shared/constants/server_entities.toml`, `shared/constants/client/presentation.toml`, `shared/constants/client/shell.toml`, and `shared/constants/client/lobby.toml` plus `tools/data_sync/` for active Go/GDScript constants.
 - Use `shared/packets/outputs.toml`, `shared/packets/gameplay.toml`, `shared/packets/debug.toml`, and `shared/packets/lobby.toml` plus `tools/data_sync/` for active packets.
 - Route server packet wire JSON through `services/game-server/internal/protocol/packetcodec`.

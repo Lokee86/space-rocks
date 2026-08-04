@@ -14,6 +14,10 @@ Parent index: [Game Server Process](./!INDEX.md)
 
 This document describes the current graceful game-server process shutdown boundary, including the HTTP lifecycle, service-owned logging closures, hosted diagnostic-aggregator closure, player-data logging runtime closure, and room cleanup.
 
+## Overview
+
+This document describes the current Service Shutdown behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Shutdown trigger and ownership
 
 `run()` creates a context with `signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)`. Interrupt and SIGTERM cancel the serving context. The executable does not expose shutdown through an HTTP or packet API; host process signals own the trigger.
@@ -97,3 +101,7 @@ cd services/player-data && go test ./...
 - [Game-server logging and diagnostics](../observability/logging-and-diagnostics.md)
 - [Game-server rooms](../rooms/!INDEX.md)
 - [Game-server networking](../networking/!INDEX.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

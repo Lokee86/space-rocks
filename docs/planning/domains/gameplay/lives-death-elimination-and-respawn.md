@@ -15,6 +15,10 @@ This doc is the authoritative P4 planning owner for lives, death, elimination, a
 
 It defines how a resolved mode tracks available ships, records death and attribution facts, decides whether and when a player may return, and hands lifecycle facts to spawning, match rules, results, and player experience. It defines policy boundaries without claiming that the implementation already exists.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Lives, Death, Elimination, And Respawn.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -399,3 +403,7 @@ Life/death/respawn facts appear in results strictly according to mode policy.
 
 Disconnected or removed participants leave active evaluation while historical facts remain available to results.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

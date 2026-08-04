@@ -14,6 +14,10 @@ Parent index: [Server](./!INDEX.md)
 
 This document describes the game-server `debug_status` readout: its authoritative source, `sr.tooling` subscription lifecycle, eligibility gates, packet shape, and client presentation boundary.
 
+## Overview
+
+This document describes the debug-only this boundary surface, its authority boundary, controls, telemetry, runtime gates, implementation owners, and tests.
+
 ## Current route
 
 `debug_status` is a privileged developer readout delivered exclusively through the reliable ordered `sr.tooling` WebRTC DataChannel.
@@ -214,3 +218,7 @@ Tests verify typed packet construction, request correlation, immediate subscribe
 * [Devtools Packet Protocol](../design/devtools-packet-protocol.md)
 * [Client Debug Status And Target Readmodels](../client/debug-status-and-target-readmodels.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

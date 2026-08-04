@@ -18,7 +18,7 @@ It explains how fatal player damage becomes a pending-despawn ship, how lives an
 
 ## Overview
 
-See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Devtools Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
 
 Player death and despawn are authoritative game-server simulation behavior.
 
@@ -397,7 +397,7 @@ Y            = event.Y
 
 `recordDomainEvent` broadcasts the packet event into every player session's pending presentation event queue.
 
-The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written. This delivery is best-effort supplementary presentation, not an acknowledgement that the client durably received lifecycle state; clients reconstruct lifecycle from `player_lifecycle`, `player_sessions`, and world state. The domain `EventState` shape is the source-facing projection; the runtime wire record is shaped later by `protocol/realtime` into sparse quantized output. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
+The event is delivered through the next `event_batch` write for each player. Successful lane packet delivery clears that player's pending presentation events after the packet is written. This delivery is best-effort supplementary presentation, not an acknowledgement that the client durably received lifecycle state; clients reconstruct lifecycle from `player_lifecycle`, `player_sessions`, and world state. The domain `EventState` shape is the source-facing projection; the runtime wire record is shaped later by `protocol/realtime` into sparse quantized output. See [Presentation Event Queue](../runtime/presentation-event-queue.md) and [Realtime Compact Wire Mapping](../../networking/realtime-compact-wire-mapping.md).
 
 A fatal damage path may also emit a `damage_applied` event before the `ship_death` event when damage actually changed health or shield.
 

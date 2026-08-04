@@ -15,6 +15,10 @@ This doc is the authoritative P4 planning owner for non-player encounter spawn p
 
 It defines how modes select one or more encounter spawn profiles, how validated profile configuration becomes runtime scheduling policy, and how encounter requests become authoritative spawn outcomes. It defines planning boundaries without claiming that the implementation already exists.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Encounter Spawn Profiles.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -398,3 +402,7 @@ Encounter Spawn Profiles select lifecycle/despawn policy; [Encounter Lifecycle A
 
 There are no remaining product-level Encounter Spawn Profile decisions blocking P4 system planning.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

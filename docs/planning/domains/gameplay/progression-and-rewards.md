@@ -15,6 +15,10 @@ This doc plans the durable progression and reward architecture for player advanc
 
 The core purpose is to define how trusted gameplay, progression, account, or commerce events become durable `GrantAward` records that can be handed to player-data safely and idempotently.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Progression And Rewards.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -610,3 +614,7 @@ This document does not lock exact XP, currency, item, unlock, or reward amounts.
 * Custom titles are unlockable content.
 * First-time objective completion state belongs to progression.
 * Guest progression uses existing transient-memory behavior.
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

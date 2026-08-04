@@ -19,6 +19,10 @@ It exists to prevent future work from treating an empty external ICE-server list
 > [!IMPORTANT]
 > ICE is always part of WebRTC connection establishment. An empty `WEBRTC_ICE_SERVERS` value means that no external STUN or TURN service is configured; it does not disable ICE.
 
+## Overview
+
+This document describes the current Hosted WebRTC Connectivity: ICE, STUN, And TURN behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Current topology
 
 Space Rocks uses a client-to-dedicated-server topology rather than peer-to-peer player hosting.
@@ -104,3 +108,7 @@ Until those triggers are observed, the empty external ICE-server configuration i
 - [Networking Flow](../networking-flow/!INDEX.md)
 - [Realtime WebRTC Gameplay Transport](../../../protocol/realtime-webrtc-gameplay-transport.md)
 - [Current System Limits](../../../limits/current-system-limits.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

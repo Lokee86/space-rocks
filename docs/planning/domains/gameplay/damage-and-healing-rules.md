@@ -17,6 +17,10 @@ It defines how authoritative damage and healing intent becomes an eligible, reso
 
 The conceptual and implementation reference for the current damage model is [Damage](../../../systems-design/combat/damage.md). That document remains a reference for existing concepts and seams; this document owns the P4 product policy described here.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Damage And Healing Rules.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -476,3 +480,7 @@ Credit, awards, environmental attribution windows, and result interpretation rem
 
 Existing effects may survive owner disconnect and retain participant credit context.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

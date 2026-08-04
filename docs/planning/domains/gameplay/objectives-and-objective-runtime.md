@@ -15,6 +15,10 @@ This doc is the authoritative P4 planning owner for the shared Objective Foundat
 
 It defines the schema/definition-driven objective state-machine factory and runtime: how objective definitions describe conditions and transitions, how objective instances consume authoritative facts, what objective-local state is retained, and which lifecycle, progress, visibility, and resolution facts are reported. It defines a reusable foundation without making objectives the owner of the systems that generate facts or the consumers that interpret them.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Objectives And Objective Runtime.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -359,3 +363,7 @@ Arcade Survival remains the no-objective baseline by mode policy.
 
 No product-level Objective Foundation decisions remain blocking P4 planning.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

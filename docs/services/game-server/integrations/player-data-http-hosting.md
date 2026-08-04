@@ -300,7 +300,7 @@ The local profiles handler tests verify unavailable local profile storage behavi
 
 * [Game Server Integrations](./!INDEX.md)
 * [Game Server](../../!INDEX.md)
-* [Player Data](../../../player-data/!INDEX.md)
+* [Player Data](../../player-data/!INDEX.md)
 * [Auth Verifier Integration](./auth-verifier-integration.md)
 * [Match Result Reporting](./match-result-reporting.md)
 

@@ -10,11 +10,19 @@ summary: PresentationBridge owns the boundary between refreshed realtime gamepla
 
 Parent index: [Gameplay Runtime](./!INDEX.md)
 
+## Purpose
+
+PresentationBridge owns the boundary between refreshed realtime gameplay state and frame-coalesced client presentation.
+
 `PresentationBridge` owns the boundary between refreshed realtime gameplay state and frame-coalesced client presentation.
 
 It is configured by `GameplaySessionController`, driven by packet-ingress notifications from `RealtimePacketPipeline`, and flushed once per gameplay frame before normal gameplay composition processing.
 
 Packet ingress is the only input path for this bridge; it does not consume lane-specific presentation signals directly.
+
+## Overview
+
+This document describes the current Presentation Bridge behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
 
 ## Ownership
 

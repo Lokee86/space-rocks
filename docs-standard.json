@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "profile": "game",
+  "docs_root": "docs",
+  "root_index": "docs/!INDEX.md",
+  "folder_index": "!INDEX.md",
+  "required_paths": [
+    "README.md",
+    "AGENTS.md",
+    "docs/!INDEX.md",
+    "docs/documentation-policy.md",
+    "docs/documentation-procedure.md",
+    "docs/maintainer-map.md",
+    "docs/planning/!INDEX.md",
+    "docs/limits/!INDEX.md",
+    "docs/development/!INDEX.md",
+    "docs/development/documentation-coverage.md",
+    "docs/development/behavioral-contract-matrix.md",
+    "docs/development/documentation-audit.md",
+    "docs/operations/!INDEX.md"
+  ],
+  "index_exempt_directories": ["stubs"],
+  "section_exemptions": [
+    "docs/notes.md",
+    "docs/observability/generated/**",
+    "docs/protocol/generated/**"
+  ],
+  "required_sections": ["Purpose", "Overview", "Related docs", "Notes"],
+  "coverage": [
+    {
+      "paths": ["client/**"],
+      "docs": [
+        "docs/services/client/**",
+        "docs/devtools/client/**",
+        "docs/domains/player-experience/**",
+        "docs/development/documentation-coverage.md"
+      ]
+    },
+    {
+      "paths": ["services/game-server/**"],
+      "docs": [
+        "docs/services/game-server/**",
+        "docs/devtools/server/**",
+        "docs/protocol/**",
+        "docs/systems-design/**",
+        "docs/development/documentation-coverage.md"
+      ]
+    },
+    {
+      "paths": ["services/api-server/**"],
+      "docs": [
+        "docs/services/api-server/**",
+        "docs/domains/platform/**",
+        "docs/protocol/http-api-contracts.md",
+        "docs/development/documentation-coverage.md"
+      ]
+    },
+    {
+      "paths": ["services/player-data/**"],
+      "docs": [
+        "docs/services/player-data/**",
+        "docs/data/player-data-schema.md",
+        "docs/protocol/player-data-http-api.md",
+        "docs/development/documentation-coverage.md"
+      ]
+    },
+    {
+      "paths": ["services/diagnostic-aggregator/**"],
+      "docs": [
+        "docs/services/diagnostic-aggregator/**",
+        "docs/devtools/diagnostic-aggregator/**",
+        "docs/operations/**",
+        "docs/development/documentation-coverage.md"
+      ]
+    },
+    {
+      "paths": ["shared/constants/**", "shared/packets/**", "shared/collisions/**", "shared/drop_tables/**", "shared/contracts/**"],
+      "docs": [
+        "docs/data/**",
+        "docs/protocol/**",
+        "docs/systems-design/**",
+        "docs/development/documentation-coverage.md"
+      ]
+    },
+    {
+      "paths": ["tools/data_sync/**"],
+      "docs": ["docs/data/**", "docs/development/documentation-coverage.md"]
+    },
+    {
+      "paths": ["deploy/production/**", ".github/workflows/publish-hosted-images.yml", ".github/workflows/*release*.yml"],
+      "docs": ["docs/operations/**", "docs/developer.md", "docs/development/documentation-coverage.md"]
+    },
+    {
+      "paths": ["web-astro/**"],
+      "docs": ["docs/services/web/**", "docs/domains/web/**", "docs/development/documentation-coverage.md"]
+    },
+    {
+      "paths": ["tools/ci/**", ".github/workflows/ci.yml", "requirements-dev.txt"],
+      "docs": ["docs/developer.md", "docs/development/**"]
+    }
+  ],
+  "change_rules": [
+    {
+      "paths": ["client/**"],
+      "docs": ["docs/services/client/**", "docs/devtools/client/**", "docs/domains/player-experience/**", "docs/protocol/**", "docs/limits/**"]
+    },
+    {
+      "paths": ["services/game-server/**"],
+      "docs": ["docs/services/game-server/**", "docs/devtools/server/**", "docs/protocol/**", "docs/systems-design/**", "docs/limits/**"]
+    },
+    {
+      "paths": ["services/api-server/**"],
+      "docs": ["docs/services/api-server/**", "docs/domains/platform/**", "docs/protocol/**", "docs/limits/**"]
+    },
+    {
+      "paths": ["services/player-data/**"],
+      "docs": ["docs/services/player-data/**", "docs/data/player-data-schema.md", "docs/protocol/player-data-http-api.md", "docs/limits/**"]
+    },
+    {
+      "paths": ["services/diagnostic-aggregator/**"],
+      "docs": ["docs/services/diagnostic-aggregator/**", "docs/devtools/diagnostic-aggregator/**", "docs/operations/**", "docs/limits/**"]
+    },
+    {
+      "paths": ["shared/constants/**", "shared/packets/**", "shared/collisions/**", "shared/drop_tables/**", "shared/contracts/**", "tools/data_sync/**"],
+      "docs": ["docs/data/**", "docs/protocol/**", "docs/systems-design/**", "docs/limits/**"]
+    },
+    {
+      "paths": ["deploy/production/**", ".github/workflows/publish-hosted-images.yml", ".github/workflows/*release*.yml", "services/*/Dockerfile"],
+      "docs": ["docs/operations/**", "docs/developer.md", "docs/limits/**"]
+    },
+    {
+      "paths": ["web-astro/**"],
+      "docs": ["docs/services/web/**", "docs/domains/web/**", "docs/limits/**"]
+    },
+    {
+      "paths": ["tools/ci/**", ".github/workflows/ci.yml", "requirements-dev.txt", "tools/pitlord/**", "docs-standard.json"],
+      "docs": ["docs/developer.md", "docs/development/**", "docs/maintainer-map.md", "docs/documentation-policy.md", "docs/documentation-procedure.md"]
+    }
+  ]
+}

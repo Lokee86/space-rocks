@@ -15,6 +15,10 @@ This doc is the authoritative P4 planning owner for match participation and join
 
 It defines participation states, joining, leaving, AFK removal, spectating, reconnect, capacity, team assignment, participant counts, and result eligibility, plus the handoffs to lifecycle, modes, teams, lives, spawning, encounters, objectives, and results. It defines policy boundaries without claiming that implementation exists.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Participation And Joining.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -253,3 +257,7 @@ Lifecycle owns execution, transport, room membership, reservations, and reconnec
 Modes own selectable policy; gameplay systems provide or consume their own facts.
 No product-level participation/joining decisions block P4 planning.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

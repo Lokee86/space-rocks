@@ -21,6 +21,10 @@ See the current web service docs for implementation details:
 - `docs/services/web/crt-media-frame.md`
 - `docs/services/web/cloudflare-pages-deployment.md`
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Devlog Static Site.
+
 ## Current status
 
 The public devlog V0 exists. Implementation facts now live in the service docs.

@@ -18,7 +18,7 @@ It covers the current score and lives mutation seams, how those counters are sto
 
 ## Overview
 
-See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Devtools Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
 
 Player counters are authoritative game-server simulation state.
 
@@ -344,7 +344,7 @@ RoomPlayerMatchSummary.score
 
 `world lane ship records` is active live ship state only. It should not be used as the source of truth for score or lives.
 
-Death events use `event_batch[].lives` to report the player's remaining lives after the death consequence is applied. That path is a logical expanded field after decode; the compact wire shaper may emit a smaller sparse record for `ship_death`. See [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md) and [Presentation Event Queue](../runtime/presentation-event-queue.md).
+Death events use `event_batch[].lives` to report the player's remaining lives after the death consequence is applied. That path is a logical expanded field after decode; the compact wire shaper may emit a smaller sparse record for `ship_death`. See [Realtime Compact Wire Mapping](../../networking/realtime-compact-wire-mapping.md) and [Presentation Event Queue](../runtime/presentation-event-queue.md).
 
 Pickup effect events use `event_batch[].lives_after` to report the updated lives value after an `add_lives` effect succeeds. That path is a logical expanded field after decode; the compact wire shaper may emit a smaller sparse record for the corresponding event.
 

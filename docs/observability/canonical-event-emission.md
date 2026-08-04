@@ -14,6 +14,10 @@ Parent index: [Observability](./!INDEX.md)
 
 This document owns the cross-service canonical-emitter boundary. The observability contract is authored under `shared/contracts/observability/`; `data-sync` validates it and generates the language metadata consumed by runtime emitters. Service documents own file-runtime and workflow details; this document records the shared seam and current migration state.
 
+## Overview
+
+This document describes the current Canonical Event Emission ownership, event flow, safety boundaries, implementation paths, and verification.
+
 ## Current architecture
 
 The current cross-language infrastructure is:
@@ -106,3 +110,11 @@ data-sync -check -observability -go -gds -ruby -json -docs
 ## Does not own
 
 Canonical emission does not own diagnostic submission, metrics, tracing infrastructure, durable hosted retention, gameplay behavior, networking behavior, or the retirement schedule for compatibility helpers. Those remain with the owning service or planning document.
+
+## Related docs
+
+- [Observability](./!INDEX.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

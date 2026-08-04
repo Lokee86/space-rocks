@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
@@ -38,6 +40,9 @@ jobs:
           echo "$RUNNER_TEMP/pitlord-bin" >> "$GITHUB_PATH"
       - name: Run repository checks
         run: bash tools/ci/run_repo_checks.sh
+      - name: Check documentation impact
+        if: github.event_name == 'pull_request'
+        run: python .standards/docs_policy/check.py --repo . --changed-from "origin/${{ github.base_ref }}"
 
   go-tests:
     name: Go tests

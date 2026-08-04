@@ -28,6 +28,10 @@ This doc focuses on ownership state and hangar flow.
 
 It does not own match runtime equipment state, final build eligibility, progression reward policy, shop pricing, or UI layout.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Inventory And Hangar.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -649,3 +653,7 @@ local and Rails stores satisfy the same logical inventory contract
 - Persistent rare drops become ownership only after collection and grant application.
 - Guest inventory behaves normally but stores durable-shaped state in transient memory.
 - Fallback/default hangar state must prevent missing or corrupt data from making the game unplayable.
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

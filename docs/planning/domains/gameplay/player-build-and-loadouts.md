@@ -13,6 +13,10 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc plans the player-build seam for ship variants, weapon-point rules, module slots, loadout selection, and match-start build resolution.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Player Build And Loadouts.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -357,3 +361,7 @@ Selection planning rule:
 - Hardwired modules stay separate from pre-match loadout selection.
 - `weight_class` stays a loadout-compatibility classification, not physics mass.
 - `primary_1` remains required at match start.
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

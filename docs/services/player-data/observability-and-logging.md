@@ -14,6 +14,10 @@ Parent index: [Player Data](./!INDEX.md)
 
 Player-data owns canonical HTTP and dispatcher observability while retaining a transitional category compatibility layer for callers that have not completed semantic migration.
 
+## Overview
+
+This document describes the current Player-Data Observability And Logging behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Runtime boundary
 
 ```text
@@ -103,3 +107,7 @@ cd services/player-data && go test -tags noembeddedsqlite ./...
 - [Local profiles HTTP API](local-profiles-http-api.md)
 - [Match result sinks](match-result-sinks.md)
 - [Game-server service startup](../game-server/process/service-startup.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

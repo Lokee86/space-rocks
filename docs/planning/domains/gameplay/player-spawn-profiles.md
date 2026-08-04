@@ -15,6 +15,10 @@ This doc is the authoritative P4 planning owner for player-spawn profile selecti
 
 It defines how a selected profile chooses a preferred location for a player-spawn reason, applies reusable safety search, incorporates team and world context, and returns an authoritative spawn outcome. It defines planning boundaries without claiming that the implementation already exists.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Player Spawn Profiles.
+
 ## Ownership Boundary
 
 This doc owns planning for:
@@ -340,3 +344,7 @@ Telemetry records profile ID, reason, preferred position, final position, safety
 
 This doc does not own lives/respawn eligibility, team assignment, encounter spawning, room lifecycle, or match-end policy.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

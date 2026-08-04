@@ -18,7 +18,7 @@ It explains how normal player pause, dev player freeze, and the shared suspensio
 
 ## Overview
 
-See also: [Game Control Devtools Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Devtools Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
 
 Player pause and suspension are game-server simulation responsibilities owned by `services/game-server/internal/game`.
 

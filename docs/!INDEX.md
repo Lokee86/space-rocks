@@ -23,6 +23,7 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 - [developer.md](developer.md) - Developer workflow and environment notes.
 - [documentation-policy.md](documentation-policy.md) - Documentation Policy documentation.
 - [documentation-procedure.md](documentation-procedure.md) - Documentation Procedure documentation.
+- [maintainer-map.md](maintainer-map.md) - Routes common changes to canonical documentation, implementation boundaries, and verification owners.
 - [notes.md](notes.md) - Cross-cutting notes that do not yet have a better home.
 <!-- doc-ledger:files:end -->
 ## Direct Folders
@@ -30,6 +31,7 @@ This is the top-level documentation index and rulebook for Space Rocks docs.
 
 - [Agent](agent/!INDEX.md) - Agent workflow and documentation support notes.
 - [data](data/!INDEX.md) - Data documentation.
+- [development](development/!INDEX.md) - Repository governance, coverage, behavioral contracts, and documentation audit evidence.
 - [devtools](devtools/!INDEX.md) - Devtools documentation.
 - [domains](domains/!INDEX.md) - Domains documentation.
 - [Limits](limits/!INDEX.md) - Current constraints, known gaps, transitional limitations, and accepted stable system ceilings.

@@ -17,6 +17,10 @@ It owns currencies, wallet policy, shop catalog offers, pricing, purchases, rece
 
 The goal is to keep value movement explicit and route all ownership changes through the same grant path used by progression and rewards. Runtime gameplay should consume resolved ownership and build eligibility, not commerce internals.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Shop, Commerce, And Economy.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -680,3 +684,7 @@ Local Profile commerce never imports into multiplayer or online account commerce
 Admin/devtools mutations use explicit source-tracking tags.
 Runtime gameplay consumes resolved ownership and build eligibility, not commerce internals.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

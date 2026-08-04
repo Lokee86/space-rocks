@@ -14,6 +14,10 @@ Parent index: [Server](./!INDEX.md)
 
 This document describes the server-side `debug_shape_catalog` readout: how reusable collision-shape definitions are built, requested through `sr.tooling`, correlated, and consumed by the existing client hitbox presentation.
 
+## Overview
+
+This document describes the debug-only Debug Shape Catalog Output surface, its authority boundary, controls, telemetry, runtime gates, implementation owners, and tests.
+
 ## Current route
 
 The shape catalog is a one-shot privileged request/response interaction on the reliable ordered `sr.tooling` WebRTC DataChannel.
@@ -267,3 +271,7 @@ Tests verify request correlation, non-empty typed catalog construction, tooling-
 * [Client Hitbox Overlays](../client/hitbox-overlays.md)
 * [Client Packet Routing And Devtools Input](../client/packet-routing-and-devtools-input.md)
 * [Collision Shape Data](../../data/collision-shape-data.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

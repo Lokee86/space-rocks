@@ -14,6 +14,10 @@ Parent index: [Client](./!INDEX.md)
 
 This document describes the runtime measurement path used by the Godot client and game server during a live gameplay room.
 
+## Overview
+
+This document describes the debug-only this boundary surface, its authority boundary, controls, telemetry, runtime gates, implementation owners, and tests.
+
 ## Lifecycle
 
 A measurement run is started, sampled, reset, and stopped through request/response packets on the reliable `sr.tooling` channel:
@@ -92,3 +96,11 @@ services/game-server/internal/tooling/controller_test.go
 ## Remaining work
 
 The capture and presentation path is implemented. Repeatable scripted/synthetic scenario orchestration remains a separate runtime-performance slice; scenario labels currently annotate manually controlled runs but do not alter gameplay by themselves.
+
+## Related docs
+
+- [Client](./!INDEX.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

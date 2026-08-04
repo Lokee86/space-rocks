@@ -17,6 +17,10 @@ It defines how the pre-lobby/create flow assembles a room content configuration 
 
 The goal is to keep authored content modular by composing refs into `RoomContentConfig`, while leaving behavior, validation, mutation, scoring, objectives, encounters, rewards, and results with their owning systems.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Levels, Missions, And Content Structure.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -596,3 +600,7 @@ Arena implementation is unresolved and deferred for a dedicated toroidal multipl
 
 Catalogs should be split now and supported by a generic enough shared-data pipeline.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

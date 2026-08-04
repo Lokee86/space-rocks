@@ -16,6 +16,10 @@ This document is the authoritative inventory and migration contract for moving r
 
 It fixes the transport boundary, packet ownership, capability requirements, attachment requirements, request/result rules, and the exact current migration surface before command routing and telemetry plumbing are changed.
 
+## Overview
+
+This document describes the debug-only Tooling Channel Migration Contract surface, its authority boundary, controls, telemetry, runtime gates, implementation owners, and tests.
+
 ## Status
 
 The transport foundation, runtime developer command migration, developer readout migration, and continuous telemetry migration are complete.
@@ -419,3 +423,7 @@ Gameplay lanes never carry tooling traffic.
 - [Devtools And Telemetry](../../planning/devtools/devtools-and-telemetry.md)
 - [Realtime WebRTC Gameplay Transport](../../protocol/realtime-webrtc-gameplay-transport.md)
 - [Realtime WebSocket Protocol](../../protocol/realtime-websocket-protocol.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

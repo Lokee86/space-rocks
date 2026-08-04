@@ -14,6 +14,10 @@ Parent index: [Client](./!INDEX.md)
 
 This document describes the current client observability architecture. The canonical envelope is the primary record model; `ClientLogger` is the compatibility-facing facade around the canonical emitter and the local rolling writer.
 
+## Overview
+
+This document describes the current Client Logging behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Primary record model
 
 Client production diagnostics are canonical observability records, not the former six-field text record. A record contains the generated contract envelope fields (`timestamp`, `level`, `event`, `event_id`, `service`, `environment`, `build_version`, `schema_version`, `service_instance_id`, `category`, and `retention_tier`) plus validated context and fields when present. Context carries identifiers such as `trace_id`, `request_id`, `session_id`, `room_id`, `player_id`, `account_id`, `match_id`, `route`, `packet_type`, and `duration_ms` according to the generated contract.
@@ -109,3 +113,7 @@ Client logging owns local canonical record construction, compatibility helpers, 
 - [Inbound packet routing](networking-flow/inbound-packet-routing.md)
 - [Agent testing](../../agent/testing.md)
 - [Developer guide](../../developer.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

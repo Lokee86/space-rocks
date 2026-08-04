@@ -14,6 +14,10 @@ Parent index: [API Server](./!INDEX.md)
 
 The API server owns a canonical observability emitter boundary for request, auth, player-stat, and match-result workflows. It consumes generated Ruby contract metadata and writes bounded local rolling JSONL without sharing active writers across Puma workers or forked processes.
 
+## Overview
+
+This document describes the current API Server Observability And Logging behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Runtime architecture
 
 ```text
@@ -129,3 +133,11 @@ services/api-server/test/lib/observes_api_request_unit_test.rb
 ```
 
 Run the focused Rails tests from `services/api-server` with the repository's normal bundle/test environment. The observability contract itself is verified by the data-sync validation and drift commands in [Observability contract](../../data/observability-contract.md).
+
+## Related docs
+
+- [API Server](./!INDEX.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

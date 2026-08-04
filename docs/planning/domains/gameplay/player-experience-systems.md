@@ -17,6 +17,10 @@ It coordinates how the player moves between identity/profile selection, pregame 
 
 This doc is an umbrella map. It does not replace the narrower system plans that own mode rules, inventory, loadouts, rewards, achievements, commerce, or persistence.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Player Experience Systems.
+
 ## Ownership Boundary
 
 This doc owns the broad player-facing flow and the handoffs between related systems.
@@ -755,3 +759,7 @@ Replay starts a new game with the same match config.
 
 Return to lobby keeps existing implemented behavior.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

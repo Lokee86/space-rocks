@@ -673,3 +673,7 @@ connected + pending multiplayer request + websocket auth not authenticated
 authenticate_result authenticated=true
 -> send pending request
 ```
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

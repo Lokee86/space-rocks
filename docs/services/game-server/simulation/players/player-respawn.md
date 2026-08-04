@@ -18,7 +18,7 @@ It covers authoritative respawn request handling, respawn eligibility, cooldown 
 
 ## Overview
 
-See also: [Game Control Adapter](../../../devtools/server/game-control-devtools-adapter.md)
+See also: [Game Control Adapter](../../../../devtools/server/game-control-devtools-adapter.md)
 
 Player respawn is owned by the game server simulation. The client may request a respawn, but the server decides whether the player is eligible, where the new ship appears, and what session state is preserved.
 
@@ -134,7 +134,7 @@ Successful respawn is reflected through normal lane projection rather than a ded
 
 Death and respawn availability are surfaced separately:
 
-  `ship_death` events include `lives` and `respawn_delay` and are delivered through `event_batch`. This is the logical expanded event shape after decode; the compact wire shaper later emits a sparse, quantized record. See [Realtime Compact Wire Mapping](../../../services/game-server/networking/realtime-compact-wire-mapping.md).
+  `ship_death` events include `lives` and `respawn_delay` and are delivered through `event_batch`. This is the logical expanded event shape after decode; the compact wire shaper later emits a sparse, quantized record. See [Realtime Compact Wire Mapping](../../networking/realtime-compact-wire-mapping.md).
   `session lane player records` include `respawn_cooldown`.
   `session lane lifecycle records` report `pending_respawn` while the player has lives but no active ship.
 

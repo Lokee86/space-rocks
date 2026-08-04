@@ -14,6 +14,10 @@ Parent index: [Protocol Planning](./!INDEX.md)
 
 This doc tracks the remaining realtime protocol architecture work after the lane-native P2 cutover.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Realtime Protocol Architecture.
+
 ## Ownership Boundary
 
 This doc owns planning for the remaining realtime protocol evolution, not the current lane implementation details.

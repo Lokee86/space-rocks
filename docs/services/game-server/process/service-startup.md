@@ -14,6 +14,10 @@ Parent index: [Game Server Process](./!INDEX.md)
 
 This document describes the current game-server executable startup composition and the logging/runtime identity gate. The process hosts game-server, player-data, and the diagnostic-aggregator HTTP surface in one process while keeping their ownership boundaries separate.
 
+## Overview
+
+This document describes the current Service Startup behavior, ownership boundaries, state flow, failure behavior, implementation owners, and verification surfaces.
+
 ## Startup identity gate
 
 Before constructing runtimes, startup requires two inputs for each service identity:
@@ -140,3 +144,7 @@ cd services/player-data && go test -tags noembeddedsqlite ./...
 - [Game-server logging and diagnostics](../observability/logging-and-diagnostics.md)
 - [Player-data observability and logging](../../player-data/observability-and-logging.md)
 - [Diagnostic aggregator hosting](../integrations/diagnostic-aggregator-hosting.md)
+
+## Notes
+
+Changes to this boundary should update its canonical owner, code map or source map, verification evidence, and related documentation in the same change.

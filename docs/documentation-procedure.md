@@ -15,6 +15,12 @@ This procedure defines the standard process for creating, updating, moving, and 
 
 Use this procedure for all documentation work, including current docs, planning docs, stubs, `!INDEX.md` indexes, limits, notes, and legacy cleanup.
 
+## Overview
+
+Documentation work follows the shared Laughing Skull engineering documentation procedure plus Space Rocks' local game-profile taxonomy. Begin with the changed responsibility, find its canonical current owner, update navigation and implementation coverage, and verify both structural compliance and semantic currency against the implementation.
+
+A documentation update is incomplete when it changes an owner, package, executable, stateful flow, persistence boundary, public contract, operation, recovery seam, or critical invariant without also updating the maintainer map, coverage map, behavioral-contract matrix, planning graduation state, or limits owner as applicable.
+
 ## Procedure Summary
 
 Follow these steps in order:
@@ -27,9 +33,13 @@ Follow these steps in order:
 5. Apply the stub rule if the doc is incomplete.
 6. Write or update the doc using the required shape for its type.
 7. Add related docs, code maps, active issues, and notes.
-8. Update planning docs when planned work becomes current.
-9. Clean up stale, duplicated, or legacy documentation.
-10. Run a final verification pass.
+8. Update the maintainer map when routing or ownership changes.
+9. Update implementation coverage for changed packages, commands, stateful flows, persistence, contracts, and recovery seams.
+10. Update the behavioral-contract matrix when critical invariants or protecting tests change.
+11. Update planning docs when planned work becomes current.
+12. Clean up stale, duplicated, or legacy documentation.
+13. Run the shared checker, changed-impact check, Pitlord policy, and affected test gates.
+14. Report inspected, updated, unaffected, checked, and remaining documentation gaps.
 ```
 
 ## 1. Classify the Documentation Type
@@ -723,5 +733,11 @@ Active issues link to sorted limits backlog headings.
 Planning docs were updated if planned work became current.
 Legacy docs were deleted if fully deprecated.
 No stale duplicate facts remain.
+The maintainer map routes changed ownership correctly.
+The implementation coverage map includes every changed production boundary.
+The behavioral-contract matrix points to current protecting evidence.
+The shared documentation checker passes or retained baseline debt is explicit.
+The changed-from documentation-impact check passes for implementation changes.
+Pitlord documentation policy passes.
 docs/!INDEX.md was updated only if taxonomy or procedure changed.
 ```

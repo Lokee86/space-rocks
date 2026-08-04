@@ -17,6 +17,32 @@ These policies govern where documentation belongs, how documentation is classifi
 
 The formal documenting procedure is defined separately. These policies describe the rules that procedure must follow.
 
+## Overview
+
+Space Rocks uses the canonical Laughing Skull engineering documentation standard as its general baseline and keeps this repository-specific taxonomy as a stricter game-profile specialization. Documentation is part of implementation: changes to behavior, ownership, state, contracts, operations, packaging, recovery, or critical verification must update their current documentation in the same work.
+
+The repository declares its enforceable profile, required owners, implementation coverage, and change-impact mappings in `docs-standard.json`. The generated `.standards/` snapshot records the exact shared checker, normative standards pages, and reusable Pitlord policies used by CI. Generated standards files are not edited locally.
+
+Current behavior must have a canonical current owner. Planning, research, notes, agent guidance, coverage tables, and indexes may route to that owner but may not replace it.
+
+## Engineering Standards Alignment
+
+The following repository-level owners are mandatory:
+
+```text
+docs/maintainer-map.md
+docs/development/documentation-coverage.md
+docs/development/behavioral-contract-matrix.md
+docs/development/documentation-audit.md
+docs/operations/!INDEX.md
+docs-standard.json
+.standards/
+```
+
+The maintainer map routes change intent to canonical documentation and implementation boundaries. The coverage map records production packages, executables, public command families, stateful flows, persistent models, machine-readable contracts, and recovery seams. The behavioral-contract matrix maps critical invariants to focused tests and release gates. None of these documents becomes a duplicate implementation owner.
+
+Every public command, API, packet, schema, configuration value, default, diagnostic, compatibility rule, deployment surface, and failure/recovery behavior requires an exact current owner. Every independently stateful or persistent boundary requires explicit lifecycle, state, mutation, concurrency, recovery, and verification documentation as applicable.
+
 ## Core Policy
 
 Documentation must be organized by documentation type, not only by topic name.
@@ -686,3 +712,16 @@ no `!INDEX.md` index presents it as current authority
 ```
 
 Stale legacy documentation should not be preserved indefinitely.
+
+## Related docs
+
+- [Documentation procedure](documentation-procedure.md)
+- [Maintainer map](maintainer-map.md)
+- [Documentation coverage](development/documentation-coverage.md)
+- [Behavioral-contract matrix](development/behavioral-contract-matrix.md)
+- [Documentation audit](development/documentation-audit.md)
+- [Generated engineering standards snapshot](../.standards/docs/documentation-standard.md)
+
+## Notes
+
+Space Rocks may be stricter than the shared standard where its service, protocol, data, systems-design, devtools, gameplay, and operations boundaries require focused ownership. Local specialization must remain compatible with the shared standard and must not weaken required coverage or status evidence.

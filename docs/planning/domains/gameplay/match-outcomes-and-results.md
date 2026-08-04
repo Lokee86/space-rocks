@@ -17,6 +17,10 @@ The goal is to make match end a single explicit flow that consumes the locked de
 
 This doc is about match-end orchestration and result handoff. It is not only a result-data shape.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Match Outcomes And Results.
+
 ## Ownership Boundary
 
 This doc owns:
@@ -713,3 +717,7 @@ session_context remains separate from gameplay mode_id.
 
 EndOfMatchFlow consumes and emits locked results; it does not independently apply match-end, winner/loser, tie, forfeiture, draw, or abort policy, and does not define gameplay, reward, achievement, persistence, or UI policy.
 ```
+
+## Notes
+
+Implemented facts must move to canonical current documentation; this plan should retain only unresolved work, sequencing, and open decisions.

@@ -20,6 +20,10 @@ It coordinates implementation priority across technical foundations, public web 
 
 Detailed ownership remains in the system-specific planning documents. This document owns sequencing, dependency order, phase gates, and priority relationships.
 
+## Overview
+
+This plan describes the current direction, ownership boundary, implementation status, remaining work, and open decisions for Development Roadmap.
+
 ## Current Baseline
 
 The current project has a useful vertical-slice baseline:

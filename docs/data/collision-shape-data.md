@@ -197,7 +197,7 @@ radial candidate radius derivation
 devtools collision telemetry via the current adapter
 ```
 
-Devtools shape catalog output also reloads the shared catalog when building the debug shape catalog response. See also: [Collision Body Telemetry](../../devtools/server/collision-body-telemetry.md).
+Devtools shape catalog output also reloads the shared catalog when building the debug shape catalog response. See also: [Collision Body Telemetry](../devtools/server/collision-body-telemetry.md).
 
 The client does not consume `shared/collisions/collision_shapes.json` as runtime source data. The client owns the scene nodes that author and present collision geometry.
 
