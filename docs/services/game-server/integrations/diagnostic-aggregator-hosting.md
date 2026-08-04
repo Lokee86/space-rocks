@@ -4,7 +4,7 @@ created: "2026-07-19"
 document_id: 019f7d55-fb2c-7e16-9711-cfc452b6e940
 document_type: general
 policy_exempt: false
-summary: This document defines the game-server process boundary for temporarily co-hosting the logically independent diagnostic-aggregator service. It records the permitted composition-root hosting exception and the forbidden runtime and domain...
+summary: This document defines the optional game-server composition boundary for hosting the independent diagnostic-aggregator service.
 ---
 # Diagnostic-Aggregator Hosting
 
@@ -12,122 +12,70 @@ Parent index: [Game Server Integrations](./!INDEX.md)
 
 ## Purpose
 
-This document defines the game-server process boundary for temporarily co-hosting the logically independent diagnostic-aggregator service. It records the permitted composition-root hosting exception and the forbidden runtime and domain dependencies.
+This document records the optional game-server composition boundary for in-process diagnostic-aggregator hosting. It does not describe the standalone runtime or duplicate the diagnostic HTTP contract.
 
 ## Overview
 
-`diagnostic-aggregator` is a separate service with its own diagnostic application and report-storage responsibilities. It is temporarily co-hosted by the game-server process for deployment and process-composition reasons. Co-hosting does not make diagnostic-aggregator part of the game-server runtime, gameplay domain, networking domain, rooms, match reporting, or player-data domain.
+`diagnostic-aggregator` is an independent service with a standalone executable and production Compose service. The game-server may also host the service in-process when `services/game-server/cmd/game-server/` imports the public `services/diagnostic-aggregator/hosted` adapter.
 
-The sole import exception is:
+The only permitted import is:
 
 ```text
 services/game-server/cmd/game-server/ -> services/diagnostic-aggregator/hosted
 ```
 
-Only the game-server composition-root hosting adapter under `services/game-server/cmd/game-server/` may import `services/diagnostic-aggregator/hosted`.
+No package under `services/game-server/internal/`, gameplay, networking, rooms, match reporting, or player-data may import diagnostic-aggregator packages or call diagnostic handlers, report services, stores, or internals directly.
 
-No package under `services/game-server/internal/`, no gameplay, networking, rooms, or match-reporting package, and no player-data package may import any diagnostic-aggregator package.
-
-No game-server or player-data runtime/domain code may call diagnostic handlers, report services, stores, or other diagnostic-aggregator internals in-process.
-
-The permitted service flow is:
+## Hosted flow and lifecycle
 
 ```text
-producer/client
--> HTTP transport/API
--> diagnostic-aggregator handler/application service
--> report store
+host composition root
+  -> load hosted configuration
+  -> construct hosted service
+  -> register diagnostic routes on shared mux
+  -> host owns listener, signals, and server shutdown
+  -> close hosted service during teardown
 ```
 
-The forbidden flow is:
-
-```text
-game-server/player-data runtime
--> diagnostic application service/store/direct handler call
-```
-
-The composition root may construct, register, and close the hosted service. That lifecycle authority does not grant report-processing authority or permission to make direct diagnostic calls. The composition root only assembles the process and its transport wiring.
-
-Future detachment changes process composition and service addressing only. Callers continue through the transport/API contract; detachment must not require changing game-server or player-data runtime/domain callers to use diagnostic-aggregator internals.
+The hosted service owns diagnostic route behavior, processing, storage, retention, operational logging, and report-store closure. A process-local registration remains an HTTP/API boundary; it is not permission for service reach-through.
 
 ## Responsibilities
 
-The game-server composition root is responsible for:
+The game-server composition root owns:
 
-- Constructing the hosted diagnostic-aggregator service through its hosting adapter.
-- Registering the hosted HTTP transport/API with the process composition.
-- Closing the hosted service during process shutdown.
-- Supplying process-level configuration and lifecycle wiring needed for co-hosting.
+- construction through `hosted.Service`;
+- registration on the shared HTTP mux;
+- host-level configuration and lifecycle wiring;
+- shared listener, signals, and HTTP server shutdown.
 
-The diagnostic-aggregator service is responsible for:
+Diagnostic-aggregator owns authentication, validation, safety policy, report construction, persistence, retrieval, retention, service observability, and closure. Producers use the HTTP transport/API.
 
-- Receiving diagnostic requests through its HTTP transport/API.
-- Running diagnostic handler and application-service behavior.
-- Validating and aggregating diagnostic reports.
-- Persisting reports through its report store.
+## Non-ownership
 
-Producers and clients are responsible for sending diagnostic information through the HTTP transport/API contract.
+This integration does not own diagnostic report policy, handlers, application services, report stores, standalone process behavior, Docker/Compose deployment, gameplay, networking, rooms, match reporting, player-data behavior, or direct in-process diagnostic calls.
 
-## Code root
+## Failure and degradation
 
-`services/game-server/`
-
-## Does not own
-
-Game-server integration hosting does not own:
-
-- Diagnostic report-processing policy.
-- Diagnostic handlers or application services.
-- Diagnostic report stores or persistence internals.
-- Gameplay simulation, networking, rooms, or match-reporting behavior.
-- Player-data runtime/domain behavior or player-data storage.
-- A direct in-process diagnostic call path.
-- The architecture guard implementation; Pitlord owns static enforcement while this document owns the boundary and rationale.
-
-## Domain roles
-
-The game-server composition root is a process host and lifecycle coordinator. It may construct, register, and close diagnostic-aggregator, but it does not become the diagnostic report-processing authority. Diagnostic-aggregator remains authoritative for diagnostic handlers, application services, validation, report construction, and report storage. Game-server gameplay, networking, rooms, match reporting, and player-data remain separate domain owners.
-
-## Data ownership
-
-Diagnostic-aggregator owns diagnostic report processing, finalized report data, report identifiers, retention, and report-store data. Producers own the diagnostic material and correlation context they submit. The game server owns gameplay and process data; player-data owns player-data aggregates and persistence. Co-hosting does not transfer these ownership responsibilities.
-
-## Protocols and APIs
-
-The integration boundary is the diagnostic-aggregator HTTP transport/API. Producers and clients send requests to that API, and the diagnostic-aggregator handler/application service processes them before writing to the report store.
-
-Game-server and player-data code must remain callers through that transport/API contract when they participate in a permitted producer flow. They must not import or call diagnostic handlers, application services, stores, or internals directly in-process.
-
-Co-hosting may use an in-process HTTP server or equivalent process-local transport registration, but process-local addressing does not change the API boundary or authorize direct package calls.
+Hosted configuration, construction, registration, and closure errors are handled by the game-server composition lifecycle. Diagnostic request and storage failures remain diagnostic-aggregator behavior and must not grant the game-server runtime diagnostic implementation ownership. The standalone process has its own listener and shutdown failure behavior; it is outside this integration boundary.
 
 ## Code map
 
-Hosting exception:
-
-- `services/game-server/cmd/game-server/` - composition-root hosting adapter; the only game-server location permitted to import `services/diagnostic-aggregator/hosted`.
-- `services/diagnostic-aggregator/hosted` - hosted-service adapter used for temporary process co-hosting.
-
-Forbidden dependency surfaces:
-
-- `services/game-server/internal/` - no diagnostic-aggregator imports.
-- Game-server gameplay, networking, rooms, and match-reporting packages - no diagnostic-aggregator imports or direct calls.
-- Player-data packages - no diagnostic-aggregator imports or direct calls.
-
-The exact handler, application-service, and report-store implementation paths belong to the diagnostic-aggregator service and are not game-server integration dependencies.
+- `services/game-server/cmd/game-server/diagnostic_aggregator_host.go` - sole game-server hosting adapter.
+- `services/diagnostic-aggregator/hosted/` - public hosted construction, registration, and close surface.
+- `services/diagnostic-aggregator/cmd/diagnostic-aggregator/` - independent standalone executable; not a game-server dependency.
 
 ## Tests
 
-Tests for this boundary should verify the HTTP transport/API behavior and service lifecycle wiring without granting runtime or domain code a direct diagnostic dependency. Co-hosting tests may verify construction, registration, request routing, and close behavior at the composition root.
-
-Pitlord rule `game-runtime-no-diagnostic-aggregator-dependency` rejects diagnostic-aggregator references under game-server internals and player-data source while leaving the composition-root hosting adapter permitted. Behavioral tests must still verify transport/API behavior and service lifecycle wiring.
+Game-server hosting tests verify construction, registration, request routing, and close behavior at the composition root. Diagnostic API, report-processing, storage/recovery/retention, logging, and standalone producer coverage belongs to the diagnostic-aggregator service suite. The Pitlord rule `game-runtime-no-diagnostic-aggregator-dependency` enforces the import boundary.
 
 ## Related docs
 
 - [Game Server Integrations](./!INDEX.md)
+- [Diagnostic Aggregator](../../diagnostic-aggregator/!INDEX.md)
+- [Diagnostic Aggregator runtime and report flow](../../diagnostic-aggregator/runtime-and-report-flow.md)
 - [Game Server](../!INDEX.md)
-- [Services index](../../!INDEX.md)
-- Diagnostic-aggregator service documentation, when available
+- [Services index](../../../services/!INDEX.md)
 
 ## Notes
 
-Co-hosting is a deployment arrangement, not an ownership merger. The game-server composition root may host the service, but diagnostic-aggregator remains logically independent and retains authority over diagnostic report processing and storage.
+Co-hosting is a composition option, not the canonical deployment assumption and not an ownership merger.
