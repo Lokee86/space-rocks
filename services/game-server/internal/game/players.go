@@ -26,7 +26,7 @@ func (game *Game) addPlayerLocked(teamID teams.ID) string {
 	game.nextID++
 
 	playerID := fmt.Sprintf("player-%d", game.nextID)
-	spawnPlan := game.planInitialPlayerSpawn(playerIndex, playerID)
+	spawnPlan := game.planInitialPlayerSpawn(playerIndex, playerID, teamID)
 	spawnPosition := spawnPlan.Position
 	session := newPlayerSession(playerID, spawnPosition)
 	session.TeamID = teamID

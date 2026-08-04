@@ -22,7 +22,8 @@ const (
 	DefaultScoreAttackTarget     = 1000
 	DefaultDeathmatchTargetKills = 10
 	EncounterAsteroidsV1         = "playercentric_asteroids_v1"
-	DefaultSpawnProfileID        = "baseline"
+	BasicSafeSpawnProfileID      = "basic_safe_spawn_v1"
+	DeathmatchSpawnProfileID     = "deathmatch_dynamic_spawn_v1"
 	StandardAwardPolicyID        = "standard"
 )
 
@@ -112,6 +113,15 @@ type MatchFacts struct {
 	Teams           []TeamFact
 	HadParticipants bool
 	Elapsed         float64
+}
+
+func IsSupportedPlayerSpawnProfileID(profileID string) bool {
+	switch profileID {
+	case BasicSafeSpawnProfileID, DeathmatchSpawnProfileID:
+		return true
+	default:
+		return false
+	}
 }
 
 func CloneResolvedMatchRules(source ResolvedMatchRules) ResolvedMatchRules {

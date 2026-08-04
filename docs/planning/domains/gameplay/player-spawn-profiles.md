@@ -13,7 +13,24 @@ Parent index: [Gameplay Planning](./!INDEX.md)
 
 This doc is the authoritative P4 planning owner for player-spawn profile selection, placement, safety, and spawn presentation handoffs.
 
-It defines how a selected profile chooses a preferred location for a player-spawn reason, applies reusable safety search, incorporates team and world context, and returns an authoritative spawn outcome. It defines planning boundaries without claiming that the implementation already exists.
+It defines how a selected profile chooses a preferred location for a player-spawn reason, applies reusable safety search, incorporates team and world context, and returns an authoritative spawn outcome.
+
+## Current Implementation Status
+
+The first runtime-backed profile slice is implemented on `feature/p4-modes-match-rules`.
+
+```text
+basic_safe_spawn_v1 preserves the existing initial grid and outward safety search for Arcade Survival and Score Attack.
+deathmatch_dynamic_spawn_v1 is selected by FFA Deathmatch and Team Deathmatch.
+Deathmatch initial spawns and respawns sample deterministic candidates across the toroidal world instead of using fixed points.
+FFA placement prefers candidates maximizing distance from the nearest active opponent.
+Team placement prefers candidates near an active teammate while remaining distant from active enemies.
+Respawns penalize reuse of the player's previous spawn position.
+Both profiles reuse the existing asteroid/player collision-clearance search before committing placement.
+Unknown player-spawn profile IDs are rejected when match rules are configured.
+```
+
+Still pending from the broader profile plan are simultaneous reservations, generalized dangerous-object categories beyond current asteroids and players, recent global spawn-region history, placement telemetry, additional spawn reasons, and configurable profile options.
 
 ## Overview
 
@@ -224,7 +241,7 @@ The first implementation slice should preserve existing placement behavior while
 11. Emit the baseline placement telemetry fields.
 ```
 
-Implementation should keep profile policy in a focused player-spawning owner. Modes, lives, teams, lifecycle, encounter, campaign, runtime, devtools, and presentation should route facts or execute their own policy rather than becoming alternate player-spawn authorities. This document describes the planning direction only; it does not claim that any of these steps are implemented.
+Implementation should keep profile policy in a focused player-spawning owner. Modes, lives, teams, lifecycle, encounter, campaign, runtime, devtools, and presentation should route facts or execute their own policy rather than becoming alternate player-spawn authorities. The current implementation establishes profile selection, baseline routing, and Deathmatch-aware placement. The remaining steps extend that owner without moving placement policy back into modes, lives, teams, rooms, or runtime coordination.
 
 ## Testing Direction
 

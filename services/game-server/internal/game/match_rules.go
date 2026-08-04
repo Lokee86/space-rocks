@@ -33,6 +33,9 @@ func (game *Game) ConfigureMatchRules(resolved modes.ResolvedMatchRules) error {
 	if resolved.ModeID == modes.ModeDeathmatch && resolved.ObjectivePolicy.TargetKills <= 0 {
 		return fmt.Errorf("deathmatch kill target must be positive")
 	}
+	if !modes.IsSupportedPlayerSpawnProfileID(resolved.PlayerSpawnProfileID) {
+		return fmt.Errorf("unsupported player spawn profile %q", resolved.PlayerSpawnProfileID)
+	}
 
 	game.resolvedMatchRules = modes.CloneResolvedMatchRules(resolved)
 	game.modeID = string(resolved.ModeID)

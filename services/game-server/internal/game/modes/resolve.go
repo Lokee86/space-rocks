@@ -95,7 +95,7 @@ func Resolve(config RoomModeConfig, teamConfig teams.Config) (ResolvedMatchRules
 		MatchEndPrecedence:       []MatchEndCondition{EndNoActivePlayers},
 		ResultPolicy:             ResultFinalFacts,
 		PlayerDamageEnabled:      false,
-		PlayerSpawnProfileID:     DefaultSpawnProfileID,
+		PlayerSpawnProfileID:     BasicSafeSpawnProfileID,
 		EncounterSpawnProfileIDs: []string{EncounterAsteroidsV1},
 		InGameJoiningAllowed:     false,
 		ProgressionEligible:      true,
@@ -116,6 +116,7 @@ func Resolve(config RoomModeConfig, teamConfig teams.Config) (ResolvedMatchRules
 		resolved.MatchEndPrecedence = []MatchEndCondition{EndTargetKillsReached, EndNoActivePlayers}
 		resolved.ResultPolicy = ResultDeathmatch
 		resolved.PlayerDamageEnabled = true
+		resolved.PlayerSpawnProfileID = DeathmatchSpawnProfileID
 		resolved.EncounterSpawnProfileIDs = nil
 		if config.PresetID == PresetTeamDeathmatch {
 			resolved.ObjectivePolicy.DefinitionID = "team_deathmatch_kill_target_v1"

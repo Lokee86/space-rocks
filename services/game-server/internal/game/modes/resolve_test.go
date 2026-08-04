@@ -14,7 +14,7 @@ func TestResolveArcadeSurvivalBaseline(t *testing.T) {
 	if resolved.ModeID != ModeArcadeSurvival || resolved.RankingMetric != RankingNone {
 		t.Fatalf("resolved = %+v", resolved)
 	}
-	if resolved.PlayerSpawnProfileID != DefaultSpawnProfileID || len(resolved.EncounterSpawnProfileIDs) != 1 {
+	if resolved.PlayerSpawnProfileID != BasicSafeSpawnProfileID || len(resolved.EncounterSpawnProfileIDs) != 1 {
 		t.Fatalf("spawn profiles = %+v", resolved)
 	}
 }
@@ -43,6 +43,9 @@ func TestResolveDeathmatchOwnsFFAInfiniteRespawnsAndKillTarget(t *testing.T) {
 	if !resolved.LivesPolicy.InfiniteLives || resolved.LivesPolicy.StartingLives != 0 || !resolved.PlayerDamageEnabled {
 		t.Fatalf("deathmatch policies = %+v", resolved)
 	}
+	if resolved.PlayerSpawnProfileID != DeathmatchSpawnProfileID {
+		t.Fatalf("deathmatch player spawn profile = %q, want %q", resolved.PlayerSpawnProfileID, DeathmatchSpawnProfileID)
+	}
 	if len(resolved.EncounterSpawnProfileIDs) != 0 {
 		t.Fatalf("deathmatch encounter profiles = %+v, want none", resolved.EncounterSpawnProfileIDs)
 	}
@@ -64,6 +67,9 @@ func TestResolveTeamDeathmatchOwnsTeamKillAggregation(t *testing.T) {
 	}
 	if resolved.ResultPolicy != ResultTeamDeathmatch || resolved.ObjectivePolicy.TargetKills != 25 {
 		t.Fatalf("team deathmatch policies = %+v", resolved)
+	}
+	if resolved.PlayerSpawnProfileID != DeathmatchSpawnProfileID {
+		t.Fatalf("team deathmatch player spawn profile = %q, want %q", resolved.PlayerSpawnProfileID, DeathmatchSpawnProfileID)
 	}
 }
 
