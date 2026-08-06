@@ -176,12 +176,16 @@ The handler builds the origin policy once. An absent or empty `Origin` header is
 
 ```text
 https://space-rocks-client.local
+https://space-rocks.laughingskull.ca
+http://localhost
+http://127.0.0.1
+http://[::1]
 http://localhost:8080
 http://127.0.0.1:8080
 http://[::1]:8080
 ```
 
-When set, `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is a comma-separated replacement allowlist; whitespace is trimmed and empty entries are ignored. Origins are matched exactly.
+When set, `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is a comma-separated replacement allowlist; whitespace is trimmed and empty entries are ignored. Origins are matched exactly. Local native clients derive a host-only `http://localhost`, `http://127.0.0.1`, or `http://[::1]` origin from the local target; hosted secure clients send `https://space-rocks.laughingskull.ca`.
 
 If upgrade fails, the server logs:
 

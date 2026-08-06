@@ -22,6 +22,9 @@ func TestWebSocketOriginPolicy(t *testing.T) {
 	}{
 		{name: "default development client", origin: "https://space-rocks-client.local", want: true},
 		{name: "default official client", origin: "https://space-rocks.laughingskull.ca", want: true},
+		{name: "default localhost native client", origin: "http://localhost", want: true},
+		{name: "default ipv4 loopback native client", origin: "http://127.0.0.1", want: true},
+		{name: "default ipv6 loopback native client", origin: "http://[::1]", want: true},
 		{name: "empty origin rejected", origin: "", want: false},
 		{name: "unapproved origin rejected", origin: "https://evil.example", want: false},
 		{name: "replacement", envSet: true, envValue: " https://allowed.example, ,http://localhost:9000 ", origin: "https://allowed.example", want: true},

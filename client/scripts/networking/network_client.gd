@@ -39,10 +39,40 @@ func connect_to_server(url: String) -> Error:
 	closed_notified = false
 	close_result_notified = false
 	socket.handshake_headers = PackedStringArray([
-		"Origin: %s" % Constants.MULTIPLAYER_WS_ORIGIN
+		"Origin: %s" % websocket_origin_for_url(url)
 	])
 	var err: Error = socket.connect_to_url(url)
 	return err
+
+
+static func websocket_origin_for_url(url: String) -> String:
+	var target := url.strip_edges()
+	if !target.to_lower().begins_with("ws://"):
+		return Constants.MULTIPLAYER_WS_ORIGIN
+
+	var authority_start := "ws://".length()
+	var authority_end := target.length()
+	for delimiter in ["/", "?", "#"]:
+		var delimiter_index := target.find(delimiter, authority_start)
+		if delimiter_index >= 0:
+			authority_end = mini(authority_end, delimiter_index)
+	var authority := target.substr(authority_start, authority_end - authority_start)
+	var user_info_end := authority.rfind("@")
+	if user_info_end >= 0:
+		authority = authority.substr(user_info_end + 1)
+
+	var host := authority
+	if authority.begins_with("["):
+		var closing_bracket := authority.find("]")
+		if closing_bracket >= 0:
+			host = authority.substr(0, closing_bracket + 1)
+	else:
+		var port_separator := authority.find(":")
+		if port_separator >= 0:
+			host = authority.substr(0, port_separator)
+	if host.is_empty():
+		return Constants.MULTIPLAYER_WS_ORIGIN
+	return "http://%s" % host.to_lower()
 
 
 func poll() -> void:

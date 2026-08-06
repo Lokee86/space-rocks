@@ -125,13 +125,18 @@ delegates to NetworkClient.connect_to_server(url)
 returns the WebSocket connect error code
 ```
 
-`NetworkClient.connect_to_server(url)` resets graceful-close state, installs the configured websocket Origin header, and calls `WebSocketPeer.connect_to_url(url)`.
+`NetworkClient.connect_to_server(url)` resets graceful-close state, installs the configured WebSocket Origin header, and calls `WebSocketPeer.connect_to_url(url)`.
 
-The Origin header is derived from generated constants:
+Origin selection follows the transport target:
 
 ```text
-Constants.MULTIPLAYER_WS_ORIGIN
+ws://localhost:<port> target -> Origin: http://localhost
+ws://127.0.0.1:<port> target -> Origin: http://127.0.0.1
+ws://[::1]:<port> target      -> Origin: http://[::1]
+wss:// target                 -> Constants.MULTIPLAYER_WS_ORIGIN
 ```
+
+Local native-client origins are derived from the target host while intentionally omitting the changing local server port. Hosted secure connections use the official public client origin `https://space-rocks.laughingskull.ca`.
 
 The connection URL itself is not selected by this document's boundary. Session boot and network-target selection are documented separately.
 

@@ -66,6 +66,45 @@ func _trace_id() -> String:
 
 func _last_record(writer: FakeWriter) -> Dictionary:
 	return JSON.parse_string(writer.written_lines.back())
+func test_connect_uses_local_client_origin_for_insecure_websocket_target() -> void:
+	var client := NetworkClient.new()
+	autofree(client)
+	var fake_socket := FakeSocket.new()
+	client.set_socket_for_tests(fake_socket)
+
+	assert_eq(client.connect_to_server("ws://localhost:8080/ws"), OK)
+	assert_eq(
+		fake_socket.handshake_headers,
+		PackedStringArray(["Origin: http://localhost"])
+	)
+
+
+func test_connect_uses_host_only_origin_for_custom_loopback_port() -> void:
+	var client := NetworkClient.new()
+	autofree(client)
+	var fake_socket := FakeSocket.new()
+	client.set_socket_for_tests(fake_socket)
+
+	assert_eq(client.connect_to_server("ws://127.0.0.1:43127/ws"), OK)
+	assert_eq(
+		fake_socket.handshake_headers,
+		PackedStringArray(["Origin: http://127.0.0.1"])
+	)
+
+
+func test_connect_uses_official_client_origin_for_secure_websocket_target() -> void:
+	var client := NetworkClient.new()
+	autofree(client)
+	var fake_socket := FakeSocket.new()
+	client.set_socket_for_tests(fake_socket)
+
+	assert_eq(client.connect_to_server("wss://game.laughingskull.ca/ws"), OK)
+	assert_eq(
+		fake_socket.handshake_headers,
+		PackedStringArray(["Origin: https://space-rocks.laughingskull.ca"])
+	)
+
+
 func test_network_metrics_snapshot_reports_default_transport_with_fake_socket() -> void:
 	var client := NetworkClient.new()
 	var fake_socket := FakeSocket.new()

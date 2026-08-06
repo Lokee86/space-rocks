@@ -265,6 +265,10 @@ The server rejects an absent or empty `Origin` header. The handler builds its po
 
 ```text
 https://space-rocks-client.local
+https://space-rocks.laughingskull.ca
+http://localhost
+http://127.0.0.1
+http://[::1]
 http://localhost:8080
 http://127.0.0.1:8080
 http://[::1]:8080
@@ -272,13 +276,14 @@ http://[::1]:8080
 
 When set, `SPACE_ROCKS_WEBSOCKET_ALLOWED_ORIGINS` is a comma-separated replacement allowlist; whitespace is trimmed and empty entries are ignored. Origins are matched exactly.
 
-The Godot client currently sets the WebSocket handshake origin from generated constants:
+The Godot client selects the WebSocket handshake origin according to the target scheme:
 
 ```text
-Constants.MULTIPLAYER_WS_ORIGIN
+ws:// target  -> http:// plus the target host, without its port
+wss:// target -> Constants.MULTIPLAYER_WS_ORIGIN
 ```
 
-Origin rejection or upgrade failure prevents session creation.
+Local loopback origins therefore remain stable when packaged or development servers choose different ports. Origin rejection or upgrade failure prevents session creation.
 
 ### Message framing
 
