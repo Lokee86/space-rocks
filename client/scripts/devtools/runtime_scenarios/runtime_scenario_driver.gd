@@ -7,7 +7,7 @@ const PhaseRunnerScript := preload("res://scripts/devtools/runtime_scenarios/run
 const ChurnRunnerScript := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_churn_runner.gd")
 const GameplayDebugFlowScript := preload("res://scripts/devtools/gameplay_debug_flow.gd")
 const DevConnectionServiceScript := preload("res://scripts/devtools/dev_connection_service.gd")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 var scenario: Dictionary = {}
@@ -105,7 +105,7 @@ func _run() -> void:
 	if !await _wait_until(Callable(self, "_is_tooling_ready"), "tooling readiness", _setup_timeout()):
 		return
 	if role == "coordinator":
-		debug_flow.set_lives(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 99)
+		debug_flow.set_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 99)
 		await get_tree().create_timer(0.5).timeout
 
 	var setup_value = scenario.get("setup", {})

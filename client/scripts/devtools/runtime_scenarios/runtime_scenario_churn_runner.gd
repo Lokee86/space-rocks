@@ -3,7 +3,7 @@ class_name RuntimeScenarioChurnRunner
 
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 const Packets := preload("res://scripts/generated/networking/packets/packets.gd")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const ScenarioRounds := preload("res://scripts/devtools/runtime_scenarios/runtime_scenario_rounds.gd")
 
 var scenario: Dictionary = {}
@@ -127,7 +127,7 @@ func _start_round(round: Dictionary, round_number: int) -> Dictionary:
 		return _failure("round %d tooling did not become ready" % round_number)
 	if role == "coordinator":
 		debug_flow.set_lives(
-			DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS,
+			DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS,
 			"",
 			maxi(int(round.get("lives", 2)), 1)
 		)
@@ -141,9 +141,9 @@ func _end_round(round_number: int, match_id: String) -> Dictionary:
 	_status("round_ending", {"round": round_number, "match_id": match_id})
 	if role == "coordinator":
 		debug_flow.clear_bullets()
-		debug_flow.set_lives(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 0)
+		debug_flow.set_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 0)
 		await Engine.get_main_loop().create_timer(0.25).timeout
-		debug_flow.kill_player(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "")
+		debug_flow.kill_player(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "")
 	if !await _wait_until(Callable(self, "_is_game_over"), "round %d game over" % round_number):
 		return _failure("round %d did not reach game over" % round_number)
 	var result: Dictionary = room_session_controller.current_match_result()

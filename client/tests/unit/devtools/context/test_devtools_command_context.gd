@@ -2,7 +2,7 @@ extends GutTest
 
 const DevtoolsCommandContext := preload("res://scripts/devtools/context/devtools_command_context.gd")
 const DevtoolsStateContext := preload("res://scripts/devtools/context/devtools_state_context.gd")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const GameplayDebugFlow := preload("res://scripts/devtools/gameplay_debug_flow.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
@@ -119,25 +119,25 @@ func test_request_respawn_player_marks_local_respawn_confirmation_for_local_and_
 	context.configure_dev_connection(dev_connection_service)
 	context.configure_local_respawn_confirmation_marker(Callable(marker, "mark"))
 
-	context.request_respawn_player(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-1")
+	context.request_respawn_player(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-1")
 
 	assert_eq(dev_connection_service.respawn_calls.size(), 1)
-	assert_eq(dev_connection_service.respawn_calls[0]["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(dev_connection_service.respawn_calls[0]["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(dev_connection_service.respawn_calls[0]["target_player_id"], "player-1")
 	assert_true(dev_connection_service.respawn_calls[0]["operation_trace"] is ClientOperationTrace)
 	assert_eq(marker.call_count, 1)
 
-	context.request_respawn_player(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2")
+	context.request_respawn_player(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-2")
 
 	assert_eq(dev_connection_service.respawn_calls.size(), 2)
-	assert_eq(dev_connection_service.respawn_calls[1]["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(dev_connection_service.respawn_calls[1]["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(dev_connection_service.respawn_calls[1]["target_player_id"], "player-2")
 	assert_eq(marker.call_count, 1)
 
-	context.request_respawn_player(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "")
+	context.request_respawn_player(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "")
 
 	assert_eq(dev_connection_service.respawn_calls.size(), 3)
-	assert_eq(dev_connection_service.respawn_calls[2]["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(dev_connection_service.respawn_calls[2]["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(dev_connection_service.respawn_calls[2]["target_player_id"], "")
 	assert_eq(marker.call_count, 2)
 func test_create_operation_trace_returns_independent_deterministic_traces() -> void:
@@ -162,19 +162,19 @@ func test_create_operation_trace_returns_independent_deterministic_traces() -> v
 
 
 func test_set_score_missing_single_player_target_emits_rejection_without_dispatch() -> void:
-	_assert_counter_rejection("debug_set_score", "00000000-0000-4000-8000-000000000711", func(context): context.request_set_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 42))
+	_assert_counter_rejection("debug_set_score", "00000000-0000-4000-8000-000000000711", func(context): context.request_set_score(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "", 42))
 
 
 func test_add_score_missing_single_player_target_emits_rejection_without_dispatch() -> void:
-	_assert_counter_rejection("debug_add_score", "00000000-0000-4000-8000-000000000712", func(context): context.request_add_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 5))
+	_assert_counter_rejection("debug_add_score", "00000000-0000-4000-8000-000000000712", func(context): context.request_add_score(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "", 5))
 
 
 func test_set_lives_missing_single_player_target_emits_rejection_without_dispatch() -> void:
-	_assert_counter_rejection("debug_set_lives", "00000000-0000-4000-8000-000000000713", func(context): context.request_set_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 3))
+	_assert_counter_rejection("debug_set_lives", "00000000-0000-4000-8000-000000000713", func(context): context.request_set_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "", 3))
 
 
 func test_add_lives_missing_single_player_target_emits_rejection_without_dispatch() -> void:
-	_assert_counter_rejection("debug_add_lives", "00000000-0000-4000-8000-000000000714", func(context): context.request_add_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "", 1))
+	_assert_counter_rejection("debug_add_lives", "00000000-0000-4000-8000-000000000714", func(context): context.request_add_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "", 1))
 
 
 func test_suppressed_counter_does_not_emit_request_or_rejection_event() -> void:
@@ -185,7 +185,7 @@ func test_suppressed_counter_does_not_emit_request_or_rejection_event() -> void:
 	var context := DevtoolsCommandContext.new()
 	context.configure(debug_flow, state_context)
 
-	context.request_set_score(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 42)
+	context.request_set_score(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 42)
 
 	assert_eq(debug_flow.calls.size(), 0)
 	assert_eq(writer.written_lines.size(), 0)
@@ -230,10 +230,10 @@ func test_valid_counter_commands_reuse_one_context_trace_for_event_and_packet() 
 	var context := DevtoolsCommandContext.new()
 	context.configure(debug_flow, state_context, trace_factory)
 
-	context.request_set_score(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 42)
-	context.request_add_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 5)
-	context.request_set_lives(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 3)
-	context.request_add_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 1)
+	context.request_set_score(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 42)
+	context.request_add_score(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 5)
+	context.request_set_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 3)
+	context.request_add_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 1)
 
 	assert_eq(trace_state["index"], trace_ids.size())
 	assert_eq(connection.sent_packets.size(), trace_ids.size())

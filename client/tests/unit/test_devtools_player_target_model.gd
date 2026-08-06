@@ -1,7 +1,7 @@
 extends GutTest
 
 const DevtoolsPlayerTargetModel := preload("res://scripts/devtools/devtools_player_target_model.gd")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const DevtoolsLaneStateAdapter := preload("res://scripts/protocol/realtime/devtools_lane_state_adapter.gd")
 
 
@@ -152,6 +152,6 @@ func test_apply_gameplay_state_with_lane_adapter_output_populates_target_rows() 
 	for row in active_rows:
 		active_ids.append(str(row.get("player_id", "")))
 
-	assert_true(active_ids.has(DevtoolsTargetResolver.TARGET_ALL_PLAYERS))
+	assert_true(active_ids.has(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS))
 	assert_true(active_ids.has("player-1"))
 	assert_true(active_ids.has("player-2"))

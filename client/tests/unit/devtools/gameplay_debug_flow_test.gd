@@ -1,7 +1,7 @@
 extends GutTest
 
 const GameplayDebugFlow := preload("res://scripts/devtools/gameplay_debug_flow.gd")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const ClientLogger := preload("res://scripts/logging/logger.gd")
 const ClientOperationTrace := preload("res://scripts/observability/client_operation_trace.gd")
 const PresentationEventCapture := preload("res://tests/unit/logging/presentation_event_capture.gd")
@@ -113,12 +113,12 @@ func test_toggle_invincible_all_players_sends_target_scope_without_target_player
 	var debug_flow := GameplayDebugFlow.new()
 	debug_flow.configure(fake_connection)
 
-	debug_flow.toggle_invincible(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "")
+	debug_flow.toggle_invincible(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "")
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "toggle_debug_invincible")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_false(packet.has("target_player_id"))
 
 
@@ -127,12 +127,12 @@ func test_toggle_infinite_lives_single_player_sends_scope_and_target_player_id()
 	var debug_flow := GameplayDebugFlow.new()
 	debug_flow.configure(fake_connection)
 
-	debug_flow.toggle_infinite_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2")
+	debug_flow.toggle_infinite_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-2")
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "toggle_debug_infinite_lives")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(packet["target_player_id"], "player-2")
 
 
@@ -146,7 +146,7 @@ func test_toggle_freeze_player_hotkey_preserves_single_player_local_behavior_wit
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "toggle_debug_freeze_player")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_false(packet.has("target_player_id"))
 
 
@@ -155,12 +155,12 @@ func test_set_score_all_players_sends_target_scope_without_target_player_id_and_
 	var debug_flow := GameplayDebugFlow.new()
 	debug_flow.configure(fake_connection)
 
-	debug_flow.set_score(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 42)
+	debug_flow.set_score(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 42)
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "debug_set_score")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(packet["score"], 42)
 	assert_false(packet.has("target_player_id"))
 
@@ -170,12 +170,12 @@ func test_add_score_single_player_sends_scope_target_player_id_and_preserves_amo
 	var debug_flow := GameplayDebugFlow.new()
 	debug_flow.configure(fake_connection)
 
-	debug_flow.add_score(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 5)
+	debug_flow.add_score(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 5)
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "debug_add_score")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(packet["target_player_id"], "player-2")
 	assert_eq(packet["amount"], 5)
 
@@ -185,12 +185,12 @@ func test_set_lives_all_players_sends_target_scope_without_target_player_id_and_
 	var debug_flow := GameplayDebugFlow.new()
 	debug_flow.configure(fake_connection)
 
-	debug_flow.set_lives(DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS, "", 3)
+	debug_flow.set_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS, "", 3)
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "debug_set_lives")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(packet["lives"], 3)
 	assert_false(packet.has("target_player_id"))
 
@@ -200,11 +200,11 @@ func test_add_lives_single_player_sends_scope_target_player_id_and_preserves_amo
 	var debug_flow := GameplayDebugFlow.new()
 	debug_flow.configure(fake_connection)
 
-	debug_flow.add_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 2)
+	debug_flow.add_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, "player-2", 2)
 
 	assert_eq(fake_connection.sent_packets.size(), 1)
 	var packet: Dictionary = fake_connection.sent_packets[0]
 	assert_eq(packet["type"], "debug_add_lives")
-	assert_eq(packet["target_scope"], DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(packet["target_scope"], DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(packet["target_player_id"], "player-2")
 	assert_eq(packet["amount"], 2)

@@ -1,7 +1,7 @@
 extends GutTest
 
 const DevtoolsWindowController := preload("res://scripts/devtools/devtools_window_controller.gd")
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 
 class FakeConnectionService:
 	extends RefCounted
@@ -91,7 +91,7 @@ class FakeEffectReceiver:
 func test_effective_target_explicit_selected_player_wins() -> void:
 	var controller := DevtoolsWindowController.new()
 	controller.self_player_id = "player-1"
-	controller.game_target_kind = DevtoolsTargetResolver.TARGET_KIND_PLAYER
+	controller.game_target_kind = DevtoolsTargetResolverScript.TARGET_KIND_PLAYER
 	controller.game_target_id = "player-2"
 
 	var resolved: String = controller._effective_target("player-3")
@@ -105,18 +105,18 @@ func test_player_canonical_target_resolves_and_sends_player_only_command() -> vo
 	controller.configure_kill_player_routing(
 		connection,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		"player-2"
 	)
 	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
-	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_kill_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 
 	assert_eq(connection.kill_target_calls, 1)
-	assert_eq(connection.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(connection.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(connection.last_target_player_id, "player-2")
 	assert_ne(connection.last_target_player_id, "player-1")
-	assert_ne(connection.last_target_player_id, DevtoolsTargetResolver.TARGET_GAME)
+	assert_ne(connection.last_target_player_id, DevtoolsTargetResolverScript.TARGET_GAME)
 	assert_eq(connection.kill_self_calls, 0)
 
 
@@ -126,12 +126,12 @@ func test_asteroid_canonical_target_does_not_send_player_only_command() -> void:
 	controller.configure_kill_player_routing(
 		connection,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_ASTEROID,
+		DevtoolsTargetResolverScript.TARGET_KIND_ASTEROID,
 		"asteroid-1"
 	)
 	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
-	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_kill_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 
 	assert_eq(connection.kill_target_calls, 0)
 	assert_eq(connection.kill_self_calls, 0)
@@ -143,12 +143,12 @@ func test_bullet_canonical_target_does_not_send_player_only_command() -> void:
 	controller.configure_kill_player_routing(
 		connection,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_BULLET,
+		DevtoolsTargetResolverScript.TARGET_KIND_BULLET,
 		"bullet-1"
 	)
 	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
-	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_kill_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 
 	assert_eq(connection.kill_target_calls, 0)
 	assert_eq(connection.kill_self_calls, 0)
@@ -160,12 +160,12 @@ func test_explicit_game_target_with_empty_target_sends_no_kill_request() -> void
 	controller.configure_kill_player_routing(
 		connection,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		""
 	)
 	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
-	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_kill_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 
 	assert_eq(connection.kill_self_calls, 0)
 	assert_eq(connection.kill_target_calls, 0)
@@ -177,16 +177,16 @@ func test_all_players_target_sends_kill_request_with_all_players_scope_and_empty
 	controller.configure_kill_player_routing(
 		connection,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		"player-2"
 	)
 	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
-	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	controller._on_kill_player_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS)
 
 	assert_eq(connection.kill_self_calls, 1)
 	assert_eq(connection.kill_target_calls, 0)
-	assert_eq(connection.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(connection.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(connection.last_target_player_id, "")
 
 
@@ -195,16 +195,16 @@ func test_all_players_target_sends_respawn_request_with_all_players_scope_and_em
 	controller.configure_kill_player_routing(
 		null,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		"player-2"
 	)
 	var receiver := FakeEffectReceiver.new()
 	controller.respawn_player_requested.connect(Callable(receiver, "on_respawn_player_requested"))
 
-	controller._on_respawn_player_placement_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	controller._on_respawn_player_placement_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS)
 
 	assert_eq(receiver.respawn_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
 
@@ -219,7 +219,7 @@ func test_explicit_game_target_without_active_player_target_sends_no_kill_reques
 	)
 	controller.configure_kill_player_request_route(Callable(connection, "request_kill_player"))
 
-	controller._on_kill_player_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_kill_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 
 	assert_eq(connection.kill_self_calls, 0)
 	assert_eq(connection.kill_target_calls, 0)
@@ -230,7 +230,7 @@ func test_game_target_player_routes_player_only_effect_signals_to_game_target_pl
 	controller.configure_kill_player_routing(
 		null,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		"player-2"
 	)
 	var receiver := FakeEffectReceiver.new()
@@ -242,39 +242,39 @@ func test_game_target_player_routes_player_only_effect_signals_to_game_target_pl
 	controller.set_lives_requested.connect(Callable(receiver, "on_set_lives_requested"))
 	controller.add_lives_requested.connect(Callable(receiver, "on_add_lives_requested"))
 
-	controller._on_toggle_invincible_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_toggle_invincible_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 	assert_eq(receiver.invincible_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
-	controller._on_toggle_infinite_lives_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_toggle_infinite_lives_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 	assert_eq(receiver.infinite_lives_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
-	controller._on_toggle_freeze_player_requested(DevtoolsTargetResolver.TARGET_GAME)
+	controller._on_toggle_freeze_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
 	assert_eq(receiver.freeze_player_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
-	controller._on_set_score_requested(DevtoolsTargetResolver.TARGET_GAME, 10)
+	controller._on_set_score_requested(DevtoolsTargetResolverScript.TARGET_GAME, 10)
 	assert_eq(receiver.set_score_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
-	controller._on_add_score_requested(DevtoolsTargetResolver.TARGET_GAME, 5)
+	controller._on_add_score_requested(DevtoolsTargetResolverScript.TARGET_GAME, 5)
 	assert_eq(receiver.add_score_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
-	controller._on_set_lives_requested(DevtoolsTargetResolver.TARGET_GAME, 3)
+	controller._on_set_lives_requested(DevtoolsTargetResolverScript.TARGET_GAME, 3)
 	assert_eq(receiver.set_lives_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
-	controller._on_add_lives_requested(DevtoolsTargetResolver.TARGET_GAME, 1)
+	controller._on_add_lives_requested(DevtoolsTargetResolverScript.TARGET_GAME, 1)
 	assert_eq(receiver.add_lives_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER)
 	assert_eq(receiver.last_target_player_id, "player-2")
 
 
@@ -283,7 +283,7 @@ func test_all_players_toggle_effect_signals_emit_scope_with_empty_target_player_
 	controller.configure_kill_player_routing(
 		null,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		"player-2"
 	)
 	var receiver := FakeEffectReceiver.new()
@@ -291,9 +291,9 @@ func test_all_players_toggle_effect_signals_emit_scope_with_empty_target_player_
 	controller.toggle_infinite_lives_requested.connect(Callable(receiver, "on_toggle_infinite_lives_requested"))
 	controller.toggle_freeze_player_requested.connect(Callable(receiver, "on_toggle_freeze_player_requested"))
 
-	controller._on_toggle_invincible_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS)
+	controller._on_toggle_invincible_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS)
 	assert_eq(receiver.invincible_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
 
@@ -302,7 +302,7 @@ func test_all_players_counter_effect_signals_emit_scope_with_empty_target_player
 	controller.configure_kill_player_routing(
 		null,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_PLAYER,
+		DevtoolsTargetResolverScript.TARGET_KIND_PLAYER,
 		"player-2"
 	)
 	var receiver := FakeEffectReceiver.new()
@@ -311,24 +311,24 @@ func test_all_players_counter_effect_signals_emit_scope_with_empty_target_player
 	controller.set_lives_requested.connect(Callable(receiver, "on_set_lives_requested"))
 	controller.add_lives_requested.connect(Callable(receiver, "on_add_lives_requested"))
 
-	controller._on_set_score_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS, 10)
+	controller._on_set_score_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS, 10)
 	assert_eq(receiver.set_score_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
-	controller._on_add_score_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS, 5)
+	controller._on_add_score_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS, 5)
 	assert_eq(receiver.add_score_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
-	controller._on_set_lives_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS, 3)
+	controller._on_set_lives_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS, 3)
 	assert_eq(receiver.set_lives_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
-	controller._on_add_lives_requested(DevtoolsTargetResolver.TARGET_ALL_PLAYERS, 1)
+	controller._on_add_lives_requested(DevtoolsTargetResolverScript.TARGET_ALL_PLAYERS, 1)
 	assert_eq(receiver.add_lives_calls, 1)
-	assert_eq(receiver.last_target_scope, DevtoolsTargetResolver.TARGET_SCOPE_ALL_PLAYERS)
+	assert_eq(receiver.last_target_scope, DevtoolsTargetResolverScript.TARGET_SCOPE_ALL_PLAYERS)
 	assert_eq(receiver.last_target_player_id, "")
 
 
@@ -337,7 +337,7 @@ func test_game_target_asteroid_does_not_emit_player_only_effect_signals() -> voi
 	controller.configure_kill_player_routing(
 		null,
 		"player-1",
-		DevtoolsTargetResolver.TARGET_KIND_ASTEROID,
+		DevtoolsTargetResolverScript.TARGET_KIND_ASTEROID,
 		"asteroid-1"
 	)
 	var receiver := FakeEffectReceiver.new()
@@ -349,13 +349,13 @@ func test_game_target_asteroid_does_not_emit_player_only_effect_signals() -> voi
 	controller.set_lives_requested.connect(Callable(receiver, "on_set_lives_requested"))
 	controller.add_lives_requested.connect(Callable(receiver, "on_add_lives_requested"))
 
-	controller._on_toggle_invincible_requested(DevtoolsTargetResolver.TARGET_GAME)
-	controller._on_toggle_infinite_lives_requested(DevtoolsTargetResolver.TARGET_GAME)
-	controller._on_toggle_freeze_player_requested(DevtoolsTargetResolver.TARGET_GAME)
-	controller._on_set_score_requested(DevtoolsTargetResolver.TARGET_GAME, 10)
-	controller._on_add_score_requested(DevtoolsTargetResolver.TARGET_GAME, 5)
-	controller._on_set_lives_requested(DevtoolsTargetResolver.TARGET_GAME, 3)
-	controller._on_add_lives_requested(DevtoolsTargetResolver.TARGET_GAME, 1)
+	controller._on_toggle_invincible_requested(DevtoolsTargetResolverScript.TARGET_GAME)
+	controller._on_toggle_infinite_lives_requested(DevtoolsTargetResolverScript.TARGET_GAME)
+	controller._on_toggle_freeze_player_requested(DevtoolsTargetResolverScript.TARGET_GAME)
+	controller._on_set_score_requested(DevtoolsTargetResolverScript.TARGET_GAME, 10)
+	controller._on_add_score_requested(DevtoolsTargetResolverScript.TARGET_GAME, 5)
+	controller._on_set_lives_requested(DevtoolsTargetResolverScript.TARGET_GAME, 3)
+	controller._on_add_lives_requested(DevtoolsTargetResolverScript.TARGET_GAME, 1)
 
 	assert_eq(receiver.invincible_calls, 0)
 	assert_eq(receiver.infinite_lives_calls, 0)

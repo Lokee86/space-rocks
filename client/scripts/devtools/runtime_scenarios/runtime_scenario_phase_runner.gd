@@ -1,7 +1,7 @@
 extends RefCounted
 class_name RuntimeScenarioPhaseRunner
 
-const DevtoolsTargetResolver := preload("res://scripts/devtools/devtools_target_resolver.gd")
+const DevtoolsTargetResolverScript := preload("res://scripts/devtools/devtools_target_resolver.gd")
 const Constants := preload("res://scripts/generated/constants/constants.gd")
 
 const ASTEROID_SPAWN_BATCH_SIZE := 24
@@ -68,9 +68,9 @@ func run(phase: Dictionary) -> Dictionary:
 			var target_player_id: String = roster.other_human_player_id()
 			if target_player_id.is_empty():
 				return _failure("phase %s could not resolve participant target" % phase_name)
-			debug_flow.set_lives(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, target_player_id, 1)
+			debug_flow.set_lives(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, target_player_id, 1)
 			await Engine.get_main_loop().create_timer(0.25).timeout
-			debug_flow.kill_player(DevtoolsTargetResolver.TARGET_SCOPE_SINGLE_PLAYER, target_player_id)
+			debug_flow.kill_player(DevtoolsTargetResolverScript.TARGET_SCOPE_SINGLE_PLAYER, target_player_id)
 			_status("phase_action", {"phase": phase_name, "killed_player_id": target_player_id})
 
 	var duration := maxf(float(phase.get("duration_seconds", 0.0)), 0.0)
