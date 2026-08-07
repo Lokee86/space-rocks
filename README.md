@@ -79,6 +79,12 @@ Documentation areas:
 * [Service docs](docs/services/!INDEX.md) - Runtime implementation docs for client, game-server, API server, player-data, and web.
 * [Systems-design docs](docs/systems-design/!INDEX.md) - Conceptual mechanics, authority boundaries, invariants, and durable design rules.
 
+## Preserved Branches
+
+The normal active development branches are `main` and whichever explicitly active feature branch is being worked on. One abandoned implementation line is intentionally retained as `backburner/p4-integrated` for reference.
+
+The remote-only branch `archive/pre-realignment-main-2026-07-31` is also intentionally retained. It preserves the exact pre-roadmap-realignment `main` topology from July 31, 2026, including historical P3/release ancestry that is no longer reachable from current `main` or represented exactly by the P4 backburner branch. **Do not use it as a development base, merge target, or active work branch.** It exists only as a durable historical recovery/reference point and should not be deleted during routine branch cleanup.
+
 ## Development Entry Points
 
 Use these docs instead of expanding this README with detailed workflow instructions:

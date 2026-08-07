@@ -628,6 +628,7 @@ Use this section only for short, high-signal warnings that help a returning deve
 
 Current handoff points:
 
+* `origin/archive/pre-realignment-main-2026-07-31` is intentionally retained as a remote-only historical recovery/reference point. It preserves the exact pre-roadmap-realignment `main` topology and should not be used for development or deleted during routine branch cleanup. `backburner/p4-integrated` separately preserves the abandoned P4 implementation line.
 * Space Rocks is in active development. Expect rough edges around newer systems.
 * The gameplay model is server-authoritative. Preserve authority boundaries when changing client presentation.
 * Single-player should remain usable without Rails unless the work explicitly touches backend/account behavior.
